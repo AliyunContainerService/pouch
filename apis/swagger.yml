@@ -1,0 +1,780 @@
+---
+swagger: "2.0"
+schemes:
+  - "http"
+  - "https"
+produces:
+  - "application/json"
+  - "text/plain"
+consumes:
+  - "application/json"
+  - "text/plain"
+basePath: "/v1.32"
+info:
+  title: "Pouch Engine API"
+  version: "1.32"
+  description: |
+    API is an HTTP API served by Pouch Engine.
+
+produces:
+        - "application/json"
+paths:
+  /_ping:
+    get:
+      summary: ""
+      description: ""
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "string"
+            example: "OK"
+        500:
+          description: "server error"
+          schema:
+            $ref: '#/definitions/Error'
+  /version:
+    get:
+      summary: "Get Pouchd version"
+      description: ""
+      responses:
+        200:
+          schema:
+            $ref: '#/definitions/SystemVersion'
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+            $ref: '#/definitions/Error'
+  /info:
+    get:
+      summary: "Get System information"
+      description: ""
+      responses:
+        200:
+          schema:
+            $ref: '#/definitions/SystemInfo'
+          description: "no error"
+        500:
+          schema:
+            $ref: '#/definitions/Error'
+          description: "server error"
+  /images/create:
+    post:
+      summary: "Create an image by pulling from a registry or importing from an existing source file"
+      consumes:
+        - "text/plain"
+        - "application/octet-stream"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+        404:
+          schema:
+            $ref: '#/definitions/Error'
+          description: "image not found"
+        500:
+          schema:
+            $ref: '#/definitions/Error'
+          description: "server error"
+      parameters:
+        - name: "fromImage"
+          in: "query"
+          description: "Name of the image to pull. The name may include a tag or digest. This parameter may only be used when pulling an image. The pull is cancelled if the HTTP connection is closed."
+          type: "string"
+        - name: "fromSrc"
+          in: "query"
+          description: "Source to import. The value may be a URL from which the image can be retrieved or `-` to read the image from the request body. This parameter may only be used when importing an image."
+          type: "string"
+        - name: "repo"
+          in: "query"
+          description: "Repository name given to an image when it is imported. The repo may include a tag. This parameter may only be used when importing an image."
+          type: "string"
+        - name: "tag"
+          in: "query"
+          description: "Tag or digest. If empty when pulling an image, this causes all tags for the given image to be pulled."
+          type: "string"
+        - name: "inputImage"
+          in: "body"
+          description: "Image content if the value `-` has been specified in fromSrc query parameter"
+          schema:
+            type: "string"
+          required: false
+        - name: "X-Registry-Auth"
+          in: "header"
+          description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
+          type: "string"
+  /images/json:
+    get:
+      summary: "List Images"
+      description: "Return a list of stored images."
+      operationId: "ImageList"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Summary image data for the images matching the query"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImageSummary"
+          examples:
+            application/json:
+              - Id: "sha256:e216a057b1cb1efc11f8a268f37ef62083e70b1b38323ba252e25ac88904a7e8"
+                ParentId: ""
+                RepoTags:
+                  - "ubuntu:12.04"
+                  - "ubuntu:precise"
+                RepoDigests:
+                  - "ubuntu@sha256:992069aee4016783df6345315302fa59681aae51a8eeb2f889dea59290f21787"
+                Created: 1474925151
+                Size: 103579269
+                VirtualSize: 103579269
+                SharedSize: 0
+                Labels: {}
+                Containers: 2
+              - Id: "sha256:3e314f95dcace0f5e4fd37b10862fe8398e3c60ed36600bc0ca5fda78b087175"
+                ParentId: ""
+                RepoTags:
+                  - "ubuntu:12.10"
+                  - "ubuntu:quantal"
+                RepoDigests:
+                  - "ubuntu@sha256:002fba3e3255af10be97ea26e476692a7ebed0bb074a9ab960b2e7a1526b15d7"
+                  - "ubuntu@sha256:68ea0200f0b90df725d99d823905b04cf844f6039ef60c60bf3e019915017bd3"
+                Created: 1403128455
+                Size: 172064416
+                VirtualSize: 172064416
+                SharedSize: 0
+                Labels: {}
+                Containers: 5
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "all"
+          in: "query"
+          description: "Show all images. Only images from a final layer (no children) are shown by default."
+          type: "boolean"
+          default: false
+        - name: "filters"
+          in: "query"
+          description: |
+            A JSON encoded value of the filters (a `map[string][]string`) to process on the images list. Available filters:
+
+            - `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)
+            - `dangling=true`
+            - `label=key` or `label="key=value"` of an image label
+            - `reference`=(`<image-name>[:<tag>]`)
+            - `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)
+          type: "string"
+        - name: "digests"
+          in: "query"
+          description: "Show digest information as a `RepoDigests` field on each image."
+          type: "boolean"
+          default: false
+  /images/search:
+    get:
+      summary: "Search images"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/SearchResultItem"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /containers/create:
+    post:
+      summary: "Create a container"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "name"
+          in: "query"
+          description: "Assign the specified name to the container. Must match `/?[a-zA-Z0-9_-]+`."
+          type: "string"
+          pattern: "/?[a-zA-Z0-9_-]+"
+        - name: "body"
+          in: "body"
+          description: "Container to create"
+          schema:
+            allOf:
+              - $ref: "#/definitions/ContainerConfig"
+              - type: "object"
+                properties:
+                  HostConfig:
+                    $ref: "#/definitions/HostConfig"
+                  NetworkingConfig:
+                    description: "This container's networking configuration."
+                    type: "object"
+                    properties:
+                      EndpointsConfig:
+                        description: "A mapping of network name to endpoint configuration for that network."
+                        type: "object"
+                        additionalProperties:
+                          $ref: "#/definitions/EndpointSettings"
+          required: true
+      responses:
+        201:
+          description: "Container created successfully"
+          schema:
+            type: "object"
+            required: [Id, Warnings]
+            properties:
+              Id:
+                description: "The ID of the created container"
+                type: "string"
+                x-nullable: false
+              Warnings:
+                description: "Warnings encountered when creating the container"
+                type: "array"
+                x-nullable: false
+                items:
+                  type: "string"
+          examples:
+            application/json:
+              Id: "e90e34656806"
+              Warnings: []
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "no such container"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        409:
+          description: "conflict"
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/Error"
+      tags: ["Container"]
+definitions:
+  Error:
+    type: "object"
+    properties:
+      message:
+        type: string
+  SystemVersion:
+    type: "object"
+    properties:
+      Version:
+        type: "string"
+        description: "version of Pouch Daemon"
+        example: "0.1.2"
+      ApiVersion:
+        type: "string"
+        description: "Api Version held by daemon"
+        example: ""
+      GitCommit:
+        type: "string"
+        description: "Commit ID held by the latest commit operation"
+        example: ""
+      GoVersion:
+        type: "string"
+        description: "version of Go runtime"
+        example: "1.8.3"
+      Os:
+        type: "string"
+        description: "Operating system type of underlying system"
+        example: "linux"
+      Arch:
+        type: "string"
+        description: "Arch type of underlying hardware"
+        example: "amd64"
+      KernelVersion:
+        type: "string"
+        description: "Operating system kernel version"
+        example: "3.13.0-106-generic"
+      BuildTime:
+        type: "string"
+        description: "The time when this binary of daemon is built"
+        example: "2017-08-29T17:41:57.729792388+00:00"
+  SystemInfo:
+    type: "object"
+    properties:
+      Architecture:
+        type: "string"
+      Containers:
+        type: "integer"
+      ContainersRunning:
+        type: "integer"
+      ContainersStopped:
+        type: "integer"
+      ContainersPaused:
+        type: "integer"
+  ContainerConfig:
+    type: "object"
+    description: "Configuration for a container that is portable between hosts"
+    properties:
+      Hostname:
+        description: "The hostname to use for the container, as a valid RFC 1123 hostname."
+        type: "string"
+      Domainname:
+        description: "The domain name to use for the container."
+        type: "string"
+      User:
+        description: "The user that commands are run as inside the container."
+        type: "string"
+      AttachStdin:
+        description: "Whether to attach to `stdin`."
+        type: "boolean"
+        default: false
+      AttachStdout:
+        description: "Whether to attach to `stdout`."
+        type: "boolean"
+        default: true
+      AttachStderr:
+        description: "Whether to attach to `stderr`."
+        type: "boolean"
+        default: true
+      ExposedPorts:
+        description: |
+          An object mapping ports to an empty object in the form:
+
+          `{"<port>/<tcp|udp>": {}}`
+        type: "object"
+        additionalProperties:
+          type: "object"
+          enum:
+            - {}
+          default: {}
+      Tty:
+        description: "Attach standard streams to a TTY, including `stdin` if it is not closed."
+        type: "boolean"
+        default: false
+      OpenStdin:
+        description: "Open `stdin`"
+        type: "boolean"
+        default: false
+      StdinOnce:
+        description: "Close `stdin` after one attached client disconnects"
+        type: "boolean"
+        default: false
+      Env:
+        description: |
+          A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+        type: "array"
+        items:
+          type: "string"
+      Cmd:
+        description: "Command to run specified as a string or an array of strings."
+        type:
+          - "array"
+          - "string"
+        items:
+          type: "string"
+      ArgsEscaped:
+        description: "Command is already escaped (Windows only)"
+        type: "boolean"
+      Image:
+        description: "The name of the image to use when creating the container"
+        type: "string"
+      Volumes:
+        description: "An object mapping mount point paths inside the container to empty objects."
+        type: "object"
+        properties:
+          additionalProperties:
+            type: "object"
+            enum:
+              - {}
+            default: {}
+      WorkingDir:
+        description: "The working directory for commands to run in."
+        type: "string"
+      Entrypoint:
+        description: |
+          The entry point for the container as a string or an array of strings.
+          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+        type:
+          - "array"
+          - "string"
+        items:
+          type: "string"
+      NetworkDisabled:
+        description: "Disable networking for the container."
+        type: "boolean"
+      MacAddress:
+        description: "MAC address of the container."
+        type: "string"
+      OnBuild:
+        description: "`ONBUILD` metadata that were defined in the image's `Dockerfile`."
+        type: "array"
+        items:
+          type: "string"
+      Labels:
+        description: "User-defined key/value metadata."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      StopSignal:
+        description: "Signal to stop a container as a string or unsigned integer."
+        type: "string"
+        default: "SIGTERM"
+      StopTimeout:
+        description: "Timeout to stop a container in seconds."
+        type: "integer"
+        default: 10
+      Shell:
+        description: "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell."
+        type: "array"
+        items:
+          type: "string"
+  HostConfig:
+    description: "Container configuration that depends on the host we are running on"
+    allOf:
+      - type: "object"
+        properties:
+          # Applicable to all platforms
+          Binds:
+            type: "array"
+            description: |
+              A list of volume bindings for this container. Each volume binding is a string in one of these forms:
+
+              - `host-src:container-dest` to bind-mount a host path into the container. Both `host-src`, and `container-dest` must be an _absolute_ path.
+              - `host-src:container-dest:ro` to make the bind mount read-only inside the container. Both `host-src`, and `container-dest` must be an _absolute_ path.
+              - `volume-name:container-dest` to bind-mount a volume managed by a volume driver into the container. `container-dest` must be an _absolute_ path.
+              - `volume-name:container-dest:ro` to mount the volume read-only inside the container.  `container-dest` must be an _absolute_ path.
+            items:
+              type: "string"
+          ContainerIDFile:
+            type: "string"
+            description: "Path to a file where the container ID is written"
+          LogConfig:
+            type: "object"
+            description: "The logging configuration for this container"
+            properties:
+              Type:
+                type: "string"
+                enum:
+                  - "json-file"
+                  - "syslog"
+                  - "journald"
+                  - "gelf"
+                  - "fluentd"
+                  - "awslogs"
+                  - "splunk"
+                  - "etwlogs"
+                  - "none"
+              Config:
+                type: "object"
+                additionalProperties:
+                  type: "string"
+          NetworkMode:
+            type: "string"
+            description: "Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to."
+          PortBindings:
+            type: "object"
+            description: "A map of exposed container ports and the host port they should map to."
+            additionalProperties:
+              type: "object"
+              properties:
+                HostIp:
+                  type: "string"
+                  description: "The host IP address"
+                HostPort:
+                  type: "string"
+                  description: "The host port number, as a string"
+          AutoRemove:
+            type: "boolean"
+            description: "Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set."
+          VolumeDriver:
+            type: "string"
+            description: "Driver that this container uses to mount volumes."
+          VolumesFrom:
+            type: "array"
+            description: "A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`."
+            items:
+              type: "string"
+          # Applicable to UNIX platforms
+          CapAdd:
+            type: "array"
+            description: "A list of kernel capabilities to add to the container."
+            items:
+              type: "string"
+          CapDrop:
+            type: "array"
+            description: "A list of kernel capabilities to drop from the container."
+            items:
+              type: "string"
+          Dns:
+            type: "array"
+            description: "A list of DNS servers for the container to use."
+            items:
+              type: "string"
+          DnsOptions:
+            type: "array"
+            description: "A list of DNS options."
+            items:
+              type: "string"
+          DnsSearch:
+            type: "array"
+            description: "A list of DNS search domains."
+            items:
+              type: "string"
+          ExtraHosts:
+            type: "array"
+            description: |
+              A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.
+            items:
+              type: "string"
+          GroupAdd:
+            type: "array"
+            description: "A list of additional groups that the container process will run as."
+            items:
+              type: "string"
+          IpcMode:
+            type: "string"
+            description: |
+                    IPC sharing mode for the container. Possible values are:
+
+                    - `"none"`: own private IPC namespace, with /dev/shm not mounted
+                    - `"private"`: own private IPC namespace
+                    - `"shareable"`: own private IPC namespace, with a possibility to share it with other containers
+                    - `"container:<name|id>"`: join another (shareable) container's IPC namespace
+                    - `"host"`: use the host system's IPC namespace
+
+                    If not specified, daemon default is used, which can either be `"private"`
+                    or `"shareable"`, depending on daemon version and configuration.
+          Cgroup:
+            type: "string"
+            description: "Cgroup to use for the container."
+          Links:
+            type: "array"
+            description: "A list of links for the container in the form `container_name:alias`."
+            items:
+              type: "string"
+          OomScoreAdj:
+            type: "integer"
+            description: "An integer value containing the score given to the container in order to tune OOM killer preferences."
+            example: 500
+          PidMode:
+            type: "string"
+            description: |
+              Set the PID (Process) Namespace mode for the container. It can be either:
+
+              - `"container:<name|id>"`: joins another container's PID namespace
+              - `"host"`: use the host's PID namespace inside the container
+          Privileged:
+            type: "boolean"
+            description: "Gives the container full access to the host."
+          PublishAllPorts:
+            type: "boolean"
+            description: "Allocates a random host port for all of a container's exposed ports."
+          ReadonlyRootfs:
+            type: "boolean"
+            description: "Mount the container's root filesystem as read only."
+          SecurityOpt:
+            type: "array"
+            description: "A list of string values to customize labels for MLS systems, such as SELinux."
+            items:
+              type: "string"
+          StorageOpt:
+            type: "object"
+            description: |
+              Storage driver options for this container, in the form `{"size": "120G"}`.
+            additionalProperties:
+              type: "string"
+          Tmpfs:
+            type: "object"
+            description: |
+              A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example: `{ "/run": "rw,noexec,nosuid,size=65536k" }`.
+            additionalProperties:
+              type: "string"
+          UTSMode:
+            type: "string"
+            description: "UTS namespace to use for the container."
+          UsernsMode:
+            type: "string"
+            description: "Sets the usernamespace mode for the container when usernamespace remapping option is enabled."
+          ShmSize:
+            type: "integer"
+            description: "Size of `/dev/shm` in bytes. If omitted, the system uses 64MB."
+            minimum: 0
+          Sysctls:
+            type: "object"
+            description: |
+              A list of kernel parameters (sysctls) to set in the container. For example: `{"net.ipv4.ip_forward": "1"}`
+            additionalProperties:
+              type: "string"
+          Runtime:
+            type: "string"
+            description: "Runtime to use with this container."
+          # Applicable to Windows
+          ConsoleSize:
+            type: "array"
+            description: "Initial console size, as an `[height, width]` array. (Windows only)"
+            minItems: 2
+            maxItems: 2
+            items:
+              type: "integer"
+              minimum: 0
+          Isolation:
+            type: "string"
+            description: "Isolation technology of the container. (Windows only)"
+            enum:
+              - "default"
+              - "process"
+              - "hyperv"
+  EndpointSettings:
+    description: "Configuration for a network endpoint."
+    type: "object"
+    properties:
+      # Configurations
+      Links:
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "container_1"
+          - "container_2"
+      Aliases:
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "server_x"
+          - "server_y"
+
+      # Operational data
+      NetworkID:
+        description: |
+          Unique ID of the network.
+        type: "string"
+        example: "08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"
+      EndpointID:
+        description: |
+          Unique ID for the service endpoint in a Sandbox.
+        type: "string"
+        example: "b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"
+      Gateway:
+        description: |
+          Gateway address for this network.
+        type: "string"
+        example: "172.17.0.1"
+      IPAddress:
+        description: |
+          IPv4 address.
+        type: "string"
+        example: "172.17.0.4"
+      IPPrefixLen:
+        description: |
+          Mask length of the IPv4 address.
+        type: "integer"
+        example: 16
+      IPv6Gateway:
+        description: |
+          IPv6 gateway address.
+        type: "string"
+        example: "2001:db8:2::100"
+      GlobalIPv6Address:
+        description: |
+          Global IPv6 address.
+        type: "string"
+        example: "2001:db8::5689"
+      GlobalIPv6PrefixLen:
+        description: |
+          Mask length of the global IPv6 address.
+        type: "integer"
+        format: "int64"
+        example: 64
+      MacAddress:
+        description: |
+          MAC address for the endpoint on this network.
+        type: "string"
+        example: "02:42:ac:11:00:04"
+      DriverOpts:
+        description: |
+          DriverOpts is a mapping of driver options and values. These options
+          are passed directly to the driver and are driver specific.
+        type: "object"
+        x-nullable: true
+        additionalProperties:
+          type: "string"
+        example:
+          com.example.some-label: "some-value"
+          com.example.some-other-label: "some-other-value"
+  ImageSummary:
+    type: "object"
+    required:
+      - Id
+      - ParentId
+      - RepoTags
+      - RepoDigests
+      - Created
+      - Size
+      - SharedSize
+      - VirtualSize
+      - Labels
+      - Containers
+    properties:
+      Id:
+        type: "string"
+        x-nullable: false
+      ParentId:
+        type: "string"
+        x-nullable: false
+      RepoTags:
+        type: "array"
+        x-nullable: false
+        items:
+          type: "string"
+      RepoDigests:
+        type: "array"
+        x-nullable: false
+        items:
+          type: "string"
+      Created:
+        type: "integer"
+        x-nullable: false
+      Size:
+        type: "integer"
+        x-nullable: false
+      SharedSize:
+        type: "integer"
+        x-nullable: false
+      VirtualSize:
+        type: "integer"
+        x-nullable: false
+      Labels:
+        type: "object"
+        x-nullable: false
+        additionalProperties:
+          type: "string"
+      Containers:
+        x-nullable: false
+        type: "integer"
+  SearchResultItem:
+    type: "object"
+    description: "search result item in search results."
+    properties:
+      description:
+        type: "string"
+        description: "description just shows the description of this image"
+      is_official:
+        type: "boolean"
+        description: "is_official shows if this image is marked official."
+      is_automated:
+        type: "boolean"
+        description: "is_automated means whether this image is automated."
+      name:
+        type: "string"
+        description: "name represents the name of this image"
+      star_count:
+        type: "integer"
+        description: "star_count refers to the star count of this image."
