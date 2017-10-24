@@ -27,10 +27,7 @@ func main() {
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// initialize log.
-			if cfg.Debug {
-				logrus.SetLevel(logrus.DebugLevel)
-				logrus.Infof("start daemon at debug level")
-			}
+			initLog()
 
 			// initialize home dir.
 			dir := cfg.HomeDir
@@ -133,4 +130,18 @@ func setupFlags(cmd *cobra.Command) {
 		"containerd-config",
 		"/etc/containerd/config.toml",
 		"Specify the path of Containerd binary")
+}
+
+func initLog() {
+	if cfg.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.Infof("start daemon at debug level")
+	}
+
+	formatter := &logrus.TextFormatter{
+		ForceColors:     true,
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05.000000000",
+	}
+	logrus.SetFormatter(formatter)
 }
