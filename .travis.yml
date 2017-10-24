@@ -1,0 +1,17 @@
+dist: trusty
+sudo: required
+
+language: go
+go:
+  - 1.8.3
+    
+go_import_path: github.com/alibaba/pouch
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y -qq autoconf automake
+
+script:
+  - cd ${TRAVIS_BUILD_DIR}
+  - docker build -t pouch:test . 
+  - docker run -ti pouch:test bash -c "cd /go/src/github.com/alibaba/pouch && make check && make unit-test"
