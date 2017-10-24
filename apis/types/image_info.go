@@ -1,6 +1,6 @@
 package types
 
-// image info
+// Image info
 type Image struct {
 	Name      string
 	Tag       string
