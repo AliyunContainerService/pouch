@@ -1,0 +1,4 @@
+# Some user would build a binary for pouch
+pouchd
+pouch
+*.patch
