@@ -2,12 +2,14 @@ package main
 
 func main() {
 	cli := NewCli().SetFlags()
+	base := &baseCommand{cmd: cli.rootCmd, cli: cli}
 
 	// Add all subcommands.
-	cli.AddCommand(&PullCommand{})
-	cli.AddCommand(&CreateCommand{})
-	cli.AddCommand(&StartCommand{})
-	cli.AddCommand(&VersionCommand{})
-	cli.AddCommand(&ImageCommand{})
+	cli.AddCommand(base, &PullCommand{})
+	cli.AddCommand(base, &CreateCommand{})
+	cli.AddCommand(base, &StartCommand{})
+	cli.AddCommand(base, &VersionCommand{})
+	cli.AddCommand(base, &ImageCommand{})
+	cli.AddCommand(base, &VolumeCommand{})
 	cli.Run()
 }

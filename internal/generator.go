@@ -72,3 +72,8 @@ func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
 
 	return imgMgr, imgErr
 }
+
+// GenVolumeMgr generates a VolumeMgr instance.
+func GenVolumeMgr(cfg config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
+	return mgr.NewVolumeManager(d.MetaStore(), cfg.Config)
+}

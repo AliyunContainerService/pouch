@@ -25,6 +25,10 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
 	r.Path("/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
 
+	// volume
+	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
+	r.Path("/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
+
 	if s.Config.Debug {
 		profilerSetup(r)
 	}

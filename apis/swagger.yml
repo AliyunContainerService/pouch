@@ -778,3 +778,56 @@ definitions:
       star_count:
         type: "integer"
         description: "star_count refers to the star count of this image."
+  VolumeApi:
+    type: "object"
+    description: "Volume represents the configuration of a volume for the container."
+    properties:
+      Name:
+        description: "Name is the name of the volume."
+        type: "string"
+      Driver:
+        description: "Driver is the Driver name used to create the volume."
+        type: "string"
+      Mountpoint:
+        description: "Mountpoint is the location on disk of the volume."
+        type: "string"
+      Status:
+        description: "Status provides low-level status information about the volume."
+        type: "object"
+        additionalProperties:
+          type: "object"
+          enum:
+            - {}
+          default: {}
+      Labels:
+        description: "Labels is metadata specific to the volume."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      Scope:
+        description: |
+          Scope describes the level at which the volume exists
+          (e.g. `global` for cluster-wide or `local` for machine level)
+        type: "string"
+  VolumeCreateRequest:
+    type: "object"
+    description: |
+      VolumeCreateRequest contains the response for the remote API:
+      POST "/volumes/create
+    properties:
+      Name:
+        description: "Name is the name of the volume."
+        type: "string"
+      Driver:
+        description: "Driver is the Driver name used to create the volume."
+        type: "string"
+      DriverOpts:
+        description: "DriverOpts holds the driver specific options to use for when creating the volume."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      Labels:
+        description: "Labels is metadata specific to the volume."
+        type: "object"
+        additionalProperties:
+          type: "string"

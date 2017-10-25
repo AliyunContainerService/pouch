@@ -10,7 +10,7 @@ PACKAGES=$(shell GOPATH=`cd ../../../..; pwd` go list ./... | grep -v /vendor/ |
 
 build: server client
 
-server:
+server: modules
 	GOOS=linux $(GOBUILD) -o $(BINARY_NAME)
 
 client:
@@ -20,6 +20,7 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 	rm -f $(CLI_BINARY_NAME)
+	./module --clean
 
 check: fmt lint vet
 
@@ -43,4 +44,8 @@ vet: # run go vet
 unit-test: ## run go test
 	@echo $@
 	@go test $(go list ./... | grep -v /vendor/)
-	
+
+modules:
+	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
+	@./module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
+	@./module --add-volume=github.com/alibaba/pouch/volume/modules/local

@@ -1,0 +1,77 @@
+#!/bin/sh
+
+
+
+function volume_module() {
+    # generate 'volume_build.go' file
+    if [ ! -f $volume_build ]; then
+    cat << END > $volume_build
+// The file is automatically generated, DON'T EDIT.
+package main
+
+// import default package.
+import _ "github.com/alibaba/pouch/volume/store/boltdb"
+
+END
+    fi
+
+    grep -q $1 $volume_build
+    if [ $? -ne "0" ]
+    then
+        echo "import _ \"$1\"" >> $volume_build
+    fi
+}
+
+help=
+clean=
+gcflags=
+volume_build=volume_build.go
+
+opt=
+for option
+do
+    opt="$opt `echo $option | sed -e \"s/\(--[^=]*=\)\(.* .*\)/\1'\2'/\"`"
+
+    case "$option" in
+        -*=*) value=`echo "$option" | sed -e 's/[-_a-zA-Z0-9]*=//'` ;;
+           *) value="" ;;
+    esac
+
+    case "$option" in
+        --help)                     help=yes                                    ;;
+        -h)                         help=yes                                    ;;
+
+        --clean)                    clean=yes                                   ;;
+
+        --add-volume=*)
+            volume_module $value
+        ;;
+
+        *)
+            echo "$0: error: invalid option \"$option\""
+            exit 1
+        ;;
+    esac
+done
+
+if [ "$clean" = "yes" ]; then
+    rm -f $volume_build
+    exit 0
+fi
+
+if [ "$help" = "yes" ]; then
+    echo "usage:"
+    echo "     module [options]"
+    echo ""
+    echo "options:"
+    echo "     --help, -h          Print help infomation"
+    echo "     --add-volume=       Add a volume driver module to compile"
+    echo "     --clean             Remove temporary codes, the 'build.go'"
+    echo ""
+    echo "     ./module             To comiple directly on current codes, include added modules"
+    echo ""
+    echo "     ./module --add-volume=github.com/alibaba/pouch/volume/examples/demo"
+    echo "     A example show how to add a driver module, 'github.com/alibaba/pouch/volume/examples/demo' is a Go's package"
+    echo "     can be found in \$GOPATH"
+    exit 0
+fi

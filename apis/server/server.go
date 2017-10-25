@@ -20,6 +20,7 @@ type Server struct {
 	ContainerMgr mgr.ContainerMgr
 	SystemMgr    mgr.SystemMgr
 	ImageMgr     mgr.ImageMgr
+	VolumeMgr    mgr.VolumeMgr
 	listeners    []net.Listener
 }
 
