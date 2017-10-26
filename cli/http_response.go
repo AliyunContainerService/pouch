@@ -59,6 +59,9 @@ func (r *Response) DecodeBody(obj interface{}, dec ...func(interface{}, io.Reade
 	}
 
 	if err := deserialize(obj, r.Body); err != nil {
+		if err == io.EOF {
+			return io.EOF
+		}
 		return errors.Wrap(err, "failed to decode body")
 	}
 	return nil

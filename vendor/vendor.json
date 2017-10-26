@@ -211,6 +211,12 @@
 			"revisionTime": "2017-09-25T17:26:31Z"
 		},
 		{
+			"checksumSHA1": "Jx8feC3fFrXM3grrATzNTXHyiCI=",
+			"path": "github.com/containerd/containerd/progress",
+			"revision": "20c621178a5f45938e71afad24df281002aac329",
+			"revisionTime": "2017-09-22T20:44:55Z"
+		},
+		{
 			"checksumSHA1": "1IXc6EnV9ggRClzM0b1UGJpBaF8=",
 			"path": "github.com/containerd/containerd/protobuf/plugin",
 			"revision": "bd1f89b73fd653018ce882fcd1b977032d232d3b",
@@ -311,6 +317,13 @@
 			"path": "github.com/docker/go-events",
 			"revision": "9461782956ad83b30282bf90e31fa6a70c255ba9",
 			"revisionTime": "2017-07-21T19:00:31Z"
+		},
+		{
+			"checksumSHA1": "dIXKrmJAsyhUTBeQlH4vLB6CqR8=",
+			"origin": "github.com/containerd/containerd/vendor/github.com/docker/go-units",
+			"path": "github.com/docker/go-units",
+			"revision": "20c621178a5f45938e71afad24df281002aac329",
+			"revisionTime": "2017-09-22T20:44:55Z"
 		},
 		{
 			"checksumSHA1": "40Ns85VYa4smQPcewZ7SOdfLnKU=",

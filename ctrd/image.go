@@ -3,10 +3,17 @@ package ctrd
 import (
 	"context"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/jsonstream"
+
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/remotes"
+	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -46,24 +53,47 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 }
 
 // PullImage downloads an image from the remote repository.
-func (c *Client) PullImage(ctx context.Context, ref string, handle func(context.Context, ocispec.Descriptor) ([]ocispec.Descriptor, error)) error {
+func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.JSONStream) error {
+	ongoing := newJobs(ref)
+
 	options := []containerd.RemoteOpts{
 		containerd.WithPullUnpack,
+		containerd.WithSchema1Conversion,
 	}
-	if handle != nil {
-		handleWrap := func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
-			if desc.MediaType != images.MediaTypeDockerSchema1Manifest {
-				return handle(ctx, desc)
-			}
-			return nil, nil
+	handle := func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		if desc.MediaType != images.MediaTypeDockerSchema1Manifest {
+			ongoing.add(desc)
 		}
-		options = append(options, containerd.WithImageHandler(images.HandlerFunc(handleWrap)))
+		return nil, nil
 	}
+	options = append(options, containerd.WithImageHandler(images.HandlerFunc(handle)))
 
+	// fetch progress status, then send to client via out channel.
+	pctx, cancelProgress := context.WithCancel(ctx)
+	wait := make(chan struct{})
+
+	go func() {
+		if err := c.fetchProgress(pctx, ongoing, stream); err != nil {
+			logrus.Errorf("failed to get pull's progress: %v", err)
+		}
+		stream.Close()
+		close(wait)
+
+		logrus.Infof("fetch progress exited, ref: %s.", ref)
+	}()
+
+	// start to pull image.
 	img, err := c.pullImage(ctx, ref, options)
+
+	// cancel fetch progress befor handle error.
+	cancelProgress()
+
 	if err != nil {
 		return err
 	}
+
+	// wait fetch progress to finish.
+	<-wait
 
 	logrus.Infof("success to pull image: %s", img.Name())
 	return nil
@@ -78,6 +108,168 @@ func (c *Client) pullImage(ctx context.Context, ref string, options []containerd
 	return img, nil
 }
 
+// ProgressInfo represents the status of downloading image.
+type ProgressInfo struct {
+	Ref       string
+	Status    string
+	Offset    int64
+	Total     int64
+	StartedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (c *Client) fetchProgress(ctx context.Context, ongoing *jobs, stream *jsonstream.JSONStream) error {
+	var (
+		ticker     = time.NewTicker(100 * time.Millisecond)
+		cs         = c.client.ContentStore()
+		start      = time.Now()
+		progresses = map[string]ProgressInfo{}
+		done       bool
+	)
+	defer ticker.Stop()
+
+outer:
+	for {
+		select {
+		case <-ticker.C:
+			resolved := "resolved"
+			if !ongoing.isResolved() {
+				resolved = "resolving"
+			}
+			progresses[ongoing.name] = ProgressInfo{
+				Ref:    ongoing.name,
+				Status: resolved,
+			}
+			keys := []string{ongoing.name}
+
+			activeSeen := map[string]struct{}{}
+			if !done {
+				active, err := cs.ListStatuses(context.TODO(), "")
+				if err != nil {
+					logrus.Errorf("failed to list statuses: %v", err)
+					continue
+				}
+				// update status of active entries!
+				for _, active := range active {
+					progresses[active.Ref] = ProgressInfo{
+						Ref:       active.Ref,
+						Status:    "downloading",
+						Offset:    active.Offset,
+						Total:     active.Total,
+						StartedAt: active.StartedAt,
+						UpdatedAt: active.UpdatedAt,
+					}
+					activeSeen[active.Ref] = struct{}{}
+				}
+			}
+
+			// now, update the items in jobs that are not in active
+			for _, j := range ongoing.jobs() {
+				key := remotes.MakeRefKey(ctx, j)
+				keys = append(keys, key)
+				if _, ok := activeSeen[key]; ok {
+					continue
+				}
+
+				status, ok := progresses[key]
+				if !done && (!ok || status.Status == "downloading") {
+					info, err := cs.Info(context.TODO(), j.Digest)
+					if err != nil {
+						if !errdefs.IsNotFound(err) {
+							logrus.Errorf("failed to get content info: %v", err)
+							continue outer
+						} else {
+							progresses[key] = ProgressInfo{
+								Ref:    key,
+								Status: "waiting",
+							}
+						}
+					} else if info.CreatedAt.After(start) {
+						progresses[key] = ProgressInfo{
+							Ref:       key,
+							Status:    "done",
+							Offset:    info.Size,
+							Total:     info.Size,
+							UpdatedAt: info.CreatedAt,
+						}
+					} else {
+						progresses[key] = ProgressInfo{
+							Ref:    key,
+							Status: "exists",
+						}
+					}
+				} else if done {
+					if ok {
+						if status.Status != "done" && status.Status != "exists" {
+							status.Status = "done"
+							progresses[key] = status
+						}
+					} else {
+						progresses[key] = ProgressInfo{
+							Ref:    key,
+							Status: "done",
+						}
+					}
+				}
+			}
+
+			var ordered []ProgressInfo
+			for _, key := range keys {
+				ordered = append(ordered, progresses[key])
+			}
+
+			stream.WriteObject(ordered)
+
+			if done {
+				return nil
+			}
+		case <-ctx.Done():
+			done = true // allow ui to update once more
+		}
+	}
+}
+
 func formatSize(size int64) string {
 	return strconv.FormatInt(size, 10)
+}
+
+type jobs struct {
+	name     string
+	added    map[digest.Digest]struct{}
+	descs    []ocispec.Descriptor
+	mu       sync.Mutex
+	resolved bool
+}
+
+func newJobs(name string) *jobs {
+	return &jobs{
+		name:  name,
+		added: map[digest.Digest]struct{}{},
+	}
+}
+
+func (j *jobs) add(desc ocispec.Descriptor) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	j.resolved = true
+
+	if _, ok := j.added[desc.Digest]; ok {
+		return
+	}
+	j.descs = append(j.descs, desc)
+	j.added[desc.Digest] = struct{}{}
+}
+
+func (j *jobs) jobs() []ocispec.Descriptor {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	var descs []ocispec.Descriptor
+	return append(descs, j.descs...)
+}
+
+func (j *jobs) isResolved() bool {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.resolved
 }
