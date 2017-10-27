@@ -47,14 +47,19 @@ func profilerSetup(mainRouter *mux.Router) {
 type handler func(context.Context, http.ResponseWriter, *http.Request) error
 
 func (s *Server) filter(handler handler) http.HandlerFunc {
-	ctx := context.Background()
+	pctx := context.Background()
+
 	return func(resp http.ResponseWriter, req *http.Request) {
+		ctx, cancel := context.WithCancel(pctx)
+		defer cancel()
+
 		// TODO: add TLS verify
+
 		if req.Method != http.MethodGet {
 			logrus.Infof("Calling %s %s", req.Method, req.URL.RequestURI())
 		}
-		err := handler(ctx, resp, req)
-		if err != nil {
+
+		if err := handler(ctx, resp, req); err != nil {
 			logrus.Errorf("invoke %s error %v", req.URL.RequestURI(), err)
 			resp.Write([]byte(err.Error()))
 		}

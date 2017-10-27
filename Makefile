@@ -38,7 +38,7 @@ lint: ## run go lint
 
 vet: # run go vet
 	@echo $@
-	@test -z "$$(go vet ${PACKAGES} 2>&1 | tee /dev/stderr)"
+	@test -z "$$(go vet ${PACKAGES} 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v '(exit status 1)' | tee /dev/stderr)"
 
 unit-test: ## run go test
 	@echo $@

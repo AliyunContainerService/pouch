@@ -2,19 +2,23 @@ package mgr
 
 import (
 	"context"
+	"io"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/registry"
 )
 
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
 	// PullImage pulls images from specified registry.
-	PullImage(ctx context.Context, image, tag string) error
+	PullImage(ctx context.Context, image, tag string, out io.Writer) error
+
 	// ListImages lists images stored by containerd.
 	ListImages(ctx context.Context, filters string) ([]types.Image, error)
+
 	// Search Images from specified registry.
 	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
 }
@@ -29,6 +33,7 @@ type ImageManager struct {
 	// daemon will automatically pull images from DefaultRegistry.
 	// TODO: make DefaultRegistry can be reloaded.
 	DefaultRegistry string
+
 	// client is a pointer to the containerd client.
 	// It is used to interact with containerd.
 	client   *ctrd.Client
@@ -44,8 +49,27 @@ func NewImageManager(cfg *config.Config, client *ctrd.Client) (*ImageManager, er
 }
 
 // PullImage pulls images from specified registry.
-func (mgr *ImageManager) PullImage(ctx context.Context, image, tag string) error {
-	return mgr.client.PullImage(ctx, image+":"+tag, nil)
+func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, out io.Writer) error {
+	ctx, cancel := context.WithCancel(pctx)
+
+	stream := jsonstream.New(out)
+	wait := make(chan struct{})
+
+	go func() {
+		// wait stream to finish.
+		stream.Wait()
+		cancel()
+		close(wait)
+	}()
+
+	if err := mgr.client.PullImage(ctx, image+":"+tag, stream); err != nil {
+		return err
+	}
+
+	// wait goroutine to exit.
+	<-wait
+
+	return nil
 }
 
 // ListImages lists images stored by containerd.
