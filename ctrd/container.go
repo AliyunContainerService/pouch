@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -20,6 +21,35 @@ type containerPack struct {
 	sch       <-chan containerd.ExitStatus
 	container containerd.Container
 	task      containerd.Task
+}
+
+// ContainerPID returns the container's init process id.
+func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return -1, err
+	}
+	return int(pack.task.Pid()), nil
+}
+
+// ContainerPIDs returns the all processes's ids inside the container.
+func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	pids, err := pack.task.Pids(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get task's pids")
+	}
+
+	// convert []uint32 to []int.
+	list := make([]int, 0, len(pids))
+	for _, pid := range pids {
+		list = append(list, int(pid))
+	}
+	return list, nil
 }
 
 // ProbeContainer probe the container's status, if timeout <= 0, will block to receive message.
