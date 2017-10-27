@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/exec"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -48,6 +49,7 @@ func main() {
 					Args: []string{
 						"-c", cfg.ContainerdConfig,
 						"-a", cfg.ContainerdAddr,
+						"-l", utils.If(cfg.Debug, "debug", "info").(string),
 					},
 				},
 			}
