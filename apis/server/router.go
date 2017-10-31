@@ -19,6 +19,7 @@ func initRoute(s *Server) http.Handler {
 	// container
 	r.Path("/containers/create").Methods(http.MethodPost).Handler(s.filter(s.createContainer))
 	r.Path("/containers/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainer))
+	r.Path("/containers/{name:.*}/stop").Methods(http.MethodPost).Handler(s.filter(s.stopContainer))
 
 	// image
 	r.Path("/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
