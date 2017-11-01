@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -58,14 +60,29 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 		ctx, cancel := context.WithCancel(pctx)
 		defer cancel()
 
-		// TODO: add TLS verify
+		t := time.Now()
+		clientInfo := req.RemoteAddr
+		defer func() {
+			d := time.Since(t) / (time.Millisecond)
+			// if elapse time of handler >= 500ms, log request
+			if d >= 500 {
+				logrus.Infof("End of Calling %s %s, costs %d ms. client %s", req.Method, req.URL.Path, d, clientInfo)
+			}
+		}()
 
+		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
+			issuer := req.TLS.PeerCertificates[0].Issuer.CommonName
+			clientName := req.TLS.PeerCertificates[0].Subject.CommonName
+			clientInfo = fmt.Sprintf("%s %s %s", clientInfo, issuer, clientName)
+		}
 		if req.Method != http.MethodGet {
-			logrus.Infof("Calling %s %s", req.Method, req.URL.RequestURI())
+			logrus.Infof("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
+		} else {
+			logrus.Debugf("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
 		}
 
 		if err := handler(ctx, resp, req); err != nil {
-			logrus.Errorf("invoke %s error %v", req.URL.RequestURI(), err)
+			logrus.Errorf("invoke %s error %v. client %s", req.URL.RequestURI(), err, clientInfo)
 			resp.Write([]byte(err.Error()))
 		}
 	}

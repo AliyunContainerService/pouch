@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,10 +9,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
+
+	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // Server is a http server which serves restful api to client.
@@ -37,8 +39,19 @@ func (s *Server) Start() (err error) {
 		}
 	}()
 
+	var tlsConfig *tls.Config
+	if s.Config.TLS.Key != "" && s.Config.TLS.Cert != "" {
+		tlsConfig, err = utils.GenTLSConfig(s.Config.TLS.Key, s.Config.TLS.Cert, s.Config.TLS.CA)
+		if err != nil {
+			return err
+		}
+		if s.Config.TLS.VerifyRemote {
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		}
+	}
+
 	for _, one := range s.Config.Listen {
-		l, err := getListener(one)
+		l, err := getListener(one, tlsConfig)
 		if err != nil {
 			return err
 		}
@@ -62,15 +75,22 @@ func (s *Server) Stop() error {
 	return nil
 }
 
-func getListener(addr string) (net.Listener, error) {
+func getListener(addr string, tlsConfig *tls.Config) (net.Listener, error) {
 	addrParts := strings.SplitN(addr, "://", 2)
 	if len(addrParts) != 2 {
-		return nil, fmt.Errorf("Invalid listen address: %s", addr)
+		return nil, fmt.Errorf("invalid listening address: %s", addr)
 	}
 
 	switch addrParts[0] {
 	case "tcp":
-		return net.Listen("tcp", addrParts[1])
+		l, err := net.Listen("tcp", addrParts[1])
+		if err != nil {
+			return l, err
+		}
+		if tlsConfig != nil {
+			l = tls.NewListener(l, tlsConfig)
+		}
+		return l, err
 	case "unix":
 		if err := syscall.Unlink(addrParts[1]); err != nil && !os.IsNotExist(err) {
 			return nil, err
