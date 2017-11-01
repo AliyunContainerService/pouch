@@ -1,13 +1,14 @@
+// +build linux
+
 package tmpfs
 
 import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
-
-	"strconv"
 	"time"
 
 	"github.com/alibaba/pouch/pkg/utils"
