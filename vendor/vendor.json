@@ -337,6 +337,13 @@
 			"revisionTime": "2017-07-31T11:19:25Z"
 		},
 		{
+			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
 			"checksumSHA1": "zyjtIlXD/8ko6gOPfC61dfuEnjA=",
 			"path": "github.com/docker/go-events",
 			"revision": "9461782956ad83b30282bf90e31fa6a70c255ba9",
@@ -596,6 +603,13 @@
 			"revisionTime": "2017-09-10T13:46:14Z"
 		},
 		{
+			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
 			"checksumSHA1": "JBNqiOz8N5OSyLjklLB7YdBE1nY=",
 			"path": "github.com/sirupsen/logrus",
 			"revision": "89742aefa4b206dcf400792f3bd35b542998eb3b",
@@ -613,6 +627,12 @@
 			"path": "github.com/spf13/pflag",
 			"revision": "7aff26db30c1be810f9de5038ec5ef96ac41fd7c",
 			"revisionTime": "2017-08-24T17:57:12Z"
+		},
+		{
+			"checksumSHA1": "mGbTYZ8dHVTiPTTJu3ktp+84pPI=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
 			"checksumSHA1": "AHk1Y+L/rkf1jKAmqttDefEWeJw=",
