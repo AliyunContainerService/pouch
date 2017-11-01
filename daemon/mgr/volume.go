@@ -6,9 +6,13 @@ import (
 	"path"
 	"strings"
 
+	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/volume"
 	"github.com/alibaba/pouch/volume/types"
+
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // VolumeMgr defines interface to manage container volume.
@@ -49,6 +53,9 @@ func NewVolumeManager(ms *meta.Store, cfg types.Config) (*VolumeManager, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	// registe setup volume spec functions.
+	spec.RegisteSetupFunc(setupMounts)
 
 	return &VolumeManager{
 		core:  core,
@@ -128,4 +135,25 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 		Name: name,
 	}
 	return vm.core.DetachVolume(id, options)
+}
+
+func setupMounts(ctx context.Context, c *apitypes.ContainerInfo, s *specs.Spec) error {
+	mounts := s.Mounts
+	if c.Config.HostConfig == nil {
+		return nil
+	}
+	for _, v := range c.Config.HostConfig.Binds {
+		sd := strings.SplitN(v, ":", 2)
+		if len(sd) != 2 {
+			continue
+		}
+		mounts = append(mounts, specs.Mount{
+			Destination: sd[0],
+			Source:      sd[1],
+			Type:        "bind",
+			Options:     []string{"rbind"},
+		})
+	}
+	s.Mounts = mounts
+	return nil
 }
