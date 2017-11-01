@@ -1,12 +1,13 @@
+// +build linux
+
 package ceph
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"time"
-
-	"encoding/json"
 
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/volume/driver"
