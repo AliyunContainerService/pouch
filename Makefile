@@ -8,6 +8,8 @@ CLI_BINARY_NAME=pouch
 GOPATH=$(shell cd ../../../..; pwd)
 PACKAGES=$(shell GOPATH=`cd ../../../..; pwd` go list ./... | grep -v /vendor/ | sed 's/^_//')
 
+.PHONY: check build client server clean fmt lint vet unit-test modules
+
 build: server client
 
 server: modules
