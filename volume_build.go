@@ -1,4 +1,7 @@
+// +build linux
+
 // The file is automatically generated, DON'T EDIT.
+
 package main
 
 // import default package.
