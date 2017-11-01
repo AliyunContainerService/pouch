@@ -36,7 +36,7 @@ func (r *Request) Send() *Response {
 		response.Err = ErrHTTP5xx
 		return response
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		response.Err = ErrHTTPNotOK
 		return response
 	}

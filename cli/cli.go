@@ -71,7 +71,7 @@ func (c *Cli) Run() {
 }
 
 // AddCommand add a subcommand.
-func (c *Cli) AddCommand(command SubCommand) {
+func (c *Cli) AddCommand(parent, command Command) {
 	command.Init(c)
 
 	cmd := command.Cmd()
@@ -94,7 +94,7 @@ func (c *Cli) AddCommand(command SubCommand) {
 		command.Run(args)
 	}
 
-	c.rootCmd.AddCommand(cmd)
+	parent.Cmd().AddCommand(cmd)
 }
 
 // NewTableDisplay create a Display instance, use to format output with table.

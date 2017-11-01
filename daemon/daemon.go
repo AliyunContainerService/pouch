@@ -25,6 +25,7 @@ type Daemon struct {
 	containerMgr   mgr.ContainerMgr
 	systemMgr      mgr.SystemMgr
 	imageMgr       mgr.ImageMgr
+	volumeMgr      mgr.VolumeMgr
 	server         server.Server
 }
 
@@ -80,6 +81,15 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
+	volumeMgr, err := internal.GenVolumeMgr(d.config, d)
+	if err != nil {
+		return err
+	}
+
+	d.systemMgr = systemMgr
+	d.imageMgr = imageMgr
+	d.volumeMgr = volumeMgr
+
 	containerMgr, err := internal.GenContainerMgr(ctx, d)
 	if err != nil {
 		return err
@@ -94,6 +104,7 @@ func (d *Daemon) Run() error {
 		ContainerMgr: containerMgr,
 		SystemMgr:    systemMgr,
 		ImageMgr:     imageMgr,
+		VolumeMgr:    volumeMgr,
 	}
 
 	return d.server.Start()

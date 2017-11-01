@@ -88,6 +88,7 @@ func main() {
 	}
 
 	setupFlags(cmdServe)
+
 	cmdServe.Execute()
 }
 
