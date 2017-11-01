@@ -1,8 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-
-
-function volume_module() {
+volume_module() {
     # generate 'volume_build.go' file
     if [ ! -f $volume_build ]; then
     cat << END > $volume_build
@@ -68,7 +66,7 @@ if [ "$help" = "yes" ]; then
     echo "     --add-volume=       Add a volume driver module to compile"
     echo "     --clean             Remove temporary codes, the 'build.go'"
     echo ""
-    echo "     ./module             To comiple directly on current codes, include added modules"
+    echo "     ./module            To comiple directly on current codes, include added modules"
     echo ""
     echo "     ./module --add-volume=github.com/alibaba/pouch/volume/examples/demo"
     echo "     A example show how to add a driver module, 'github.com/alibaba/pouch/volume/examples/demo' is a Go's package"
