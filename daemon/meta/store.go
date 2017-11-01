@@ -232,3 +232,8 @@ func (s *Store) KeysWithPrefix(prefix string) ([]string, error) {
 	}
 	return keys, nil
 }
+
+// Path returns the path with specified key.
+func (s *Store) Path(key string) string {
+	return s.backend.Path(key)
+}

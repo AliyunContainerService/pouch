@@ -40,6 +40,7 @@ type watch struct {
 	sync.Mutex
 	client     *containerd.Client
 	containers map[string]containerPack
+	hooks      []func(string, *Message) error
 }
 
 func (w *watch) add(pack containerPack) {
@@ -62,11 +63,20 @@ func (w *watch) add(pack containerPack) {
 			logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
 		}
 
-		pack.ch <- &Message{
+		msg := &Message{
 			err:      status.Error(),
 			exitCode: status.ExitCode(),
 			exitTime: status.ExitTime(),
 		}
+
+		for _, hook := range w.hooks {
+			if err := hook(pack.id, msg); err != nil {
+				logrus.Errorf("failed to execute the exit hooks: %v", err)
+				break
+			}
+		}
+
+		pack.ch <- msg
 
 	}(pack)
 

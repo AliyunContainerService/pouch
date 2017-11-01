@@ -43,6 +43,10 @@ func (s *localStore) New(cfg Config) error {
 	return walkDir(s.base, handle)
 }
 
+func (s *localStore) Path(key string) string {
+	return path.Join(s.base, key)
+}
+
 func (s *localStore) Put(fileName, key string, value []byte) error {
 	dir := path.Join(s.base, key)
 

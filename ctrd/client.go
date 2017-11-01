@@ -56,6 +56,11 @@ func NewClient(cfg Config) (*Client, error) {
 	}, nil
 }
 
+// SetExitHooks specified the handlers of container exit.
+func (c *Client) SetExitHooks(hooks []func(string, *Message) error) {
+	c.watch.hooks = hooks
+}
+
 // Close closes the client.
 func (c *Client) Close() error {
 	return c.client.Close()

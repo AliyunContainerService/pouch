@@ -32,6 +32,11 @@ func (m *SafeMap) Put(k string, v interface{}) {
 	m.inner[k] = v
 }
 
+// Remove removes the key-value pair.
+func (m *SafeMap) Remove(k string) {
+	delete(m.inner, k)
+}
+
 // Value represents the value's info of a key-value pair.
 type Value struct {
 	data interface{}

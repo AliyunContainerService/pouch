@@ -21,6 +21,9 @@ type Backend interface {
 
 	// Keys return all keys.
 	Keys() ([]string, error)
+
+	// Path returns the path with the specified key.
+	Path(key string) string
 }
 
 // Register registers a backend to be daemon's store.
