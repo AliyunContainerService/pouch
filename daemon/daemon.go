@@ -86,10 +86,6 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
-	d.systemMgr = systemMgr
-	d.imageMgr = imageMgr
-	d.volumeMgr = volumeMgr
-
 	containerMgr, err := internal.GenContainerMgr(ctx, d)
 	if err != nil {
 		return err
@@ -98,6 +94,7 @@ func (d *Daemon) Run() error {
 	d.systemMgr = systemMgr
 	d.imageMgr = imageMgr
 	d.containerMgr = containerMgr
+	d.volumeMgr = volumeMgr
 
 	d.server = server.Server{
 		Config:       d.config,

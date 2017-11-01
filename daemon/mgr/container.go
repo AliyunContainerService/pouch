@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/randomid"
 
@@ -31,6 +32,20 @@ type ContainerManager struct {
 	Client   *ctrd.Client
 	NameToID *collect.SafeMap
 	ImageMgr ImageMgr
+}
+
+// NewContainerManager creates a brand new container manager.
+func NewContainerManager(ctx context.Context, store *meta.Store) (*ContainerManager, error) {
+	cm := &ContainerManager{
+		Store:    store,
+		NameToID: collect.NewSafeMap(),
+	}
+
+	spec.RegisteSetupFunc(setupProcess)
+	spec.RegisteSetupFunc(setupNs)
+	spec.RegisteSetupFunc(setupCap)
+
+	return cm, cm.Restore(ctx)
 }
 
 // Restore containers from meta store to memory.
@@ -122,18 +137,19 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 	c.DetachKeys = startCfg.DetachKeys
 
 	// new a default spec.
-	spec, err := ctrd.NewDefaultSpec(ctx)
+	s, err := ctrd.NewDefaultSpec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID)
 	}
 
-	fs := []setupFunc{setupProcess, setupNetwork, setupCap, setupNs, setupMounts}
-	for _, f := range fs {
-		if err = f.run(ctx, c, spec); err != nil {
+	setupSpecFuncs := spec.GetSetupFunc()
+	for _, f := range setupSpecFuncs {
+		if err = f(ctx, c, s); err != nil {
 			return err
 		}
 	}
-	err = cm.Client.CreateContainer(ctx, c, spec)
+
+	err = cm.Client.CreateContainer(ctx, c, s)
 	if err == nil {
 		c.Status = types.RUNNING
 		c.StartedAt = time.Now()
@@ -154,6 +170,7 @@ func (sf setupFunc) run(ctx context.Context, c *types.ContainerInfo, s *specs.Sp
 	return sf(ctx, c, s)
 }
 
+// TODO: move to network module.
 func setupNetwork(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	s.Hostname = c.Config.Hostname
 	//TODO setup network parameters
@@ -167,27 +184,6 @@ func setupCap(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error 
 
 func setupNs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	//TODO setup ns
-	return nil
-}
-
-func setupMounts(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
-	mounts := s.Mounts
-	if c.Config.HostConfig == nil {
-		return nil
-	}
-	for _, v := range c.Config.HostConfig.Binds {
-		sd := strings.SplitN(v, ":", 2)
-		if len(sd) != 2 {
-			continue
-		}
-		mounts = append(mounts, specs.Mount{
-			Destination: sd[0],
-			Source:      sd[1],
-			Type:        "bind",
-			Options:     []string{"rbind"},
-		})
-	}
-	s.Mounts = mounts
 	return nil
 }
 

@@ -8,72 +8,71 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
-	"github.com/alibaba/pouch/pkg/collect"
-)
-
-var (
-	contMgr  *mgr.ContainerManager
-	contOnce sync.Once
-	contErr  error
-	imgMgr   *mgr.ImageManager
-	imgOnce  sync.Once
-	imgErr   error
-	sysMgr   *mgr.SystemManager
-	sysOnce  sync.Once
-	sysErr   error
 )
 
 // DaemonProvider provides resources which are needed by container manager and are from daemon.
 type DaemonProvider interface {
 	Config() *config.Config
 	Containerd() *ctrd.Client
+	ImgMgr() mgr.ImageMgr
 	MetaStore() *meta.Store
 }
 
 // GenContainerMgr generates a ContainerMgr instance according to config cfg.
 func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
-	contOnce.Do(func() {
-		imgMgr, err := GenImageMgr(d.Config(), d)
-		if err != nil {
-			contErr = err
-			return
-		}
-
-		contMgr = &mgr.ContainerManager{
-			Store:    d.MetaStore(),
-			NameToID: collect.NewSafeMap(),
-			Client:   d.Containerd(),
-			ImageMgr: imgMgr,
-		}
-
-		if err := contMgr.Restore(ctx); err != nil {
-			contErr = err
-		}
+	var (
+		ctrMgr  *mgr.ContainerManager
+		ctrOnce sync.Once
+		err     error
+	)
+	ctrOnce.Do(func() {
+		ctrMgr, err = mgr.NewContainerManager(ctx, d.MetaStore())
+		ctrMgr.Client = d.Containerd()
+		ctrMgr.ImageMgr = d.ImgMgr()
 	})
 
-	return contMgr, contErr
+	return ctrMgr, err
 }
 
 // GenSystemMgr generates a SystemMgr instance according to config cfg.
 func GenSystemMgr(cfg config.Config) (mgr.SystemMgr, error) {
+	var (
+		sysMgr  *mgr.SystemManager
+		sysOnce sync.Once
+		err     error
+	)
+
 	//TODO
 	sysOnce.Do(func() {
-		sysMgr, sysErr = mgr.NewSystemManager(cfg)
+		sysMgr, err = mgr.NewSystemManager(cfg)
 	})
 
-	return sysMgr, sysErr
+	return sysMgr, err
 }
 
 // GenImageMgr generates a SystemMgr instance according to config cfg.
 func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
+	var (
+		imgMgr  *mgr.ImageManager
+		imgOnce sync.Once
+		err     error
+	)
 	imgOnce.Do(func() {
-		imgMgr, imgErr = mgr.NewImageManager(cfg, d.Containerd())
+		imgMgr, err = mgr.NewImageManager(cfg, d.Containerd())
 	})
 
-	return imgMgr, imgErr
+	return imgMgr, err
 }
 
 // GenVolumeMgr generates a VolumeMgr instance.
 func GenVolumeMgr(cfg config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
-	return mgr.NewVolumeManager(d.MetaStore(), cfg.Config)
+	var (
+		volMgr  mgr.VolumeMgr
+		volOnce sync.Once
+		err     error
+	)
+	volOnce.Do(func() {
+		volMgr, err = mgr.NewVolumeManager(d.MetaStore(), cfg.Config)
+	})
+	return volMgr, err
 }
