@@ -54,11 +54,17 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 
 // PullImage downloads an image from the remote repository.
 func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.JSONStream) error {
+	resolver, err := resolver()
+	if err != nil {
+		return err
+	}
+
 	ongoing := newJobs(ref)
 
 	options := []containerd.RemoteOpts{
 		containerd.WithPullUnpack,
 		containerd.WithSchema1Conversion,
+		containerd.WithResolver(resolver),
 	}
 	handle := func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		if desc.MediaType != images.MediaTypeDockerSchema1Manifest {
