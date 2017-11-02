@@ -230,7 +230,7 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 		}
 	}()
 
-	statusCh, err := task.Wait(ctx)
+	statusCh, err := task.Wait(context.TODO())
 	if err != nil {
 		return pack, errors.Wrap(err, "failed to wait task")
 	}

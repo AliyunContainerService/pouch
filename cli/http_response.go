@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 
 	"github.com/pkg/errors"
 )
@@ -69,5 +70,9 @@ func (r *Response) DecodeBody(obj interface{}, dec ...func(interface{}, io.Reade
 
 // Close close the 'Body' io.
 func (r *Response) Close() error {
-	return r.Body.Close()
+	if r.Body != nil {
+		io.Copy(ioutil.Discard, r.Body)
+		return r.Body.Close()
+	}
+	return nil
 }
