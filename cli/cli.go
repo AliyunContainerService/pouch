@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Option use to define the global options.
+// Option uses to define the global options.
 type Option struct {
 	host    string
 	timeout time.Duration
@@ -35,7 +35,7 @@ type Cli struct {
 	baseURL   string
 }
 
-// NewCli create a instance of 'Cli'.
+// NewCli creates an instance of 'Cli'.
 func NewCli() *Cli {
 	tr := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -56,7 +56,7 @@ func NewCli() *Cli {
 	}
 }
 
-// SetFlags set all global options.
+// SetFlags sets all global options.
 func (c *Cli) SetFlags() *Cli {
 	cmd := c.rootCmd
 	cmd.PersistentFlags().StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify listen address of pouchd")
@@ -65,7 +65,7 @@ func (c *Cli) SetFlags() *Cli {
 	return c
 }
 
-// Run execute the client program.
+// Run executes the client program.
 func (c *Cli) Run() {
 	c.rootCmd.Execute()
 }
@@ -97,13 +97,13 @@ func (c *Cli) AddCommand(parent, command Command) {
 	parent.Cmd().AddCommand(cmd)
 }
 
-// NewTableDisplay create a Display instance, use to format output with table.
+// NewTableDisplay creates a display instance, and uses to format output with table.
 func (c *Cli) NewTableDisplay() *Display {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, c.padding, ' ', 0)
 	return &Display{w}
 }
 
-// Print output the obj's fields.
+// Print outputs the obj's fields.
 func (c *Cli) Print(obj interface{}) {
 	display := c.NewTableDisplay()
 	kvs := structs.Map(obj)
@@ -141,7 +141,7 @@ func (c *Cli) Print(obj interface{}) {
 	display.Flush()
 }
 
-// NewRequest create a HTTPRequest instance.
+// NewRequest creates a HTTPRequest instance.
 func (c *Cli) NewRequest(method, path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
 	serialize := func(o interface{}) (io.Reader, error) {
 		if o == nil {
@@ -169,17 +169,17 @@ func (c *Cli) NewRequest(method, path string, obj interface{}, enc ...func(inter
 	return &Request{req: r, cli: c.httpcli}, nil
 }
 
-// NewGetRequest create a http get request.
+// NewGetRequest creates an HTTP get request.
 func (c *Cli) NewGetRequest(path string) (*Request, error) {
 	return c.NewRequest(http.MethodGet, path, nil)
 }
 
-// NewPostRequest create a http post request.
+// NewPostRequest creates an HTTP post request.
 func (c *Cli) NewPostRequest(path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
 	return c.NewRequest(http.MethodPost, path, obj, enc...)
 }
 
-// NewDeleteRequest create a http delete request.
+// NewDeleteRequest creates an HTTP delete request.
 func (c *Cli) NewDeleteRequest(path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
 	return c.NewRequest(http.MethodDelete, path, obj, enc...)
 }
