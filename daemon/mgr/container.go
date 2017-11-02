@@ -15,14 +15,19 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 //ContainerMgr as an interface defines all operations against container.
 type ContainerMgr interface {
-	// Create a container.
-	Create(context context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error)
+	// Create a new container.
+	Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error)
+
 	// Start a container.
-	Start(context context.Context, config types.ContainerStartConfig) error
+	Start(ctx context.Context, config types.ContainerStartConfig) error
+
+	// Stop a container.
+	Stop(ctx context.Context, name string, timeout time.Duration) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -33,11 +38,19 @@ type ContainerManager struct {
 	ImageMgr ImageMgr
 }
 
-// Restore containers from meta store to memory.
+// Restore containers from meta store to memory and recover those container.
 func (cm *ContainerManager) Restore(ctx context.Context) error {
 	fn := func(obj meta.Object) error {
 		if c, ok := obj.(*types.ContainerInfo); ok {
+			// map container's name to id.
 			cm.NameToID.Put(c.Name, c.ID)
+
+			// recover the running container.
+			if c.Status == types.RUNNING {
+				if err := cm.Client.RecoverContainer(ctx, c.ID); err != nil {
+					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
+				}
+			}
 		}
 		return nil
 	}
@@ -99,23 +112,11 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 	if startCfg.ID == "" {
 		return fmt.Errorf("either container name or id is required")
 	}
-	var obj meta.Object
-	idByName, exist := cm.NameToID.Get(startCfg.ID).String()
-	if exist {
-		obj, err = cm.Store.Get(idByName)
-		if err != nil {
-			return errors.Wrapf(err, "fetch container from store error %s", idByName)
-		}
-	}
 
-	if obj == nil {
-		//TODO matching by prefix
-		obj, err = cm.Store.Get(startCfg.ID)
-		if err != nil {
-			return errors.Wrapf(err, "fetch container from store error %s", startCfg.ID)
-		}
+	c, err := cm.containerInfo(startCfg.ID)
+	if err != nil {
+		return err
 	}
-	c := obj.(*types.ContainerInfo)
 	if c == nil || c.Config == nil || c.ContainerState == nil {
 		return fmt.Errorf("no container found by %s", startCfg.ID)
 	}
@@ -146,6 +147,77 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 	}
 	cm.Store.Put(c)
 	return err
+}
+
+// Stop stops a running container.
+func (cm *ContainerManager) Stop(ctx context.Context, name string, timeout time.Duration) error {
+	var (
+		ci  *types.ContainerInfo
+		err error
+	)
+
+	if ci, err = cm.containerInfo(name); err != nil {
+		return errors.Wrap(err, "failed to stop container")
+	}
+
+	if ci.Status != types.RUNNING {
+		return fmt.Errorf("container's status is not running: %d", ci.Status)
+	}
+
+	result, err := cm.Client.DestroyContainer(ctx, ci.ID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to destroy container: %s", ci.ID)
+	}
+
+	ci.Pid = -1
+	ci.ExitCodeValue = int(result.ExitCode())
+	ci.FinishedAt = result.ExitTime()
+	ci.Status = types.STOPPED
+
+	if result.HasError() {
+		ci.ErrorMsg = result.Error().Error()
+	}
+
+	// update meta
+	if err := cm.Store.Put(ci); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+	}
+
+	return nil
+}
+
+// containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's
+// name, id or prefix id.
+func (cm *ContainerManager) containerInfo(s string) (*types.ContainerInfo, error) {
+	var (
+		obj meta.Object
+		err error
+	)
+
+	// name is the container's name.
+	id, ok := cm.NameToID.Get(s).String()
+	if ok {
+		if obj, err = cm.Store.Get(id); err != nil {
+			return nil, errors.Wrapf(err, "failed to get container info: %s", s)
+		}
+	} else {
+		// name is the container's prefix of the id.
+		objs, err := cm.Store.GetWithPrefix(s)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get container info with prefix: %s", s)
+		}
+		if len(objs) != 1 {
+			return nil, fmt.Errorf("failed to get container info with prefix: %s, there are %d containers", s, len(objs))
+		}
+		obj = objs[0]
+	}
+
+	ci, ok := obj.(*types.ContainerInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to get container info, invalid meta's type")
+	}
+
+	return ci, nil
 }
 
 type setupFunc func(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error

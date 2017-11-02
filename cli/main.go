@@ -8,6 +8,7 @@ func main() {
 	cli.AddCommand(base, &PullCommand{})
 	cli.AddCommand(base, &CreateCommand{})
 	cli.AddCommand(base, &StartCommand{})
+	cli.AddCommand(base, &StopCommand{})
 	cli.AddCommand(base, &VersionCommand{})
 	cli.AddCommand(base, &ImageCommand{})
 	cli.AddCommand(base, &VolumeCommand{})

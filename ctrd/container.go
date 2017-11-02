@@ -142,7 +142,9 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	}
 
 	if err := pack.container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-		return msg, errors.Wrap(err, "failed to delete container")
+		if !errdefs.IsNotFound(err) {
+			return msg, errors.Wrap(err, "failed to delete container")
+		}
 	}
 
 	logrus.Infof("success to destroy container: %s", id)
