@@ -1,11 +1,11 @@
 package boltdb
 
 import (
+	"os"
+	"path"
 	"time"
 
-	"github.com/alibaba/pouch/volume"
 	"github.com/alibaba/pouch/volume/store"
-	"github.com/alibaba/pouch/volume/types"
 
 	boltdb "github.com/boltdb/bolt"
 	"github.com/pkg/errors"
@@ -22,11 +22,19 @@ type bolt struct {
 }
 
 // New is used to make bolt metadata store instance.
-func (b *bolt) New(conf types.Config) error {
+func (b *bolt) New(metaPath string) error {
 	opt := &boltdb.Options{
 		Timeout: time.Second * 10,
 	}
-	db, err := boltdb.Open(conf.VolumeMetaPath, 0600, opt)
+
+	dirname := path.Dir(metaPath)
+	if _, err := os.Stat(dirname); err != nil && os.IsNotExist(err) {
+		if err := os.MkdirAll(dirname, 0755); err != nil {
+			return errors.Wrap(err, "failed to create metadata path")
+		}
+	}
+
+	db, err := boltdb.Open(metaPath, 0644, opt)
 	if err != nil {
 		return err
 	}
@@ -82,7 +90,7 @@ func (b *bolt) Get(key []byte) ([]byte, error) {
 			return errors.New("boltdb: not found bucket")
 		}
 		if value = bucket.Get(key); value == nil {
-			return volume.ErrLocalMetaNotfound
+			return errors.New("boltdb: metadata not found")
 		}
 		return nil
 	})

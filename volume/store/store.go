@@ -16,16 +16,16 @@ func RegisterMetaStore(m metaStorer) {
 }
 
 type metaStorer interface {
-	New(types.Config) error
-	Put([]byte, []byte) error
-	Del([]byte) error
-	Get([]byte) ([]byte, error)
+	New(path string) error
+	Put(key []byte, value []byte) error
+	Del(key []byte) error
+	Get(key []byte) ([]byte, error)
 	List() ([][]byte, error)
 }
 
 // MetaNewStore is used to make a metadata store instance.
-func MetaNewStore(conf types.Config) error {
-	return ms.New(conf)
+func MetaNewStore(path string) error {
+	return ms.New(path)
 }
 
 // MetaPut is used to put volume metadate into store.

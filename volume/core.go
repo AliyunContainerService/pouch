@@ -15,13 +15,13 @@ import (
 
 // Core represents volume core struct.
 type Core struct {
-	types.Config
+	Config
 	BaseURL       string
 	EnableControl bool
 }
 
 // NewCore returns Core struct instance with volume config.
-func NewCore(cfg types.Config) (*Core, error) {
+func NewCore(cfg Config) (*Core, error) {
 	c := &Core{Config: cfg}
 	if cfg.ControlAddress != "" {
 		c.EnableControl = true
@@ -30,7 +30,7 @@ func NewCore(cfg types.Config) (*Core, error) {
 		c.EnableControl = false
 	}
 
-	if err := store.MetaNewStore(cfg); err != nil {
+	if err := store.MetaNewStore(cfg.VolumeMetaPath); err != nil {
 		return nil, err
 	}
 

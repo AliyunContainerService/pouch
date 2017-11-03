@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/volume"
 )
 
 // Config refers to daemon's whole configurations.
 type Config struct {
 	//Volume config
-	types.Config
+	volume.Config
 
 	// Server listening address.
 	Listen []string
