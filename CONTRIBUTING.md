@@ -11,7 +11,7 @@ It is warmly welcomed if you have interest to hack on Pouch. First, we encourage
 
 ## Reporting security issues
 
-Security issues are always treated seriously. As our usual principle, we discourage anyone to spread security issues. If you find a security issue of Pouch, please do not discuss it in public and even do not open a public issue. Instead we encourage you to send us a private email to report this.
+Security issues are always treated seriously. As our usual principle, we discourage anyone to spread security issues. If you find a security issue of Pouch, please do not discuss it in public and even do not open a public issue. Instead we encourage you to send us a private email to  [pouch-dev@list.alibaba-inc.com](mailto:pouch-dev@list.alibaba-inc.com) to report this.
 
 ## Reporting general issues
 
