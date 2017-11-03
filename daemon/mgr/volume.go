@@ -39,7 +39,7 @@ type VolumeManager struct {
 }
 
 // NewVolumeManager creates a brand new volume manager.
-func NewVolumeManager(ms *meta.Store, cfg types.Config) (*VolumeManager, error) {
+func NewVolumeManager(ms *meta.Store, cfg volume.Config) (*VolumeManager, error) {
 	// init voluem config
 	cfg.RemoveVolume = true
 	cfg.VolumeMetaPath = path.Join(path.Dir(ms.BaseDir), "volume", "volume.db")
