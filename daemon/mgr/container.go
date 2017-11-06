@@ -3,6 +3,8 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -38,7 +40,7 @@ type ContainerManager struct {
 	Client    *ctrd.Client
 	NameToID  *collect.SafeMap
 	ImageMgr  ImageMgr
-	VolumeMrg VolumeMgr
+	VolumeMgr VolumeMgr
 	IOs       *containerio.Cache
 }
 
@@ -49,7 +51,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		NameToID:  collect.NewSafeMap(),
 		Client:    cli,
 		ImageMgr:  imgMgr,
-		VolumeMrg: volMgr,
+		VolumeMgr: volMgr,
 		IOs:       containerio.NewCache(),
 	}
 
@@ -112,9 +114,14 @@ func (cm *ContainerManager) Create(ctx context.Context, name string, config *typ
 	if cm.NameToID.Get(name).Exist() {
 		return nil, fmt.Errorf("container with name %s already exist", name)
 	}
-	//TODO add more validation of parameter
-	//TODO check whether image exist
 
+	// parse volume config
+	if err := cm.parseVolumes(ctx, config); err != nil {
+		return nil, errors.Wrap(err, "failed to parse volume argument")
+	}
+
+	// TODO add more validation of parameter
+	// TODO check whether image exist
 	c := &types.ContainerInfo{
 		ContainerState: &types.ContainerState{
 			Status: types.CREATED,
@@ -322,4 +329,96 @@ func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error 
 		logrus.Errorf("failed to update meta: %v", err)
 	}
 	return nil
+}
+
+func (cm *ContainerManager) parseVolumes(ctx context.Context, c *types.ContainerConfigWrapper) error {
+	logrus.Debugf("bind volumes: %v", c.HostConfig.Binds)
+	// TODO: parse c.HostConfig.VolumesFrom
+
+	for i, b := range c.HostConfig.Binds {
+		// TODO: when caused error, how to rollback.
+		arr, err := checkBind(b)
+		if err != nil {
+			return err
+		}
+		source := ""
+		switch len(arr) {
+		case 1:
+			source = ""
+		case 2, 3:
+			source = arr[0]
+		default:
+			return errors.Errorf("unknown bind: %s", b)
+		}
+
+		if source == "" {
+			source = randomid.Generate()
+		}
+		if !path.IsAbs(source) {
+			_, err := cm.VolumeMgr.Info(ctx, source)
+			if err != nil {
+				opts := map[string]string{
+					"backend": "local",
+					"size":    "100G",
+				}
+				if err := cm.VolumeMgr.Create(ctx, source, c.HostConfig.VolumeDriver, opts, nil); err != nil {
+					logrus.Errorf("failed to create volume: %s, err: %v", source, err)
+					return errors.Wrap(err, "failed to create volume")
+				}
+			}
+
+			if _, err := cm.VolumeMgr.Attach(ctx, source, nil); err != nil {
+				logrus.Errorf("failed to attach volume: %s, err: %v", source, err)
+				return errors.Wrap(err, "failed to attach volume")
+			}
+
+			mountPath, err := cm.VolumeMgr.Path(ctx, source)
+			if err != nil {
+				logrus.Errorf("failed to get the mount path of volume: %s, err: %v", source, err)
+				return errors.Wrap(err, "failed to get volume mount path")
+			}
+
+			source = mountPath
+		}
+
+		switch len(arr) {
+		case 1:
+			b = fmt.Sprintf("%s:%s", source, arr[0])
+		case 2, 3:
+			arr[0] = source
+			b = strings.Join(arr, ":")
+		default:
+		}
+
+		c.HostConfig.Binds[i] = b
+	}
+	return nil
+}
+
+func checkBind(b string) ([]string, error) {
+	if strings.Count(b, ":") > 2 {
+		return nil, fmt.Errorf("unknown volume bind: %s", b)
+	}
+
+	arr := strings.SplitN(b, ":", 3)
+	switch len(arr) {
+	case 1:
+		if arr[0] == "" {
+			return nil, fmt.Errorf("unknown volume bind: %s", b)
+		}
+		if arr[0][:1] != "/" {
+			return nil, fmt.Errorf("invalid bind path: %s", arr[0])
+		}
+	case 2, 3:
+		if arr[1] == "" {
+			return nil, fmt.Errorf("unknown volume bind: %s", b)
+		}
+		if arr[1][:1] != "/" {
+			return nil, fmt.Errorf("invalid bind path: %s", arr[1])
+		}
+	default:
+		return nil, fmt.Errorf("unknown volume bind: %s", b)
+	}
+
+	return arr, nil
 }
