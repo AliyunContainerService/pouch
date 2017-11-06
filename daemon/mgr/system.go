@@ -20,7 +20,7 @@ type SystemManager struct {
 }
 
 // NewSystemManager creates a brand new system manager.
-func NewSystemManager(cfg config.Config) (*SystemManager, error) {
+func NewSystemManager(cfg *config.Config) (*SystemManager, error) {
 	return &SystemManager{
 		name: "system_manager",
 	}, nil

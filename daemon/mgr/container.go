@@ -32,10 +32,23 @@ type ContainerMgr interface {
 
 // ContainerManager is the default implement of interface ContainerMgr.
 type ContainerManager struct {
-	Store    *meta.Store
-	Client   *ctrd.Client
-	NameToID *collect.SafeMap
-	ImageMgr ImageMgr
+	Store     *meta.Store
+	Client    *ctrd.Client
+	NameToID  *collect.SafeMap
+	ImageMgr  ImageMgr
+	VolumeMrg VolumeMgr
+}
+
+// NewContainerManager creates a brand new container manager.
+func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr) (*ContainerManager, error) {
+	mgr := &ContainerManager{
+		Store:     store,
+		NameToID:  collect.NewSafeMap(),
+		Client:    cli,
+		ImageMgr:  imgMgr,
+		VolumeMrg: volMgr,
+	}
+	return mgr, mgr.Restore(ctx)
 }
 
 // Restore containers from meta store to memory and recover those container.
