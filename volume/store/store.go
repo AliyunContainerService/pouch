@@ -1,7 +1,10 @@
 package store
 
 import (
+	"strings"
+
 	"github.com/alibaba/pouch/pkg/serializer"
+	volerr "github.com/alibaba/pouch/volume/error"
 	"github.com/alibaba/pouch/volume/types"
 
 	"github.com/pkg/errors"
@@ -46,6 +49,9 @@ func MetaDel(name string) error {
 func MetaGet(v *types.Volume) error {
 	value, err := ms.Get([]byte(v.GetName()))
 	if err != nil {
+		if strings.Contains(err.Error(), "metadata not found") {
+			return volerr.ErrLocalMetaNotfound
+		}
 		return err
 	}
 

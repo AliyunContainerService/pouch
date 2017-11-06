@@ -191,7 +191,6 @@ func checkMountpoint(devID uint64) (string, bool, string) {
 
 	var mountPoint, fsType string
 	hasQuota := false
-	// /dev/sdf1 /apsarapangu/disk5 ext3 rw,noatime,nodiratime,errors=continue,barrier=1,data=ordered,grpquota 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
 		if len(parts) != 6 {
@@ -256,7 +255,6 @@ func getVFSVersionAndQuotaFile(devID uint64) (string, string, error) {
 
 	vfsVersion := "vfsv0"
 	quotaFilename := "aquota.group"
-	// /dev/sdf1 /apsarapangu/disk5 ext3 rw,noatime,nodiratime,errors=continue,barrier=1,data=ordered,grpquota 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
 		if len(parts) != 6 {
@@ -270,7 +268,6 @@ func getVFSVersionAndQuotaFile(devID uint64) (string, string, error) {
 				if len(items) != 2 {
 					continue
 				}
-				//支持的磁盘挂载格式：jqfmt=vfsv1,grpjquota=quota.group
 				switch items[0] {
 				case "jqfmt":
 					vfsVersion = items[1]

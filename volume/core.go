@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/pkg/client"
 	"github.com/alibaba/pouch/volume/driver"
+	volerr "github.com/alibaba/pouch/volume/error"
 	"github.com/alibaba/pouch/volume/store"
 	"github.com/alibaba/pouch/volume/types"
 	"github.com/alibaba/pouch/volume/types/meta"
@@ -50,14 +51,14 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 	if err == nil {
 		return v, nil
 	}
-	cerr, ok := err.(CoreError)
+	cerr, ok := err.(volerr.CoreError)
 	if !ok {
 		return nil, err
 	}
 	if !cerr.IsLocalMetaNotfound() {
 		return nil, err
 	}
-	err = ErrVolumeNotfound
+	err = volerr.ErrVolumeNotfound
 
 	// then, try to get volume from central store.
 	if c.EnableControl {
@@ -70,7 +71,7 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 			return v, nil
 		}
 		if ce, ok := err.(client.Error); ok && ce.IsNotfound() {
-			return nil, ErrVolumeNotfound
+			return nil, volerr.ErrVolumeNotfound
 		}
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 func (c *Core) ExistVolume(id types.VolumeID) (bool, error) {
 	_, err := c.GetVolume(id)
 	if err != nil {
-		if ec, ok := err.(CoreError); ok && ec.IsVolumeNotfound() {
+		if ec, ok := err.(volerr.CoreError); ok && ec.IsVolumeNotfound() {
 			return false, nil
 		}
 		return false, err
@@ -97,7 +98,7 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 		return err
 	}
 	if exist {
-		return ErrVolumeExisted
+		return volerr.ErrVolumeExisted
 	}
 
 	v, err := c.newVolume(id)

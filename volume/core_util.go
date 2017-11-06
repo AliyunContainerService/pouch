@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/pkg/client"
 	"github.com/alibaba/pouch/volume/driver"
+	volerr "github.com/alibaba/pouch/volume/error"
 	"github.com/alibaba/pouch/volume/types"
 	"github.com/alibaba/pouch/volume/types/meta"
 
@@ -55,7 +56,7 @@ func (c *Core) getStorage(id types.StorageID) (*types.Storage, error) {
 
 func (c *Core) storageURL(id ...types.StorageID) (string, error) {
 	if c.BaseURL == "" {
-		return "", ErrDisableControl
+		return "", volerr.ErrDisableControl
 	}
 	if len(id) == 0 {
 		return client.JoinURL(c.BaseURL, types.APIVersion, client.StoragePath)
@@ -65,7 +66,7 @@ func (c *Core) storageURL(id ...types.StorageID) (string, error) {
 
 func (c *Core) volumeURL(id ...types.VolumeID) (string, error) {
 	if c.BaseURL == "" {
-		return "", ErrDisableControl
+		return "", volerr.ErrDisableControl
 	}
 	if len(id) == 0 {
 		return client.JoinURL(c.BaseURL, types.APIVersion, client.VolumePath)
@@ -75,7 +76,7 @@ func (c *Core) volumeURL(id ...types.VolumeID) (string, error) {
 
 func (c *Core) listVolumeNameURL(labels map[string]string) (string, error) {
 	if c.BaseURL == "" {
-		return "", ErrDisableControl
+		return "", volerr.ErrDisableControl
 	}
 	url, err := client.JoinURL(c.BaseURL, types.APIVersion, "/listkeys", client.VolumePath)
 	if err != nil {
