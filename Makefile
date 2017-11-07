@@ -45,7 +45,7 @@ vet: # run go vet
 
 unit-test: ## run go test
 	@echo $@
-	@go test $(go list ./... | grep -v /vendor/)
+	@go test ./...
 
 modules:
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
