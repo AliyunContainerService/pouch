@@ -48,7 +48,11 @@ func (s *Server) startContainer(ctx context.Context, resp http.ResponseWriter, r
 }
 
 func (s *Server) stopContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
-	t, err := strconv.Atoi(req.FormValue("t"))
+	timeout := req.FormValue("t")
+	if timeout == "" {
+		timeout = "10"
+	}
+	t, err := strconv.Atoi(timeout)
 	if err != nil {
 		resp.WriteHeader(http.StatusBadRequest)
 		return err
