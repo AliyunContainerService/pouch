@@ -13,5 +13,5 @@ before_install:
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
-  - docker build -t pouch:test . 
+  - docker build --quiet -t pouch:test . 
   - docker run -ti pouch:test bash -c "cd /go/src/github.com/alibaba/pouch && make check && make unit-test"
