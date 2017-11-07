@@ -17,7 +17,7 @@ ENV GO_VERSION=1.8.3
 ENV ARCH=amd64
 
 # install golang which version is GO_VERSION
-RUN wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${ARCH}.tar.gz \
+RUN wget --quiet https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${ARCH}.tar.gz \
     && tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz \
     && rm go${GO_VERSION}.linux-${ARCH}.tar.gz
 
