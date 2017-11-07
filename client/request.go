@@ -44,6 +44,10 @@ func (cli *Client) post(path string, query url.Values, obj interface{}) (*Respon
 	return cli.sendRequest("POST", path, query, obj)
 }
 
+func (cli *Client) delete(path string, query url.Values) (*Response, error) {
+	return cli.sendRequest("DELETE", path, query, nil)
+}
+
 func (cli *Client) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
 	var body io.Reader
 	if method == "POST" {

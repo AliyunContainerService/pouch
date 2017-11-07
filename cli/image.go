@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
+
 	"github.com/spf13/cobra"
 )
 
@@ -35,21 +37,15 @@ func (i *ImageCommand) addFlags() {
 
 // Run is the entry of images container command.
 func (i *ImageCommand) Run(args []string) {
-	req, err := i.cli.NewGetRequest("/images/json")
+	client, err := client.New("")
 	if err != nil {
-		fmt.Printf("fail to post request %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
 
-	resp := req.Send()
-	if err = resp.Error(); err != nil {
-		fmt.Printf("send request %s\n", err)
-		return
-	}
-
-	imageList := []types.Image{}
-	if err = resp.DecodeBody(&imageList); err != nil {
-		fmt.Printf("fail to decode body %s\n", err)
+	imageList, err := client.ImageList()
+	if err != nil {
+		fmt.Fprintf("failed to get image list: %s\n", err)
 		return
 	}
 

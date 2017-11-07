@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/alibaba/pouch/apis/types"
+	"fmt"
+	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/client"
+
 	"github.com/spf13/cobra"
 )
 
@@ -24,23 +26,17 @@ func (v *VersionCommand) Init(c *Cli) {
 
 // Run is the entry of version command.
 func (v *VersionCommand) Run(args []string) {
-	req, err := v.cli.NewGetRequest("/version")
+	client, err := client.New("")
 	if err != nil {
-		logrus.Errorln(err)
-		return
-	}
-	resp := req.Send()
-
-	if err := resp.Error(); err != nil {
-		logrus.Errorf("failed to print version: %v, %s(%d)", err, resp.Status, resp.StatusCode)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
 
-	obj := &types.SystemVersion{}
-	if err := resp.DecodeBody(obj); err != nil {
-		logrus.Errorln(err)
+	result, err := client.SystemVersion()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get system version: %v\n", err)
 		return
 	}
 
-	v.cli.Print(obj)
+	v.cli.Print(result)
 }

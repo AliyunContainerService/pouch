@@ -43,3 +43,11 @@ func (cli *Client) ContainerStart(name, detachKeys string) error {
 
 	return err
 }
+
+// ContainerStop stops a container
+func (cli *Client) ContainerStop(name string) error {
+	resp, err := cli.post("/containers/"+name+"/stop", nil, nil)
+	ensureCloseReader(resp)
+
+	return err
+}
