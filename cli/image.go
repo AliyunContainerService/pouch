@@ -45,7 +45,7 @@ func (i *ImageCommand) Run(args []string) {
 
 	imageList, err := client.ImageList()
 	if err != nil {
-		fmt.Fprintf("failed to get image list: %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed to get image list: %s\n", err)
 		return
 	}
 
