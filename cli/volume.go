@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"path"
+	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -96,7 +97,7 @@ func (v *VolumeCreateCommand) Run(args []string) {
 }
 
 func (v *VolumeCreateCommand) volumeCreate() error {
-	volumeReq := types.VolumeCreateRequest{
+	volumeReq := &types.VolumeCreateRequest{
 		Driver:     v.driver,
 		Name:       v.name,
 		DriverOpts: map[string]string{},
@@ -136,21 +137,14 @@ func (v *VolumeCreateCommand) volumeCreate() error {
 		volumeReq.DriverOpts["selector."+selector[0]] = selector[1]
 	}
 
-	req, err := v.cli.NewPostRequest("/volumes/create", volumeReq)
+	client, err := client.New("")
 	if err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-	resp := req.Send()
-
-	if err := resp.Error(); err != nil {
-		logrus.Errorf("failed to create volume: %s err: %v, status: %s code: %d",
-			v.name, err, resp.Status, resp.StatusCode)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return err
 	}
 
-	volume := &types.VolumeAPI{}
-	if err := resp.DecodeBody(volume); err != nil {
+	volume, err := client.VolumeCreate(volumeReq)
+	if err != nil {
 		logrus.Errorln(err)
 		return err
 	}
@@ -182,15 +176,13 @@ func (v *VolumeRemoveCommand) Run(args []string) {
 
 	logrus.Debugf("remove a volume: %s", name)
 
-	req, err := v.cli.NewDeleteRequest(path.Join("/volumes", name), nil)
+	client, err := client.New("")
 	if err != nil {
-		logrus.Errorln(err)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
-	resp := req.Send()
 
-	if err := resp.Error(); err != nil {
-		logrus.Errorf("failed to remove volume: %s, err: %v", name, err)
-		return
+	if err = client.VolumeRemove(name); err != nil {
+		logrus.Errorln(err)
 	}
 }

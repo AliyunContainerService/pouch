@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 
 	"github.com/spf13/cobra"
 )
@@ -31,27 +31,15 @@ func (cc *CreateCommand) Run(args []string) {
 	config := cc.config()
 	config.Image = args[0]
 
-	path := "/containers/create"
-	if cc.container.name != "" {
-		path = fmt.Sprintf("/containers/create?name=%s", cc.container.name)
-	}
-
-	req, err := cc.cli.NewPostRequest(path, config)
+	client, err := client.New("")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new post request: %v \n", err)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
 
-	respone := req.Send()
-	if err := respone.Error(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to send request: %v \n", err)
-		return
-	}
-	defer respone.Close()
-
-	result := types.ContainerCreateResp{}
-	if err := respone.DecodeBody(&result); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to decode body: %v \n", err)
+	result, err := client.ContainerCreate(config.ContainerConfig, config.HostConfig, "")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create container: %v\n", err)
 		return
 	}
 

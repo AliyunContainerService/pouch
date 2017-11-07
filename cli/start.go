@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/alibaba/pouch/client"
+
 	"github.com/spf13/cobra"
 )
 
@@ -27,20 +29,17 @@ func (s *StartCommand) Init(c *Cli) {
 func (s *StartCommand) Run(args []string) {
 	container := args[0]
 
-	path := fmt.Sprintf("/containers/%s/start", container)
-
-	req, err := s.cli.NewPostRequest(path, nil)
+	client, err := client.New("")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new post request: %v \n", err)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
 
-	response := req.Send()
-	if err := response.Error(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to request: %v \n", err)
+	err = client.ContainerStart(container, "")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to start container %s: %v\n", container, err)
 		return
 	}
-	defer response.Close()
 
 	fmt.Printf("succeed in starting container: %s \n", container)
 }
