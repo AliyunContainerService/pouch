@@ -11,8 +11,13 @@ var (
 	testHost = "unix:///var/run/pouchd.sock"
 )
 
-func newClient(host string) (*Client, error) {
-	return New(host)
+func newClient(t *testing.T) *Client {
+	client, err := New("")
+	if err != nil {
+		t.Fatal("failed to new client: ", err)
+	}
+
+	return client
 }
 
 func TestNewClient(t *testing.T) {
@@ -25,7 +30,7 @@ func TestNewClient(t *testing.T) {
 	}
 
 	for host, expectError := range kvs {
-		cli, err := newClient(host)
+		cli, err := New(host)
 		if expectError {
 			assert.Error(err, fmt.Sprintf("test data %v", host))
 		} else {
