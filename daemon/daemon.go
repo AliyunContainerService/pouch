@@ -75,28 +75,24 @@ func (d *Daemon) Run() error {
 	if err != nil {
 		return err
 	}
-
-	systemMgr, err := internal.GenSystemMgr(d.config)
-	if err != nil {
-		return err
-	}
-
-	volumeMgr, err := internal.GenVolumeMgr(d.config, d)
-	if err != nil {
-		return err
-	}
-
-	d.systemMgr = systemMgr
 	d.imageMgr = imageMgr
+
+	systemMgr, err := internal.GenSystemMgr(&d.config)
+	if err != nil {
+		return err
+	}
+	d.systemMgr = systemMgr
+
+	volumeMgr, err := internal.GenVolumeMgr(&d.config, d)
+	if err != nil {
+		return err
+	}
 	d.volumeMgr = volumeMgr
 
 	containerMgr, err := internal.GenContainerMgr(ctx, d)
 	if err != nil {
 		return err
 	}
-
-	d.systemMgr = systemMgr
-	d.imageMgr = imageMgr
 	d.containerMgr = containerMgr
 
 	d.server = server.Server{
@@ -123,6 +119,11 @@ func (d *Daemon) Config() *config.Config {
 // ImgMgr gets manager of image.
 func (d *Daemon) ImgMgr() mgr.ImageMgr {
 	return d.imageMgr
+}
+
+// VolMgr gets manager of volume.
+func (d *Daemon) VolMgr() mgr.VolumeMgr {
+	return d.volumeMgr
 }
 
 // Containerd gets containerd client.
