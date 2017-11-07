@@ -325,18 +325,6 @@
 			"revisionTime": "2016-07-27T18:54:06Z"
 		},
 		{
-			"checksumSHA1": "EIjWhCG0hvItZph8m9YXFJBYBhM=",
-			"path": "github.com/coreos/etcd/client",
-			"revision": "a8f9de2abf824db8a3aa7358227653ca00d9f755",
-			"revisionTime": "2017-10-17T16:06:34Z"
-		},
-		{
-			"checksumSHA1": "RBwpnMpfQt7Jo7YWrRph0Vwe+f0=",
-			"path": "github.com/coreos/go-systemd/activation",
-			"revision": "d2196463941895ee908e13531a23a39feb9e1243",
-			"revisionTime": "2017-07-31T11:19:25Z"
-		},
-		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -361,6 +349,13 @@
 			"path": "github.com/fatih/structs",
 			"revision": "7e5a8eef611ee84dd359503f3969f80df4c50723",
 			"revisionTime": "2017-06-12T12:55:44Z"
+		},
+		{
+			"checksumSHA1": "OED5RsS1Us385a/VH6IAlSl0xHo=",
+			"path": "github.com/go-check/check",
+			"revision": "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec",
+			"revisionTime": "2016-12-08T18:13:25Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "I21ZDprdd0n98lXaL8Kc79Ypihs=",
@@ -641,10 +636,11 @@
 			"revisionTime": "2017-09-01T15:15:52Z"
 		},
 		{
-			"checksumSHA1": "nqWNlnMmVpt628zzvyo6Yv2CX5Q=",
+			"checksumSHA1": "Csl3lrkis5iUo5In4BltnOc0hS4=",
 			"path": "golang.org/x/crypto/ssh/terminal",
-			"revision": "847319b7fc94cab682988f93da778204da164588",
-			"revisionTime": "2017-08-18T09:57:21Z"
+			"revision": "81e90905daefcd6fd217b62423c0908922eadb30",
+			"revisionTime": "2017-08-25T20:24:07Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "dr5+PfIRzXeN+l1VG+s0lea9qz8=",
@@ -707,10 +703,11 @@
 			"revisionTime": "2017-05-17T20:25:26Z"
 		},
 		{
-			"checksumSHA1": "uggjqMBFNJd11oNco2kbkAT641w=",
+			"checksumSHA1": "EveOzYPCTHTDrTjRLYcS/RzV984=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "429f518978ab01db8bb6f44b66785088e7fba58b",
-			"revisionTime": "2017-09-20T21:38:28Z"
+			"revision": "a45f55524b7ec57890cfa6c6bc06b47f877be0d1",
+			"revisionTime": "2017-09-06T22:16:59Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "pBPFzDGt3AVSRffB7ffiUnruFUk=",
