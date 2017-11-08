@@ -133,6 +133,8 @@ func setupFlags(cmd *cobra.Command) {
 		"containerd-config",
 		"/etc/containerd/config.toml",
 		"Specify the path of Containerd binary")
+
+	utils.SetupTLSFlag(flagSet, &cfg.TLS)
 }
 
 func initLog() {

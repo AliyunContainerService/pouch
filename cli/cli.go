@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/fatih/structs"
 	"github.com/pkg/errors"
@@ -22,6 +26,7 @@ import (
 type Option struct {
 	host    string
 	timeout time.Duration
+	TLS     types.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request
@@ -61,7 +66,7 @@ func (c *Cli) SetFlags() *Cli {
 	cmd := c.rootCmd
 	cmd.PersistentFlags().StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify listen address of pouchd")
 	cmd.PersistentFlags().DurationVar(&c.Option.timeout, "timeout", time.Second*10, "Set timeout")
-
+	utils.SetupTLSFlag(cmd.PersistentFlags(), &c.Option.TLS)
 	return c
 }
 
@@ -77,17 +82,31 @@ func (c *Cli) AddCommand(parent, command Command) {
 	cmd := command.Cmd()
 
 	cmd.PreRun = func(cmd *cobra.Command, args []string) {
+		// init tls config
+		httpSchema := "http://"
+		if c.TLS.Key != "" && c.TLS.Cert != "" && !strings.HasPrefix(c.host, "unix://") {
+			tlsCfg, err := utils.GenTLSConfig(c.TLS.Key, c.TLS.Cert, c.TLS.CA)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
+				os.Exit(1)
+			}
+			tlsCfg.InsecureSkipVerify = !c.TLS.VerifyRemote
+			c.transport.TLSClientConfig = tlsCfg
+			httpSchema = "https://"
+		}
+
+		// setup base url
 		if strings.HasPrefix(c.host, "unix://") {
 			dial := func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return net.DialTimeout("unix", strings.TrimPrefix(c.host, "unix://"), time.Second*10)
 			}
 
 			c.transport.DialContext = dial
-			c.baseURL = "http://d"
+			c.baseURL = fmt.Sprintf("%sd", httpSchema)
 			return
 		}
 
-		c.baseURL = "http://" + strings.TrimPrefix(c.host, "tcp://")
+		c.baseURL = httpSchema + strings.TrimPrefix(c.host, "tcp://")
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
