@@ -30,6 +30,9 @@ func (cc *CreateCommand) Init(c *Cli) {
 func (cc *CreateCommand) Run(args []string) {
 	config := cc.config()
 	config.Image = args[0]
+	if len(args) == 2 {
+		config.Cmd = strings.Fields(args[1])
+	}
 
 	client, err := client.New("")
 	if err != nil {

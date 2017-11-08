@@ -21,24 +21,51 @@ func setupNs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	return nil
 }
 
-func setupProcess(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) (err error) {
-	p := s.Process
-	cmdArr := c.Config.Entrypoint
+func setupProcessArgs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+	args := c.Config.Entrypoint
+	if args == nil {
+		args = []string{}
+	}
 	if len(c.Config.Cmd) > 0 {
-		cmdArr = append(cmdArr, c.Config.Cmd...)
+		args = append(args, c.Config.Cmd...)
 	}
+	s.Process.Args = args
+	return nil
+}
+
+func setupProcessEnv(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+	if s.Process.Env == nil {
+		s.Process.Env = c.Config.Env
+	} else {
+		s.Process.Env = append(s.Process.Env, c.Config.Env...)
+	}
+	return nil
+}
+
+func setupProcessCwd(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+	s.Process.Cwd = c.Config.WorkingDir
+	return nil
+}
+
+func setupProcessTTY(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	if c.Config.Tty != nil {
-		p.Terminal = *c.Config.Tty
+		s.Process.Terminal = *c.Config.Tty
+		if s.Process.Env != nil {
+			s.Process.Env = append(s.Process.Env, "TERM=xterm")
+		} else {
+			s.Process.Env = []string{"TERM=xterm"}
+		}
 	}
-	p.Cwd = c.Config.WorkingDir
-	p.Env = c.Config.Env
-	p.Args = cmdArr
+	return nil
+}
+
+func setupProcessUser(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) (err error) {
 	if c.Config.User != "" {
-		tmpArr := strings.SplitN(c.Config.User, ":", 2)
+		fields := strings.SplitN(c.Config.User, ":", 2)
 		var u, g string
-		u = tmpArr[0]
-		if len(tmpArr) == 2 {
-			g = tmpArr[1]
+		u = fields[0]
+		if len(fields) == 2 {
+			g = fields[1]
 		}
 		user := &specs.User{}
 		if uid, err := strconv.Atoi(u); err == nil {
