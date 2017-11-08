@@ -23,7 +23,6 @@ RUN wget --quiet https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${A
 
 # create GOPATH
 RUN mkdir /go
-WORKDIR /go
 ENV GOPATH=/go
 
 # set go binary path to local $PATH
@@ -34,6 +33,8 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN go get -u github.com/golang/lint/golint 
 
 COPY . /go/src/github.com/alibaba/pouch
+
+WORKDIR /go/src/github.com/alibaba/pouch
 
 # The environment is setup, when run what you need, just setup the CMD when `pouch run`
 # For exmaple, this Dockerfile will build an image named `pouch-image`.
