@@ -2,15 +2,13 @@ package ctrd
 
 import (
 	"context"
-	"os"
 	"syscall"
 	"time"
 
-	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/containerio"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -74,7 +72,7 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 }
 
 // RecoverContainer reload the container from metadata and watch it, if program be restarted.
-func (c *Client) RecoverContainer(ctx context.Context, id string) error {
+func (c *Client) RecoverContainer(ctx context.Context, id string, io *containerio.IO) error {
 	if !c.lock.Trylock(id) {
 		return ErrTrylockFailed
 	}
@@ -88,7 +86,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string) error {
 		return errors.Wrap(err, "failed to load container")
 	}
 
-	task, err := lc.Task(ctx, containerd.WithAttach(os.Stdin, os.Stdout, os.Stderr))
+	task, err := lc.Task(ctx, containerd.WithAttach(io.Stdin, io.Stdout, io.Stderr))
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
@@ -127,7 +125,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	}
 
 	waitExit := func() *Message {
-		return c.ProbeContainer(ctx, id, 0)
+		return c.ProbeContainer(ctx, id, time.Second*5)
 	}
 
 	var msg *Message
@@ -139,6 +137,25 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	} else {
 		// wait for the task to exit.
 		msg = waitExit()
+	}
+
+	if msg.Error() != nil {
+		if cerr, ok := msg.Error().(Error); ok && cerr.IsTimeout() {
+			// timeout, use SIGKILL to retry.
+			if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
+				if !errdefs.IsNotFound(err) {
+					return nil, errors.Wrap(err, "failed to kill task")
+				}
+
+			} else {
+				msg = waitExit()
+			}
+		}
+	}
+	if msg.Error() != nil {
+		if cerr, ok := msg.Error().(Error); ok && cerr.IsTimeout() {
+			return nil, cerr
+		}
 	}
 
 	if err := pack.container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
@@ -153,19 +170,21 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 }
 
 // CreateContainer create container and start process.
-func (c *Client) CreateContainer(ctx context.Context, container *types.ContainerInfo, spec *specs.Spec) error {
-	ref := container.Config.Image
-	id := container.ID
+func (c *Client) CreateContainer(ctx context.Context, container *Container) error {
+	var (
+		ref = container.Info.Config.Image
+		id  = container.Info.ID
+	)
 
 	if !c.lock.Trylock(id) {
 		return ErrTrylockFailed
 	}
 	defer c.lock.Unlock(id)
 
-	return c.createContainer(ctx, ref, id, spec)
+	return c.createContainer(ctx, ref, id, container)
 }
 
-func (c *Client) createContainer(ctx context.Context, ref, id string, spec *specs.Spec) (err0 error) {
+func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (err0 error) {
 	// get image
 	img, err := c.client.GetImage(ctx, ref)
 	if err != nil {
@@ -185,8 +204,8 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, spec *spec
 	options := []containerd.NewContainerOpts{
 		containerd.WithNewSnapshot(id, img),
 	}
-	if spec != nil {
-		options = append(options, containerd.WithSpec(spec, specOptions...))
+	if container.Spec != nil {
+		options = append(options, containerd.WithSpec(container.Spec, specOptions...))
 	} else {
 		options = append(options, containerd.WithNewSpec(specOptions...))
 	}
@@ -205,7 +224,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, spec *spec
 	logrus.Infof("success to new container: %s", id)
 
 	// create task
-	pack, err := c.createTask(ctx, id, nc)
+	pack, err := c.createTask(ctx, id, nc, container)
 	if err != nil {
 		return err
 	}
@@ -215,11 +234,18 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, spec *spec
 	return nil
 }
 
-func (c *Client) createTask(ctx context.Context, id string, container containerd.Container) (p containerPack, err0 error) {
+func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p containerPack, err0 error) {
 	var pack containerPack
 
+	var io containerd.IOCreation
+	if cc.Spec.Process.Terminal {
+		io = containerd.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, true)
+	} else {
+		io = containerd.NewIO(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr)
+	}
+
 	// create task
-	task, err := container.NewTask(ctx, containerd.NewIO(os.Stdin, os.Stdout, os.Stderr))
+	task, err := container.NewTask(ctx, io)
 	if err != nil {
 		return pack, errors.Wrapf(err, "failed to create task, container id: %s", id)
 	}

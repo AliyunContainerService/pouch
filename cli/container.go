@@ -8,6 +8,7 @@ import (
 
 type container struct {
 	name string
+	tty  bool
 }
 
 func (c *container) init() *cobra.Command {
@@ -15,6 +16,7 @@ func (c *container) init() *cobra.Command {
 
 	// TODO add flag
 	cmd.Flags().StringVar(&c.name, "name", "", "specified the container's name")
+	cmd.Flags().BoolVarP(&c.tty, "tty", "t", false, "allocate a tty device")
 
 	return cmd
 }
@@ -26,6 +28,7 @@ func (c *container) config() *types.ContainerConfigWrapper {
 	}
 
 	// TODO
+	config.Tty = &c.tty
 
 	return config
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
@@ -26,6 +27,9 @@ type ContainerMgr interface {
 
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout time.Duration) error
+
+	// Attach a container.
+	Attach(ctx context.Context, name string, attach *types.AttachConfig) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -35,6 +39,7 @@ type ContainerManager struct {
 	NameToID  *collect.SafeMap
 	ImageMgr  ImageMgr
 	VolumeMrg VolumeMgr
+	IOs       *containerio.Cache
 }
 
 // NewContainerManager creates a brand new container manager.
@@ -45,7 +50,13 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		Client:    cli,
 		ImageMgr:  imgMgr,
 		VolumeMrg: volMgr,
+		IOs:       containerio.NewCache(),
 	}
+
+	var exitHooks []func(string, *ctrd.Message) error
+	exitHooks = append(exitHooks, mgr.stoppedAndRelease)
+	mgr.Client.SetExitHooks(exitHooks)
+
 	return mgr, mgr.Restore(ctx)
 }
 
@@ -58,7 +69,11 @@ func (cm *ContainerManager) Restore(ctx context.Context) error {
 
 			// recover the running container.
 			if c.Status == types.RUNNING {
-				if err := cm.Client.RecoverContainer(ctx, c.ID); err != nil {
+				io, err := cm.openContainerIO(c.ID, nil)
+				if err != nil {
+					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
+				}
+				if err := cm.Client.RecoverContainer(ctx, c.ID, io); err != nil {
 					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
 				}
 			}
@@ -145,7 +160,20 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 		}
 	}
 
-	err = cm.Client.CreateContainer(ctx, c, s)
+	// open container's stdio.
+	io, err := cm.openContainerIO(c.ID, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to open io")
+	}
+	if io.Stdin.OpenStdin() {
+		s.Process.Terminal = true
+	}
+
+	err = cm.Client.CreateContainer(ctx, &ctrd.Container{
+		Info: c,
+		Spec: s,
+		IO:   io,
+	})
 	if err == nil {
 		c.Status = types.RUNNING
 		c.StartedAt = time.Now()
@@ -155,6 +183,14 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 		c.ErrorMsg = err.Error()
 		c.Pid = 0
 		//TODO get and set exit code
+
+		// close io resource.
+		if io := cm.IOs.Get(c.ID); io != nil {
+			io.Stderr.Close()
+			io.Stdout.Close()
+			io.Stdin.Close()
+			cm.IOs.Remove(c.ID)
+		}
 	}
 	cm.Store.Put(c)
 	return err
@@ -175,23 +211,22 @@ func (cm *ContainerManager) Stop(ctx context.Context, name string, timeout time.
 		return fmt.Errorf("container's status is not running: %d", ci.Status)
 	}
 
-	result, err := cm.Client.DestroyContainer(ctx, ci.ID)
-	if err != nil {
+	if _, err := cm.Client.DestroyContainer(ctx, ci.ID); err != nil {
 		return errors.Wrapf(err, "failed to destroy container: %s", ci.ID)
 	}
 
-	ci.Pid = -1
-	ci.ExitCodeValue = int(result.ExitCode())
-	ci.FinishedAt = result.ExitTime()
-	ci.Status = types.STOPPED
+	return nil
+}
 
-	if result.HasError() {
-		ci.ErrorMsg = result.Error().Error()
+// Attach attachs a container's io.
+func (cm *ContainerManager) Attach(ctx context.Context, name string, attach *types.AttachConfig) error {
+	container, err := cm.containerInfo(name)
+	if err != nil {
+		return err
 	}
 
-	// update meta
-	if err := cm.Store.Put(ci); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+	if _, err := cm.openContainerIO(container.ID, attach); err != nil {
+		return err
 	}
 
 	return nil
@@ -229,4 +264,62 @@ func (cm *ContainerManager) containerInfo(s string) (*types.ContainerInfo, error
 	}
 
 	return ci, nil
+}
+
+func (cm *ContainerManager) openContainerIO(id string, attach *types.AttachConfig) (*containerio.IO, error) {
+	if io := cm.IOs.Get(id); io != nil {
+		return io, nil
+	}
+
+	root := cm.Store.Path(id)
+
+	options := []func(*containerio.Option){
+		containerio.WithID(id),
+		containerio.WithRootDir(root),
+	}
+
+	if attach != nil {
+		options = append(options, containerio.WithHijack(attach.Hijack, attach.Upgrade))
+		if attach.Stdin {
+			options = append(options, containerio.WithStdinHijack())
+		}
+	} else {
+		options = append(options, containerio.WithRawFile())
+	}
+
+	io := containerio.NewIO(containerio.NewOption(options...))
+
+	cm.IOs.Put(id, io)
+
+	return io, nil
+}
+
+func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error {
+	// update container info
+	c, err := cm.containerInfo(id)
+	if err != nil {
+		return err
+	}
+	c.Pid = -1
+	c.ExitCodeValue = int(m.ExitCode())
+	c.FinishedAt = time.Now()
+	c.Status = types.STOPPED
+
+	if m.HasError() {
+		c.ErrorMsg = m.Error().Error()
+	}
+
+	// release resource
+	if io := cm.IOs.Get(id); io != nil {
+		io.Stderr.Close()
+		io.Stdout.Close()
+		io.Stdin.Close()
+		cm.IOs.Remove(id)
+	}
+
+	// update meta
+	if err := cm.Store.Put(c); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+	}
+	return nil
 }
