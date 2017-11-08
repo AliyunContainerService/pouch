@@ -43,12 +43,17 @@ func main() {
 			}
 
 			// define and start all required processes.
+			if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
+				os.RemoveAll(cfg.ContainerdAddr)
+			}
 			var processes exec.Processes = []*exec.Process{
 				{
 					Path: cfg.ContainerdPath,
 					Args: []string{
 						"-c", cfg.ContainerdConfig,
 						"-a", cfg.ContainerdAddr,
+						"--root", path.Join(cfg.HomeDir, "containerd/root"),
+						"--state", path.Join(cfg.HomeDir, "containerd/state"),
 						"-l", utils.If(cfg.Debug, "debug", "info").(string),
 					},
 				},
