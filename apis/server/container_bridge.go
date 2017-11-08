@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -95,4 +96,29 @@ func (s *Server) attachContainer(ctx context.Context, resp http.ResponseWriter, 
 	}
 
 	return nil
+}
+
+func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	cis, err := s.ContainerMgr.List(ctx)
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	cs := []types.Container{}
+	for _, ci := range cis {
+		c := types.Container{
+			ID:      ci.ID,
+			Names:   []string{ci.Name},
+			Status:  ci.Status.String(),
+			Image:   ci.Config.Image,
+			Command: strings.Join(ci.Config.Cmd, " "),
+			Created: ci.StartedAt.UnixNano(),
+			Labels:  ci.Config.Labels,
+		}
+		cs = append(cs, c)
+	}
+
+	resp.WriteHeader(http.StatusOK)
+	return json.NewEncoder(resp).Encode(cs)
 }
