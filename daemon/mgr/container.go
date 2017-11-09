@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
+	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/pkg/errors"
@@ -42,6 +43,7 @@ type ContainerManager struct {
 	ImageMgr  ImageMgr
 	VolumeMgr VolumeMgr
 	IOs       *containerio.Cache
+	km        *kmutex.KMutex
 }
 
 // NewContainerManager creates a brand new container manager.
@@ -53,6 +55,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		ImageMgr:  imgMgr,
 		VolumeMgr: volMgr,
 		IOs:       containerio.NewCache(),
+		km:        kmutex.New(),
 	}
 
 	var exitHooks []func(string, *ctrd.Message) error
@@ -77,6 +80,12 @@ func (cm *ContainerManager) Restore(ctx context.Context) error {
 				}
 				if err := cm.Client.RecoverContainer(ctx, c.ID, io); err != nil {
 					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
+
+					// release io
+					io.Stdin.Close()
+					io.Stdout.Close()
+					io.Stderr.Close()
+					cm.IOs.Remove(c.ID)
 				}
 			}
 		}
@@ -86,7 +95,7 @@ func (cm *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (cm *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (t *types.ContainerCreateResp, err error) {
+func (cm *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error) {
 	var id string
 	for {
 		id = randomid.Generate()
@@ -115,6 +124,9 @@ func (cm *ContainerManager) Create(ctx context.Context, name string, config *typ
 		return nil, fmt.Errorf("container with name %s already exist", name)
 	}
 
+	cm.km.Lock(id)
+	defer cm.km.Unlock(id)
+
 	// parse volume config
 	if err := cm.parseVolumes(ctx, config); err != nil {
 		return nil, errors.Wrap(err, "failed to parse volume argument")
@@ -141,19 +153,22 @@ func (cm *ContainerManager) Create(ctx context.Context, name string, config *typ
 }
 
 // Start a pre created Container.
-func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerStartConfig) (err error) {
-	if startCfg.ID == "" {
+func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartConfig) (err error) {
+	if cfg.ID == "" {
 		return fmt.Errorf("either container name or id is required")
 	}
 
-	c, err := cm.containerInfo(startCfg.ID)
+	cm.km.Lock(cfg.ID)
+	defer cm.km.Unlock(cfg.ID)
+
+	c, err := cm.containerInfo(cfg.ID)
 	if err != nil {
 		return err
 	}
 	if c == nil || c.Config == nil || c.ContainerState == nil {
-		return fmt.Errorf("no container found by %s", startCfg.ID)
+		return fmt.Errorf("no container found by %s", cfg.ID)
 	}
-	c.DetachKeys = startCfg.DetachKeys
+	c.DetachKeys = cfg.DetachKeys
 
 	// new a default spec.
 	s, err := ctrd.NewDefaultSpec(ctx)
@@ -191,13 +206,11 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 		c.Pid = 0
 		//TODO get and set exit code
 
-		// close io resource.
-		if io := cm.IOs.Get(c.ID); io != nil {
-			io.Stderr.Close()
-			io.Stdout.Close()
-			io.Stdin.Close()
-			cm.IOs.Remove(c.ID)
-		}
+		// release io
+		io.Stderr.Close()
+		io.Stdout.Close()
+		io.Stdin.Close()
+		cm.IOs.Remove(c.ID)
 	}
 	cm.Store.Put(c)
 	return err
@@ -213,6 +226,9 @@ func (cm *ContainerManager) Stop(ctx context.Context, name string, timeout time.
 	if ci, err = cm.containerInfo(name); err != nil {
 		return errors.Wrap(err, "failed to stop container")
 	}
+
+	cm.km.Lock(ci.ID)
+	defer cm.km.Unlock(ci.ID)
 
 	if ci.Status != types.RUNNING {
 		return fmt.Errorf("container's status is not running: %d", ci.Status)
@@ -231,6 +247,9 @@ func (cm *ContainerManager) Attach(ctx context.Context, name string, attach *typ
 	if err != nil {
 		return err
 	}
+
+	cm.km.Lock(container.ID)
+	defer cm.km.Unlock(container.ID)
 
 	if _, err := cm.openContainerIO(container.ID, attach); err != nil {
 		return err
@@ -302,6 +321,9 @@ func (cm *ContainerManager) openContainerIO(id string, attach *types.AttachConfi
 }
 
 func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error {
+	cm.km.Lock(id)
+	defer cm.km.Unlock(id)
+
 	// update container info
 	c, err := cm.containerInfo(id)
 	if err != nil {
