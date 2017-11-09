@@ -227,19 +227,7 @@ paths:
         201:
           description: "Container created successfully"
           schema:
-            type: "object"
-            required: [Id, Warnings]
-            properties:
-              Id:
-                description: "The ID of the created container"
-                type: "string"
-                x-nullable: false
-              Warnings:
-                description: "Warnings encountered when creating the container"
-                type: "array"
-                x-nullable: false
-                items:
-                  type: "string"
+            $ref: "#/definitions/ContainerCreateResp"
           examples:
             application/json:
               Id: "e90e34656806"
@@ -433,6 +421,24 @@ definitions:
       Shell:
         description: "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell."
         type: "array"
+        items:
+          type: "string"
+  ContainerCreateResp:
+    description: "response returned by daemon when container create successfully"
+    type: "object"
+    required: [Id, Warnings]
+    properties:
+      Id:
+        description: "The ID of the created container"
+        type: "string"
+        x-nullable: false
+      Name:
+        description: "Then name of the created container"
+        type: "string"
+      Warnings:
+        description: "Warnings encountered when creating the container"
+        type: "array"
+        x-nullable: false
         items:
           type: "string"
   HostConfig:
