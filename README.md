@@ -6,7 +6,7 @@
 - [Introduction](#introduction)
 - [Advantanges and Disadvantages](#advantages)
 - [Docs](docs)
-    - [Installation]()
+    - [Installation](#installation)
     - [Usage]()
     - [Software Design]()
     - [Contributing](CONTRIBUTING.md)
@@ -42,12 +42,16 @@ Pouch pays more emphasis on view of application, and we can call this "applicati
 * Application delivery turns to be out of box. Pouch improve the portability of application, no matter cross-platform or cross-os.
 * Application delivery period should be minimal. Pouch shorted this by standardizing the application image spec between developers and operators.
 
+## Installation
+
+See [INSTALLATION.md](INSTALLATION.md).
+
 ## FAQ
 File [FAQ.md](FAQ.md) contains frequently asked question (FAQ).
 
 ## Roadmap
 
-See [ROADMAP](ROADMAP.md)
+See [ROADMAP.md](ROADMAP.md).
 
 ## License
 

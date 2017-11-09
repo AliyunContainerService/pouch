@@ -3,10 +3,15 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
+GOPATH=$(shell cd ../../../..; pwd)
+GOPACKAGES=$(shell GOPATH=`cd ../../../..; pwd` go list ./... | grep -v /vendor/ | sed 's/^_//')
+
+# Binary name of CLI and Daemon
 BINARY_NAME=pouchd
 CLI_BINARY_NAME=pouch
-GOPATH=$(shell cd ../../../..; pwd)
-PACKAGES=$(shell GOPATH=`cd ../../../..; pwd` go list ./... | grep -v /vendor/ | sed 's/^_//')
+
+# Base path used to install pouch & pouchd
+DESTDIR=/usr/local
 
 .PHONY: check build client server clean fmt lint vet unit-test modules
 
@@ -41,7 +46,7 @@ lint: ## run go lint
 
 vet: # run go vet
 	@echo $@
-	@test -z "$$(go vet ${PACKAGES} 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v '(exit status 1)' | tee /dev/stderr)"
+	@test -z "$$(go vet ${GOPACKAGES} 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v '(exit status 1)' | tee /dev/stderr)"
 
 unit-test: ## run go test
 	@echo $@
@@ -51,3 +56,18 @@ modules:
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/local
+	
+# build binaries
+# install them to /usr/local/bin/
+# remove binaries
+install: build
+	@echo $@
+	@echo "installing $(BINARY_NAME) and $(CLI_BINARY_NAME) to $(DESTDIR)/bin"
+	@mkdir -p $(DESTDIR)/bin
+	@install $(BINARY_NAME) $(DESTDIR)/bin
+	@install $(CLI_BINARY_NAME) $(DESTDIR)/bin
+
+uninstall:
+	@echo $@
+	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(BINARY_NAME)))
+	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
