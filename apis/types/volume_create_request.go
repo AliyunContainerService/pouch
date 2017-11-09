@@ -12,9 +12,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// VolumeCreateRequest VolumeCreateRequest contains the response for the remote API:
-// POST "/volumes/create
-//
+// VolumeCreateRequest VolumeCreateRequest contains the response for the remote API: POST /volumes/create
 // swagger:model VolumeCreateRequest
 
 type VolumeCreateRequest struct {

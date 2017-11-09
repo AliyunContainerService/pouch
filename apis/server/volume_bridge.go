@@ -28,7 +28,7 @@ func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req
 		return err
 	}
 
-	volume := types.VolumeAPI{
+	volume := types.VolumeInfo{
 		Name:   volumeCreateReq.Name,
 		Driver: volumeCreateReq.Driver,
 		Labels: volumeCreateReq.Labels,
