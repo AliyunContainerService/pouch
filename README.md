@@ -9,7 +9,7 @@
     - [Installation]()
     - [Usage]()
     - [Software Design]()
-    - [Contribute]()
+    - [Contributing](CONTRIBUTING.md)
 - [FAQ](FAQ.md)
 - [ROADMAP](ROADMAP.md)
 - [LICENSE](LICENSE)
