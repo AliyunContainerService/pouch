@@ -252,6 +252,80 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       tags: ["Container"]
+  
+  /volumes:
+    get:
+      summary: "List volumes"
+      operationId: "VolumeList"
+      produces: ["application/json"]
+      responses:
+        200:
+          description: "Summary volume data that matches the query"
+          schema:
+            $ref: "#/definitions/VolumeListResp"
+          examples:
+            application/json:
+              Volumes:
+                - CreatedAt: "2017-07-19T12:00:26Z"
+                  Name: "tardis"
+                  Driver: "local"
+                  Mountpoint: "/var/lib/docker/volumes/tardis"
+                  Labels:
+                    com.example.some-label: "some-value"
+                    com.example.some-other-label: "some-other-value"
+                  Scope: "local"
+                  Options:
+                    device: "tmpfs"
+                    o: "size=100m,uid=1000"
+                    type: "tmpfs"
+              Warnings: []
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            JSON encoded value of the filters (a `map[string][]string`) to
+            process on the volumes list. Available filters:
+
+            - `dangling=<boolean>` When set to `true` (or `1`), returns all
+               volumes that are not in use by a container. When set to `false`
+               (or `0`), only volumes that are in use by one or more
+               containers are returned.
+            - `driver=<volume-driver-name>` Matches volumes based on their driver.
+            - `label=<key>` or `label=<key>:<value>` Matches volumes based on
+               the presence of a `label` alone or a `label` and a value.
+            - `name=<volume-name>` Matches all or part of a volume name.
+          type: "string"
+          format: "json"
+      tags: ["Volume"]
+
+  /volumes/create:
+    post:
+      summary: "Create a volume"
+      operationId: "VolumeCreate"
+      consumes: ["application/json"]
+      produces: ["application/json"]
+      responses:
+        201:
+          description: "The volume was created successfully"
+          schema:
+            $ref: "#/definitions/VolumeInfo"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "VolumeConfig"
+          in: "body"
+          required: true
+          description: "Volume configuration"
+          schema:
+            $ref: "#/definitions/VolumeConfig"
+      tags: ["Volume"]
+
 definitions:
   Error:
     type: "object"
@@ -784,7 +858,7 @@ definitions:
       star_count:
         type: "integer"
         description: "star_count refers to the star count of this image."
-  VolumeApi:
+  VolumeInfo:
     type: "object"
     description: "Volume represents the configuration of a volume for the container."
     properties:
@@ -797,6 +871,10 @@ definitions:
       Mountpoint:
         description: "Mountpoint is the location on disk of the volume."
         type: "string"
+      CreatedAt:
+        type: "string"
+        format: "dateTime"
+        description: "Date/Time the volume was created."
       Status:
         description: "Status provides low-level status information about the volume."
         type: "object"
@@ -815,11 +893,38 @@ definitions:
           Scope describes the level at which the volume exists
           (e.g. `global` for cluster-wide or `local` for machine level)
         type: "string"
+  VolumeConfig:
+    description: "config used to create a volume"
+    type: "object"
+    properties:
+      Name:
+        description: "The new volume's name. If not specified, Docker generates a name."
+        type: "string"
+        x-nullable: false
+      Driver:
+        description: "Name of the volume driver to use."
+        type: "string"
+        default: "local"
+        x-nullable: false
+      DriverOpts:
+        description: "A mapping of driver options and values. These options are passed directly to the driver and are driver specific."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      Labels:
+        description: "User-defined key/value metadata."
+        type: "object"
+        additionalProperties:
+          type: "string"
+    example:
+      Name: "tardis"
+      Labels:
+        com.example.some-label: "some-value"
+        com.example.some-other-label: "some-other-value"
+      Driver: "custom"
   VolumeCreateRequest:
     type: "object"
-    description: |
-      VolumeCreateRequest contains the response for the remote API:
-      POST "/volumes/create
+    description: "VolumeCreateRequest contains the response for the remote API: POST /volumes/create"
     properties:
       Name:
         description: "Name is the name of the volume."
@@ -836,4 +941,20 @@ definitions:
         description: "Labels is metadata specific to the volume."
         type: "object"
         additionalProperties:
+          type: "string"
+  VolumeListResp:
+    type: "object"
+    required: [Volumes, Warnings]
+    properties:
+      Volumes:
+        type: "array"
+        x-nullable: false
+        description: "List of volumes"
+        items:
+          $ref: "#/definitions/VolumeInfo"
+      Warnings:
+        type: "array"
+        x-nullable: false
+        description: "Warnings that occurred when fetching the list of volumes"
+        items:
           type: "string"

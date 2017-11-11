@@ -3,13 +3,13 @@ package client
 import "github.com/alibaba/pouch/apis/types"
 
 // VolumeCreate creates a volume
-func (cli *Client) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeAPI, error) {
+func (cli *Client) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeInfo, error) {
 	resp, err := cli.post("/volumes/create", nil, req)
 	if err != nil {
 		return nil, err
 	}
 
-	volume := &types.VolumeAPI{}
+	volume := &types.VolumeInfo{}
 
 	err = decodeBody(volume, resp.Body)
 	ensureCloseReader(resp)

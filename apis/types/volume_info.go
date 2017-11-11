@@ -15,10 +15,13 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// VolumeAPI Volume represents the configuration of a volume for the container.
-// swagger:model VolumeApi
+// VolumeInfo Volume represents the configuration of a volume for the container.
+// swagger:model VolumeInfo
 
-type VolumeAPI struct {
+type VolumeInfo struct {
+
+	// Date/Time the volume was created.
+	CreatedAt string `json:"CreatedAt,omitempty"`
 
 	// Driver is the Driver name used to create the volume.
 	Driver string `json:"Driver,omitempty"`
@@ -41,20 +44,22 @@ type VolumeAPI struct {
 	Status map[string]interface{} `json:"Status,omitempty"`
 }
 
-/* polymorph VolumeApi Driver false */
+/* polymorph VolumeInfo CreatedAt false */
 
-/* polymorph VolumeApi Labels false */
+/* polymorph VolumeInfo Driver false */
 
-/* polymorph VolumeApi Mountpoint false */
+/* polymorph VolumeInfo Labels false */
 
-/* polymorph VolumeApi Name false */
+/* polymorph VolumeInfo Mountpoint false */
 
-/* polymorph VolumeApi Scope false */
+/* polymorph VolumeInfo Name false */
 
-/* polymorph VolumeApi Status false */
+/* polymorph VolumeInfo Scope false */
 
-// Validate validates this volume Api
-func (m *VolumeAPI) Validate(formats strfmt.Registry) error {
+/* polymorph VolumeInfo Status false */
+
+// Validate validates this volume info
+func (m *VolumeInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateStatus(formats); err != nil {
@@ -69,7 +74,7 @@ func (m *VolumeAPI) Validate(formats strfmt.Registry) error {
 }
 
 // additional properties value enum
-var volumeApiStatusValueEnum []interface{}
+var volumeInfoStatusValueEnum []interface{}
 
 func init() {
 	var res []interface{}
@@ -77,17 +82,17 @@ func init() {
 		panic(err)
 	}
 	for _, v := range res {
-		volumeApiStatusValueEnum = append(volumeApiStatusValueEnum, v)
+		volumeInfoStatusValueEnum = append(volumeInfoStatusValueEnum, v)
 	}
 }
-func (m *VolumeAPI) validateStatusValueEnum(path, location string, value interface{}) error {
-	if err := validate.Enum(path, location, value, volumeApiStatusValueEnum); err != nil {
+func (m *VolumeInfo) validateStatusValueEnum(path, location string, value interface{}) error {
+	if err := validate.Enum(path, location, value, volumeInfoStatusValueEnum); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *VolumeAPI) validateStatus(formats strfmt.Registry) error {
+func (m *VolumeInfo) validateStatus(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Status) { // not required
 		return nil
@@ -109,7 +114,7 @@ func (m *VolumeAPI) validateStatus(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *VolumeAPI) MarshalBinary() ([]byte, error) {
+func (m *VolumeInfo) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -117,8 +122,8 @@ func (m *VolumeAPI) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *VolumeAPI) UnmarshalBinary(b []byte) error {
-	var res VolumeAPI
+func (m *VolumeInfo) UnmarshalBinary(b []byte) error {
+	var res VolumeInfo
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
