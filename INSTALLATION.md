@@ -88,10 +88,9 @@ $ yum install -y libseccomp-devel
 $ apt-get install -y libseccomp-dev
 
 # Install runC
-$ mkdir -p $GOPATH/src/github.com/opencontainers
-$ cd $GOPATH/src/github.com/opencontainers; git clone https://github.com/opencontainers/runc
-$ cd runc
-$ make; make install
+$ wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin 
+$ chmod +x /usr/local/bin/runc.amd64
+$ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 ```
 
 Forth, with all needed binaries installed, we could start pouchd via:
