@@ -21,44 +21,17 @@ To be added.
 This guide provides step by step instructions to deploy Pouch on bare metal servers or virtual machines.
 As a developer, you may need to build and test Pouch binaries via source code. To build pouchd which is so-called "pouch daemon" and pouch which is so-called "pouch cli", the following build system dependencies are required:
 
-* Go 1.9.x or above
 * Linux Kernel 3.10+
 * containerd: 1.0.0-beta.3
 * runc: 1.0.0-rc4
 * runv: 1.0.0
 
-First, install go 1.9.x
+First, clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
 
 ``` shell
-# Centos
-$ yum update -y
-$ yum install -y wget git make gcc vim tree
-$ wget --quiet https://storage.googleapis.com/golang/go1.9.2.linux-arm64.tar.gz
-$ tar -C /usr/local -xzf go1.9.2.linux-arm64.tar.gz
-$ rm go1.9.2.linux-arm64.tar.gz
-$ mkdir /go
-$ export GOPATH=/go && export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-$ go get -u github.com/golang/lint/golint
-
-# Ubuntu
-$ apt-get update
-$ apt-get install -y wget git make gcc vim tree
-$ wget --quiet https://storage.googleapis.com/golang/go1.9.2.linux-arm64.tar.gz
-$ tar -C /usr/local -xzf go1.9.2.linux-arm64.tar.gz
-$ rm go1.9.2.linux-arm64.tar.gz
-$ mkdir /go
-$ export GOPATH=/go && export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-$ go get -u github.com/golang/lint/golint
-```
-
-Second, clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
-
-``` shell
-$ git clone https://github.com/alibaba/pouch.git
-$ mkdir -p $GOPATH/src/github.com/alibaba/pouch
-$ cp -r pouch/ $GOPATH/src/github.com/alibaba/pouch
-$ cd pouch
-$ git checkout master
+$ mkdir -p $GOPATH/src/github.com/alibaba/ 
+$ cd $GOPATH/src/github.com/alibaba/; git clone https://github.com/alibaba/pouch.git
+$ cd pouch; git checkout master
 ```
 build and install pouch binaries (pouchd and pouch). With the required dependencies installed, the Makefile target named build will compile the pouch and pouchd binaries in current work directory. Or you can just execute `make install` to build binaries and install them in destination directory (/usr/local/bin by default).
 
@@ -66,7 +39,7 @@ build and install pouch binaries (pouchd and pouch). With the required dependenc
 $ make install
 ```
 
-Third, install containerd, runc and runv binaries. Since pouchd is a kind of container engine, and pouch is a cli tool, if you hope to experience container management ability via Pouch, there are several additional binaries needed:
+Second, install containerd, runc and runv binaries. Since pouchd is a kind of container engine, and pouch is a cli tool, if you hope to experience container management ability via Pouch, there are several additional binaries needed:
 
 * [containerd](https://github.com/containerd/containerd): an industry-standard container runtime;
 * [runc](https://github.com/opencontainers/runc): a CLI tool for spawning and running containers according to the OCI specification;
@@ -90,10 +63,9 @@ $ apt-get install -y autoconf automake pkg-config qemu
 
 # Install runV
 $ mkdir $GOPATH/src/github.com/hyperhq
-$ cd $GOPATH/src/github.com/hyperhq
-$ git clone https://github.com/hyperhq/runv/
-$ cd runv && ./autogen.sh && ./configure --without-xen && make
-$ make install
+$ cd $GOPATH/src/github.com/hyperhq; git clone https://github.com/hyperhq/runv/
+$ cd runv; ./autogen.sh; ./configure --without-xen
+$ make; make install
 ```
 
 Install hyperstart
@@ -102,8 +74,7 @@ runv needs hyperstart to provide guest kernel and initrd. By default, it looks f
 
 ```
 $ git clone https://github.com/hyperhq/hyperstart.git
-$ cd hyperstart
-$ ./autogen.sh ;./configure ;make
+$ cd hyperstart; ./autogen.sh; ./configure; make
 $ mkdir /var/lib/hyper/
 $ cp build/hyper-initrd.img build/kernel /var/lib/hyper
 ```
@@ -118,10 +89,9 @@ $ apt-get install -y libseccomp-dev
 
 # Install runC
 $ mkdir -p $GOPATH/src/github.com/opencontainers
-$ cd $GOPATH/src/github.com/opencontainers
-$ git clone https://github.com/opencontainers/runc
+$ cd $GOPATH/src/github.com/opencontainers; git clone https://github.com/opencontainers/runc
 $ cd runc
-$ make && make install
+$ make; make install
 ```
 
 Forth, with all needed binaries installed, we could start pouchd via:
