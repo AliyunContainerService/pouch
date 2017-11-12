@@ -21,7 +21,7 @@ server: modules
 	GOOS=linux $(GOBUILD) -o $(BINARY_NAME)
 
 client:
-	GOOS=linux $(GOBUILD) -o $(CLI_BINARY_NAME) github.com/alibaba/pouch/cli
+	$(GOBUILD) -o $(CLI_BINARY_NAME) github.com/alibaba/pouch/cli
 
 clean:
 	$(GOCLEAN)
