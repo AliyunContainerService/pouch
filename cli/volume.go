@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/client"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -137,13 +135,9 @@ func (v *VolumeCreateCommand) volumeCreate() error {
 		volumeReq.DriverOpts["selector."+selector[0]] = selector[1]
 	}
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return err
-	}
+	apiClient := v.cli.Client()
 
-	volume, err := client.VolumeCreate(volumeReq)
+	volume, err := apiClient.VolumeCreate(volumeReq)
 	if err != nil {
 		logrus.Errorln(err)
 		return err
@@ -176,13 +170,9 @@ func (v *VolumeRemoveCommand) Run(args []string) {
 
 	logrus.Debugf("remove a volume: %s", name)
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
+	apiClient := v.cli.Client()
 
-	if err = client.VolumeRemove(name); err != nil {
+	if err := apiClient.VolumeRemove(name); err != nil {
 		logrus.Errorln(err)
 	}
 }

@@ -8,12 +8,12 @@ import (
 )
 
 // ImagePull requests daemon to pull an image from registry.
-func (cli *Client) ImagePull(name, tag string) (io.ReadCloser, error) {
+func (client *APIClient) ImagePull(name, tag string) (io.ReadCloser, error) {
 	q := url.Values{}
 	q.Set("fromImage", name)
 	q.Set("tag", tag)
 
-	resp, err := cli.post("/images/create", q, nil)
+	resp, err := client.post("/images/create", q, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +21,8 @@ func (cli *Client) ImagePull(name, tag string) (io.ReadCloser, error) {
 }
 
 // ImageList requests daemon to list all images
-func (cli *Client) ImageList() ([]types.Image, error) {
-	resp, err := cli.get("/images/json", nil)
+func (client *APIClient) ImageList() ([]types.Image, error) {
+	resp, err := client.get("/images/json", nil)
 	if err != nil {
 		return nil, err
 	}

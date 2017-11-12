@@ -2,23 +2,20 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"text/tabwriter"
 	"time"
 
-	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/fatih/structs"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +23,7 @@ import (
 type Option struct {
 	host    string
 	timeout time.Duration
-	TLS     types.TLSConfig
+	TLS     utils.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request
@@ -34,30 +31,17 @@ type Option struct {
 type Cli struct {
 	Option
 	rootCmd   *cobra.Command
-	transport *http.Transport
-	httpcli   *http.Client
+	APIClient *client.APIClient
 	padding   int
-	baseURL   string
 }
 
 // NewCli creates an instance of 'Cli'.
 func NewCli() *Cli {
-	tr := &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, time.Second*10)
-		},
-	}
-
 	return &Cli{
 		rootCmd: &cobra.Command{
 			Use: "pouch",
 		},
-		httpcli: &http.Client{
-			Transport: tr,
-			Timeout:   time.Minute * 30,
-		},
-		transport: tr,
-		padding:   3,
+		padding: 3,
 	}
 }
 
@@ -68,6 +52,20 @@ func (c *Cli) SetFlags() *Cli {
 	cmd.PersistentFlags().DurationVar(&c.Option.timeout, "timeout", time.Second*10, "Set timeout")
 	utils.SetupTLSFlag(cmd.PersistentFlags(), &c.Option.TLS)
 	return c
+}
+
+// NewAPIClient initializes the API client in Cli.
+func (c *Cli) NewAPIClient() {
+	client, err := client.NewAPIClient(c.Option.host, c.Option.TLS)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	c.APIClient = client
+}
+
+// Client returns API client torwards daemon.
+func (c *Cli) Client() *client.APIClient {
+	return c.APIClient
 }
 
 // Run executes the client program.
@@ -82,31 +80,7 @@ func (c *Cli) AddCommand(parent, command Command) {
 	cmd := command.Cmd()
 
 	cmd.PreRun = func(cmd *cobra.Command, args []string) {
-		// init tls config
-		httpSchema := "http://"
-		if c.TLS.Key != "" && c.TLS.Cert != "" && !strings.HasPrefix(c.host, "unix://") {
-			tlsCfg, err := utils.GenTLSConfig(c.TLS.Key, c.TLS.Cert, c.TLS.CA)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
-				os.Exit(1)
-			}
-			tlsCfg.InsecureSkipVerify = !c.TLS.VerifyRemote
-			c.transport.TLSClientConfig = tlsCfg
-			httpSchema = "https://"
-		}
-
-		// setup base url
-		if strings.HasPrefix(c.host, "unix://") {
-			dial := func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.DialTimeout("unix", strings.TrimPrefix(c.host, "unix://"), time.Second*10)
-			}
-
-			c.transport.DialContext = dial
-			c.baseURL = fmt.Sprintf("%sd", httpSchema)
-			return
-		}
-
-		c.baseURL = httpSchema + strings.TrimPrefix(c.host, "tcp://")
+		c.NewAPIClient()
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
@@ -181,11 +155,11 @@ func (c *Cli) NewRequest(method, path string, obj interface{}, enc ...func(inter
 		return nil, errors.Wrap(err, "failed to encoding object")
 	}
 
-	r, err := http.NewRequest(method, c.baseURL+path, body)
+	r, err := http.NewRequest(method, c.APIClient.BaseURL()+path, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to new http request")
 	}
-	return &Request{req: r, cli: c.httpcli}, nil
+	return &Request{req: r, cli: c.APIClient.HTTPCli}, nil
 }
 
 // NewGetRequest creates an HTTP get request.

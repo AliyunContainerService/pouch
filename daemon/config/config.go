@@ -1,7 +1,7 @@
 package config
 
 import (
-	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/volume"
 )
 
@@ -33,5 +33,5 @@ type Config struct {
 	ContainerdConfig string
 
 	// TLS configuration
-	TLS apitypes.TLSConfig
+	TLS utils.TLSConfig
 }

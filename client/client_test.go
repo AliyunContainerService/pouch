@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,16 +12,7 @@ var (
 	testHost = "unix:///var/run/pouchd.sock"
 )
 
-func newClient(t *testing.T) *Client {
-	client, err := New("")
-	if err != nil {
-		t.Fatal("failed to new client: ", err)
-	}
-
-	return client
-}
-
-func TestNewClient(t *testing.T) {
+func TestNewAPIClient(t *testing.T) {
 	assert := assert.New(t)
 	kvs := map[string]bool{
 		"":                      false,
@@ -30,11 +22,11 @@ func TestNewClient(t *testing.T) {
 	}
 
 	for host, expectError := range kvs {
-		cli, err := New(host)
+		cli, err := NewAPIClient(host, utils.TLSConfig{})
 		if expectError {
-			assert.Error(err, fmt.Sprintf("test data %v", host))
+			assert.Error(err, fmt.Sprintf("test data: %v", host))
 		} else {
-			assert.NoError(err, fmt.Sprintf("test data %v", host))
+			assert.NoError(err, fmt.Sprintf("test data %v: %v", host, err))
 		}
 
 		t.Logf("client info %+v", cli)

@@ -2,11 +2,16 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/alibaba/pouch/pkg/utils"
 )
 
 var (
@@ -14,35 +19,40 @@ var (
 	defaultTimeout = time.Second * 10
 )
 
-// Client is a API client that performs all operations
+// APIClient is a API client that performs all operations
 // against a pouch server
-type Client struct {
+type APIClient struct {
 	proto   string // socket type
 	baseURL string
-
-	httpCli *http.Client
+	HTTPCli *http.Client
 }
 
-// New initializes a new API client for the given host
-func New(host string) (*Client, error) {
+// NewAPIClient initializes a new API client for the given host
+func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
 	if host == "" {
 		host = defaultHost
 	}
 
-	u, basePath, err := parseHost(host)
+	newURL, basePath, err := parseHost(host)
 	if err != nil {
-		return nil, fmt.Errorf("failed to new client: %s", err)
+		return nil, fmt.Errorf("failed to parse host %s: %v", host, err)
 	}
 
-	httpCli := newHTTPClient(u)
+	tlsConfig := generateTLSConfig(host, tls)
 
-	return &Client{
-		proto:   u.Scheme,
+	httpCli := newHTTPClient(newURL, tlsConfig)
+
+	basePath = generateBaseURL(newURL, tls)
+
+	return &APIClient{
+		proto:   newURL.Scheme,
 		baseURL: basePath,
-		httpCli: httpCli,
+		HTTPCli: httpCli,
 	}, nil
 }
 
+// parseHost inputs a host address string, and output three type:
+// url.URL, basePath and an error
 func parseHost(host string) (*url.URL, string, error) {
 	u, err := url.Parse(host)
 	if err != nil {
@@ -64,8 +74,10 @@ func parseHost(host string) (*url.URL, string, error) {
 	return u, basePath, nil
 }
 
-func newHTTPClient(u *url.URL) *http.Client {
-	tr := &http.Transport{}
+func newHTTPClient(u *url.URL, tlsConfig *tls.Config) *http.Client {
+	tr := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
 
 	switch u.Scheme {
 	case "unix":
@@ -83,4 +95,36 @@ func newHTTPClient(u *url.URL) *http.Client {
 	return &http.Client{
 		Transport: tr,
 	}
+}
+
+// generateTLSConfig configures TLS for API Client.
+func generateTLSConfig(host string, tls utils.TLSConfig) *tls.Config {
+	// init tls config
+	if tls.Key != "" && tls.Cert != "" && !strings.HasPrefix(host, "unix://") {
+		tlsCfg, err := utils.GenTLSConfig(tls.Key, tls.Cert, tls.CA)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
+			os.Exit(1)
+		}
+		tlsCfg.InsecureSkipVerify = !tls.VerifyRemote
+
+		return tlsCfg
+	}
+	return nil
+}
+
+func generateBaseURL(u *url.URL, tls utils.TLSConfig) string {
+	if tls.Key != "" && tls.Cert != "" && u.Scheme != "unix" {
+		return "https://" + u.Host
+	}
+
+	if u.Scheme == "unix" {
+		return "http://d"
+	}
+	return "http://" + u.Host
+}
+
+// BaseURL returns the base URL of APIClient
+func (client *APIClient) BaseURL() string {
+	return client.baseURL
 }

@@ -36,19 +36,19 @@ type Response struct {
 	Body       io.ReadCloser
 }
 
-func (cli *Client) get(path string, query url.Values) (*Response, error) {
-	return cli.sendRequest("GET", path, query, nil)
+func (client *APIClient) get(path string, query url.Values) (*Response, error) {
+	return client.sendRequest("GET", path, query, nil)
 }
 
-func (cli *Client) post(path string, query url.Values, obj interface{}) (*Response, error) {
-	return cli.sendRequest("POST", path, query, obj)
+func (client *APIClient) post(path string, query url.Values, obj interface{}) (*Response, error) {
+	return client.sendRequest("POST", path, query, obj)
 }
 
-func (cli *Client) delete(path string, query url.Values) (*Response, error) {
-	return cli.sendRequest("DELETE", path, query, nil)
+func (client *APIClient) delete(path string, query url.Values) (*Response, error) {
+	return client.sendRequest("DELETE", path, query, nil)
 }
 
-func (cli *Client) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
+func (client *APIClient) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
 	var body io.Reader
 	if method == "POST" {
 		if obj != nil {
@@ -62,12 +62,12 @@ func (cli *Client) sendRequest(method, path string, query url.Values, obj interf
 		}
 	}
 
-	req, err := http.NewRequest(method, cli.baseURL+getAPIPath(path, query), body)
+	req, err := http.NewRequest(method, client.baseURL+getAPIPath(path, query), body)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := cli.httpCli.Do(req)
+	resp, err := client.HTTPCli.Do(req)
 	if err != nil {
 		return nil, err
 	}

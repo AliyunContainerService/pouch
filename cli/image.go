@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alibaba/pouch/client"
-
 	"github.com/spf13/cobra"
 )
 
@@ -37,13 +35,9 @@ func (i *ImageCommand) addFlags() {
 
 // Run is the entry of images container command.
 func (i *ImageCommand) Run(args []string) {
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
+	apiClient := i.cli.Client()
 
-	imageList, err := client.ImageList()
+	imageList, err := apiClient.ImageList()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get image list: %s\n", err)
 		return

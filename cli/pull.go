@@ -9,7 +9,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/ctrd"
 
 	"github.com/containerd/containerd/progress"
@@ -48,13 +47,8 @@ func (p *PullCommand) Run(args []string) {
 		tag = fields[1]
 	}
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
-
-	responseBody, err := client.ImagePull(name, tag)
+	apiClient := p.cli.Client()
+	responseBody, err := apiClient.ImagePull(name, tag)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to pull image: %v \n", err)
 		return
