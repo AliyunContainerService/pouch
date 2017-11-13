@@ -1,21 +1,23 @@
 package client
 
 import (
+	"io"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
 )
 
 // ImagePull requests daemon to pull an image from registry.
-func (cli *Client) ImagePull(name, tag string) error {
+func (cli *Client) ImagePull(name, tag string) (io.ReadCloser, error) {
 	q := url.Values{}
 	q.Set("fromImage", name)
 	q.Set("tag", tag)
 
 	resp, err := cli.post("/images/create", q, nil)
-	ensureCloseReader(resp)
-
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
 }
 
 // ImageList requests daemon to list all images
