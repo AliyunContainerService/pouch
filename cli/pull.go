@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/ctrd"
 
 	"github.com/containerd/containerd/progress"
@@ -47,25 +48,26 @@ func (p *PullCommand) Run(args []string) {
 		tag = fields[1]
 	}
 
-	req, err := p.cli.NewPostRequest(fmt.Sprintf("/images/create?fromImage=%s&tag=%s", name, tag), nil)
+	client, err := client.New("")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new request: %v \n", err)
+		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
-	response := req.Send()
 
-	if err := response.Error(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to pull: %v", err)
+	responseBody, err := client.ImagePull(name, tag)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to pull image: %v \n", err)
 		return
 	}
-	defer response.Close()
+
+	defer responseBody.Close()
 
 	var (
 		start = time.Now()
 		fw    = progress.NewWriter(os.Stdout)
 	)
 
-	dec := json.NewDecoder(response.Body)
+	dec := json.NewDecoder(responseBody)
 	if _, err = dec.Token(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to read the opening token: %v", err)
 		return
