@@ -34,6 +34,8 @@ func (m *SafeMap) Put(k string, v interface{}) {
 
 // Remove removes the key-value pair.
 func (m *SafeMap) Remove(k string) {
+	m.Lock()
+	defer m.Unlock()
 	delete(m.inner, k)
 }
 
