@@ -15,11 +15,14 @@ import (
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/content"
+	"github.com/containerd/containerd/diff"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/rootfs"
 	"github.com/containerd/typeurl"
+	google_protobuf "github.com/gogo/protobuf/types"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -31,6 +34,11 @@ import (
 // or if an error was encountered when obtaining the exit status, it is set to 255.
 const UnknownExitStatus = 255
 
+const (
+	checkpointDateFormat = "01-02-2006-15:04:05"
+	checkpointNameFormat = "containerd.io/checkpoint/%s:%s"
+)
+
 // Status returns process status and exit information
 type Status struct {
 	// Status of the process
@@ -39,6 +47,15 @@ type Status struct {
 	ExitStatus uint32
 	// ExitedTime is the time at which the process died
 	ExitTime time.Time
+}
+
+// ProcessInfo provides platform specific process information
+type ProcessInfo struct {
+	// Pid is the process ID
+	Pid uint32
+	// Info includes additional process information
+	// Info varies by platform
+	Info *google_protobuf.Any
 }
 
 // ProcessStatus returns a human readable status for the Process representing its current status
@@ -76,6 +93,7 @@ func WithStdinCloser(r *IOCloseInfo) {
 
 // CheckpointTaskInfo allows specific checkpoint information to be set for the task
 type CheckpointTaskInfo struct {
+	Name string
 	// ParentCheckpoint is the digest of a parent checkpoint
 	ParentCheckpoint digest.Digest
 	// Options hold runtime specific settings for checkpointing a task
@@ -107,12 +125,12 @@ type Task interface {
 	// Exec creates a new process inside the task
 	Exec(context.Context, string, *specs.Process, IOCreation) (Process, error)
 	// Pids returns a list of system specific process ids inside the task
-	Pids(context.Context) ([]uint32, error)
+	Pids(context.Context) ([]ProcessInfo, error)
 	// Checkpoint serializes the runtime and memory information of a task into an
 	// OCI Index that can be push and pulled from a remote resource.
 	//
 	// Additional software like CRIU maybe required to checkpoint and restore tasks
-	Checkpoint(context.Context, ...CheckpointTaskOpts) (v1.Descriptor, error)
+	Checkpoint(context.Context, ...CheckpointTaskOpts) (Image, error)
 	// Update modifies executing tasks with updated settings
 	Update(context.Context, ...UpdateTaskOpts) error
 	// LoadProcess loads a previously created exec'd process
@@ -203,6 +221,7 @@ func (t *task) Status(ctx context.Context) (Status, error) {
 func (t *task) Wait(ctx context.Context) (<-chan ExitStatus, error) {
 	c := make(chan ExitStatus, 1)
 	go func() {
+		defer close(c)
 		r, err := t.client.TaskService().Wait(ctx, &tasks.WaitRequest{
 			ContainerID: t.id,
 		})
@@ -294,14 +313,21 @@ func (t *task) Exec(ctx context.Context, id string, spec *specs.Process, ioCreat
 	}, nil
 }
 
-func (t *task) Pids(ctx context.Context) ([]uint32, error) {
+func (t *task) Pids(ctx context.Context) ([]ProcessInfo, error) {
 	response, err := t.client.TaskService().ListPids(ctx, &tasks.ListPidsRequest{
 		ContainerID: t.id,
 	})
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)
 	}
-	return response.Pids, nil
+	var processList []ProcessInfo
+	for _, p := range response.Processes {
+		processList = append(processList, ProcessInfo{
+			Pid:  p.Pid,
+			Info: p.Info,
+		})
+	}
+	return processList, nil
 }
 
 func (t *task) CloseIO(ctx context.Context, opts ...IOCloserOpts) error {
@@ -330,46 +356,78 @@ func (t *task) Resize(ctx context.Context, w, h uint32) error {
 	return errdefs.FromGRPC(err)
 }
 
-func (t *task) Checkpoint(ctx context.Context, opts ...CheckpointTaskOpts) (d v1.Descriptor, err error) {
+func (t *task) Checkpoint(ctx context.Context, opts ...CheckpointTaskOpts) (Image, error) {
+	ctx, done, err := t.client.withLease(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+
 	request := &tasks.CheckpointTaskRequest{
 		ContainerID: t.id,
 	}
 	var i CheckpointTaskInfo
 	for _, o := range opts {
 		if err := o(&i); err != nil {
-			return d, err
+			return nil, err
 		}
+	}
+	// set a default name
+	if i.Name == "" {
+		i.Name = fmt.Sprintf(checkpointNameFormat, t.id, time.Now().Format(checkpointDateFormat))
 	}
 	request.ParentCheckpoint = i.ParentCheckpoint
 	if i.Options != nil {
 		any, err := typeurl.MarshalAny(i.Options)
 		if err != nil {
-			return d, err
+			return nil, err
 		}
 		request.Options = any
 	}
 	// make sure we pause it and resume after all other filesystem operations are completed
 	if err := t.Pause(ctx); err != nil {
-		return d, err
+		return nil, err
 	}
 	defer t.Resume(ctx)
 	cr, err := t.client.ContainerService().Get(ctx, t.id)
 	if err != nil {
-		return d, err
+		return nil, err
 	}
-	var index v1.Index
+	index := v1.Index{
+		Annotations: make(map[string]string),
+	}
 	if err := t.checkpointTask(ctx, &index, request); err != nil {
-		return d, err
+		return nil, err
 	}
-	if err := t.checkpointImage(ctx, &index, cr.Image); err != nil {
-		return d, err
+	if cr.Image != "" {
+		if err := t.checkpointImage(ctx, &index, cr.Image); err != nil {
+			return nil, err
+		}
+		index.Annotations["image.name"] = cr.Image
 	}
-	if err := t.checkpointRWSnapshot(ctx, &index, cr.Snapshotter, cr.SnapshotKey); err != nil {
-		return d, err
+	if cr.SnapshotKey != "" {
+		if err := t.checkpointRWSnapshot(ctx, &index, cr.Snapshotter, cr.SnapshotKey); err != nil {
+			return nil, err
+		}
 	}
-	index.Annotations = make(map[string]string)
-	index.Annotations["image.name"] = cr.Image
-	return t.writeIndex(ctx, &index)
+	desc, err := t.writeIndex(ctx, &index)
+	if err != nil {
+		return nil, err
+	}
+	im := images.Image{
+		Name:   i.Name,
+		Target: desc,
+		Labels: map[string]string{
+			"containerd.io/checkpoint": "true",
+		},
+	}
+	if im, err = t.client.ImageService().Create(ctx, im); err != nil {
+		return nil, err
+	}
+	return &image{
+		client: t.client,
+		i:      im,
+	}, nil
 }
 
 // UpdateTaskInfo allows updated specific settings to be changed on a task
@@ -436,6 +494,15 @@ func (t *task) Metrics(ctx context.Context) (*types.Metric, error) {
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)
 	}
+
+	if response.Metrics == nil {
+		_, err := t.Status(ctx)
+		if err != nil && errdefs.IsNotFound(err) {
+			return nil, err
+		}
+		return nil, errors.New("no metrics received")
+	}
+
 	return response.Metrics[0], nil
 }
 
@@ -460,7 +527,10 @@ func (t *task) checkpointTask(ctx context.Context, index *v1.Index, request *tas
 }
 
 func (t *task) checkpointRWSnapshot(ctx context.Context, index *v1.Index, snapshotterName string, id string) error {
-	rw, err := rootfs.Diff(ctx, id, fmt.Sprintf("checkpoint-rw-%s", id), t.client.SnapshotService(snapshotterName), t.client.DiffService())
+	opts := []diff.Opt{
+		diff.WithReference(fmt.Sprintf("checkpoint-rw-%s", id)),
+	}
+	rw, err := rootfs.Diff(ctx, id, t.client.SnapshotService(snapshotterName), t.client.DiffService(), opts...)
 	if err != nil {
 		return err
 	}
@@ -484,15 +554,19 @@ func (t *task) checkpointImage(ctx context.Context, index *v1.Index, image strin
 	return nil
 }
 
-func (t *task) writeIndex(ctx context.Context, index *v1.Index) (v1.Descriptor, error) {
+func (t *task) writeIndex(ctx context.Context, index *v1.Index) (d v1.Descriptor, err error) {
+	labels := map[string]string{}
+	for i, m := range index.Manifests {
+		labels[fmt.Sprintf("containerd.io/gc.ref.content.%d", i)] = m.Digest.String()
+	}
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(index); err != nil {
 		return v1.Descriptor{}, err
 	}
-	return writeContent(ctx, t.client.ContentStore(), v1.MediaTypeImageIndex, t.id, buf)
+	return writeContent(ctx, t.client.ContentStore(), v1.MediaTypeImageIndex, t.id, buf, content.WithLabels(labels))
 }
 
-func writeContent(ctx context.Context, store content.Store, mediaType, ref string, r io.Reader) (d v1.Descriptor, err error) {
+func writeContent(ctx context.Context, store content.Store, mediaType, ref string, r io.Reader, opts ...content.Opt) (d v1.Descriptor, err error) {
 	writer, err := store.Writer(ctx, ref, 0, "")
 	if err != nil {
 		return d, err
@@ -502,7 +576,7 @@ func writeContent(ctx context.Context, store content.Store, mediaType, ref strin
 	if err != nil {
 		return d, err
 	}
-	if err := writer.Commit(ctx, size, ""); err != nil {
+	if err := writer.Commit(ctx, size, "", opts...); err != nil {
 		return d, err
 	}
 	return v1.Descriptor{
