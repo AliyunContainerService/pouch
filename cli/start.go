@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/client"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -70,21 +72,17 @@ func (s *StartCommand) Run(args []string) {
 		}()
 	}
 
-	// start container.
-	path := fmt.Sprintf("/containers/%s/start", container)
-
-	req, err := s.cli.NewPostRequest(path, nil)
+	client, err := client.New("")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
 		return
 	}
 
-	response := req.Send()
-	if err := response.Error(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to request: %v \n", err)
+	// start container
+	if err := client.ContainerStart(container, ""); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to start container %s: %v\n", container, err)
 		return
 	}
-	defer response.Close()
 
 	// wait the io to finish.
 	if s.attach || s.stdin {
