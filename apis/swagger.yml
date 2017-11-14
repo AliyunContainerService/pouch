@@ -9,10 +9,10 @@ produces:
 consumes:
   - "application/json"
   - "text/plain"
-basePath: "/v1.32"
+basePath: "/v1.24"
 info:
   title: "Pouch Engine API"
-  version: "1.32"
+  version: "1.24"
   description: |
     API is an HTTP API served by Pouch Engine.
 
