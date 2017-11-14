@@ -1,4 +1,4 @@
-package volume
+package error
 
 const (
 	volumeNotfound errCode = iota

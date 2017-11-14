@@ -25,6 +25,9 @@ type VolumeMgr interface {
 	// Info returns the information of volume that specified name/id.
 	Info(ctx context.Context, name string) (*types.Volume, error)
 
+	// Path returns the mount path of volume.
+	Path(ctx context.Context, name string) (string, error)
+
 	// Attach is used to bind a volume to container.
 	Attach(ctx context.Context, name string, options map[string]string) (*types.Volume, error)
 
@@ -112,6 +115,14 @@ func (vm *VolumeManager) Info(ctx context.Context, name string) (*types.Volume, 
 		Name: name,
 	}
 	return vm.core.GetVolume(id)
+}
+
+// Path returns the mount path of volume.
+func (vm *VolumeManager) Path(ctx context.Context, name string) (string, error) {
+	id := types.VolumeID{
+		Name: name,
+	}
+	return vm.core.VolumePath(id)
 }
 
 // Attach is used to bind a volume to container.
