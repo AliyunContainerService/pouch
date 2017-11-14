@@ -23,72 +23,11 @@ var (
 
 func main() {
 	var cmdServe = &cobra.Command{
-		Use:  "",
+		Use:  "pouchd",
 		Args: cobra.MinimumNArgs(0),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// initialize log.
-			initLog()
-
-			// initialize home dir.
-			dir := cfg.HomeDir
-
-			if dir == "" || !path.IsAbs(dir) {
-				return fmt.Errorf("invalid pouchd's home dir: %s", dir)
-			}
-			if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
-				if err := os.MkdirAll(dir, 0666); err != nil {
-					return fmt.Errorf("failed to mkdir: %v", err)
-				}
-			}
-
-			// define and start all required processes.
-			if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
-				os.RemoveAll(cfg.ContainerdAddr)
-			}
-			var processes exec.Processes = []*exec.Process{
-				{
-					Path: cfg.ContainerdPath,
-					Args: []string{
-						"-c", cfg.ContainerdConfig,
-						"-a", cfg.ContainerdAddr,
-						"--root", path.Join(cfg.HomeDir, "containerd/root"),
-						"--state", path.Join(cfg.HomeDir, "containerd/state"),
-						"-l", utils.If(cfg.Debug, "debug", "info").(string),
-					},
-				},
-			}
-			defer processes.StopAll()
-
-			if err := processes.RunAll(); err != nil {
-				return err
-			}
-			sigHandles = append(sigHandles, processes.StopAll)
-
-			// initialize signal and handle method.
-			signals := make(chan os.Signal, 1)
-			signal.Notify(signals, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
-			go func() {
-				sig := <-signals
-				logrus.Warnf("received signal: %s", sig)
-
-				for _, handle := range sigHandles {
-					if err := handle(); err != nil {
-						logrus.Errorf("failed to handle signal: %v", err)
-					}
-				}
-				os.Exit(1)
-			}()
-
-			// new daemon instance, this is core.
-			d := daemon.NewDaemon(cfg)
-			if d == nil {
-				return fmt.Errorf("failed to new daemon")
-			}
-
-			sigHandles = append(sigHandles, d.Shutdown)
-
-			return d.Run()
+			return runDaemon()
 		},
 	}
 
@@ -97,6 +36,73 @@ func main() {
 	cmdServe.Execute()
 }
 
+// runDaemon prepares configs, setups essential details and runs pouchd daemon.
+func runDaemon() error {
+	// initialize log.
+	initLog()
+
+	// initialize home dir.
+	dir := cfg.HomeDir
+
+	if dir == "" || !path.IsAbs(dir) {
+		return fmt.Errorf("invalid pouchd's home dir: %s", dir)
+	}
+	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0666); err != nil {
+			return fmt.Errorf("failed to mkdir: %v", err)
+		}
+	}
+
+	// define and start all required processes.
+	if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
+		os.RemoveAll(cfg.ContainerdAddr)
+	}
+	var processes exec.Processes = []*exec.Process{
+		{
+			Path: cfg.ContainerdPath,
+			Args: []string{
+				"-c", cfg.ContainerdConfig,
+				"-a", cfg.ContainerdAddr,
+				"--root", path.Join(cfg.HomeDir, "containerd/root"),
+				"--state", path.Join(cfg.HomeDir, "containerd/state"),
+				"-l", utils.If(cfg.Debug, "debug", "info").(string),
+			},
+		},
+	}
+	defer processes.StopAll()
+
+	if err := processes.RunAll(); err != nil {
+		return err
+	}
+	sigHandles = append(sigHandles, processes.StopAll)
+
+	// initialize signal and handle method.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		sig := <-signals
+		logrus.Warnf("received signal: %s", sig)
+
+		for _, handle := range sigHandles {
+			if err := handle(); err != nil {
+				logrus.Errorf("failed to handle signal: %v", err)
+			}
+		}
+		os.Exit(1)
+	}()
+
+	// new daemon instance, this is core.
+	d := daemon.NewDaemon(cfg)
+	if d == nil {
+		return fmt.Errorf("failed to new daemon")
+	}
+
+	sigHandles = append(sigHandles, d.Shutdown)
+
+	return d.Run()
+}
+
+// setupFlags setups flags for command line.
 func setupFlags(cmd *cobra.Command) {
 	flagSet := cmd.Flags()
 
@@ -142,6 +148,7 @@ func setupFlags(cmd *cobra.Command) {
 	utils.SetupTLSFlag(flagSet, &cfg.TLS)
 }
 
+// initLog initializes log Level and log format of daemon.
 func initLog() {
 	if cfg.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
