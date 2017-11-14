@@ -15,6 +15,7 @@ function build_test ()
 	docker build --quiet -t pouch:test .
 
 	# build pouch binaries and execute unit tests.
+	echo "Build pouch binaries and execute unit tests."
 	docker run -ti -v `pwd`:/go/src/github.com/alibaba/pouch pouch:test bash -c "make check && make build && make unit-test"
 }
 
@@ -22,15 +23,18 @@ function build_test ()
 function install_pouch ()
 {
 	# install containerd
+	echo "Download and install containerd."
 	wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.0-beta.3/containerd-1.0.0-beta.3.linux-amd64.tar.gz -P $TMP
 	tar xf $TMP/containerd-1.0.0-beta.3.linux-amd64.tar.gz -C $TMP && cp -f $TMP/bin/* /usr/local/bin/
 
 	# install runc
+	echo "Download and install runc."
 	wget --quiet https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin
 	chmod +x /usr/local/bin/runc.amd64
 	mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 
 	# copy pouch daemon and pouch cli to PATH
+	echo "Install pouch."
 	cp -f pouch pouchd /usr/local/bin/
 }
 
@@ -40,6 +44,7 @@ function main ()
 	install_pouch
 
 	#start pouch daemon
+	echo "start pouch daemon"
 	pouchd > $TMP/log 2>&1 &
 
 	# wait until pouch daemon is ready
@@ -52,7 +57,13 @@ function main ()
 		fi
 	done
 
+	echo "verify pouch version"
 	pouch version
+
+	# This scripts can't get environment variables in travis ci.
+	PATH=$PATH:/home/travis/.gimme/versions/go1.8.3.linux.amd64/bin/
+	cd $DIR/../test
+	go test
 }
 
 main "$@"

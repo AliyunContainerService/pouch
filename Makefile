@@ -50,7 +50,7 @@ vet: # run go vet
 
 unit-test: ## run go test
 	@echo $@
-	@go test ./...
+	@go test `go list ./... | grep -v 'github.com/alibaba/pouch/test'`
 
 modules:
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
