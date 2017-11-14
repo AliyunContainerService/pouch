@@ -12,8 +12,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DeleteOpts allows the caller to set options for the deletion of a container
+type DeleteOpts func(ctx context.Context, client *Client, c containers.Container) error
+
 // NewContainerOpts allows the caller to set additional options when creating a container
 type NewContainerOpts func(ctx context.Context, client *Client, c *containers.Container) error
+
+// UpdateContainerOpts allows the caller to set additional options when updating a container
+type UpdateContainerOpts func(ctx context.Context, client *Client, c *containers.Container) error
 
 // WithRuntime allows a user to specify the runtime name and additional options that should
 // be used to create tasks for the container
@@ -85,7 +91,8 @@ func WithNewSnapshot(id string, i Image) NewContainerOpts {
 			return err
 		}
 		setSnapshotterIfEmpty(c)
-		if _, err := client.SnapshotService(c.Snapshotter).Prepare(ctx, id, identity.ChainID(diffIDs).String()); err != nil {
+		parent := identity.ChainID(diffIDs).String()
+		if _, err := client.SnapshotService(c.Snapshotter).Prepare(ctx, id, parent); err != nil {
 			return err
 		}
 		c.SnapshotKey = id
@@ -114,7 +121,8 @@ func WithNewSnapshotView(id string, i Image) NewContainerOpts {
 			return err
 		}
 		setSnapshotterIfEmpty(c)
-		if _, err := client.SnapshotService(c.Snapshotter).View(ctx, id, identity.ChainID(diffIDs).String()); err != nil {
+		parent := identity.ChainID(diffIDs).String()
+		if _, err := client.SnapshotService(c.Snapshotter).View(ctx, id, parent); err != nil {
 			return err
 		}
 		c.SnapshotKey = id
@@ -134,18 +142,21 @@ func setSnapshotterIfEmpty(c *containers.Container) {
 // integration.
 //
 // Make sure to register the type of `extension` in the typeurl package via
-// `typeurl.Register` otherwise the type data will be inferred, including how
-// to encode and decode the object.
+// `typeurl.Register` or container creation may fail.
 func WithContainerExtension(name string, extension interface{}) NewContainerOpts {
 	return func(ctx context.Context, client *Client, c *containers.Container) error {
-		any, err := typeurl.MarshalAny(extension)
-		if err != nil {
-			return err
-		}
-
 		if name == "" {
 			return errors.Wrapf(errdefs.ErrInvalidArgument, "extension key must not be zero-length")
 		}
+
+		any, err := typeurl.MarshalAny(extension)
+		if err != nil {
+			if errors.Cause(err) == typeurl.ErrNotFound {
+				return errors.Wrapf(err, "extension %q is not registered with the typeurl package, see `typeurl.Register`", name)
+			}
+			return errors.Wrap(err, "error marshalling extension")
+		}
+
 		if c.Extensions == nil {
 			c.Extensions = make(map[string]types.Any)
 		}

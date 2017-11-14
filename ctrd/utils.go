@@ -8,14 +8,18 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
+
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // NewDefaultSpec new a template spec with default.
-func NewDefaultSpec(ctx context.Context) (*specs.Spec, error) {
-	return containerd.GenerateSpec(ctx, nil, nil)
+func NewDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
+	ctx = namespaces.WithNamespace(ctx, namespaces.Default)
+	return containerd.GenerateSpec(ctx, nil, &containers.Container{ID: id})
 }
 
 func resolver() (remotes.Resolver, error) {

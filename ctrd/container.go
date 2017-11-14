@@ -37,15 +37,15 @@ func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
 		return nil, err
 	}
 
-	pids, err := pack.task.Pids(ctx)
+	processes, err := pack.task.Pids(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get task's pids")
 	}
 
 	// convert []uint32 to []int.
-	list := make([]int, 0, len(pids))
-	for _, pid := range pids {
-		list = append(list, int(pid))
+	list := make([]int, 0, len(processes))
+	for _, ps := range processes {
+		list = append(list, int(ps.Pid))
 	}
 	return list, nil
 }
@@ -199,7 +199,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	// create container
 	specOptions := []containerd.SpecOpts{
 		containerd.WithImageConfig(img),
-		containerd.WithRootFSPath("rootfs", false),
+		containerd.WithRootFSPath("rootfs"),
 	}
 	options := []containerd.NewContainerOpts{
 		containerd.WithNewSnapshot(id, img),

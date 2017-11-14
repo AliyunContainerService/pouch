@@ -2,11 +2,16 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/containerd/containerd/content"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/rootfs"
+	"github.com/containerd/containerd/snapshot"
 	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 )
@@ -25,6 +30,8 @@ type Image interface {
 	Size(ctx context.Context) (int64, error)
 	// Config descriptor for the image.
 	Config(ctx context.Context) (ocispec.Descriptor, error)
+	// IsUnpacked returns whether or not an image is unpacked.
+	IsUnpacked(context.Context, string) (bool, error)
 }
 
 var _ = (Image)(&image{})
@@ -58,40 +65,70 @@ func (i *image) Config(ctx context.Context) (ocispec.Descriptor, error) {
 	return i.i.Config(ctx, provider, platforms.Default())
 }
 
+func (i *image) IsUnpacked(ctx context.Context, snapshotterName string) (bool, error) {
+	sn := i.client.SnapshotService(snapshotterName)
+	cs := i.client.ContentStore()
+
+	diffs, err := i.i.RootFS(ctx, cs, platforms.Default())
+	if err != nil {
+		return false, err
+	}
+
+	chainID := identity.ChainID(diffs)
+	_, err = sn.Stat(ctx, chainID.String())
+	if err == nil {
+		return true, nil
+	} else if !errdefs.IsNotFound(err) {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func (i *image) Unpack(ctx context.Context, snapshotterName string) error {
 	layers, err := i.getLayers(ctx, platforms.Default())
 	if err != nil {
 		return err
 	}
 
-	sn := i.client.SnapshotService(snapshotterName)
-	a := i.client.DiffService()
-	cs := i.client.ContentStore()
+	var (
+		sn = i.client.SnapshotService(snapshotterName)
+		a  = i.client.DiffService()
+		cs = i.client.ContentStore()
 
-	var chain []digest.Digest
+		chain    []digest.Digest
+		unpacked bool
+	)
 	for _, layer := range layers {
-		unpacked, err := rootfs.ApplyLayer(ctx, layer, chain, sn, a)
-		if err != nil {
-			// TODO: possibly wait and retry if extraction of same chain id was in progress
-			return err
+		labels := map[string]string{
+			"containerd.io/uncompressed": layer.Diff.Digest.String(),
 		}
-		if unpacked {
-			info, err := cs.Info(ctx, layer.Blob.Digest)
-			if err != nil {
-				return err
-			}
-			if info.Labels["containerd.io/uncompressed"] != layer.Diff.Digest.String() {
-				if info.Labels == nil {
-					info.Labels = map[string]string{}
-				}
-				info.Labels["containerd.io/uncompressed"] = layer.Diff.Digest.String()
-				if _, err := cs.Update(ctx, info, "labels.containerd.io/uncompressed"); err != nil {
-					return err
-				}
-			}
+
+		unpacked, err = rootfs.ApplyLayer(ctx, layer, chain, sn, a, snapshot.WithLabels(labels))
+		if err != nil {
+			return err
 		}
 
 		chain = append(chain, layer.Diff.Digest)
+	}
+
+	if unpacked {
+		desc, err := i.i.Config(ctx, cs, platforms.Default())
+		if err != nil {
+			return err
+		}
+
+		rootfs := identity.ChainID(chain).String()
+
+		cinfo := content.Info{
+			Digest: desc.Digest,
+			Labels: map[string]string{
+				fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", snapshotterName): rootfs,
+			},
+		}
+		if _, err := cs.Update(ctx, cinfo, fmt.Sprintf("labels.containerd.io/gc.ref.snapshot.%s", snapshotterName)); err != nil {
+			return err
+		}
 	}
 
 	return nil

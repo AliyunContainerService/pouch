@@ -3,8 +3,8 @@
 
 package logrus
 
-import "golang.org/x/sys/unix"
+import "syscall"
 
-const ioctlReadTermios = unix.TIOCGETA
+const ioctlReadTermios = syscall.TIOCGETA
 
-type Termios unix.Termios
+type Termios syscall.Termios

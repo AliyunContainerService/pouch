@@ -156,7 +156,7 @@ func (cm *ContainerManager) Start(ctx context.Context, startCfg types.ContainerS
 	c.DetachKeys = startCfg.DetachKeys
 
 	// new a default spec.
-	s, err := ctrd.NewDefaultSpec(ctx)
+	s, err := ctrd.NewDefaultSpec(ctx, c.ID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID)
 	}

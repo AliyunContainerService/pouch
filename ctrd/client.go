@@ -1,6 +1,8 @@
 package ctrd
 
 import (
+	"context"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/version"
 
@@ -21,6 +23,11 @@ type Client struct {
 	client *containerd.Client
 	watch  *watch
 	lock   *containerLock
+
+	// Lease is a new feature of containerd, We use it to avoid that the images
+	// are removed by garbage collection. If no lease is defined, the downloaded images will
+	// be removed automatically when the container is removed.
+	lease *containerd.Lease
 }
 
 // NewClient connect to containerd.
@@ -41,11 +48,27 @@ func NewClient(cfg Config) (*Client, error) {
 		return nil, errors.Wrap(err, "failed to connect containerd")
 	}
 
+	// create a new lease or reuse the existed.
+	var lease containerd.Lease
+
+	leases, err := cli.ListLeases(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	if len(leases) != 0 {
+		lease = leases[0]
+	} else {
+		if lease, err = cli.CreateLease(context.TODO()); err != nil {
+			return nil, err
+		}
+	}
+
 	logrus.Infof("success to create containerd's client, connect to: %s", cfg.Address)
 
 	return &Client{
 		Config: cfg,
 		client: cli,
+		lease:  &lease,
 		lock: &containerLock{
 			ids: make(map[string]struct{}),
 		},

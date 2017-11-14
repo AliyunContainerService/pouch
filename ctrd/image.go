@@ -12,6 +12,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/remotes"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -61,7 +62,7 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 
 	ongoing := newJobs(ref)
 
-	options := []containerd.RemoteOpts{
+	options := []containerd.RemoteOpt{
 		containerd.WithPullUnpack,
 		containerd.WithSchema1Conversion,
 		containerd.WithResolver(resolver),
@@ -105,7 +106,9 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 	return nil
 }
 
-func (c *Client) pullImage(ctx context.Context, ref string, options []containerd.RemoteOpts) (containerd.Image, error) {
+func (c *Client) pullImage(ctx context.Context, ref string, options []containerd.RemoteOpt) (containerd.Image, error) {
+	ctx = leases.WithLease(ctx, c.lease.ID())
+
 	img, err := c.client.Pull(ctx, ref, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to pull image")
