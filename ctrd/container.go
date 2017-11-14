@@ -201,6 +201,10 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		containerd.WithImageConfig(img),
 		containerd.WithRootFSPath("rootfs"),
 	}
+	if args := container.Spec.Process.Args; len(args) != 0 {
+		specOptions = append(specOptions, containerd.WithProcessArgs(args...))
+	}
+
 	options := []containerd.NewContainerOpts{
 		containerd.WithNewSnapshot(id, img),
 	}

@@ -13,7 +13,11 @@ type SetupFunc func(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) 
 
 var setupFunc = []SetupFunc{
 	// Container spec
-	setupProcess,
+	setupProcessArgs,
+	setupProcessCwd,
+	setupProcessEnv,
+	setupProcessTTY,
+	setupProcessUser,
 	setupNs,
 	setupCap,
 
