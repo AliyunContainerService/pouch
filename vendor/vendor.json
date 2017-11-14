@@ -3,12 +3,6 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "pkj2Ye4zdp0xPbL3kMwYevlpwQo=",
-			"path": "code.cloudfoundry.org/bytefmt",
-			"revision": "f4415fafc5619dd75599a54a7c91fb3948ad58bd",
-			"revisionTime": "2017-04-28T00:31:08Z"
-		},
-		{
 			"checksumSHA1": "FU/snvk/G/MqCWeKVnTyCKx+Y5M=",
 			"path": "github.com/Microsoft/go-winio/vhd",
 			"revision": ""

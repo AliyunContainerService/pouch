@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/pkg/client"
 	"github.com/alibaba/pouch/volume/driver"
 	volerr "github.com/alibaba/pouch/volume/error"
 	"github.com/alibaba/pouch/volume/types"
 	"github.com/alibaba/pouch/volume/types/meta"
 
-	"code.cloudfoundry.org/bytefmt"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -177,7 +177,7 @@ func checkVolume(v *types.Volume) error {
 }
 
 func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
-	size := "100G"
+	size := defaultSize
 	config := &types.VolumeConfig{
 		FileSystem: defaultFileSystem,
 		MountOpt:   defaultFileSystem,
@@ -186,7 +186,6 @@ func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
 	// Parse size
 	if s, ok := options[optionSize]; ok {
 		size = s
-		delete(options, optionSize)
 	}
 
 	sizeInt, err := bytefmt.ToMegabytes(size)

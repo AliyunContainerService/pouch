@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"text/tabwriter"
@@ -132,7 +133,7 @@ func (c *Cli) Print(obj interface{}) {
 			}
 
 		default:
-			continue
+			line = append(line, fmt.Sprintf("%v", v))
 		}
 
 		display.AddRow(line)

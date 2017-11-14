@@ -847,7 +847,6 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 			if err != nil {
 				opts := map[string]string{
 					"backend": "local",
-					"size":    "100G",
 				}
 				if err := mgr.VolumeMgr.Create(ctx, source, c.HostConfig.VolumeDriver, opts, nil); err != nil {
 					logrus.Errorf("failed to create volume: %s, err: %v", source, err)
