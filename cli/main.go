@@ -2,6 +2,7 @@ package main
 
 func main() {
 	cli := NewCli().SetFlags()
+
 	base := &baseCommand{cmd: cli.rootCmd, cli: cli}
 
 	// Add all subcommands.

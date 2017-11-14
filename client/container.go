@@ -7,7 +7,7 @@ import (
 )
 
 // ContainerCreate creates a new container based in the given configuration.
-func (cli *Client) ContainerCreate(config *types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error) {
+func (client *APIClient) ContainerCreate(config *types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error) {
 	createConfig := types.ContainerConfigWrapper{
 		ContainerConfig: config,
 		HostConfig:      hostConfig,
@@ -18,7 +18,7 @@ func (cli *Client) ContainerCreate(config *types.ContainerConfig, hostConfig *ty
 		q.Set("name", containerName)
 	}
 
-	resp, err := cli.post("/containers/create", q, createConfig)
+	resp, err := client.post("/containers/create", q, createConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -32,21 +32,21 @@ func (cli *Client) ContainerCreate(config *types.ContainerConfig, hostConfig *ty
 }
 
 // ContainerStart starts a created container.
-func (cli *Client) ContainerStart(name, detachKeys string) error {
+func (client *APIClient) ContainerStart(name, detachKeys string) error {
 	q := url.Values{}
 	if detachKeys != "" {
 		q.Set("detachKeys", detachKeys)
 	}
 
-	resp, err := cli.post("/containers/"+name+"/start", q, nil)
+	resp, err := client.post("/containers/"+name+"/start", q, nil)
 	ensureCloseReader(resp)
 
 	return err
 }
 
 // ContainerStop stops a container
-func (cli *Client) ContainerStop(name string) error {
-	resp, err := cli.post("/containers/"+name+"/stop", nil, nil)
+func (client *APIClient) ContainerStop(name string) error {
+	resp, err := client.post("/containers/"+name+"/stop", nil, nil)
 	ensureCloseReader(resp)
 
 	return err

@@ -7,8 +7,8 @@ import (
 )
 
 // SystemPing shows weather server is ok.
-func (cli *Client) SystemPing() (string, error) {
-	resp, err := cli.get("/_ping", nil)
+func (client *APIClient) SystemPing() (string, error) {
+	resp, err := client.get("/_ping", nil)
 	if err != nil {
 		return "", err
 	}
@@ -23,8 +23,8 @@ func (cli *Client) SystemPing() (string, error) {
 }
 
 // SystemVersion requests daemon for system version.
-func (cli *Client) SystemVersion() (*types.SystemVersion, error) {
-	resp, err := cli.get("/version", nil)
+func (client *APIClient) SystemVersion() (*types.SystemVersion, error) {
+	resp, err := client.get("/version", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +37,8 @@ func (cli *Client) SystemVersion() (*types.SystemVersion, error) {
 }
 
 // SystemInfo requests daemon for system info.
-func (cli *Client) SystemInfo() (*types.SystemInfo, error) {
-	resp, err := cli.get("/info", nil)
+func (client *APIClient) SystemInfo() (*types.SystemInfo, error) {
+	resp, err := client.get("/info", nil)
 	if err != nil {
 		return nil, err
 	}

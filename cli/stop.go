@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alibaba/pouch/client"
-
 	"github.com/spf13/cobra"
 )
 
@@ -29,15 +27,11 @@ func (s *StopCommand) Init(c *Cli) {
 
 // Run is the entry of stop command.
 func (s *StopCommand) Run(args []string) {
+	apiClient := s.cli.Client()
+
 	container := args[0]
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
-
-	if err = client.ContainerStop(container); err != nil {
+	if err := apiClient.ContainerStop(container); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to stop container %s: %v \n", container, err)
 		return
 	}

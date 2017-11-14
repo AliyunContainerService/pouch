@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alibaba/pouch/client"
-
 	"github.com/spf13/cobra"
 )
 
@@ -26,13 +24,9 @@ func (v *VersionCommand) Init(c *Cli) {
 
 // Run is the entry of version command.
 func (v *VersionCommand) Run(args []string) {
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
+	apiClient := v.cli.Client()
 
-	result, err := client.SystemVersion()
+	result, err := apiClient.SystemVersion()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get system version: %v\n", err)
 		return

@@ -3,8 +3,8 @@ package client
 import "github.com/alibaba/pouch/apis/types"
 
 // VolumeCreate creates a volume
-func (cli *Client) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeInfo, error) {
-	resp, err := cli.post("/volumes/create", nil, req)
+func (client *APIClient) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeInfo, error) {
+	resp, err := client.post("/volumes/create", nil, req)
 	if err != nil {
 		return nil, err
 	}
@@ -18,8 +18,8 @@ func (cli *Client) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeIn
 }
 
 // VolumeRemove removes a volume
-func (cli *Client) VolumeRemove(name string) error {
-	resp, err := cli.delete("/volumes/"+name, nil)
+func (client *APIClient) VolumeRemove(name string) error {
+	resp, err := client.delete("/volumes/"+name, nil)
 	ensureCloseReader(resp)
 
 	return err

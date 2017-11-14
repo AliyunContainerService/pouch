@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alibaba/pouch/client"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -72,14 +70,9 @@ func (s *StartCommand) Run(args []string) {
 		}()
 	}
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
-
+	apiClient := s.cli.Client()
 	// start container
-	if err := client.ContainerStart(container, ""); err != nil {
+	if err := apiClient.ContainerStart(container, ""); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to start container %s: %v\n", container, err)
 		return
 	}

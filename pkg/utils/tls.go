@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/alibaba/pouch/apis/types"
-
 	"github.com/spf13/pflag"
 )
+
+// TLSConfig contains information of tls which users can specify
+type TLSConfig struct {
+	CA           string
+	Cert         string
+	Key          string
+	VerifyRemote bool
+}
 
 // GenTLSConfig returns a tls config object according to inputting parameters.
 func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
@@ -39,7 +45,7 @@ func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
 }
 
 // SetupTLSFlag setups flags of tls arguments
-func SetupTLSFlag(fs *pflag.FlagSet, tlsCfg *types.TLSConfig) {
+func SetupTLSFlag(fs *pflag.FlagSet, tlsCfg *TLSConfig) {
 	fs.StringVar(&tlsCfg.Key, "tlskey", "", "Specify key file of tls")
 	fs.StringVar(&tlsCfg.Cert, "tlscert", "", "Specify cert file of tls")
 	fs.StringVar(&tlsCfg.CA, "tlscacert", "", "Specify CA file of tls")

@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alibaba/pouch/client"
-
 	"github.com/spf13/cobra"
 )
 
@@ -31,13 +29,8 @@ func (cc *CreateCommand) Run(args []string) {
 	config := cc.config()
 	config.Image = args[0]
 
-	client, err := client.New("")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to new client: %v\n", err)
-		return
-	}
-
-	result, err := client.ContainerCreate(config.ContainerConfig, config.HostConfig, "")
+	apiClient := cc.cli.Client()
+	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create container: %v\n", err)
 		return
