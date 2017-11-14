@@ -33,19 +33,7 @@ func (p *PullCommand) Init(c *Cli) {
 
 // Run is the entry of pull command.
 func (p *PullCommand) Run(args []string) {
-	fields := strings.Split(args[0], ":")
-
-	var (
-		name string
-		tag  string
-	)
-
-	if len(fields) == 1 || len(fields) == 2 {
-		name = fields[0]
-	}
-	if len(fields) == 2 {
-		tag = fields[1]
-	}
+	name, tag := parseNameTag(args[0])
 
 	apiClient := p.cli.Client()
 	responseBody, err := apiClient.ImagePull(name, tag)
@@ -53,16 +41,20 @@ func (p *PullCommand) Run(args []string) {
 		fmt.Fprintf(os.Stderr, "failed to pull image: %v \n", err)
 		return
 	}
-
 	defer responseBody.Close()
 
+	renderOutput(responseBody)
+}
+
+// renderOutput draws the commandline output via api response.
+func renderOutput(responseBody io.ReadCloser) {
 	var (
 		start = time.Now()
 		fw    = progress.NewWriter(os.Stdout)
 	)
 
 	dec := json.NewDecoder(responseBody)
-	if _, err = dec.Token(); err != nil {
+	if _, err := dec.Token(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to read the opening token: %v", err)
 		return
 	}
@@ -77,19 +69,19 @@ func (p *PullCommand) Run(args []string) {
 			return
 		}
 
-		p.display(tw, objs, start)
+		display(tw, objs, start)
 
 		tw.Flush()
 		fw.Flush()
 	}
 
-	if _, err = dec.Token(); err != nil {
+	if _, err := dec.Token(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to read the closing token: %v", err)
 		return
 	}
 }
 
-func (p *PullCommand) display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
+func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
 	var total int64
 	for _, status := range statuses {
 		total += status.Offset
@@ -130,4 +122,21 @@ func (p *PullCommand) display(w io.Writer, statuses []ctrd.ProgressInfo, start t
 		// data into the start time before.
 		progress.Bytes(total),
 		progress.NewBytesPerSecond(total, time.Since(start)))
+}
+
+// parseNameTag parses input arg and gets image name and image tag.
+func parseNameTag(input string) (string, string) {
+	fields := strings.Split(input, ":")
+
+	var name, tag string
+
+	if len(fields) == 1 {
+		name = fields[0]
+	}
+
+	if len(fields) == 2 {
+		tag = fields[1]
+	}
+
+	return name, tag
 }
