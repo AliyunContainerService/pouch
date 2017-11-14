@@ -8,11 +8,11 @@ If you wish to experience Pouch, please choose [End User Quick-Start](#end-user-
 
 You can install Pouch automatically on your machine with very few steps. Currently we support two kinds of Linux Distribution: Ubuntu and CentOS.
 
-## Ubuntu
+### Ubuntu
 
 To be added.
 
-## CentOS
+### CentOS
 
 To be added.
 
@@ -22,78 +22,58 @@ This guide provides step by step instructions to deploy Pouch on bare metal serv
 As a developer, you may need to build and test Pouch binaries via source code. To build pouchd which is so-called "pouch daemon" and pouch which is so-called "pouch cli", the following build system dependencies are required:
 
 * Linux Kernel 3.10+
+* Go 1.9.0+
 * containerd: 1.0.0-beta.3
 * runc: 1.0.0-rc4
-* runv: 1.0.0
+* runv: 1.0.0 (option)
 
-First, clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
+### Prerequisites Installation
+
+Since pouchd is a kind of container engine, and pouch is a cli tool, if you hope to experience container management ability via Pouch, there are several additional binaries needed:
+
+* [containerd](https://github.com/containerd/containerd): an industry-standard container runtime;
+* [runc](https://github.com/opencontainers/runc): a CLI tool for spawning and running containers according to the OCI specification;
+* [runv](https://github.com/hyperhq/runv): a hypervisor-based runtime for OCI.
+
+Here are the shell scripts to install `containerd` and `runc`:
+
+``` shell
+# install containerd
+$ wget https://github.com/containerd/containerd/releases/download/v1.0.0-beta.3/containerd-1.0.0-beta.3.linux-amd64.tar.gz
+$ tar -xzvf containerd-1.0.0-beta.3.linux-amd64.tar.gz -C /usr/local
+$
+# install runc
+$ wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin 
+$ chmod +x /usr/local/bin/runc.amd64
+$ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
+
+```
+
+### runV Installation
+
+If you wish to experience hypervisor-based virtualization additionally, you will still need to install [runV](https://github.com/hyperhq/runv).
+
+More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guinde](docs/pouch-runv-guide.md).
+
+### Pouch Build and Installation
+
+With all Prerequisites installed, you can build and install pouch daemon and pouch cli. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
 
 ``` shell
 $ mkdir -p $GOPATH/src/github.com/alibaba/ 
 $ cd $GOPATH/src/github.com/alibaba/; git clone https://github.com/alibaba/pouch.git
 $ cd pouch; git checkout master
 ```
-build and install pouch binaries (pouchd and pouch). With the required dependencies installed, the Makefile target named build will compile the pouch and pouchd binaries in current work directory. Or you can just execute `make install` to build binaries and install them in destination directory (/usr/local/bin by default).
+
+Makefile target named `build` will compile the pouch and pouchd binaries in current work directory. Or you can just execute `make install` to build binaries and install them in destination directory (`/usr/local/bin` by default).
 
 ``` shell
 $ make install
 ```
 
-Second, install containerd, runc and runv binaries. Since pouchd is a kind of container engine, and pouch is a cli tool, if you hope to experience container management ability via Pouch, there are several additional binaries needed:
+### Start Pouch
 
-* [containerd](https://github.com/containerd/containerd): an industry-standard container runtime;
-* [runc](https://github.com/opencontainers/runc): a CLI tool for spawning and running containers according to the OCI specification;
-* [runv](https://github.com/hyperhq/runv): a hypervisor-based runtime for OCI.
-
-Install containerd
-
-``` shell
-$ wget https://github.com/containerd/containerd/releases/download/v1.0.0-beta.3/containerd-1.0.0-beta.3.linux-amd64.tar.gz
-$ tar -xzvf containerd-1.0.0-beta.3.linux-amd64.tar.gz -C /usr/local
-```
-
-Install runV
-
-``` shell
-# Centos
-$ yum install -y autoconf automake pkg-config qemu
-
-# Ubuntu
-$ apt-get install -y autoconf automake pkg-config qemu
-
-# Install runV
-$ mkdir $GOPATH/src/github.com/hyperhq
-$ cd $GOPATH/src/github.com/hyperhq; git clone https://github.com/hyperhq/runv/
-$ cd runv; ./autogen.sh; ./configure --without-xen
-$ make; make install
-```
-
-Install hyperstart
-
-runv needs hyperstart to provide guest kernel and initrd. By default, it looks for kernel and hyper-initrd.img from /var/lib/hyper/ directory. Build hyperstart and copy them there:
-
-```
-$ git clone https://github.com/hyperhq/hyperstart.git
-$ cd hyperstart; ./autogen.sh; ./configure; make
-$ mkdir /var/lib/hyper/
-$ cp build/hyper-initrd.img build/kernel /var/lib/hyper
-```
-Install runC
-
-``` shell
-# Centos
-$ yum install -y libseccomp-devel
-
-# Ubuntu
-$ apt-get install -y libseccomp-dev
-
-# Install runC
-$ wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin 
-$ chmod +x /usr/local/bin/runc.amd64
-$ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
-```
-
-Forth, with all needed binaries installed, we could start pouchd via:
+With all needed binaries installed, you could start pouchd via:
 
 ``` shell
 $ pouchd
