@@ -92,7 +92,6 @@ func (p *Local) Options() map[string]types.Option {
 func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) error {
 	ctx.Log.Debugf("Local attach volume: %s", v.Name)
 	mountPath := v.Path()
-	size := v.Size()
 	reqID := v.Option("reqID")
 	ids := v.Option("ids")
 
@@ -110,13 +109,6 @@ func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) er
 		}
 	} else if !st.IsDir() {
 		return fmt.Errorf("mount path is not a dir %s", mountPath)
-	}
-
-	if size != "0" {
-		quotaDriverStart(mountPath)
-		if ex := setDiskQuota(mountPath, size, 0); ex != nil {
-			return ex
-		}
 	}
 
 	v.SetOption("ids", ids)
