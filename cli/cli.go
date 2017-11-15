@@ -69,8 +69,8 @@ func (c *Cli) Client() *client.APIClient {
 }
 
 // Run executes the client program.
-func (c *Cli) Run() {
-	c.rootCmd.Execute()
+func (c *Cli) Run() error {
+	return c.rootCmd.Execute()
 }
 
 // AddCommand add a subcommand.

@@ -1,5 +1,9 @@
 package main
 
+import (
+	"os"
+)
+
 func main() {
 	cli := NewCli().SetFlags()
 
@@ -14,5 +18,8 @@ func main() {
 	cli.AddCommand(base, &VersionCommand{})
 	cli.AddCommand(base, &ImageCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
-	cli.Run()
+
+	if err := cli.Run(); err != nil {
+		os.Exit(1)
+	}
 }
