@@ -19,9 +19,23 @@ func (suite *PouchHelpSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, IsLinux)
 }
 
-// TestExample is a demo of CLI test.
-func (suite *PouchHelpSuite) TestExample(c *check.C) {
-	cmd := exec.Command("ls")
-	err := cmd.Run()
-	c.Assert(err, check.IsNil)
+// TestHelpWorks is a demo of CLI test.
+func (suite *PouchHelpSuite) TestHelpWorks(c *check.C) {
+	// TODO: add wrong args.
+	args := map[string]bool{
+		"help":   true,
+		"--help": true,
+		"-h":     true,
+	}
+
+	for arg, ok := range args {
+		cmd := exec.Command("pouch", arg)
+		_, _, err := runCmd(cmd)
+
+		if ok {
+			c.Assert(err, check.IsNil)
+		} else {
+			c.Assert(err, check.NotNil)
+		}
+	}
 }
