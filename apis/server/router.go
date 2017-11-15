@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,6 +34,9 @@ func initRoute(s *Server) http.Handler {
 	// volume
 	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
 	r.Path("/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
+
+	// metrics
+	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 
 	if s.Config.Debug {
 		profilerSetup(r)

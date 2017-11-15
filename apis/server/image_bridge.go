@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/alibaba/pouch/apis/metrics"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,6 +25,10 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 	if tag == "" {
 		tag = "latest"
 	}
+	// record the time spent during image pull procedure.
+	defer func(start time.Time) {
+		metrics.ImagePullSummary.WithLabelValues(image + ":" + tag).Observe(metrics.SinceInMicroseconds(start))
+	}(time.Now())
 
 	if err := s.ImageMgr.PullImage(ctx, image, tag, resp); err != nil {
 		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
