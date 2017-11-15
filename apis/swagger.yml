@@ -224,21 +224,7 @@ paths:
           in: "body"
           description: "Container to create"
           schema:
-            allOf:
-              - $ref: "#/definitions/ContainerConfig"
-              - type: "object"
-                properties:
-                  HostConfig:
-                    $ref: "#/definitions/HostConfig"
-                  NetworkingConfig:
-                    description: "This container's networking configuration."
-                    type: "object"
-                    properties:
-                      EndpointsConfig:
-                        description: "A mapping of network name to endpoint configuration for that network."
-                        type: "object"
-                        additionalProperties:
-                          $ref: "#/definitions/EndpointSettings"
+            $ref: "#/definitions/ContainerConfigWrapper"
           required: true
       responses:
         201:
@@ -492,6 +478,7 @@ definitions:
     properties:
       message:
         type: string
+
   SystemVersion:
     type: "object"
     properties:
@@ -527,6 +514,7 @@ definitions:
         type: "string"
         description: "The time when this binary of daemon is built"
         example: "2017-08-29T17:41:57.729792388+00:00"
+
   SystemInfo:
     type: "object"
     properties:
@@ -540,6 +528,89 @@ definitions:
         type: "integer"
       ContainersPaused:
         type: "integer"
+
+  ContainerInfo:
+    type: "object"
+    properties:
+      Id:
+        description: "The ID of the container"
+        type: "string"
+      Created:
+        description: "The time the container was created"
+        type: "string"
+      Path:
+        description: "The path to the command being run"
+        type: "string"
+      Args:
+        description: "The arguments to the command being run"
+        type: "array"
+        items:
+          type: "string"
+      State:
+        $ref: "#/definitions/ContainerState"
+      Image:
+        description: "The container's image"
+        type: "string"
+      ResolvConfPath:
+        type: "string"
+      HostnamePath:
+        type: "string"
+      HostsPath:
+        type: "string"
+      LogPath:
+        type: "string"
+      Node:
+        description: "TODO"
+        type: "object"
+      Name:
+        type: "string"
+      RestartCount:
+        type: "integer"
+      Driver:
+        type: "string"
+      MountLabel:
+        type: "string"
+      ProcessLabel:
+        type: "string"
+      AppArmorProfile:
+        type: "string"
+      ExecIDs:
+        type: "string"
+      HostConfig:
+        $ref: "#/definitions/HostConfig"
+      GraphDriver:
+        $ref: "#/definitions/GraphDriverData"
+      SizeRw:
+        description: "The size of files that have been created or changed by this container."
+        type: "integer"
+        format: "int64"
+      SizeRootFs:
+        description: "The total size of all the files in this container."
+        type: "integer"
+        format: "int64"
+      Mounts:
+        type: "array"
+        items:
+          $ref: "#/definitions/MountPoint"
+      Config:
+        $ref: "#/definitions/ContainerConfig"
+      NetworkSettings:
+        $ref: "#/definitions/NetworkSettings"
+
+  ContainerConfigWrapper:
+    description: | 
+      ContainerConfigWrapper is used for API "POST /containers/create".
+      It wraps all kinds of config used in container creation.
+      It can be used to encode client params in client and unmarshal request body in daemon side.
+    allOf:
+      - $ref: "#/definitions/ContainerConfig"
+      - type: "object"
+        properties:
+          HostConfig:
+            $ref: "#/definitions/HostConfig"
+          NetworkingConfig:
+            $ref: "#/definitions/NetworkingConfig"
+
   ContainerConfig:
     type: "object"
     description: "Configuration for a container that is portable between hosts"
@@ -566,10 +637,7 @@ definitions:
         type: "boolean"
         default: true
       ExposedPorts:
-        description: |
-          An object mapping ports to an empty object in the form:
-
-          `{"<port>/<tcp|udp>": {}}`
+        description: "An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`"
         type: "object"
         additionalProperties:
           type: "object"
@@ -653,6 +721,7 @@ definitions:
         type: "array"
         items:
           type: "string"
+  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
     type: "object"
@@ -663,7 +732,7 @@ definitions:
         type: "string"
         x-nullable: false
       Name:
-        description: "Then name of the created container"
+        description: "The name of the created container"
         type: "string"
       Warnings:
         description: "Warnings encountered when creating the container"
@@ -671,6 +740,7 @@ definitions:
         x-nullable: false
         items:
           type: "string"
+
   HostConfig:
     description: "Container configuration that depends on the host we are running on"
     allOf:
@@ -718,14 +788,7 @@ definitions:
             type: "object"
             description: "A map of exposed container ports and the host port they should map to."
             additionalProperties:
-              type: "object"
-              properties:
-                HostIp:
-                  type: "string"
-                  description: "The host IP address"
-                HostPort:
-                  type: "string"
-                  description: "The host port number, as a string"
+              $ref: "#/definitions/PortBinding"
           AutoRemove:
             type: "boolean"
             description: "Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set."
@@ -737,7 +800,6 @@ definitions:
             description: "A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`."
             items:
               type: "string"
-          # Applicable to UNIX platforms
           CapAdd:
             type: "array"
             description: "A list of kernel capabilities to add to the container."
@@ -778,13 +840,11 @@ definitions:
             type: "string"
             description: |
                     IPC sharing mode for the container. Possible values are:
-
                     - `"none"`: own private IPC namespace, with /dev/shm not mounted
                     - `"private"`: own private IPC namespace
                     - `"shareable"`: own private IPC namespace, with a possibility to share it with other containers
                     - `"container:<name|id>"`: join another (shareable) container's IPC namespace
                     - `"host"`: use the host system's IPC namespace
-
                     If not specified, daemon default is used, which can either be `"private"`
                     or `"shareable"`, depending on daemon version and configuration.
           Cgroup:
@@ -803,7 +863,6 @@ definitions:
             type: "string"
             description: |
               Set the PID (Process) Namespace mode for the container. It can be either:
-
               - `"container:<name|id>"`: joins another container's PID namespace
               - `"host"`: use the host's PID namespace inside the container
           Privileged:
@@ -909,6 +968,13 @@ definitions:
         type: "object"
         $ref: '#/definitions/HostConfig'
 
+  NetworkingConfig:
+    description: "Configuration for a network used to create a container."
+    type: "object"
+    properties:
+      EndpointsConfig:
+        $ref: "#/definitions/EndpointSettings"
+
   EndpointSettings:
     description: "Configuration for a network endpoint."
     type: "object"
@@ -1009,6 +1075,7 @@ definitions:
       Size:
         description: "size of image's taking disk space."
         type: "integer"
+
   SearchResultItem:
     type: "object"
     description: "search result item in search results."
@@ -1028,6 +1095,7 @@ definitions:
       star_count:
         type: "integer"
         description: "star_count refers to the star count of this image."
+
   VolumeInfo:
     type: "object"
     description: "Volume represents the configuration of a volume for the container."
@@ -1063,6 +1131,7 @@ definitions:
           Scope describes the level at which the volume exists
           (e.g. `global` for cluster-wide or `local` for machine level)
         type: "string"
+
   VolumeConfig:
     description: "config used to create a volume"
     type: "object"
@@ -1092,6 +1161,7 @@ definitions:
         com.example.some-label: "some-value"
         com.example.some-other-label: "some-other-value"
       Driver: "custom"
+
   VolumeCreateRequest:
     type: "object"
     description: "VolumeCreateRequest contains the response for the remote API: POST /volumes/create"
@@ -1112,6 +1182,7 @@ definitions:
         type: "object"
         additionalProperties:
           type: "string"
+
   VolumeListResp:
     type: "object"
     required: [Volumes, Warnings]
@@ -1128,6 +1199,7 @@ definitions:
         description: "Warnings that occurred when fetching the list of volumes"
         items:
           type: "string"
+
   ExecCreateConfig:
     type: "object"
     properties:
@@ -1281,3 +1353,207 @@ definitions:
     description: The status of the container. For example, "running" or "exited".
     type: "string"
     enum: ["created", "running", "stopped","paused", "restarting", "removing", "exited", "dead"]
+
+  GraphDriverData:
+    description: "Information about a container's graph driver."
+    type: "object"
+    required: [Name, Data]
+    properties:
+      Name:
+        type: "string"
+        x-nullable: false
+      Data:
+        type: "object"
+        x-nullable: false
+        additionalProperties:
+          type: "string"
+
+  MountPoint:
+    type: "object"
+    description: "A mount point inside a container"
+    properties:
+      Type:
+        type: "string"
+      Name:
+        type: "string"
+      Source:
+        type: "string"
+      Destination:
+        type: "string"
+      Driver:
+        type: "string"
+      Mode:
+        type: "string"
+      RW:
+        type: "boolean"
+      Propagation:
+        type: "string"
+
+  NetworkSettings:
+    description: "NetworkSettings exposes the network settings in the API"
+    type: "object"
+    properties:
+      Bridge:
+        description: Name of the network'a bridge (for example, `pouch-br`).
+        type: "string"
+        example: "pouch-br"
+      SandboxID:
+        description: SandboxID uniquely represents a container's network stack.
+        type: "string"
+        example: "9d12daf2c33f5959c8bf90aa513e4f65b561738661003029ec84830cd503a0c3"
+      HairpinMode:
+        description: "Indicates if hairpin NAT should be enabled on the virtual interface"
+        type: "boolean"
+        example: false
+      LinkLocalIPv6Address:
+        description: "IPv6 unicast address using the link-local prefix"
+        type: "string"
+        example: "fe80::42:acff:fe11:1"
+      LinkLocalIPv6PrefixLen:
+        description: Prefix length of the IPv6 unicast address.
+        type: "integer"
+        example: "64"
+      Ports:
+        $ref: "#/definitions/PortMap"
+      SandboxKey:
+        description: SandboxKey identifies the sandbox
+        type: "string"
+        example: "/var/run/pouch/netns/8ab54b426c38"
+
+      # TODO is SecondaryIPAddresses actually used?
+      SecondaryIPAddresses:
+        description: ""
+        type: "array"
+        items:
+          $ref: "#/definitions/IPAddress"
+        x-nullable: true
+
+      # TODO is SecondaryIPv6Addresses actually used?
+      SecondaryIPv6Addresses:
+        description: ""
+        type: "array"
+        items:
+          $ref: "#/definitions/IPAddress"
+        x-nullable: true
+      Networks:
+        description: "Information about all networks that the container is connected to"
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/EndpointSettings"
+
+  EndpointSettings:
+    description: "Configuration for a network endpoint."
+    type: "object"
+    properties:
+      Links:
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "container_1"
+          - "container_2"
+      Aliases:
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "server_x"
+          - "server_y"
+      NetworkID:
+        description: "Unique ID of the network.\""
+        type: "string"
+        example: "08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"
+      EndpointID:
+        description: "Unique ID for the service endpoint in a Sandbox"
+        type: "string"
+        example: "b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"
+      Gateway:
+        description: "Gateway address for this network"
+        type: "string"
+        example: "172.17.0.1"
+      IPAddress:
+        description: "IPv4 address"
+        type: "string"
+        example: "172.17.0.4"
+      IPPrefixLen:
+        description: "Mask length of the IPv4 address"
+        type: "integer"
+        example: 16
+      IPv6Gateway:
+        description: "IPv6 gateway address"
+        type: "string"
+        example: "2001:db8:2::100"
+      GlobalIPv6Address:
+        description: "Global IPv6 address"
+        type: "string"
+        example: "2001:db8::5689"
+      GlobalIPv6PrefixLen:
+        description: "Mask length of the global IPv6 address"
+        type: "integer"
+        format: "int64"
+        example: 64
+      MacAddress:
+        description: MAC address for the endpoint on this network"
+        type: "string"
+        example: "02:42:ac:11:00:04"
+      DriverOpts:
+        description: "DriverOpts is a mapping of driver options and values. These options are passed directly to the driver and are driver specific"
+        type: "object"
+        x-nullable: true
+        additionalProperties:
+          type: "string"
+        example:
+          com.example.some-label: "some-value"
+          com.example.some-other-label: "some-other-value"
+
+  IPAddress:
+    description: Address represents an IPv4 or IPv6 IP address.
+    type: "object"
+    properties:
+      Addr:
+        description: IP address.
+        type: "string"
+      PrefixLen:
+        description: Mask length of the IP address.
+        type: "integer"
+
+  PortMap:
+    description: |
+      PortMap describes the mapping of container ports to host ports, using the
+      container's port-number and protocol as key in the format `<port>/<protocol>`,
+      for example, `80/udp`.
+
+      If a container's port is mapped for both `tcp` and `udp`, two separate
+      entries are added to the mapping table.
+    type: "object"
+    additionalProperties:
+      type: "array"
+      items:
+        $ref: "#/definitions/PortBinding"
+    example:
+      "443/tcp":
+        - HostIp: "127.0.0.1"
+          HostPort: "4443"
+      "80/tcp":
+        - HostIp: "0.0.0.0"
+          HostPort: "80"
+        - HostIp: "0.0.0.0"
+          HostPort: "8080"
+      "80/udp":
+        - HostIp: "0.0.0.0"
+          HostPort: "80"
+      "2377/tcp": null
+
+  PortBinding:
+    description: "PortBinding represents a binding between a host IP address and a host port"
+    type: "object"
+    x-nullable: true
+    properties:
+      HostIp:
+        description: "Host IP address that the container's port is mapped to."
+        type: "string"
+        example: "127.0.0.1"
+      HostPort:
+        description: "Host port number that the container's port is mapped to."
+        type: "string"
+        example: "4443"
