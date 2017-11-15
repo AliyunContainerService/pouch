@@ -115,26 +115,21 @@ func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
 
 	fmt.Fprintf(w, "elapsed: %-4.1fs\ttotal: %7.6v\t(%v)\t\n",
 		time.Since(start).Seconds(),
-		// TODO(stevvooe): These calculations are actually way off.
-		// Need to account for previously downloaded data. These
-		// will basically be right for a download the first time
-		// but will be skewed if restarting, as it includes the
-		// data into the start time before.
 		progress.Bytes(total),
 		progress.NewBytesPerSecond(total, time.Since(start)))
 }
 
 // parseNameTag parses input arg and gets image name and image tag.
 func parseNameTag(input string) (string, string) {
-	fields := strings.Split(input, ":")
+	fields := strings.SplitN(input, ":", 2)
 
 	var name, tag string
 
-	if len(fields) == 1 {
-		name = fields[0]
-	}
+	name = fields[0]
 
-	if len(fields) == 2 {
+	if len(fields) == 1 {
+		tag = "latest"
+	} else if len(fields) == 2 {
 		tag = fields[1]
 	}
 
