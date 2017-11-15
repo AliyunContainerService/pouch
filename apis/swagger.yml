@@ -252,7 +252,22 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       tags: ["Container"]
-  
+
+  /containers/json:
+    get:
+      summary: "List containers"
+      operationId: "ContainerList"
+      produces: ["application/json"]
+      responses:
+        200:
+          description: "Summary containers that matches the query"
+          schema:
+            $ref: "#/definitions/Container"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/Error"
+
   /volumes:
     get:
       summary: "List volumes"
@@ -711,6 +726,49 @@ definitions:
               - "default"
               - "process"
               - "hyperv"
+
+  Container:
+    description: |
+      Container contains response of Engine API:
+      GET "/containers/json""
+    type: "object"
+    properties:
+      ID:
+        type: "string"
+      Names:
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "container_1"
+          - "container_2"
+      Image:
+        type: "string"
+      ImageID:
+        type: "string"
+      Command:
+        type: "string"
+      Created:
+        type: "integer"
+        format: "int64"
+      SizeRw:
+        type: "integer"
+        format: "int64"
+      SizeRootFs:
+        type: "integer"
+        format: "int64"
+      Labels:
+        type: "object"
+        additionalProperties:
+          type: "string"
+      State:
+        type: "string"
+      Status:
+        type: "string"
+      HostConfig:
+        type: "object"
+        $ref: '#/definitions/HostConfig'
+
   EndpointSettings:
     description: "Configuration for a network endpoint."
     type: "object"

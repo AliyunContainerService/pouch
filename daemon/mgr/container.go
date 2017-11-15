@@ -32,6 +32,9 @@ type ContainerMgr interface {
 
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *types.AttachConfig) error
+
+	// List returns the list of containers.
+	List(ctx context.Context) ([]*types.ContainerInfo, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -237,6 +240,26 @@ func (cm *ContainerManager) Attach(ctx context.Context, name string, attach *typ
 	}
 
 	return nil
+}
+
+// List returns the container's list.
+func (cm *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, error) {
+	cis := []*types.ContainerInfo{}
+
+	list, err := cm.Store.List()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, obj := range list {
+		ci, ok := obj.(*types.ContainerInfo)
+		if !ok {
+			return nil, fmt.Errorf("failed to get container list, invalid meta type")
+		}
+		cis = append(cis, ci)
+	}
+
+	return cis, nil
 }
 
 // containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's

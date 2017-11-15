@@ -51,3 +51,17 @@ func (client *APIClient) ContainerStop(name string) error {
 
 	return err
 }
+
+// ContainerList returns the list of containers.
+func (client *APIClient) ContainerList() ([]*types.Container, error) {
+	resp, err := client.get("/containers/json", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	containers := []*types.Container{}
+	err = decodeBody(&containers, resp.Body)
+	ensureCloseReader(resp)
+
+	return containers, err
+}
