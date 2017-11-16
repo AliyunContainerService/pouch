@@ -138,6 +138,13 @@ No matter commit message, or commit content, we do take more emphasis on code re
 
 PR is the only way to make change to Pouch project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
 
+### Test case contribution
+
+Any test case would be welcomed. Currently, pouch function test cases is a high priority task.
+
+* For unit test, you need to create a test file ended with `_test.go` in the same directory as dev package.
+* For integration test, you need to add test scrips in `pouch/test/` directory. The test makes use of [package check](https://github.com/go-check/check), a rich testing extension for Go's testing package. Test scripts are named by pouch commands. For example, all pouch help api tests are included in pouch_api_help_test.go and all pouch help tests of commandline tests are included in pouch_cli_help_test.go. For more details, refer to [gocheck document](https://godoc.org/gopkg.in/check.v1).
+
 ## Engage to help anything
 
 We choose GitHub as the primary place for Pouch to collaborate. So the latest updates of Pouch are always here. Although contributions via PR is an explicit way to help, we still call for any other ways.
