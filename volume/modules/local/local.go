@@ -81,10 +81,10 @@ func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
 // Options returns local volume's options.
 func (p *Local) Options() map[string]types.Option {
 	return map[string]types.Option{
-		"ids":      {"", "local volume user's ids"},
-		"reqID":    {"", "create local volume request id"},
-		"freeTime": {"", "local volume free time"},
-		"mount":    {"", "local directory"},
+		"ids":      {Value: "", Desc: "local volume user's ids"},
+		"reqID":    {Value: "", Desc: "create local volume request id"},
+		"freeTime": {Value: "", Desc: "local volume free time"},
+		"mount":    {Value: "", Desc: "local directory"},
 	}
 }
 

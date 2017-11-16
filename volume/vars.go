@@ -20,16 +20,16 @@ const (
 )
 
 var commonOptions = map[string]types.Option{
-	"size":      {"", "volume size"},
-	"backend":   {"", "volume backend"},
-	"sifter":    {"", "volume scheduler sifter"},
-	"fs":        {"ext4", "volume make filesystem"},
-	"wbps":      {"", "volume write bps"},
-	"rbps":      {"", "volume read bps"},
-	"iops":      {"", "volume total iops"},
-	"riops":     {"", "volume read iops"},
-	"wiops":     {"", "volume write iops"},
-	"namespace": {"default", "volume namespace"},
+	"size":      {Value: "", Desc: "volume size"},
+	"backend":   {Value: "", Desc: "volume backend"},
+	"sifter":    {Value: "", Desc: "volume scheduler sifter"},
+	"fs":        {Value: "ext4", Desc: "volume make filesystem"},
+	"wbps":      {Value: "", Desc: "volume write bps"},
+	"rbps":      {Value: "", Desc: "volume read bps"},
+	"iops":      {Value: "", Desc: "volume total iops"},
+	"riops":     {Value: "", Desc: "volume read iops"},
+	"wiops":     {Value: "", Desc: "volume write iops"},
+	"namespace": {Value: "default", Desc: "volume namespace"},
 }
 
 // ListCommonOptions returns common options.
