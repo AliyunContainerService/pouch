@@ -1,14 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
-	"net"
-	"net/http/httputil"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
@@ -40,6 +35,8 @@ func (s *StartCommand) Run(args []string) {
 	container := args[0]
 
 	// attach to io.
+	apiClient := s.cli.Client()
+
 	var wait chan struct{}
 	if s.attach || s.stdin {
 		in, out, err := setRawMode(s.stdin, false)
@@ -53,7 +50,7 @@ func (s *StartCommand) Run(args []string) {
 			}
 		}()
 
-		conn, br, err := attachContainer(s.cli, container, s.stdin)
+		conn, br, err := apiClient.ContainerAttach(container, s.stdin)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to attach container: %v \n", err)
 			return
@@ -70,7 +67,6 @@ func (s *StartCommand) Run(args []string) {
 		}()
 	}
 
-	apiClient := s.cli.Client()
 	// start container
 	if err := apiClient.ContainerStart(container, ""); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to start container %s: %v\n", container, err)
@@ -81,51 +77,6 @@ func (s *StartCommand) Run(args []string) {
 	if s.attach || s.stdin {
 		<-wait
 	}
-}
-
-func attachContainer(c *Cli, name string, stdin bool) (net.Conn, *bufio.Reader, error) {
-	var path string
-	if stdin {
-		path = fmt.Sprintf("/containers/%s/attach?stdin=1", name)
-	} else {
-		path = fmt.Sprintf("/containers/%s/attach?stdin=0", name)
-	}
-	req, err := c.NewPostRequest(path, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	req.req.Header["Content-Type"] = []string{"text/plain"}
-	req.req.Header.Set("Connection", "Upgrade")
-	req.req.Header.Set("Upgrade", "tcp")
-
-	var conn net.Conn
-
-	if strings.HasPrefix(c.host, "unix://") {
-		req.req.Host = strings.TrimPrefix(c.host, "unix://")
-		if conn, err = net.DialTimeout("unix", req.req.Host, time.Second*10); err != nil {
-			return nil, nil, err
-		}
-	} else {
-		req.req.Host = strings.TrimPrefix(c.host, "tcp://")
-		if conn, err = net.DialTimeout("tcp", req.req.Host, time.Second*10); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		tcpConn.SetKeepAlive(true)
-		tcpConn.SetKeepAlivePeriod(30 * time.Second)
-	}
-
-	clientconn := httputil.NewClientConn(conn, nil)
-	defer clientconn.Close()
-
-	if _, err := clientconn.Do(req.req); err != nil {
-		return nil, nil, err
-	}
-
-	rwc, br := clientconn.Hijack()
-	return rwc, br, nil
 }
 
 func setRawMode(stdin, stdout bool) (*terminal.State, *terminal.State, error) {

@@ -1,12 +1,16 @@
 package client
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 var (
@@ -48,7 +52,39 @@ func (client *APIClient) delete(path string, query url.Values) (*Response, error
 	return client.sendRequest("DELETE", path, query, nil)
 }
 
-func (client *APIClient) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
+func (client *APIClient) hijack(path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
+	req, err := client.newRequest("POST", path, query, obj, header)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Upgrade", "tcp")
+
+	req.Host = client.addr
+	conn, err := net.DialTimeout(client.proto, client.addr, defaultTimeout)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+	}
+
+	clientconn := httputil.NewClientConn(conn, nil)
+	defer clientconn.Close()
+
+	if _, err := clientconn.Do(req); err != nil {
+		return nil, nil, err
+	}
+
+	rwc, br := clientconn.Hijack()
+
+	return rwc, br, nil
+}
+
+func (client *APIClient) newRequest(method, path string, query url.Values, obj interface{}, header map[string][]string) (*http.Request, error) {
 	var body io.Reader
 	if method == "POST" {
 		if obj != nil {
@@ -63,6 +99,21 @@ func (client *APIClient) sendRequest(method, path string, query url.Values, obj 
 	}
 
 	req, err := http.NewRequest(method, client.baseURL+getAPIPath(path, query), body)
+	if err != nil {
+		return nil, err
+	}
+
+	if header != nil {
+		for k, v := range header {
+			req.Header[k] = v
+		}
+	}
+
+	return req, err
+}
+
+func (client *APIClient) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
+	req, err := client.newRequest(method, path, query, obj, nil)
 	if err != nil {
 		return nil, err
 	}

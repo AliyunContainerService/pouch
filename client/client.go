@@ -23,6 +23,7 @@ var (
 // against a pouch server
 type APIClient struct {
 	proto   string // socket type
+	addr    string
 	baseURL string
 	HTTPCli *http.Client
 }
@@ -33,7 +34,7 @@ func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
 		host = defaultHost
 	}
 
-	newURL, basePath, err := parseHost(host)
+	newURL, basePath, addr, err := parseHost(host)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host %s: %v", host, err)
 	}
@@ -46,6 +47,7 @@ func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
 
 	return &APIClient{
 		proto:   newURL.Scheme,
+		addr:    addr,
 		baseURL: basePath,
 		HTTPCli: httpCli,
 	}, nil
@@ -53,10 +55,10 @@ func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
 
 // parseHost inputs a host address string, and output three type:
 // url.URL, basePath and an error
-func parseHost(host string) (*url.URL, string, error) {
+func parseHost(host string) (*url.URL, string, string, error) {
 	u, err := url.Parse(host)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	var basePath string
@@ -68,10 +70,10 @@ func parseHost(host string) (*url.URL, string, error) {
 	case "http":
 		basePath = host
 	default:
-		return nil, "", fmt.Errorf("not support url scheme %v", u.Scheme)
+		return nil, "", "", fmt.Errorf("not support url scheme %v", u.Scheme)
 	}
 
-	return u, basePath, nil
+	return u, basePath, strings.TrimPrefix(host, u.Scheme+"://"), nil
 }
 
 func newHTTPClient(u *url.URL, tlsConfig *tls.Config) *http.Client {
