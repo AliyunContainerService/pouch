@@ -113,12 +113,12 @@ func (c *Ceph) Path(ctx driver.Context, v *types.Volume) (string, error) {
 // Options returns ceph volume options.
 func (c *Ceph) Options() map[string]types.Option {
 	return map[string]types.Option{
-		"conf":          {"/etc/ceph/ceph.conf", "set ceph config file"},
-		"key":           {"", "set ceph keyring file"},
-		"pool":          {"rbd", "set rbd image pool"},
-		"image-feature": {"", "set rbd image feature"},
-		"object-size":   {"4M", "set rbd image object size"},
-		"base":          {"", "create image by base image"},
+		"conf":          {Value: "/etc/ceph/ceph.conf", Desc: "set ceph config file"},
+		"key":           {Value: "", Desc: "set ceph keyring file"},
+		"pool":          {Value: "rbd", Desc: "set rbd image pool"},
+		"image-feature": {Value: "", Desc: "set rbd image feature"},
+		"object-size":   {Value: "4M", Desc: "set rbd image object size"},
+		"base":          {Value: "", Desc: "create image by base image"},
 	}
 }
 

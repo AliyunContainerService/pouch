@@ -63,9 +63,9 @@ func (p *Tmpfs) Path(ctx driver.Context, v *types.Volume) (string, error) {
 // Options returns tmpfs volume's options.
 func (p *Tmpfs) Options() map[string]types.Option {
 	return map[string]types.Option{
-		"ids":      {"", "tmpfs volume user's ids"},
-		"reqID":    {"", "create tmpfs volume request id"},
-		"freeTime": {"", "tmpfs volume free time"},
+		"ids":      {Value: "", Desc: "tmpfs volume user's ids"},
+		"reqID":    {Value: "", Desc: "create tmpfs volume request id"},
+		"freeTime": {Value: "", Desc: "tmpfs volume free time"},
 	}
 }
 
