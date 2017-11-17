@@ -106,7 +106,7 @@ func (d *Daemon) Run() error {
 	return d.server.Start()
 }
 
-// Shutdown stop daemon.
+// Shutdown stops daemon.
 func (d *Daemon) Shutdown() error {
 	return d.server.Stop()
 }
