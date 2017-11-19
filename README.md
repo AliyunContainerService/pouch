@@ -1,6 +1,7 @@
 
 ## ![Pouch](docs/logo/pouch_10x4_orange.png)
 
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![GoDoc](https://godoc.org/github.com/alibaba/pouch?status.svg)](https://godoc.org/github.com/alibaba/pouch)
 [![Build Status](https://travis-ci.org/alibaba/pouch.svg?branch=master)](https://travis-ci.org/alibaba/pouch)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch?ref=badge_shield)
