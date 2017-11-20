@@ -55,4 +55,4 @@ See [ROADMAP.md](./ROADMAP.md)
 
 It is warmly welcomed if you have interest to contribute to Pouch.
 
-More details, please refer to [CONTRIBUTION.md](./CONTRIBUTION.md)
+More details, please refer to [CONTRIBUTION.md](./CONTRIBUTING.md)
