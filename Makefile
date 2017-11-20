@@ -29,7 +29,7 @@ clean:
 	rm -f $(CLI_BINARY_NAME)
 	./module --clean
 
-check: fmt lint vet
+check: fmt lint vet validate-swagger
 
 fmt: ## run go fmt
 	@echo $@
@@ -51,6 +51,10 @@ vet: # run go vet
 unit-test: ## run go test
 	@echo $@
 	@go test `go list ./... | grep -v 'github.com/alibaba/pouch/test'`
+
+validate-swagger: ## run swagger validate
+	@echo $@
+	@swagger validate apis/swagger.yml
 
 modules:
 	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph

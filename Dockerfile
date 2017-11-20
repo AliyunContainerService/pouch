@@ -30,7 +30,8 @@ ENV GOPATH=/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 # install golint. currently golint has no released version.
-RUN go get -u github.com/golang/lint/golint 
+RUN go get -u github.com/golang/lint/golint \
+    && go get -u github.com/go-swagger/go-swagger/cmd/swagger
 
 COPY . /go/src/github.com/alibaba/pouch
 
