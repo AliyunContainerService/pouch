@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bufio"
+	"net"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -64,4 +66,20 @@ func (client *APIClient) ContainerList() ([]*types.Container, error) {
 	ensureCloseReader(resp)
 
 	return containers, err
+}
+
+// ContainerAttach attach a container
+func (client *APIClient) ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error) {
+	q := url.Values{}
+	if stdin {
+		q.Set("stdin", "1")
+	} else {
+		q.Set("stdin", "0")
+	}
+
+	header := map[string][]string{
+		"Content-Type": {"text/plain"},
+	}
+
+	return client.hijack("/containers/"+name+"/attach", q, nil, header)
 }

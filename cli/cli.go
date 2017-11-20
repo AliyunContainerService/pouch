@@ -1,29 +1,22 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
 	"os"
 	"strconv"
 	"text/tabwriter"
-	"time"
 
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/fatih/structs"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 // Option uses to define the global options.
 type Option struct {
-	host    string
-	timeout time.Duration
-	TLS     utils.TLSConfig
+	host string
+	TLS  utils.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request
@@ -49,7 +42,6 @@ func NewCli() *Cli {
 func (c *Cli) SetFlags() *Cli {
 	cmd := c.rootCmd
 	cmd.PersistentFlags().StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify listen address of pouchd")
-	cmd.PersistentFlags().DurationVar(&c.Option.timeout, "timeout", time.Second*10, "Set timeout")
 	utils.SetupTLSFlag(cmd.PersistentFlags(), &c.Option.TLS)
 	return c
 }
@@ -60,6 +52,7 @@ func (c *Cli) NewAPIClient() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+
 	c.APIClient = client
 }
 
@@ -132,47 +125,4 @@ func (c *Cli) Print(obj interface{}) {
 	}
 
 	display.Flush()
-}
-
-// NewRequest creates a HTTPRequest instance.
-func (c *Cli) NewRequest(method, path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
-	serialize := func(o interface{}) (io.Reader, error) {
-		if o == nil {
-			return nil, nil
-		}
-		b, err := json.Marshal(o)
-		if err != nil {
-			return nil, err
-		}
-		return bytes.NewReader(b), nil
-	}
-	if len(enc) != 0 {
-		serialize = enc[0]
-	}
-
-	body, err := serialize(obj)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to encoding object")
-	}
-
-	r, err := http.NewRequest(method, c.APIClient.BaseURL()+path, body)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to new http request")
-	}
-	return &Request{req: r, cli: c.APIClient.HTTPCli}, nil
-}
-
-// NewGetRequest creates an HTTP get request.
-func (c *Cli) NewGetRequest(path string) (*Request, error) {
-	return c.NewRequest(http.MethodGet, path, nil)
-}
-
-// NewPostRequest creates an HTTP post request.
-func (c *Cli) NewPostRequest(path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
-	return c.NewRequest(http.MethodPost, path, obj, enc...)
-}
-
-// NewDeleteRequest creates an HTTP delete request.
-func (c *Cli) NewDeleteRequest(path string, obj interface{}, enc ...func(interface{}) (io.Reader, error)) (*Request, error) {
-	return c.NewRequest(http.MethodDelete, path, obj, enc...)
 }

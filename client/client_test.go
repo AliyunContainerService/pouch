@@ -39,18 +39,19 @@ func TestParseHost(t *testing.T) {
 		host           string
 		expectError    bool
 		expectBasePath string
+		expectAddr     string
 	}
 
 	parseds := []parsed{
-		{host: testHost, expectError: false, expectBasePath: "http://d"},
-		{host: "tcp://localhost:1234", expectError: false, expectBasePath: "http://localhost:1234"},
-		{host: "http://localhost:5678", expectError: false, expectBasePath: "http://localhost:5678"},
-		{host: "foo:bar", expectError: true, expectBasePath: ""},
-		{host: "", expectError: true, expectBasePath: ""},
+		{host: testHost, expectError: false, expectBasePath: "http://d", expectAddr: "/var/run/pouchd.sock"},
+		{host: "tcp://localhost:1234", expectError: false, expectBasePath: "http://localhost:1234", expectAddr: "localhost:1234"},
+		{host: "http://localhost:5678", expectError: false, expectBasePath: "http://localhost:5678", expectAddr: "localhost:5678"},
+		{host: "foo:bar", expectError: true, expectBasePath: "", expectAddr: ""},
+		{host: "", expectError: true, expectBasePath: "", expectAddr: ""},
 	}
 
 	for _, p := range parseds {
-		_, basePath, err := parseHost(p.host)
+		_, basePath, addr, err := parseHost(p.host)
 		if p.expectError {
 			assert.Error(err, fmt.Sprintf("test data %v", p.host))
 		} else {
@@ -58,5 +59,6 @@ func TestParseHost(t *testing.T) {
 		}
 
 		assert.Equal(basePath, p.expectBasePath)
+		assert.Equal(addr, p.expectAddr)
 	}
 }
