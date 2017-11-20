@@ -3,8 +3,8 @@ sudo: required
 
 language: go
 go:
-  - 1.8.3
-    
+  - 1.9.1
+
 go_import_path: github.com/alibaba/pouch
 
 before_install:
@@ -12,5 +12,6 @@ before_install:
   - sudo apt-get install -y -qq autoconf automake
 
 script:
-  - cd ${TRAVIS_BUILD_DIR}
-  - sudo hack/make.sh 
+  # PATH is not set under sudo, then we set up path mannually.
+  # Ref https://unix.stackexchange.com/questions/83191/how-to-make-sudo-preserve-path
+  - sudo env "PATH=$PATH" hack/make.sh

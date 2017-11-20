@@ -60,8 +60,6 @@ function main ()
 	echo "verify pouch version"
 	pouch version
 
-	# This scripts can't get environment variables in travis ci.
-	PATH=$PATH:/home/travis/.gimme/versions/go1.8.3.linux.amd64/bin/
 	cd $DIR/../test
 	go test
 }
