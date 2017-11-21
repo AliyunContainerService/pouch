@@ -7,6 +7,13 @@ go:
 
 go_import_path: github.com/alibaba/pouch
 
+notifications:
+  webhooks:
+    urls:
+      - http://121.201.13.205:6789/ci_notifications
+    on_failure: always
+    on_error: always
+
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y -qq autoconf automake
