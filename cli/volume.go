@@ -48,7 +48,7 @@ func (v *VolumeCreateCommand) Init(c *Cli) {
 	v.cli = c
 
 	v.cmd = &cobra.Command{
-		Use:   "create [args] NAME",
+		Use:   "create [args]",
 		Short: "Create a pouch volume",
 	}
 
@@ -157,10 +157,10 @@ func (v *VolumeRemoveCommand) Init(c *Cli) {
 	v.cli = c
 
 	v.cmd = &cobra.Command{
-		Use:     "remove [volume]",
+		Use:     "remove <volume name>",
 		Aliases: []string{"rm"},
-		Short:   "Remove pouch volumes",
-		Args:    cobra.MinimumNArgs(1),
+		Short:   "Remove pouch volume",
+		Args:    cobra.ExactArgs(1),
 	}
 }
 

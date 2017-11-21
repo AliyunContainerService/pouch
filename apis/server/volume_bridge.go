@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/gorilla/mux"
 )
@@ -23,14 +24,22 @@ func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req
 	options := volumeCreateReq.DriverOpts
 	labels := volumeCreateReq.Labels
 
+	if name == "" {
+		name = randomid.Generate()
+	}
+
+	if driver == "" {
+		driver = "local"
+	}
+
 	if err := s.VolumeMgr.Create(ctx, name, driver, options, labels); err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
 	volume := types.VolumeInfo{
-		Name:   volumeCreateReq.Name,
-		Driver: volumeCreateReq.Driver,
+		Name:   name,
+		Driver: driver,
 		Labels: volumeCreateReq.Labels,
 	}
 	resp.WriteHeader(http.StatusCreated)
