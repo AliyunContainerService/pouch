@@ -87,5 +87,5 @@ func (mgr *ImageManager) SearchImages(ctx context.Context, name string, registry
 		registry = mgr.DefaultRegistry
 	}
 
-	return nil, nil
+	return registry, nil
 }

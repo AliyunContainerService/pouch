@@ -12,7 +12,7 @@ func init() {
 	check.Suite(&PouchAPIHelpSuite{})
 }
 
-// SetUpTest does common setup in the begining of each test.
+// SetUpTest does common setup in the beginning of each test.
 func (suite *PouchAPIHelpSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, IsLinux)
 }
