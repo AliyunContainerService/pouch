@@ -1,5 +1,5 @@
 
-## ![Pouch](docs/logo/pouch_10x4_orange.png)
+## ![Pouch](docs/static_files/logo/pouch_10x4_orange.png)
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![GoDoc](https://godoc.org/github.com/alibaba/pouch?status.svg)](https://godoc.org/github.com/alibaba/pouch)
