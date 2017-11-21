@@ -14,7 +14,7 @@ func init() {
 	check.Suite(&PouchVersionSuite{})
 }
 
-// SetUpTest does common setup in the begining of each test.
+// SetUpTest does common setup in the beginning of each test.
 func (suite *PouchVersionSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, IsLinux)
 }

@@ -147,7 +147,7 @@ func Get(name string) (Driver, bool) {
 	return backendDrivers.Get(name)
 }
 
-// Exist return true if the backend driver is registed.
+// Exist return true if the backend driver is registered.
 func Exist(name string) bool {
 	_, ok := Get(name)
 	return ok
