@@ -3,6 +3,7 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
+	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/alibaba/pouch/pkg/randomid"
 
@@ -158,7 +160,8 @@ func (cm *ContainerManager) Create(ctx context.Context, name string, config *typ
 // Start a pre created Container.
 func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartConfig) (err error) {
 	if cfg.ID == "" {
-		return fmt.Errorf("either container name or id is required")
+		err := fmt.Errorf("either container name or id is required")
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
 	cm.km.Lock(cfg.ID)
@@ -169,7 +172,8 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 		return err
 	}
 	if c == nil || c.Config == nil || c.ContainerState == nil {
-		return fmt.Errorf("no container found by %s", cfg.ID)
+		err := fmt.Errorf("no container found by %s", cfg.ID)
+		return httputils.NewHTTPError(err, http.StatusNotFound)
 	}
 	c.DetachKeys = cfg.DetachKeys
 

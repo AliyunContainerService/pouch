@@ -40,7 +40,7 @@ func (mgr *SystemManager) Version() (types.SystemVersion, error) {
 		GitCommit:  "",
 		GoVersion:  runtime.Version(),
 		// TODO:  add a pkg to support getting kernel version
-		//KernelVersion: kernel.Version(),
+		// KernelVersion: kernel.Version(),
 		Os:      runtime.GOOS,
 		Version: version.Version,
 	}, nil

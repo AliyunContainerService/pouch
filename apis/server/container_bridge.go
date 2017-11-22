@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/httputils"
+
 	"github.com/gorilla/mux"
 )
 
@@ -17,15 +19,13 @@ func (s *Server) createContainer(ctx context.Context, resp http.ResponseWriter, 
 	var config types.ContainerConfigWrapper
 
 	if err := json.NewDecoder(req.Body).Decode(&config); err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		return err
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
 	name := req.FormValue("name")
 
 	ret, err := s.ContainerMgr.Create(ctx, name, &config)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -41,7 +41,6 @@ func (s *Server) startContainer(ctx context.Context, resp http.ResponseWriter, r
 	}
 
 	if err := s.ContainerMgr.Start(ctx, config); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -57,15 +56,13 @@ func (s *Server) stopContainer(ctx context.Context, resp http.ResponseWriter, re
 
 	if v := req.FormValue("t"); v != "" {
 		if t, err = strconv.Atoi(v); err != nil {
-			resp.WriteHeader(http.StatusBadRequest)
-			return err
+			return httputils.NewHTTPError(err, http.StatusBadRequest)
 		}
 	}
 
 	name := mux.Vars(req)["name"]
 
 	if err = s.ContainerMgr.Stop(ctx, name, time.Duration(t)*time.Second); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -101,11 +98,10 @@ func (s *Server) attachContainer(ctx context.Context, resp http.ResponseWriter, 
 func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
 	cis, err := s.ContainerMgr.List(ctx)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
-	cs := []types.Container{}
+	cs := make([]types.Container, 0, len(cis))
 	for _, ci := range cis {
 		c := types.Container{
 			ID:      ci.ID,
