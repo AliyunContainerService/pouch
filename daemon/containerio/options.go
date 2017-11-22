@@ -39,6 +39,16 @@ func WithRootDir(dir string) func(*Option) {
 	}
 }
 
+// WithDiscard specified the discard backend.
+func WithDiscard() func(*Option) {
+	return func(opt *Option) {
+		if opt.backends == nil {
+			opt.backends = make(map[string]struct{})
+		}
+		opt.backends["discard"] = struct{}{}
+	}
+}
+
 // WithRawFile specified the raw-file backend.
 func WithRawFile() func(*Option) {
 	return func(opt *Option) {
