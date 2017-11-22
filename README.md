@@ -36,7 +36,7 @@ Pouch has lots of advantages over VM technologies. Two of the most impressive on
 
 Pouch improves resource utilization of application with significant effect:
 
-* Image technology of Pouch is compatile with OCI image spec. It could help application take minimal space of storage with layerd image originazation.
+* Image technology of Pouch is compatible with OCI image spec. It could help application take minimal space of storage with layerd image originazation.
 * Via incremental way provided by image when application distribution, datacentre bandwidth reource could be saved a lot.
 * Unlike original VM technology, the auxiliary resource which is needed for applications' boot could be minimal, while for VM there are resources spared for kernel and system services and so on.
 
