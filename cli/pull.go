@@ -139,7 +139,7 @@ func parseNameTag(input string) (string, string) {
                   name = "docker.io/" + name
                 }
         } else {
-            name = "docker.io/library/" + name
+                name = "docker.io/library/" + name
         }
        
 	return name, tag
