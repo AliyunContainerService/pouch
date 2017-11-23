@@ -13,6 +13,59 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func (s *Server) createContainerExec(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	config := &types.ExecCreateConfig{}
+
+	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+		return err
+	}
+
+	if len(config.Cmd) == 0 {
+		return fmt.Errorf("no exec process specified")
+	}
+
+	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
+	if err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusCreated)
+	return json.NewEncoder(resp).Encode(&types.ExecCreateResponse{
+		ID: id,
+	})
+}
+
+func (s *Server) startContainerExec(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	config := &types.ExecStartConfig{}
+
+	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+		return err
+	}
+
+	var attach *types.AttachConfig
+
+	if !config.Detach {
+		hijacker, ok := resp.(http.Hijacker)
+		if !ok {
+			return fmt.Errorf("not a hijack connection, container: %s", name)
+		}
+
+		attach = &types.AttachConfig{
+			Hijack:  hijacker,
+			Stdin:   config.Tty,
+			Stdout:  true,
+			Stderr:  true,
+			Upgrade: true,
+		}
+	}
+
+	return s.ContainerMgr.StartExec(ctx, name, config, attach)
+}
+
 func (s *Server) createContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
 	var config types.ContainerConfigWrapper
 

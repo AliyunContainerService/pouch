@@ -16,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/alibaba/pouch/pkg/randomid"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -36,34 +37,41 @@ type ContainerMgr interface {
 
 	// List returns the list of containers.
 	List(ctx context.Context) ([]*types.ContainerInfo, error)
+
+	// CreateExec creates exec process's environment.
+	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
+
+	// StartExec executes a new process in container.
+	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *types.AttachConfig) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
 type ContainerManager struct {
-	Store     *meta.Store
-	Client    *ctrd.Client
-	NameToID  *collect.SafeMap
-	ImageMgr  ImageMgr
-	VolumeMgr VolumeMgr
-	IOs       *containerio.Cache
-	km        *kmutex.KMutex
+	Store         *meta.Store
+	Client        *ctrd.Client
+	NameToID      *collect.SafeMap
+	ImageMgr      ImageMgr
+	VolumeMgr     VolumeMgr
+	IOs           *containerio.Cache
+	km            *kmutex.KMutex
+	ExecProcesses *collect.SafeMap
 }
 
 // NewContainerManager creates a brand new container manager.
 func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr) (*ContainerManager, error) {
 	mgr := &ContainerManager{
-		Store:     store,
-		NameToID:  collect.NewSafeMap(),
-		Client:    cli,
-		ImageMgr:  imgMgr,
-		VolumeMgr: volMgr,
-		IOs:       containerio.NewCache(),
-		km:        kmutex.New(),
+		Store:         store,
+		NameToID:      collect.NewSafeMap(),
+		Client:        cli,
+		ImageMgr:      imgMgr,
+		VolumeMgr:     volMgr,
+		IOs:           containerio.NewCache(),
+		km:            kmutex.New(),
+		ExecProcesses: collect.NewSafeMap(),
 	}
 
-	var exitHooks []func(string, *ctrd.Message) error
-	exitHooks = append(exitHooks, mgr.stoppedAndRelease)
-	mgr.Client.SetExitHooks(exitHooks)
+	mgr.Client.SetStopHooks(mgr.stoppedAndRelease)
+	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
 
 	return mgr, mgr.Restore(ctx)
 }
@@ -95,6 +103,59 @@ func (cm *ContainerManager) Restore(ctx context.Context) error {
 		return nil
 	}
 	return cm.Store.ForEach(fn)
+}
+
+// CreateExec creates exec process's meta data.
+func (cm *ContainerManager) CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error) {
+	execid := randomid.Generate()
+
+	container, err := cm.containerInfo(name)
+	if err != nil {
+		return "", err
+	}
+
+	execConfig := &containerExecConfig{
+		ExecCreateConfig: *config,
+		ContainerID:      container.ID,
+	}
+
+	cm.ExecProcesses.Put(execid, execConfig)
+
+	return execid, nil
+}
+
+// StartExec executes a new process in container.
+func (cm *ContainerManager) StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *types.AttachConfig) error {
+	v, ok := cm.ExecProcesses.Get(execid).Result()
+	if !ok {
+		return fmt.Errorf("exec process: %s not found", execid)
+	}
+	execConfig, ok := v.(*containerExecConfig)
+	if !ok {
+		return fmt.Errorf("invalid exec config type")
+	}
+
+	if attach != nil {
+		attach.Stdin = execConfig.AttachStdin
+	}
+
+	io, err := cm.openExecIO(execid, attach)
+	if err != nil {
+		return err
+	}
+
+	process := &specs.Process{
+		Args:     execConfig.Cmd,
+		Terminal: execConfig.Tty,
+		Cwd:      "/",
+	}
+
+	return cm.Client.ExecContainer(ctx, &ctrd.Process{
+		ContainerID: execConfig.ContainerID,
+		ExecID:      execid,
+		IO:          io,
+		P:           process,
+	})
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
@@ -316,15 +377,25 @@ func (cm *ContainerManager) containerInfo(s string) (*types.ContainerInfo, error
 }
 
 func (cm *ContainerManager) openContainerIO(id string, attach *types.AttachConfig) (*containerio.IO, error) {
+	return cm.openIO(id, attach, false)
+}
+
+func (cm *ContainerManager) openExecIO(id string, attach *types.AttachConfig) (*containerio.IO, error) {
+	return cm.openIO(id, attach, true)
+}
+
+func (cm *ContainerManager) openIO(id string, attach *types.AttachConfig, exec bool) (*containerio.IO, error) {
 	if io := cm.IOs.Get(id); io != nil {
 		return io, nil
 	}
 
-	root := cm.Store.Path(id)
-
 	options := []func(*containerio.Option){
 		containerio.WithID(id),
-		containerio.WithRootDir(root),
+	}
+
+	if !exec {
+		root := cm.Store.Path(id)
+		options = append(options, containerio.WithRootDir(root))
 	}
 
 	if attach != nil {
@@ -332,8 +403,11 @@ func (cm *ContainerManager) openContainerIO(id string, attach *types.AttachConfi
 		if attach.Stdin {
 			options = append(options, containerio.WithStdinHijack())
 		}
-	} else {
+	} else if !exec {
 		options = append(options, containerio.WithRawFile())
+
+	} else {
+		options = append(options, containerio.WithDiscard())
 	}
 
 	io := containerio.NewIO(containerio.NewOption(options...))
@@ -373,6 +447,18 @@ func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error 
 	if err := cm.Store.Put(c); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
 	}
+	return nil
+}
+
+func (cm *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
+	// release io.
+	if io := cm.IOs.Get(id); io != nil {
+		io.Stderr.Close()
+		io.Stdout.Close()
+		io.Stdin.Close()
+		cm.IOs.Remove(id)
+	}
+	cm.ExecProcesses.Remove(id)
 	return nil
 }
 
