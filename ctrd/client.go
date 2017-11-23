@@ -24,6 +24,8 @@ type Client struct {
 	watch  *watch
 	lock   *containerLock
 
+	hooks []func(string, *Message) error
+
 	// Lease is a new feature of containerd, We use it to avoid that the images
 	// are removed by garbage collection. If no lease is defined, the downloaded images will
 	// be removed automatically when the container is removed.
@@ -79,9 +81,14 @@ func NewClient(cfg Config) (*Client, error) {
 	}, nil
 }
 
-// SetExitHooks specified the handlers of container exit.
-func (c *Client) SetExitHooks(hooks []func(string, *Message) error) {
+// SetStopHooks specified the handlers of container exit.
+func (c *Client) SetStopHooks(hooks ...func(string, *Message) error) {
 	c.watch.hooks = hooks
+}
+
+// SetExitHooks specified the handlers of exec process exit.
+func (c *Client) SetExitHooks(hooks ...func(string, *Message) error) {
+	c.hooks = hooks
 }
 
 // Close closes the client.

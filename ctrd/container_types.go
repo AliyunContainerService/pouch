@@ -13,3 +13,11 @@ type Container struct {
 	IO   *containerio.IO
 	Spec *specs.Spec
 }
+
+// Process wraps exec process's info.
+type Process struct {
+	ContainerID string
+	ExecID      string
+	IO          *containerio.IO
+	P           *specs.Process
+}
