@@ -13,4 +13,4 @@ In pouch's roadmap, we set ecosystem embracing as a big target. To upper orchest
 
 ## Component Architecture
 
-To be added soon.
+![Component Architecture](static_files/pouch-inside.png)
