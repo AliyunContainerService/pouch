@@ -71,27 +71,36 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 // Restore containers from meta store to memory and recover those container.
 func (cm *ContainerManager) Restore(ctx context.Context) error {
 	fn := func(obj meta.Object) error {
-		if c, ok := obj.(*types.ContainerInfo); ok {
-			// map container's name to id.
-			cm.NameToID.Put(c.Name, c.ID)
-
-			// recover the running container.
-			if c.Status == types.RUNNING {
-				io, err := cm.openContainerIO(c.ID, nil)
-				if err != nil {
-					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
-				}
-				if err := cm.Client.RecoverContainer(ctx, c.ID, io); err != nil {
-					logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
-
-					// release io
-					io.Stdin.Close()
-					io.Stdout.Close()
-					io.Stderr.Close()
-					cm.IOs.Remove(c.ID)
-				}
-			}
+		c, ok := obj.(*types.ContainerInfo)
+		if !ok {
+			// object has not type of ContainerInfo
+			return nil
 		}
+
+		// map container's name to id.
+		cm.NameToID.Put(c.Name, c.ID)
+
+		if c.Status != types.RUNNING {
+			return nil
+		}
+
+		// recover the running container.
+		io, err := cm.openContainerIO(c.ID, nil)
+		if err != nil {
+			logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
+		}
+
+		if err := cm.Client.RecoverContainer(ctx, c.ID, io); err == nil {
+			return nil
+		}
+
+		logrus.Errorf("failed to recover container: %s,  %v", c.ID, err)
+		// release io
+		io.Stdin.Close()
+		io.Stdout.Close()
+		io.Stderr.Close()
+		cm.IOs.Remove(c.ID)
+
 		return nil
 	}
 	return cm.Store.ForEach(fn)
