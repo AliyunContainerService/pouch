@@ -40,7 +40,7 @@ Here we list some additional features of Pouch:
 
 * rich container: It means that there is not only one application process in container any more. Each container has its init process, and other systsem services on premise according to user's need.
 * strong isolation: Pouch can create a VM with hypervisor technology via [runV](https://github.com/hyperhq/runv) and [clearcontainer](https://github.com/clearcontainers/runtime)
-* high kernel compatibility: Pouch has a wide range of kernel version support. It is a long road for industry to upgrade kernel version to 3.10+. Pouch could help legecy kernel world to enjoy the fresh container technology.
+* high kernel compatibility: Pouch has a wide range of kernel version support. It is a long road for industry to upgrade kernel version to 3.10+. Pouch could help legacy kernel world to enjoy the fresh container technology.
 * P2P image distribution: In a very large datacenter, image distribution is heavy load for network. Pouch can take advantage of P2P image distribution solutions to improve this.
 
 ## What is version rule of Pouch ?
