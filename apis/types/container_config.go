@@ -227,9 +227,7 @@ func init() {
 	if err := json.Unmarshal([]byte(`[{}]`), &res); err != nil {
 		panic(err)
 	}
-	for _, v := range res {
-		containerConfigExposedPortsValueEnum = append(containerConfigExposedPortsValueEnum, v)
-	}
+	containerConfigExposedPortsValueEnum = append(containerConfigExposedPortsValueEnum, res...)
 }
 func (m *ContainerConfig) validateExposedPortsValueEnum(path, location string, value interface{}) error {
 	if err := validate.Enum(path, location, value, containerConfigExposedPortsValueEnum); err != nil {
@@ -347,9 +345,7 @@ func init() {
 	if err := json.Unmarshal([]byte(`[{}]`), &res); err != nil {
 		panic(err)
 	}
-	for _, v := range res {
-		containerConfigVolumesTypeAdditionalPropertiesPropEnum = append(containerConfigVolumesTypeAdditionalPropertiesPropEnum, v)
-	}
+	containerConfigVolumesTypeAdditionalPropertiesPropEnum = append(containerConfigVolumesTypeAdditionalPropertiesPropEnum, res...)
 }
 
 // prop value enum

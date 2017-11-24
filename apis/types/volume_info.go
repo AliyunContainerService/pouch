@@ -81,9 +81,7 @@ func init() {
 	if err := json.Unmarshal([]byte(`[{}]`), &res); err != nil {
 		panic(err)
 	}
-	for _, v := range res {
-		volumeInfoStatusValueEnum = append(volumeInfoStatusValueEnum, v)
-	}
+	volumeInfoStatusValueEnum = append(volumeInfoStatusValueEnum, res...)
 }
 func (m *VolumeInfo) validateStatusValueEnum(path, location string, value interface{}) error {
 	if err := validate.Enum(path, location, value, volumeInfoStatusValueEnum); err != nil {
