@@ -93,7 +93,7 @@ Right now we assume every contribution via pull request is for [branch master](h
 
 As a contributor, keep in mind again that every contribution via pull request is for branch master. While in project pouch, there are several other branches, we generally call them rc branches, release branches and backport branches.
 
-Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commit to this branch.
+Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commits to this branch.
 
 When officially releasing a version, there will be a release branch before tagging. After tagging, we will delete the release branch.
 
