@@ -25,7 +25,7 @@ type Config struct {
 	// Home directory.
 	HomeDir string
 
-	// CotnainerdPath is the absolute path of containerd binary,
+	// ContainerdPath is the absolute path of containerd binary,
 	// /usr/local/bin is the default.
 	ContainerdPath string
 
