@@ -2,6 +2,7 @@ package ctrd
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -83,7 +84,6 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 		if err := c.fetchProgress(pctx, ongoing, stream); err != nil {
 			logrus.Errorf("failed to get pull's progress: %v", err)
 		}
-		stream.Close()
 		close(wait)
 
 		logrus.Infof("fetch progress exited, ref: %s.", ref)
@@ -94,13 +94,20 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 
 	// cancel fetch progress befor handle error.
 	cancelProgress()
-
-	if err != nil {
-		return err
-	}
+	defer stream.Close()
 
 	// wait fetch progress to finish.
 	<-wait
+
+	if err != nil {
+		// Send Error information to client through stream
+		messages := []ProgressInfo{
+			{Code: http.StatusInternalServerError, ErrorMessage: err.Error()},
+		}
+		stream.WriteObject(messages)
+
+		return err
+	}
 
 	logrus.Infof("success to pull image: %s", img.Name())
 	return nil
@@ -125,6 +132,10 @@ type ProgressInfo struct {
 	Total     int64
 	StartedAt time.Time
 	UpdatedAt time.Time
+
+	// For Error handling
+	Code         int    // http response code
+	ErrorMessage string // detail error information
 }
 
 func (c *Client) fetchProgress(ctx context.Context, ongoing *jobs, stream *jsonstream.JSONStream) error {

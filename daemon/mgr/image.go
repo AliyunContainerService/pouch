@@ -62,14 +62,12 @@ func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, out 
 		close(wait)
 	}()
 
-	if err := mgr.client.PullImage(ctx, image+":"+tag, stream); err != nil {
-		return err
-	}
+	err := mgr.client.PullImage(ctx, image+":"+tag, stream)
 
 	// wait goroutine to exit.
 	<-wait
 
-	return nil
+	return err
 }
 
 // ListImages lists images stored by containerd.
