@@ -84,6 +84,10 @@ func renderOutput(responseBody io.ReadCloser) {
 func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
 	var total int64
 	for _, status := range statuses {
+		if status.ErrorMessage != "" {
+			fmt.Fprintf(os.Stderr, "%s\n", status.ErrorMessage)
+			return
+		}
 		total += status.Offset
 		switch status.Status {
 		case "downloading", "uploading":
