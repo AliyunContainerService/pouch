@@ -6,7 +6,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-// SystemPing shows weather server is ok.
+// SystemPing shows whether server is ok.
 func (client *APIClient) SystemPing() (string, error) {
 	resp, err := client.get("/_ping", nil)
 	if err != nil {
