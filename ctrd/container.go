@@ -21,6 +21,57 @@ type containerPack struct {
 	task      containerd.Task
 }
 
+// ExecContainer executes a process in container.
+func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
+	pack, err := c.watch.get(process.ContainerID)
+	if err != nil {
+		return err
+	}
+
+	// create io
+	var io containerd.IOCreation
+	if process.P.Terminal {
+		io = containerd.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, true)
+	} else {
+		io = containerd.NewIO(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr)
+	}
+
+	// create exec process in container
+	execProcess, err := pack.task.Exec(ctx, process.ExecID, process.P, io)
+	if err != nil {
+		return errors.Wrap(err, "failed to exec process")
+	}
+
+	// wait exec process to exit
+	exitStatus, err := execProcess.Wait(context.TODO())
+	if err != nil {
+		return errors.Wrap(err, "failed to exec process")
+	}
+	go func() {
+		status := <-exitStatus
+
+		msg := &Message{
+			err:      status.Error(),
+			exitCode: status.ExitCode(),
+			exitTime: status.ExitTime(),
+		}
+
+		for _, hook := range c.hooks {
+			if err := hook(process.ExecID, msg); err != nil {
+				logrus.Errorf("failed to execute the exec exit hooks: %v", err)
+				break
+			}
+		}
+	}()
+
+	// start the exec process
+	if err := execProcess.Start(ctx); err != nil {
+		return errors.Wrap(err, "failed to exec process")
+	}
+
+	return nil
+}
+
 // ContainerPID returns the container's init process id.
 func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
 	pack, err := c.watch.get(id)
