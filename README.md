@@ -24,9 +24,9 @@
 
 Pouch is an open-source project created by Alibaba Group to promote the container technology movement. 
 
-Pouch can pack, deliver and run any application. It provides the enviroment for applications with strong isolation in quite lightweight way. Pouch not only splits the application itself from the underlying environment, but also has ability to remain the good experience of operation.
+Pouch can pack, deliver and run any application. It provides the environment for applications with strong isolation in quite lightweight way. Pouch not only splits the application itself from the underlying environment, but also has ability to remain the good experience of operation.
 
-The ambitious of Pouch is embracing container ecosystem and perfecting container standards [OCI(Open Container Initiative)](https://github.com/opencontainers). With the ability Pouch provides, people can spend less energy transforming applications to be cloud native. 
+The ambition of Pouch is embracing container ecosystem and perfecting container standards [OCI(Open Container Initiative)](https://github.com/opencontainers). With the ability Pouch provides, people can spend less energy transforming applications to be cloud native. 
 
 ## Advantages
 
@@ -45,7 +45,7 @@ Pouch improves resource utilization of application with significant effect:
 Pouch pays more emphasis on view of application, and we can call this "application centric":
 
 * Application needs an absolutely isolated environment. Pouch provides strong isolation for them with cutting-edge technology both within kernel support and beyond kernel mode.
-* Application delivery turns to be out of box. Pouch improve the portability of application, no matter cross-platform or cross-os.
+* Application delivery turns to be out of box. Pouch improves the portability of application, no matter cross-platform or cross-os.
 * Application delivery period should be minimal. Pouch shorted this by standardizing the application image spec between developers and operators.
 
 ## Installation
