@@ -225,6 +225,13 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(err, "failed to parse volume argument")
 	}
 
+	// check the image existed or not, and convert image id to image ref
+	// FIXME handle error
+	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
+	if err == nil {
+		config.Image = image.Name
+	}
+
 	// TODO add more validation of parameter
 	// TODO check whether image exist
 	meta := &types.ContainerInfo{

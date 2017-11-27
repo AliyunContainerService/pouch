@@ -2,13 +2,20 @@ package mgr
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/registry"
+
+	"github.com/tchap/go-patricia/patricia"
 )
 
 // ImageMgr as an interface defines all operations against images.
@@ -21,6 +28,9 @@ type ImageMgr interface {
 
 	// Search Images from specified registry.
 	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
+
+	// GetImage gets image by image id or ref.
+	GetImage(ctx context.Context, idOrRef string) (*types.Image, error)
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -38,14 +48,22 @@ type ImageManager struct {
 	// It is used to interact with containerd.
 	client   *ctrd.Client
 	registry *registry.Client
+
+	cache *imageCache
 }
 
 // NewImageManager initializes a brand new image manager.
 func NewImageManager(cfg *config.Config, client *ctrd.Client) (*ImageManager, error) {
-	return &ImageManager{
+	mgr := &ImageManager{
 		DefaultRegistry: "docker.io",
 		client:          client,
-	}, nil
+		cache:           newImageCache(),
+	}
+
+	if err := mgr.loadImages(); err != nil {
+		return nil, err
+	}
+	return mgr, nil
 }
 
 // PullImage pulls images from specified registry.
@@ -62,12 +80,24 @@ func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, out 
 		close(wait)
 	}()
 
-	err := mgr.client.PullImage(ctx, image+":"+tag, stream)
+	img, err := mgr.client.PullImage(ctx, image+":"+tag, stream)
 
 	// wait goroutine to exit.
 	<-wait
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// FIXME need to refactor it and the image's list interface.
+	mgr.cache.put(&types.Image{
+		Name:   img.Name(),
+		ID:     strings.TrimPrefix(string(img.Target().Digest), "sha256:")[:12],
+		Digest: string(img.Target().Digest),
+		Size:   strconv.FormatInt(img.Target().Size, 10),
+	})
+
+	return nil
 }
 
 // ListImages lists images stored by containerd.
@@ -88,4 +118,88 @@ func (mgr *ImageManager) SearchImages(ctx context.Context, name string, registry
 	}
 
 	return nil, nil
+}
+
+// GetImage gets image by image id or ref.
+func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.Image, error) {
+	return mgr.cache.get(idOrRef)
+}
+
+func (mgr *ImageManager) loadImages() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	images, err := mgr.client.ListImages(ctx)
+	cancel()
+	if err != nil {
+		return err
+	}
+
+	for i := range images {
+		mgr.cache.put(&images[i])
+	}
+	return nil
+}
+
+type imageCache struct {
+	sync.Mutex
+	refs map[string]*types.Image // store the mapping ref to image.
+	ids  *patricia.Trie          // store the mapping id to image.
+}
+
+func newImageCache() *imageCache {
+	return &imageCache{
+		refs: make(map[string]*types.Image),
+		ids:  patricia.NewTrie(),
+	}
+}
+
+func (c *imageCache) put(image *types.Image) {
+	c.Lock()
+	defer c.Unlock()
+
+	id := strings.TrimPrefix(image.Digest, "sha256:")
+	ref := image.Name
+
+	c.refs[ref] = image
+	c.ids.Insert(patricia.Prefix(id), image)
+}
+
+func (c *imageCache) get(idOrRef string) (*types.Image, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	image, ok := c.refs[idOrRef]
+	if ok {
+		return image, nil
+	}
+
+	var images []*types.Image
+
+	fn := func(prefix patricia.Prefix, item patricia.Item) error {
+		if image, ok := item.(*types.Image); ok {
+			images = append(images, image)
+		}
+		return nil
+	}
+
+	if err := c.ids.VisitSubtree(patricia.Prefix(idOrRef), fn); err != nil {
+		// the error does not occur.
+		return nil, err
+	}
+
+	if len(images) != 1 {
+		return nil, fmt.Errorf("found %d images, not only one: %s", len(images), idOrRef)
+	}
+
+	return images[0], nil
+}
+
+func (c *imageCache) remove(image *types.Image) {
+	c.Lock()
+	defer c.Unlock()
+
+	id := strings.TrimPrefix(image.Digest, "sha256:")
+	ref := image.Name
+
+	delete(c.refs, ref)
+	c.ids.Delete(patricia.Prefix(id))
 }
