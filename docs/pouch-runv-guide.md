@@ -37,12 +37,12 @@ runv from source code.
 ```
 export GOPATH=$HOME/go
 mkdir -p $GOPATH
-go get -u https://github.com/hyperhq/runv.git
+go get -u github.com/hyperhq/runv
 ```
 
 2. build runv
 ```
-cd $GOPATH
+cd $GOPATH/src/github.com/hyperhq/runv
 ./autogen.sh
 ./configure
 sudo make
