@@ -9,10 +9,10 @@ produces:
 consumes:
   - "application/json"
   - "text/plain"
-basePath: "/v1.32"
+basePath: "/v1.24"
 info:
   title: "Pouch Engine API"
-  version: "1.32"
+  version: "1.24"
   description: |
     API is an HTTP API served by Pouch Engine.
 
@@ -451,9 +451,7 @@ definitions:
           type: "string"
       Cmd:
         description: "Command to run specified as a string or an array of strings."
-        type:
-          - "array"
-          - "string"
+        type: "array"
         items:
           type: "string"
       ArgsEscaped:
@@ -478,9 +476,7 @@ definitions:
         description: |
           The entry point for the container as a string or an array of strings.
           If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
-        type:
-          - "array"
-          - "string"
+        type: "array"
         items:
           type: "string"
       NetworkDisabled:
@@ -1016,3 +1012,47 @@ definitions:
         description: "Warnings that occurred when fetching the list of volumes"
         items:
           type: "string"
+  ExecCreateConfig:
+    type: "object"
+    properties:
+      User:
+        type: "string"
+        description: "User that will run the command"
+      Privileged:
+        type: "boolean"
+        description: "Is the container in privileged mode"
+      Tty:
+        type: "boolean"
+        description: "Attach standard streams to a tty"
+      AttachStdin:
+        type: "boolean"
+        description: "Attach the standard input, makes possible user interaction"
+      AttachStderr:
+        type: "boolean"
+        description: "Attach the standard error"
+      AttachStdout:
+        type: "boolean"
+        description: "Attach the standard output"
+      Detach:
+        type: "boolean"
+        description: "Execute in detach mode"
+      DetachKeys:
+        type: "string"
+        description: "Escape keys for detach"
+      Cmd:
+        type: "array"
+        description:  "Execution commands and args"
+        items:
+          type: "string"
+  ExecCreateResponse:
+    type: "object"
+    properties:
+      ID:
+        type: "string"
+  ExecStartConfig:
+    type: "object"
+    properties:
+      Detach:
+        type: "boolean"
+      Tty:
+        type: "boolean"

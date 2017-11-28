@@ -23,8 +23,9 @@ var (
 
 func main() {
 	var cmdServe = &cobra.Command{
-		Use:  "pouchd",
-		Args: cobra.MinimumNArgs(0),
+		Use:          "pouchd",
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDaemon()
@@ -33,7 +34,9 @@ func main() {
 
 	setupFlags(cmdServe)
 
-	cmdServe.Execute()
+	if err := cmdServe.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.

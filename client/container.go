@@ -83,3 +83,26 @@ func (client *APIClient) ContainerAttach(name string, stdin bool) (net.Conn, *bu
 
 	return client.hijack("/containers/"+name+"/attach", q, nil, header)
 }
+
+// ContainerCreateExec creates exec process.
+func (client *APIClient) ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResponse, error) {
+	response, err := client.post("/containers/"+name+"/exec", url.Values{}, config)
+	if err != nil {
+		return nil, err
+	}
+
+	body := &types.ExecCreateResponse{}
+	decodeBody(body, response.Body)
+	ensureCloseReader(response)
+
+	return body, nil
+}
+
+// ContainerStartExec starts exec process.
+func (client *APIClient) ContainerStartExec(execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
+	header := map[string][]string{
+		"Content-Type": {"text/plain"},
+	}
+
+	return client.hijack("/exec/"+execid+"/start", url.Values{}, config, header)
+}

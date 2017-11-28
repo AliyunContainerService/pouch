@@ -10,4 +10,4 @@ const Version = "0.1.0-dev"
 var BuildTime = time.Now().Format(time.RFC3339Nano)
 
 // APIVersion means the api version daemon serves
-var APIVersion = "vx.y.z"
+var APIVersion = "1.24"

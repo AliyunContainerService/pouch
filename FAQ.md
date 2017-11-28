@@ -12,7 +12,7 @@ Pouch can help to build a successful work flow for your IT engineering easily. W
 
 For developers, it can provide a standard way to package various applications. The standarized environment provided by Pouch could help you easily run CI(continuous integration) and improve CD(continuous delivery) efficieny. With this software, engineers can pack apllication with no effort and run applications out of box.
 
-For operators, automation is one of the obvious benifits. Manual operation can be reduced to a fairly small percentage with Pouch. Operator could never mind the heterogeneous machine architeture and operation system. And they has alibities to focus more on application operation rather than hardware operation.
+For operators, automation is one of the obvious benifits. Manual operation can be reduced to a fairly small percentage with Pouch. Operator could never mind the heterogeneous machine architeture and operation system. And they have alibities to focus more on application operation rather than hardware operation.
 
 In addition, if you own a huge datacenter, Pouch is the best choice you ever have. It can increase the resource utilization of datacenter a lot at a very low effort. Besides, isolation ability is bright feature of Pouchd.
 
@@ -40,7 +40,7 @@ Here we list some additional features of Pouch:
 
 * rich container: It means that there is not only one application process in container any more. Each container has its init process, and other systsem services on premise according to user's need.
 * strong isolation: Pouch can create a VM with hypervisor technology via [runV](https://github.com/hyperhq/runv) and [clearcontainer](https://github.com/clearcontainers/runtime)
-* high kernel compatibility: Pouch has a wide range of kernel version support. It is a long road for industry to upgrade kernel version to 3.10+. Pouch could help legecy kernel world to enjoy the fresh container technology.
+* high kernel compatibility: Pouch has a wide range of kernel version support. It is a long road for industry to upgrade kernel version to 3.10+. Pouch could help legacy kernel world to enjoy the fresh container technology.
 * P2P image distribution: In a very large datacenter, image distribution is heavy load for network. Pouch can take advantage of P2P image distribution solutions to improve this.
 
 ## What is version rule of Pouch ?

@@ -29,7 +29,7 @@ type Daemon struct {
 	server         server.Server
 }
 
-// router represents the router fo daemon.
+// router represents the router of daemon.
 type router struct {
 	daemon *Daemon
 	*mux.Router

@@ -28,12 +28,12 @@ func GenSystemMgr(cfg *config.Config) (mgr.SystemMgr, error) {
 	return mgr.NewSystemManager(cfg)
 }
 
-// GenImageMgr generates a SystemMgr instance according to config cfg.
+// GenImageMgr generates a ImageMgr instance according to config cfg.
 func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
 	return mgr.NewImageManager(cfg, d.Containerd())
 }
 
-// GenVolumeMgr generates a VolumeMgr instance.
+// GenVolumeMgr generates a VolumeMgr instance according to config cfg.
 func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
 	return mgr.NewVolumeManager(d.MetaStore(), cfg.Config)
 }

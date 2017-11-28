@@ -93,7 +93,7 @@ Right now we assume every contribution via pull request is for [branch master](h
 
 As a contributor, keep in mind again that every contribution via pull request is for branch master. While in project pouch, there are several other branches, we generally call them rc branches, release branches and backport branches.
 
-Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commit to this branch.
+Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commits to this branch.
 
 When officially releasing a version, there will be a release branch before tagging. After tagging, we will delete the release branch.
 
@@ -137,6 +137,13 @@ No matter commit message, or commit content, we do take more emphasis on code re
 ### PR Description
 
 PR is the only way to make change to Pouch project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
+
+### Test case contribution
+
+Any test case would be welcomed. Currently, pouch function test cases are high priority.
+
+* For unit test, you need to create a test file ended with `_test.go` in the same directory as dev package.
+* For integration test, you need to add test scrips in `pouch/test/` directory. The test makes use of [package check](https://github.com/go-check/check), a rich testing extension for Go's testing package. Test scripts are named by pouch commands. For example, all pouch help api tests are included in pouch_api_help_test.go and all pouch help command line tests are included in pouch_cli_help_test.go. For more details, please refer to [gocheck document](https://godoc.org/gopkg.in/check.v1).
 
 ## Engage to help anything
 

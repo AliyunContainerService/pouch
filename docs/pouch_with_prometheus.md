@@ -1,14 +1,21 @@
-# Overview
-  Pouch supports various monitoring metrics via prometheus. Now we already have the basic golang runtime and some api latency metrics. We plan to add more in the future in below two main area:
-  - Important pouch daemon metrics
-  - Full list of important api duration metrics
-## How to add new metrics
-   We tend to use prometheus's metric naming best-practices https://prometheus.io/docs/practices/naming/ in pouch. So when you are going to add a new metric, do follow the metric and label naming convention.
+# Pouch with Prometheus
 
-   We use prometheus [go-sdk](https://github.com/prometheus/client_golang) to monitor pouchd. It supports counter, gauge, summary metric types. For more info, please refer to https://prometheus.io/docs/concepts/metric_types/
+Pouch supports various monitoring metrics via [Prometheus](https://prometheus.io/). Now we already have the basic golang runtime and some api latency metrics. We plan to add more in the future in below two main areas:
+
+* Important pouch daemon metrics
+* Full list of important api duration metrics
+
+## How to add new metrics
+
+We tend to use prometheus's [METRIC AND LABEL NAMING](https://prometheus.io/docs/practices/naming) best-practices in pouch. So when you are going to add a new metric, do follow the metric and label naming convention.
+
+We use prometheus [go-sdk](https://github.com/prometheus/client_golang) to monitor pouchd. It supports counter, gauge and summary metric types. For more info, please refer to [METRIC TYPES](https://prometheus.io/docs/concepts/metric_types/).
+
 ## How to use 
-  User can start pouchd listening on `0.0.0.0:4243`, then issue `GET http://127.0.0.0.1:4243/metrics`  request to get a full list of prometheus-formatted metrics as below:
-  ```
+  
+Users can start pouchd listening on `0.0.0.0:4243` via `pouchd -l tcp://0.0.0.0:4243`, then issue `GET http://127.0.0.1:4243/metrics`  request to get a full list of prometheus-formatted metrics as below:
+
+```
 # HELP go_gc_duration_seconds A summary of the GC invocation durations.
 # TYPE go_gc_duration_seconds summary
 go_gc_duration_seconds{quantile="0"} 0.000111176
@@ -64,5 +71,6 @@ process_start_time_seconds 1.51064406778e+09
 # HELP process_virtual_memory_bytes Virtual memory size in bytes.
 # TYPE process_virtual_memory_bytes gauge
 process_virtual_memory_bytes 4.91610112e+08
-  ```
+```
+
 Then we can set up a new target to scrape this metric endpoint in prometheus. So that's it.
