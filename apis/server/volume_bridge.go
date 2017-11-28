@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/gorilla/mux"
@@ -15,8 +16,7 @@ func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req
 	var volumeCreateReq types.VolumeCreateRequest
 
 	if err := json.NewDecoder(req.Body).Decode(&volumeCreateReq); err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		return err
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
 	name := volumeCreateReq.Name
@@ -33,7 +33,6 @@ func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req
 	}
 
 	if err := s.VolumeMgr.Create(ctx, name, driver, options, labels); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -50,7 +49,6 @@ func (s *Server) removeVolume(ctx context.Context, resp http.ResponseWriter, req
 	name := mux.Vars(req)["name"]
 
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 	resp.WriteHeader(http.StatusOK)

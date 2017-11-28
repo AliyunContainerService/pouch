@@ -15,7 +15,6 @@ func (s *Server) ping(context context.Context, resp http.ResponseWriter, req *ht
 func (s *Server) info(ctx context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
 	info, err := s.SystemMgr.Info()
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 	resp.WriteHeader(http.StatusOK)
@@ -25,7 +24,6 @@ func (s *Server) info(ctx context.Context, resp http.ResponseWriter, req *http.R
 func (s *Server) version(ctx context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
 	info, err := s.SystemMgr.Version()
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 	resp.WriteHeader(http.StatusOK)
