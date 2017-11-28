@@ -31,9 +31,10 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 		metrics.ImagePullSummary.WithLabelValues(image + ":" + tag).Observe(metrics.SinceInMicroseconds(start))
 	}(time.Now())
 
+	// Error information has be sent to client, so no need call resp.Write
 	if err := s.ImageMgr.PullImage(ctx, image, tag, resp); err != nil {
 		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
-		return err
+		return nil
 	}
 
 	return nil
