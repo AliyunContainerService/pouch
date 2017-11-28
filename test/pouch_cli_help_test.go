@@ -26,6 +26,8 @@ func (suite *PouchHelpSuite) TestHelpWorks(c *check.C) {
 		"help":   true,
 		"--help": true,
 		"-h":     true,
+		"-help":  false,
+		"--h":    false,
 	}
 
 	for arg, ok := range args {
