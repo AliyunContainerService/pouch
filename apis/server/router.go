@@ -2,10 +2,14 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"time"
+
+	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -64,7 +68,7 @@ type handler func(context.Context, http.ResponseWriter, *http.Request) error
 func (s *Server) filter(handler handler) http.HandlerFunc {
 	pctx := context.Background()
 
-	return func(resp http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(pctx)
 		defer cancel()
 
@@ -72,7 +76,7 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 		clientInfo := req.RemoteAddr
 		defer func() {
 			d := time.Since(t) / (time.Millisecond)
-			// if elapse time of handler >= 500ms, log request
+			// If elapse time of handler >= 500ms, log request.
 			if d >= 500 {
 				logrus.Infof("End of Calling %s %s, costs %d ms. client %s", req.Method, req.URL.Path, d, clientInfo)
 			}
@@ -89,9 +93,40 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 			logrus.Debugf("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
 		}
 
-		if err := handler(ctx, resp, req); err != nil {
-			logrus.Errorf("invoke %s error %v. client %s", req.URL.RequestURI(), err, clientInfo)
-			resp.Write([]byte(err.Error()))
+		// Start to handle request.
+		err := handler(ctx, w, req)
+		if err == nil {
+			return
 		}
+		// Handle error if request handling fails.
+		HandleErrorResponse(w, err)
 	}
+}
+
+// HandleErrorResponse handles err from daemon side and constructs response for client side.
+func HandleErrorResponse(w http.ResponseWriter, err error) {
+	var (
+		code   int
+		errMsg string
+	)
+
+	// By default, daemon side returns code 500 if error happens.
+	code = http.StatusInternalServerError
+	errMsg = err.Error()
+
+	httpErr, ok := err.(httputils.HTTPError)
+	if ok {
+		code = httpErr.Code()
+		errMsg = httpErr.Error()
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+
+	resp := types.Error{
+		Message: errMsg,
+	}
+	enc.Encode(resp)
 }
