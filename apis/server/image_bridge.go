@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
+	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,8 +19,8 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 	tag := req.FormValue("tag")
 
 	if image == "" {
-		resp.WriteHeader(http.StatusBadRequest)
-		return fmt.Errorf("fromImage cannot be empty")
+		err := fmt.Errorf("fromImage cannot be empty")
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
 	if tag == "" {
@@ -32,7 +33,6 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 
 	if err := s.ImageMgr.PullImage(ctx, image, tag, resp); err != nil {
 		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -45,7 +45,6 @@ func (s *Server) listImages(ctx context.Context, resp http.ResponseWriter, req *
 	imageList, err := s.ImageMgr.ListImages(ctx, filters)
 	if err != nil {
 		logrus.Errorf("failed to list images in containerd: %v", err)
-		resp.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 	return json.NewEncoder(resp).Encode(imageList)
@@ -58,7 +57,6 @@ func (s *Server) searchImages(ctx context.Context, resp http.ResponseWriter, req
 	response, err := s.ImageMgr.SearchImages(ctx, searchPattern, registry)
 	if err != nil {
 		logrus.Errorf("failed to search images from resgitry: %v", err)
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 	return json.NewEncoder(resp).Encode(response)
