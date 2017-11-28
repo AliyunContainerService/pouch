@@ -45,6 +45,9 @@ type ContainerMgr interface {
 
 	// StartExec executes a new process in container.
 	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *types.AttachConfig) error
+
+	// Remove removes a container, it may be running or stopped and so on.
+	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -114,6 +117,12 @@ func (cm *ContainerManager) Restore(ctx context.Context) error {
 		return nil
 	}
 	return cm.Store.ForEach(fn)
+}
+
+// Remove removes a container, it may be running or stopped and so on.
+// TODO
+func (cm *ContainerManager) Remove(ctx context.Context, name string, option *ContainerRemoveOption) error {
+	return nil
 }
 
 // CreateExec creates exec process's meta data.
