@@ -13,6 +13,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO
+func (s *Server) removeContainers(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	return nil
+}
+
 func (s *Server) createContainerExec(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
