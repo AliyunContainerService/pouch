@@ -112,7 +112,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(
 		&cfg.HomeDir,
 		"home-dir",
-		"/etc/pouchd",
+		"/var/lib/pouch",
 		"The pouchd's home directory")
 
 	flagSet.StringArrayVarP(
