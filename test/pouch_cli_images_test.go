@@ -29,7 +29,7 @@ func (suite *PouchImagesSuite) TestPouchImages(c *check.C) {
 	}
 }
 
-// TestPouchImages is to verify pouch images with flags
+// TestPouchImagesFlags is to verify pouch images with flags
 func (suite *PouchImagesSuite) TestPouchImagesFlags(c *check.C) {
 	args := map[string]bool{
 		"-q":       true,
