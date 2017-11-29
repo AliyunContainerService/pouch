@@ -1,9 +1,12 @@
 package main
 
 import (
-	"github.com/go-check/check"
 	"os/exec"
 	"strings"
+
+	"github.com/alibaba/pouch/version"
+
+	"github.com/go-check/check"
 )
 
 // PouchVersionSuite is the test suite fo help CLI.
@@ -24,8 +27,11 @@ func (suite *PouchVersionSuite) TestPouchVersion(c *check.C) {
 	out, err := exec.Command("pouch", "version").Output()
 	c.Assert(err, check.IsNil)
 
-	if !strings.Contains(string(out), "APIVersion") {
-		c.Fatalf("unexpected output %s expected APIVersion\n", string(out))
+	if !strings.Contains(string(out), version.Version) {
+		c.Fatalf("unexpected output %s expected %s\n", string(out), version.Version)
 	}
 
+	if !strings.Contains(string(out), version.APIVersion) {
+		c.Fatalf("unexpected output %s expected %s\n", string(out), version.APIVersion)
+	}
 }
