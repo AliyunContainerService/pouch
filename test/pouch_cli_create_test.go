@@ -2,6 +2,7 @@ package main
 
 import (
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/go-check/check"
@@ -44,4 +45,48 @@ func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C)
 		c.Fatalf("unexpected output %s expected already exist\n", string(out))
 	}
 
+}
+
+// SetUpSuite does common setup in the beginning of each test suite.
+func (suite *PouchCreateSuite) SetUpSuite(c *check.C) {
+	SkipIfFalse(c, IsLinux)
+
+	// Pull test image
+	cmd := exec.Command("pouch", "pull", testImage)
+	cmd.Run()
+}
+
+// TearDownSuite does cleanup work in the end of each test suite.
+func (suite *PouchCreateSuite) TearDownSuite(c *check.C) {
+	// TODO: Remove test image
+}
+
+// TearDownTest does cleanup work in the end of each test.
+func (suite *PouchCreateSuite) TearDownTest(c *check.C) {
+	// TODO add cleanup work
+}
+
+// TestCreateWorks tests "pouch create" work.
+func (suite *PouchCreateSuite) TestCreateWorks(c *check.C) {
+
+	// TODO: add wrong args.
+	args := map[string]bool{
+		"":             true,
+		"-t":           true,
+		"-v /tmp:/tmp": true,
+	}
+
+	for arg, ok := range args {
+		cmd := exec.Command("pouch", "create", arg, testImage)
+		out, _, err := runCmd(cmd)
+
+		if ok {
+			c.Assert(err, check.IsNil)
+			match, _ := regexp.MatchString("container.*name.*", out)
+			c.Assert(match, check.Equals, true)
+		} else {
+			c.Assert(err, check.NotNil)
+		}
+	}
+	// TODO: clean the created container
 }

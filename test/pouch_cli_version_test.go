@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/go-check/check"
 	"os/exec"
 	"strings"
+
+	"github.com/go-check/check"
 )
 
 // PouchVersionSuite is the test suite fo help CLI.
