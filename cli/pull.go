@@ -26,28 +26,37 @@ func (p *PullCommand) Init(c *Cli) {
 
 	p.cmd = &cobra.Command{
 		Use:   "pull [image]",
-		Short: "Pull use to download image from repository",
+		Short: "Pull an image from registry",
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.runPull(args)
+		},
 	}
+	p.addFlags()
 }
 
-// Run is the entry of pull command.
-func (p *PullCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (p *PullCommand) addFlags() {
+	// TODO: add flags here
+}
+
+// runPull is the entry of pull command.
+func (p *PullCommand) runPull(args []string) error {
 	name, tag := parseNameTag(args[0])
 
 	apiClient := p.cli.Client()
 	responseBody, err := apiClient.ImagePull(name, tag)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to pull image: %v \n", err)
-		return
+		return fmt.Errorf("failed to pull image: %v", err)
 	}
 	defer responseBody.Close()
 
-	renderOutput(responseBody)
+	return renderOutput(responseBody)
+
 }
 
 // renderOutput draws the commandline output via api response.
-func renderOutput(responseBody io.ReadCloser) {
+func renderOutput(responseBody io.ReadCloser) error {
 	var (
 		start = time.Now()
 		fw    = progress.NewWriter(os.Stdout)
@@ -55,8 +64,7 @@ func renderOutput(responseBody io.ReadCloser) {
 
 	dec := json.NewDecoder(responseBody)
 	if _, err := dec.Token(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read the opening token: %v", err)
-		return
+		return fmt.Errorf("failed to read the opening token: %v", err)
 	}
 
 	for dec.More() {
@@ -65,8 +73,7 @@ func renderOutput(responseBody io.ReadCloser) {
 		tw := tabwriter.NewWriter(fw, 1, 8, 1, ' ', 0)
 
 		if err := dec.Decode(&objs); err != nil {
-			fmt.Fprintf(os.Stderr, "failed to decode: %v \n", err)
-			return
+			return fmt.Errorf("failed to decode: %v", err)
 		}
 
 		display(tw, objs, start)
@@ -76,9 +83,9 @@ func renderOutput(responseBody io.ReadCloser) {
 	}
 
 	if _, err := dec.Token(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read the closing token: %v", err)
-		return
+		return fmt.Errorf("failed to read the closing token: %v", err)
 	}
+	return nil
 }
 
 func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {

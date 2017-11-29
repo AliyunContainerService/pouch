@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -15,22 +14,31 @@ type VersionCommand struct {
 // Init initialize version command.
 func (v *VersionCommand) Init(c *Cli) {
 	v.cli = c
-
 	v.cmd = &cobra.Command{
 		Use:   "version",
-		Short: "Print version",
+		Short: "Print versions about Pouch CLI and Pouchd",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runVersion()
+		},
 	}
+	v.addFlags()
 }
 
-// Run is the entry of version command.
-func (v *VersionCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (v *VersionCommand) addFlags() {
+	// TODO: add flags here
+}
+
+// runVersion is the entry of version command.
+func (v *VersionCommand) runVersion() error {
 	apiClient := v.cli.Client()
 
 	result, err := apiClient.SystemVersion()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get system version: %v\n", err)
-		return
+		return fmt.Errorf("failed to get system version: %v", err)
 	}
 
 	v.cli.Print(result)
+	return nil
 }

@@ -5,8 +5,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-
-	"github.com/spf13/pflag"
 )
 
 // TLSConfig contains information of tls which users can specify
@@ -42,12 +40,4 @@ func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
-}
-
-// SetupTLSFlag setups flags of tls arguments
-func SetupTLSFlag(fs *pflag.FlagSet, tlsCfg *TLSConfig) {
-	fs.StringVar(&tlsCfg.Key, "tlskey", "", "Specify key file of tls")
-	fs.StringVar(&tlsCfg.Cert, "tlscert", "", "Specify cert file of tls")
-	fs.StringVar(&tlsCfg.CA, "tlscacert", "", "Specify CA file of tls")
-	fs.BoolVar(&tlsCfg.VerifyRemote, "tlsverify", false, "Switch if verify the remote when using tls")
 }
