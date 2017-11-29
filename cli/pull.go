@@ -138,6 +138,9 @@ func parseNameTag(input string) (string, string) {
 		if count == 1 {
 			name = "docker.io/" + name
 		}
+		else if count > 2 {
+		        return 0, fmt.Errorf("invalid image formate")
+		}
 	} else {
 		name = "docker.io/library/" + name
 	}
