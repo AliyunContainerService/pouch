@@ -49,7 +49,7 @@ func (i *ImageCommand) runImages(args []string) error {
 
 	if i.flagQuiet {
 		for _, image := range imageList {
-			fmt.Println(image.Name)
+			fmt.Println(image.ID)
 		}
 		return nil
 	}
