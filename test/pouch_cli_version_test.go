@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// PouchVersionSuite is the test suite fo help CLI.
+// PouchVersionSuite is the test suite of help CLI.
 type PouchVersionSuite struct {
 }
 
