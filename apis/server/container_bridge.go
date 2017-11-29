@@ -176,3 +176,14 @@ func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, re
 	resp.WriteHeader(http.StatusOK)
 	return json.NewEncoder(resp).Encode(cs)
 }
+
+func (s *Server) getContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	ci, err := s.ContainerMgr.ContainerInfo(name)
+	if err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusOK)
+	return json.NewEncoder(resp).Encode(ci)
+}

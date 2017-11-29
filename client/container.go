@@ -106,3 +106,16 @@ func (client *APIClient) ContainerStartExec(execid string, config *types.ExecSta
 
 	return client.hijack("/exec/"+execid+"/start", url.Values{}, config, header)
 }
+
+func (client *APIClient) ContainerInfo(name string) (*types.ContainerInfo, error) {
+	resp, err := client.get("/containers/"+name+"/json", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	container := types.ContainerInfo{}
+	err = decodeBody(&container, resp.Body)
+	ensureCloseReader(resp)
+
+	return &container, err
+}

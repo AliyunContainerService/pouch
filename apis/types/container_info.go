@@ -3,7 +3,7 @@ package types
 // ContainerInfo accommodates container state and container configuration
 type ContainerInfo struct {
 	*ContainerState
-	Config     *ContainerConfigWrapper
+	Config     *ContainerConfigWrapper `json:"Config,omitempty"`
 	ID         string
 	Name       string
 	DetachKeys string

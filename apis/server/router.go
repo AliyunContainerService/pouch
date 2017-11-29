@@ -29,6 +29,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/containers/{name:.*}/stop").Methods(http.MethodPost).Handler(s.filter(s.stopContainer))
 	r.Path("/containers/{name:.*}/attach").Methods(http.MethodPost).Handler(s.filter(s.attachContainer))
 	r.Path("/containers/json").Methods(http.MethodGet).Handler(s.filter(s.getContainers))
+	r.Path("/containers/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getContainer))
 	r.Path("/containers/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeContainers))
 	r.Path("/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
 	r.Path("/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
