@@ -19,19 +19,26 @@ type StartCommand struct {
 // Init initialize start command.
 func (s *StartCommand) Init(c *Cli) {
 	s.cli = c
-
 	s.cmd = &cobra.Command{
 		Use:   "start [container]",
-		Short: "Start a created container",
+		Short: "Start a created or stopped container",
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return s.runStart(args)
+		},
 	}
-
-	s.cmd.Flags().BoolVarP(&s.attach, "attach", "a", false, "attach the container's io or not")
-	s.cmd.Flags().BoolVarP(&s.stdin, "interactive", "i", false, "attach container's stdin")
+	s.addFlags()
 }
 
-// Run is the entry of start command.
-func (s *StartCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (s *StartCommand) addFlags() {
+	flagSet := s.cmd.Flags()
+	flagSet.BoolVarP(&s.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
+	flagSet.BoolVarP(&s.stdin, "interactive", "i", false, "Attach container's STDIN")
+}
+
+// runStart is the entry of start command.
+func (s *StartCommand) runStart(args []string) error {
 	container := args[0]
 
 	// attach to io.
@@ -41,8 +48,7 @@ func (s *StartCommand) Run(args []string) {
 	if s.attach || s.stdin {
 		in, out, err := setRawMode(s.stdin, false)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to set raw mode")
-			return
+			return fmt.Errorf("failed to set raw mode")
 		}
 		defer func() {
 			if err := restoreMode(in, out); err != nil {
@@ -52,8 +58,7 @@ func (s *StartCommand) Run(args []string) {
 
 		conn, br, err := apiClient.ContainerAttach(container, s.stdin)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to attach container: %v \n", err)
-			return
+			return fmt.Errorf("failed to attach container: %v", err)
 		}
 
 		wait = make(chan struct{})
@@ -69,14 +74,14 @@ func (s *StartCommand) Run(args []string) {
 
 	// start container
 	if err := apiClient.ContainerStart(container, ""); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to start container %s: %v\n", container, err)
-		return
+		return fmt.Errorf("failed to start container %s: %v", container, err)
 	}
 
 	// wait the io to finish.
 	if s.attach || s.stdin {
 		<-wait
 	}
+	return nil
 }
 
 func setRawMode(stdin, stdout bool) (*terminal.State, *terminal.State, error) {
