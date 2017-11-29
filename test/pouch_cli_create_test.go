@@ -30,3 +30,18 @@ func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
 	}
 
 }
+
+// TestPouchCreateDuplicateContainerName is to verify duplicate container names.
+func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C) {
+	containername := "duplicate"
+	cmd := exec.Command("pouch", "create", "--name", containername, "busybox:latest")
+	err := cmd.Run()
+	c.Assert(err, check.IsNil)
+
+	out, err := exec.Command("pouch", "create", "--name", containername, "busybox:latest").CombinedOutput()
+	c.Assert(err, check.NotNil)
+	if !strings.Contains(string(out), "already exist") {
+		c.Fatalf("unexpected output %s expected already exist\n", string(out))
+	}
+
+}
