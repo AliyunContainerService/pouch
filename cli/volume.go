@@ -52,7 +52,7 @@ func (v *VolumeCreateCommand) Init(c *Cli) {
 	v.cmd = &cobra.Command{
 		Use:   "create [args]",
 		Short: "Create a volume",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runVolumeCreate(args)
 		},

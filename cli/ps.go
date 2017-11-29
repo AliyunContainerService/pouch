@@ -17,7 +17,7 @@ func (p *PsCommand) Init(c *Cli) {
 	p.cmd = &cobra.Command{
 		Use:   "ps",
 		Short: "List all containers",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.runPs(args)
 		},

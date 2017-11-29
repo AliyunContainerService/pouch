@@ -21,7 +21,7 @@ func (i *ImageCommand) Init(c *Cli) {
 	i.cmd = &cobra.Command{
 		Use:   "images",
 		Short: "List all images",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return i.runImages(args)
 		},
