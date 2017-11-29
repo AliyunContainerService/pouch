@@ -31,9 +31,10 @@ func (cc *CreateCommand) Run(args []string) {
 	if len(args) == 2 {
 		config.Cmd = strings.Fields(args[1])
 	}
+	containerName := cc.name
 
 	apiClient := cc.cli.Client()
-	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, "")
+	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, containerName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create container: %v\n", err)
 		return
