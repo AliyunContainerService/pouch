@@ -68,6 +68,7 @@ func (w *watch) add(pack containerPack) {
 			exitCode: status.ExitCode(),
 			exitTime: status.ExitTime(),
 		}
+		pack.ch <- msg
 
 		for _, hook := range w.hooks {
 			if err := hook(pack.id, msg); err != nil {
@@ -75,8 +76,6 @@ func (w *watch) add(pack containerPack) {
 				break
 			}
 		}
-
-		pack.ch <- msg
 
 	}(pack)
 
