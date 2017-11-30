@@ -473,8 +473,12 @@ func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error 
 }
 
 func (cm *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
-	// release io.
 	if io := cm.IOs.Get(id); io != nil {
+		if err := m.StartError(); err != nil {
+			fmt.Fprintf(io.Stdout, "%v\n", err)
+		}
+
+		// close io
 		io.Stderr.Close()
 		io.Stdout.Close()
 		io.Stdin.Close()

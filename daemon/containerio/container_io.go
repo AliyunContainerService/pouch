@@ -170,8 +170,10 @@ func (io *ContainerIO) Write(data []byte) (int, error) {
 // Close implements the standard Close interface.
 func (io *ContainerIO) Close() error {
 	for name, b := range io.backends {
-		b.backend.Close()
+		// we need to close ringbuf before close backend, because close ring will flush
+		// the remain data into backend.
 		b.ring.Close()
+		b.backend.Close()
 
 		logrus.Infof("close containerio backend: %s, id: %s", name, io.id)
 	}

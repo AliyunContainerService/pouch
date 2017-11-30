@@ -14,6 +14,12 @@ type Message struct {
 	exitCode uint32
 	exitTime time.Time
 	err      error
+	startErr error
+}
+
+// StartError returns the error of start exec process or container.
+func (m *Message) StartError() error {
+	return m.startErr
 }
 
 // Error returns the error contained in Message.
