@@ -7,7 +7,7 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchCreateSuite is the test suite fo help CLI.
+// PouchCreateSuite is the test suite of help CLI.
 type PouchCreateSuite struct {
 }
 
