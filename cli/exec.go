@@ -25,17 +25,25 @@ func (e *ExecCommand) Init(c *Cli) {
 	e.cli = c
 	e.cmd = &cobra.Command{
 		Use:   "exec [container]",
-		Short: "exec a process in container",
+		Short: "Exec a process in a running container",
 		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return e.runExec(args)
+		},
 	}
-
-	e.cmd.Flags().BoolVarP(&e.Detach, "detach", "d", false, "run process in the backgroud")
-	e.cmd.Flags().BoolVarP(&e.Terminal, "tty", "t", false, "allocate a tty device")
-	e.cmd.Flags().BoolVarP(&e.Interactive, "interactive", "i", false, "open container's stdin io")
+	e.addFlags()
 }
 
-// Run is the entry of ExecCommand command.
-func (e *ExecCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (e *ExecCommand) addFlags() {
+	flagSet := e.cmd.Flags()
+	flagSet.BoolVarP(&e.Detach, "detach", "d", false, "Run the process in the background")
+	flagSet.BoolVarP(&e.Terminal, "tty", "t", false, "Allocate a tty device")
+	flagSet.BoolVarP(&e.Interactive, "interactive", "i", false, "Open container's STDIN")
+}
+
+// runExec is the entry of ExecCommand command.
+func (e *ExecCommand) runExec(args []string) error {
 	apiClient := e.cli.Client()
 
 	// create exec process.
@@ -55,8 +63,7 @@ func (e *ExecCommand) Run(args []string) {
 
 	createResp, err := apiClient.ContainerCreateExec(id, createExecConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create exec: %v", err)
-		return
+		return fmt.Errorf("failed to create exec: %v", err)
 	}
 
 	// start exec process.
@@ -67,8 +74,7 @@ func (e *ExecCommand) Run(args []string) {
 
 	conn, reader, err := apiClient.ContainerStartExec(createResp.ID, startExecConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create exec: %v", err)
-		return
+		return fmt.Errorf("failed to create exec: %v", err)
 	}
 
 	// handle stdio.
@@ -84,8 +90,7 @@ func (e *ExecCommand) Run(args []string) {
 	if createExecConfig.AttachStdin {
 		in, out, err := setRawMode(true, false)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to set raw mode")
-			return
+			return fmt.Errorf("failed to set raw mode")
 		}
 		defer func() {
 			if err := restoreMode(in, out); err != nil {
@@ -99,4 +104,5 @@ func (e *ExecCommand) Run(args []string) {
 	}
 
 	wg.Wait()
+	return nil
 }

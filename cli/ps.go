@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -17,18 +16,27 @@ func (p *PsCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
 		Use:   "ps",
-		Short: "list all containers",
+		Short: "List all containers",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.runPs(args)
+		},
 	}
+	p.addFlags()
 }
 
-// Run is the entry of PsCommand command.
-func (p *PsCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (p *PsCommand) addFlags() {
+	// TODO: add flags here
+}
+
+// runPs is the entry of PsCommand command.
+func (p *PsCommand) runPs(args []string) error {
 	apiClient := p.cli.Client()
 
 	containers, err := apiClient.ContainerList()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get container list: %v\n", err)
-		return
+		return fmt.Errorf("failed to get container list: %v", err)
 	}
 
 	display := p.cli.NewTableDisplay()
@@ -37,4 +45,5 @@ func (p *PsCommand) Run(args []string) {
 		display.AddRow([]string{c.Names[0], c.ID[:6], c.Status, c.Image})
 	}
 	display.Flush()
+	return nil
 }

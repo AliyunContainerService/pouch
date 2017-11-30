@@ -26,7 +26,6 @@ func main() {
 		Use:          "pouchd",
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
-
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDaemon()
 		},
@@ -35,8 +34,25 @@ func main() {
 	setupFlags(cmdServe)
 
 	if err := cmdServe.Execute(); err != nil {
+		logrus.Error(err)
 		os.Exit(1)
 	}
+}
+
+// setupFlags setups flags for command line.
+func setupFlags(cmd *cobra.Command) {
+	flagSet := cmd.Flags()
+
+	flagSet.StringVar(&cfg.HomeDir, "home-dir", "/var/lib/pouch", "Specify root dir of pouchd")
+	flagSet.StringArrayVarP(&cfg.Listen, "listen", "l", []string{"unix:///var/run/pouchd.sock"}, "Specify listening addresses of Pouchd")
+	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
+	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
+	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "/usr/local/bin/containerd", "Specify the path of containerd binary")
+	flagSet.StringVar(&cfg.ContainerdConfig, "containerd-config", "/etc/containerd/config.toml", "Specify the path of containerd configuration file")
+	flagSet.StringVar(&cfg.TLS.Key, "tlskey", "", "Specify key file of TLS")
+	flagSet.StringVar(&cfg.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
+	flagSet.StringVar(&cfg.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
+	flagSet.BoolVar(&cfg.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
@@ -103,52 +119,6 @@ func runDaemon() error {
 	sigHandles = append(sigHandles, d.Shutdown)
 
 	return d.Run()
-}
-
-// setupFlags setups flags for command line.
-func setupFlags(cmd *cobra.Command) {
-	flagSet := cmd.Flags()
-
-	flagSet.StringVar(
-		&cfg.HomeDir,
-		"home-dir",
-		"/etc/pouchd",
-		"The pouchd's home directory")
-
-	flagSet.StringArrayVarP(
-		&cfg.Listen,
-		"listen",
-		"l",
-		[]string{"unix:///var/run/pouchd.sock"},
-		"which address to listen on")
-
-	flagSet.BoolVarP(
-		&cfg.Debug,
-		"debug",
-		"D",
-		false,
-		"switch debug level")
-
-	flagSet.StringVarP(
-		&cfg.ContainerdAddr,
-		"containerd",
-		"c",
-		"/var/run/containerd.sock",
-		"where does containerd listened on")
-
-	flagSet.StringVar(
-		&cfg.ContainerdPath,
-		"containerd-path",
-		"/usr/local/bin/containerd",
-		"Specify the path of Containerd binary")
-
-	flagSet.StringVar(
-		&cfg.ContainerdConfig,
-		"containerd-config",
-		"/etc/containerd/config.toml",
-		"Specify the path of Containerd binary")
-
-	utils.SetupTLSFlag(flagSet, &cfg.TLS)
 }
 
 // initLog initializes log Level and log format of daemon.

@@ -20,7 +20,7 @@ Flags:
       --containerd-path string     Specify the path of Containerd binary (default "/usr/local/bin/containerd")
   -D, --debug                      switch debug level
   -h, --help                       help for this command
-      --home-dir string            The pouchd's home directory (default "/etc/pouchd")
+      --home-dir string            The pouchd's home directory (default "/var/lib/pouch")
   -l, --listen stringArray         which address to listen on (default [unix:///var/run/pouchd.sock])
       --tlscacert string           Specify CA file of tls
       --tlscert string             Specify cert file of tls
