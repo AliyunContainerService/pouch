@@ -43,6 +43,9 @@ type Container struct {
 	// names
 	Names []string `json:"Names"`
 
+	// pid
+	Pid int `json:"Pid,omitempty"`
+
 	// size root fs
 	SizeRootFs int64 `json:"SizeRootFs,omitempty"`
 

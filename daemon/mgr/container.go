@@ -279,7 +279,7 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 		s.Process.Terminal = true
 	}
 
-	err = cm.Client.CreateContainer(ctx, &ctrd.Container{
+	pid, err := cm.Client.CreateContainer(ctx, &ctrd.Container{
 		Info: c,
 		Spec: s,
 		IO:   io,
@@ -288,10 +288,10 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 		c.Status = types.RUNNING
 		c.StartedAt = time.Now()
 		//TODO get and set container pid
+		c.Pid = int(pid)
 	} else {
 		c.FinishedAt = time.Now()
 		c.ErrorMsg = err.Error()
-		c.Pid = 0
 		//TODO get and set exit code
 
 		// release io

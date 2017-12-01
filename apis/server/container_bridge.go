@@ -184,6 +184,16 @@ func (s *Server) getContainer(ctx context.Context, resp http.ResponseWriter, req
 		return err
 	}
 
+	c := types.Container{
+		ID:      ci.ID,
+		Names:   []string{ci.Name},
+		Status:  ci.Status.String(),
+		Image:   ci.Config.Image,
+		Command: strings.Join(ci.Config.Cmd, " "),
+		Created: ci.StartedAt.UnixNano(),
+		Labels:  ci.Config.Labels,
+		Pid: ci.Pid,
+	}
 	resp.WriteHeader(http.StatusOK)
-	return json.NewEncoder(resp).Encode(ci)
+	return json.NewEncoder(resp).Encode(c)
 }

@@ -221,28 +221,28 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 }
 
 // CreateContainer create container and start process.
-func (c *Client) CreateContainer(ctx context.Context, container *Container) error {
+func (c *Client) CreateContainer(ctx context.Context, container *Container) (uint32, error) {
 	var (
 		ref = container.Info.Config.Image
 		id  = container.Info.ID
 	)
 
 	if !c.lock.Trylock(id) {
-		return ErrTrylockFailed
+		return 0, ErrTrylockFailed
 	}
 	defer c.lock.Unlock(id)
 
 	return c.createContainer(ctx, ref, id, container)
 }
 
-func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (err0 error) {
+func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (pid uint32, err0 error) {
 	// get image
 	img, err := c.client.GetImage(ctx, ref)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			return ErrImageNotfound
+			return 0, ErrImageNotfound
 		}
-		return errors.Wrapf(err, "failed to get image: %s", ref)
+		return 0, errors.Wrapf(err, "failed to get image: %s", ref)
 	}
 
 	logrus.Infof("success to get image: %s, container id: %s", img.Name(), id)
@@ -267,7 +267,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 
 	nc, err := c.client.NewContainer(ctx, id, options...)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create container, id: %s", id)
+		return 0, errors.Wrapf(err, "failed to create container, id: %s", id)
 	}
 
 	defer func() {
@@ -281,12 +281,12 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	// create task
 	pack, err := c.createTask(ctx, id, nc, container)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	c.watch.add(pack)
 
-	return nil
+	return pack.task.Pid(), nil
 }
 
 func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p containerPack, err0 error) {
