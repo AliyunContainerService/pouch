@@ -11,14 +11,16 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/version"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var (
-	cfg        config.Config
-	sigHandles []func() error
+	cfg          config.Config
+	sigHandles   []func() error
+	printVersion bool
 )
 
 func main() {
@@ -53,10 +55,17 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
 	flagSet.StringVar(&cfg.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
 	flagSet.BoolVar(&cfg.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
+	flagSet.BoolVarP(&printVersion, "version", "v", false, "Print daemon version")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
 func runDaemon() error {
+	//user specifies --version or -v, print version and return.
+	if printVersion {
+		fmt.Println(version.Version)
+		return nil
+	}
+
 	// initialize log.
 	initLog()
 
