@@ -77,8 +77,9 @@ func (c *Cli) AddCommand(parent, child Command) {
 	parentCmd := parent.Cmd()
 	childCmd := child.Cmd()
 
-	// make command error not return command usage
+	// make command error not return command usage and error
 	childCmd.SilenceUsage = true
+	childCmd.SilenceErrors = true
 
 	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		c.NewAPIClient()
