@@ -1,20 +1,18 @@
 # Frequently Asked Questions
 
-## What does Pouch mean?
+## What is Pouch project?
+
+Pouch is tool providing container services for developers and operators. It helps to build a successful work flow for IT engineering teams. Pouch also acclerates DevOps innovations for enterprises.
+
+For developers, Pouch provides a standard way to package their applications. With Pouch, developers can pack application with little effort, and run it everywhere. The standarized environment provided by Pouch makes it easier to run Continuous Integration, and improves the efficiency of Continuous Delivery. 
+
+For operators, Pouch enables automation, and largely reduces manual operations. With Pouch, operators no longer worry about the heterogeneous machine architeture and environments. Pouch enables them to focus more on application operation.
+
+For data center owners, Pouch is the best choice you ever have. Compared to VM technology, Pouch helps increase the resource utilization with the similar level of isolation.
+
+## Why it is named Pouch?
 
 Pouch refers to some kinds of small bags. One kind is brood pouch which is used to protect very young life. This is a metaphor that Software Pouch has its responsibilty to take care of applications very closely. In another word, application is the keyword in Pouch's world.
-
-## What can Pouch bring you?
-
-Pouch is a convenient tool providing container services for developers and operators. 
-
-Pouch can help to build a successful work flow for your IT engineering easily. We can also have such idea that Pouch is a huge helper to inovate DevOps for enterprises.
-
-For developers, it can provide a standard way to package various applications. The standarized environment provided by Pouch could help you easily run CI(continuous integration) and improve CD(continuous delivery) efficieny. With this software, engineers can pack apllication with no effort and run applications out of box.
-
-For operators, automation is one of the obvious benifits. Manual operation can be reduced to a fairly small percentage with Pouch. Operator could never mind the heterogeneous machine architeture and operation system. And they have alibities to focus more on application operation rather than hardware operation.
-
-In addition, if you own a huge datacenter, Pouch is the best choice you ever have. It can increase the resource utilization of datacenter a lot at a very low effort. Besides, isolation ability is bright feature of Pouchd.
 
 ## What is the history of Pouch?
 
