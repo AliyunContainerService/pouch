@@ -267,6 +267,37 @@ paths:
           description: "Server error"
           schema:
             $ref: "#/definitions/Error"
+  /containers/{id}/rename:
+    post:
+      summary: "Rename a container"
+      operationId: "ContainerRename"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "name"
+          in: "query"
+          required: true
+          description: "New name for the container"
+          type: "string"
+      responses:
+        204:
+          description: "no error"
+        404:
+          description: "no such container"
+          schema:
+           $ref: "#/definitions/Error"
+        409:
+          description: "name already in use"
+          schema:
+           $ref: "#/definitions/Error"
+        500:
+          description: "server error"
+          schema:
+           $ref: "#/definitions/Error"
+      tags: ["Container"]
 
   /volumes:
     get:

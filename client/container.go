@@ -120,3 +120,14 @@ func (client *APIClient) ContainerGet(name string) (*types.ContainerJSON, error)
 
 	return &container, err
 }
+
+// ContainerRename renames a container.
+func (client *APIClient) ContainerRename(id string, name string) error {
+	q := url.Values{}
+	q.Add("name", name)
+
+	resp, err := client.post("/containers/"+id+"/rename", q, nil)
+	ensureCloseReader(resp)
+
+	return err
+}
