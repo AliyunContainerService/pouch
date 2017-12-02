@@ -2,7 +2,7 @@
 
 ## What is Pouch project?
 
-Pouch is tool providing container services for developers and operators. It helps to build a successful work flow for IT engineering teams. Pouch also acclerates DevOps innovations for enterprises.
+Pouch is a tool providing container services for developers and operators. It helps to build a successful work flow for IT engineering teams. Pouch also acclerates DevOps innovations for enterprises.
 
 For developers, Pouch provides a standard way to package their applications. With Pouch, developers can pack application with little effort, and run it everywhere. The standarized environment provided by Pouch makes it easier to run Continuous Integration, and improves the efficiency of Continuous Delivery. 
 
