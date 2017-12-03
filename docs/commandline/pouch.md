@@ -52,7 +52,7 @@ Use "pouch [command] --help" for more information about a command.
 
 ### volume
 
-## Flag Guidance
+## Global Flags
 
 ### --help
 
