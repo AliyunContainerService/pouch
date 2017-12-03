@@ -53,11 +53,11 @@ $ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 
 If you wish to experience hypervisor-based virtualization additionally, you will still need to install [runV](https://github.com/hyperhq/runv).
 
-More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guinde](docs/pouch-runv-guide.md).
+More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guide](docs/pouch-runv-guide.md).
 
 ### Pouch Build and Installation
 
-With all Prerequisites installed, you can build and install pouch daemon and pouch cli. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
+With all prerequisites installed, you can build and install pouch daemon and pouch cli. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
 
 ``` shell
 $ mkdir -p $GOPATH/src/github.com/alibaba/ 
