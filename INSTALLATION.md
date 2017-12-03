@@ -1,6 +1,6 @@
 # Quick-Start
 
-Two quick-start are provided, one for end-users, the other for developers.
+Two quick-starts are provided, one for end-users, the other one for developers.
 
 As an end user who wish to use Pouch, please read [End User Quick-Start](#end-user-quick-start) to install and explore Pouch. 
 
