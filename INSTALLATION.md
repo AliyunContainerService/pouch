@@ -1,8 +1,10 @@
-# Installation
+# Quick-Start
 
-We have two different ways to experience Pouch, one for end-users, the other for developers. In the former one, installation can help you with Pouch installing out of box. The latter one is for those who wish to get involved in Pouch with hacking.
+Two quick-starts are provided, one for end-users, the other one for developers.
 
-If you wish to experience Pouch, please choose [End User Quick-Start](#end-user-quick-start). And if you are looking forward to becoming a hacker, [Developer Quick-Start](#developer-quick-start) is a must-read for you.
+As an end user who wish to use Pouch, please read [End User Quick-Start](#end-user-quick-start) to install and explore Pouch. 
+
+As a developer who wish to hack on Pouch, please read [Developer Quick-Start](#developer-quick-start) to start hacking and get invloved in the project!
 
 ## End User Quick-Start
 
