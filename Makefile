@@ -13,8 +13,6 @@ CLI_BINARY_NAME=pouch
 # Base path used to install pouch & pouchd
 DESTDIR=/usr/local
 
-.PHONY: check build client server clean fmt lint vet unit-test modules
-
 build: server client
 
 server: modules
@@ -75,3 +73,17 @@ uninstall:
 	@echo $@
 	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(BINARY_NAME)))
 	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
+	
+.PHONY: check \
+  build \
+  client \
+  server \
+  clean \
+  fmt \
+  lint \
+  vet \
+  unit-test \
+  modules \
+  validate-swagger \
+  install \
+  uninstall
