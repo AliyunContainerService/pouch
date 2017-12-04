@@ -32,7 +32,8 @@ type Cli struct {
 func NewCli() *Cli {
 	return &Cli{
 		rootCmd: &cobra.Command{
-			Use: "pouch",
+			Use:   "pouch",
+			Short: "An efficient container engine",
 		},
 		padding: 3,
 	}
@@ -40,9 +41,12 @@ func NewCli() *Cli {
 
 // SetFlags sets all global options.
 func (c *Cli) SetFlags() *Cli {
-	cmd := c.rootCmd
-	cmd.PersistentFlags().StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify listen address of pouchd")
-	utils.SetupTLSFlag(cmd.PersistentFlags(), &c.Option.TLS)
+	flags := c.rootCmd.PersistentFlags()
+	flags.StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify connecting address of Pouch CLI")
+	flags.StringVar(&c.Option.TLS.Key, "tlskey", "", "Specify key file of TLS")
+	flags.StringVar(&c.Option.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
+	flags.StringVar(&c.Option.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
+	flags.BoolVar(&c.Option.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
 	return c
 }
 
@@ -67,20 +71,21 @@ func (c *Cli) Run() error {
 }
 
 // AddCommand add a subcommand.
-func (c *Cli) AddCommand(parent, command Command) {
-	command.Init(c)
+func (c *Cli) AddCommand(parent, child Command) {
+	child.Init(c)
 
-	cmd := command.Cmd()
+	parentCmd := parent.Cmd()
+	childCmd := child.Cmd()
 
-	cmd.PreRun = func(cmd *cobra.Command, args []string) {
+	// make command error not return command usage and error
+	childCmd.SilenceUsage = true
+	childCmd.SilenceErrors = true
+
+	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		c.NewAPIClient()
 	}
 
-	cmd.Run = func(cmd *cobra.Command, args []string) {
-		command.Run(args)
-	}
-
-	parent.Cmd().AddCommand(cmd)
+	parentCmd.AddCommand(childCmd)
 }
 
 // NewTableDisplay creates a display instance, and uses to format output with table.

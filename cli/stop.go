@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -15,24 +14,30 @@ type StopCommand struct {
 // Init initialize stop command.
 func (s *StopCommand) Init(c *Cli) {
 	s.cli = c
-
 	s.cmd = &cobra.Command{
 		Use:   "stop [container]",
 		Short: "Stop a running container",
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return s.runStop(args)
+		},
 	}
-
-	// TODO add flag
+	s.addFlags()
 }
 
-// Run is the entry of stop command.
-func (s *StopCommand) Run(args []string) {
+// addFlags adds flags for specific command.
+func (s *StopCommand) addFlags() {
+	// TODO: add flags here
+}
+
+// runStop is the entry of stop command.
+func (s *StopCommand) runStop(args []string) error {
 	apiClient := s.cli.Client()
 
 	container := args[0]
 
 	if err := apiClient.ContainerStop(container); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to stop container %s: %v \n", container, err)
-		return
+		return fmt.Errorf("failed to stop container %s: %v", container, err)
 	}
+	return nil
 }

@@ -23,36 +23,48 @@ func SkipIfFalse(c *check.C, conditions ...VerifyCondition) {
 }
 
 // runCmd runs Linux CMD and returns its stdout/stderr/error
-func runCmd(cmd *exec.Cmd) ([]byte, []byte, error) {
+func runCmd(cmd *exec.Cmd) (string, string, error) {
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return nil, nil, err
+		return "", "", err
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, nil, err
+		return "", "", err
 	}
 
 	if err := cmd.Start(); err != nil {
-		return nil, nil, err
+		return "", "", err
 	}
 
 	slurpErr, err := ioutil.ReadAll(stderr)
 	defer stderr.Close()
 	if err != nil {
-		return nil, nil, err
+		return "", "", err
 	}
 
 	slurpOut, err := ioutil.ReadAll(stdout)
 	defer stdout.Close()
 	if err != nil {
-		return nil, slurpErr, err
+		return "", string(slurpErr[:]), err
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return slurpOut, slurpErr, err
+		return string(slurpOut[:]), string(slurpErr[:]), err
 	}
 
-	return slurpOut, slurpErr, err
+	return string(slurpOut[:]), string(slurpErr[:]), err
+}
+
+// runCmdPos asserts failure when CMD returns error
+func runCmdPos(c *check.C, cmd *exec.Cmd) {
+	stdout, stderr, err := runCmd(cmd)
+	c.Assert(err, check.IsNil, check.Commentf("failed to run CMD: [ %s ] \n OUT: [ %s ] \n ERR: [ %s ]", cmd, stdout, stderr))
+}
+
+// runCmdNeg asserts failure when CMD does not return error
+func runCmdNeg(c *check.C, cmd *exec.Cmd) {
+	stdout, stderr, err := runCmd(cmd)
+	c.Assert(err, check.NotNil, check.Commentf("failed to run CMD: [ %s ] \n OUT: [ %s ] \n ERR: [ %s ]", cmd, stdout, stderr))
 }

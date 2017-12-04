@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 )
 
 func main() {
-	cli := NewCli().SetFlags()
+	cli := NewCli()
+
+	// set global flags for rootCmd in cli.
+	cli.SetFlags()
 
 	base := &baseCommand{cmd: cli.rootCmd, cli: cli}
 
@@ -22,6 +26,7 @@ func main() {
 	cli.AddCommand(base, &InspectCommand{})
 
 	if err := cli.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }

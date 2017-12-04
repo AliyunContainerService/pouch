@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -19,35 +18,40 @@ type ImageCommand struct {
 // Init initialize images command.
 func (i *ImageCommand) Init(c *Cli) {
 	i.cli = c
-
 	i.cmd = &cobra.Command{
 		Use:   "images",
-		Short: "show images",
+		Short: "List all images",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return i.runImages(args)
+		},
 	}
 
 	i.addFlags()
 }
 
+// addFlags adds flags for specific command.
 func (i *ImageCommand) addFlags() {
-	i.cmd.Flags().BoolVarP(&i.flagQuiet, "quiet", "q", false, "only show image numeric id")
-	i.cmd.Flags().BoolVar(&i.flagDigest, "digest", false, "show image with digest")
+	flagSet := i.cmd.Flags()
+	flagSet.BoolVarP(&i.flagQuiet, "quiet", "q", false, "Only show image numeric ID")
+	flagSet.BoolVar(&i.flagDigest, "digest", false, "Show images with digest")
 }
 
-// Run is the entry of images container command.
-func (i *ImageCommand) Run(args []string) {
+// runImages is the entry of images container command.
+func (i *ImageCommand) runImages(args []string) error {
 	apiClient := i.cli.Client()
 
 	imageList, err := apiClient.ImageList()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get image list: %s\n", err)
-		return
+		return fmt.Errorf("failed to get image list: %v", err)
+
 	}
 
 	if i.flagQuiet {
 		for _, image := range imageList {
-			fmt.Println(image.Name)
+			fmt.Println(image.ID)
 		}
-		return
+		return nil
 	}
 
 	if i.flagDigest {
@@ -63,4 +67,5 @@ func (i *ImageCommand) Run(args []string) {
 			fmt.Printf("%-20s %-56s %s\n", image.ID, image.Name, image.Size)
 		}
 	}
+	return nil
 }

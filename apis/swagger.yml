@@ -761,8 +761,6 @@ definitions:
         type: "string"
       Status:
         type: "string"
-      Pid:
-        type: "integer"
       HostConfig:
         type: "object"
         $ref: '#/definitions/HostConfig'

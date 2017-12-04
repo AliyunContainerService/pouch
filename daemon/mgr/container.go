@@ -49,7 +49,8 @@ type ContainerMgr interface {
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
 
-	ContainerInfo(s string) (*types.ContainerInfo, error)
+	// Get the detailed information of container
+	Get(s string) (*types.ContainerInfo, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -131,7 +132,7 @@ func (cm *ContainerManager) Remove(ctx context.Context, name string, option *Con
 func (cm *ContainerManager) CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error) {
 	execid := randomid.Generate()
 
-	container, err := cm.ContainerInfo(name)
+	container, err := cm.containerInfo(name)
 	if err != nil {
 		return "", err
 	}
@@ -248,7 +249,7 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 	cm.km.Lock(cfg.ID)
 	defer cm.km.Unlock(cfg.ID)
 
-	c, err := cm.ContainerInfo(cfg.ID)
+	c, err := cm.containerInfo(cfg.ID)
 	if err != nil {
 		return err
 	}
@@ -279,7 +280,7 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 		s.Process.Terminal = true
 	}
 
-	pid, err := cm.Client.CreateContainer(ctx, &ctrd.Container{
+	err = cm.Client.CreateContainer(ctx, &ctrd.Container{
 		Info: c,
 		Spec: s,
 		IO:   io,
@@ -287,11 +288,15 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 	if err == nil {
 		c.Status = types.RUNNING
 		c.StartedAt = time.Now()
-		//TODO get and set container pid
-		c.Pid = int(pid)
+		pid, err := cm.Client.ContainerPID(ctx, c.ID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID)
+		}
+		c.Pid = pid
 	} else {
 		c.FinishedAt = time.Now()
 		c.ErrorMsg = err.Error()
+		c.Pid = 0
 		//TODO get and set exit code
 
 		// release io
@@ -311,7 +316,7 @@ func (cm *ContainerManager) Stop(ctx context.Context, name string, timeout time.
 		err error
 	)
 
-	if ci, err = cm.ContainerInfo(name); err != nil {
+	if ci, err = cm.containerInfo(name); err != nil {
 		return errors.Wrap(err, "failed to stop container")
 	}
 
@@ -331,7 +336,7 @@ func (cm *ContainerManager) Stop(ctx context.Context, name string, timeout time.
 
 // Attach attachs a container's io.
 func (cm *ContainerManager) Attach(ctx context.Context, name string, attach *types.AttachConfig) error {
-	container, err := cm.ContainerInfo(name)
+	container, err := cm.containerInfo(name)
 	if err != nil {
 		return err
 	}
@@ -366,9 +371,14 @@ func (cm *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, e
 	return cis, nil
 }
 
-// ContainerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's
+// Get the detailed information of container
+func (cm *ContainerManager) Get(s string) (*types.ContainerInfo, error) {
+	return cm.containerInfo(s)
+}
+
+// containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's
 // name, id or prefix id.
-func (cm *ContainerManager) ContainerInfo(s string) (*types.ContainerInfo, error) {
+func (cm *ContainerManager) containerInfo(s string) (*types.ContainerInfo, error) {
 	var (
 		obj meta.Object
 		err error
@@ -446,7 +456,7 @@ func (cm *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error 
 	defer cm.km.Unlock(id)
 
 	// update container info
-	c, err := cm.ContainerInfo(id)
+	c, err := cm.containerInfo(id)
 	if err != nil {
 		return err
 	}
