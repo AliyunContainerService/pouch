@@ -32,6 +32,11 @@ func (c *Container) ID() string {
 	return c.meta.ID
 }
 
+// Name returns container's name.
+func (c *Container) Name() string {
+	return c.meta.Name
+}
+
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
 	return c.meta.Status == types.RUNNING
@@ -40,6 +45,11 @@ func (c *Container) IsRunning() bool {
 // IsStopped returns container is stopped or not.
 func (c *Container) IsStopped() bool {
 	return c.meta.Status == types.STOPPED
+}
+
+// IsCreated returns container is created or not.
+func (c *Container) IsCreated() bool {
+	return c.meta.Status == types.CREATED
 }
 
 // Write writes container's meta data into meta store.
