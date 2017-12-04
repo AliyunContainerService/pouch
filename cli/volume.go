@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// volumeDescription is used to describe volume command in detail and auto generate command doc.
+// TODO: add description
+var volumeDescription = ""
+
 // VolumeCommand is used to implement 'volume' command.
 type VolumeCommand struct {
 	baseCommand
@@ -22,6 +26,7 @@ func (v *VolumeCommand) Init(c *Cli) {
 	v.cmd = &cobra.Command{
 		Use:   "volume [command]",
 		Short: "Manage pouch volumes",
+		Long:  volumeDescription,
 		Args:  cobra.MinimumNArgs(1),
 	}
 
@@ -33,6 +38,10 @@ func (v *VolumeCommand) Init(c *Cli) {
 func (v *VolumeCommand) RunE(args []string) error {
 	return nil
 }
+
+// volumeCreateDescription is used to describe volume create command in detail and auto generate command doc.
+// TODO: add description
+var volumeCreateDescription = ""
 
 // VolumeCreateCommand is used to implement 'volume create' command.
 type VolumeCreateCommand struct {
@@ -52,10 +61,12 @@ func (v *VolumeCreateCommand) Init(c *Cli) {
 	v.cmd = &cobra.Command{
 		Use:   "create [args]",
 		Short: "Create a volume",
+		Long:  volumeCreateDescription,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runVolumeCreate(args)
 		},
+		Example: volumeCreateExample(),
 	}
 	v.addFlags()
 }
@@ -129,6 +140,16 @@ func parseVolume(volumeReq *types.VolumeCreateRequest, v *VolumeCreateCommand) e
 	return nil
 }
 
+// volumeCreateExample shows examples in volume create command, and is used in auto-generated cli docs.
+// TODO: add example
+func volumeCreateExample() string {
+	return ""
+}
+
+// volumeRmDescription is used to describe volume rm command in detail and auto generate command doc.
+// TODO: add description
+var volumeRmDescription = ""
+
 // VolumeRemoveCommand is used to implement 'volume rm' command.
 type VolumeRemoveCommand struct {
 	baseCommand
@@ -141,10 +162,12 @@ func (v *VolumeRemoveCommand) Init(c *Cli) {
 		Use:     "remove <name>",
 		Aliases: []string{"rm"},
 		Short:   "Remove volume",
+		Long:    volumeRmDescription,
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runVolumeRm(args)
 		},
+		Example: volumeRmExample(),
 	}
 	v.addFlags()
 }
@@ -163,4 +186,10 @@ func (v *VolumeRemoveCommand) runVolumeRm(args []string) error {
 	apiClient := v.cli.Client()
 
 	return apiClient.VolumeRemove(name)
+}
+
+// volumeRmExample shows examples in volume rm command, and is used in auto-generated cli docs.
+// TODO: add example
+func volumeRmExample() string {
+	return "Add volume create examples in code, not in doc."
 }

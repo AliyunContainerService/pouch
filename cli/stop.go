@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// stopDescription is used to describe stop command in detail and auto generate command doc.
+// TODO: add description
+var stopDescription = ""
+
 // StopCommand use to implement 'stop' command, it stops a container.
 type StopCommand struct {
 	baseCommand
@@ -17,10 +21,12 @@ func (s *StopCommand) Init(c *Cli) {
 	s.cmd = &cobra.Command{
 		Use:   "stop [container]",
 		Short: "Stop a running container",
+		Long:  stopDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return s.runStop(args)
 		},
+		Example: stopExample(),
 	}
 	s.addFlags()
 }
@@ -40,4 +46,10 @@ func (s *StopCommand) runStop(args []string) error {
 		return fmt.Errorf("failed to stop container %s: %v", container, err)
 	}
 	return nil
+}
+
+// stopExample shows examples in stop command, and is used in auto-generated cli docs.
+// TODO: add example
+func stopExample() string {
+	return ""
 }
