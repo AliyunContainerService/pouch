@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// execDescription is used to describe exec command in detail and auto generate command doc.
+// TODO: add description
+var execDescription = ""
+
 // ExecCommand is used to implement 'exec' command.
 type ExecCommand struct {
 	baseCommand
@@ -26,10 +30,12 @@ func (e *ExecCommand) Init(c *Cli) {
 	e.cmd = &cobra.Command{
 		Use:   "exec [container]",
 		Short: "Exec a process in a running container",
+		Long:  execDescription,
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return e.runExec(args)
 		},
+		Example: execExample(),
 	}
 	e.addFlags()
 }
@@ -105,4 +111,10 @@ func (e *ExecCommand) runExec(args []string) error {
 
 	wg.Wait()
 	return nil
+}
+
+// execExample shows examples in exec command, and is used in auto-generated cli docs.
+// TODO: add example
+func execExample() string {
+	return ""
 }

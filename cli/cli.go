@@ -13,6 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// pouchDescription is used to describe pouch command in detail and auto generate command doc.
+var pouchDescription = "pouch is a client side tool pouch to interact with daemon side process pouchd. " +
+	"Flags and arguments can be input to do what actually you wish. " +
+	"Then pouch parses the flags and arguments and sends a RESTful request to daemon side pouchd."
+
 // Option uses to define the global options.
 type Option struct {
 	host string
@@ -34,6 +39,9 @@ func NewCli() *Cli {
 		rootCmd: &cobra.Command{
 			Use:   "pouch",
 			Short: "An efficient container engine",
+			Long:  pouchDescription,
+			// disable displaying auto generation tag in cli docs
+			DisableAutoGenTag: true,
 		},
 		padding: 3,
 	}
@@ -77,8 +85,9 @@ func (c *Cli) AddCommand(parent, child Command) {
 	parentCmd := parent.Cmd()
 	childCmd := child.Cmd()
 
-	// make command error not return command usage
+	// make command error not return command usage and error
 	childCmd.SilenceUsage = true
+	childCmd.SilenceErrors = true
 
 	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		c.NewAPIClient()

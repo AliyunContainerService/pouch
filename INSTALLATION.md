@@ -1,8 +1,10 @@
-# Installation
+# Quick-Start
 
-We have two different ways to experience Pouch, one for end-users, the other for developers. In the former one, installation can help you with Pouch installing out of box. The latter one is for those who wish to get involved in Pouch with hacking.
+Two quick-starts are provided, one for end-users, the other one for developers.
 
-If you wish to experience Pouch, please choose [End User Quick-Start](#end-user-quick-start). And if you are looking forward to becoming a hacker, [Developer Quick-Start](#developer-quick-start) is a must-read for you.
+As an end user who wish to use Pouch, please read [End User Quick-Start](#end-user-quick-start) to install and explore Pouch. 
+
+As a developer who wish to hack on Pouch, please read [Developer Quick-Start](#developer-quick-start) to start hacking and get invloved in the project!
 
 ## End User Quick-Start
 
@@ -53,11 +55,11 @@ $ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 
 If you wish to experience hypervisor-based virtualization additionally, you will still need to install [runV](https://github.com/hyperhq/runv).
 
-More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guinde](docs/pouch-runv-guide.md).
+More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guide](docs/pouch-runv-guide.md).
 
 ### Pouch Build and Installation
 
-With all Prerequisites installed, you can build and install pouch daemon and pouch cli. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
+With all prerequisites installed, you can build and install pouch daemon and pouch cli. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
 
 ``` shell
 $ mkdir -p $GOPATH/src/github.com/alibaba/ 
