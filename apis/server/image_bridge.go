@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,4 +63,18 @@ func (s *Server) searchImages(ctx context.Context, resp http.ResponseWriter, req
 		return err
 	}
 	return json.NewEncoder(resp).Encode(response)
+}
+
+// removeImages delete image by reference
+func (s *Server) removeImages(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	option := &mgr.ImageRemoveOption{}
+
+	if err := s.ImageMgr.RemoveImages(ctx, name, option); err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusNoContent)
+	return nil
 }
