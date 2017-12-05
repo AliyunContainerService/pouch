@@ -48,6 +48,9 @@ type ContainerMgr interface {
 
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
+
+	// Get the detailed information of container
+	Get(s string) (*types.ContainerInfo, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -285,7 +288,11 @@ func (cm *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartC
 	if err == nil {
 		c.Status = types.RUNNING
 		c.StartedAt = time.Now()
-		//TODO get and set container pid
+		pid, err := cm.Client.ContainerPID(ctx, c.ID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID)
+		}
+		c.Pid = pid
 	} else {
 		c.FinishedAt = time.Now()
 		c.ErrorMsg = err.Error()
@@ -362,6 +369,11 @@ func (cm *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, e
 	}
 
 	return cis, nil
+}
+
+// Get the detailed information of container
+func (cm *ContainerManager) Get(s string) (*types.ContainerInfo, error) {
+	return cm.containerInfo(s)
 }
 
 // containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's

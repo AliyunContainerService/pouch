@@ -176,3 +176,21 @@ func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, re
 	resp.WriteHeader(http.StatusOK)
 	return json.NewEncoder(resp).Encode(cs)
 }
+
+func (s *Server) getContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	ci, err := s.ContainerMgr.Get(name)
+	if err != nil {
+		return err
+	}
+
+	c := types.ContainerJSON{
+		ID:      ci.ID,
+		Name:    ci.Name,
+		Image:   ci.Config.Image,
+		Created: ci.StartedAt.Format("2006-01-02 15:04:05"),
+		State:   &types.ContainerState{Pid: ci.Pid},
+	}
+	resp.WriteHeader(http.StatusOK)
+	return json.NewEncoder(resp).Encode(c)
+}
