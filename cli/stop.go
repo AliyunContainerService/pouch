@@ -8,7 +8,9 @@ import (
 
 // stopDescription is used to describe stop command in detail and auto generate command doc.
 // TODO: add description
-var stopDescription = ""
+var stopDescription = "Stop a running container in Pouchd." +
+	"This is useful when you wish to stop a container.And Pouchd will stop this running container and release the resource." +
+	"The container that you stopped will be closed."
 
 // StopCommand use to implement 'stop' command, it stops a container.
 type StopCommand struct {
