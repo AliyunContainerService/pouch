@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// versionDescription is used to describe version command in detail and auto generate command doc.
+// TODO: add description
+var versionDescription = ""
+
 // VersionCommand use to implement 'version' command.
 type VersionCommand struct {
 	baseCommand
@@ -21,6 +25,7 @@ func (v *VersionCommand) Init(c *Cli) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runVersion()
 		},
+		Example: versionExample(),
 	}
 	v.addFlags()
 }
@@ -41,4 +46,10 @@ func (v *VersionCommand) runVersion() error {
 
 	v.cli.Print(result)
 	return nil
+}
+
+// versionExample shows examples in version command, and is used in auto-generated cli docs.
+// TODO: add example
+func versionExample() string {
+	return ""
 }

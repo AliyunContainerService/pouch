@@ -389,6 +389,13 @@
 			"revisionTime": "2016-07-27T18:54:06Z"
 		},
 		{
+			"checksumSHA1": "CCfIpyo6sGH8gnEdP/0vGSi4ywA=",
+			"path": "github.com/cpuguy83/go-md2man/md2man",
+			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
+			"revisionTime": "2017-08-27T12:01:20Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -707,6 +714,13 @@
 			"revisionTime": "2017-10-17T21:40:25Z"
 		},
 		{
+			"checksumSHA1": "kAsVpOPmZfaz68zkQ/E/wkIN2CY=",
+			"path": "github.com/russross/blackfriday",
+			"revision": "6d1ef893fcb01b4f50cb6e57ed7df3e2e627b6b2",
+			"revisionTime": "2017-10-11T18:22:19Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "qhdXyUM/JKNOaX/hVKS39pRX96c=",
 			"path": "github.com/sirupsen/logrus",
 			"revision": "2b8ed96d2a422bf205adcdfa05272dc12c81613b",
@@ -714,10 +728,11 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "xPKgXygsORkmXnLdtFaFmipYKaA=",
+			"checksumSHA1": "hdInnyKy67BtDxbKCoRD+kNjxfQ=",
 			"path": "github.com/spf13/cobra",
-			"revision": "b78744579491c1ceeaaa3b40205e56b0591b93a3",
-			"revisionTime": "2017-09-05T17:20:51Z"
+			"revision": "3a5f27b046057b8b1bc8301159a31635aa68d0d5",
+			"revisionTime": "2017-12-04T10:43:02Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "Q52Y7t0lEtk/wcDn5q7tS7B+jqs=",
