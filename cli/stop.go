@@ -53,5 +53,13 @@ func (s *StopCommand) runStop(args []string) error {
 // stopExample shows examples in stop command, and is used in auto-generated cli docs.
 // TODO: add example
 func stopExample() string {
-	return ""
+	return "
+	$ pouch ps
+	Name     ID       Status    Image
+	foo      71b9c1   Running   docker.io/library/busybox:latest
+	$ pouch stop foo 
+	$ pouch ps
+	Name     ID       Status    Image
+	foo         71b9c1     Stopped  docker.io/library/busybox:latest
+	"
 }
