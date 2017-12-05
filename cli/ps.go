@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// psDescription is used to describe ps command in detail and auto generate command doc.
+// TODO: add description
+var psDescription = ""
+
 // PsCommand is used to implement 'ps' command.
 type PsCommand struct {
 	baseCommand
@@ -17,10 +21,12 @@ func (p *PsCommand) Init(c *Cli) {
 	p.cmd = &cobra.Command{
 		Use:   "ps",
 		Short: "List all containers",
+		Long:  psDescription,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.runPs(args)
 		},
+		Example: psExample(),
 	}
 	p.addFlags()
 }
@@ -46,4 +52,10 @@ func (p *PsCommand) runPs(args []string) error {
 	}
 	display.Flush()
 	return nil
+}
+
+// psExample shows examples in ps command, and is used in auto-generated cli docs.
+// TODO: add example
+func psExample() string {
+	return ""
 }

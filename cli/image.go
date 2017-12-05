@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// imagesDescription is used to describe image command in detail and auto generate command doc.
+// TODO: add description
+var imagesDescription = ""
+
 // ImageCommand use to implement 'images' command.
 type ImageCommand struct {
 	baseCommand
@@ -21,10 +25,12 @@ func (i *ImageCommand) Init(c *Cli) {
 	i.cmd = &cobra.Command{
 		Use:   "images",
 		Short: "List all images",
+		Long:  imagesDescription,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return i.runImages(args)
 		},
+		Example: imagesExample(),
 	}
 
 	i.addFlags()
@@ -68,4 +74,10 @@ func (i *ImageCommand) runImages(args []string) error {
 		}
 	}
 	return nil
+}
+
+// imagesExample shows examples in images command, and is used in auto-generated cli docs.
+// TODO: add example
+func imagesExample() string {
+	return ""
 }

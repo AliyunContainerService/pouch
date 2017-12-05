@@ -24,6 +24,9 @@ func main() {
 	cli.AddCommand(base, &ImageCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 
+	// add generate doc command
+	cli.AddCommand(base, &GenDocCommand{})
+
 	if err := cli.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

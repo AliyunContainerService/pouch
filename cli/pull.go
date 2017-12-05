@@ -15,6 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// pullDescription is used to describe pull command in detail and auto generate command doc.
+// TODO: add description
+var pullDescription = ""
+
 // PullCommand use to implement 'pull' command, it download image.
 type PullCommand struct {
 	baseCommand
@@ -27,10 +31,12 @@ func (p *PullCommand) Init(c *Cli) {
 	p.cmd = &cobra.Command{
 		Use:   "pull [image]",
 		Short: "Pull an image from registry",
+		Long:  pullDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.runPull(args)
 		},
+		Example: pullExample(),
 	}
 	p.addFlags()
 }
@@ -52,7 +58,6 @@ func (p *PullCommand) runPull(args []string) error {
 	defer responseBody.Close()
 
 	return renderOutput(responseBody)
-
 }
 
 // renderOutput draws the commandline output via api response.
@@ -145,4 +150,10 @@ func parseNameTag(input string) (string, string) {
 	}
 
 	return name, tag
+}
+
+// pullExample shows examples in pull command, and is used in auto-generated cli docs.
+// TODO: add example
+func pullExample() string {
+	return ""
 }

@@ -9,6 +9,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// startDescription is used to describe start command in detail and auto generate command doc.
+// TODO: add description
+var startDescription = ""
+
 // StartCommand use to implement 'start' command, it start a container.
 type StartCommand struct {
 	baseCommand
@@ -22,10 +26,12 @@ func (s *StartCommand) Init(c *Cli) {
 	s.cmd = &cobra.Command{
 		Use:   "start [container]",
 		Short: "Start a created or stopped container",
+		Long:  startDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return s.runStart(args)
 		},
+		Example: startExample(),
 	}
 	s.addFlags()
 }
@@ -117,4 +123,15 @@ func restoreMode(in, out *terminal.State) error {
 		}
 	}
 	return nil
+}
+
+// startExample shows examples in start command, and is used in auto-generated cli docs.
+// TODO: add example
+func startExample() string {
+	example := `# pouch start ${containerID} -a -i		
+/ # ls /		
+bin   dev   etc   home  proc  root  run   sys   tmp   usr   var		
+/ # exit`
+
+	return example
 }
