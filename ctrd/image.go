@@ -3,12 +3,12 @@ package ctrd
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
@@ -48,7 +48,7 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			Name:   image.Name(),
 			ID:     string(digest[len(digestPrefix) : len(digestPrefix)+12]),
 			Digest: string(digest),
-			Size:   formatSize(size),
+			Size:   utils.FormatSize(size),
 		})
 	}
 	return images, nil
@@ -247,10 +247,6 @@ outer:
 			done = true // allow ui to update once more
 		}
 	}
-}
-
-func formatSize(size int64) string {
-	return strconv.FormatInt(size, 10)
 }
 
 type jobs struct {
