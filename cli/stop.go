@@ -7,9 +7,9 @@ import (
 )
 
 // stopDescription is used to describe stop command in detail and auto generate command doc.
-var stopDescription = "Stop a running container in Pouchd." +
-	"This is useful when you wish to stop a container.And Pouchd will stop this running container and release the resource." +
-	"The container that you stopped will be closed."
+var stopDescription = "Stop a running container in Pouchd. " +
+	"This is useful when you wish to stop a container.And Pouchd will stop this running container and release the resource. " +
+	"The container that you stopped will be closed. "
 
 // StopCommand use to implement 'stop' command, it stops a container.
 type StopCommand struct {
@@ -51,12 +51,12 @@ func (s *StopCommand) runStop(args []string) error {
 
 // stopExample shows examples in stop command, and is used in auto-generated cli docs.
 func stopExample() string {
-	return "$ pouch ps
+	return ·$ pouch ps
 Name     ID       Status    Image
 foo      71b9c1   Running   docker.io/library/busybox:latest
 $ pouch stop foo 
 $ pouch ps
 Name     ID       Status    Image
 foo         71b9c1     Stopped  docker.io/library/busybox:latest
-"
+·
 }
