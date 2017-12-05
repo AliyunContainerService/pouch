@@ -66,6 +66,8 @@ func (n *NetworkListCommand) runNetworkList(args []string) error {
 	display := n.cli.NewTableDisplay()
 	display.AddRow([]string{"Network Id", "Name", "Driver", "Scope"})
 	for _, n := range networks {
-		display.AddRow([]string{})
+		display.AddRow([]string{n.ID, n.Name, n.Driver, n.Scope})
 	}
+	display.Flush()
+	return nil
 }
