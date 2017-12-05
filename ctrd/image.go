@@ -20,7 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// RemoveImage removes an image.
+// RemoveImage deletes an image.
 func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 	err := c.client.ImageService().Delete(ctx, ref)
 	if err != nil {
