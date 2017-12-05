@@ -33,6 +33,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/containers/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeContainers))
 	r.Path("/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
 	r.Path("/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
+	r.Path("/containers/{name:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
 
 	// image
 	r.Path("/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))

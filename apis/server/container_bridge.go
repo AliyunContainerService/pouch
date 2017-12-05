@@ -20,6 +20,18 @@ func (s *Server) removeContainers(ctx context.Context, resp http.ResponseWriter,
 	return nil
 }
 
+func (s *Server) renameContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	id := mux.Vars(req)["id"]
+	name := req.FormValue("name")
+
+	if err := s.ContainerMgr.Rename(ctx, id, name); err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
 func (s *Server) createContainerExec(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 

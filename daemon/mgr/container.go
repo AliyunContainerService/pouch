@@ -49,6 +49,9 @@ type ContainerMgr interface {
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
 
+	// Rename renames a container
+	Rename(ctx context.Context, id string, name string) error
+
 	// Get the detailed information of container
 	Get(s string) (*types.ContainerInfo, error)
 }
@@ -374,6 +377,32 @@ func (cm *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, e
 // Get the detailed information of container
 func (cm *ContainerManager) Get(s string) (*types.ContainerInfo, error) {
 	return cm.containerInfo(s)
+}
+
+// Rename renames a container
+func (cm *ContainerManager) Rename(ctx context.Context, id string, name string) error {
+	var (
+		ci  *types.ContainerInfo
+		err error
+	)
+
+	if cm.NameToID.Get(name).Exist() {
+		return httputils.NewHTTPError(errors.New("The newName already exists"), 409)
+	}
+
+	if ci, err = cm.containerInfo(id); err != nil {
+		return errors.Wrap(err, "failed to rename container")
+	}
+
+	cm.km.Lock(ci.ID)
+	defer cm.km.Unlock(ci.ID)
+
+	cm.NameToID.Remove(id)
+	cm.NameToID.Put(name, ci.ID)
+	ci.Name = name
+	cm.Store.Put(ci)
+
+	return nil
 }
 
 // containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's
