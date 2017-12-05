@@ -51,7 +51,6 @@ func (s *StopCommand) runStop(args []string) error {
 }
 
 // stopExample shows examples in stop command, and is used in auto-generated cli docs.
-// TODO: add example
 func stopExample() string {
 	return "
 	$ pouch ps
