@@ -1,7 +1,10 @@
 package client
 
 import (
+	"errors"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -34,4 +37,29 @@ func (client *APIClient) ImageList() ([]types.Image, error) {
 
 	return imageList, err
 
+}
+
+// ImageRemove removes a image
+func (client *APIClient) ImageRemove(name string, force bool) error {
+	q := url.Values{}
+	if force {
+		q.Set("force", "true")
+	}
+
+	resp, err := client.delete("/images/"+name, q)
+	if err != nil {
+		return err
+	}
+
+	defer ensureCloseReader(resp)
+
+	if resp.StatusCode != http.StatusNoContent {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(string(body))
+	}
+
+	return nil
 }

@@ -21,8 +21,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// RemoveImage removes an image.
-func (c *Client) RemoveImage(ctx context.Context, ref string) error {
+// RemoveImages removes an image.
+func (c *Client) RemoveImages(ctx context.Context, ref string) error {
 	err := c.client.ImageService().Delete(ctx, ref)
 	if err != nil {
 		return errors.Wrap(err, "failed to remove image")

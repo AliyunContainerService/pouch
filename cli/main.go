@@ -22,6 +22,7 @@ func main() {
 	cli.AddCommand(base, &ExecCommand{})
 	cli.AddCommand(base, &VersionCommand{})
 	cli.AddCommand(base, &ImageCommand{})
+	cli.AddCommand(base, &RmiCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 
 	// add generate doc command

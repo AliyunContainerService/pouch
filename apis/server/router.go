@@ -37,6 +37,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
 	r.Path("/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
 	r.Path("/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
+	r.Path("/images/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeImages))
 
 	// volume
 	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
