@@ -68,7 +68,7 @@ To put forward a PR, we assume you have registered a GitHub ID. Then you could f
 
 1. **FORK** Pouch to your repository. To make this work, you just need to click the button Fork in right-left of [alibaba/pouch](https://github.com/alibaba/pouch) main page. Then you will end up with your repository in `https://github.com/<your-username>/pouch`, in which `your-username` is your GitHub username.
 
-2. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make. Branch creation should be read the [Git Flow](#git-flow) part.
+2. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make.
 
 3. **Set Remote** upstream to be https://github.com/alibaba/pouch.git using the following two commands:
 ```
