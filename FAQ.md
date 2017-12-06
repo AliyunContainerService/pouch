@@ -10,7 +10,7 @@ For operators, Pouch enables automation, and largely reduces manual operations. 
 
 For data center owners, Pouch is the best choice you ever have. Compared to VM technology, Pouch helps increase the resource utilization with the similar level of isolation.
 
-## Why it is named Pouch?
+## Why is it named Pouch?
 
 Pouch refers to some kinds of small bags. One kind is brood pouch which is used to protect very young life. This is a metaphor that Software Pouch has its responsibilty to take care of applications very closely. In another word, application is the keyword in Pouch's world.
 
