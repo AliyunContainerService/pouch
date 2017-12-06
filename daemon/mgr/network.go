@@ -1,8 +1,8 @@
 package mgr
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
@@ -18,7 +18,7 @@ const (
 // NetworkMgr as an interface defines all operations against networks.
 type NetworkMgr interface {
 	// ListNetworks lists networks
-	ListNetworks(ctx context.Context) ([]types.Network, error) 	
+	ListNetworks(ctx context.Context) ([]types.Network, error)
 }
 
 // NetworkManager is an implementation of interface NetworkMgr.
@@ -26,7 +26,7 @@ type NetworkMgr interface {
 // When network details needed from users, NetworkManager use libnetwork.Controller
 // to get details.
 type NetworkManager struct {
-	controller 		libnetwork.NetworkController
+	controller libnetwork.NetworkController
 }
 
 // NewNetworkManager initializes a brand new network manager.
@@ -51,7 +51,7 @@ func NewNetworkManager(cfg *config.Config) (*NetworkManager, error) {
 	}
 
 	return &NetworkManager{
-		controller:		controller,
+		controller: controller,
 	}, nil
 }
 
@@ -60,8 +60,8 @@ func (mgr *NetworkManager) ListNetworks(ctx context.Context) ([]types.Network, e
 	list := []types.Network{}
 
 	for _, nw := range mgr.controller.Networks() {
-			n := buildNetwork(nw)
-			list = append(list, *n)
+		n := buildNetwork(nw)
+		list = append(list, *n)
 	}
 
 	return list, nil

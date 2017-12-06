@@ -16,9 +16,9 @@ func (n *NetworkCommand) Init(c *Cli) {
 	n.cli = c
 
 	n.cmd = &cobra.Command{
-		Use:	"network [command]",
-		Short:	"Manage pouch networks",
-		Args:	cobra.MinimumNArgs(1),
+		Use:   "network [command]",
+		Short: "Manage pouch networks",
+		Args:  cobra.MinimumNArgs(1),
 	}
 
 	c.AddCommand(n, &NetworkListCommand{})
@@ -39,10 +39,10 @@ func (n *NetworkListCommand) Init(c *Cli) {
 	n.cli = c
 
 	n.cmd = &cobra.Command{
-		Use:	"ls [OPTIONS]",
-		Short:	"List networks",
-		Args:	cobra.NoArgs,
-		RunE:	func(cmd *cobra.Command, args []string) error {
+		Use:   "ls [OPTIONS]",
+		Short: "List networks",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return n.runNetworkList(args)
 		},
 	}

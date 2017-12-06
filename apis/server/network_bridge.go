@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"net/http"
 	"encoding/json"
+	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
