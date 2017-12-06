@@ -81,7 +81,9 @@ func renderOutput(responseBody io.ReadCloser) error {
 			return fmt.Errorf("failed to decode: %v", err)
 		}
 
-		display(tw, objs, start)
+		if err := display(tw, objs, start); err != nil {
+			return err
+		}
 
 		tw.Flush()
 		fw.Flush()
@@ -93,12 +95,11 @@ func renderOutput(responseBody io.ReadCloser) error {
 	return nil
 }
 
-func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
+func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) error {
 	var total int64
 	for _, status := range statuses {
 		if status.ErrorMessage != "" {
-			fmt.Fprintf(os.Stderr, "%s\n", status.ErrorMessage)
-			return
+			return fmt.Errorf(status.ErrorMessage)
 		}
 		total += status.Offset
 		switch status.Status {
@@ -133,6 +134,7 @@ func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) {
 		time.Since(start).Seconds(),
 		progress.Bytes(total),
 		progress.NewBytesPerSecond(total, time.Since(start)))
+	return nil
 }
 
 // parseNameTag parses input arg and gets image name and image tag.
