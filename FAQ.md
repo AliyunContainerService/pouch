@@ -32,7 +32,7 @@ In the underlying support of container runtime, Pouch takes such opinion that li
 
 ## What is difference between Pouch and Docker?
 
-Pouch and Docker are both excellent container solution for users. They do similar things if comparing them at a glance. But more specifically, they have different emphasize on each one's target. Pouch takes more emphasis on application experience, while Docker advocates "one process one container" a lot. Pouch cannot ignore isolation threat of container technology in some particular scene, while Docker relies on kernel to achieve isolation heavily. Pouch brings an open attitude for the surrounding ecosystem, while docker also works on this but maybe not so much. 
+Pouch and Docker are both excellent container solution for users. They do similar things if comparing them at a glance. But more specifically, they have different emphasize on each one's target. Pouch takes more emphasis on application experience, while Docker advocates "one process one container" a lot. Pouch cannot ignore isolation threat of container technology in some particular scenes, while Docker relies on kernel to achieve isolation heavily. Pouch brings an open attitude for the surrounding ecosystem, while docker also works on this but maybe not so much. 
 
 Here we list some additional features of Pouch: 
 

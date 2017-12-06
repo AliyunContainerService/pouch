@@ -28,7 +28,7 @@ Let's us take an example:
 
 To finish this, we can simplify work to two parts:
 
-* define API path, including request method, request parameters, request content type and response status code, reposonse body and so on;
+* define API path, including request method, request parameters, request content type and response status code, response body and so on;
 * define API structs used by both pouch client and pouch daemon.
 
 For part one, we should add the following content in `paths`:
