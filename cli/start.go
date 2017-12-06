@@ -10,8 +10,10 @@ import (
 )
 
 // startDescription is used to describe start command in detail and auto generate command doc.
-// TODO: add description
-var startDescription = ""
+var startDescription = "Start a created container object in Pouchd. " +
+	"When starting, the relevant resource preserved during creating period comes into use." +
+	"This is useful when you wish to start a container which has been created in advance." +
+	"The container you started will be running if no error occurs."
 
 // StartCommand use to implement 'start' command, it start a container.
 type StartCommand struct {
@@ -126,12 +128,12 @@ func restoreMode(in, out *terminal.State) error {
 }
 
 // startExample shows examples in start command, and is used in auto-generated cli docs.
-// TODO: add example
 func startExample() string {
-	example := `# pouch start ${containerID} -a -i		
-/ # ls /		
-bin   dev   etc   home  proc  root  run   sys   tmp   usr   var		
-/ # exit`
-
-	return example
+	return `$ pouch ps
+Name     ID       Status    Image
+foo      71b9c1   Created   docker.io/library/busybox:latest
+$ pouch start foo
+$ pouch ps
+Name     ID       Status    Image
+foo      71b9c1   Running   docker.io/library/busybox:latest`
 }
