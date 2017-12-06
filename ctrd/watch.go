@@ -14,6 +14,12 @@ type Message struct {
 	exitCode uint32
 	exitTime time.Time
 	err      error
+	startErr error
+}
+
+// StartError returns the error of start exec process or container.
+func (m *Message) StartError() error {
+	return m.startErr
 }
 
 // Error returns the error contained in Message.
@@ -68,6 +74,7 @@ func (w *watch) add(pack containerPack) {
 			exitCode: status.ExitCode(),
 			exitTime: status.ExitTime(),
 		}
+		pack.ch <- msg
 
 		for _, hook := range w.hooks {
 			if err := hook(pack.id, msg); err != nil {
@@ -75,8 +82,6 @@ func (w *watch) add(pack containerPack) {
 				break
 			}
 		}
-
-		pack.ch <- msg
 
 	}(pack)
 
