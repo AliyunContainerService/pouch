@@ -21,10 +21,10 @@ func (s *Server) removeContainers(ctx context.Context, resp http.ResponseWriter,
 }
 
 func (s *Server) renameContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
-	id := mux.Vars(req)["id"]
-	name := req.FormValue("name")
+	oldName := mux.Vars(req)["id"]
+	newName := req.FormValue("name")
 
-	if err := s.ContainerMgr.Rename(ctx, id, name); err != nil {
+	if err := s.ContainerMgr.Rename(ctx, oldName, newName); err != nil {
 		return err
 	}
 
