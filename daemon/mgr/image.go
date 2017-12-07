@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,13 +23,13 @@ type ImageMgr interface {
 	PullImage(ctx context.Context, image, tag string, out io.Writer) error
 
 	// ListImages lists images stored by containerd.
-	ListImages(ctx context.Context, filters string) ([]types.Image, error)
+	ListImages(ctx context.Context, filters string) ([]types.ImageInfo, error)
 
 	// Search Images from specified registry.
 	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
 
 	// GetImage gets image by image id or ref.
-	GetImage(ctx context.Context, idOrRef string) (*types.Image, error)
+	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -90,18 +89,18 @@ func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, out 
 	}
 
 	// FIXME need to refactor it and the image's list interface.
-	mgr.cache.put(&types.Image{
+	mgr.cache.put(&types.ImageInfo{
 		Name:   img.Name(),
 		ID:     strings.TrimPrefix(string(img.Target().Digest), "sha256:")[:12],
 		Digest: string(img.Target().Digest),
-		Size:   strconv.FormatInt(img.Target().Size, 10),
+		Size:   img.Target().Size,
 	})
 
 	return nil
 }
 
 // ListImages lists images stored by containerd.
-func (mgr *ImageManager) ListImages(ctx context.Context, filters string) ([]types.Image, error) {
+func (mgr *ImageManager) ListImages(ctx context.Context, filters string) ([]types.ImageInfo, error) {
 	imageList, err := mgr.client.ListImages(ctx, filters)
 	if err != nil {
 		return nil, err
@@ -121,7 +120,7 @@ func (mgr *ImageManager) SearchImages(ctx context.Context, name string, registry
 }
 
 // GetImage gets image by image id or ref.
-func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.Image, error) {
+func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error) {
 	return mgr.cache.get(idOrRef)
 }
 
@@ -141,18 +140,18 @@ func (mgr *ImageManager) loadImages() error {
 
 type imageCache struct {
 	sync.Mutex
-	refs map[string]*types.Image // store the mapping ref to image.
-	ids  *patricia.Trie          // store the mapping id to image.
+	refs map[string]*types.ImageInfo // store the mapping ref to image.
+	ids  *patricia.Trie              // store the mapping id to image.
 }
 
 func newImageCache() *imageCache {
 	return &imageCache{
-		refs: make(map[string]*types.Image),
+		refs: make(map[string]*types.ImageInfo),
 		ids:  patricia.NewTrie(),
 	}
 }
 
-func (c *imageCache) put(image *types.Image) {
+func (c *imageCache) put(image *types.ImageInfo) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -163,7 +162,7 @@ func (c *imageCache) put(image *types.Image) {
 	c.ids.Insert(patricia.Prefix(id), image)
 }
 
-func (c *imageCache) get(idOrRef string) (*types.Image, error) {
+func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -172,10 +171,10 @@ func (c *imageCache) get(idOrRef string) (*types.Image, error) {
 		return image, nil
 	}
 
-	var images []*types.Image
+	var images []*types.ImageInfo
 
 	fn := func(prefix patricia.Prefix, item patricia.Item) error {
-		if image, ok := item.(*types.Image); ok {
+		if image, ok := item.(*types.ImageInfo); ok {
 			images = append(images, image)
 		}
 		return nil
@@ -193,7 +192,7 @@ func (c *imageCache) get(idOrRef string) (*types.Image, error) {
 	return images[0], nil
 }
 
-func (c *imageCache) remove(image *types.Image) {
+func (c *imageCache) remove(image *types.ImageInfo) {
 	c.Lock()
 	defer c.Unlock()
 

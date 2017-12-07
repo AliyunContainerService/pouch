@@ -8,7 +8,6 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
-	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
@@ -31,24 +30,24 @@ func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 }
 
 // ListImages lists all images.
-func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Image, error) {
+func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error) {
 	imageList, err := c.client.ListImages(ctx, filter...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list images")
 	}
 
-	images := make([]types.Image, 0, 32)
+	images := make([]types.ImageInfo, 0, 32)
 	digestPrefix := "sha256:"
 	for _, image := range imageList {
 		descriptor := image.Target()
 		digest := []byte(descriptor.Digest)
 		size := descriptor.Size
 
-		images = append(images, types.Image{
+		images = append(images, types.ImageInfo{
 			Name:   image.Name(),
 			ID:     string(digest[len(digestPrefix) : len(digestPrefix)+12]),
 			Digest: string(digest),
-			Size:   utils.FormatSize(size),
+			Size:   size,
 		})
 	}
 	return images, nil
