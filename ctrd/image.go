@@ -55,10 +55,10 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 }
 
 // PullImage downloads an image from the remote repository.
-func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.JSONStream) error {
+func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	resolver, err := resolver()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ongoing := newJobs(ref)
@@ -106,11 +106,11 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 		}
 		stream.WriteObject(messages)
 
-		return err
+		return nil, err
 	}
 
 	logrus.Infof("success to pull image: %s", img.Name())
-	return nil
+	return img, nil
 }
 
 func (c *Client) pullImage(ctx context.Context, ref string, options []containerd.RemoteOpt) (containerd.Image, error) {
