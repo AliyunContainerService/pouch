@@ -130,6 +130,10 @@ func (r *RingBuff) Pop() (interface{}, bool) {
 func (r *RingBuff) Close() error {
 	// first try to wakeup
 	r.Lock()
+	if r.closed {
+		r.Unlock()
+		return nil
+	}
 	r.cond.Broadcast()
 	r.Unlock()
 
