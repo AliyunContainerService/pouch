@@ -266,11 +266,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 
 	options := []containerd.NewContainerOpts{
 		containerd.WithNewSnapshot(id, img),
-	}
-	if container.Spec != nil {
-		options = append(options, containerd.WithSpec(container.Spec, specOptions...))
-	} else {
-		options = append(options, containerd.WithNewSpec(specOptions...))
+		containerd.WithSpec(container.Spec, specOptions...),
 	}
 
 	nc, err := c.client.NewContainer(ctx, id, options...)
