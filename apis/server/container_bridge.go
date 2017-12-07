@@ -104,13 +104,11 @@ func (s *Server) createContainer(ctx context.Context, resp http.ResponseWriter, 
 }
 
 func (s *Server) startContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
-	name := mux.Vars(req)["name"]
-	config := types.ContainerStartConfig{
-		ID:         name,
-		DetachKeys: req.FormValue("detachKeys"),
-	}
+	id := mux.Vars(req)["name"]
 
-	if err := s.ContainerMgr.Start(ctx, config); err != nil {
+	detachKeys := req.FormValue("detachKeys")
+
+	if err := s.ContainerMgr.Start(ctx, id, detachKeys); err != nil {
 		return err
 	}
 
