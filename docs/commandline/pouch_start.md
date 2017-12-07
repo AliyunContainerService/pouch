@@ -4,7 +4,7 @@ Start a created or stopped container
 
 ### Synopsis
 
-Start a created or stopped container
+Start a created container object in Pouchd. When starting, the relevant resource preserved during creating period comes into use.This is useful when you wish to start a container which has been created in advance.The container you started will be running if no error occurs.
 
 ```
 pouch start [container] [flags]
@@ -13,10 +13,13 @@ pouch start [container] [flags]
 ### Examples
 
 ```
-# pouch start ${containerID} -a -i		
-/ # ls /		
-bin   dev   etc   home  proc  root  run   sys   tmp   usr   var		
-/ # exit
+$ pouch ps
+Name     ID       Status    Image
+foo      71b9c1   Created   docker.io/library/busybox:latest
+$ pouch start foo
+$ pouch ps
+Name     ID       Status    Image
+foo      71b9c1   Running   docker.io/library/busybox:latest
 ```
 
 ### Options
