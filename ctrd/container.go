@@ -8,7 +8,9 @@ import (
 	"github.com/alibaba/pouch/daemon/containerio"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/oci"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -29,11 +31,12 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 	}
 
 	// create io
-	var io containerd.IOCreation
+	// var io containerd.IOCreation
+	var io cio.Creation
 	if process.P.Terminal {
-		io = containerd.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, true)
+		io = cio.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, true)
 	} else {
-		io = containerd.NewIO(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr)
+		io = cio.NewIO(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr)
 	}
 
 	// create exec process in container
@@ -145,7 +148,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 		return errors.Wrap(err, "failed to load container")
 	}
 
-	task, err := lc.Task(ctx, containerd.WithAttach(io.Stdin, io.Stdout, io.Stderr))
+	task, err := lc.Task(ctx, cio.WithAttach(io.Stdin, io.Stdout, io.Stderr))
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
@@ -256,12 +259,12 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	logrus.Infof("success to get image: %s, container id: %s", img.Name(), id)
 
 	// create container
-	specOptions := []containerd.SpecOpts{
-		containerd.WithImageConfig(img),
-		containerd.WithRootFSPath("rootfs"),
+	specOptions := []oci.SpecOpts{
+		oci.WithImageConfig(img),
+		oci.WithRootFSPath("rootfs"),
 	}
 	if args := container.Spec.Process.Args; len(args) != 0 {
-		specOptions = append(specOptions, containerd.WithProcessArgs(args...))
+		specOptions = append(specOptions, oci.WithProcessArgs(args...))
 	}
 
 	options := []containerd.NewContainerOpts{
@@ -300,11 +303,11 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p containerPack, err0 error) {
 	var pack containerPack
 
-	var io containerd.IOCreation
+	var io cio.Creation
 	if cc.Spec.Process.Terminal {
-		io = containerd.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, true)
+		io = cio.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, true)
 	} else {
-		io = containerd.NewIO(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr)
+		io = cio.NewIO(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr)
 	}
 
 	// create task
