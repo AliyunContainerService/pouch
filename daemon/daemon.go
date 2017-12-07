@@ -25,6 +25,7 @@ type Daemon struct {
 	containerMgr   mgr.ContainerMgr
 	systemMgr      mgr.SystemMgr
 	imageMgr       mgr.ImageMgr
+	networkMgr     mgr.NetworkMgr
 	volumeMgr      mgr.VolumeMgr
 	server         server.Server
 }
@@ -77,6 +78,12 @@ func (d *Daemon) Run() error {
 	}
 	d.imageMgr = imageMgr
 
+	networkMgr, err := internal.GenNetworkMgr(&d.config)
+	if err != nil {
+		return err
+	}
+	d.networkMgr = networkMgr
+
 	systemMgr, err := internal.GenSystemMgr(&d.config)
 	if err != nil {
 		return err
@@ -98,6 +105,7 @@ func (d *Daemon) Run() error {
 	d.server = server.Server{
 		Config:       d.config,
 		ContainerMgr: containerMgr,
+		NetworkMgr:   networkMgr,
 		SystemMgr:    systemMgr,
 		ImageMgr:     imageMgr,
 		VolumeMgr:    volumeMgr,

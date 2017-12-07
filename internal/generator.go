@@ -33,6 +33,11 @@ func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
 	return mgr.NewImageManager(cfg, d.Containerd())
 }
 
+// GenNetworkMgr generates a NetworkMgr instance according to config cfg.
+func GenNetworkMgr(cfg *config.Config) (mgr.NetworkMgr, error) {
+	return mgr.NewNetworkManager(cfg)
+}
+
 // GenVolumeMgr generates a VolumeMgr instance according to config cfg.
 func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
 	return mgr.NewVolumeManager(d.MetaStore(), cfg.Config)

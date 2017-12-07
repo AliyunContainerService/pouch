@@ -21,6 +21,7 @@ type Server struct {
 	Config       config.Config
 	ContainerMgr mgr.ContainerMgr
 	SystemMgr    mgr.SystemMgr
+	NetworkMgr   mgr.NetworkMgr
 	ImageMgr     mgr.ImageMgr
 	VolumeMgr    mgr.VolumeMgr
 	listeners    []net.Listener

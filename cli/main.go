@@ -21,6 +21,7 @@ func main() {
 	cli.AddCommand(base, &PsCommand{})
 	cli.AddCommand(base, &ExecCommand{})
 	cli.AddCommand(base, &VersionCommand{})
+	cli.AddCommand(base, &NetworkCommand{})
 	cli.AddCommand(base, &ImageCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 	cli.AddCommand(base, &InspectCommand{})
