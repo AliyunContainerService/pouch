@@ -7,7 +7,7 @@ import (
 )
 
 func TestImageCache(t *testing.T) {
-	images := []types.Image{
+	images := []types.ImageInfo{
 		{
 			Digest: "sha256:dc5f67a48da730d67bf4bfb8824ea8a51be26711de090d6d5a1ffff2723168a3",
 			Name:   "docker.io/library/nginx:alpine",
@@ -59,7 +59,7 @@ func TestImageCache(t *testing.T) {
 		t.Errorf("get error: %s", i.Name)
 	}
 
-	cache.remove(&types.Image{
+	cache.remove(&types.ImageInfo{
 		Digest: "sha256:03b17f82af79a338571410df9b26670c160175eda81d6e9fd62e3fda6b728928",
 		Name:   "reg.docker.alibaba-inc.com/mysql:5.6.23",
 		ID:     "03b17f82af79",

@@ -1,10 +1,9 @@
 # Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOPATH=$(shell cd ../../../..; pwd)
-GOPACKAGES=$(shell GOPATH=`cd ../../../..; pwd` go list ./... | grep -v /vendor/ | sed 's/^_//')
+GOBUILD=go build
+GOCLEAN=go clean
+GOTEST=go test
+GOPATH=$(shell go env GOPATH)
+GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | sed 's/^_//')
 
 # Binary name of CLI and Daemon
 BINARY_NAME=pouchd

@@ -69,9 +69,9 @@ func (i *ImageCommand) runImages(args []string) error {
 
 	for _, image := range imageList {
 		if i.flagDigest {
-			fmt.Printf("%-20s %-56s %-71s %s\n", image.ID, image.Name, image.Digest, image.Size)
+			fmt.Printf("%-20s %-56s %-71s %d\n", image.ID, image.Name, image.Digest, image.Size)
 		} else {
-			fmt.Printf("%-20s %-56s %s\n", image.ID, image.Name, image.Size)
+			fmt.Printf("%-20s %-56s %d\n", image.ID, image.Name, image.Size)
 		}
 	}
 	return nil

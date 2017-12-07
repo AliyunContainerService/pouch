@@ -21,13 +21,13 @@ func (client *APIClient) ImagePull(name, tag string) (io.ReadCloser, error) {
 }
 
 // ImageList requests daemon to list all images
-func (client *APIClient) ImageList() ([]types.Image, error) {
+func (client *APIClient) ImageList() ([]types.ImageInfo, error) {
 	resp, err := client.get("/images/json", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	imageList := []types.Image{}
+	imageList := []types.ImageInfo{}
 
 	err = decodeBody(&imageList, resp.Body)
 	ensureCloseReader(resp)
