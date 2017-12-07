@@ -49,7 +49,7 @@ type ContainerMgr interface {
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
 
 	// Rename renames a container
-	Rename(ctx context.Context, id string, name string) error
+	Rename(ctx context.Context, oldName string, newName string) error
 
 	// Get the detailed information of container
 	Get(name string) (*types.ContainerInfo, error)
@@ -400,24 +400,27 @@ func (mgr *ContainerManager) Get(name string) (*types.ContainerInfo, error) {
 }
 
 // Rename renames a container
-func (mgr *ContainerManager) Rename(ctx context.Context, id string, name string) error {
+func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string) error {
 	var (
-		ci  *types.ContainerInfo
+		c   *Container
 		err error
 	)
 
-	if mgr.NameToID.Get(name).Exist() {
+	if mgr.NameToID.Get(newName).Exist() {
 		return httputils.NewHTTPError(errors.New("The newName already exists"), 409)
 	}
 
-	if ci, err = mgr.containerInfo(id); err != nil {
+	if c, err = mgr.container(oldName); err != nil {
 		return errors.Wrap(err, "failed to rename container")
 	}
+	c.Lock()
+	defer c.Unlock()
 
-	mgr.NameToID.Remove(id)
-	mgr.NameToID.Put(name, ci.ID)
-	ci.Name = name
-	mgr.Store.Put(ci)
+	mgr.NameToID.Remove(oldName)
+	mgr.NameToID.Put(newName, c.ID())
+
+	c.meta.Name = newName
+	c.Write(mgr.Store)
 
 	return nil
 }
