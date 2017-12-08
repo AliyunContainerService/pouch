@@ -23,6 +23,7 @@ func main() {
 	cli.AddCommand(base, &ExecCommand{})
 	cli.AddCommand(base, &VersionCommand{})
 	cli.AddCommand(base, &ImageCommand{})
+	cli.AddCommand(base, &RmiCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})

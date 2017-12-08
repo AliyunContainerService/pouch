@@ -190,6 +190,23 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/Error"
+  /images/{name}:
+    delete:
+      summary: "Remove an image"
+      description: "Remove an image by reference."
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: "Image reference"
+          type: string
+      responses:
+        204:
+          description: "No error"
+        500:
+          schema:
+            $ref: "#/definitions/Error"
+          description: "Server deletes an image error"
   /containers/create:
     post:
       summary: "Create a container"

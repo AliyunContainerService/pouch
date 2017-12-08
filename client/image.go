@@ -35,3 +35,16 @@ func (client *APIClient) ImageList() ([]types.ImageInfo, error) {
 	return imageList, err
 
 }
+
+// ImageRemove deletes an image.
+func (client *APIClient) ImageRemove(name string, force bool) error {
+	q := url.Values{}
+	if force {
+		q.Set("force", "true")
+	}
+
+	resp, err := client.delete("/images/"+name, q)
+	ensureCloseReader(resp)
+
+	return err
+}
