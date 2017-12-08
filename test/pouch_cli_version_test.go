@@ -1,9 +1,6 @@
 package main
 
 import (
-	"os/exec"
-	"strings"
-
 	"github.com/go-check/check"
 )
 
@@ -22,11 +19,13 @@ func (suite *PouchVersionSuite) SetUpTest(c *check.C) {
 
 // TestPouchVersion is to verify pouch version.
 func (suite *PouchVersionSuite) TestPouchVersion(c *check.C) {
-	out, err := exec.Command("pouch", "version").Output()
-	c.Assert(err, check.IsNil)
 
-	if !strings.Contains(string(out), "APIVersion") {
-		c.Fatalf("unexpected output %s expected APIVersion\n", string(out))
+	var cmd PouchCmd
+
+	cmd = PouchCmd{
+		args:        "version",
+		result:      true,
+		outContains: "APIVersion",
 	}
-
+	RunCmd(c, &cmd)
 }
