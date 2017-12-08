@@ -16,8 +16,9 @@ import (
 )
 
 // pullDescription is used to describe pull command in detail and auto generate command doc.
-// TODO: add description
-var pullDescription = ""
+var pullDescription = "Pull an image or a repository from a registry. " +
+	"Most of your images will be created on top of a base image from the registry. " +
+	"So, you can pull and try prebuilt images contained by registry without needing to define and configure your own."
 
 // PullCommand use to implement 'pull' command, it download image.
 type PullCommand struct {
@@ -155,7 +156,13 @@ func parseNameTag(input string) (string, string) {
 }
 
 // pullExample shows examples in pull command, and is used in auto-generated cli docs.
-// TODO: add example
 func pullExample() string {
-	return ""
+	return `$ pouch images
+IMAGE ID            IMAGE NAME                           SIZE
+bbc3a0323522        docker.io/library/busybox:latest     2699
+$ pouch pull docker.io/library/redis:alpine
+$ pouch images
+IMAGE ID            IMAGE NAME                           SIZE
+bbc3a0323522        docker.io/library/busybox:latest     2699
+0153c5db97e5        docker.io/library/redis:alpine       2035`
 }
