@@ -105,7 +105,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 			meta: c,
 		})
 
-		if c.Status != types.RUNNING {
+		if c.Status != types.StatusRunning {
 			return nil
 		}
 
@@ -269,7 +269,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// TODO check whether image exist
 	meta := &types.ContainerInfo{
 		ContainerState: &types.ContainerState{
-			Status: types.CREATED,
+			Status: types.StatusCreated,
 		},
 		ID:     id,
 		Name:   name,
@@ -344,16 +344,16 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		IO:   io,
 	})
 	if err == nil {
-		c.meta.Status = types.RUNNING
-		c.meta.StartedAt = time.Now()
+		c.meta.Status = types.StatusRunning
+		c.meta.StartedAt = time.Now().String()
 		pid, err := mgr.Client.ContainerPID(ctx, c.ID())
 		if err != nil {
 			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID())
 		}
-		c.meta.Pid = pid
+		c.meta.Pid = int64(pid)
 	} else {
-		c.meta.FinishedAt = time.Now()
-		c.meta.ErrorMsg = err.Error()
+		c.meta.FinishedAt = time.Now().String()
+		c.meta.Error = err.Error()
 		c.meta.Pid = 0
 		//TODO get and set exit code
 
@@ -552,12 +552,12 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 	defer c.Unlock()
 
 	c.meta.Pid = -1
-	c.meta.ExitCodeValue = int(m.ExitCode())
-	c.meta.FinishedAt = time.Now()
-	c.meta.Status = types.STOPPED
+	c.meta.ExitCode = int64(m.ExitCode())
+	c.meta.FinishedAt = time.Now().String()
+	c.meta.Status = types.StatusStopped
 
 	if m.HasError() {
-		c.meta.ErrorMsg = m.Error().Error()
+		c.meta.Error = m.Error().Error()
 	}
 
 	// release resource
