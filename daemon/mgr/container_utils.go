@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/pkg/errors"
@@ -26,8 +27,10 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get container info with prefix: %s", nameOrPrefix)
 	}
-	if len(objs) != 1 {
-		return "", fmt.Errorf("failed to get container info with prefix: %s, more than one", nameOrPrefix)
+	if len(objs) > 1 {
+		return "", errors.Wrap(errtypes.ErrTooMany, "container: "+nameOrPrefix)
+	} else if len(objs) == 0 {
+		return "", errors.Wrap(errtypes.ErrNotfound, "container: "+nameOrPrefix)
 	}
 	obj = objs[0]
 
@@ -56,7 +59,7 @@ func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) 
 		return res.(*Container), nil
 	}
 
-	return nil, fmt.Errorf("container: %s not found", id)
+	return nil, errors.Wrap(errtypes.ErrNotfound, "container "+nameOrPrefix)
 }
 
 // generateID generates an ID for newly created container. We must ensure that

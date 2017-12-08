@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
@@ -121,7 +122,12 @@ func HandleErrorResponse(w http.ResponseWriter, err error) {
 	httpErr, ok := err.(httputils.HTTPError)
 	if ok {
 		code = httpErr.Code()
-		errMsg = httpErr.Error()
+	} else if errtypes.IsNotfound(err) {
+		code = http.StatusNotFound
+	} else if errtypes.IsInvalidParam(err) {
+		code = http.StatusBadRequest
+	} else if errtypes.IsAlreadyExisted(err) {
+		code = http.StatusConflict
 	}
 
 	w.Header().Set("Content-Type", "application/json")

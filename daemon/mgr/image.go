@@ -2,7 +2,6 @@ package mgr
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -11,9 +10,11 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/registry"
 
+	"github.com/pkg/errors"
 	"github.com/tchap/go-patricia/patricia"
 )
 
@@ -205,8 +206,10 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 		return nil, err
 	}
 
-	if len(images) != 1 {
-		return nil, fmt.Errorf("found %d images, not only one: %s", len(images), idOrRef)
+	if len(images) > 1 {
+		return nil, errors.Wrapf(errtypes.ErrTooMany, "image: "+idOrRef)
+	} else if len(images) == 0 {
+		return nil, errors.Wrapf(errtypes.ErrNotfound, "image: "+idOrRef)
 	}
 
 	return images[0], nil
