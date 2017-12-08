@@ -7,8 +7,9 @@ import (
 )
 
 // imagesDescription is used to describe image command in detail and auto generate command doc.
-// TODO: add description
-var imagesDescription = ""
+var imagesDescription = "List all images in Pouchd." +
+	"This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE." +
+	"All local images will be shown in a table format you can use."
 
 // ImageCommand use to implement 'images' command.
 type ImageCommand struct {
@@ -77,7 +78,9 @@ func (i *ImageCommand) runImages(args []string) error {
 }
 
 // imagesExample shows examples in images command, and is used in auto-generated cli docs.
-// TODO: add example
 func imagesExample() string {
-	return ""
+	return `$ pouch images ls
+IMAGE ID             IMAGE NAME                                               SIZE
+bbc3a0323522         docker.io/library/busybox:latest                         2.64 KB
+b81f317384d7         docker.io/library/nginx:latest                           1.98 KB`
 }
