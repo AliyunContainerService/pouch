@@ -272,7 +272,7 @@ Return a list of stored images.
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**200**|Summary image data for the images matching the query|< [ImageSummary](#imagesummary) > array|
+|**200**|Summary image data for the images matching the query|< [ImageInfo](#imageinfo) > array|
 |**500**|server error|[Error](#error)|
 
 
@@ -675,21 +675,19 @@ Container configuration that depends on the host we are running on
 |**HostPort**  <br>*optional*|The host port number, as a string|string|
 
 
-<a name="imagesummary"></a>
-### ImageSummary
+<a name="imageinfo"></a>
+### ImageInfo
+An object containing all details of an image at API side
 
-|Name|Schema|
-|---|---|
-|**Containers**  <br>*required*|integer|
-|**Created**  <br>*required*|integer|
-|**Id**  <br>*required*|string|
-|**Labels**  <br>*required*|< string, string > map|
-|**ParentId**  <br>*required*|string|
-|**RepoDigests**  <br>*required*|< string > array|
-|**RepoTags**  <br>*required*|< string > array|
-|**SharedSize**  <br>*required*|integer|
-|**Size**  <br>*required*|integer|
-|**VirtualSize**  <br>*required*|integer|
+
+|Name|Description|Schema|
+|---|---|---|
+|**CreatedAt**  <br>*optional*|Time of image creation|string|
+|**Digest**  <br>*optional*|digest of image.|string|
+|**ID**  <br>*optional*|ID of an image.|string|
+|**Name**  <br>*optional*|name of an image.|string|
+|**Size**  <br>*optional*|size of image's taking disk space.|integer|
+|**Tag**  <br>*optional*|tag of an image.|string|
 
 
 <a name="searchresultitem"></a>
