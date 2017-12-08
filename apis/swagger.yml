@@ -298,7 +298,24 @@ paths:
           schema:
            $ref: "#/definitions/Error"
       tags: ["Container"]
-
+  /containers/{name}:
+    delete:
+      summary: "Remove one container"
+      operationId: "ContainerRemove"
+      parameters:
+        - name: "name"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+      responses:
+        204:
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+           $ref: "#/definitions/Error"
+      tags: ["Container"]
   /volumes:
     get:
       summary: "List volumes"

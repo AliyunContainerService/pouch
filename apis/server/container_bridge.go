@@ -10,13 +10,27 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
 )
 
-// TODO
 func (s *Server) removeContainers(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	option := &mgr.ContainerRemoveOption{
+		Force: httputils.BoolValue(req, "force"),
+		// TODO Volume and Link will be supported in the future.
+		Volume: httputils.BoolValue(req, "v"),
+		Link:   httputils.BoolValue(req, "link"),
+	}
+
+	if err := s.ContainerMgr.Remove(ctx, name, option); err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusNoContent)
 	return nil
 }
 

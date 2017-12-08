@@ -46,12 +46,27 @@ func (client *APIClient) ContainerStart(name, detachKeys string) error {
 	return err
 }
 
-// ContainerStop stops a container
+// ContainerStop stops a container.
 func (client *APIClient) ContainerStop(name string) error {
 	resp, err := client.post("/containers/"+name+"/stop", nil, nil)
 	ensureCloseReader(resp)
 
 	return err
+}
+
+// ContainerRemove removes a container.
+func (client *APIClient) ContainerRemove(name string, force bool) error {
+	q := url.Values{}
+	if force {
+		q.Set("force", "true")
+	}
+
+	resp, err := client.delete("/containers/"+name, q)
+	if err != nil {
+		return err
+	}
+	ensureCloseReader(resp)
+	return nil
 }
 
 // ContainerList returns the list of containers.

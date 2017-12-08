@@ -132,8 +132,38 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-// TODO
 func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *ContainerRemoveOption) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+	c.Lock()
+	defer c.Unlock()
+
+	if !c.IsStopped() && !c.IsCreated() && !option.Force {
+		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID())
+	}
+
+	// if the container is running, force to stop it.
+	if c.IsRunning() && option.Force {
+		if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil {
+			if cerr, ok := err.(ctrd.Error); !ok || cerr != ctrd.ErrContainerNotfound {
+				return errors.Wrapf(err, "failed to remove container: %s", c.ID())
+			}
+		}
+	}
+
+	// remove name
+	mgr.NameToID.Remove(c.Name())
+
+	// remove meta data
+	if err := mgr.Store.Remove(c.meta.Key()); err != nil {
+		logrus.Errorf("failed to remove container: %s meta store", c.ID())
+	}
+
+	// remove container cache
+	mgr.cache.Remove(c.ID())
+
 	return nil
 }
 
@@ -396,7 +426,15 @@ func (mgr *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, 
 
 // Get the detailed information of container
 func (mgr *ContainerManager) Get(name string) (*types.ContainerInfo, error) {
-	return mgr.containerInfo(name)
+	c, err := mgr.container(name)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return c.meta, nil
 }
 
 // Rename renames a container
