@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/alibaba/pouch/pkg/utils"
+
 	"github.com/spf13/cobra"
 )
 
@@ -10,6 +12,12 @@ import (
 var imagesDescription = "List all images in Pouchd." +
 	"This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE." +
 	"All local images will be shown in a table format you can use."
+
+type imageSize int64
+
+func (i imageSize) String() string {
+	return utils.FormatSize(int64(i))
+}
 
 // ImageCommand use to implement 'images' command.
 type ImageCommand struct {
@@ -61,19 +69,32 @@ func (i *ImageCommand) runImages(args []string) error {
 		return nil
 	}
 
+	display := i.cli.NewTableDisplay()
+
 	if i.flagDigest {
-		fmt.Printf("%-20s %-56s %-71s %s\n", "IMAGE ID", "IMAGE NAME", "DIGEST", "SIZE")
+		display.AddRow([]string{"IMAGE ID", "IMAGE NAME", "DIGEST", "SIZE"})
 	} else {
-		fmt.Printf("%-20s %-56s %s\n", "IMAGE ID", "IMAGE NAME", "SIZE")
+		display.AddRow([]string{"IMAGE ID", "IMAGE NAME", "SIZE"})
 	}
 
 	for _, image := range imageList {
 		if i.flagDigest {
-			fmt.Printf("%-20s %-56s %-71s %d\n", image.ID, image.Name, image.Digest, image.Size)
+			display.AddRow([]string{
+				image.ID,
+				image.Name,
+				image.Digest,
+				fmt.Sprintf("%s", imageSize(image.Size)),
+			})
 		} else {
-			fmt.Printf("%-20s %-56s %d\n", image.ID, image.Name, image.Size)
+			display.AddRow([]string{
+				image.ID,
+				image.Name,
+				fmt.Sprintf("%s", imageSize(image.Size)),
+			})
 		}
 	}
+
+	display.Flush()
 	return nil
 }
 
