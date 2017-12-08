@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"net/http"
 	"sync"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -12,6 +13,15 @@ type containerExecConfig struct {
 
 	// Save the container's id into exec config.
 	ContainerID string
+}
+
+// AttachConfig wraps some infos of attaching.
+type AttachConfig struct {
+	Hijack  http.Hijacker
+	Stdin   bool
+	Stdout  bool
+	Stderr  bool
+	Upgrade bool
 }
 
 // ContainerRemoveOption wraps the container remove interface params.

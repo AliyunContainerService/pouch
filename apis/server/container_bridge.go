@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
@@ -65,7 +66,7 @@ func (s *Server) startContainerExec(ctx context.Context, resp http.ResponseWrite
 		return err
 	}
 
-	var attach *types.AttachConfig
+	var attach *mgr.AttachConfig
 
 	if !config.Detach {
 		hijacker, ok := resp.(http.Hijacker)
@@ -73,7 +74,7 @@ func (s *Server) startContainerExec(ctx context.Context, resp http.ResponseWrite
 			return fmt.Errorf("not a hijack connection, container: %s", name)
 		}
 
-		attach = &types.AttachConfig{
+		attach = &mgr.AttachConfig{
 			Hijack:  hijacker,
 			Stdin:   config.Tty,
 			Stdout:  true,
@@ -150,7 +151,7 @@ func (s *Server) attachContainer(ctx context.Context, resp http.ResponseWriter, 
 		return fmt.Errorf("not a hijack connection, container: %s", name)
 	}
 
-	attach := &types.AttachConfig{
+	attach := &mgr.AttachConfig{
 		Hijack:  hijacker,
 		Stdin:   req.FormValue("stdin") == "1",
 		Stdout:  true,

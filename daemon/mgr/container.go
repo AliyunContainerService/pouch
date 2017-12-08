@@ -34,7 +34,7 @@ type ContainerMgr interface {
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 
 	// Attach a container.
-	Attach(ctx context.Context, name string, attach *types.AttachConfig) error
+	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
 	// List returns the list of containers.
 	List(ctx context.Context) ([]*types.ContainerInfo, error)
@@ -43,7 +43,7 @@ type ContainerMgr interface {
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
 
 	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *types.AttachConfig) error
+	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
 
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
@@ -157,7 +157,7 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 }
 
 // StartExec executes a new process in container.
-func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *types.AttachConfig) error {
+func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error {
 	v, ok := mgr.ExecProcesses.Get(execid).Result()
 	if !ok {
 		return fmt.Errorf("exec process: %s not found", execid)
@@ -361,7 +361,7 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout time
 }
 
 // Attach attachs a container's io.
-func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *types.AttachConfig) error {
+func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *AttachConfig) error {
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
@@ -459,15 +459,15 @@ func (mgr *ContainerManager) containerInfo(s string) (*types.ContainerInfo, erro
 	return ci, nil
 }
 
-func (mgr *ContainerManager) openContainerIO(id string, attach *types.AttachConfig) (*containerio.IO, error) {
+func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {
 	return mgr.openIO(id, attach, false)
 }
 
-func (mgr *ContainerManager) openExecIO(id string, attach *types.AttachConfig) (*containerio.IO, error) {
+func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*containerio.IO, error) {
 	return mgr.openIO(id, attach, true)
 }
 
-func (mgr *ContainerManager) openIO(id string, attach *types.AttachConfig, exec bool) (*containerio.IO, error) {
+func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) (*containerio.IO, error) {
 	if io := mgr.IOs.Get(id); io != nil {
 		return io, nil
 	}
