@@ -6,8 +6,8 @@ import (
 
 // renameDescription is used to describe rename command in detail and auto generate command doc.
 var renameDescription = "Rename a container object in Pouchd. " +
-	"You can change the name of one container identified by it's name or ID. " +
-	"The container you renamed is ready to be used by it's new name."
+	"You can change the name of one container identified by its name or ID. " +
+	"The container you renamed is ready to be used by its new name."
 
 // RenameCommand uses to implement 'rename' command, it renames a container.
 type RenameCommand struct {
