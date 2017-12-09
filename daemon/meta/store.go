@@ -39,7 +39,7 @@ type Object interface {
 // Store defines what a metadata store should be like.
 type Store struct {
 	Config
-	trieLock sync.Mutex // trieLock use to protect 'trie'.
+	trieLock *sync.Mutex // trieLock use to protect 'trie'.
 	trie     *patricia.Trie
 	current  *Bucket
 	backend  Backend
@@ -48,9 +48,10 @@ type Store struct {
 // NewStore creates a backend storage.
 func NewStore(cfg Config) (*Store, error) {
 	s := &Store{
-		Config:  cfg,
-		backend: backend,
-		trie:    patricia.NewTrie(),
+		Config:   cfg,
+		backend:  backend,
+		trieLock: new(sync.Mutex),
+		trie:     patricia.NewTrie(),
 	}
 
 	if err := s.backend.New(cfg); err != nil {
@@ -88,10 +89,11 @@ func (s *Store) Bucket(name string) *Store {
 	}
 
 	return &Store{
-		Config:  s.Config,
-		backend: s.backend,
-		current: pb,
-		trie:    s.trie,
+		Config:   s.Config,
+		backend:  s.backend,
+		current:  pb,
+		trieLock: s.trieLock,
+		trie:     s.trie,
 	}
 }
 
