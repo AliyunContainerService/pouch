@@ -4,10 +4,23 @@ Pull an image from registry
 
 ### Synopsis
 
-Pull an image from registry
+Pull an image or a repository from a registry. Most of your images will be created on top of a base image from the registry. So, you can pull and try prebuilt images contained by registry without needing to define and configure your own.
 
 ```
 pouch pull [image] [flags]
+```
+
+### Examples
+
+```
+$ pouch images
+IMAGE ID            IMAGE NAME                           SIZE
+bbc3a0323522        docker.io/library/busybox:latest     2699
+$ pouch pull docker.io/library/redis:alpine
+$ pouch images
+IMAGE ID            IMAGE NAME                           SIZE
+bbc3a0323522        docker.io/library/busybox:latest     2699
+0153c5db97e5        docker.io/library/redis:alpine       2035
 ```
 
 ### Options
