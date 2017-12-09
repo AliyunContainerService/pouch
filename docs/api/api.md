@@ -209,6 +209,33 @@ POST /containers/{id}/rename
 * Container
 
 
+<a name="containerremove"></a>
+### Remove one container
+```
+DELETE /containers/{name}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**name**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="images-create-post"></a>
 ### Create an image by pulling from a registry or importing from an existing source file
 ```
@@ -330,6 +357,32 @@ GET /images/search
 #### Produces
 
 * `application/json`
+
+
+<a name="images-name-delete"></a>
+### Remove an image
+```
+DELETE /images/{name}
+```
+
+
+#### Description
+Remove an image by reference.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**name**  <br>*required*|Image reference|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|No error|No Content|
+|**500**|Server deletes an image error|[Error](#error)|
 
 
 <a name="info-get"></a>
