@@ -169,13 +169,16 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 
 // CreateExec creates exec process's meta data.
 func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error) {
-	execid := randomid.Generate()
-
 	c, err := mgr.container(name)
 	if err != nil {
 		return "", err
 	}
 
+	if !c.IsRunning() {
+		return "", fmt.Errorf("container %s is not running", c.ID())
+	}
+
+	execid := randomid.Generate()
 	execConfig := &containerExecConfig{
 		ExecCreateConfig: *config,
 		ContainerID:      c.ID(),
