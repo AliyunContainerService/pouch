@@ -18,30 +18,30 @@ Pouch - An Efficient Container Engine
 - [Getting Started](#getting-started)
 - User Manual
     - [CLI Manual](docs/commandline)
-    - [API Manual](docs/api)   
+    - [API Manual](docs/api)
 - [Contributing](#contributing)
 
 ## Introduction
 
-Pouch is an open-source project created by Alibaba Group to promote the container technology movement. 
+Pouch is an open-source project created by Alibaba Group to promote the container technology movement.
 
-Pouch can pack, deliver and run any application. It provides the environment for applications with strong isolation in quite lightweight way. Pouch not only splits the application itself from the underlying environment, but also has ability to remain the good experience of operation.
+Pouch's vision is to advance container ecosystem and promote container standards [OCI(Open Container Initiative)](https://github.com/opencontainers), so that container technologies become the foundation for application development in the Cloud era.
 
-The ambition of Pouch is embracing container ecosystem and perfecting container standards [OCI(Open Container Initiative)](https://github.com/opencontainers). With the ability Pouch provides, people can spend less energy transforming applications to be cloud native. 
+Pouch can pack, deliver and run any application. It provides applications with a lightweight runtime environment with strong isolation and minimal overhead. Pouch isolates applications from varying runtime environment, and minimizes operational workload. Pouch minimizes the effort for application developers to write Cloud-native applications, or to migrate legacy ones to a Cloud platform.
 
 ## Features
 
-Pouch project has many important features listed below:
+Pouch's most important features are:
 
-- **Security**: Designed to be secure by default. Include lots of security features, like hypervisor-based container technology, lxcfs, patched Linux kernel and so on.
-- **P2P distribution**: Easy to integrate with [Dragonfly](https://github.com/alibaba/dragonfly) which is a P2P-base container image distribution system to significantly improve image distribution efficiency.
-- **Rich container**: Besides the common way of container usage, also includes `rich container` mode which integrates more services, prestart hooks and more things inside container to guarantee container's running like usual.
-- **Kernel compatibility**: Supports more OCI-compatible runtimes to support low version kernels, like linux kernel 2.6.32+.
-- **Simple and easy to use**: Very few steps needed to setup Pouch. 
+- **Security**: Pouch is designed to be secure by default. Include lots of security features, like hypervisor-based container technology, lxcfs, patched Linux kernel and so on.
+- **P2P distribution**: Pouch utilizes [Dragonfly](https://github.com/alibaba/dragonfly), a P2P-base distribution system, to achieve lightning-fast container image distribution.
+- **Rich container**: Besides the common ways of running container, Pouch includes a `rich container` mode, which integrates more services, hooks, and many others container internals to guarantee container's running like usual.
+- **Kernel compatibility**: Enables OCI-compatible runtimes to work on old kernel versions, like linux kernel 2.6.32+.
+- **Simplicty**: Very few steps needed to setup Pouch.
 
 ## Architecture
 
-We describe Pouch's architecture from two dimensions: **ecosystem architecture**  which illustrates the place of Pouch in container ecosystem and **component architecture** which shows how we design decoupled components inside Pouch. For more details, please refer to file [architecture.md](docs/architecture.md).
+We describe Pouch's architecture from two dimensions: **ecosystem architecture**  which illustrates how Pouch fits into the container ecosystem and **component architecture** which describes the interactions between various components inside Pouch. For more details, please refer to file [architecture.md](docs/architecture.md).
 
 ## Advantages
 
@@ -49,35 +49,31 @@ Pouch has lots of advantages over VM technologies. Two of the most impressive on
 
 ### Resource Utilization
 
-Pouch improves resource utilization of application with significant effect:
+Pouch significantly improves resource utilization:
 
-* Image technology of Pouch is compatible with OCI image spec. It could help application take minimal space of storage with layered image originization.
-* Via incremental way provided by image when application distribution, datacentre bandwidth reource could be saved a lot.
-* Unlike original VM technology, the auxiliary resource which is needed for applications' boot could be minimal, while for VM there are resources spared for kernel, system services and so on.
+* Pouch is compatible with OCI image spec. Applications can minimize their storage usage with layered image structure.
+* Incremental image distribution, saves datacenter bandwidth consumption.
+* Significantly less runtime overhead than VM-based technologies.
 
 ### Application Centric
 
-Pouch pays more emphasis on view of application, and we can call this "application centric":
+Pouch offers a more "application centric" approach for application development:
 
-* Application needs an absolutely isolated environment. Pouch provides strong isolation for them with cutting-edge technology both within kernel support and beyond kernel mode.
-* Application delivery turns to be out of box. Pouch improves the portability of application, no matter cross-platform or cross-os.
-* Application delivery period should be minimal. Pouch shorted this by standardizing the application image spec between developers and operators.
+* Pouch provides strong runtime isolation between applications, with cutting-edge technology both within kernel support and beyond kernel mode.
+* Pouch enables cross-platform and cross-OS application delivery.
+* Pouch supports standardized application image spec, so application sharing and reusing becomes trivial for developers and operators.
 
 ## Getting Started
 
-It is quite easy for us to start a journey to Pouch. Just install a few prerequisites before starting, and start pouchd with default configuration. Then you can enjoy container management both by API and pouch cli. For more details, please refer to file [INSTALLATION.md](INSTALLATION.md).
-
-## User Manual
-
-We can experience or hack Pouch in two ways: API side and CLI side. No matter which way you like, we provide detailed manuals for you. For more details, please refer to [CLI Manual](docs/commandline) and [API Manual](docs/api).
+You can easily setup a basic Pouch environment, see [INSTALLATION.md](INSTALLATION.md). You'll need to install a few packages before starting `pouchd`, which starts a container management service. The service can be accessed through the `pouch` CLI or RPC calls. For more details, please refer to [CLI Manual](docs/commandline) and [API Manual](docs/api).
 
 ## Contributing
 
-It is warmly welcomed if you are interested in hacking on Pouch. Here we have prepared detailed guidance [CONTRIBUTING.md](CONTRIBUTING.md) for you to follow. If you are not saitisfied with the guide, I think you know what to do. Yeah, contribute to improve it.
+You are warmly welcomed to hack on Pouch. We have prepared a detailed guide [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## FAQ
 
-For more details about frequently asked questions (FAQ), please refer to file [FAQ.md](FAQ.md). 
+For more details about frequently asked questions (FAQ), please refer to file [FAQ.md](FAQ.md).
 
 ## Roadmap
 
@@ -85,9 +81,9 @@ For more details about roadmap, please refer to file [ROADMAP.md](ROADMAP.md).
 
 ## Connect with us
 
-At First, we have to say that it is encouraged to communicate everything via GitHub issues or GitHub pull requests, and all these should be in English. There is no difference between sending pouch members a regular email and pinging them on GitHub. In the future, we will provide more channels for community if necessary.
+You are encouraged to communicate everything via GitHub issues or pull requests. In the future, we would provide more channels for communication if necessary.
 
-If you have ugent issues, please contact with this email address [pouch-dev@list.alibaba-inc.com](mailto:pouch-dev@list.alibaba-inc.com) which is mentioned in [CONTRIBUTING.md](CONTRIBUTING.md)
+If you have urgent issues, please contact Pouch team at [pouch-dev@list.alibaba-inc.com](mailto:pouch-dev@list.alibaba-inc.com).
 
 ## License
 
