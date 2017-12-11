@@ -41,6 +41,14 @@ Here we list some additional features of Pouch:
 * high kernel compatibility: Pouch has a wide range of kernel version support. It is a long road for industry to upgrade kernel version to 3.10+. Pouch could help legacy kernel world to enjoy the fresh container technology.
 * P2P image distribution: In a very large datacenter, image distribution is heavy load for network. Pouch can take advantage of P2P image distribution solutions to improve this.
 
+## What is the difference bewtween Pouch and Kubernetes?
+
+Kubernetes is an open source project for managing containerized applications across multiple hosts, providing basic mechanisms for deployment, maintenance, and scaling of applications. While Pouch mainly focuses on container management with a rich container runtime diversity. For clearer relationship between Pouch and Kubernetes, you can refer to [Ecosystem Architecture](docs/architecture.md#ecosystem-architecture).
+
+If you are choosing overall container solution for a 100+ nodes cluster wide scenario, along with application maintenance friendly with less effort, Kubernetes is one which you can choose. If you wish to harden you container's running, pack your application efficiently and standardize your heterogeneous infrastucture with a unified operation experience, Pouch is what you want.
+
+What is more, in data center's architecture, Kubernetes and Pouch locate in different layers. We can say that Kubernete is in the upper layer torwards Pouch. Actually we can combine Kubernetes and Pouch in a very efficient way. Pouch takes a role of runtime solution, and Kubernetes plays a role of orchestration. Pouch takes over fine-grained resource from infrastucture, like CPU, memory, network, disk and so on. Then it provides these resource metrics to upper Kubernetes for scheduling usage. When Kubernetes runs to meet application's maintenance demand, it can pass the request down to Pouch to provide secure and isolated container carriers for applications.
+
 ## What is version rule of Pouch ?
 
 We set the version rule of Pouch on the basis of [SemVer](http://semver.org/). Briefly speaking, we follow version number of MAJOR.MINOR.PATCH, such as 0.2.1, 1.1.3. For more details, please refer to [SemVer](http://semver.org/).
