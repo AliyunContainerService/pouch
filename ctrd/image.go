@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
+	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/remotes"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -31,20 +32,24 @@ func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 
 // ListImages lists all images.
 func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error) {
-	imageList, err := c.client.ListImages(ctx, filter...)
+	imageList, err := c.client.ImageService().List(ctx, filter...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list images")
+		return nil, err
 	}
 
 	images := make([]types.ImageInfo, 0, 32)
 	digestPrefix := "sha256:"
 	for _, image := range imageList {
-		descriptor := image.Target()
+		descriptor := image.Target
 		digest := []byte(descriptor.Digest)
-		size := descriptor.Size
+
+		size, err := image.Size(ctx, c.client.ContentStore(), platforms.Default())
+		if err != nil {
+			return nil, err
+		}
 
 		images = append(images, types.ImageInfo{
-			Name:   image.Name(),
+			Name:   image.Name,
 			ID:     string(digest[len(digestPrefix) : len(digestPrefix)+12]),
 			Digest: string(digest),
 			Size:   size,
