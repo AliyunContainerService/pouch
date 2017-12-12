@@ -49,17 +49,17 @@ func (c *Container) Name() string {
 
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
-	return c.meta.Status == types.RUNNING
+	return c.meta.Status == types.StatusRunning
 }
 
 // IsStopped returns container is stopped or not.
 func (c *Container) IsStopped() bool {
-	return c.meta.Status == types.STOPPED
+	return c.meta.Status == types.StatusStopped
 }
 
 // IsCreated returns container is created or not.
 func (c *Container) IsCreated() bool {
-	return c.meta.Status == types.CREATED
+	return c.meta.Status == types.StatusCreated
 }
 
 // Write writes container's meta data into meta store.

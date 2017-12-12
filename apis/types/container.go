@@ -23,7 +23,7 @@ type Container struct {
 	Command string `json:"Command,omitempty"`
 
 	// created
-	Created int64 `json:"Created,omitempty"`
+	Created string `json:"Created,omitempty"`
 
 	// host config
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`

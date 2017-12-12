@@ -270,6 +270,42 @@ paths:
             $ref: "#/definitions/Error"
       tags: ["Container"]
 
+  /containers/{id}/json:
+    get:
+      summary: "Inspect a container"
+      description: "Return low-level information about a container."
+      operationId: "ContainerInspect"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/ContainerJSON"
+        404:
+          description: "no such container"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "size"
+          in: "query"
+          type: "boolean"
+          default: false
+          description: "Return the size of container as fields `SizeRw` and `SizeRootFs`"
+      tags: ["Container"]
+
   /containers/json:
     get:
       summary: "List containers"
@@ -810,8 +846,7 @@ definitions:
       Command:
         type: "string"
       Created:
-        type: "integer"
-        format: "int64"
+        type: "string"
       SizeRw:
         type: "integer"
         format: "int64"
@@ -1093,3 +1128,112 @@ definitions:
         type: "boolean"
       Tty:
         type: "boolean"
+  
+  ContainerJSON:
+    type: "object"
+    properties:
+      Id:
+        description: "The ID of the container"
+        type: "string"
+      Created:
+        description: "The time the container was created"
+        type: "string"
+      Path:
+        description: "The path to the command being run"
+        type: "string"
+      Args:
+        description: "The arguments to the command being run"
+        type: "array"
+        items:
+          type: "string"
+      State:
+        description: "The state of the container."
+        $ref: "#/definitions/ContainerState"
+      Image:
+        description: "The container's image"
+        type: "string"
+      ResolvConfPath:
+        type: "string"
+      HostnamePath:
+        type: "string"
+      HostsPath:
+        type: "string"
+      LogPath:
+        type: "string"
+      Name:
+        type: "string"
+      RestartCount:
+        type: "integer"
+      Driver:
+        type: "string"
+      MountLabel:
+        type: "string"
+      ProcessLabel:
+        type: "string"
+      AppArmorProfile:
+        type: "string"
+      ExecIDs:
+        type: "string"
+      HostConfig:
+        $ref: "#/definitions/HostConfig"
+      SizeRw:
+        description: "The size of files that have been created or changed by this container."
+        type: "integer"
+        format: "int64"
+      SizeRootFs:
+        description: "The total size of all the files in this container."
+        type: "integer"
+        format: "int64"
+      Config:
+        $ref: "#/definitions/ContainerConfig"
+
+  ContainerState:
+    type: "object"
+    properties:
+      Status:
+        $ref: "#/definitions/Status"
+      Running:
+        description: |
+          Whether this container is running.
+
+          Note that a running container can be _paused_. The `Running` and `Paused`
+          booleans are not mutually exclusive:
+
+          When pausing a container (on Linux), the cgroups freezer is used to suspend
+          all processes in the container. Freezing the process requires the process to
+          be running. As a result, paused containers are both `Running` _and_ `Paused`.
+
+          Use the `Status` field instead to determine if a container's state is "running".
+        type: "boolean"
+      Paused:
+        description: "Whether this container is paused."
+        type: "boolean"
+      Restarting:
+        description: "Whether this container is restarting."
+        type: "boolean"
+      OOMKilled:
+        description: "Whether this container has been killed because it ran out of memory."
+        type: "boolean"
+      Dead:
+        description: "Whether this container is dead."
+        type: "boolean"
+      Pid:
+        description: "The process ID of this container"
+        type: "integer"
+      ExitCode:
+        description: "The last exit code of this container"
+        type: "integer"
+      Error:
+        description: "The error message of this container"
+        type: "string"
+      StartedAt:
+        description: "The time when this container was last started."
+        type: "string"
+      FinishedAt:
+        description: "The time when this container last exited."
+        type: "string"
+
+  Status:
+    description: The status of the container. For example, "running" or "exited".
+    type: "string"
+    enum: ["created", "running", "stopped","paused", "restarting", "removing", "exited", "dead"]
