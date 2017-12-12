@@ -28,6 +28,12 @@ the advantages of both vm and container.
 sudo apt-get install -y qemu qemu-kvm
 ```
 
+#### On redhat/centos
+
+```
+yum install -y qemu qemu-kvm
+```
+
 ### Install runV
 
 [runv](https://github.com/hyperhq/runv) does not provide binary package, build
@@ -57,4 +63,37 @@ cd hyperstart
 ./autogen.sh
 ./configure
 sudo make
+```
+
+Copy guest kernel and image to the default directory which runv will look for.
+```
+mkdir /var/lib/hyper/
+cp build/{kernel,hyper-initrd.img} /var/lib/hyper/
+```
+
+## Get Started
+
+supported containerd commit `31dabf0c7d321e14f49202e8016aa6b5a0905bc0`
+
+get dafault config for containerd
+```
+containerd config default > /etc/containerd/config.toml
+```
+
+append runtime plugin config to config.toml
+```
+[plugins.linux]
+ shim = "containerd-shim"
+ no_shim = false
+ runtime = "runv"
+ shim_debug = true
+```
+
+test with pouch client:
+```
+$ sudo ./pouch create docker.io/library/busybox:latest
+container ID: a07ae55306d276b9627ecf612bae47509e00e37afd3765b4c091f3e865271cfa, name: a07ae5 
+
+$ sudo ./pouch start -i a07ae5
+/ # 
 ```
