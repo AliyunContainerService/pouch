@@ -186,13 +186,14 @@ func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, re
 	cs := make([]types.Container, 0, len(cis))
 	for _, ci := range cis {
 		c := types.Container{
-			ID:      ci.ID,
-			Names:   []string{ci.Name},
-			Status:  string(ci.Status),
-			Image:   ci.Config.Image,
-			Command: strings.Join(ci.Config.Cmd, " "),
-			Created: ci.StartedAt,
-			Labels:  ci.Config.Labels,
+			ID:         ci.ID,
+			Names:      []string{ci.Name},
+			Status:     string(ci.Status),
+			Image:      ci.Config.Image,
+			Command:    strings.Join(ci.Config.Cmd, " "),
+			Created:    ci.StartedAt,
+			Labels:     ci.Config.Labels,
+			HostConfig: ci.Config.HostConfig,
 		}
 		cs = append(cs, c)
 	}
