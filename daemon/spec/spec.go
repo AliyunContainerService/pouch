@@ -12,19 +12,25 @@ import (
 type SetupFunc func(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error
 
 var setupFunc = []SetupFunc{
-	// Container spec
+	// process
 	setupProcessArgs,
 	setupProcessCwd,
 	setupProcessEnv,
 	setupProcessTTY,
 	setupProcessUser,
-	setupNs,
 	setupCap,
 
-	// Volume spec
+	// namespaces
+	setupUserNamespace,
+	setupNetworkNamespace,
+	setupIpcNamespace,
+	setupPidNamespace,
+	setupUtsNamespace,
+
+	// volume spec
 	setupMounts,
 
-	// Network spec
+	// network spec
 	setupNetwork,
 }
 
