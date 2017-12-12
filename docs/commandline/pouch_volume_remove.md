@@ -4,7 +4,7 @@ Remove volume
 
 ### Synopsis
 
-Remove volume
+Remove a volume in pouchd. It need specify volume's name, when the volume is exist and is unuse, it will be remove.
 
 ```
 pouch volume remove <name> [flags]
@@ -13,7 +13,8 @@ pouch volume remove <name> [flags]
 ### Examples
 
 ```
-Add volume create examples in code, not in doc.
+$ pouch volume rm pouch-volume
+Removed: pouch-volume
 ```
 
 ### Options

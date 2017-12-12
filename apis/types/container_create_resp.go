@@ -22,7 +22,7 @@ type ContainerCreateResp struct {
 	// Required: true
 	ID string `json:"Id"`
 
-	// Then name of the created container
+	// The name of the created container
 	Name string `json:"Name,omitempty"`
 
 	// Warnings encountered when creating the container

@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/alibaba/pouch/apis/server"
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
@@ -42,7 +41,7 @@ func NewDaemon(cfg config.Config) *Daemon {
 		Buckets: []meta.Bucket{
 			{
 				Name: meta.MetaJSONFile,
-				Type: reflect.TypeOf(types.ContainerInfo{}),
+				Type: reflect.TypeOf(mgr.ContainerMeta{}),
 			},
 		},
 	})
