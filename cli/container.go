@@ -5,9 +5,10 @@ import (
 )
 
 type container struct {
-	name   string
-	tty    bool
-	volume []string
+	name    string
+	tty     bool
+	volume  []string
+	runtime string
 }
 
 func (c *container) config() *types.ContainerConfigWrapper {

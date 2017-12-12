@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/spec"
@@ -64,13 +65,14 @@ type ContainerManager struct {
 	VolumeMgr     VolumeMgr
 	IOs           *containerio.Cache
 	ExecProcesses *collect.SafeMap
+	Config        *config.Config
 
 	// cache stores all containers in memory.
 	cache *collect.SafeMap
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr, cfg *config.Config) (*ContainerManager, error) {
 	mgr := &ContainerManager{
 		Store:         store,
 		NameToID:      collect.NewSafeMap(),
@@ -80,6 +82,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		IOs:           containerio.NewCache(),
 		ExecProcesses: collect.NewSafeMap(),
 		cache:         collect.NewSafeMap(),
+		Config:        cfg,
 	}
 
 	mgr.Client.SetStopHooks(mgr.stoppedAndRelease)
@@ -247,7 +250,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(err, "failed to create container")
 	}
 
+	// set container hostconfig
 	config.Image = image.Name
+
+	if config.HostConfig.Runtime == "" {
+		config.HostConfig.Runtime = mgr.Config.DefaultRuntime
+	}
 
 	// TODO add more validation of parameter
 	// TODO check whether image exist

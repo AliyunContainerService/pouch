@@ -20,7 +20,7 @@ type DaemonProvider interface {
 
 // GenContainerMgr generates a ContainerMgr instance according to config cfg.
 func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
-	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr())
+	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.Config())
 }
 
 // GenSystemMgr generates a SystemMgr instance according to config cfg.
