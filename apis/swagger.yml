@@ -351,6 +351,28 @@ paths:
           schema:
            $ref: "#/definitions/Error"
       tags: ["Container"]
+  /containers/{id}/pause:
+    post:
+      summary: "Pause a container"
+      operationId: "ContainerPause"
+      parameters:
+        - name : "id"
+          in : "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+      responses:
+        204:
+          description: "no error"
+        404:
+          description: "no such container"
+          schema:
+           $ref: "#/definitions/Error"
+        500:
+          description: "server error"
+          schema:
+           $ref: "#/definitions/Error"
+      tags: ["Container"]
   /containers/{name}:
     delete:
       summary: "Remove one container"

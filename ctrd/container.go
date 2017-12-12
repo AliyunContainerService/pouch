@@ -234,6 +234,30 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	return msg, c.watch.remove(ctx, id)
 }
 
+// PauseContainer pause container.
+func (c *Client) PauseContainer(ctx context.Context, id string) error {
+	if !c.lock.Trylock(id) {
+		return ErrTrylockFailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	if err := pack.task.Pause(ctx); err != nil {
+		if !errdefs.IsNotFound(err) {
+			return errors.Wrap(err, "failed to pause task")
+		}
+	}
+
+	logrus.Infof("success to pause container: %s", id)
+
+	return nil
+
+}
+
 // CreateContainer create container and start process.
 func (c *Client) CreateContainer(ctx context.Context, container *Container) error {
 	var (

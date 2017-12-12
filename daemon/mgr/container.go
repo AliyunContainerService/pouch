@@ -33,6 +33,9 @@ type ContainerMgr interface {
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 
+	// Pause a container.
+	Pause(ctx context.Context, name string) error
+
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
@@ -379,6 +382,37 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout time
 		return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
 	}
 
+	return nil
+}
+
+// Pause pauses a running container.
+func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
+	var (
+		err error
+		c   *Container
+	)
+
+	if c, err = mgr.container(name); err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if c.meta.Config == nil || c.meta.ContainerState == nil {
+		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID())
+	}
+
+	if !c.IsRunning() {
+		return fmt.Errorf("container's status is not running: %d", c.meta.Status)
+	}
+
+	if err := mgr.Client.PauseContainer(ctx, c.ID()); err != nil {
+		return errors.Wrapf(err, "failed to pause container: %s", c.ID())
+	}
+
+	c.meta.Status = types.StatusPaused
+	c.Write(mgr.Store)
 	return nil
 }
 
