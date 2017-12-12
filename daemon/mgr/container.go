@@ -28,7 +28,7 @@ type ContainerMgr interface {
 	Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error)
 
 	// Start a container.
-	Start(ctx context.Context, config types.ContainerStartConfig) error
+	Start(ctx context.Context, id, detachKeys string) error
 
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout time.Duration) error
@@ -297,13 +297,13 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 }
 
 // Start a pre created Container.
-func (mgr *ContainerManager) Start(ctx context.Context, cfg types.ContainerStartConfig) (err error) {
-	if cfg.ID == "" {
+func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (err error) {
+	if id == "" {
 		err := fmt.Errorf("either container name or id is required")
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	c, err := mgr.container(cfg.ID)
+	c, err := mgr.container(id)
 	if err != nil {
 		return err
 	}
@@ -312,10 +312,10 @@ func (mgr *ContainerManager) Start(ctx context.Context, cfg types.ContainerStart
 	defer c.Unlock()
 
 	if c.meta.Config == nil || c.meta.ContainerState == nil {
-		err := fmt.Errorf("no container found by %s", cfg.ID)
+		err := fmt.Errorf("no container found by %s", id)
 		return httputils.NewHTTPError(err, http.StatusNotFound)
 	}
-	c.meta.DetachKeys = cfg.DetachKeys
+	c.meta.DetachKeys = detachKeys
 
 	// new a default spec.
 	s, err := ctrd.NewDefaultSpec(ctx, c.ID())
