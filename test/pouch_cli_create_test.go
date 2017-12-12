@@ -19,11 +19,15 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *PouchCreateSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, IsLinux)
+
+	// Pull test image
+	cmd := exec.Command("pouch", "pull", testImage)
+	cmd.Run()
 }
 
 // TestPouchCreateName is to verify the correctness of creating contaier with specified name.
 func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
-	out, err := exec.Command("pouch", "create", "--name", "foo", "busybox:latest").Output()
+	out, err := exec.Command("pouch", "create", "--name", "foo", testImage).Output()
 	c.Assert(err, check.IsNil)
 
 	if !strings.Contains(string(out), "foo") {
@@ -34,10 +38,10 @@ func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
 // TestPouchCreateDuplicateContainerName is to verify duplicate container names.
 func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C) {
 	containername := "duplicate"
-	out, err := exec.Command("pouch", "create", "--name", containername, "busybox:latest").Output()
+	out, err := exec.Command("pouch", "create", "--name", containername, testImage).Output()
 	c.Assert(err, check.IsNil)
 
-	out, err = exec.Command("pouch", "create", "--name", containername, "busybox:latest").CombinedOutput()
+	out, err = exec.Command("pouch", "create", "--name", containername, testImage).CombinedOutput()
 	c.Assert(err, check.NotNil)
 
 	if !strings.Contains(string(out), "already exist") {
