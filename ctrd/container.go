@@ -268,8 +268,19 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	}
 
 	options := []containerd.NewContainerOpts{
-		containerd.WithNewSnapshot(id, img),
+		// containerd.WithNewSnapshot(id, img),
 		containerd.WithSpec(container.Spec, specOptions...),
+	}
+
+	// check snaphost exist or not.
+	if _, err = c.GetSnapshot(ctx, id); err != nil {
+		if errdefs.IsNotFound(err) {
+			options = append(options, containerd.WithNewSnapshot(id, img))
+		} else {
+			return errors.Wrapf(err, "failed to create container, id: %s", id)
+		}
+	} else {
+		options = append(options, containerd.WithSnapshot(id))
 	}
 
 	nc, err := c.client.NewContainer(ctx, id, options...)
