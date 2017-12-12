@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd/progress"
 	"github.com/spf13/cobra"
@@ -49,10 +49,13 @@ func (p *PullCommand) addFlags() {
 
 // runPull is the entry of pull command.
 func (p *PullCommand) runPull(args []string) error {
-	name, tag := parseNameTag(args[0])
+	ref, err := reference.Parse(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to pull image: %v", err)
+	}
 
 	apiClient := p.cli.Client()
-	responseBody, err := apiClient.ImagePull(name, tag)
+	responseBody, err := apiClient.ImagePull(ref.Name, ref.Tag)
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -136,23 +139,6 @@ func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) error {
 		progress.Bytes(total),
 		progress.NewBytesPerSecond(total, time.Since(start)))
 	return nil
-}
-
-// parseNameTag parses input arg and gets image name and image tag.
-func parseNameTag(input string) (string, string) {
-	fields := strings.SplitN(input, ":", 2)
-
-	var name, tag string
-
-	name = fields[0]
-
-	if len(fields) == 1 {
-		tag = "latest"
-	} else if len(fields) == 2 {
-		tag = fields[1]
-	}
-
-	return name, tag
 }
 
 // pullExample shows examples in pull command, and is used in auto-generated cli docs.
