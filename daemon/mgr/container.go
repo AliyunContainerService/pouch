@@ -242,11 +242,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// check the image existed or not, and convert image id to image ref
-	// FIXME handle error
 	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
-	if err == nil {
-		config.Image = image.Name
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create container")
 	}
+
+	config.Image = image.Name
 
 	// TODO add more validation of parameter
 	// TODO check whether image exist
