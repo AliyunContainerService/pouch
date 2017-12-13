@@ -225,31 +225,14 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error) {
-	var id string
-	for {
-		id = randomid.Generate()
-		_, err := mgr.Store.Get(id)
-		if err != nil {
-			if merr, ok := err.(meta.Error); ok && merr.IsNotfound() {
-				break
-			}
-			return nil, err
-		}
+	id, err := mgr.generateID()
+	if err != nil {
+		return nil, err
 	}
+
 	if name == "" {
-		i := 0
-		for {
-			if i+6 > len(id) {
-				break
-			}
-			name = id[i : i+6]
-			i++
-			if !mgr.NameToID.Get(name).Exist() {
-				break
-			}
-		}
-	}
-	if mgr.NameToID.Get(name).Exist() {
+		name = mgr.generateName(id)
+	} else if mgr.NameToID.Get(name).Exist() {
 		return nil, fmt.Errorf("container with name %s already exist", name)
 	}
 
