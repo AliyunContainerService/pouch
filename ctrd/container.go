@@ -158,7 +158,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 			return errors.Wrap(err, "failed to get task")
 		}
 		// not found task, delete container directly.
-		lc.Delete(ctx, containerd.WithSnapshotCleanup)
+		lc.Delete(ctx)
 		return errors.Wrap(errtypes.ErrNotfound, "task")
 	}
 
@@ -222,7 +222,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 		return nil, err
 	}
 
-	if err := pack.container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
+	if err := pack.container.Delete(ctx); err != nil {
 		if !errdefs.IsNotFound(err) {
 			return msg, errors.Wrap(err, "failed to delete container")
 		}
@@ -260,8 +260,8 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 // CreateContainer create container and start process.
 func (c *Client) CreateContainer(ctx context.Context, container *Container) error {
 	var (
-		ref = container.Info.Config.Image
-		id  = container.Info.ID
+		ref = container.Image
+		id  = container.ID
 	)
 
 	if !c.lock.Trylock(id) {
@@ -293,26 +293,18 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		specOptions = append(specOptions, oci.WithProcessArgs(args...))
 	}
 
-	config := container.Info.Config
-
 	options := []containerd.NewContainerOpts{
-		// containerd.WithNewSnapshot(id, img),
 		containerd.WithSpec(container.Spec, specOptions...),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
-			Runtime: config.HostConfig.Runtime,
+			Runtime: container.Runtime,
 		}),
 	}
 
 	// check snaphost exist or not.
-	if _, err = c.GetSnapshot(ctx, id); err != nil {
-		if errdefs.IsNotFound(err) {
-			options = append(options, containerd.WithNewSnapshot(id, img))
-		} else {
-			return errors.Wrapf(err, "failed to create container, id: %s", id)
-		}
-	} else {
-		options = append(options, containerd.WithSnapshot(id))
+	if _, err := c.GetSnapshot(ctx, id); err != nil {
+		return errors.Wrapf(err, "failed to create container, id: %s", id)
 	}
+	options = append(options, containerd.WithSnapshot(id))
 
 	nc, err := c.client.NewContainer(ctx, id, options...)
 	if err != nil {
