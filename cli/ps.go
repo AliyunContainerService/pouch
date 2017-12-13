@@ -7,8 +7,7 @@ import (
 )
 
 // psDescription is used to describe ps command in detail and auto generate command doc.
-// TODO: add description
-var psDescription = ""
+var psDescription = "\nList Containers with container name, ID, status, image reference and runtime."
 
 // PsCommand is used to implement 'ps' command.
 type PsCommand struct {
@@ -46,16 +45,18 @@ func (p *PsCommand) runPs(args []string) error {
 	}
 
 	display := p.cli.NewTableDisplay()
-	display.AddRow([]string{"Name", "ID", "Status", "Image"})
+	display.AddRow([]string{"Name", "ID", "Status", "Image", "Runtime"})
 	for _, c := range containers {
-		display.AddRow([]string{c.Names[0], c.ID[:6], c.Status, c.Image})
+		display.AddRow([]string{c.Names[0], c.ID[:6], c.Status, c.Image, c.HostConfig.Runtime})
 	}
 	display.Flush()
 	return nil
 }
 
 // psExample shows examples in ps command, and is used in auto-generated cli docs.
-// TODO: add example
 func psExample() string {
-	return ""
+	return `$ pouch ps
+Name     ID       Status    Image                              Runtime
+1dad17   1dad17   stopped   docker.io/library/busybox:latest   runv
+505571   505571   stopped   docker.io/library/busybox:latest   runc`
 }
