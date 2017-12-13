@@ -14,7 +14,7 @@ Here is the architecture of Pouch's supporting both runV and runC:
 
 ![pouch_with_runv_architecture](static_files/pouch_with_runv_architecture.png)
 
-## Quick Start
+## Prerequisites Installation
 
 Before installing, We should remind one important thing: **Pouch with runv can only work on PHYSICAL MACHINE**. Nested VMs currently are not supported yet. In addition, we should make sure that `containerd` and `pouchd` are already installed on the physical machine which is described in [INSTALLATION.md](../../INSTALLATION.md).
 
@@ -87,34 +87,43 @@ mkdir /var/lib/hyper/
 cp build/{kernel,hyper-initrd.img} /var/lib/hyper/
 ```
 
-### Configure containerd
+## Start Hypervisor-based Container
 
-With runv related tools installed, we still need to finish the last step to create hypervisor-based containers. That is to configure containerd to use runV as the default runtime option.
+With runv related tools installed, we need to start Pouch daemon. Then we can create hypervisor-based container via command line tool `pouch`. The container created has an independent kernel isolated from host machine.
 
-First, generate dafault configuration for containerd. Create file `config.toml` if it does not exist and generate config:
+We can create hypervisor-based container by adding a flag `--runtime` in create command. And we can also use `pouch ps` to list containers including hypervisor-based containers whose runtime type is `runv` and runc-based containerd whose runtime type is `runc`.
 
+``` shell
+$ pouch create --name hypervisor --runtime runv docker.io/library/busybox:latest
+container ID: 95c8d52154515e58ab267f3c33ef74ff84c901ad77ab18ee6428a1ffac12400d, name: hypervisor
+$
+$ pouch ps
+Name         ID       Status    Image                              Runtime
+hypervisor   95c8d5   created   docker.io/library/busybox:latest   runv
+4945c0       4945c0   stopped   docker.io/library/busybox:latest   runc
+1dad17       1dad17   stopped   docker.io/library/busybox:latest   runv
+fab7ef       fab7ef   created   docker.io/library/busybox:latest   runv
+505571       505571   stopped   docker.io/library/busybox:latest   runc
 ```
-containerd config default > /etc/containerd/config.toml
-```
 
-Second, append runv as a runtime plugin config to file `config.toml`:
+What's more, we are able to check different kernels of host physical machine and hypervisor-based container, like below:
 
-```
-[plugins.linux]
- shim = "containerd-shim"
- no_shim = false
- runtime = "runv"
- shim_debug = true
-```
+``` shell
+# one host physical machine
+$ uname -a
+Linux www 4.4.0-101-generic #124-Ubuntu SMP Fri Nov 10 18:29:59 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+$
+# gen tunnel into hypervisor-based container
+# check inside kernel
+$ pouch start hypervisor -i
+/ # uname -a
+Linux 4.12.4-hyper #18 SMP Mon Sep 4 15:10:13 CST 2017 x86_64 GNU/Linux
+``` 
 
-### Create hypervisor-based container
+It turns out that in experiment above kernel in host physical machine is 4.4.0-101-generic, and that in hypervisor-based container is 4.12.4-hyper. Obviously, they are isolated from each other in term of kernel.
 
-After starting `pouchd`, we can test with command line tool `pouch` binary:
+## Conclusion
 
-```
-$ pouch create docker.io/library/busybox:latest
-container ID: a07ae55306d276b9627ecf612bae47509e00e37afd3765b4c091f3e865271cfa, name: a07ae5 
+Pouch brings a common way to provide hypervisor-based containers. With pouch, users can take advantanges of both hypervisor-based containers and LXC-based containers according to specific scenario.
 
-$ pouch start -i a07ae5
-/ # 
-```
+
