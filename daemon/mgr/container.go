@@ -148,10 +148,8 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 
 	// if the container is running, force to stop it.
 	if c.IsRunning() && option.Force {
-		if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil {
-			if cerr, ok := err.(ctrd.Error); !ok || cerr != ctrd.ErrContainerNotfound {
-				return errors.Wrapf(err, "failed to remove container: %s", c.ID())
-			}
+		if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil && !errtypes.IsNotfound(err) {
+			return errors.Wrapf(err, "failed to remove container: %s", c.ID())
 		}
 	}
 

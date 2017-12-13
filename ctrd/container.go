@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/daemon/containerio"
+	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -130,7 +131,7 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 		ch <- msg // put it back, make sure the method can be called repeatedly.
 		return msg
 	case <-time.After(timeout):
-		return &Message{err: ErrTimeout}
+		return &Message{err: errtypes.ErrTimeout}
 	case <-ctx.Done():
 		return &Message{err: ctx.Err()}
 	}
@@ -139,14 +140,14 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 // RecoverContainer reload the container from metadata and watch it, if program be restarted.
 func (c *Client) RecoverContainer(ctx context.Context, id string, io *containerio.IO) error {
 	if !c.lock.Trylock(id) {
-		return ErrTrylockFailed
+		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
 
 	lc, err := c.client.LoadContainer(ctx, id)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			return ErrContainerNotfound
+			return errors.Wrap(errtypes.ErrNotfound, "container")
 		}
 		return errors.Wrap(err, "failed to load container")
 	}
@@ -158,7 +159,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 		}
 		// not found task, delete container directly.
 		lc.Delete(ctx, containerd.WithSnapshotCleanup)
-		return ErrTaskNotfound
+		return errors.Wrap(errtypes.ErrNotfound, "task")
 	}
 
 	statusCh, err := task.Wait(ctx)
@@ -180,7 +181,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 // DestroyContainer kill container and delete it.
 func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, error) {
 	if !c.lock.Trylock(id) {
-		return nil, ErrTrylockFailed
+		return nil, errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
 
@@ -205,7 +206,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	}
 
 	if msg.Error() != nil {
-		if cerr, ok := msg.Error().(Error); ok && cerr.IsTimeout() {
+		if errtypes.IsTimeout(msg.Error()) {
 			// timeout, use SIGKILL to retry.
 			if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
 				if !errdefs.IsNotFound(err) {
@@ -217,10 +218,8 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 			}
 		}
 	}
-	if msg.Error() != nil {
-		if cerr, ok := msg.Error().(Error); ok && cerr.IsTimeout() {
-			return nil, cerr
-		}
+	if err := msg.Error(); err != nil && errtypes.IsTimeout(err) {
+		return nil, err
 	}
 
 	if err := pack.container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
@@ -242,7 +241,7 @@ func (c *Client) CreateContainer(ctx context.Context, container *Container) erro
 	)
 
 	if !c.lock.Trylock(id) {
-		return ErrTrylockFailed
+		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
 
@@ -254,7 +253,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	img, err := c.client.GetImage(ctx, ref)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			return ErrImageNotfound
+			return errors.Wrap(errtypes.ErrNotfound, "image")
 		}
 		return errors.Wrapf(err, "failed to get image: %s", ref)
 	}
