@@ -3,7 +3,6 @@ package mgr
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -15,7 +14,7 @@ import (
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
-	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -196,7 +195,7 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error {
 	v, ok := mgr.ExecProcesses.Get(execid).Result()
 	if !ok {
-		return fmt.Errorf("exec process: %s not found", execid)
+		return errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+execid)
 	}
 	execConfig, ok := v.(*containerExecConfig)
 	if !ok {
@@ -236,7 +235,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if name == "" {
 		name = mgr.generateName(id)
 	} else if mgr.NameToID.Get(name).Exist() {
-		return nil, fmt.Errorf("container with name %s already exist", name)
+		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+name)
 	}
 
 	// parse volume config
@@ -291,8 +290,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 // Start a pre created Container.
 func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (err error) {
 	if id == "" {
-		err := fmt.Errorf("either container name or id is required")
-		return httputils.NewHTTPError(err, http.StatusBadRequest)
+		return errors.Wrap(errtypes.ErrInvalidParam, "either container name or id is required")
 	}
 
 	c, err := mgr.container(id)
@@ -304,8 +302,7 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	defer c.Unlock()
 
 	if c.meta.Config == nil || c.meta.ContainerState == nil {
-		err := fmt.Errorf("no container found by %s", id)
-		return httputils.NewHTTPError(err, http.StatusNotFound)
+		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID())
 	}
 	c.meta.DetachKeys = detachKeys
 
@@ -440,7 +437,7 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	)
 
 	if mgr.NameToID.Get(newName).Exist() {
-		return httputils.NewHTTPError(errors.New("The newName already exists"), 409)
+		return errtypes.ErrAlreadyExisted
 	}
 
 	if c, err = mgr.container(oldName); err != nil {
