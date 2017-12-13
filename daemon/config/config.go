@@ -34,4 +34,7 @@ type Config struct {
 
 	// TLS configuration
 	TLS utils.TLSConfig
+
+	// Default OCI Runtime
+	DefaultRuntime string
 }

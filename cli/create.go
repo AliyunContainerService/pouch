@@ -41,11 +41,18 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.name, "name", "", "Specify name of container")
 	flagSet.BoolVarP(&cc.tty, "tty", "t", false, "Allocate a tty device")
 	flagSet.StringSliceVarP(&cc.volume, "volume", "v", nil, "Bind mount volumes to container")
+	flagSet.StringVar(&cc.runtime, "runtime", "", "Specify oci runtime")
 }
 
 // runCreate is the entry of create command.
 func (cc *CreateCommand) runCreate(args []string) error {
 	config := cc.config()
+
+	// set flags for container
+	if cc.runtime != "" {
+		config.HostConfig.Runtime = cc.runtime
+	}
+
 	config.Image = args[0]
 	if len(args) == 2 {
 		config.Cmd = strings.Fields(args[1])

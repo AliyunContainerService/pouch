@@ -56,6 +56,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
 	flagSet.BoolVar(&cfg.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
 	flagSet.BoolVarP(&printVersion, "version", "v", false, "Print daemon version")
+	flagSet.StringVar(&cfg.DefaultRuntime, "default-runtime", "runc", "Default OCI Runtime")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
