@@ -179,6 +179,55 @@ GET /containers/json
 * `application/json`
 
 
+<a name="containerinspect"></a>
+### Inspect a container
+```
+GET /containers/{id}/json
+```
+
+
+#### Description
+Return low-level information about a container.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string||
+|**Query**|**size**  <br>*optional*|Return the size of container as fields `SizeRw` and `SizeRootFs`|boolean|`"false"`|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|[ContainerJSON](#containerjson)|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerrename"></a>
 ### Rename a container
 ```
@@ -541,7 +590,7 @@ GET "/containers/json""
 |Name|Description|Schema|
 |---|---|---|
 |**Command**  <br>*optional*||string|
-|**Created**  <br>*optional*||integer (int64)|
+|**Created**  <br>*optional*||string|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
 |**ID**  <br>*optional*||string|
 |**Image**  <br>*optional*||string|
@@ -604,6 +653,52 @@ response returned by daemon when container create successfully
 |**Id**  <br>*required*|The ID of the created container|string|
 |**Name**  <br>*optional*|Then name of the created container|string|
 |**Warnings**  <br>*required*|Warnings encountered when creating the container|< string > array|
+
+
+<a name="containerjson"></a>
+### ContainerJSON
+
+|Name|Description|Schema|
+|---|---|---|
+|**AppArmorProfile**  <br>*optional*||string|
+|**Args**  <br>*optional*|The arguments to the command being run|< string > array|
+|**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
+|**Created**  <br>*optional*|The time the container was created|string|
+|**Driver**  <br>*optional*||string|
+|**ExecIDs**  <br>*optional*||string|
+|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
+|**HostnamePath**  <br>*optional*||string|
+|**HostsPath**  <br>*optional*||string|
+|**Id**  <br>*optional*|The ID of the container|string|
+|**Image**  <br>*optional*|The container's image|string|
+|**LogPath**  <br>*optional*||string|
+|**MountLabel**  <br>*optional*||string|
+|**Name**  <br>*optional*||string|
+|**Path**  <br>*optional*|The path to the command being run|string|
+|**ProcessLabel**  <br>*optional*||string|
+|**ResolvConfPath**  <br>*optional*||string|
+|**RestartCount**  <br>*optional*||integer|
+|**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
+|**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
+|**State**  <br>*optional*|The state of the container.|[ContainerState](#containerstate)|
+
+
+<a name="containerstate"></a>
+### ContainerState
+
+|Name|Description|Schema|
+|---|---|---|
+|**Dead**  <br>*optional*|Whether this container is dead.|boolean|
+|**Error**  <br>*optional*|The error message of this container|string|
+|**ExitCode**  <br>*optional*|The last exit code of this container|integer|
+|**FinishedAt**  <br>*optional*|The time when this container last exited.|string|
+|**OOMKilled**  <br>*optional*|Whether this container has been killed because it ran out of memory.|boolean|
+|**Paused**  <br>*optional*|Whether this container is paused.|boolean|
+|**Pid**  <br>*optional*|The process ID of this container|integer|
+|**Restarting**  <br>*optional*|Whether this container is restarting.|boolean|
+|**Running**  <br>*optional*|Whether this container is running.<br><br>Note that a running container can be _paused_. The `Running` and `Paused`<br>booleans are not mutually exclusive:<br><br>When pausing a container (on Linux), the cgroups freezer is used to suspend<br>all processes in the container. Freezing the process requires the process to<br>be running. As a result, paused containers are both `Running` _and_ `Paused`.<br><br>Use the `Status` field instead to determine if a container's state is "running".|boolean|
+|**StartedAt**  <br>*optional*|The time when this container was last started.|string|
+|**Status**  <br>*optional*||[Status](#status)|
 
 
 <a name="endpointsettings"></a>
@@ -755,6 +850,13 @@ search result item in search results.
 |**is_official**  <br>*optional*|is_official shows if this image is marked official.|boolean|
 |**name**  <br>*optional*|name represents the name of this image|string|
 |**star_count**  <br>*optional*|star_count refers to the star count of this image.|integer|
+
+
+<a name="status"></a>
+### Status
+The status of the container. For example, "running" or "exited".
+
+*Type* : enum (created, running, stopped, paused, restarting, removing, exited, dead)
 
 
 <a name="systeminfo"></a>
