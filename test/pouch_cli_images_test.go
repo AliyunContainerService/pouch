@@ -2,6 +2,7 @@ package main
 
 import (
 	"os/exec"
+	"regexp"
 
 	"github.com/go-check/check"
 )
@@ -36,6 +37,20 @@ func (suite *PouchImagesSuite) TearDownSuite(c *check.C) {
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchImagesSuite) TearDownTest(c *check.C) {
 	// TODO add cleanup work
+}
+
+// TestImagesQuietOption is to verify the quiet flag.
+func (suite *PouchImagesSuite) TestImagesQuietFlag(c *check.C) {
+	qOut, _, err := runCmd(exec.Command("pouch", "images", "-q"))
+	c.Assert(err, check.IsNil)
+
+	quietOut, _, err := runCmd(exec.Command("pouch", "images", "--quiet"))
+	c.Assert(err, check.IsNil)
+
+	c.Assert(qOut, check.Equals, quietOut)
+	if match, _ := regexp.MatchString("^[0-9a-f]+\n$", qOut); !match {
+		c.Fatalf("should return numeric ID, but got %s", qOut)
+	}
 }
 
 // TestImagesWorks tests "pouch image" work.
