@@ -43,7 +43,7 @@ type ContainerMgr interface {
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
 	// List returns the list of containers.
-	List(ctx context.Context) ([]*ContainerMeta, error)
+	List(ctx context.Context, filter ContainerFilter) ([]*ContainerMeta, error)
 
 	// CreateExec creates exec process's environment.
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
@@ -291,6 +291,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			Status:    types.StatusCreated,
 		},
 		ID:         id,
+		Image:      image.Name,
 		Name:       name,
 		Config:     &config.ContainerConfig,
 		HostConfig: config.HostConfig,
@@ -494,7 +495,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 }
 
 // List returns the container's list.
-func (mgr *ContainerManager) List(ctx context.Context) ([]*ContainerMeta, error) {
+func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter) ([]*ContainerMeta, error) {
 	metas := []*ContainerMeta{}
 
 	list, err := mgr.Store.List()
@@ -507,13 +508,15 @@ func (mgr *ContainerManager) List(ctx context.Context) ([]*ContainerMeta, error)
 		if !ok {
 			return nil, fmt.Errorf("failed to get container list, invalid meta type")
 		}
-		metas = append(metas, m)
+		if filter != nil && filter(m) {
+			metas = append(metas, m)
+		}
 	}
 
 	return metas, nil
 }
 
-// Get the detailed information of container
+// Get the detailed information of container.
 func (mgr *ContainerManager) Get(ctx context.Context, name string) (*ContainerMeta, error) {
 	c, err := mgr.container(name)
 	if err != nil {
