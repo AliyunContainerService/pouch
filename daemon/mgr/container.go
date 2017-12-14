@@ -372,7 +372,7 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout time
 	defer c.Unlock()
 
 	if !c.IsRunning() {
-		return fmt.Errorf("container's status is not running: %d", c.meta.Status)
+		return fmt.Errorf("container's status is not running: %v", c.meta.Status)
 	}
 
 	if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil {

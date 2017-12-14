@@ -48,11 +48,6 @@ func (cc *CreateCommand) addFlags() {
 func (cc *CreateCommand) runCreate(args []string) error {
 	config := cc.config()
 
-	// set flags for container
-	if cc.runtime != "" {
-		config.HostConfig.Runtime = cc.runtime
-	}
-
 	config.Image = args[0]
 	if len(args) == 2 {
 		config.Cmd = strings.Fields(args[1])
