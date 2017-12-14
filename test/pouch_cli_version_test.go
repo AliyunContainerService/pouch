@@ -23,7 +23,7 @@ func (suite *PouchVersionSuite) TestPouchVersion(c *check.C) {
 	var cmd PouchCmd
 
 	cmd = PouchCmd{
-		args:        "version",
+		args:        []string{"version"},
 		result:      true,
 		outContains: "APIVersion",
 	}

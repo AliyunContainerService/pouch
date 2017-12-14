@@ -50,9 +50,16 @@ func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	cmd := exec.Command("pouch", "volume", "create", "--name", funcname)
-	runCmdPos(c, cmd)
+	cmd := PouchCmd{
+		args:   []string{"volume", "create", "--name", funcname},
+		result: true,
+	}
+	RunCmd(c, &cmd)
 
-	cmd = exec.Command("pouch", "volume", "remove", funcname)
-	runCmdPos(c, cmd)
+	cmd = PouchCmd{
+		args:   []string{"volume", "remove", funcname},
+		result: true,
+	}
+	RunCmd(c, &cmd)
+
 }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os/exec"
-
 	"github.com/go-check/check"
 )
 
@@ -31,13 +29,10 @@ func (suite *PouchHelpSuite) TestHelpWorks(c *check.C) {
 	}
 
 	for arg, ok := range args {
-		cmd := exec.Command("pouch", arg)
-		_, _, err := runCmd(cmd)
-
-		if ok {
-			c.Assert(err, check.IsNil)
-		} else {
-			c.Assert(err, check.NotNil)
+		cmd := PouchCmd{
+			args:   []string{arg},
+			result: ok,
 		}
+		RunCmd(c, &cmd)
 	}
 }

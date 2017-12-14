@@ -48,12 +48,10 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 	}
 
 	for arg, ok := range args {
-		cmd := exec.Command("pouch", "ps", arg)
-
-		if ok {
-			runCmdPos(c, cmd)
-		} else {
-			runCmdNeg(c, cmd)
+		cmd := PouchCmd{
+			args:   []string{"ps", arg},
+			result: ok,
 		}
+		RunCmd(c, &cmd)
 	}
 }

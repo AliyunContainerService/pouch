@@ -2,8 +2,6 @@ package main
 
 import (
 	"os/exec"
-	"regexp"
-	"strings"
 
 	"github.com/go-check/check"
 )
@@ -18,35 +16,6 @@ func init() {
 
 // SetUpTest does common setup in the beginning of each test.
 func (suite *PouchCreateSuite) SetUpTest(c *check.C) {
-	SkipIfFalse(c, IsLinux)
-
-	// Pull test image
-	cmd := exec.Command("pouch", "pull", testImage)
-	cmd.Run()
-}
-
-// TestPouchCreateName is to verify the correctness of creating contaier with specified name.
-func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
-	out, err := exec.Command("pouch", "create", "--name", "foo", testImage).Output()
-	c.Assert(err, check.IsNil)
-
-	if !strings.Contains(string(out), "foo") {
-		c.Fatalf("unexpected output %s expected foo\n", string(out))
-	}
-}
-
-// TestPouchCreateDuplicateContainerName is to verify duplicate container names.
-func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C) {
-	containername := "duplicate"
-	out, err := exec.Command("pouch", "create", "--name", containername, testImage).Output()
-	c.Assert(err, check.IsNil)
-
-	out, err = exec.Command("pouch", "create", "--name", containername, testImage).CombinedOutput()
-	c.Assert(err, check.NotNil)
-
-	if !strings.Contains(string(out), "already exist") {
-		c.Fatalf("unexpected output %s expected already exist\n", string(out))
-	}
 }
 
 // SetUpSuite does common setup in the beginning of each test suite.
@@ -68,27 +37,58 @@ func (suite *PouchCreateSuite) TearDownTest(c *check.C) {
 	// TODO add cleanup work
 }
 
+// TestPouchCreateName is to verify the correctness of creating contaier with specified name.
+func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
+	var cmd PouchCmd
+
+	args := []string{"create", "--name", "foo", testImage}
+	cmd = PouchCmd{
+		args:        args,
+		result:      true,
+		outContains: "foo",
+	}
+	RunCmd(c, &cmd)
+}
+
+// TestPouchCreateDuplicateContainerName is to verify duplicate container names.
+func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C) {
+	containername := "duplicate"
+	args := []string{"create", "--name", containername, testImage}
+
+	var cmd PouchCmd
+
+	cmd = PouchCmd{
+		args:        args,
+		result:      true,
+		outContains: containername,
+	}
+	RunCmd(c, &cmd)
+
+	cmd = PouchCmd{
+		args:        args,
+		result:      false,
+		returnValue: 1,
+		outContains: "already exist",
+	}
+	RunCmd(c, &cmd)
+}
+
 // TestCreateWorks tests "pouch create" work.
 func (suite *PouchCreateSuite) TestCreateWorks(c *check.C) {
 
-	// TODO: add wrong args.
-	args := map[string]bool{
-		"":             true,
-		"-t":           true,
-		"-v /tmp:/tmp": true,
+	args := []string{"create", testImage, "-t"}
+	cmd := PouchCmd{
+		args:   args,
+		result: true,
 	}
+	RunCmd(c, &cmd)
 
-	for arg, ok := range args {
-		cmd := exec.Command("pouch", "create", arg, testImage)
-		out, _, err := runCmd(cmd)
-
-		if ok {
-			c.Assert(err, check.IsNil)
-			match, _ := regexp.MatchString("container.*name.*", out)
-			c.Assert(match, check.Equals, true)
-		} else {
-			c.Assert(err, check.NotNil)
-		}
+	args = []string{"create", "-v", "/tmp:/tmp", testImage}
+	cmd = PouchCmd{
+		args:   args,
+		result: true,
 	}
+	RunCmd(c, &cmd)
+
 	// TODO: clean the created container
 }

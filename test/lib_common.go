@@ -76,7 +76,7 @@ type PouchCmd struct {
 	binary string
 
 	// pouch argument
-	args string
+	args []string
 
 	// MustRequired: result mean whether or not the CMD is expected to succeed
 	result bool
@@ -101,7 +101,7 @@ func RunCmd(c *check.C, cmd *PouchCmd) {
 		cmd.binary = defaultBinary
 	}
 
-	ret := icmd.RunCommand(cmd.binary, cmd.args)
+	ret := icmd.RunCmd(icmd.Command(cmd.binary, cmd.args...))
 
 	// check result
 	if cmd.result == true {
