@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/errtypes"
+
 	"github.com/containerd/containerd"
 	"github.com/sirupsen/logrus"
 )
@@ -102,7 +104,7 @@ func (w *watch) get(id string) (containerPack, error) {
 
 	pack, ok := w.containers[id]
 	if !ok {
-		return pack, ErrContainerNotfound
+		return pack, errtypes.ErrNotfound
 	}
 	return pack, nil
 }
@@ -115,7 +117,7 @@ func (w *watch) notify(id string) chan *Message {
 	if !ok {
 		ch := make(chan *Message, 1)
 		ch <- &Message{
-			err: ErrContainerNotfound,
+			err: errtypes.ErrNotfound,
 		}
 		return ch
 	}

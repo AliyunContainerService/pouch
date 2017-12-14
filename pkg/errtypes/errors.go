@@ -19,6 +19,12 @@ var (
 
 	// ErrInvalidType represents the object's type is invalid.
 	ErrInvalidType = errorType{codeInvalidType, "invalid type"}
+
+	// ErrTimeout represents the operation is time out.
+	ErrTimeout = errorType{codeTimeout, "time out"}
+
+	// ErrLockfailed represents that failed to lock.
+	ErrLockfailed = errorType{codeLockfailed, "lock failed"}
 )
 
 const (
@@ -27,6 +33,8 @@ const (
 	codeInvalidParam
 	codeTooMany
 	codeInvalidType
+	codeTimeout
+	codeLockfailed
 )
 
 type errorType struct {
@@ -40,29 +48,28 @@ func (e errorType) Error() string {
 
 // IsNotfound checks the error is object Notfound or not.
 func IsNotfound(err error) bool {
-	err = causeError(err)
-
-	if err0, ok := err.(errorType); ok && err0.code == codeNotfound {
-		return true
-	}
-	return false
+	return checkError(err, codeNotfound)
 }
 
 // IsAlreadyExisted checks the error is object AlreadyExisted or not.
 func IsAlreadyExisted(err error) bool {
-	err = causeError(err)
-
-	if err0, ok := err.(errorType); ok && err0.code == codeAlreadyExisted {
-		return true
-	}
-	return false
+	return checkError(err, codeAlreadyExisted)
 }
 
 // IsInvalidParam checks the error is the parameters are invalid or not.
 func IsInvalidParam(err error) bool {
+	return checkError(err, codeInvalidParam)
+}
+
+// IsTimeout checks the error is time out or not.
+func IsTimeout(err error) bool {
+	return checkError(err, codeTimeout)
+}
+
+func checkError(err error, code int) bool {
 	err = causeError(err)
 
-	if err0, ok := err.(errorType); ok && err0.code == codeInvalidParam {
+	if err0, ok := err.(errorType); ok && err0.code == code {
 		return true
 	}
 	return false
