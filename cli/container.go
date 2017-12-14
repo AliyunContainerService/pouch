@@ -25,5 +25,10 @@ func (c *container) config() *types.ContainerConfigWrapper {
 		config.HostConfig.Binds = c.volume
 	}
 
+	// set runtime
+	if c.runtime != "" {
+		config.HostConfig.Runtime = c.runtime
+	}
+
 	return config
 }
