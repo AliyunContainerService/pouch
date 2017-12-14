@@ -15,6 +15,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
 var (
@@ -71,15 +72,8 @@ func runDaemon() error {
 	initLog()
 
 	// initialize home dir.
-	dir := cfg.HomeDir
-
-	if dir == "" || !path.IsAbs(dir) {
-		return fmt.Errorf("invalid pouchd's home dir: %s", dir)
-	}
-	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0666); err != nil {
-			return fmt.Errorf("failed to mkdir: %v", err)
-		}
+	if err := initHomeDir(cfg.HomeDir); err != nil {
+		return err
 	}
 
 	// define and start all required processes.
@@ -129,6 +123,31 @@ func runDaemon() error {
 	sigHandles = append(sigHandles, d.Shutdown)
 
 	return d.Run()
+}
+
+// initHomeDir initializes home dir
+func initHomeDir(dir string) error {
+	if dir == "" {
+		return fmt.Errorf("pouchd's home dir can not be nil, invalid argument")
+	}
+	if !path.IsAbs(dir) {
+		return fmt.Errorf("pouchd's home dir should be an absolute path, invalid argement: %s", dir)
+	}
+	homeDir, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return err
+	}
+	if dir != homeDir {
+		return fmt.Errorf("pouchd's home dir can not be a symlink, invalid argement: %s", dir)
+	}
+
+	// create home dir for pouch
+	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(dir), 0666); err != nil {
+			return fmt.Errorf("failed to create home dir for pouch: %v", err)
+		}
+	}
+	return nil
 }
 
 // initLog initializes log Level and log format of daemon.
