@@ -407,11 +407,12 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 		timeout = c.StopTimeout()
 	}
 
-	if _, err := mgr.Client.DestroyContainer(ctx, c.ID(), timeout); err != nil {
+	msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), timeout)
+	if err != nil {
 		return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
 	}
 
-	return nil
+	return mgr.markStoppedAndRelease(c, msg)
 }
 
 // Pause pauses a running container.
@@ -592,16 +593,7 @@ func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) 
 	return io, nil
 }
 
-func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error {
-	// update container info
-	c, err := mgr.container(id)
-	if err != nil {
-		return err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
+func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message) error {
 	c.meta.State.Pid = -1
 	c.meta.State.ExitCode = int64(m.ExitCode())
 	c.meta.State.FinishedAt = time.Now().String()
@@ -612,17 +604,9 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 	}
 
 	// release resource
-	if io := mgr.IOs.Get(id); io != nil {
+	if io := mgr.IOs.Get(c.ID()); io != nil {
 		io.Close()
-		mgr.IOs.Remove(id)
-	}
-
-	// lookup again, avoid container already removed
-	if _, err := mgr.container(id); err != nil {
-		if errtypes.IsNotfound(err) {
-			err = nil
-		}
-		return err
+		mgr.IOs.Remove(c.ID())
 	}
 
 	// update meta
@@ -632,6 +616,23 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 	return nil
 }
 
+// stoppedAndRelease be register into ctrd as a callback function, when the running container suddenly
+// stopped, "ctrd" will call it to set the container's state and release resouce and so on.
+func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error {
+	// update container info
+	c, err := mgr.container(id)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return mgr.markStoppedAndRelease(c, m)
+}
+
+// exitedAndRelease be register into ctrd as a callback function, when the exec process in a container
+// exited, "ctrd" will call it to release resource and so on.
 func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
 	if io := mgr.IOs.Get(id); io != nil {
 		if err := m.StartError(); err != nil {

@@ -24,11 +24,12 @@ var (
 )
 
 type containerPack struct {
-	id        string
-	ch        chan *Message
-	sch       <-chan containerd.ExitStatus
-	container containerd.Container
-	task      containerd.Task
+	id            string
+	ch            chan *Message
+	sch           <-chan containerd.ExitStatus
+	container     containerd.Container
+	task          containerd.Task
+	skipStopHooks bool
 }
 
 // ExecContainer executes a process in container.
@@ -169,7 +170,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 	if err != nil {
 		return errors.Wrap(err, "failed to wait task")
 	}
-	c.watch.add(containerPack{
+	c.watch.add(&containerPack{
 		id:        id,
 		container: lc,
 		task:      task,
@@ -192,6 +193,13 @@ func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64)
 	if err != nil {
 		return nil, err
 	}
+
+	// if you call DestroyContainer to stop a container, will skip the hooks.
+	// the caller need to execute the all hooks.
+	pack.skipStopHooks = true
+	defer func() {
+		pack.skipStopHooks = false
+	}()
 
 	waitExit := func() *Message {
 		return c.ProbeContainer(ctx, id, time.Duration(timeout)*time.Second)
@@ -356,8 +364,8 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	return nil
 }
 
-func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p containerPack, err0 error) {
-	var pack containerPack
+func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p *containerPack, err0 error) {
+	var pack *containerPack
 
 	var io cio.Creation
 	if cc.Spec.Process.Terminal {
@@ -392,7 +400,7 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 
 	logrus.Infof("success to start task, container id: %s", id)
 
-	pack = containerPack{
+	pack = &containerPack{
 		id:        id,
 		container: container,
 		task:      task,
