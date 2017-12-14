@@ -236,7 +236,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 // PauseContainer pause container.
 func (c *Client) PauseContainer(ctx context.Context, id string) error {
 	if !c.lock.Trylock(id) {
-		return ErrTrylockFailed
+		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
 
