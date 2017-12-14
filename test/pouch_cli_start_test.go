@@ -40,10 +40,16 @@ func (suite *PouchStartSuite) TearDownTest(c *check.C) {
 
 // TestStartWorks tests "pouch start" work.
 func (suite *PouchStartSuite) TestStartWorks(c *check.C) {
+	containername := "foo2"
+	cmd := PouchCmd{
+		args:   []string{"create", "--name", containername, testImage},
+		result: true,
+	}
+	RunCmd(c, &cmd)
 
-	cmd := exec.Command("pouch", "create", "--name", "foo2", testImage)
-	runCmdPos(c, cmd)
-
-	cmd = exec.Command("pouch", "start", "foo2")
-	runCmdPos(c, cmd)
+	cmd = PouchCmd{
+		args:   []string{"start", containername},
+		result: true,
+	}
+	RunCmd(c, &cmd)
 }

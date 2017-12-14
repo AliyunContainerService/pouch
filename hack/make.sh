@@ -60,6 +60,11 @@ function main ()
 	echo "verify pouch version"
 	pouch version
 
+	#
+	# pull busybox as test image
+	#
+	pouch pull registry.hub.docker.com/library/busybox:latest
+
 	cd $DIR/../test
 	go test
 }

@@ -48,12 +48,10 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	}
 
 	for arg, ok := range args {
-		cmd := exec.Command("pouch", "images", arg)
-
-		if ok {
-			runCmdPos(c, cmd)
-		} else {
-			runCmdNeg(c, cmd)
+		cmd := PouchCmd{
+			args:   []string{"images", arg},
+			result: ok,
 		}
+		RunCmd(c, &cmd)
 	}
 }
