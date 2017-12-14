@@ -13,15 +13,6 @@ import (
 	"time"
 )
 
-var (
-	// ErrHTTPNotfound represents the 404 error of a http request.
-	ErrHTTPNotfound = RespError{codeHTTPNotfound, "404: not found"}
-)
-
-const (
-	codeHTTPNotfound = iota
-)
-
 // RespError defines the response error.
 type RespError struct {
 	code int
@@ -121,10 +112,6 @@ func (client *APIClient) sendRequest(method, path string, query url.Values, obj 
 	resp, err := client.HTTPCli.Do(req)
 	if err != nil {
 		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrHTTPNotfound
 	}
 
 	if resp.StatusCode >= 400 {
