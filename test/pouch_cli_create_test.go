@@ -1,94 +1,97 @@
 package main
 
 import (
-	"os/exec"
+	"strings"
 
+	"github.com/alibaba/pouch/test/command"
+	"github.com/alibaba/pouch/test/environment"
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // PouchCreateSuite is the test suite fo help CLI.
-type PouchCreateSuite struct {
-}
+type PouchCreateSuite struct{}
 
 func init() {
 	check.Suite(&PouchCreateSuite{})
 }
 
-// SetUpTest does common setup in the beginning of each test.
-func (suite *PouchCreateSuite) SetUpTest(c *check.C) {
-}
-
 // SetUpSuite does common setup in the beginning of each test suite.
 func (suite *PouchCreateSuite) SetUpSuite(c *check.C) {
-	SkipIfFalse(c, IsLinux)
+	SkipIfFalse(c, environment.IsLinux)
 
-	// Pull test image
-	cmd := exec.Command("pouch", "pull", testImage)
-	cmd.Run()
-}
+	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 
-// TearDownSuite does cleanup work in the end of each test suite.
-func (suite *PouchCreateSuite) TearDownSuite(c *check.C) {
-	// TODO: Remove test image
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchCreateSuite) TearDownTest(c *check.C) {
-	// TODO add cleanup work
+	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 }
 
-// TestPouchCreateName is to verify the correctness of creating contaier with specified name.
-func (suite *PouchCreateSuite) TestPouchCreateName(c *check.C) {
-	var cmd PouchCmd
+// TestCreateName is to verify the correctness of creating contaier with specified name.
+func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
+	name := "create-normal"
+	res := command.PouchRun("create", "--name", name, busyboxImage)
 
-	args := []string{"create", "--name", "foo", testImage}
-	cmd = PouchCmd{
-		args:        args,
-		result:      true,
-		outContains: "foo",
+	res.Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("unexpected output %s expected %s\n", out, name)
 	}
-	RunCmd(c, &cmd)
 }
 
-// TestPouchCreateDuplicateContainerName is to verify duplicate container names.
-func (suite *PouchCreateSuite) TestPouchCreateDuplicateContainerName(c *check.C) {
-	containername := "duplicate"
-	args := []string{"create", "--name", containername, testImage}
+// TestCreateDuplicateContainerName is to verify duplicate container names.
+func (suite *PouchCreateSuite) TestCreateDuplicateContainerName(c *check.C) {
+	name := "duplicate"
 
-	var cmd PouchCmd
+	res := command.PouchRun("create", "--name", name, busyboxImage)
+	res.Assert(c, icmd.Success)
 
-	cmd = PouchCmd{
-		args:        args,
-		result:      true,
-		outContains: containername,
+	res = command.PouchRun("create", "--name", name, busyboxImage)
+	c.Assert(res.Error, check.NotNil)
+
+	if out := res.Combined(); !strings.Contains(out, "already exist") {
+		c.Fatalf("unexpected output %s expected already exist\n", out)
 	}
-	RunCmd(c, &cmd)
-
-	cmd = PouchCmd{
-		args:        args,
-		result:      false,
-		returnValue: 1,
-		outContains: "already exist",
-	}
-	RunCmd(c, &cmd)
 }
 
-// TestCreateWorks tests "pouch create" work.
-func (suite *PouchCreateSuite) TestCreateWorks(c *check.C) {
+// TestCreateWithArgs is to verify args.
+//
+// TODO: pouch inspect should return args info
+func (suite *PouchCreateSuite) TestCreateWithArgs(c *check.C) {
+	res := command.PouchRun("create", busyboxImage, "/bin/ls")
+	res.Assert(c, icmd.Success)
+}
 
-	args := []string{"create", testImage, "-t"}
-	cmd := PouchCmd{
-		args:   args,
-		result: true,
+// TestCreateWithTTY is to verify tty flag.
+//
+// TODO: pouch inspect should return tty info
+func (suite *PouchCreateSuite) TestCreateWithTTY(c *check.C) {
+	res := command.PouchRun("create", "-t", busyboxImage)
+	res.Assert(c, icmd.Success)
+}
+
+// TestPouchCreateVolume is to verify volume flag.
+//
+// TODO: pouch inspect should return volume info to check
+func (suite *PouchCreateSuite) TestPouchCreateVolume(c *check.C) {
+	res := command.PouchRun("create", "-v /tmp:/tmp", busyboxImage)
+	res.Assert(c, icmd.Success)
+}
+
+// TestCreateInWrongWay tries to run create in wrong way.
+func (suite *PouchCreateSuite) TestCreateInWrongWay(c *check.C) {
+	for _, tc := range []struct {
+		name string
+		args string
+	}{
+		{name: "unknown flag", args: "-a"},
+
+		// TODO: should add the following cases if ready
+		// {name: "missing image name", args: ""},
+	} {
+		res := command.PouchRun("create", tc.args)
+		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
 	}
-	RunCmd(c, &cmd)
-
-	args = []string{"create", "-v", "/tmp:/tmp", testImage}
-	cmd = PouchCmd{
-		args:   args,
-		result: true,
-	}
-	RunCmd(c, &cmd)
-
-	// TODO: clean the created container
 }

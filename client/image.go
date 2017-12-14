@@ -7,6 +7,13 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
+// ImageAPIClient defines methods of Image client.
+type ImageAPIClient interface {
+	ImageList() ([]types.ImageInfo, error)
+	ImagePull(name, tag string) (io.ReadCloser, error)
+	ImageRemove(name string, force bool) error
+}
+
 // ImagePull requests daemon to pull an image from registry.
 func (client *APIClient) ImagePull(name, tag string) (io.ReadCloser, error) {
 	q := url.Values{}

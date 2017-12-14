@@ -508,6 +508,12 @@
 			"revisionTime": "2017-11-07T15:27:38Z"
 		},
 		{
+			"checksumSHA1": "jHOLsfeMPcX84YQB2MXBqXFntBg=",
+			"path": "github.com/kr/pty",
+			"revision": "95d05c1eef33a45bd58676b6ce28d105839b8d0b",
+			"revisionTime": "2017-10-06T17:48:01Z"
+		},
+		{
 			"checksumSHA1": "T8soMJArSZrYnhmdpAnq1bVxQ6Q=",
 			"path": "github.com/mailru/easyjson/buffer",
 			"revision": "2a92e673c9a6302dd05c3a691ae1f24aef46457d",
