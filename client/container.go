@@ -146,3 +146,11 @@ func (client *APIClient) ContainerRename(id string, name string) error {
 
 	return err
 }
+
+// ContainerPause pauses a container
+func (client *APIClient) ContainerPause(name string) error {
+	resp, err := client.post("/containers/"+name+"/pause", nil, nil)
+	ensureCloseReader(resp)
+
+	return err
+}
