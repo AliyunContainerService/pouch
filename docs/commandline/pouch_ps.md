@@ -4,10 +4,20 @@ List all containers
 
 ### Synopsis
 
-List all containers
+
+List Containers with container name, ID, status, image reference and runtime.
 
 ```
 pouch ps [flags]
+```
+
+### Examples
+
+```
+$ pouch ps
+Name     ID       Status    Image                              Runtime
+1dad17   1dad17   stopped   docker.io/library/busybox:latest   runv
+505571   505571   stopped   docker.io/library/busybox:latest   runc
 ```
 
 ### Options

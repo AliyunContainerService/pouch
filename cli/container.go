@@ -5,9 +5,10 @@ import (
 )
 
 type container struct {
-	name   string
-	tty    bool
-	volume []string
+	name    string
+	tty     bool
+	volume  []string
+	runtime string
 }
 
 func (c *container) config() *types.ContainerConfigWrapper {
@@ -22,6 +23,11 @@ func (c *container) config() *types.ContainerConfigWrapper {
 	// set bind volume
 	if c.volume != nil {
 		config.HostConfig.Binds = c.volume
+	}
+
+	// set runtime
+	if c.runtime != "" {
+		config.HostConfig.Runtime = c.runtime
 	}
 
 	return config

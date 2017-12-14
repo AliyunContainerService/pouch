@@ -2,6 +2,8 @@ package ctrd
 
 import (
 	"context"
+	"fmt"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -267,9 +270,25 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		specOptions = append(specOptions, oci.WithProcessArgs(args...))
 	}
 
+	config := container.Info.Config
+
 	options := []containerd.NewContainerOpts{
-		containerd.WithNewSnapshot(id, img),
+		// containerd.WithNewSnapshot(id, img),
 		containerd.WithSpec(container.Spec, specOptions...),
+		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
+			Runtime: config.HostConfig.Runtime,
+		}),
+	}
+
+	// check snaphost exist or not.
+	if _, err = c.GetSnapshot(ctx, id); err != nil {
+		if errdefs.IsNotFound(err) {
+			options = append(options, containerd.WithNewSnapshot(id, img))
+		} else {
+			return errors.Wrapf(err, "failed to create container, id: %s", id)
+		}
+	} else {
+		options = append(options, containerd.WithSnapshot(id))
 	}
 
 	nc, err := c.client.NewContainer(ctx, id, options...)

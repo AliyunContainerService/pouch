@@ -5,6 +5,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/pkg/errors"
 )
@@ -25,8 +27,10 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get container info with prefix: %s", nameOrPrefix)
 	}
-	if len(objs) != 1 {
-		return "", fmt.Errorf("failed to get container info with prefix: %s, more than one", nameOrPrefix)
+	if len(objs) > 1 {
+		return "", errors.Wrap(errtypes.ErrTooMany, "container: "+nameOrPrefix)
+	} else if len(objs) == 0 {
+		return "", errors.Wrap(errtypes.ErrNotfound, "container: "+nameOrPrefix)
 	}
 	obj = objs[0]
 
@@ -55,5 +59,42 @@ func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) 
 		return res.(*Container), nil
 	}
 
-	return nil, fmt.Errorf("container: %s not found", id)
+	return nil, errors.Wrap(errtypes.ErrNotfound, "container "+nameOrPrefix)
+}
+
+// generateID generates an ID for newly created container. We must ensure that
+// this ID has not used yet.
+func (mgr *ContainerManager) generateID() (string, error) {
+	var id string
+	for {
+		id = randomid.Generate()
+		_, err := mgr.Store.Get(id)
+		if err != nil {
+			if merr, ok := err.(meta.Error); ok && merr.IsNotfound() {
+				break
+			}
+			return "", err
+		}
+	}
+	return id, nil
+}
+
+// generateName generates container name by container ID.
+// It get first 6 continuous letters which has not been taken.
+// TODO: take a shorter than 6 letters ID into consideration.
+// FIXME: there is possibility that for block loops forever.
+func (mgr *ContainerManager) generateName(id string) string {
+	var name string
+	i := 0
+	for {
+		if i+6 > len(id) {
+			break
+		}
+		name = id[i : i+6]
+		i++
+		if !mgr.NameToID.Get(name).Exist() {
+			break
+		}
+	}
+	return name
 }
