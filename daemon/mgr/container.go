@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -260,7 +261,8 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// TODO check whether image exist
 	meta := &types.ContainerInfo{
 		ContainerState: &types.ContainerState{
-			Status: types.StatusCreated,
+			Status:    types.StatusCreated,
+			StartedAt: strconv.FormatInt(time.Now().Unix(), 10),
 		},
 		ID:     id,
 		Name:   name,
