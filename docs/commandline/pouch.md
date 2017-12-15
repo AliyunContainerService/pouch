@@ -24,6 +24,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
 * [pouch images](pouch_images.md)	 - List all images
 * [pouch inspect](pouch_inspect.md)	 - Get the detailed information of container
+* [pouch pause](pouch_pause.md)	 - Pause a running container
 * [pouch ps](pouch_ps.md)	 - List all containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
