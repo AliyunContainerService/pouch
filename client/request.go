@@ -13,15 +13,6 @@ import (
 	"time"
 )
 
-var (
-	// ErrHTTPNotfound represents the 404 error of a http request.
-	ErrHTTPNotfound = RespError{codeHTTPNotfound, "404: not found"}
-)
-
-const (
-	codeHTTPNotfound = iota
-)
-
 // RespError defines the response error.
 type RespError struct {
 	code int

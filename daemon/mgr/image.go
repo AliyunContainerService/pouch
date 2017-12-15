@@ -207,9 +207,9 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 	}
 
 	if len(images) > 1 {
-		return nil, errors.Wrapf(errtypes.ErrTooMany, "image: "+idOrRef)
+		return nil, errors.Wrap(errtypes.ErrTooMany, "image: "+idOrRef)
 	} else if len(images) == 0 {
-		return nil, errors.Wrapf(errtypes.ErrNotfound, "image: "+idOrRef)
+		return nil, errors.Wrap(errtypes.ErrNotfound, "image: "+idOrRef)
 	}
 
 	return images[0], nil

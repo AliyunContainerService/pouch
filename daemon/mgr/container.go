@@ -247,7 +247,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// check the image existed or not, and convert image id to image ref
 	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create container")
+		return nil, err
 	}
 
 	// set container hostconfig
@@ -469,7 +469,7 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	)
 
 	if mgr.NameToID.Get(newName).Exist() {
-		return errtypes.ErrAlreadyExisted
+		return errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+newName)
 	}
 
 	if c, err = mgr.container(oldName); err != nil {
