@@ -123,10 +123,6 @@ func (client *APIClient) sendRequest(method, path string, query url.Values, obj 
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrHTTPNotfound
-	}
-
 	if resp.StatusCode >= 400 {
 		defer resp.Body.Close()
 		data, err := ioutil.ReadAll(resp.Body)
