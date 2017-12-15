@@ -228,6 +228,34 @@ json :
 ```
 
 
+<a name="containerpause"></a>
+### Pause a container
+```
+POST /containers/{id}/pause
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="containerrename"></a>
 ### Rename a container
 ```
