@@ -254,7 +254,29 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 	logrus.Infof("success to pause container: %s", id)
 
 	return nil
+}
 
+// UnpauseContainer unpauses a container.
+func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
+	if !c.lock.Trylock(id) {
+		return errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	if err := pack.task.Resume(ctx); err != nil {
+		if !errdefs.IsNotFound(err) {
+			return errors.Wrap(err, "failed to resume task")
+		}
+	}
+
+	logrus.Infof("success to unpause container: %s", id)
+
+	return nil
 }
 
 // CreateContainer create container and start process.

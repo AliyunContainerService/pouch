@@ -36,6 +36,9 @@ type ContainerMgr interface {
 	// Pause a container.
 	Pause(ctx context.Context, name string) error
 
+	// Unpause a container.
+	Unpause(ctx context.Context, name string) error
+
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
@@ -402,7 +405,7 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 	}
 
 	if !c.IsRunning() {
-		return fmt.Errorf("container's status is not running: %d", c.meta.Status)
+		return fmt.Errorf("container's status is not running: %v", c.meta.Status)
 	}
 
 	if err := mgr.Client.PauseContainer(ctx, c.ID()); err != nil {
@@ -410,6 +413,37 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 	}
 
 	c.meta.Status = types.StatusPaused
+	c.Write(mgr.Store)
+	return nil
+}
+
+// Unpause unpauses a paused container.
+func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
+	var (
+		err error
+		c   *Container
+	)
+
+	if c, err = mgr.container(name); err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if c.meta.Config == nil || c.meta.ContainerState == nil {
+		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID())
+	}
+
+	if !c.IsPaused() {
+		return fmt.Errorf("container's status is not paused: %v", c.meta.Status)
+	}
+
+	if err := mgr.Client.UnpauseContainer(ctx, c.ID()); err != nil {
+		return errors.Wrapf(err, "failed to unpause container: %s", c.ID())
+	}
+
+	c.meta.Status = types.StatusRunning
 	c.Write(mgr.Store)
 	return nil
 }

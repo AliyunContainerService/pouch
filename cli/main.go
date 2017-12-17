@@ -28,6 +28,7 @@ func main() {
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
 	cli.AddCommand(base, &PauseCommand{})
+	cli.AddCommand(base, &UnpauseCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})
