@@ -55,19 +55,18 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		return errors.Wrap(err, "failed to exec process")
 	}
 	fail := make(chan error, 1)
+	defer close(fail)
+
 	go func() {
-		var msg *Message
-		select {
-		case status := <-exitStatus:
-			msg = &Message{
-				err:      status.Error(),
-				exitCode: status.ExitCode(),
-				exitTime: status.ExitTime(),
-			}
-		case err := <-fail:
-			msg = &Message{
-				startErr: err,
-			}
+		status := <-exitStatus
+		msg := &Message{
+			err:      status.Error(),
+			exitCode: status.ExitCode(),
+			exitTime: status.ExitTime(),
+		}
+
+		if err := <-fail; err != nil {
+			msg.startErr = err
 		}
 
 		for _, hook := range c.hooks {
