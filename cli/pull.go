@@ -145,10 +145,10 @@ func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) error {
 func pullExample() string {
 	return `$ pouch images
 IMAGE ID            IMAGE NAME                           SIZE
-bbc3a0323522        docker.io/library/busybox:latest     2699
+bbc3a0323522        docker.io/library/busybox:latest     703.14 KB
 $ pouch pull docker.io/library/redis:alpine
 $ pouch images
 IMAGE ID            IMAGE NAME                           SIZE
-bbc3a0323522        docker.io/library/busybox:latest     2699
-0153c5db97e5        docker.io/library/redis:alpine       2035`
+bbc3a0323522        docker.io/library/busybox:latest     703.14 KB
+0153c5db97e5        docker.io/library/redis:alpine       9.63 MB`
 }
