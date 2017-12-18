@@ -130,10 +130,10 @@ func restoreMode(in, out *terminal.State) error {
 // startExample shows examples in start command, and is used in auto-generated cli docs.
 func startExample() string {
 	return `$ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Created   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Created   docker.io/library/busybox:latest   runc
 $ pouch start foo
 $ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Running   docker.io/library/busybox:latest`
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Running   docker.io/library/busybox:latest   runc`
 }

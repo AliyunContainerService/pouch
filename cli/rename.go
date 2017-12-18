@@ -44,11 +44,11 @@ func (rc *RenameCommand) runRename(args []string) error {
 // renameExample shows examples in rename command, and is used in auto-generated cli docs.
 func renameExample() string {
 	return `$ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Running   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Running   docker.io/library/busybox:latest   runc
 $ pouch rename foo newName
 $ pouch ps
-Name     ID       Status    Image
-newName  71b9c1   Running   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+newName  71b9c1   Running   docker.io/library/busybox:latest   runc
 `
 }
