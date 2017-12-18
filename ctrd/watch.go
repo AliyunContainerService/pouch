@@ -67,7 +67,7 @@ func (w *watch) add(pack containerPack) {
 			logrus.Errorf("failed to delete task, container id: %s: %v", pack.id, err)
 		}
 
-		if err := pack.container.Delete(context.Background(), containerd.WithSnapshotCleanup); err != nil {
+		if err := pack.container.Delete(context.Background()); err != nil {
 			logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
 		}
 
