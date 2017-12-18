@@ -62,6 +62,11 @@ func (c *Container) IsCreated() bool {
 	return c.meta.Status == types.StatusCreated
 }
 
+// IsPaused returns container is paused or not.
+func (c *Container) IsPaused() bool {
+	return c.meta.Status == types.StatusPaused
+}
+
 // Write writes container's meta data into meta store.
 func (c *Container) Write(store *meta.Store) error {
 	return store.Put(c.meta)

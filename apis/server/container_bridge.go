@@ -153,10 +153,20 @@ func (s *Server) stopContainer(ctx context.Context, resp http.ResponseWriter, re
 }
 
 func (s *Server) pauseContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
-
 	name := mux.Vars(req)["name"]
 
 	if err := s.ContainerMgr.Pause(ctx, name); err != nil {
+		return err
+	}
+
+	resp.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) unpauseContainer(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	if err := s.ContainerMgr.Unpause(ctx, name); err != nil {
 		return err
 	}
 

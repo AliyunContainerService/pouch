@@ -154,3 +154,11 @@ func (client *APIClient) ContainerPause(name string) error {
 
 	return err
 }
+
+// ContainerUnpause unpauses a container
+func (client *APIClient) ContainerUnpause(name string) error {
+	resp, err := client.post("/containers/"+name+"/unpause", nil, nil)
+	ensureCloseReader(resp)
+
+	return err
+}
