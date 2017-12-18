@@ -38,20 +38,21 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 	}
 
 	images := make([]types.ImageInfo, 0, 32)
-	digestPrefix := "sha256:"
 	for _, image := range imageList {
 		descriptor := image.Target
-		digest := []byte(descriptor.Digest)
+		digest := descriptor.Digest
 
 		size, err := image.Size(ctx, c.client.ContentStore(), platforms.Default())
 		if err != nil {
 			return nil, err
 		}
 
+		// TODO(Wei Fu): the go-digest will deprecate the Hex() method.
+		// We need to use Encoded() if update the go-digest version.
 		images = append(images, types.ImageInfo{
 			Name:   image.Name,
-			ID:     string(digest[len(digestPrefix) : len(digestPrefix)+12]),
-			Digest: string(digest),
+			ID:     truncateID(digest.Hex()),
+			Digest: digest.String(),
 			Size:   size,
 		})
 	}
@@ -251,6 +252,15 @@ outer:
 			done = true // allow ui to update once more
 		}
 	}
+}
+
+func truncateID(id string) string {
+	var shortLen = 12
+
+	if len(id) > shortLen {
+		return id[:shortLen]
+	}
+	return id
 }
 
 type jobs struct {
