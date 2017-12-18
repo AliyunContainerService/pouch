@@ -50,7 +50,11 @@ function main ()
 	# wait until pouch daemon is ready
 	while true;
 	do
-		if [ -S /var/run/pouchd.sock ];then
+		COUNT=`ps -ef | grep pouchd | grep -v grep | wc -l`
+		if [ $COUNT = 0 ];then
+			echo "failed to start pouch daemon."
+			return 1
+		elif [ -S /var/run/pouchd.sock ];then
 			break
 		else
 			sleep 1
