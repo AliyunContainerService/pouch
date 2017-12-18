@@ -45,6 +45,17 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, "stopped") {
 		c.Fatalf("unexpected output %s expected Stopped\n", out)
 	}
+
+	// test stop container with timeout(*seconds)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", name, "3").Assert(c, icmd.Success)
+
+	res = command.PouchRun("ps")
+
+	// FIXME: It's better if we use inspect to filter status.
+	if out := res.Combined(); !strings.Contains(out, "stopped") {
+		c.Fatalf("unexpected output %s expected Stopped\n", out)
+	}
 }
 
 // TestStopInWrongWay tries to run create in wrong way.
