@@ -12,10 +12,10 @@ import (
 
 func setupMounts(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	mounts := s.Mounts
-	if c.Config.HostConfig == nil {
+	if c.HostConfig == nil {
 		return nil
 	}
-	for _, v := range c.Config.HostConfig.Binds {
+	for _, v := range c.HostConfig.Binds {
 		sd := strings.SplitN(v, ":", 2)
 		if len(sd) != 2 {
 			return fmt.Errorf("unknown bind: %s", v)

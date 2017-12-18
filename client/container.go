@@ -9,7 +9,7 @@ import (
 )
 
 // ContainerCreate creates a new container based in the given configuration.
-func (client *APIClient) ContainerCreate(config *types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error) {
+func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error) {
 	createConfig := types.ContainerConfigWrapper{
 		ContainerConfig: config,
 		HostConfig:      hostConfig,

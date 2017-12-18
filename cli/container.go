@@ -13,8 +13,7 @@ type container struct {
 
 func (c *container) config() *types.ContainerConfigWrapper {
 	config := &types.ContainerConfigWrapper{
-		ContainerConfig: &types.ContainerConfig{},
-		HostConfig:      &types.HostConfig{},
+		HostConfig: &types.HostConfig{},
 	}
 
 	// TODO

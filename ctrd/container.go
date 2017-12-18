@@ -314,13 +314,13 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		specOptions = append(specOptions, oci.WithProcessArgs(args...))
 	}
 
-	config := container.Info.Config
+	config := container.Info.HostConfig
 
 	options := []containerd.NewContainerOpts{
 		// containerd.WithNewSnapshot(id, img),
 		containerd.WithSpec(container.Spec, specOptions...),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
-			Runtime: config.HostConfig.Runtime,
+			Runtime: config.Runtime,
 		}),
 	}
 

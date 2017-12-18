@@ -47,10 +47,7 @@ type ContainerConfig struct {
 	//
 	Env []string `json:"Env"`
 
-	// An object mapping ports to an empty object in the form:
-	//
-	// `{"<port>/<tcp|udp>": {}}`
-	//
+	// An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`
 	ExposedPorts map[string]interface{} `json:"ExposedPorts,omitempty"`
 
 	// The hostname to use for the container, as a valid RFC 1123 hostname.

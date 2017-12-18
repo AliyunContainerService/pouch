@@ -210,12 +210,12 @@ func (s *Server) getContainers(ctx context.Context, resp http.ResponseWriter, re
 		c := types.Container{
 			ID:         ci.ID,
 			Names:      []string{ci.Name},
-			Status:     string(ci.Status),
+			Status:     string(ci.State.Status),
 			Image:      ci.Config.Image,
 			Command:    strings.Join(ci.Config.Cmd, " "),
-			Created:    ci.StartedAt,
+			Created:    ci.State.StartedAt,
 			Labels:     ci.Config.Labels,
-			HostConfig: ci.Config.HostConfig,
+			HostConfig: ci.HostConfig,
 		}
 		cs = append(cs, c)
 	}
@@ -235,8 +235,8 @@ func (s *Server) getContainer(ctx context.Context, resp http.ResponseWriter, req
 		ID:      ci.ID,
 		Name:    ci.Name,
 		Image:   ci.Config.Image,
-		Created: ci.StartedAt,
-		State:   &types.ContainerState{Pid: ci.Pid},
+		Created: ci.State.StartedAt,
+		State:   &types.ContainerState{Pid: ci.State.Pid},
 	}
 	resp.WriteHeader(http.StatusOK)
 	return json.NewEncoder(resp).Encode(c)
