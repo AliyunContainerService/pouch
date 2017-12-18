@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +49,12 @@ func (cc *CreateCommand) addFlags() {
 func (cc *CreateCommand) runCreate(args []string) error {
 	config := cc.config()
 
-	config.Image = args[0]
+	ref, err := reference.Parse(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to create container: %v", err)
+	}
+
+	config.Image = ref.String()
 	if len(args) == 2 {
 		config.Cmd = strings.Fields(args[1])
 	}
