@@ -589,6 +589,14 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 		mgr.IOs.Remove(id)
 	}
 
+	// lookup again, avoid container already removed
+	if _, err := mgr.container(id); err != nil {
+		if errtypes.IsNotfound(err) {
+			err = nil
+		}
+		return err
+	}
+
 	// update meta
 	if err := c.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
