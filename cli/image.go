@@ -100,7 +100,7 @@ func (i *ImageCommand) runImages(args []string) error {
 
 // imagesExample shows examples in images command, and is used in auto-generated cli docs.
 func imagesExample() string {
-	return `$ pouch images ls
+	return `$ pouch images
 IMAGE ID             IMAGE NAME                                               SIZE
 bbc3a0323522         docker.io/library/busybox:latest                         703.14 KB
 b81f317384d7         docker.io/library/nginx:latest                           42.39 MB`

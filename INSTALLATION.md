@@ -94,10 +94,10 @@ INFO[0000] loading plugin "io.containerd.grpc.v1.containers"...  module=containe
 After pouchd's running, you could interact with pouchd by pouch cli:
 
 ```
-$ pouch images ls
+$ pouch images
 IMAGE ID             IMAGE NAME                                               SIZE
-3e8fa85ddfef         docker.io/library/busybox:latest                         2699
-504cf109b492         docker.io/library/redis:alpine                           2035
+bbc3a0323522         docker.io/library/busybox:latest                         703.14 KB
+0153c5db97e5         docker.io/library/redis:alpine                           9.63 MB
 ```
 
 ## Feedback
