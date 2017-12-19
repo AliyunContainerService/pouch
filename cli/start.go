@@ -18,8 +18,9 @@ var startDescription = "Start a created container object in Pouchd. " +
 // StartCommand use to implement 'start' command, it start a container.
 type StartCommand struct {
 	baseCommand
-	attach bool
-	stdin  bool
+	detachKeys string
+	attach     bool
+	stdin      bool
 }
 
 // Init initialize start command.
@@ -41,6 +42,7 @@ func (s *StartCommand) Init(c *Cli) {
 // addFlags adds flags for specific command.
 func (s *StartCommand) addFlags() {
 	flagSet := s.cmd.Flags()
+	flagSet.StringVar(&s.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
 	flagSet.BoolVarP(&s.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
 	flagSet.BoolVarP(&s.stdin, "interactive", "i", false, "Attach container's STDIN")
 }
@@ -81,7 +83,7 @@ func (s *StartCommand) runStart(args []string) error {
 	}
 
 	// start container
-	if err := apiClient.ContainerStart(container, ""); err != nil {
+	if err := apiClient.ContainerStart(container, s.detachKeys); err != nil {
 		return fmt.Errorf("failed to start container %s: %v", container, err)
 	}
 

@@ -126,7 +126,7 @@ func (s *Server) startContainer(ctx context.Context, resp http.ResponseWriter, r
 		return err
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	resp.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
