@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -51,4 +52,19 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 	resp, err = request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
+}
+
+// TestCreateWithEmptyBody tests /containers/create API.
+// If create request has an empty body, daemon should return HTTP status code of bad request.
+func (suite *APIContainerCreateSuite) TestCreateWithEmptyBody(c *check.C) {
+	config := map[string]interface{}{}
+	resp, err := request.Post("/containers/create", request.WithJSONBody(config))
+
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	c.Assert(resp.StatusCode, check.Equals, http.StatusBadRequest)
+	// check the error message
+	// HostConfig in request body cannot be nil
+
 }
