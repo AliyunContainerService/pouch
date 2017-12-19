@@ -1,14 +1,16 @@
 package main
 
 import (
-	"os/exec"
+	"strings"
 
+	"github.com/alibaba/pouch/test/command"
+	"github.com/alibaba/pouch/test/environment"
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // PouchStopSuite is the test suite fo help CLI.
-type PouchStopSuite struct {
-}
+type PouchStopSuite struct{}
 
 func init() {
 	check.Suite(&PouchStopSuite{})
@@ -16,29 +18,48 @@ func init() {
 
 // SetUpSuite does common setup in the beginning of each test suite.
 func (suite *PouchStopSuite) SetUpSuite(c *check.C) {
-	SkipIfFalse(c, IsLinux)
+	SkipIfFalse(c, environment.IsLinux)
 
-	// Pull test image
-	cmd := exec.Command("pouch", "pull", testImage)
-	cmd.Run()
-}
+	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 
-// SetUpTest does common setup in the beginning of each test.
-func (suite *PouchStopSuite) SetUpTest(c *check.C) {
-	// TODO
-}
-
-// TearDownSuite does cleanup work in the end of each test suite.
-func (suite *PouchStopSuite) TearDownSuite(c *check.C) {
-	// TODO: Remove test image
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchStopSuite) TearDownTest(c *check.C) {
-	// TODO add cleanup work
+	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 }
 
 // TestStopWorks tests "pouch stop" work.
 func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
+	name := "stop-normal"
 
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps")
+
+	// FIXME: It's better if we use inspect to filter status.
+	if out := res.Combined(); !strings.Contains(out, "stopped") {
+		c.Fatalf("unexpected output %s expected Stopped\n", out)
+	}
+}
+
+// TestStopInWrongWay tries to run create in wrong way.
+func (suite *PouchStopSuite) TestStopInWrongWay(c *check.C) {
+	for _, tc := range []struct {
+		name string
+		args string
+	}{
+		{name: "unknown container name", args: "unknown"},
+		{name: "unknown flag", args: "-a"},
+
+		// TODO: should add the following cases if ready
+		// {name: "missing container name", args: ""},
+	} {
+		res := command.PouchRun("stop", tc.args)
+		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+	}
 }
