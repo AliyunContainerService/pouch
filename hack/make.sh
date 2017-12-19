@@ -70,7 +70,10 @@ function main ()
 	pouch pull registry.hub.docker.com/library/busybox:latest
 
 	cd $DIR/../test
+  set +e
 	go test
+  pouch ps
+  set -e
 }
 
 main "$@"
