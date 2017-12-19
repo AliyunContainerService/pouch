@@ -4,10 +4,21 @@ Create a volume
 
 ### Synopsis
 
-Create a volume
+Create a volume in pouchd. It must specify volume's name, size and driver. You can use 'volume driver' to get drivers that pouch support.
 
 ```
 pouch volume create [args] [flags]
+```
+
+### Examples
+
+```
+$ pouch volume create -d local -n pouch-volume -o size=100g
+Mountpoint:
+Name:         pouch-volume
+Scope:
+CreatedAt:
+Driver:       local
 ```
 
 ### Options

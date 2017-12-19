@@ -14,12 +14,12 @@ pouch rename [container] [newName] [flags]
 
 ```
 $ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Running   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Running   docker.io/library/busybox:latest   runc
 $ pouch rename foo newName
 $ pouch ps
-Name     ID       Status    Image
-newName  71b9c1   Running   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+newName  71b9c1   Running   docker.io/library/busybox:latest   runc
 
 ```
 

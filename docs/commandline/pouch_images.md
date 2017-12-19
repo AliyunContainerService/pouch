@@ -15,8 +15,8 @@ pouch images [flags]
 ```
 $ pouch images ls
 IMAGE ID             IMAGE NAME                                               SIZE
-bbc3a0323522         docker.io/library/busybox:latest                         2.64 KB
-b81f317384d7         docker.io/library/nginx:latest                           1.98 KB
+bbc3a0323522         docker.io/library/busybox:latest                         703.14 KB
+b81f317384d7         docker.io/library/nginx:latest                           42.39 MB
 ```
 
 ### Options
