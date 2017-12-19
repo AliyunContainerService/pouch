@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/test/environment"
@@ -13,6 +14,8 @@ import (
 var (
 	// A apiClient is a pouch API client.
 	apiClient *client.APIClient
+
+	_ = time.Now()
 )
 
 // TestMain will do initializes and run all the cases.
