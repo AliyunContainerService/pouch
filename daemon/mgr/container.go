@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
@@ -275,7 +275,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// TODO check whether image exist
 	containerMeta := &ContainerMeta{
 		State: &types.ContainerState{
-			StartedAt: strconv.FormatInt(time.Now().Unix(), 10),
+			StartedAt: time.Now().UTC().Format(utils.TimeLayout),
 			Status:    types.StatusCreated,
 		},
 		ID:         id,
@@ -351,7 +351,7 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	})
 	if err == nil {
 		c.meta.State.Status = types.StatusRunning
-		c.meta.State.StartedAt = time.Now().String()
+		c.meta.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
 		pid, err := mgr.Client.ContainerPID(ctx, c.ID())
 		if err != nil {
 			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID())
