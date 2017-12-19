@@ -1,13 +1,13 @@
-## pouch stop
+## pouch unpause
 
-Stop a running container
+Unpause a paused container
 
 ### Synopsis
 
-Stop a running container in Pouchd. This is useful when you wish to stop a container.And Pouchd will stop this running container and release the resource. The container that you stopped will be closed. 
+Unpause a paused container in Pouchd. when unpausing, the paused container will resumes the process execution within the container.The container you unpaused will be running again if no error occurs.
 
 ```
-pouch stop [container] [flags]
+pouch unpause [container] [flags]
 ```
 
 ### Examples
@@ -15,17 +15,17 @@ pouch stop [container] [flags]
 ```
 $ pouch ps
 Name     ID       Status    Image                              Runtime
-foo      71b9c1   Running   docker.io/library/busybox:latest   runc
-$ pouch stop foo 
-$ pouch ps 
+foo      71b9c1   Paused   docker.io/library/busybox:latest   runc
+$ pouch unpause foo
+$ pouch ps
 Name     ID       Status    Image                              Runtime
-foo      71b9c1   Stopped   docker.io/library/busybox:latest   runc
+foo      71b9c1   Running    docker.io/library/busybox:latest   runc
 ```
 
 ### Options
 
 ```
-  -h, --help   help for stop
+  -h, --help   help for unpause
 ```
 
 ### Options inherited from parent commands
