@@ -242,6 +242,11 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error) {
+	// TODO: check request validate.
+	if config.HostConfig == nil {
+		return nil, fmt.Errorf("host config and network config can not be nil")
+	}
+
 	id, err := mgr.generateID()
 	if err != nil {
 		return nil, err
