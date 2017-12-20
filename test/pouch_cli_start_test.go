@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os/exec"
 	"strings"
 
@@ -68,43 +67,6 @@ func (suite *PouchStartSuite) TestStartInTTY(c *check.C) {
 	c.Assert(strings.TrimSpace(echo), check.Equals, msg)
 
 	command.PouchRun("stop", name)
-}
-
-// TestStartAttach tests "pouch start -a" work.
-func (suite *PouchStartSuite) TestStartAttach(c *check.C) {
-	_, tty, err := pty.Open()
-	c.Assert(err, check.IsNil)
-	defer tty.Close()
-
-	baseName := "start-attach"
-
-	for idx, tc := range []struct {
-		name     string
-		cmd      string
-		expected string
-		exitcode int
-	}{
-		{name: "echo 1", cmd: "echo 1", expected: "1\n", exitcode: 0},
-		{name: "pwd", cmd: "pwd", expected: "/\n", exitcode: 0},
-		{name: "true", cmd: "true", expected: "", exitcode: 0},
-
-		// FIXME: should add non-zero exitcode cases here
-		// {name: "false", cmd: "false", expected: "", exitcode: 1},
-	} {
-		name := fmt.Sprintf("%s-%d", baseName, idx)
-		command.PouchRun("create", "--name", name, busyboxImage, tc.cmd).Assert(c, icmd.Success)
-
-		// FIXME: The start command will close wait channel twice if
-		// the stdin meets EOF.
-		cmd := command.PouchCmd("start", "-a", name)
-		cmd.Stdin = tty
-
-		res := icmd.RunCmd(cmd)
-		c.Assert(res.Combined(), check.Equals, tc.expected, check.Commentf(tc.name))
-		c.Assert(res.ExitCode, check.Equals, tc.exitcode, check.Commentf(tc.name))
-
-		command.PouchRun("rm", name)
-	}
 }
 
 // TestStartInWrongWay runs start command in wrong way.
