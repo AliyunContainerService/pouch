@@ -108,6 +108,7 @@ paths:
           in: "header"
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
+
   /images/{name}/json:
     get:
       summary: "Inspect a image"
@@ -145,6 +146,7 @@ paths:
           description: "Image name or id"
           type: "string"
           required: true
+
   /images/json:
     get:
       summary: "List Images"
@@ -423,6 +425,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /containers/{id}/stop:
     post:
       summary: "Stop a container"
@@ -452,6 +455,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /containers/{id}/pause:
     post:
       summary: "Pause a container"
@@ -535,6 +539,91 @@ paths:
             $ref: "#/definitions/Error"
       tags: ["Container"]
 
+  /containers/{id}/exec:
+    post:
+      summary: "Create an exec instance"
+      description: "Run a command inside a running container."
+      operationId: "ContainerExec"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        201:
+          description: "no error"
+          schema:
+            type: "string"
+        404:
+          description: "no such container"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        409:
+          description: "container is paused"
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            allOf:
+              - $ref: "#/definitions/ExecConfig"
+          required: true
+        - name: "id"
+          in: "path"
+          description: "ID or name of container"
+          type: "string"
+          required: true
+      tags: ["Exec"]
+
+  /exec/{id}/start:
+    post:
+      summary: "Start an exec instance"
+      description: "Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting the command. Otherwise, it sets up an interactive session with the command."
+      operationId: "ExecStart"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/vnd.raw-stream"
+      responses:
+        200:
+          description: "No error"
+        404:
+          description: "No such exec instance"
+          schema:
+            $ref: "#/definitions/Error"
+        409:
+          description: "Container is stopped or paused"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "execStartConfig"
+          in: "body"
+          schema:
+            type: "object"
+            properties:
+              Detach:
+                type: "boolean"
+                description: "Detach from the command."
+              Tty:
+                type: "boolean"
+                description: "Allocate a pseudo-TTY."
+            example:
+              Detach: false
+              Tty: false
+        - name: "id"
+          in: "path"
+          description: "Exec instance ID"
+          required: true
+          type: "string"
+      tags: ["Exec"]
+
   /volumes:
     get:
       summary: "List volumes"
@@ -551,7 +640,7 @@ paths:
                 - CreatedAt: "2017-07-19T12:00:26Z"
                   Name: "tardis"
                   Driver: "local"
-                  Mountpoint: "/var/lib/docker/volumes/tardis"
+                  Mountpoint: "/var/lib/pouch/volumes/tardis"
                   Labels:
                     com.example.some-label: "some-value"
                     com.example.some-other-label: "some-other-value"
@@ -824,7 +913,7 @@ definitions:
       Entrypoint:
         description: |
           The entry point for the container as a string or an array of strings.
-          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
         type: "array"
         items:
           type: "string"
@@ -1696,3 +1785,51 @@ definitions:
         description: "Host port number that the container's port is mapped to."
         type: "string"
         example: "4443"
+
+  ExecConfig:
+    description: "Exec configuration"
+    type: "object"
+    properties:
+      AttachStdin:
+        type: "boolean"
+        description: "Attach to `stdin` of the exec command."
+      AttachStdout:
+        type: "boolean"
+        description: "Attach to `stdout` of the exec command."
+      AttachStderr:
+        type: "boolean"
+        description: "Attach to `stderr` of the exec command."
+      DetachKeys:
+        type: "string"
+        description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
+      Tty:
+        type: "boolean"
+        description: "Allocate a pseudo-TTY."
+      Env:
+        description: "A list of environment variables in the form `[\"VAR=value\", ...]`."
+        type: "array"
+        items:
+          type: "string"
+      Cmd:
+        type: "array"
+        description: "Command to run, as a string or array of strings."
+        items:
+          type: "string"
+      Privileged:
+        type: "boolean"
+        description: "Runs the exec process with extended privileges."
+        default: false
+      User:
+        type: "string"
+        description: "The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`."
+    example:
+      AttachStdin: false
+      AttachStdout: true
+      AttachStderr: true
+      DetachKeys: "ctrl-p,ctrl-q"
+      Tty: false
+      Cmd:
+        - "date"
+      Env:
+        - "FOO=bar"
+        - "BAZ=quux"
