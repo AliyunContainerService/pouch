@@ -33,6 +33,7 @@ paths:
           description: "server error"
           schema:
             $ref: '#/definitions/Error'
+
   /version:
     get:
       summary: "Get Pouchd version"
@@ -46,6 +47,7 @@ paths:
           description: "server error"
           schema:
             $ref: '#/definitions/Error'
+
   /info:
     get:
       summary: "Get System information"
@@ -59,6 +61,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
           description: "server error"
+
   /images/create:
     post:
       summary: "Create an image by pulling from a registry or importing from an existing source file"
@@ -211,6 +214,7 @@ paths:
           description: "Show digest information as a `RepoDigests` field on each image."
           type: "boolean"
           default: false
+
   /images/search:
     get:
       summary: "Search images"
@@ -227,6 +231,7 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/Error"
+
   /images/{name}:
     delete:
       summary: "Remove an image"
@@ -240,10 +245,18 @@ paths:
       responses:
         204:
           description: "No error"
+        404:
+          description: "no such image"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such image: c2ada9df5af8"
         500:
           schema:
             $ref: "#/definitions/Error"
           description: "Server deletes an image error"
+
   /containers/create:
     post:
       summary: "Create a container"
@@ -343,6 +356,7 @@ paths:
           description: "Server error"
           schema:
             $ref: "#/definitions/Error"
+
   /containers/{id}/rename:
     post:
       summary: "Rename a container"
@@ -364,16 +378,20 @@ paths:
         404:
           description: "no such container"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
         409:
           description: "name already in use"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
         500:
           description: "server error"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /containers/{id}/start:
     post:
       summary: "Start a container"
@@ -448,12 +466,16 @@ paths:
         404:
           description: "no such container"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
         500:
           description: "server error"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /containers/{id}/unpause:
     post:
       summary: "Unpause a container"
@@ -470,12 +492,16 @@ paths:
         404:
           description: "no such container"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
         500:
           description: "server error"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /containers/{name}:
     delete:
       summary: "Remove one container"
@@ -489,11 +515,19 @@ paths:
       responses:
         204:
           description: "no error"
+        404:
+          description: "no such container"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
         500:
           description: "server error"
           schema:
-           $ref: "#/definitions/Error"
+            $ref: "#/definitions/Error"
       tags: ["Container"]
+
   /volumes:
     get:
       summary: "List volumes"
@@ -1148,6 +1182,7 @@ definitions:
         example:
           com.example.some-label: "some-value"
           com.example.some-other-label: "some-other-value"
+
   ImageInfo:
     description: "An object containing all details of an image at API side"
     type: "object"
@@ -1327,11 +1362,13 @@ definitions:
         description:  "Execution commands and args"
         items:
           type: "string"
+
   ExecCreateResponse:
     type: "object"
     properties:
       ID:
         type: "string"
+
   ExecStartConfig:
     type: "object"
     properties:
