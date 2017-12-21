@@ -240,6 +240,46 @@ POST /containers/{id}/rename
 * Container
 
 
+<a name="containerstart"></a>
+### Start a container
+```
+POST /containers/{id}/start
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**detachKeys**  <br>*optional*|Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerunpause"></a>
 ### Unpause a container
 ```
