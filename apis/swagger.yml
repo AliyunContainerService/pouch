@@ -105,6 +105,43 @@ paths:
           in: "header"
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
+  /images/{name}/json:
+    get:
+      summary: "Inspect a image"
+      description: "Return the information about image"
+      operationId: "ImageInspect"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/ImageInfo"
+          examples:
+            application/json:
+              CreatedAt: "2017-12-19 15:32:09"
+              Digest: "sha256:e216a057b1cb1efc11f8a268f37ef62083e70b1b38323ba252e25ac88904a7e8"
+              ID: "e216a057b1cb"
+              Name: "ubuntu:12.04"
+              Size: 103579269
+              Tag: "12.04"
+        404:
+          description: "no such image"
+          schema:
+            $ref: "#/definitions/Error"
+          examples:
+            application/json:
+              message: "No such image: e216a057b1cb"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "name"
+          in: "path"
+          description: "Image name or id"
+          type: "string"
+          required: true
   /images/json:
     get:
       summary: "List Images"
