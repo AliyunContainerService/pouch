@@ -9,20 +9,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIImageCreateSuite is the test suite for image create API.
-type PouchAPIImageCreateSuite struct{}
+// APIImageCreateSuite is the test suite for image create API.
+type APIImageCreateSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIImageCreateSuite{})
+	check.Suite(&APIImageCreateSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIImageCreateSuite) SetUpTest(c *check.C) {
+func (suite *APIImageCreateSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestImageCreateOk tests creating an image is OK.
-func (suite *PouchAPIImageCreateSuite) TestImageCreateOk(c *check.C) {
+func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", busyboxImage)
 	path := "/images/create"

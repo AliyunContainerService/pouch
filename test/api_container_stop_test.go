@@ -9,22 +9,22 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerPauseSuite is the test suite for container pause/unpause API.
-type PouchAPIContainerPauseSuite struct{}
+// APIContainerStopSuite is the test suite for container stop API.
+type APIContainerStopSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerPauseSuite{})
+	check.Suite(&APIContainerStopSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerPauseSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerStopSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
-// TestPauseUnpauseOk tests a running container could be paused and unpaused.
-func (suite *PouchAPIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
+// TestStopOk tests a running container could be stopped.
+func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
 	// must required
-	cname := "TestPauseUnpauseOk"
+	cname := "TestStopOk"
 	q := url.Values{}
 	q.Add("name", cname)
 
@@ -47,18 +47,11 @@ func (suite *PouchAPIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
-	resp, err = request.Post("/containers/" + cname + "/pause")
+	resp, err = request.Post("/containers/" + cname + "/stop")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
-	resp, err = request.Post("/containers/" + cname + "/unpause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
-
-	// Need to set force=true in url.rawquery, as container's state is running
-	q = url.Values{}
-	q.Add("force", "true")
-	resp, err = request.Delete("/containers/"+cname, request.WithQuery(q))
+	resp, err = request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }

@@ -7,20 +7,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIImageListSuite is the test suite for image list API.
-type PouchAPIImageListSuite struct{}
+// APIImageListSuite is the test suite for image list API.
+type APIImageListSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIImageListSuite{})
+	check.Suite(&APIImageListSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIImageListSuite) SetUpTest(c *check.C) {
+func (suite *APIImageListSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestImageListOk tests listing images is OK.
-func (suite *PouchAPIImageListSuite) TestImageListOk(c *check.C) {
+func (suite *APIImageListSuite) TestImageListOk(c *check.C) {
 	path := "/images/json"
 	resp, err := request.Get(path)
 	c.Assert(err, check.IsNil)

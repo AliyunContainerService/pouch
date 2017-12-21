@@ -11,27 +11,27 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerInspectSuite is the test suite for container inspect API.
-type PouchAPIContainerInspectSuite struct{}
+// APIContainerInspectSuite is the test suite for container inspect API.
+type APIContainerInspectSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerInspectSuite{})
+	check.Suite(&APIContainerInspectSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerInspectSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerInspectSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestInspectNoSuchContainer tests inspecting a container that doesn't exits return error.
-func (suite *PouchAPIContainerInspectSuite) TestInspectNoSuchContainer(c *check.C) {
+func (suite *APIContainerInspectSuite) TestInspectNoSuchContainer(c *check.C) {
 	resp, err := request.Get("/containers/nosuchcontainerxxx/json")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 404)
 }
 
 // TestInspectOk tests inspecting an existing container is OK.
-func (suite *PouchAPIContainerInspectSuite) TestInpectOk(c *check.C) {
+func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	// must required
 	cname := "TestInpectOk"
 	q := url.Values{}

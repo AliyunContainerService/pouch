@@ -11,20 +11,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerCreateSuite is the test suite for container create API.
-type PouchAPIContainerCreateSuite struct{}
+// APIContainerCreateSuite is the test suite for container create API.
+type APIContainerCreateSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerCreateSuite{})
+	check.Suite(&APIContainerCreateSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerCreateSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerCreateSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestCreateOk test create api is ok with default parameters.
-func (suite *PouchAPIContainerCreateSuite) TestCreateOk(c *check.C) {
+func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 
 	// must required
 	cname := "api-create-test"
