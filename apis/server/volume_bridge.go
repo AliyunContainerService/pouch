@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	var volumeCreateReq types.VolumeCreateRequest
 
 	if err := json.NewDecoder(req.Body).Decode(&volumeCreateReq); err != nil {
@@ -41,16 +41,15 @@ func (s *Server) createVolume(ctx context.Context, resp http.ResponseWriter, req
 		Driver: driver,
 		Labels: volumeCreateReq.Labels,
 	}
-	resp.WriteHeader(http.StatusCreated)
-	return json.NewEncoder(resp).Encode(volume)
+	return EncodeResponse(rw, http.StatusCreated, volume)
 }
 
-func (s *Server) removeVolume(ctx context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
+func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	name := mux.Vars(req)["name"]
 
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
 		return err
 	}
-	resp.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 	return nil
 }

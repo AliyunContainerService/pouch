@@ -111,6 +111,13 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 	}
 }
 
+// EncodeResponse encodes reponse in json.
+func EncodeResponse(rw http.ResponseWriter, statusCode int, data interface{}) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+	return json.NewEncoder(rw).Encode(data)
+}
+
 // HandleErrorResponse handles err from daemon side and constructs response for client side.
 func HandleErrorResponse(w http.ResponseWriter, err error) {
 	var (
