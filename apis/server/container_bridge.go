@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -144,11 +143,11 @@ func (s *Server) stopContainer(ctx context.Context, resp http.ResponseWriter, re
 
 	name := mux.Vars(req)["name"]
 
-	if err = s.ContainerMgr.Stop(ctx, name, time.Duration(t)*time.Second); err != nil {
+	if err = s.ContainerMgr.Stop(ctx, name, int64(t)); err != nil {
 		return err
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	resp.WriteHeader(http.StatusNoContent)
 	return nil
 }
 

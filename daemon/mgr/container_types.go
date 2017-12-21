@@ -8,6 +8,11 @@ import (
 	"github.com/alibaba/pouch/daemon/meta"
 )
 
+const (
+	// DefaultStopTimeout is the timeout (in seconds) for the syscall signal used to stop a container.
+	DefaultStopTimeout = 10
+)
+
 type containerExecConfig struct {
 	types.ExecCreateConfig
 
@@ -92,4 +97,12 @@ func (c *Container) IsPaused() bool {
 // Write writes container's meta data into meta store.
 func (c *Container) Write(store *meta.Store) error {
 	return store.Put(c.meta)
+}
+
+// StopTimeout returns the timeout (in seconds) used to stop the container.
+func (c *Container) StopTimeout() int64 {
+	if c.meta.Config.StopTimeout != nil {
+		return *c.meta.Config.StopTimeout
+	}
+	return DefaultStopTimeout
 }

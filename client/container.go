@@ -12,7 +12,7 @@ import (
 type ContainerAPIClient interface {
 	ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error)
 	ContainerStart(name, detachKeys string) error
-	ContainerStop(name string) error
+	ContainerStop(name, timeout string) error
 	ContainerRemove(name string, force bool) error
 	ContainerList() ([]*types.Container, error)
 	ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error)
@@ -62,8 +62,11 @@ func (client *APIClient) ContainerStart(name, detachKeys string) error {
 }
 
 // ContainerStop stops a container.
-func (client *APIClient) ContainerStop(name string) error {
-	resp, err := client.post("/containers/"+name+"/stop", nil, nil)
+func (client *APIClient) ContainerStop(name string, timeout string) error {
+	q := url.Values{}
+	q.Add("t", timeout)
+
+	resp, err := client.post("/containers/"+name+"/stop", q, nil)
 	ensureCloseReader(resp)
 
 	return err

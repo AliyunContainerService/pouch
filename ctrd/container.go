@@ -178,7 +178,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 }
 
 // DestroyContainer kill container and delete it.
-func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, error) {
+func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}
@@ -190,7 +190,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	}
 
 	waitExit := func() *Message {
-		return c.ProbeContainer(ctx, id, time.Second*5)
+		return c.ProbeContainer(ctx, id, time.Duration(timeout)*time.Second)
 	}
 
 	var msg *Message

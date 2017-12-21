@@ -32,7 +32,7 @@ type ContainerMgr interface {
 	Start(ctx context.Context, id, detachKeys string) error
 
 	// Stop a container.
-	Stop(ctx context.Context, name string, timeout time.Duration) error
+	Stop(ctx context.Context, name string, timeout int64) error
 
 	// Pause a container.
 	Pause(ctx context.Context, name string) error
@@ -165,7 +165,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 
 	// if the container is running, force to stop it.
 	if c.IsRunning() && option.Force {
-		if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil && !errtypes.IsNotfound(err) {
+		if _, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout()); err != nil && !errtypes.IsNotfound(err) {
 			return errors.Wrapf(err, "failed to remove container: %s", c.ID())
 		}
 	}
@@ -375,7 +375,7 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 }
 
 // Stop stops a running container.
-func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout time.Duration) error {
+func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int64) error {
 	var (
 		err error
 		c   *Container
@@ -392,7 +392,11 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout time
 		return fmt.Errorf("container's status is not running: %s", c.meta.State.Status)
 	}
 
-	if _, err := mgr.Client.DestroyContainer(ctx, c.ID()); err != nil {
+	if timeout == 0 {
+		timeout = c.StopTimeout()
+	}
+
+	if _, err := mgr.Client.DestroyContainer(ctx, c.ID(), timeout); err != nil {
 		return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
 	}
 

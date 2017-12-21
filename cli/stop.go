@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
 
 // stopDescription is used to describe stop command in detail and auto generate command doc.
-var stopDescription = "Stop a running container in Pouchd. " +
-	"This is useful when you wish to stop a container.And Pouchd will stop this running container and release the resource. " +
-	"The container that you stopped will be closed. "
+var stopDescription = "Stop a running container in Pouchd. Waiting the given number of seconds before forcefully killing the container." +
+	"This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. " +
+	"The container that you stopped will be terminated. "
 
 // StopCommand use to implement 'stop' command, it stops a container.
 type StopCommand struct {
 	baseCommand
+	timeout int
 }
 
 // Init initialize stop command.
@@ -34,7 +36,8 @@ func (s *StopCommand) Init(c *Cli) {
 
 // addFlags adds flags for specific command.
 func (s *StopCommand) addFlags() {
-	// TODO: add flags here
+	flagSet := s.cmd.Flags()
+	flagSet.IntVarP(&s.timeout, "time", "t", 10, "Seconds to wait for stop before killing it")
 }
 
 // runStop is the entry of stop command.
@@ -43,7 +46,7 @@ func (s *StopCommand) runStop(args []string) error {
 
 	container := args[0]
 
-	if err := apiClient.ContainerStop(container); err != nil {
+	if err := apiClient.ContainerStop(container, strconv.Itoa(s.timeout)); err != nil {
 		return fmt.Errorf("failed to stop container %s: %v", container, err)
 	}
 	return nil
