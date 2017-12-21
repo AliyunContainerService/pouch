@@ -3,6 +3,7 @@ package request
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -49,6 +50,12 @@ func WithJSONBody(obj interface{}) Option {
 	}
 }
 
+// DecodeBody decodes body to obj.
+func DecodeBody(obj interface{}, body io.ReadCloser) error {
+	defer body.Close()
+	return json.NewDecoder(body).Decode(obj)
+}
+
 // Delete sends request to the default pouchd server with custom request options.
 func Delete(endpoint string, opts ...Option) (*http.Response, error) {
 	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
@@ -89,6 +96,10 @@ func Post(endpoint string, opts ...Option) (*http.Response, error) {
 		return nil, err
 	}
 
+	// By default, if Content-Type in header is not set, set it to application/json
+	if req.Header.Get("Content-Type") == "" {
+		WithHeader("Content-Type", "application/json")(req)
+	}
 	return apiClient.HTTPCli.Do(req)
 }
 
