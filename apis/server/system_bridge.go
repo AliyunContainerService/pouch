@@ -2,30 +2,27 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 )
 
-func (s *Server) ping(context context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
-	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte{'O', 'K'})
+func (s *Server) ping(context context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte{'O', 'K'})
 	return
 }
 
-func (s *Server) info(ctx context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
+func (s *Server) info(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	info, err := s.SystemMgr.Info()
 	if err != nil {
 		return err
 	}
-	resp.WriteHeader(http.StatusOK)
-	return json.NewEncoder(resp).Encode(info)
+	return EncodeResponse(rw, http.StatusOK, info)
 }
 
-func (s *Server) version(ctx context.Context, resp http.ResponseWriter, req *http.Request) (err error) {
-	info, err := s.SystemMgr.Version()
+func (s *Server) version(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	version, err := s.SystemMgr.Version()
 	if err != nil {
 		return err
 	}
-	resp.WriteHeader(http.StatusOK)
-	return json.NewEncoder(resp).Encode(info)
+	return EncodeResponse(rw, http.StatusOK, version)
 }
