@@ -799,7 +799,7 @@ definitions:
         items:
           type: "string"
       Cmd:
-        description: "Command to run specified as a string or an array of strings."
+        description: "Command to run specified an array of strings."
         type: "array"
         items:
           type: "string"
