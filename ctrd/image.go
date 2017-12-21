@@ -8,6 +8,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/reference"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
@@ -47,13 +49,20 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			return nil, err
 		}
 
+		ref, err := reference.Parse(image.Name)
+		if err != nil {
+			return nil, err
+		}
+
 		// TODO(Wei Fu): the go-digest will deprecate the Hex() method.
 		// We need to use Encoded() if update the go-digest version.
 		images = append(images, types.ImageInfo{
-			Name:   image.Name,
-			ID:     truncateID(digest.Hex()),
-			Digest: digest.String(),
-			Size:   size,
+			CreatedAt: image.CreatedAt.Format(utils.TimeLayout),
+			Name:      image.Name,
+			ID:        truncateID(digest.Hex()),
+			Digest:    digest.String(),
+			Size:      size,
+			Tag:       ref.Tag,
 		})
 	}
 	return images, nil

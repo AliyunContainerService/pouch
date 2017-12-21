@@ -10,8 +10,23 @@ import (
 // ImageAPIClient defines methods of Image client.
 type ImageAPIClient interface {
 	ImageList() ([]types.ImageInfo, error)
+	ImageInspect(name string) (types.ImageInfo, error)
 	ImagePull(name, tag string) (io.ReadCloser, error)
 	ImageRemove(name string, force bool) error
+}
+
+// ImageInspect requests daemon to inspect an image.
+func (client *APIClient) ImageInspect(name string) (types.ImageInfo, error) {
+	image := types.ImageInfo{}
+
+	resp, err := client.get("/images/"+name+"/json", nil)
+	if err != nil {
+		return image, err
+	}
+
+	defer ensureCloseReader(resp)
+	err = decodeBody(&image, resp.Body)
+	return image, err
 }
 
 // ImagePull requests daemon to pull an image from registry.

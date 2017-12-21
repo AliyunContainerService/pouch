@@ -47,10 +47,23 @@ func (s *Server) listImages(ctx context.Context, resp http.ResponseWriter, req *
 
 	imageList, err := s.ImageMgr.ListImages(ctx, filters)
 	if err != nil {
-		logrus.Errorf("failed to list images in containerd: %v", err)
+		logrus.Errorf("failed to list images: %v", err)
 		return err
 	}
 	return json.NewEncoder(resp).Encode(imageList)
+}
+
+func (s *Server) getImage(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+	idOrRef := mux.Vars(req)["name"]
+
+	image, err := s.ImageMgr.GetImage(ctx, idOrRef)
+	if err != nil {
+		logrus.Errorf("failed to get image: %v", err)
+		return err
+	}
+
+	resp.WriteHeader(http.StatusOK)
+	return json.NewEncoder(resp).Encode(image)
 }
 
 func (s *Server) searchImages(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
