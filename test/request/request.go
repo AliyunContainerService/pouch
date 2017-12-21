@@ -49,6 +49,20 @@ func WithJSONBody(obj interface{}) Option {
 	}
 }
 
+// Delete sends request to the default pouchd server with custom request options.
+func Delete(endpoint string, opts ...Option) (*http.Response, error) {
+	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := newRequest(http.MethodDelete, apiClient.BaseURL()+endpoint, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return apiClient.HTTPCli.Do(req)
+}
+
 // Get sends request to the default pouchd server with custom request options.
 func Get(endpoint string, opts ...Option) (*http.Response, error) {
 	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
@@ -98,6 +112,7 @@ func newRequest(method, url string, opts ...Option) (*http.Request, error) {
 			return nil, err
 		}
 	}
+	//fmt.Println(req)
 
 	return req, nil
 }

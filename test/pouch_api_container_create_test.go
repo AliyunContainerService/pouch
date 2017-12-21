@@ -27,8 +27,9 @@ func (suite *PouchAPIContainerCreateSuite) SetUpTest(c *check.C) {
 func (suite *PouchAPIContainerCreateSuite) TestCreateOk(c *check.C) {
 
 	// must required
+	cname := "api-create-test"
 	q := url.Values{}
-	q.Add("name", "api-create-test")
+	q.Add("name", cname)
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
@@ -46,4 +47,8 @@ func (suite *PouchAPIContainerCreateSuite) TestCreateOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	c.Assert(got.ID, check.NotNil)
+
+	resp, err = request.Delete("/containers/" + cname)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 204)
 }
