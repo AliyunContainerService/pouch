@@ -16,8 +16,8 @@ pouch ps [flags]
 ```
 $ pouch ps
 Name     ID       Status    Image                              Runtime   Created
-1dad17   1dad17   stopped   docker.io/library/busybox:latest   runv      about 1 hour ago
-505571   505571   stopped   docker.io/library/busybox:latest   runc      about 1 hour ago
+1dad17   1dad17   stopped   docker.io/library/busybox:latest   runv      1 hour ago
+505571   505571   stopped   docker.io/library/busybox:latest   runc      1 hour ago
 
 ```
 
