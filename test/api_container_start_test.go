@@ -9,20 +9,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerStartSuite is the test suite for container pause/unpause API.
-type PouchAPIContainerStartSuite struct{}
+// APIContainerStartSuite is the test suite for container pause/unpause API.
+type APIContainerStartSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerStartSuite{})
+	check.Suite(&APIContainerStartSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerStartSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerStartSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestStartOk tests a running container could be paused and unpaused.
-func (suite *PouchAPIContainerStartSuite) TestStartOk(c *check.C) {
+func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	// must required
 	cname := "TestStartOk"
 	q := url.Values{}

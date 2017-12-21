@@ -7,20 +7,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerDeleteSuite is the test suite for container delete API.
-type PouchAPIContainerDeleteSuite struct{}
+// APIContainerDeleteSuite is the test suite for container delete API.
+type APIContainerDeleteSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerDeleteSuite{})
+	check.Suite(&APIContainerDeleteSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerDeleteSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerDeleteSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestDeleteNonExisting tests deleting a non-existing container return error.
-func (suite *PouchAPIContainerDeleteSuite) TestDeleteNonExisting(c *check.C) {
+func (suite *APIContainerDeleteSuite) TestDeleteNonExisting(c *check.C) {
 	cname := "TestDeleteNonExisting"
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)

@@ -9,28 +9,30 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIContainerStopSuite is the test suite for container stop API.
-type PouchAPIContainerStopSuite struct{}
+// APIContainerRenameSuite is the test suite for container create API.
+type APIContainerRenameSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIContainerStopSuite{})
+	check.Suite(&APIContainerRenameSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIContainerStopSuite) SetUpTest(c *check.C) {
+func (suite *APIContainerRenameSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
-// TestStopOk tests a running container could be stopped.
-func (suite *PouchAPIContainerStopSuite) TestStopOk(c *check.C) {
+// TestRenameOk test create api is ok with default parameters.
+func (suite *APIContainerRenameSuite) TestRenameOk(c *check.C) {
+
 	// must required
-	cname := "TestStopOk"
+	oldname := "TestRenameOk"
+	newname := "NewTestRenameOk"
+
 	q := url.Values{}
-	q.Add("name", cname)
+	q.Add("name", oldname)
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
-		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
@@ -39,19 +41,17 @@ func (suite *PouchAPIContainerStopSuite) TestStopOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 201)
 
-	resp, err = request.Get("/containers/" + cname + "/json")
+	resp, err = request.Get("/containers/" + oldname + "/json")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
 
-	resp, err = request.Post("/containers/" + cname + "/start")
+	newq := url.Values{}
+	newq.Add("name", newname)
+	resp, err = request.Post("/containers/"+oldname+"/rename", request.WithQuery(newq))
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
-	resp, err = request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
-
-	resp, err = request.Delete("/containers/" + cname)
+	resp, err = request.Delete("/containers/" + newname)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }

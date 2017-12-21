@@ -11,15 +11,15 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPISystemSuite is the test suite for info related API.
-type PouchAPISystemSuite struct{}
+// APISystemSuite is the test suite for info related API.
+type APISystemSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPISystemSuite{})
+	check.Suite(&APISystemSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPISystemSuite) SetUpTest(c *check.C) {
+func (suite *APISystemSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
@@ -27,7 +27,7 @@ func (suite *PouchAPISystemSuite) SetUpTest(c *check.C) {
 //
 // TODO: the /info is still implementing.
 // If the /info is ready, we should create containers to test.
-func (suite *PouchAPISystemSuite) TestInfo(c *check.C) {
+func (suite *APISystemSuite) TestInfo(c *check.C) {
 	resp, err := request.Get("/info")
 	c.Assert(err, check.IsNil)
 	defer resp.Body.Close()
@@ -44,7 +44,7 @@ func (suite *PouchAPISystemSuite) TestInfo(c *check.C) {
 //
 // TODO: the /version is still implementing.
 // If the /info is ready, we need to check the GitCommit/Kernelinfo/BuildTime.
-func (suite *PouchAPISystemSuite) TestVersion(c *check.C) {
+func (suite *APISystemSuite) TestVersion(c *check.C) {
 	resp, err := request.Get("/version")
 	c.Assert(err, check.IsNil)
 	defer resp.Body.Close()

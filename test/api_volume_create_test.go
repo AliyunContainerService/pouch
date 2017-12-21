@@ -7,20 +7,20 @@ import (
 	"github.com/go-check/check"
 )
 
-// PouchAPIVolumeCreateSuite is the test suite for volume create API.
-type PouchAPIVolumeCreateSuite struct{}
+// APIVolumeCreateSuite is the test suite for volume create API.
+type APIVolumeCreateSuite struct{}
 
 func init() {
-	check.Suite(&PouchAPIVolumeCreateSuite{})
+	check.Suite(&APIVolumeCreateSuite{})
 }
 
 // SetUpTest does common setup in the beginning of each test.
-func (suite *PouchAPIVolumeCreateSuite) SetUpTest(c *check.C) {
+func (suite *APIVolumeCreateSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
 // TestVolumeCreateOk tests creating a volume is OK.
-func (suite *PouchAPIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
+func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 	vol := "TestVolumeCreateOk"
 
 	obj := map[string]interface{}{
