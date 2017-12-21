@@ -67,7 +67,7 @@ function main ()
 	#
 	# pull busybox as test image
 	#
-	pouch pull registry.hub.docker.com/library/busybox:latest
+	pouch pull registry.hub.docker.com/library/busybox:latest >/dev/null
 
 	cd $DIR/../test
 	go test
