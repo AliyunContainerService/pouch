@@ -514,6 +514,11 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
+        - name: "force"
+          in: "query"
+          description: "If the container is running, force query is used to kill it and remove it forcefully."
+          type: "boolean"
+          default: false
       responses:
         204:
           description: "no error"
