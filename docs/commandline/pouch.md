@@ -22,6 +22,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
 * [pouch exec](pouch_exec.md)	 - Exec a process in a running container
 * [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
+* [pouch image](pouch_image.md)	 - Manage image
 * [pouch images](pouch_images.md)	 - List all images
 * [pouch inspect](pouch_inspect.md)	 - Get the detailed information of container
 * [pouch pause](pouch_pause.md)	 - Pause a running container
