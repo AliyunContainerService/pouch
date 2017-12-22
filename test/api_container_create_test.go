@@ -52,8 +52,8 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }
 
-// TestNilNmae tests creating container without giving name should succeed.
-func (suite *APIContainerCreateSuite) TestNilNmae(c *check.C) {
+// TestNilName tests creating container without giving name should succeed.
+func (suite *APIContainerCreateSuite) TestNilName(c *check.C) {
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
 		"HostConfig": map[string]interface{}{},
