@@ -292,12 +292,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         404:
-          description: "no such container"
+          description: "no such image"
           schema:
             $ref: "#/definitions/Error"
           examples:
             application/json:
-              message: "No such container: c2ada9df5af8"
+              message: "image: xxx:latest: not found"
         409:
           description: "conflict"
           schema:
