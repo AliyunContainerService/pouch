@@ -32,14 +32,14 @@ type ContainerConfig struct {
 	// Whether to attach to `stdout`.
 	AttachStdout *bool `json:"AttachStdout,omitempty"`
 
-	// Command to run specified as a string or an array of strings.
+	// Command to run specified an array of strings.
 	Cmd []string `json:"Cmd"`
 
 	// The domain name to use for the container.
 	Domainname string `json:"Domainname,omitempty"`
 
 	// The entry point for the container as a string or an array of strings.
-	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
 	//
 	Entrypoint []string `json:"Entrypoint"`
 
