@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -25,9 +24,8 @@ func (suite *APIContainerCreateSuite) SetUpTest(c *check.C) {
 
 // TestCreateOk test create api is ok with default parameters.
 func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
+	cname := "TestCreateOk"
 
-	// must required
-	cname := "api-create-test"
 	q := url.Values{}
 	q.Add("name", cname)
 
@@ -36,19 +34,95 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
+	path := "/containers/create"
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(path, query, body)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 201)
 
 	// Decode response
 	got := types.ContainerCreateResp{}
-	err = json.NewDecoder(resp.Body).Decode(&got)
+	request.DecodeBody(&got, resp.Body)
 	c.Assert(err, check.IsNil)
-
 	c.Assert(got.ID, check.NotNil)
 
 	resp, err = request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
+}
+
+// TestNilNmae tests creating container without giving name should succeed.
+func (suite *APIContainerCreateSuite) TestNilNmae(c *check.C) {
+	obj := map[string]interface{}{
+		"Image":      busyboxImage,
+		"HostConfig": map[string]interface{}{},
+	}
+
+	path := "/containers/create"
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(path, body)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	// Decode response
+	got := types.ContainerCreateResp{}
+	request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+	c.Assert(got.ID, check.NotNil)
+	c.Assert(got.Name, check.NotNil)
+
+	resp, err = request.Delete("/containers/" + got.Name)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 204)
+}
+
+// TestDupContainer tests create a duplicate container, return 409.
+func (suite *APIContainerCreateSuite) TestDupContainer(c *check.C) {
+	cname := "TestDupContainer"
+	q := url.Values{}
+	q.Add("name", cname)
+	obj := map[string]interface{}{
+		"Image":      busyboxImage,
+		"HostConfig": map[string]interface{}{},
+	}
+	path := "/containers/create"
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post(path, query, body)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	// Create a duplicate container
+	resp, err = request.Post(path, query, body)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 409)
+
+	resp, err = request.Delete("/containers/" + cname)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 204)
+}
+
+// TestBadParam tests using bad parameter return 400.
+func (suite *APIContainerCreateSuite) TestBadParam(c *check.C) {
+	// TODO
+}
+
+// TestNonExistingImg tests using non-existing image return 404.
+func (suite *APIContainerCreateSuite) TestNonExistingImg(c *check.C) {
+	cname := "TestNonExistingImg"
+	q := url.Values{}
+	q.Add("name", cname)
+	obj := map[string]interface{}{
+		"Image":      "non-existing",
+		"HostConfig": map[string]interface{}{},
+	}
+	path := "/containers/create"
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post(path, query, body)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 404)
 }
