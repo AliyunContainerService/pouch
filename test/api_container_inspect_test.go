@@ -62,3 +62,16 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }
+
+// TestNonExistingContainer tests inspect a non-existing container return 404.
+func (suite *APIContainerInspectSuite) TestNonExistingContainer(c *check.C) {
+	cname := "TestNonExistingContainer"
+	resp, err := request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 404)
+}
+
+// TestRespValid tests the response of inspect is accurate.
+func (suite *APIContainerInspectSuite) TestRespValid(c *check.C) {
+	// TODO
+}
