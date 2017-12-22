@@ -16,7 +16,7 @@ function build_test ()
 
 	# build pouch binaries and execute unit tests.
 	echo "Build pouch binaries and execute unit tests."
-	docker run -ti -v `pwd`:/go/src/github.com/alibaba/pouch pouch:test bash -c "make check && make build && make unit-test"
+	docker run -ti -v `pwd`:/go/src/github.com/alibaba/pouch pouch:test bash -c "make check && make build && make unit-test && cd test && go test -c -o integration-test"
 }
 
 # install pouch and essential binaries: containerd, runc and so on
@@ -69,8 +69,8 @@ function main ()
 	#
 	pouch pull registry.hub.docker.com/library/busybox:latest >/dev/null
 
-	cd $DIR/../test
-	go test
+	echo "start to run integration test"
+	$DIR/../test/integration-test
 }
 
 main "$@"
