@@ -667,6 +667,7 @@ definitions:
   ContainerConfig:
     type: "object"
     description: "Configuration for a container that is portable between hosts"
+    required: [Image]
     properties:
       Hostname:
         description: "The hostname to use for the container, as a valid RFC 1123 hostname."
@@ -726,6 +727,7 @@ definitions:
       Image:
         description: "The name of the image to use when creating the container"
         type: "string"
+        x-nullable: false
       Volumes:
         description: "An object mapping mount point paths inside the container to empty objects."
         type: "object"
