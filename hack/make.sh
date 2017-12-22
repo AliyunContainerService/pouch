@@ -16,7 +16,7 @@ function build_test ()
 
 	# build pouch binaries and execute unit tests.
 	echo "Build pouch binaries and execute unit tests."
-	docker run -ti -v `pwd`:/go/src/github.com/alibaba/pouch pouch:test bash -c "make check && make build && make unit-test"
+	docker run -ti -v `pwd`:/go/src/github.com/alibaba/pouch pouch:test bash -c "make check && make build && make unit-test && cd test && go test -c -o integration-test"
 }
 
 # install pouch and essential binaries: containerd, runc and so on
@@ -48,14 +48,15 @@ function main ()
 	pouchd > $TMP/log 2>&1 &
 
 	# wait until pouch daemon is ready
+	daemon_timeout_time=30
 	while true;
 	do
-		COUNT=`ps -ef | grep pouchd | grep -v grep | wc -l`
-		if [ $COUNT = 0 ];then
-			echo "failed to start pouch daemon."
-			return 1
-		elif [ -S /var/run/pouchd.sock ];then
+		if [ -S /var/run/pouchd.sock ];then
+			echo "Succeed to start pouch daemon"
 			break
+		elif (( $((daemon_timeout_time--)) == 0 ));then
+			echo "Failed to start pouch daemon"
+			return 1
 		else
 			sleep 1
 		fi
@@ -69,8 +70,8 @@ function main ()
 	#
 	pouch pull registry.hub.docker.com/library/busybox:latest >/dev/null
 
-	cd $DIR/../test
-	go test
+	echo "start to run integration test"
+	$DIR/../test/integration-test
 }
 
 main "$@"
