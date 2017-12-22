@@ -55,3 +55,16 @@ func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }
+
+// TestNonExistingContainer tests stop a non-existing container return 404.
+func (suite *APIContainerStopSuite) TestNonExistingContainer(c *check.C) {
+	cname := "TestNonExistingContainer"
+	resp, err := request.Post("/containers/" + cname + "/stop")
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 404)
+}
+
+// TestInvalidParam tests using invalid parameter return.
+func (suite *APIContainerStopSuite) TestInvalidParam(c *check.C) {
+	//TODO
+}
