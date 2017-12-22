@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/spf13/cobra"
 )
@@ -54,14 +55,18 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
-	config.Image = ref.String()
+	apiClient := cc.cli.Client()
+	imageName, err := getImageName(ref, apiClient)
+	if err != nil {
+		return err
+	}
+	config.Image = imageName
 
 	if len(args) > 1 {
 		config.Cmd = args[1:]
 	}
 	containerName := cc.name
 
-	apiClient := cc.cli.Client()
 	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
@@ -72,6 +77,20 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	}
 	fmt.Printf("container ID: %s, name: %s \n", result.ID, result.Name)
 	return nil
+}
+
+//getImageName get image metadata by  image name/id
+func getImageName(ref reference.Ref, apiClient *client.APIClient) (string, error) {
+	imageList, err := apiClient.ImageList()
+	if err != nil {
+		return "", fmt.Errorf("failed to get images metadata: %v", err)
+	}
+	for _, image := range imageList {
+		if image.ID == ref.Name || image.Name == ref.String() {
+			return image.Name, nil
+		}
+	}
+	return "", fmt.Errorf("failed to get image informations by image name/id %s", ref)
 }
 
 // createExample shows examples in create command, and is used in auto-generated cli docs.
