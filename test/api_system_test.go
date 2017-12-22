@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"runtime"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -28,15 +27,12 @@ func (suite *APISystemSuite) SetUpTest(c *check.C) {
 // TODO: the /info is still implementing.
 // If the /info is ready, we should create containers to test.
 func (suite *APISystemSuite) TestInfo(c *check.C) {
-	resp, err := request.Get("/info")
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
-
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Get(c, "/info")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
 	got := types.SystemInfo{}
-	err = json.NewDecoder(resp.Body).Decode(&got)
-	c.Assert(err, check.IsNil)
+	request.DecodeToStruct(c, resp.Body, &got)
+
 	c.Assert(got, check.Equals, types.SystemInfo{})
 }
 
@@ -45,15 +41,12 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 // TODO: the /version is still implementing.
 // If the /info is ready, we need to check the GitCommit/Kernelinfo/BuildTime.
 func (suite *APISystemSuite) TestVersion(c *check.C) {
-	resp, err := request.Get("/version")
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
+	resp, err := request.Get(c, "/version")
 
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
 	got := types.SystemVersion{}
-	err = json.NewDecoder(resp.Body).Decode(&got)
-	c.Assert(err, check.IsNil)
+	request.DecodeToStruct(c, resp.Body, &got)
 
 	// skip GitCommit/Kernelinfo/BuildTime
 	got.GitCommit = ""

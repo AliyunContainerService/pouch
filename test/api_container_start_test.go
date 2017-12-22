@@ -35,21 +35,17 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 
 	query := request.WithQuery(q)
 	body := request.WithJSONBody(obj)
-	resp, err := request.Post("/containers/create", query, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err = request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/start")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err = request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
 	// Comment until inspect interface returns this
 	//got := &types.ContainerJSON{}
@@ -62,8 +58,7 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	q.Add("force", "true")
 	query = request.WithQuery(q)
 
-	resp, err = request.Delete("/containers/"+cname, query)
-	c.Assert(err, check.IsNil)
+	resp, err = request.Delete(c, "/containers/"+cname, query)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }
 
@@ -71,9 +66,8 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 func (suite *APIContainerStartSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
 
-	resp, err := request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Post(c, "/containers/"+cname+"/start")
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
 
 // TestInvalidParam tests using invalid parameter return.

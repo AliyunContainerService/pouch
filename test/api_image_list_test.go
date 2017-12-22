@@ -21,8 +21,6 @@ func (suite *APIImageListSuite) SetUpTest(c *check.C) {
 
 // TestImageListOk tests listing images is OK.
 func (suite *APIImageListSuite) TestImageListOk(c *check.C) {
-	path := "/images/json"
-	resp, err := request.Get(path)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Get(c, "/images/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 }

@@ -25,9 +25,7 @@ func (suite *APIImageCreateSuite) SetUpTest(c *check.C) {
 func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", busyboxImage)
-	path := "/images/create"
 	query := request.WithQuery(q)
-	resp, err := request.Post(path, query)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Post(c, "/images/create", query)
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 }

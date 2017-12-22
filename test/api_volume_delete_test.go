@@ -22,9 +22,7 @@ func (suite *APIVolumeDeleteSuite) SetUpTest(c *check.C) {
 // TestDeleteNonExisting tests deleting a non-existing volume return error.
 func (suite *APIVolumeDeleteSuite) TestDeleteNonExisting(c *check.C) {
 	vol := "TestDeleteNonExisting"
-	path := "/volumes/" + vol
-	resp, err := request.Delete(path)
-	c.Assert(err, check.IsNil)
+	resp, err := request.Delete(c, "/volumes/"+vol)
 	// TODO: Now server return 500, should return 404
-	c.Assert(resp.StatusCode, check.Equals, 500)
+	c.Assert(resp.StatusCode, check.Equals, 500, err.Error())
 }

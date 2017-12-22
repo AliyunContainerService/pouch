@@ -34,58 +34,49 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/start")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
+
+	resp, err = request.Post(c, "/containers/"+cname+"/pause")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
 	// TODO: Add state check
-	//resp, err = request.Get("/containers/" + cname + "/json")
-	//c.Assert(err, check.IsNil)
+	//resp = request.Get(c, "/containers/" + cname + "/json")
 	//c.Assert(resp.StatusCode, check.Equals, 200)
 	//got := types.ContainerJSON{}
-	//err = request.DecodeBody(&got, resp.Body)
-	//c.Assert(err, check.IsNil)
+	//err = request.DecodeBody(c, resp.Body, &got)
 	//c.Assert(got.State.Status, check.Equals, "paused")
 
-	resp, err = request.Post("/containers/" + cname + "/unpause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/unpause")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	//resp, err = request.Get("/containers/" + cname + "/json")
-	//c.Assert(err, check.IsNil)
+	//resp = request.Get(c,"/containers/" + cname + "/json")
 	//c.Assert(resp.StatusCode, check.Equals, 200)
 	//got = types.ContainerJSON{}
-	//err = request.DecodeBody(&got, resp.Body)
-	//c.Assert(err, check.IsNil)
+	//err = request.DecodeBody(c, resp.Body, &got)
 	//c.Assert(got.State.Status, check.Equals, "running")
 
 	// Need to set force=true in url.rawquery, as container's state is running
 	q = url.Values{}
 	q.Add("force", "true")
-	resp, err = request.Delete("/containers/"+cname, request.WithQuery(q))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+cname, request.WithQuery(q))
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestNonExistingContainer tests pause a non-existing container return 404.
 func (suite *APIContainerPauseSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
-	resp, err := request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Post(c, "/containers/"+cname+"/pause")
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
 
 // TestNotRunningContainer tests pausing a non-running container will return error.
@@ -100,15 +91,13 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
-
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 500)
+	resp, err = request.Post(c, "/containers/"+cname+"/pause")
+	c.Assert(resp.StatusCode, check.Equals, 500, err.Error())
 
 	//resp, err = request.Get("/containers/" + cname + "/json")
 	//c.Assert(err, check.IsNil)
@@ -118,17 +107,14 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	//c.Assert(err, check.IsNil)
 	//c.Assert(got.State.Status, check.Equals, "created")
 
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/start")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/pause")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 500)
+	resp, err = request.Post(c, "/containers/"+cname+"/pause")
+	c.Assert(resp.StatusCode, check.Equals, 500, err.Error())
 
 	//resp, err = request.Get("/containers/" + cname + "/json")
 	//c.Assert(err, check.IsNil)
@@ -138,8 +124,7 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	//c.Assert(err, check.IsNil)
 	//c.Assert(got.State.Status, check.Equals, "paused")
 
-	resp, err = request.Post("/containers/" + cname + "/unpause")
-	c.Assert(err, check.IsNil)
+	resp, err = request.Post(c, "/containers/"+cname+"/unpause")
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
 	//resp, err = request.Get("/containers/" + cname + "/json")
@@ -150,12 +135,10 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	//c.Assert(err, check.IsNil)
 	//c.Assert(got.State.Status, check.Equals, "running")
 
-	resp, err = request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
+	resp, err = request.Post(c, "/containers/"+cname+"/stop")
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
+	resp, err = request.Post(c, "/containers/"+cname+"/pause")
 	c.Assert(resp.StatusCode, check.Equals, 500)
 
 	//resp, err = request.Get("/containers/" + cname + "/json")
@@ -169,7 +152,7 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	// Need to set force=true in url.rawquery, as container's state is running
 	q = url.Values{}
 	q.Add("force", "true")
-	resp, err = request.Delete("/containers/"+cname, request.WithQuery(q))
-	c.Assert(err, check.IsNil)
+	query = request.WithQuery(q)
+	resp, err = request.Delete(c, "/containers/"+cname, query)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }

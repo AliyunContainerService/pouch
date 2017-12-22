@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -25,9 +24,8 @@ func (suite *APIContainerInspectSuite) SetUpTest(c *check.C) {
 
 // TestInspectNoSuchContainer tests inspecting a container that doesn't exits return error.
 func (suite *APIContainerInspectSuite) TestInspectNoSuchContainer(c *check.C) {
-	resp, err := request.Get("/containers/nosuchcontainerxxx/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Get(c, "/containers/nosuchcontainerxxx/json")
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
 
 // TestInspectOk tests inspecting an existing container is OK.
@@ -41,34 +39,30 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 		"Image":      busyboxImage,
 		"HostConfig": map[string]interface{}{},
 	}
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(c, "/containers/create", query, body)
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err = request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
 	got := types.ContainerJSON{}
-	err = json.NewDecoder(resp.Body).Decode(&got)
-	c.Assert(err, check.IsNil)
+	request.DecodeToStruct(c, resp.Body, &got)
 
 	c.Assert(got.Image, check.Equals, busyboxImage)
 	c.Assert(got.Name, check.Equals, cname)
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+cname)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestNonExistingContainer tests inspect a non-existing container return 404.
 func (suite *APIContainerInspectSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
-	resp, err := request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
 
 // TestRespValid tests the response of inspect is accurate.
