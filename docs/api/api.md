@@ -124,7 +124,7 @@ GET /containers/json
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**200**|Summary containers that matches the query|[Container](#container)|
+|**200**|Summary containers that matches the query|< [Container](#container) > array|
 |**500**|Server error|[Error](#error)|
 
 
@@ -210,6 +210,17 @@ POST /containers/{id}/pause
 * Container
 
 
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerrename"></a>
 ### Rename a container
 ```
@@ -240,6 +251,17 @@ POST /containers/{id}/rename
 * Container
 
 
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerstart"></a>
 ### Start a container
 ```
@@ -253,6 +275,46 @@ POST /containers/{id}/start
 |---|---|---|---|
 |**Path**|**id**  <br>*required*|ID or name of the container|string|
 |**Query**|**detachKeys**  <br>*optional*|Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="containerstop"></a>
+### Stop a container
+```
+POST /containers/{id}/stop
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**t**  <br>*optional*|Number of seconds to wait before killing the container|integer|
 
 
 #### Responses
@@ -308,6 +370,17 @@ POST /containers/{id}/unpause
 * Container
 
 
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerremove"></a>
 ### Remove one container
 ```
@@ -317,9 +390,10 @@ DELETE /containers/{name}
 
 #### Parameters
 
-|Type|Name|Description|Schema|
-|---|---|---|---|
-|**Path**|**name**  <br>*required*|ID or name of the container|string|
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**name**  <br>*required*|ID or name of the container|string||
+|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|`"false"`|
 
 
 #### Responses
@@ -327,12 +401,24 @@ DELETE /containers/{name}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
 |**500**|server error|[Error](#error)|
 
 
 #### Tags
 
 * Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
 
 
 <a name="images-create-post"></a>
@@ -481,7 +567,76 @@ Remove an image by reference.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|No error|No Content|
+|**404**|no such image|[Error](#error)|
 |**500**|Server deletes an image error|[Error](#error)|
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such image: c2ada9df5af8"
+}
+```
+
+
+<a name="imageinspect"></a>
+### Inspect a image
+```
+GET /images/{name}/json
+```
+
+
+#### Description
+Return the information about image
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**name**  <br>*required*|Image name or id|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|[ImageInfo](#imageinfo)|
+|**404**|no such image|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Example HTTP response
+
+##### Response 200
+```
+json :
+{
+  "CreatedAt" : "2017-12-19 15:32:09",
+  "Digest" : "sha256:e216a057b1cb1efc11f8a268f37ef62083e70b1b38323ba252e25ac88904a7e8",
+  "ID" : "e216a057b1cb",
+  "Name" : "ubuntu:12.04",
+  "Size" : 103579269,
+  "Tag" : "12.04"
+}
+```
+
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such image: e216a057b1cb"
+}
+```
 
 
 <a name="info-get"></a>
@@ -664,7 +819,7 @@ Configuration for a container that is portable between hosts
 |**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
-|**Cmd**  <br>*optional*|Command to run specified as a string or an array of strings.|< string > array|
+|**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
@@ -708,7 +863,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
-|**Cmd**  <br>*optional*|Command to run specified as a string or an array of strings.|< string > array|
+|**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
