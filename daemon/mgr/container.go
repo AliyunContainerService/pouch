@@ -242,6 +242,15 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error) {
+	// TODO: validate request body
+	if config.Image == "" {
+		return nil, errors.Wrap(errtypes.ErrInvalidParam, "image name in request body cannot be empty")
+	}
+
+	if config.HostConfig == nil {
+		return nil, errors.Wrap(errtypes.ErrInvalidParam, "HostConfig in request body cannot be nil")
+	}
+
 	id, err := mgr.generateID()
 	if err != nil {
 		return nil, err
