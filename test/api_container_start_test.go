@@ -21,9 +21,8 @@ func (suite *APIContainerStartSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
-// TestStartOk tests a running container could be paused and unpaused.
+// TestStartOk tests starting container could work.
 func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
-	// must required
 	cname := "TestStartOk"
 	q := url.Values{}
 	q.Add("name", cname)
@@ -34,25 +33,21 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	path := "/containers/create"
 	query := request.WithQuery(q)
 	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, query, body)
+	resp, err := request.Post("/containers/create", query, body)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 201)
 
-	path = "/containers/" + cname + "/json"
-	resp, err = request.Get(path)
+	resp, err = request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
 
-	path = "/containers/" + cname + "/start"
-	resp, err = request.Post(path)
+	resp, err = request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 
-	path = "/containers/" + cname + "/json"
-	resp, err = request.Get(path)
+	resp, err = request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
 
@@ -66,8 +61,22 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	q = url.Values{}
 	q.Add("force", "true")
 	query = request.WithQuery(q)
-	path = "/containers/" + cname
-	resp, err = request.Delete(path, query)
+
+	resp, err = request.Delete("/containers/"+cname, query)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
+}
+
+// TestNonExistingContainer tests start a non-existing container return 404.
+func (suite *APIContainerStartSuite) TestNonExistingContainer(c *check.C) {
+	cname := "TestNonExistingContainer"
+
+	resp, err := request.Post("/containers/" + cname + "/start")
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 404)
+}
+
+// TestInvalidParam tests using invalid parameter return.
+func (suite *APIContainerStartSuite) TestInvalidParam(c *check.C) {
+	//TODO
 }
