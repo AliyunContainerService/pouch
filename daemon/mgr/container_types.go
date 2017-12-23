@@ -42,6 +42,11 @@ type ContainerRemoveOption struct {
 	Link   bool
 }
 
+// ContainerListOption wraps the container list interface params.
+type ContainerListOption struct {
+	All bool
+}
+
 // ContainerMeta represents the container's meta data.
 type ContainerMeta struct {
 

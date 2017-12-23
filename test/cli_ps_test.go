@@ -39,10 +39,10 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 	{
 		command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
-		res := command.PouchRun("ps").Assert(c, icmd.Success)
+		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "created")
+		c.Assert(kv[name].status[0], check.Equals, "created")
 		c.Assert(kv[name].image, check.Equals, busyboxImage)
 	}
 
@@ -53,17 +53,17 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		res := command.PouchRun("ps").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "running")
+		c.Assert(kv[name].status[0], check.Equals, "Up")
 	}
 
 	// stop
 	{
 		command.PouchRun("stop", name).Assert(c, icmd.Success)
 
-		res := command.PouchRun("ps").Assert(c, icmd.Success)
+		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "stopped")
+		c.Assert(kv[name].status[0], check.Equals, "stopped")
 	}
 }
 
@@ -71,7 +71,8 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 type psTable struct {
 	id      string
 	name    string
-	status  string
+	status  []string
+	created []string
 	image   string
 	runtime string
 }
@@ -88,13 +89,23 @@ func psToKV(ps string) map[string]psTable {
 		}
 
 		items := strings.Fields(line)
-		res[items[0]] = psTable{
-			id:      items[1],
-			name:    items[0],
-			status:  items[2],
-			image:   items[3],
-			runtime: items[4],
+
+		pst := psTable{}
+		pst.name = items[0]
+		pst.id = items[1]
+
+		if items[2] == "Up" {
+			pst.status = items[2:5]
+			pst.created = items[5:8]
+			pst.image = items[8]
+			pst.runtime = items[9]
+		} else {
+			pst.status = items[2:3]
+			pst.created = items[3:6]
+			pst.image = items[6]
+			pst.runtime = items[7]
 		}
+		res[items[0]] = pst
 	}
 	return res
 }

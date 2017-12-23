@@ -30,84 +30,84 @@ func TestFormatSize(t *testing.T) {
 	}
 }
 
-func TestFormatCreatedTime(t *testing.T) {
+func TestFormatTimeInterval(t *testing.T) {
 
 	for _, tc := range []tCase{
 		{
 			name:     "second",
 			input:    time.Now().Add(0 - Second).UTC().Format(TimeLayout),
-			expected: "1 second ago",
+			expected: "1 second",
 			err:      nil,
 		}, {
 			name:     "minute",
 			input:    time.Now().Add(0 - Minute).UTC().Format(TimeLayout),
-			expected: "1 minute ago",
+			expected: "1 minute",
 			err:      nil,
 		}, {
 			name:     "hour",
 			input:    time.Now().Add(0 - Hour).UTC().Format(TimeLayout),
-			expected: "1 hour ago",
+			expected: "1 hour",
 			err:      nil,
 		}, {
 			name:     "day",
 			input:    time.Now().Add(0 - Day).UTC().Format(TimeLayout),
-			expected: "1 day ago",
+			expected: "1 day",
 			err:      nil,
 		}, {
 			name:     "week",
 			input:    time.Now().Add(0 - Week).UTC().Format(TimeLayout),
-			expected: "1 week ago",
+			expected: "1 week",
 			err:      nil,
 		}, {
 			name:     "month",
 			input:    time.Now().Add(0 - Month).UTC().Format(TimeLayout),
-			expected: "1 month ago",
+			expected: "1 month",
 			err:      nil,
 		}, {
 			name:     "year",
 			input:    time.Now().Add(0 - Year).UTC().Format(TimeLayout),
-			expected: "1 year ago",
+			expected: "1 year",
 			err:      nil,
 		},
 		{
 			name:     "seconds",
 			input:    time.Now().Add(0 - Second*3).UTC().Format(TimeLayout),
-			expected: "3 seconds ago",
+			expected: "3 seconds",
 			err:      nil,
 		}, {
 			name:     "minutes",
 			input:    time.Now().Add(0 - Minute*3).UTC().Format(TimeLayout),
-			expected: "3 minutes ago",
+			expected: "3 minutes",
 			err:      nil,
 		}, {
 			name:     "hours",
 			input:    time.Now().Add(0 - Hour*3).UTC().Format(TimeLayout),
-			expected: "3 hours ago",
+			expected: "3 hours",
 			err:      nil,
 		}, {
 			name:     "days",
 			input:    time.Now().Add(0 - Day*3).UTC().Format(TimeLayout),
-			expected: "3 days ago",
+			expected: "3 days",
 			err:      nil,
 		}, {
 			name:     "weeks",
 			input:    time.Now().Add(0 - Week*3).UTC().Format(TimeLayout),
-			expected: "3 weeks ago",
+			expected: "3 weeks",
 			err:      nil,
 		}, {
 			name:     "months",
 			input:    time.Now().Add(0 - Month*3).UTC().Format(TimeLayout),
-			expected: "3 months ago",
+			expected: "3 months",
 			err:      nil,
 		}, {
 			name:     "years",
 			input:    time.Now().Add(0 - Year*3).UTC().Format(TimeLayout),
-			expected: "3 years ago",
+			expected: "3 years",
 			err:      nil,
 		}, {
 			name:     "notHappen",
 			input:    time.Now().Add(Second * 61).UTC().Format(TimeLayout),
-			expected: "-1 minute ago",
+			expected: "-1 minute",
 			err:      nil,
 		},
 		{
@@ -117,7 +117,7 @@ func TestFormatCreatedTime(t *testing.T) {
 			err:      errInvalid,
 		},
 	} {
-		output, err := FormatCreatedTime(tc.input)
+		output, err := FormatTimeInterval(tc.input)
 		assert.Equal(t, tc.err, err, tc.name)
 		assert.Equal(t, tc.expected, output, tc.name)
 	}

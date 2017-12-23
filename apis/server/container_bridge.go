@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -216,28 +217,46 @@ func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	option := &mgr.ContainerListOption{
+		All: httputils.BoolValue(req, "all"),
+	}
+
 	metas, err := s.ContainerMgr.List(ctx, func(meta *mgr.ContainerMeta) bool {
 		return true
-	})
+	}, option)
 	if err != nil {
 		return err
 	}
 
 	containerList := make([]types.Container, 0, len(metas))
+
 	for _, m := range metas {
 		container := types.Container{
 			ID:         m.ID,
 			Names:      []string{m.Name},
-			Status:     string(m.State.Status),
 			Image:      m.Config.Image,
 			Command:    strings.Join(m.Config.Cmd, " "),
-			Created:    m.State.StartedAt,
+			Created:    m.Created,
 			Labels:     m.Config.Labels,
 			HostConfig: m.HostConfig,
 		}
+
+		if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
+			startAt, err := utils.FormatTimeInterval(m.State.StartedAt)
+			if err != nil {
+				return err
+			}
+
+			container.Status = "Up " + startAt
+			if m.State.Status == types.StatusPaused {
+				container.Status += "(paused)"
+			}
+		} else {
+			container.Status = string(m.State.Status)
+		}
+
 		containerList = append(containerList, container)
 	}
-
 	return EncodeResponse(rw, http.StatusOK, containerList)
 }
 
