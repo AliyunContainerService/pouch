@@ -3,7 +3,6 @@ package mgr
 import (
 	"fmt"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -29,17 +28,18 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 	}
 	if len(objs) > 1 {
 		return "", errors.Wrap(errtypes.ErrTooMany, "container: "+nameOrPrefix)
-	} else if len(objs) == 0 {
+	}
+	if len(objs) == 0 {
 		return "", errors.Wrap(errtypes.ErrNotfound, "container: "+nameOrPrefix)
 	}
 	obj = objs[0]
 
-	meta, ok := obj.(*types.ContainerInfo)
+	containerMeta, ok := obj.(*ContainerMeta)
 	if !ok {
 		return "", fmt.Errorf("failed to get container info, invalid meta's type")
 	}
 
-	return meta.ID, nil
+	return containerMeta.ID, nil
 }
 
 func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) {

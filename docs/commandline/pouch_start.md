@@ -14,20 +14,21 @@ pouch start [container] [flags]
 
 ```
 $ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Created   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Created   docker.io/library/busybox:latest   runc
 $ pouch start foo
 $ pouch ps
-Name     ID       Status    Image
-foo      71b9c1   Running   docker.io/library/busybox:latest
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Running   docker.io/library/busybox:latest   runc
 ```
 
 ### Options
 
 ```
-  -a, --attach        Attach container's STDOUT and STDERR
-  -h, --help          help for start
-  -i, --interactive   Attach container's STDIN
+  -a, --attach               Attach container's STDOUT and STDERR
+      --detach-keys string   Override the key sequence for detaching a container
+  -h, --help                 help for start
+  -i, --interactive          Attach container's STDIN
 ```
 
 ### Options inherited from parent commands

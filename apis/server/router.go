@@ -36,12 +36,14 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
 	r.Path("/containers/{id:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
 	r.Path("/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
+	r.Path("/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
 
 	// image
 	r.Path("/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
 	r.Path("/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
 	r.Path("/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
 	r.Path("/images/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeImage))
+	r.Path("/images/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getImage))
 
 	// volume
 	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
@@ -107,6 +109,13 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 		// Handle error if request handling fails.
 		HandleErrorResponse(w, err)
 	}
+}
+
+// EncodeResponse encodes reponse in json.
+func EncodeResponse(rw http.ResponseWriter, statusCode int, data interface{}) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+	return json.NewEncoder(rw).Encode(data)
 }
 
 // HandleErrorResponse handles err from daemon side and constructs response for client side.

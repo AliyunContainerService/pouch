@@ -22,12 +22,14 @@ func main() {
 	cli.AddCommand(base, &RmCommand{})
 	cli.AddCommand(base, &ExecCommand{})
 	cli.AddCommand(base, &VersionCommand{})
-	cli.AddCommand(base, &ImageCommand{})
+	cli.AddCommand(base, &ImageMgmtCommand{})
+	cli.AddCommand(base, &ImagesCommand{})
 	cli.AddCommand(base, &RmiCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
 	cli.AddCommand(base, &PauseCommand{})
+	cli.AddCommand(base, &UnpauseCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

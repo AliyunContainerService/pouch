@@ -55,19 +55,18 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		return errors.Wrap(err, "failed to exec process")
 	}
 	fail := make(chan error, 1)
+	defer close(fail)
+
 	go func() {
-		var msg *Message
-		select {
-		case status := <-exitStatus:
-			msg = &Message{
-				err:      status.Error(),
-				exitCode: status.ExitCode(),
-				exitTime: status.ExitTime(),
-			}
-		case err := <-fail:
-			msg = &Message{
-				startErr: err,
-			}
+		status := <-exitStatus
+		msg := &Message{
+			err:      status.Error(),
+			exitCode: status.ExitCode(),
+			exitTime: status.ExitTime(),
+		}
+
+		if err := <-fail; err != nil {
+			msg.startErr = err
 		}
 
 		for _, hook := range c.hooks {
@@ -179,7 +178,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 }
 
 // DestroyContainer kill container and delete it.
-func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, error) {
+func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}
@@ -191,7 +190,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string) (*Message, err
 	}
 
 	waitExit := func() *Message {
-		return c.ProbeContainer(ctx, id, time.Second*5)
+		return c.ProbeContainer(ctx, id, time.Duration(timeout)*time.Second)
 	}
 
 	var msg *Message
@@ -254,7 +253,29 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 	logrus.Infof("success to pause container: %s", id)
 
 	return nil
+}
 
+// UnpauseContainer unpauses a container.
+func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
+	if !c.lock.Trylock(id) {
+		return errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	if err := pack.task.Resume(ctx); err != nil {
+		if !errdefs.IsNotFound(err) {
+			return errors.Wrap(err, "failed to resume task")
+		}
+	}
+
+	logrus.Infof("success to unpause container: %s", id)
+
+	return nil
 }
 
 // CreateContainer create container and start process.
@@ -293,13 +314,13 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		specOptions = append(specOptions, oci.WithProcessArgs(args...))
 	}
 
-	config := container.Info.Config
+	config := container.Info.HostConfig
 
 	options := []containerd.NewContainerOpts{
 		// containerd.WithNewSnapshot(id, img),
 		containerd.WithSpec(container.Spec, specOptions...),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
-			Runtime: config.HostConfig.Runtime,
+			Runtime: config.Runtime,
 		}),
 	}
 

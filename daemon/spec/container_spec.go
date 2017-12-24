@@ -16,11 +16,6 @@ func setupCap(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error 
 	return nil
 }
 
-func setupNs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
-	//TODO setup ns
-	return nil
-}
-
 func setupProcessArgs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
 	args := c.Config.Entrypoint
 	if args == nil {

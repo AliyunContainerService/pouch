@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/containerd/containerd/progress"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // pullDescription is used to describe pull command in detail and auto generate command doc.
@@ -61,36 +63,62 @@ func (p *PullCommand) runPull(args []string) error {
 	}
 	defer responseBody.Close()
 
-	return renderOutput(responseBody)
+	return showProgress(responseBody)
 }
 
-// renderOutput draws the commandline output via api response.
-func renderOutput(responseBody io.ReadCloser) error {
+// bufwriter defines interface which has Write and Flush behaviors.
+type bufwriter interface {
+	Write([]byte) (int, error)
+	Flush() error
+}
+
+// showProgress shows pull progress status.
+func showProgress(body io.ReadCloser) error {
 	var (
-		start = time.Now()
-		fw    = progress.NewWriter(os.Stdout)
+		output bufwriter = bufio.NewWriter(os.Stdout)
+
+		start      = time.Now()
+		isTerminal = terminal.IsTerminal(int(os.Stdout.Fd()))
 	)
 
-	dec := json.NewDecoder(responseBody)
+	if isTerminal {
+		output = progress.NewWriter(os.Stdout)
+	}
+
+	dec := json.NewDecoder(body)
 	if _, err := dec.Token(); err != nil {
 		return fmt.Errorf("failed to read the opening token: %v", err)
 	}
 
+	refStatus := make(map[string]string)
 	for dec.More() {
-		var objs []ctrd.ProgressInfo
+		var infos []ctrd.ProgressInfo
 
-		tw := tabwriter.NewWriter(fw, 1, 8, 1, ' ', 0)
-
-		if err := dec.Decode(&objs); err != nil {
+		if err := dec.Decode(&infos); err != nil {
 			return fmt.Errorf("failed to decode: %v", err)
 		}
 
-		if err := display(tw, objs, start); err != nil {
-			return err
+		// only display the new status if the stdout is not terminal
+		if !isTerminal {
+			newInfos := make([]ctrd.ProgressInfo, 0)
+			for i, info := range infos {
+				old, ok := refStatus[info.Ref]
+				if !ok || info.Status != old {
+					refStatus[info.Ref] = info.Status
+					newInfos = append(newInfos, infos[i])
+				}
+			}
+
+			infos = newInfos
 		}
 
-		tw.Flush()
-		fw.Flush()
+		if err := displayProgressInfos(output, isTerminal, infos, start); err != nil {
+			return fmt.Errorf("failed to display progress: %v", err)
+		}
+
+		if err := output.Flush(); err != nil {
+			return fmt.Errorf("failed to display progress: %v", err)
+		}
 	}
 
 	if _, err := dec.Token(); err != nil {
@@ -99,56 +127,77 @@ func renderOutput(responseBody io.ReadCloser) error {
 	return nil
 }
 
-func display(w io.Writer, statuses []ctrd.ProgressInfo, start time.Time) error {
-	var total int64
-	for _, status := range statuses {
-		if status.ErrorMessage != "" {
-			return fmt.Errorf(status.ErrorMessage)
+// displayProgressInfos uses tabwriter to show current progress info.
+func displayProgressInfos(output io.Writer, isTerminal bool, infos []ctrd.ProgressInfo, start time.Time) error {
+	var (
+		tw    = tabwriter.NewWriter(output, 1, 8, 1, ' ', 0)
+		total = int64(0)
+	)
+
+	for _, info := range infos {
+		if info.ErrorMessage != "" {
+			return fmt.Errorf(info.ErrorMessage)
 		}
-		total += status.Offset
-		switch status.Status {
-		case "downloading", "uploading":
-			var bar progress.Bar
-			if status.Total > 0.0 {
-				bar = progress.Bar(float64(status.Offset) / float64(status.Total))
-			}
-			fmt.Fprintf(w, "%s:\t%s\t%40r\t%8.8s/%s\t\n",
-				status.Ref,
-				status.Status,
-				bar,
-				progress.Bytes(status.Offset), progress.Bytes(status.Total))
 
-		case "resolving", "waiting":
-			bar := progress.Bar(0.0)
-			fmt.Fprintf(w, "%s:\t%s\t%40r\t\n",
-				status.Ref,
-				status.Status,
-				bar)
-
-		default:
-			bar := progress.Bar(1.0)
-			fmt.Fprintf(w, "%s:\t%s\t%40r\t\n",
-				status.Ref,
-				status.Status,
-				bar)
+		total += info.Offset
+		if _, err := fmt.Fprint(tw, formatProgressInfo(info, isTerminal)); err != nil {
+			return err
 		}
 	}
 
-	fmt.Fprintf(w, "elapsed: %-4.1fs\ttotal: %7.6v\t(%v)\t\n",
-		time.Since(start).Seconds(),
-		progress.Bytes(total),
-		progress.NewBytesPerSecond(total, time.Since(start)))
-	return nil
+	// no need to show the total information if ther stdout is not terminal
+	if isTerminal {
+		_, err := fmt.Fprintf(tw, "elapsed: %-4.1fs\ttotal: %7.6v\t(%v)\t\n",
+			time.Since(start).Seconds(),
+			progress.Bytes(total),
+			progress.NewBytesPerSecond(total, time.Since(start)))
+		if err != nil {
+			return err
+		}
+	}
+	return tw.Flush()
+}
+
+// formatProgressInfo formats ProgressInfo into string.
+func formatProgressInfo(info ctrd.ProgressInfo, isTerminal bool) string {
+	if !isTerminal {
+		return fmt.Sprintf("%s:\t%s\n", info.Ref, info.Status)
+	}
+
+	switch info.Status {
+	case "downloading", "uploading":
+		var bar progress.Bar
+		if info.Total > 0.0 {
+			bar = progress.Bar(float64(info.Offset) / float64(info.Total))
+		}
+		return fmt.Sprintf("%s:\t%s\t%40r\t%8.8s/%s\t\n",
+			info.Ref,
+			info.Status,
+			bar,
+			progress.Bytes(info.Offset), progress.Bytes(info.Total))
+
+	case "resolving", "waiting":
+		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
+			info.Ref,
+			info.Status,
+			progress.Bar(0.0))
+
+	default:
+		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
+			info.Ref,
+			info.Status,
+			progress.Bar(1.0))
+	}
 }
 
 // pullExample shows examples in pull command, and is used in auto-generated cli docs.
 func pullExample() string {
 	return `$ pouch images
 IMAGE ID            IMAGE NAME                           SIZE
-bbc3a0323522        docker.io/library/busybox:latest     2699
+bbc3a0323522        docker.io/library/busybox:latest     703.14 KB
 $ pouch pull docker.io/library/redis:alpine
 $ pouch images
 IMAGE ID            IMAGE NAME                           SIZE
-bbc3a0323522        docker.io/library/busybox:latest     2699
-0153c5db97e5        docker.io/library/redis:alpine       2035`
+bbc3a0323522        docker.io/library/busybox:latest     703.14 KB
+0153c5db97e5        docker.io/library/redis:alpine       9.63 MB`
 }

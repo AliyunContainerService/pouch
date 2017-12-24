@@ -63,53 +63,7 @@ POST /containers/create
 |Type|Name|Description|Schema|
 |---|---|---|---|
 |**Query**|**name**  <br>*optional*|Assign the specified name to the container. Must match `/?[a-zA-Z0-9_-]+`.|string|
-|**Body**|**body**  <br>*required*|Container to create|[body](#containers-create-post-body)|
-
-<a name="containers-create-post-body"></a>
-**body**
-
-|Name|Description|Schema|
-|---|---|---|
-|**ArgsEscaped**  <br>*optional*|Command is already escaped (Windows only)|boolean|
-|**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
-|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
-|**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
-|**Cmd**  <br>*optional*|Command to run specified as a string or an array of strings.|< string > array|
-|**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
-|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
-|**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:<br><br>`{"<port>/<tcp\|udp>": {}}`|< string, object > map|
-|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
-|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
-|**Image**  <br>*optional*|The name of the image to use when creating the container|string|
-|**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
-|**MacAddress**  <br>*optional*|MAC address of the container.|string|
-|**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
-|**NetworkingConfig**  <br>*optional*|This container's networking configuration.|[NetworkingConfig](#containers-create-post-networkingconfig)|
-|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
-|**OpenStdin**  <br>*optional*|Open `stdin`  <br>**Default** : `false`|boolean|
-|**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
-|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects  <br>**Default** : `false`|boolean|
-|**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
-|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
-|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.  <br>**Default** : `false`|boolean|
-|**User**  <br>*optional*|The user that commands are run as inside the container.|string|
-|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containers-create-post-volumes)|
-|**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
-
-<a name="containers-create-post-networkingconfig"></a>
-**NetworkingConfig**
-
-|Name|Description|Schema|
-|---|---|---|
-|**EndpointsConfig**  <br>*optional*|A mapping of network name to endpoint configuration for that network.|< string, [EndpointSettings](#endpointsettings) > map|
-
-<a name="containers-create-post-volumes"></a>
-**Volumes**
-
-|Name|Schema|
-|---|---|
-|**additionalProperties**  <br>*optional*|object|
+|**Body**|**body**  <br>*required*|Container to create|[ContainerConfigWrapper](#containerconfigwrapper)|
 
 
 #### Responses
@@ -170,7 +124,7 @@ GET /containers/json
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**200**|Summary containers that matches the query|[Container](#container)|
+|**200**|Summary containers that matches the query|< [Container](#container) > array|
 |**500**|Server error|[Error](#error)|
 
 
@@ -256,6 +210,17 @@ POST /containers/{id}/pause
 * Container
 
 
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerrename"></a>
 ### Rename a container
 ```
@@ -286,6 +251,136 @@ POST /containers/{id}/rename
 * Container
 
 
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="containerstart"></a>
+### Start a container
+```
+POST /containers/{id}/start
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**detachKeys**  <br>*optional*|Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="containerstop"></a>
+### Stop a container
+```
+POST /containers/{id}/stop
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**t**  <br>*optional*|Number of seconds to wait before killing the container|integer|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="containerunpause"></a>
+### Unpause a container
+```
+POST /containers/{id}/unpause
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerremove"></a>
 ### Remove one container
 ```
@@ -295,9 +390,10 @@ DELETE /containers/{name}
 
 #### Parameters
 
-|Type|Name|Description|Schema|
-|---|---|---|---|
-|**Path**|**name**  <br>*required*|ID or name of the container|string|
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**name**  <br>*required*|ID or name of the container|string||
+|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|`"false"`|
 
 
 #### Responses
@@ -305,12 +401,24 @@ DELETE /containers/{name}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
+|**404**|no such container|[Error](#error)|
 |**500**|server error|[Error](#error)|
 
 
 #### Tags
 
 * Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
 
 
 <a name="images-create-post"></a>
@@ -459,7 +567,76 @@ Remove an image by reference.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|No error|No Content|
+|**404**|no such image|[Error](#error)|
 |**500**|Server deletes an image error|[Error](#error)|
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such image: c2ada9df5af8"
+}
+```
+
+
+<a name="imageinspect"></a>
+### Inspect a image
+```
+GET /images/{name}/json
+```
+
+
+#### Description
+Return the information about image
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**name**  <br>*required*|Image name or id|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|[ImageInfo](#imageinfo)|
+|**404**|no such image|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Example HTTP response
+
+##### Response 200
+```
+json :
+{
+  "CreatedAt" : "2017-12-19 15:32:09",
+  "Digest" : "sha256:e216a057b1cb1efc11f8a268f37ef62083e70b1b38323ba252e25ac88904a7e8",
+  "ID" : "e216a057b1cb",
+  "Name" : "ubuntu:12.04",
+  "Size" : 103579269,
+  "Tag" : "12.04"
+}
+```
+
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such image: e216a057b1cb"
+}
+```
 
 
 <a name="info-get"></a>
@@ -642,11 +819,11 @@ Configuration for a container that is portable between hosts
 |**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
-|**Cmd**  <br>*optional*|Command to run specified as a string or an array of strings.|< string > array|
+|**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
-|**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:<br><br>`{"<port>/<tcp\|udp>": {}}`|< string, object > map|
+|**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
 |**Image**  <br>*optional*|The name of the image to use when creating the container|string|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
@@ -671,6 +848,52 @@ Configuration for a container that is portable between hosts
 |**additionalProperties**  <br>*optional*|object|
 
 
+<a name="containerconfigwrapper"></a>
+### ContainerConfigWrapper
+ContainerConfigWrapper is used for API "POST /containers/create".
+It wraps all kinds of config used in container creation.
+It can be used to encode client params in client and unmarshal request body in daemon side.
+
+*Polymorphism* : Composition
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**ArgsEscaped**  <br>*optional*|Command is already escaped (Windows only)|boolean|
+|**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
+|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
+|**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
+|**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
+|**Domainname**  <br>*optional*|The domain name to use for the container.|string|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
+|**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
+|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
+|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
+|**Image**  <br>*optional*|The name of the image to use when creating the container|string|
+|**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
+|**MacAddress**  <br>*optional*|MAC address of the container.|string|
+|**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
+|**NetworkingConfig**  <br>*optional*||[NetworkingConfig](#networkingconfig)|
+|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
+|**OpenStdin**  <br>*optional*|Open `stdin`  <br>**Default** : `false`|boolean|
+|**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects  <br>**Default** : `false`|boolean|
+|**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
+|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
+|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.  <br>**Default** : `false`|boolean|
+|**User**  <br>*optional*|The user that commands are run as inside the container.|string|
+|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containerconfigwrapper-volumes)|
+|**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
+
+<a name="containerconfigwrapper-volumes"></a>
+**Volumes**
+
+|Name|Schema|
+|---|---|
+|**additionalProperties**  <br>*optional*|object|
+
+
 <a name="containercreateresp"></a>
 ### ContainerCreateResp
 response returned by daemon when container create successfully
@@ -679,8 +902,40 @@ response returned by daemon when container create successfully
 |Name|Description|Schema|
 |---|---|---|
 |**Id**  <br>*required*|The ID of the created container|string|
-|**Name**  <br>*optional*|Then name of the created container|string|
+|**Name**  <br>*optional*|The name of the created container|string|
 |**Warnings**  <br>*required*|Warnings encountered when creating the container|< string > array|
+
+
+<a name="containerinfo"></a>
+### ContainerInfo
+
+|Name|Description|Schema|
+|---|---|---|
+|**AppArmorProfile**  <br>*optional*||string|
+|**Args**  <br>*optional*|The arguments to the command being run|< string > array|
+|**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
+|**Created**  <br>*optional*|The time the container was created|string|
+|**Driver**  <br>*optional*||string|
+|**ExecIDs**  <br>*optional*||string|
+|**GraphDriver**  <br>*optional*||[GraphDriverData](#graphdriverdata)|
+|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
+|**HostnamePath**  <br>*optional*||string|
+|**HostsPath**  <br>*optional*||string|
+|**Id**  <br>*optional*|The ID of the container|string|
+|**Image**  <br>*optional*|The container's image|string|
+|**LogPath**  <br>*optional*||string|
+|**MountLabel**  <br>*optional*||string|
+|**Mounts**  <br>*optional*||< [MountPoint](#mountpoint) > array|
+|**Name**  <br>*optional*||string|
+|**NetworkSettings**  <br>*optional*||[NetworkSettings](#networksettings)|
+|**Node**  <br>*optional*|TODO|object|
+|**Path**  <br>*optional*|The path to the command being run|string|
+|**ProcessLabel**  <br>*optional*||string|
+|**ResolvConfPath**  <br>*optional*||string|
+|**RestartCount**  <br>*optional*||integer|
+|**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
+|**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
+|**State**  <br>*optional*||[ContainerState](#containerstate)|
 
 
 <a name="containerjson"></a>
@@ -737,17 +992,17 @@ Configuration for a network endpoint.
 |Name|Description|Schema|
 |---|---|---|
 |**Aliases**  <br>*optional*|**Example** : `[ "server_x", "server_y" ]`|< string > array|
-|**DriverOpts**  <br>*optional*|DriverOpts is a mapping of driver options and values. These options<br>are passed directly to the driver and are driver specific.  <br>**Example** : `{<br>  "com.example.some-label" : "some-value",<br>  "com.example.some-other-label" : "some-other-value"<br>}`|< string, string > map|
-|**EndpointID**  <br>*optional*|Unique ID for the service endpoint in a Sandbox.  <br>**Example** : `"b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"`|string|
-|**Gateway**  <br>*optional*|Gateway address for this network.  <br>**Example** : `"172.17.0.1"`|string|
-|**GlobalIPv6Address**  <br>*optional*|Global IPv6 address.  <br>**Example** : `"2001:db8::5689"`|string|
-|**GlobalIPv6PrefixLen**  <br>*optional*|Mask length of the global IPv6 address.  <br>**Example** : `64`|integer (int64)|
-|**IPAddress**  <br>*optional*|IPv4 address.  <br>**Example** : `"172.17.0.4"`|string|
-|**IPPrefixLen**  <br>*optional*|Mask length of the IPv4 address.  <br>**Example** : `16`|integer|
-|**IPv6Gateway**  <br>*optional*|IPv6 gateway address.  <br>**Example** : `"2001:db8:2::100"`|string|
+|**DriverOpts**  <br>*optional*|DriverOpts is a mapping of driver options and values. These options are passed directly to the driver and are driver specific  <br>**Example** : `{<br>  "com.example.some-label" : "some-value",<br>  "com.example.some-other-label" : "some-other-value"<br>}`|< string, string > map|
+|**EndpointID**  <br>*optional*|Unique ID for the service endpoint in a Sandbox  <br>**Example** : `"b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"`|string|
+|**Gateway**  <br>*optional*|Gateway address for this network  <br>**Example** : `"172.17.0.1"`|string|
+|**GlobalIPv6Address**  <br>*optional*|Global IPv6 address  <br>**Example** : `"2001:db8::5689"`|string|
+|**GlobalIPv6PrefixLen**  <br>*optional*|Mask length of the global IPv6 address  <br>**Example** : `64`|integer (int64)|
+|**IPAddress**  <br>*optional*|IPv4 address  <br>**Example** : `"172.17.0.4"`|string|
+|**IPPrefixLen**  <br>*optional*|Mask length of the IPv4 address  <br>**Example** : `16`|integer|
+|**IPv6Gateway**  <br>*optional*|IPv6 gateway address  <br>**Example** : `"2001:db8:2::100"`|string|
 |**Links**  <br>*optional*|**Example** : `[ "container_1", "container_2" ]`|< string > array|
-|**MacAddress**  <br>*optional*|MAC address for the endpoint on this network.  <br>**Example** : `"02:42:ac:11:00:04"`|string|
-|**NetworkID**  <br>*optional*|Unique ID of the network.  <br>**Example** : `"08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"`|string|
+|**MacAddress**  <br>*optional*|MAC address for the endpoint on this network"  <br>**Example** : `"02:42:ac:11:00:04"`|string|
+|**NetworkID**  <br>*optional*|Unique ID of the network."  <br>**Example** : `"08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"`|string|
 
 
 <a name="error"></a>
@@ -791,6 +1046,17 @@ Configuration for a network endpoint.
 |**Tty**  <br>*optional*|boolean|
 
 
+<a name="graphdriverdata"></a>
+### GraphDriverData
+Information about a container's graph driver.
+
+
+|Name|Schema|
+|---|---|
+|**Data**  <br>*required*|< string, string > map|
+|**Name**  <br>*required*|string|
+
+
 <a name="hostconfig"></a>
 ### HostConfig
 Container configuration that depends on the host we are running on
@@ -812,14 +1078,14 @@ Container configuration that depends on the host we are running on
 |**DnsSearch**  <br>*optional*|A list of DNS search domains.|< string > array|
 |**ExtraHosts**  <br>*optional*|A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.|< string > array|
 |**GroupAdd**  <br>*optional*|A list of additional groups that the container process will run as.|< string > array|
-|**IpcMode**  <br>*optional*|IPC sharing mode for the container. Possible values are:<br><br>- `"none"`: own private IPC namespace, with /dev/shm not mounted<br>- `"private"`: own private IPC namespace<br>- `"shareable"`: own private IPC namespace, with a possibility to share it with other containers<br>- `"container:<name\|id>"`: join another (shareable) container's IPC namespace<br>- `"host"`: use the host system's IPC namespace<br><br>If not specified, daemon default is used, which can either be `"private"`<br>or `"shareable"`, depending on daemon version and configuration.|string|
+|**IpcMode**  <br>*optional*|IPC sharing mode for the container. Possible values are:<br>- `"none"`: own private IPC namespace, with /dev/shm not mounted<br>- `"private"`: own private IPC namespace<br>- `"shareable"`: own private IPC namespace, with a possibility to share it with other containers<br>- `"container:<name\|id>"`: join another (shareable) container's IPC namespace<br>- `"host"`: use the host system's IPC namespace<br>If not specified, daemon default is used, which can either be `"private"`<br>or `"shareable"`, depending on daemon version and configuration.|string|
 |**Isolation**  <br>*optional*|Isolation technology of the container. (Windows only)|enum (default, process, hyperv)|
 |**Links**  <br>*optional*|A list of links for the container in the form `container_name:alias`.|< string > array|
 |**LogConfig**  <br>*optional*|The logging configuration for this container|[LogConfig](#hostconfig-logconfig)|
 |**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.  <br>**Example** : `500`|integer|
-|**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br><br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
-|**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|< string, [PortBindings](#hostconfig-portbindings) > map|
+|**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
+|**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|< string, [PortBinding](#portbinding) > map|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
 |**ReadonlyRootfs**  <br>*optional*|Mount the container's root filesystem as read only.|boolean|
@@ -842,13 +1108,16 @@ Container configuration that depends on the host we are running on
 |**Config**  <br>*optional*|< string, string > map|
 |**Type**  <br>*optional*|enum (json-file, syslog, journald, gelf, fluentd, awslogs, splunk, etwlogs, none)|
 
-<a name="hostconfig-portbindings"></a>
-**PortBindings**
+
+<a name="ipaddress"></a>
+### IPAddress
+Address represents an IPv4 or IPv6 IP address.
+
 
 |Name|Description|Schema|
 |---|---|---|
-|**HostIp**  <br>*optional*|The host IP address|string|
-|**HostPort**  <br>*optional*|The host port number, as a string|string|
+|**Addr**  <br>*optional*|IP address.|string|
+|**PrefixLen**  <br>*optional*|Mask length of the IP address.|integer|
 
 
 <a name="imageinfo"></a>
@@ -864,6 +1133,75 @@ An object containing all details of an image at API side
 |**Name**  <br>*optional*|name of an image.|string|
 |**Size**  <br>*optional*|size of image's taking disk space.|integer|
 |**Tag**  <br>*optional*|tag of an image.|string|
+
+
+<a name="mountpoint"></a>
+### MountPoint
+A mount point inside a container
+
+
+|Name|Schema|
+|---|---|
+|**Destination**  <br>*optional*|string|
+|**Driver**  <br>*optional*|string|
+|**Mode**  <br>*optional*|string|
+|**Name**  <br>*optional*|string|
+|**Propagation**  <br>*optional*|string|
+|**RW**  <br>*optional*|boolean|
+|**Source**  <br>*optional*|string|
+|**Type**  <br>*optional*|string|
+
+
+<a name="networksettings"></a>
+### NetworkSettings
+NetworkSettings exposes the network settings in the API
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Bridge**  <br>*optional*|Name of the network'a bridge (for example, `pouch-br`).  <br>**Example** : `"pouch-br"`|string|
+|**HairpinMode**  <br>*optional*|Indicates if hairpin NAT should be enabled on the virtual interface  <br>**Example** : `false`|boolean|
+|**LinkLocalIPv6Address**  <br>*optional*|IPv6 unicast address using the link-local prefix  <br>**Example** : `"fe80::42:acff:fe11:1"`|string|
+|**LinkLocalIPv6PrefixLen**  <br>*optional*|Prefix length of the IPv6 unicast address.  <br>**Example** : `64`|integer|
+|**Networks**  <br>*optional*|Information about all networks that the container is connected to|< string, [EndpointSettings](#endpointsettings) > map|
+|**Ports**  <br>*optional*||[PortMap](#portmap)|
+|**SandboxID**  <br>*optional*|SandboxID uniquely represents a container's network stack.  <br>**Example** : `"9d12daf2c33f5959c8bf90aa513e4f65b561738661003029ec84830cd503a0c3"`|string|
+|**SandboxKey**  <br>*optional*|SandboxKey identifies the sandbox  <br>**Example** : `"/var/run/pouch/netns/8ab54b426c38"`|string|
+|**SecondaryIPAddresses**  <br>*optional*||< [IPAddress](#ipaddress) > array|
+|**SecondaryIPv6Addresses**  <br>*optional*||< [IPAddress](#ipaddress) > array|
+
+
+<a name="networkingconfig"></a>
+### NetworkingConfig
+Configuration for a network used to create a container.
+
+
+|Name|Schema|
+|---|---|
+|**EndpointsConfig**  <br>*optional*|[EndpointSettings](#endpointsettings)|
+
+
+<a name="portbinding"></a>
+### PortBinding
+PortBinding represents a binding between a host IP address and a host port
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**HostIp**  <br>*optional*|Host IP address that the container's port is mapped to.  <br>**Example** : `"127.0.0.1"`|string|
+|**HostPort**  <br>*optional*|Host port number that the container's port is mapped to.  <br>**Example** : `"4443"`|string|
+
+
+<a name="portmap"></a>
+### PortMap
+PortMap describes the mapping of container ports to host ports, using the
+container's port-number and protocol as key in the format `<port>/<protocol>`,
+for example, `80/udp`.
+
+If a container's port is mapped for both `tcp` and `udp`, two separate
+entries are added to the mapping table.
+
+*Type* : < string, < [PortBinding](#portbinding) > array > map
 
 
 <a name="searchresultitem"></a>

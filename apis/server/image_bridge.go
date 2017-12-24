@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,7 +15,7 @@ import (
 )
 
 // pullImage will pull an image from a specified registry.
-func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	image := req.FormValue("fromImage")
 	tag := req.FormValue("tag")
 
@@ -34,7 +33,7 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 	}(time.Now())
 
 	// Error information has be sent to client, so no need call resp.Write
-	if err := s.ImageMgr.PullImage(ctx, image, tag, resp); err != nil {
+	if err := s.ImageMgr.PullImage(ctx, image, tag, rw); err != nil {
 		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
 		return nil
 	}
@@ -42,31 +41,43 @@ func (s *Server) pullImage(ctx context.Context, resp http.ResponseWriter, req *h
 	return nil
 }
 
-func (s *Server) listImages(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) listImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	filters := req.FormValue("failters")
 
 	imageList, err := s.ImageMgr.ListImages(ctx, filters)
 	if err != nil {
-		logrus.Errorf("failed to list images in containerd: %v", err)
+		logrus.Errorf("failed to list images: %v", err)
 		return err
 	}
-	return json.NewEncoder(resp).Encode(imageList)
+	return EncodeResponse(rw, http.StatusOK, imageList)
 }
 
-func (s *Server) searchImages(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) getImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	idOrRef := mux.Vars(req)["name"]
+
+	imageInfo, err := s.ImageMgr.GetImage(ctx, idOrRef)
+	if err != nil {
+		logrus.Errorf("failed to get image: %v", err)
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, imageInfo)
+}
+
+func (s *Server) searchImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	searchPattern := req.FormValue("term")
 	registry := req.FormValue("registry")
 
-	response, err := s.ImageMgr.SearchImages(ctx, searchPattern, registry)
+	searchResultItem, err := s.ImageMgr.SearchImages(ctx, searchPattern, registry)
 	if err != nil {
 		logrus.Errorf("failed to search images from resgitry: %v", err)
 		return err
 	}
-	return json.NewEncoder(resp).Encode(response)
+	return EncodeResponse(rw, http.StatusOK, searchResultItem)
 }
 
 // removeImage deletes an image by reference
-func (s *Server) removeImage(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
 	option := &mgr.ImageRemoveOption{}
@@ -75,6 +86,6 @@ func (s *Server) removeImage(ctx context.Context, resp http.ResponseWriter, req 
 		return err
 	}
 
-	resp.WriteHeader(http.StatusNoContent)
+	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }

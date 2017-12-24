@@ -50,7 +50,11 @@ function main ()
 	# wait until pouch daemon is ready
 	while true;
 	do
-		if [ -S /var/run/pouchd.sock ];then
+		COUNT=`ps -ef | grep pouchd | grep -v grep | wc -l`
+		if [ $COUNT = 0 ];then
+			echo "failed to start pouch daemon."
+			return 1
+		elif [ -S /var/run/pouchd.sock ];then
 			break
 		else
 			sleep 1
@@ -63,7 +67,7 @@ function main ()
 	#
 	# pull busybox as test image
 	#
-	pouch pull registry.hub.docker.com/library/busybox:latest
+	pouch pull registry.hub.docker.com/library/busybox:latest >/dev/null
 
 	cd $DIR/../test
 	go test
