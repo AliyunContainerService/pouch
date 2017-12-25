@@ -69,6 +69,11 @@ func (c *Container) ID() string {
 	return c.meta.ID
 }
 
+// Image returns container's image name.
+func (c *Container) Image() string {
+	return c.meta.Config.Image
+}
+
 // Name returns container's name.
 func (c *Container) Name() string {
 	return c.meta.Name

@@ -174,12 +174,17 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 	mgr.NameToID.Remove(c.Name())
 
 	// remove meta data
-	if err := mgr.Store.Remove(c.ID()); err != nil {
-		logrus.Errorf("failed to remove container: %s meta store", c.ID())
+	if err := mgr.Store.Remove(c.meta.Key()); err != nil {
+		logrus.Errorf("failed to remove container: %s meta store, %v", c.ID(), err)
 	}
 
 	// remove container cache
 	mgr.cache.Remove(c.ID())
+
+	// remove snapshot
+	if err := mgr.Client.RemoveSnapshot(ctx, c.ID()); err != nil {
+		logrus.Errorf("failed to remove container: %s snapshot, %v", c.ID(), err)
+	}
 
 	return nil
 }
@@ -268,16 +273,18 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err != nil {
 		return nil, err
 	}
-
-	// set container hostconfig
 	config.Image = image.Name
 
+	// set container runtime
 	if config.HostConfig.Runtime == "" {
 		config.HostConfig.Runtime = mgr.Config.DefaultRuntime
 	}
 
-	// TODO add more validation of parameter
-	// TODO check whether image exist
+	// create a snapshot with image.
+	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
+		return nil, err
+	}
+
 	containerMeta := &ContainerMeta{
 		State: &types.ContainerState{
 			StartedAt: time.Now().UTC().Format(utils.TimeLayout),
@@ -350,9 +357,11 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	}
 
 	err = mgr.Client.CreateContainer(ctx, &ctrd.Container{
-		Info: c.meta.ToContainerInfo(),
-		Spec: s,
-		IO:   io,
+		ID:      c.ID(),
+		Image:   c.Image(),
+		Runtime: c.meta.HostConfig.Runtime,
+		Spec:    s,
+		IO:      io,
 	})
 	if err == nil {
 		c.meta.State.Status = types.StatusRunning
