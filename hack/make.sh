@@ -76,8 +76,8 @@ function target()
 		echo "verify pouch version"
 		pouch version
 
-		# pull busybox as test image
-		$DIR/test/integration-test
+		# If test is failed, print pouch daemon log.
+		$DIR/test/integration-test || { echo "pouch daemon log:"; cat $TMP/log; return 1; } 
 		;;
 	*)
 		echo "no such target: $target"
