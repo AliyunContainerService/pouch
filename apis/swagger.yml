@@ -572,8 +572,7 @@ paths:
         - name: "body"
           in: "body"
           schema:
-            allOf:
-              - $ref: "#/definitions/ExecConfig"
+            $ref: "#/definitions/ExecConfig"
           required: true
         - name: "id"
           in: "path"
