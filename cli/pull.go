@@ -145,7 +145,7 @@ func displayProgressInfos(output io.Writer, isTerminal bool, infos []ctrd.Progre
 		}
 	}
 
-	// no need to show the total information if ther stdout is not terminal
+	// no need to show the total information if the stdout is not terminal
 	if isTerminal {
 		_, err := fmt.Fprintf(tw, "elapsed: %-4.1fs\ttotal: %7.6v\t(%v)\t\n",
 			time.Since(start).Seconds(),
@@ -170,20 +170,20 @@ func formatProgressInfo(info ctrd.ProgressInfo, isTerminal bool) string {
 		if info.Total > 0.0 {
 			bar = progress.Bar(float64(info.Offset) / float64(info.Total))
 		}
-		return fmt.Sprintf("%s:\t%s\t%40r\t%8.8s/%s\t\n",
+		return fmt.Sprintf("%s:\t%s\t%40f\t%8.8s/%s\t\n",
 			info.Ref,
 			info.Status,
 			bar,
 			progress.Bytes(info.Offset), progress.Bytes(info.Total))
 
 	case "resolving", "waiting":
-		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
+		return fmt.Sprintf("%s:\t%s\t%40f\t\n",
 			info.Ref,
 			info.Status,
 			progress.Bar(0.0))
 
 	default:
-		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
+		return fmt.Sprintf("%s:\t%s\t%40f\t\n",
 			info.Ref,
 			info.Status,
 			progress.Bar(1.0))

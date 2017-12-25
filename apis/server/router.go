@@ -111,7 +111,7 @@ func (s *Server) filter(handler handler) http.HandlerFunc {
 	}
 }
 
-// EncodeResponse encodes reponse in json.
+// EncodeResponse encodes response in json.
 func EncodeResponse(rw http.ResponseWriter, statusCode int, data interface{}) error {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
