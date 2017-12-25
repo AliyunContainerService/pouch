@@ -39,7 +39,8 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, query, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	CheckRespStatus(c, resp, 201)
 
 	// Decode response
 	got := types.ContainerCreateResp{}
@@ -47,9 +48,7 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(got.ID, check.NotNil)
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	DelContainerForceOk(c, cname)
 }
 
 // TestNilName tests creating container without giving name should succeed.
@@ -63,7 +62,7 @@ func (suite *APIContainerCreateSuite) TestNilName(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 201)
 
 	// Decode response
 	got := types.ContainerCreateResp{}
@@ -72,9 +71,7 @@ func (suite *APIContainerCreateSuite) TestNilName(c *check.C) {
 	c.Assert(got.ID, check.NotNil)
 	c.Assert(got.Name, check.NotNil)
 
-	resp, err = request.Delete("/containers/" + got.Name)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	DelContainerForceOk(c, got.Name)
 }
 
 // TestDupContainer tests create a duplicate container, return 409.
@@ -92,16 +89,16 @@ func (suite *APIContainerCreateSuite) TestDupContainer(c *check.C) {
 
 	resp, err := request.Post(path, query, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	CheckRespStatus(c, resp, 201)
 
 	// Create a duplicate container
 	resp, err = request.Post(path, query, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 409)
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	CheckRespStatus(c, resp, 409)
+
+	DelContainerForceOk(c, cname)
 }
 
 // TestBadParam tests using bad parameter return 400.
@@ -124,5 +121,5 @@ func (suite *APIContainerCreateSuite) TestNonExistingImg(c *check.C) {
 
 	resp, err := request.Post(path, query, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }

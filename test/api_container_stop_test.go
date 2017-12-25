@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/url"
-
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -23,37 +21,16 @@ func (suite *APIContainerStopSuite) SetUpTest(c *check.C) {
 
 // TestStopOk tests a running container could be stopped.
 func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
-	// must required
 	cname := "TestStopOk"
-	q := url.Values{}
-	q.Add("name", cname)
 
-	obj := map[string]interface{}{
-		"Image":      busyboxImage,
-		"Cmd":        [1]string{"top"},
-		"HostConfig": map[string]interface{}{},
-	}
+	CreateBusyboxContainerOk(c, cname)
+	StartContainerOk(c, cname)
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
+	resp, err := request.Post("/containers/" + cname + "/stop")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 204)
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
-
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
-
-	resp, err = request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
-
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	DelContainerForceOk(c, cname)
 }
 
 // TestNonExistingContainer tests stop a non-existing container return 404.
@@ -61,7 +38,7 @@ func (suite *APIContainerStopSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
 	resp, err := request.Post("/containers/" + cname + "/stop")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }
 
 // TestInvalidParam tests using invalid parameter return.

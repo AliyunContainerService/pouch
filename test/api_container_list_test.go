@@ -23,5 +23,5 @@ func (suite *APIContainerListSuite) SetUpTest(c *check.C) {
 func (suite *APIContainerListSuite) TestListOk(c *check.C) {
 	resp, err := request.Get("/containers/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 }
