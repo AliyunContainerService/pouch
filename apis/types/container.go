@@ -13,7 +13,7 @@ import (
 )
 
 // Container Container contains response of Engine API:
-// GET "/containers/json""
+// GET "/containers/json"
 //
 // swagger:model Container
 

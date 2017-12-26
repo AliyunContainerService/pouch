@@ -16,7 +16,7 @@ type ContainerAPIClient interface {
 	ContainerRemove(name string, force bool) error
 	ContainerList() ([]*types.Container, error)
 	ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error)
-	ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResponse, error)
+	ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)
 	ContainerStartExec(execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)
 	ContainerGet(name string) (*types.ContainerJSON, error)
 	ContainerRename(id string, name string) error
@@ -118,13 +118,13 @@ func (client *APIClient) ContainerAttach(name string, stdin bool) (net.Conn, *bu
 }
 
 // ContainerCreateExec creates exec process.
-func (client *APIClient) ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResponse, error) {
+func (client *APIClient) ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error) {
 	response, err := client.post("/containers/"+name+"/exec", url.Values{}, config)
 	if err != nil {
 		return nil, err
 	}
 
-	body := &types.ExecCreateResponse{}
+	body := &types.ExecCreateResp{}
 	decodeBody(body, response.Body)
 	ensureCloseReader(response)
 

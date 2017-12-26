@@ -13,16 +13,16 @@ import (
 )
 
 func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	var volumeCreateReq types.VolumeCreateRequest
+	var volumeCreateConfig types.VolumeCreateConfig
 
-	if err := json.NewDecoder(req.Body).Decode(&volumeCreateReq); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&volumeCreateConfig); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	name := volumeCreateReq.Name
-	driver := volumeCreateReq.Driver
-	options := volumeCreateReq.DriverOpts
-	labels := volumeCreateReq.Labels
+	name := volumeCreateConfig.Name
+	driver := volumeCreateConfig.Driver
+	options := volumeCreateConfig.DriverOpts
+	labels := volumeCreateConfig.Labels
 
 	if name == "" {
 		name = randomid.Generate()
@@ -39,7 +39,7 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 	volume := types.VolumeInfo{
 		Name:   name,
 		Driver: driver,
-		Labels: volumeCreateReq.Labels,
+		Labels: volumeCreateConfig.Labels,
 	}
 	return EncodeResponse(rw, http.StatusCreated, volume)
 }

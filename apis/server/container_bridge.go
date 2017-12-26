@@ -63,7 +63,7 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 		return err
 	}
 
-	execCreateResp := &types.ExecCreateResponse{
+	execCreateResp := &types.ExecCreateResp{
 		ID: id,
 	}
 

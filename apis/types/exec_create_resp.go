@@ -12,19 +12,19 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ExecCreateResponse exec create response
-// swagger:model ExecCreateResponse
+// ExecCreateResp exec create resp
+// swagger:model ExecCreateResp
 
-type ExecCreateResponse struct {
+type ExecCreateResp struct {
 
 	// ID
 	ID string `json:"ID,omitempty"`
 }
 
-/* polymorph ExecCreateResponse ID false */
+/* polymorph ExecCreateResp ID false */
 
-// Validate validates this exec create response
-func (m *ExecCreateResponse) Validate(formats strfmt.Registry) error {
+// Validate validates this exec create resp
+func (m *ExecCreateResp) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if len(res) > 0 {
@@ -34,7 +34,7 @@ func (m *ExecCreateResponse) Validate(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *ExecCreateResponse) MarshalBinary() ([]byte, error) {
+func (m *ExecCreateResp) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -42,8 +42,8 @@ func (m *ExecCreateResponse) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *ExecCreateResponse) UnmarshalBinary(b []byte) error {
-	var res ExecCreateResponse
+func (m *ExecCreateResp) UnmarshalBinary(b []byte) error {
+	var res ExecCreateResp
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

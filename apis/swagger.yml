@@ -199,7 +199,6 @@ paths:
           in: "query"
           description: "Show all images. Only images from a final layer (no children) are shown by default."
           type: "boolean"
-          default: false
         - name: "filters"
           in: "query"
           description: |
@@ -215,7 +214,6 @@ paths:
           in: "query"
           description: "Show digest information as a `RepoDigests` field on each image."
           type: "boolean"
-          default: false
 
   /images/search:
     get:
@@ -340,7 +338,6 @@ paths:
         - name: "size"
           in: "query"
           type: "boolean"
-          default: false
           description: "Return the size of container as fields `SizeRw` and `SizeRootFs`"
       tags: ["Container"]
 
@@ -522,7 +519,6 @@ paths:
           in: "query"
           description: "If the container is running, force query is used to kill it and remove it forcefully."
           type: "boolean"
-          default: false
       responses:
         204:
           description: "no error"
@@ -552,7 +548,7 @@ paths:
         201:
           description: "no error"
           schema:
-            type: "string"
+            $ref: "#/definitions/ExecCreateResp"
         404:
           description: "no such container"
           schema:
@@ -572,7 +568,7 @@ paths:
         - name: "body"
           in: "body"
           schema:
-            $ref: "#/definitions/ExecConfig"
+            $ref: "#/definitions/ExecCreateConfig"
           required: true
         - name: "id"
           in: "path"
@@ -605,17 +601,7 @@ paths:
         - name: "execStartConfig"
           in: "body"
           schema:
-            type: "object"
-            properties:
-              Detach:
-                type: "boolean"
-                description: "Detach from the command."
-              Tty:
-                type: "boolean"
-                description: "Allocate a pseudo-TTY."
-            example:
-              Detach: false
-              Tty: false
+            $ref: "#/definitions/ExecStartConfig"
         - name: "id"
           in: "path"
           description: "Exec instance ID"
@@ -688,12 +674,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       parameters:
-        - name: "VolumeConfig"
+        - name: "body"
           in: "body"
           required: true
           description: "Volume configuration"
           schema:
-            $ref: "#/definitions/VolumeConfig"
+            $ref: "#/definitions/VolumeCreateConfig"
       tags: ["Volume"]
 
 definitions:
@@ -1086,7 +1072,7 @@ definitions:
   Container:
     description: |
       Container contains response of Engine API:
-      GET "/containers/json""
+      GET "/containers/json"
     type: "object"
     properties:
       ID:
@@ -1289,7 +1275,7 @@ definitions:
           (e.g. `global` for cluster-wide or `local` for machine level)
         type: "string"
 
-  VolumeConfig:
+  VolumeCreateConfig:
     description: "config used to create a volume"
     type: "object"
     properties:
@@ -1318,27 +1304,6 @@ definitions:
         com.example.some-label: "some-value"
         com.example.some-other-label: "some-other-value"
       Driver: "custom"
-
-  VolumeCreateRequest:
-    type: "object"
-    description: "VolumeCreateRequest contains the response for the remote API: POST /volumes/create"
-    properties:
-      Name:
-        description: "Name is the name of the volume."
-        type: "string"
-      Driver:
-        description: "Driver is the Driver name used to create the volume."
-        type: "string"
-      DriverOpts:
-        description: "DriverOpts holds the driver specific options to use for when creating the volume."
-        type: "object"
-        additionalProperties:
-          type: "string"
-      Labels:
-        description: "Labels is metadata specific to the volume."
-        type: "object"
-        additionalProperties:
-          type: "string"
 
   VolumeListResp:
     type: "object"
@@ -1390,7 +1355,7 @@ definitions:
         items:
           type: "string"
 
-  ExecCreateResponse:
+  ExecCreateResp:
     type: "object"
     properties:
       ID:
@@ -1403,8 +1368,14 @@ definitions:
         type: "boolean"
       Tty:
         type: "boolean"
+    example:
+      Detach: false
+      Tty: false
   
   ContainerJSON:
+    description: | 
+      an array of ContainerJSON contains response of Engine API:
+      GET "/containers/json"
     type: "object"
     properties:
       Id:
@@ -1512,7 +1483,6 @@ definitions:
     description: The status of the container. For example, "running" or "exited".
     type: "string"
     enum: ["created", "running", "stopped","paused", "restarting", "removing", "exited", "dead"]
-
   GraphDriverData:
     description: "Information about a container's graph driver."
     type: "object"
@@ -1600,71 +1570,6 @@ definitions:
         additionalProperties:
           $ref: "#/definitions/EndpointSettings"
 
-  EndpointSettings:
-    description: "Configuration for a network endpoint."
-    type: "object"
-    properties:
-      Links:
-        type: "array"
-        items:
-          type: "string"
-        example:
-          - "container_1"
-          - "container_2"
-      Aliases:
-        type: "array"
-        items:
-          type: "string"
-        example:
-          - "server_x"
-          - "server_y"
-      NetworkID:
-        description: "Unique ID of the network.\""
-        type: "string"
-        example: "08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"
-      EndpointID:
-        description: "Unique ID for the service endpoint in a Sandbox"
-        type: "string"
-        example: "b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"
-      Gateway:
-        description: "Gateway address for this network"
-        type: "string"
-        example: "172.17.0.1"
-      IPAddress:
-        description: "IPv4 address"
-        type: "string"
-        example: "172.17.0.4"
-      IPPrefixLen:
-        description: "Mask length of the IPv4 address"
-        type: "integer"
-        example: 16
-      IPv6Gateway:
-        description: "IPv6 gateway address"
-        type: "string"
-        example: "2001:db8:2::100"
-      GlobalIPv6Address:
-        description: "Global IPv6 address"
-        type: "string"
-        example: "2001:db8::5689"
-      GlobalIPv6PrefixLen:
-        description: "Mask length of the global IPv6 address"
-        type: "integer"
-        format: "int64"
-        example: 64
-      MacAddress:
-        description: MAC address for the endpoint on this network"
-        type: "string"
-        example: "02:42:ac:11:00:04"
-      DriverOpts:
-        description: "DriverOpts is a mapping of driver options and values. These options are passed directly to the driver and are driver specific"
-        type: "object"
-        x-nullable: true
-        additionalProperties:
-          type: "string"
-        example:
-          com.example.some-label: "some-value"
-          com.example.some-other-label: "some-other-value"
-
   IPAddress:
     description: Address represents an IPv4 or IPv6 IP address.
     type: "object"
@@ -1717,50 +1622,3 @@ definitions:
         type: "string"
         example: "4443"
 
-  ExecConfig:
-    description: "Exec configuration"
-    type: "object"
-    properties:
-      AttachStdin:
-        type: "boolean"
-        description: "Attach to `stdin` of the exec command."
-      AttachStdout:
-        type: "boolean"
-        description: "Attach to `stdout` of the exec command."
-      AttachStderr:
-        type: "boolean"
-        description: "Attach to `stderr` of the exec command."
-      DetachKeys:
-        type: "string"
-        description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
-      Tty:
-        type: "boolean"
-        description: "Allocate a pseudo-TTY."
-      Env:
-        description: "A list of environment variables in the form `[\"VAR=value\", ...]`."
-        type: "array"
-        items:
-          type: "string"
-      Cmd:
-        type: "array"
-        description: "Command to run, as a string or array of strings."
-        items:
-          type: "string"
-      Privileged:
-        type: "boolean"
-        description: "Runs the exec process with extended privileges."
-        default: false
-      User:
-        type: "string"
-        description: "The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`."
-    example:
-      AttachStdin: false
-      AttachStdout: true
-      AttachStderr: true
-      DetachKeys: "ctrl-p,ctrl-q"
-      Tty: false
-      Cmd:
-        - "date"
-      Env:
-        - "FOO=bar"
-        - "BAZ=quux"
