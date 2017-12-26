@@ -1,16 +1,14 @@
-package spec
+package mgr
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
-
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func setupMounts(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupMounts(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	mounts := s.Mounts
 	if c.HostConfig == nil {
 		return nil

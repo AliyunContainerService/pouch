@@ -1,15 +1,13 @@
-package spec
+package mgr
 
 import (
 	"context"
-
-	"github.com/alibaba/pouch/apis/types"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // SetupFunc defines spec setup function type.
-type SetupFunc func(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error
+type SetupFunc func(ctx context.Context, m *ContainerMeta, s *specs.Spec) error
 
 var setupFunc = []SetupFunc{
 	// process

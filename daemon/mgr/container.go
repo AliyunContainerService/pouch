@@ -12,7 +12,6 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/meta"
-	"github.com/alibaba/pouch/daemon/spec"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -44,7 +43,7 @@ type ContainerMgr interface {
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
 	// List returns the list of containers.
-	List(ctx context.Context) ([]*types.ContainerInfo, error)
+	List(ctx context.Context) ([]*ContainerMeta, error)
 
 	// CreateExec creates exec process's environment.
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
@@ -59,7 +58,7 @@ type ContainerMgr interface {
 	Rename(ctx context.Context, oldName string, newName string) error
 
 	// Get the detailed information of container
-	Get(name string) (*types.ContainerInfo, error)
+	Get(ctx context.Context, name string) (*ContainerMeta, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -114,7 +113,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 	fn := func(obj meta.Object) error {
 		containerMeta, ok := obj.(*ContainerMeta)
 		if !ok {
-			// object has not type of ContainerInfo
+			// object has not type of ContainerMeta
 			return nil
 		}
 
@@ -341,8 +340,8 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID())
 	}
 
-	for _, f := range spec.SetupFuncs() {
-		if err = f(ctx, c.meta.ToContainerInfo(), s); err != nil {
+	for _, setup := range SetupFuncs() {
+		if err = setup(ctx, c.meta, s); err != nil {
 			return err
 		}
 	}
@@ -494,8 +493,8 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 }
 
 // List returns the container's list.
-func (mgr *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, error) {
-	cis := []*types.ContainerInfo{}
+func (mgr *ContainerManager) List(ctx context.Context) ([]*ContainerMeta, error) {
+	metas := []*ContainerMeta{}
 
 	list, err := mgr.Store.List()
 	if err != nil {
@@ -503,19 +502,18 @@ func (mgr *ContainerManager) List(ctx context.Context) ([]*types.ContainerInfo, 
 	}
 
 	for _, obj := range list {
-		cm, ok := obj.(*ContainerMeta)
+		m, ok := obj.(*ContainerMeta)
 		if !ok {
 			return nil, fmt.Errorf("failed to get container list, invalid meta type")
 		}
-		containerInfo := cm.ToContainerInfo()
-		cis = append(cis, containerInfo)
+		metas = append(metas, m)
 	}
 
-	return cis, nil
+	return metas, nil
 }
 
 // Get the detailed information of container
-func (mgr *ContainerManager) Get(name string) (*types.ContainerInfo, error) {
+func (mgr *ContainerManager) Get(ctx context.Context, name string) (*ContainerMeta, error) {
 	c, err := mgr.container(name)
 	if err != nil {
 		return nil, err
@@ -524,7 +522,7 @@ func (mgr *ContainerManager) Get(name string) (*types.ContainerInfo, error) {
 	c.Lock()
 	defer c.Unlock()
 
-	return c.meta.ToContainerInfo(), nil
+	return c.meta, nil
 }
 
 // Rename renames a container
@@ -551,40 +549,6 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	c.Write(mgr.Store)
 
 	return nil
-}
-
-// containerInfo returns the 'ContainerInfo' object, the parameter 's' may be container's
-// name, id or prefix id.
-func (mgr *ContainerManager) containerInfo(s string) (*types.ContainerInfo, error) {
-	var (
-		obj meta.Object
-		err error
-	)
-
-	// name is the container's name.
-	id, ok := mgr.NameToID.Get(s).String()
-	if ok {
-		if obj, err = mgr.Store.Get(id); err != nil {
-			return nil, errors.Wrapf(err, "failed to get container info: %s", s)
-		}
-	} else {
-		// name is the container's prefix of the id.
-		objs, err := mgr.Store.GetWithPrefix(s)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get container info with prefix: %s", s)
-		}
-		if len(objs) != 1 {
-			return nil, fmt.Errorf("failed to get container info with prefix: %s, there are %d containers", s, len(objs))
-		}
-		obj = objs[0]
-	}
-
-	containerMeta, ok := obj.(*ContainerMeta)
-	if !ok {
-		return nil, fmt.Errorf("failed to get container info, invalid meta's type")
-	}
-
-	return containerMeta.ToContainerInfo(), nil
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {

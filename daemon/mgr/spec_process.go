@@ -1,4 +1,4 @@
-package spec
+package mgr
 
 import (
 	"context"
@@ -6,17 +6,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
-
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func setupCap(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupCap(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	//TODO setup capabilities
 	return nil
 }
 
-func setupProcessArgs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupProcessArgs(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	args := c.Config.Entrypoint
 	if args == nil {
 		args = []string{}
@@ -28,7 +26,7 @@ func setupProcessArgs(ctx context.Context, c *types.ContainerInfo, s *specs.Spec
 	return nil
 }
 
-func setupProcessEnv(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupProcessEnv(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	if s.Process.Env == nil {
 		s.Process.Env = c.Config.Env
 	} else {
@@ -37,12 +35,12 @@ func setupProcessEnv(ctx context.Context, c *types.ContainerInfo, s *specs.Spec)
 	return nil
 }
 
-func setupProcessCwd(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupProcessCwd(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	s.Process.Cwd = c.Config.WorkingDir
 	return nil
 }
 
-func setupProcessTTY(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) error {
+func setupProcessTTY(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	if c.Config.Tty != nil {
 		s.Process.Terminal = *c.Config.Tty
 		if s.Process.Env != nil {
@@ -54,7 +52,7 @@ func setupProcessTTY(ctx context.Context, c *types.ContainerInfo, s *specs.Spec)
 	return nil
 }
 
-func setupProcessUser(ctx context.Context, c *types.ContainerInfo, s *specs.Spec) (err error) {
+func setupProcessUser(ctx context.Context, c *ContainerMeta, s *specs.Spec) (err error) {
 	if c.Config.User != "" {
 		fields := strings.SplitN(c.Config.User, ":", 2)
 		var u, g string
