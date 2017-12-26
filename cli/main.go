@@ -26,6 +26,8 @@ func main() {
 	cli.AddCommand(base, &ImagesCommand{})
 	cli.AddCommand(base, &RmiCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
+	cli.AddCommand(base, &NetworkCommand{})
+
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
 	cli.AddCommand(base, &PauseCommand{})

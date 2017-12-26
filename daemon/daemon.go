@@ -5,15 +5,16 @@ import (
 	"path"
 	"reflect"
 
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-
 	"github.com/alibaba/pouch/apis/server"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/internal"
+	"github.com/alibaba/pouch/network/bridge"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 // Daemon refers to a daemon.
@@ -25,6 +26,7 @@ type Daemon struct {
 	systemMgr      mgr.SystemMgr
 	imageMgr       mgr.ImageMgr
 	volumeMgr      mgr.VolumeMgr
+	networkMgr     mgr.NetworkMgr
 	server         server.Server
 }
 
@@ -88,6 +90,12 @@ func (d *Daemon) Run() error {
 	}
 	d.volumeMgr = volumeMgr
 
+	networkMgr, err := internal.GenNetworkMgr(&d.config, d)
+	if err != nil {
+		return err
+	}
+	d.networkMgr = networkMgr
+
 	containerMgr, err := internal.GenContainerMgr(ctx, d)
 	if err != nil {
 		return err
@@ -100,6 +108,13 @@ func (d *Daemon) Run() error {
 		SystemMgr:    systemMgr,
 		ImageMgr:     imageMgr,
 		VolumeMgr:    volumeMgr,
+		NetworkMgr:   networkMgr,
+	}
+
+	// init base network
+	err = d.networkInit(ctx)
+	if err != nil {
+		return err
 	}
 
 	return d.server.Start()
@@ -125,6 +140,11 @@ func (d *Daemon) VolMgr() mgr.VolumeMgr {
 	return d.volumeMgr
 }
 
+// NetMgr gets manager of network.
+func (d *Daemon) NetMgr() mgr.NetworkMgr {
+	return d.networkMgr
+}
+
 // Containerd gets containerd client.
 func (d *Daemon) Containerd() *ctrd.Client {
 	return d.containerd
@@ -133,4 +153,8 @@ func (d *Daemon) Containerd() *ctrd.Client {
 // MetaStore gets store of meta.
 func (d *Daemon) MetaStore() *meta.Store {
 	return d.containerStore
+}
+
+func (d *Daemon) networkInit(ctx context.Context) error {
+	return bridge.New(ctx, d.config.NetworkConfg.BridgeConfig, d.networkMgr)
 }

@@ -681,7 +681,33 @@ paths:
           schema:
             $ref: "#/definitions/VolumeCreateConfig"
       tags: ["Volume"]
-
+  /networks/create:
+    post:
+      summary: "Create a network"
+      operationId: "NetworkCreate"
+      consumes: ["application/json"]
+      produces: ["application/json"]
+      responses:
+        201:
+          description: "The network was created successfully"
+          schema:
+            $ref: "#/definitions/NetworkCreateResponse"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/Error"
+      parameters:
+        - name: "NetworkCreateRequest"
+          in: "body"
+          required: true
+          description: "Network configuration"
+          schema:
+            $ref: "#/definitions/NetworkCreateRequest"
+      tags: ["Network"]
 definitions:
   Error:
     type: "object"
@@ -1622,3 +1648,101 @@ definitions:
         type: "string"
         example: "4443"
 
+  NetworkCreateRequest:
+    type: "object"
+    description: "contains the request for the remote API: POST /networks/create"
+    properties:
+      Name:
+        description: "Name is the name of the network."
+        type: "string"
+      NetworkCreate:
+        $ref: "#/definitions/NetworkCreate"
+
+  NetworkCreateResponse:
+    type: "object"
+    description: "contains the response for the remote API: POST /networks/create"
+    properties:
+      ID:
+        description: "ID is the id of the network."
+        type: "string"
+      Warning:
+        description: "Warning means the message of create network result."
+        type: "string"
+
+  NetworkCreate:
+      type: "object"
+      description: "is the expected body of the \"create network\" http request message"
+      properties:
+        CheckDuplicate:
+          type: "boolean"
+          description: "CheckDuplicate is used to check the network is duplicate or not."
+        Driver:
+          type: "string"
+          description: "Driver means the network's driver."
+        Scope:
+          type: "string"
+          description: "Scope means the network's scope."
+        EnableIPv6:
+          type: "boolean"
+        IPAM:
+          type: "object"
+          $ref: "#/definitions/IPAM"
+        Internal:
+          type: "boolean"
+          description: "Internal checks the network is internal network or not."
+        Attachable:
+          type: "boolean"
+          description: "Attachable means the network can be attached or not."
+        Ingress:
+          type: "boolean"
+          description: "Ingress checks the network is ingress network or not."
+        ConfigOnly:
+          type: "boolean"
+        ConfigFrom:
+          type: "object"
+          $ref: "#/definitions/ConfigReference"
+        Options:
+          type: "object"
+          additionalProperties:
+            type: "string"
+        Labels:
+          type: "object"
+          additionalProperties:
+            type: "string"
+
+  IPAM:
+    type: "object"
+    description: "represents IP Address Management"
+    properties:
+      Driver:
+        type: "string"
+      Options:
+        type: "object"
+        additionalProperties:
+          type: "string"
+      Config:
+        type: "array"
+        items:
+          $ref: '#/definitions/IPAMConfig'
+
+  IPAMConfig:
+    description: "represents IPAM configurations"
+    type: "object"
+    properties:
+      Subnet:
+        type: "string"
+      IPRange:
+        type: "string"
+      Gateway:
+        type: "string"
+      AuxAddress:
+        type: "object"
+        additionalProperties:
+          type: "string"
+
+  ConfigReference:
+    type: "object"
+    description: "specifies the source which provides a network's configuration"
+    properties:
+      Network:
+        type: "string"

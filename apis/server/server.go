@@ -23,6 +23,7 @@ type Server struct {
 	SystemMgr    mgr.SystemMgr
 	ImageMgr     mgr.ImageMgr
 	VolumeMgr    mgr.VolumeMgr
+	NetworkMgr   mgr.NetworkMgr
 	listeners    []net.Listener
 }
 
