@@ -38,6 +38,7 @@ func (suite *APIContainerDeleteSuite) TestDeleteRunningCon(c *check.C) {
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
+		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
@@ -74,6 +75,7 @@ func (suite *APIContainerDeleteSuite) TestDeletePausedCon(c *check.C) {
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
+		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
@@ -114,6 +116,7 @@ func (suite *APIContainerDeleteSuite) TestDeleteStoppedCon(c *check.C) {
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
+		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
@@ -147,6 +150,7 @@ func (suite *APIContainerDeleteSuite) TestDeleteCreatedCon(c *check.C) {
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
+		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
