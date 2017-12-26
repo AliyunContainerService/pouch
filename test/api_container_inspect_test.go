@@ -39,6 +39,7 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 
 	obj := map[string]interface{}{
 		"Image":      busyboxImage,
+		"Cmd":        [1]string{"top"},
 		"HostConfig": map[string]interface{}{},
 	}
 
