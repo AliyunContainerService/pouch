@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/alibaba/pouch/pkg/reference"
 
@@ -83,8 +82,7 @@ func (rc *RunCommand) runRun(args []string) error {
 		containerName = result.Name
 	}
 
-	var wg sync.WaitGroup
-	var waitDisplayID chan struct{}
+	wait := make(chan struct{})
 
 	if rc.attach || rc.stdin {
 		in, out, err := setRawMode(rc.stdin, false)
@@ -102,20 +100,13 @@ func (rc *RunCommand) runRun(args []string) error {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
 
-		wg.Add(2)
 		go func() {
 			io.Copy(os.Stdout, br)
-			wg.Done()
+			wait <- struct{}{}
 		}()
 		go func() {
 			io.Copy(conn, os.Stdin)
-			wg.Done()
-		}()
-	} else { // detach mode, print Container ID
-		waitDisplayID = make(chan struct{})
-		go func() {
-			defer close(waitDisplayID)
-			fmt.Fprintf(os.Stdout, "%s\n", result.ID)
+			wait <- struct{}{}
 		}()
 	}
 
@@ -126,9 +117,9 @@ func (rc *RunCommand) runRun(args []string) error {
 
 	// wait the io to finish
 	if rc.attach || rc.stdin {
-		wg.Wait()
+		<-wait
 	} else {
-		<-waitDisplayID
+		fmt.Fprintf(os.Stdout, "%s\n", result.ID)
 	}
 	return nil
 }
