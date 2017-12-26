@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"net/url"
-
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
@@ -27,40 +24,27 @@ func (suite *APIContainerInspectSuite) SetUpTest(c *check.C) {
 func (suite *APIContainerInspectSuite) TestInspectNoSuchContainer(c *check.C) {
 	resp, err := request.Get("/containers/nosuchcontainerxxx/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }
 
 // TestInspectOk tests inspecting an existing container is OK.
 func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
-	// must required
 	cname := "TestInpectOk"
-	q := url.Values{}
-	q.Add("name", cname)
 
-	obj := map[string]interface{}{
-		"Image":      busyboxImage,
-		"HostConfig": map[string]interface{}{},
-	}
+	CreateBusyboxContainerOk(c, cname)
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
+	resp, err := request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
-
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	got := types.ContainerJSON{}
-	err = json.NewDecoder(resp.Body).Decode(&got)
+	err = request.DecodeBody(&got, resp.Body)
 	c.Assert(err, check.IsNil)
 
 	c.Assert(got.Image, check.Equals, busyboxImage)
 	c.Assert(got.Name, check.Equals, cname)
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	DelContainerForceOk(c, cname)
 }
 
 // TestNonExistingContainer tests inspect a non-existing container return 404.
@@ -68,7 +52,7 @@ func (suite *APIContainerInspectSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
 	resp, err := request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }
 
 // TestRespValid tests the response of inspect is accurate.

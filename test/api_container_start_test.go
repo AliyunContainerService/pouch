@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/url"
-
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -24,47 +22,14 @@ func (suite *APIContainerStartSuite) SetUpTest(c *check.C) {
 // TestStartOk tests starting container could work.
 func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	cname := "TestStartOk"
-	q := url.Values{}
-	q.Add("name", cname)
 
-	obj := map[string]interface{}{
-		"Image":      busyboxImage,
-		"Cmd":        [1]string{"top"},
-		"HostConfig": map[string]interface{}{},
-	}
+	CreateBusyboxContainerOk(c, cname)
 
-	query := request.WithQuery(q)
-	body := request.WithJSONBody(obj)
-	resp, err := request.Post("/containers/create", query, body)
+	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 204)
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
-
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
-
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
-
-	// Comment until inspect interface returns this
-	//got := &types.ContainerJSON{}
-	//err = request.DecodeBody(got, resp.Body)
-	//c.Assert(err, check.IsNil)
-	//c.Assert(got.State.Running, check.Equals, true)
-
-	// Need to set force=true in url.rawquery, as container's state is running
-	q = url.Values{}
-	q.Add("force", "true")
-	query = request.WithQuery(q)
-
-	resp, err = request.Delete("/containers/"+cname, query)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	DelContainerForceOk(c, cname)
 }
 
 // TestNonExistingContainer tests start a non-existing container return 404.
@@ -73,7 +38,7 @@ func (suite *APIContainerStartSuite) TestNonExistingContainer(c *check.C) {
 
 	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }
 
 // TestInvalidParam tests using invalid parameter return.
