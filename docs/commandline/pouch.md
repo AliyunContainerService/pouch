@@ -31,6 +31,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
+* [pouch run](pouch_run.md)	 - Create a new container and start it
 * [pouch start](pouch_start.md)	 - Start a created or stopped container
 * [pouch stop](pouch_stop.md)	 - Stop a running container
 * [pouch unpause](pouch_unpause.md)	 - Unpause a paused container

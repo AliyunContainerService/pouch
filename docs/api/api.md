@@ -72,7 +72,7 @@ POST /containers/create
 |---|---|---|
 |**201**|Container created successfully|[ContainerCreateResp](#containercreateresp)|
 |**400**|bad parameter|[Error](#error)|
-|**404**|no such container|[Error](#error)|
+|**404**|no such image|[Error](#error)|
 |**409**|conflict|[Error](#error)|
 |**500**|server error|[Error](#error)|
 
@@ -108,7 +108,7 @@ json :
 ```
 json :
 {
-  "message" : "No such container: c2ada9df5af8"
+  "message" : "image: xxx:latest: not found"
 }
 ```
 
@@ -131,6 +131,78 @@ GET /containers/json
 #### Produces
 
 * `application/json`
+
+
+<a name="containerexec"></a>
+### Create an exec instance
+```
+POST /containers/{id}/exec
+```
+
+
+#### Description
+Run a command inside a running container.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of container|string|
+|**Body**|**body**  <br>*required*||[ExecConfig](#execconfig)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**201**|no error|string|
+|**404**|no such container|[Error](#error)|
+|**409**|container is paused|[Error](#error)|
+|**500**|Server error|[Error](#error)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Exec
+
+
+#### Example HTTP request
+
+##### Request body
+```
+json :
+{
+  "AttachStdin" : false,
+  "AttachStdout" : true,
+  "AttachStderr" : true,
+  "DetachKeys" : "ctrl-p,ctrl-q",
+  "Tty" : false,
+  "Cmd" : [ "date" ],
+  "Env" : [ "FOO=bar", "BAZ=quux" ]
+}
+```
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
 
 
 <a name="containerinspect"></a>
@@ -419,6 +491,57 @@ json :
   "message" : "No such container: c2ada9df5af8"
 }
 ```
+
+
+<a name="execstart"></a>
+### Start an exec instance
+```
+POST /exec/{id}/start
+```
+
+
+#### Description
+Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting the command. Otherwise, it sets up an interactive session with the command.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|Exec instance ID|string|
+|**Body**|**execStartConfig**  <br>*optional*||[execStartConfig](#execstart-execstartconfig)|
+
+<a name="execstart-execstartconfig"></a>
+**execStartConfig**
+
+|Name|Description|Schema|
+|---|---|---|
+|**Detach**  <br>*optional*|Detach from the command.|boolean|
+|**Tty**  <br>*optional*|Allocate a pseudo-TTY.|boolean|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|No error|No Content|
+|**404**|No such exec instance|[Error](#error)|
+|**409**|Container is stopped or paused|[Error](#error)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/vnd.raw-stream`
+
+
+#### Tags
+
+* Exec
 
 
 <a name="images-create-post"></a>
@@ -711,7 +834,7 @@ json :
     "CreatedAt" : "2017-07-19T12:00:26Z",
     "Name" : "tardis",
     "Driver" : "local",
-    "Mountpoint" : "/var/lib/docker/volumes/tardis",
+    "Mountpoint" : "/var/lib/pouch/volumes/tardis",
     "Labels" : {
       "com.example.some-label" : "some-value",
       "com.example.some-other-label" : "some-other-value"
@@ -821,7 +944,7 @@ Configuration for a container that is portable between hosts
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
@@ -865,7 +988,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
@@ -1011,6 +1134,24 @@ Configuration for a network endpoint.
 |Name|Schema|
 |---|---|
 |**message**  <br>*optional*|string|
+
+
+<a name="execconfig"></a>
+### ExecConfig
+Exec configuration
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**AttachStderr**  <br>*optional*|Attach to `stderr` of the exec command.|boolean|
+|**AttachStdin**  <br>*optional*|Attach to `stdin` of the exec command.|boolean|
+|**AttachStdout**  <br>*optional*|Attach to `stdout` of the exec command.|boolean|
+|**Cmd**  <br>*optional*|Command to run, as a string or array of strings.|< string > array|
+|**DetachKeys**  <br>*optional*|Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string|
+|**Env**  <br>*optional*|A list of environment variables in the form `["VAR=value", ...]`.|< string > array|
+|**Privileged**  <br>*optional*|Runs the exec process with extended privileges.  <br>**Default** : `false`|boolean|
+|**Tty**  <br>*optional*|Allocate a pseudo-TTY.|boolean|
+|**User**  <br>*optional*|The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`.|string|
 
 
 <a name="execcreateconfig"></a>
