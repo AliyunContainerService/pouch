@@ -19,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	runtimeRoot = "/run"
+)
+
 type containerPack struct {
 	id        string
 	ch        chan *Message
@@ -317,7 +321,8 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	options := []containerd.NewContainerOpts{
 		containerd.WithSpec(container.Spec, specOptions...),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
-			Runtime: container.Runtime,
+			Runtime:     container.Runtime,
+			RuntimeRoot: runtimeRoot,
 		}),
 	}
 
