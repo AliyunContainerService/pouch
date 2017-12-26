@@ -199,22 +199,22 @@ func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	cis, err := s.ContainerMgr.List(ctx)
+	metas, err := s.ContainerMgr.List(ctx)
 	if err != nil {
 		return err
 	}
 
-	containerList := make([]types.Container, 0, len(cis))
-	for _, ci := range cis {
+	containerList := make([]types.Container, 0, len(metas))
+	for _, m := range metas {
 		container := types.Container{
-			ID:         ci.ID,
-			Names:      []string{ci.Name},
-			Status:     string(ci.State.Status),
-			Image:      ci.Config.Image,
-			Command:    strings.Join(ci.Config.Cmd, " "),
-			Created:    ci.State.StartedAt,
-			Labels:     ci.Config.Labels,
-			HostConfig: ci.HostConfig,
+			ID:         m.ID,
+			Names:      []string{m.Name},
+			Status:     string(m.State.Status),
+			Image:      m.Config.Image,
+			Command:    strings.Join(m.Config.Cmd, " "),
+			Created:    m.State.StartedAt,
+			Labels:     m.Config.Labels,
+			HostConfig: m.HostConfig,
 		}
 		containerList = append(containerList, container)
 	}
@@ -224,17 +224,17 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 
 func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
-	containerInfo, err := s.ContainerMgr.Get(name)
+	meta, err := s.ContainerMgr.Get(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	container := types.ContainerJSON{
-		ID:      containerInfo.ID,
-		Name:    containerInfo.Name,
-		Image:   containerInfo.Config.Image,
-		Created: containerInfo.State.StartedAt,
-		State:   &types.ContainerState{Pid: containerInfo.State.Pid},
+		ID:      meta.ID,
+		Name:    meta.Name,
+		Image:   meta.Config.Image,
+		Created: meta.State.StartedAt,
+		State:   &types.ContainerState{Pid: meta.State.Pid},
 	}
 	return EncodeResponse(rw, http.StatusOK, container)
 }

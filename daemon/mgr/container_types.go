@@ -36,27 +36,94 @@ type ContainerRemoveOption struct {
 	Link   bool
 }
 
+// ContainerMeta represents the container's meta data.
+type ContainerMeta struct {
+
+	// app armor profile
+	AppArmorProfile string `json:"AppArmorProfile,omitempty"`
+
+	// The arguments to the command being run
+	Args []string `json:"Args"`
+
+	// config
+	Config *types.ContainerConfig `json:"Config,omitempty"`
+
+	// The time the container was created
+	Created string `json:"Created,omitempty"`
+
+	// driver
+	Driver string `json:"Driver,omitempty"`
+
+	// exec ids
+	ExecIds string `json:"ExecIDs,omitempty"`
+
+	// graph driver
+	GraphDriver *types.GraphDriverData `json:"GraphDriver,omitempty"`
+
+	// host config
+	HostConfig *types.HostConfig `json:"HostConfig,omitempty"`
+
+	// hostname path
+	HostnamePath string `json:"HostnamePath,omitempty"`
+
+	// hosts path
+	HostsPath string `json:"HostsPath,omitempty"`
+
+	// The ID of the container
+	ID string `json:"Id,omitempty"`
+
+	// The container's image
+	Image string `json:"Image,omitempty"`
+
+	// log path
+	LogPath string `json:"LogPath,omitempty"`
+
+	// mount label
+	MountLabel string `json:"MountLabel,omitempty"`
+
+	// mounts
+	Mounts []*types.MountPoint `json:"Mounts"`
+
+	// name
+	Name string `json:"Name,omitempty"`
+
+	// network settings
+	NetworkSettings *types.NetworkSettings `json:"NetworkSettings,omitempty"`
+
+	Node interface{} `json:"Node,omitempty"`
+
+	// The path to the command being run
+	Path string `json:"Path,omitempty"`
+
+	// process label
+	ProcessLabel string `json:"ProcessLabel,omitempty"`
+
+	// resolv conf path
+	ResolvConfPath string `json:"ResolvConfPath,omitempty"`
+
+	// restart count
+	RestartCount int64 `json:"RestartCount,omitempty"`
+
+	// The total size of all the files in this container.
+	SizeRootFs int64 `json:"SizeRootFs,omitempty"`
+
+	// The size of files that have been created or changed by this container.
+	SizeRw int64 `json:"SizeRw,omitempty"`
+
+	// state
+	State *types.ContainerState `json:"State,omitempty"`
+}
+
+// Key returns container's id.
+func (m *ContainerMeta) Key() string {
+	return m.ID
+}
+
 // Container represents the container instance in runtime.
 type Container struct {
 	sync.Mutex
 	meta       *ContainerMeta
 	DetachKeys string
-}
-
-// ContainerMeta wraps ContainerInfo and implements meta.Object interface.
-// ContainerInfo is a struct only used in both client side and API server side.
-// When request flow enters daemon's mgr side, all codes uses ContainerMeta to represent a container.
-type ContainerMeta types.ContainerInfo
-
-// Key returns container's id.
-func (cm *ContainerMeta) Key() string {
-	return cm.ID
-}
-
-// ToContainerInfo converts ContainerMeta to ContainerInfo
-func (cm *ContainerMeta) ToContainerInfo() *types.ContainerInfo {
-	containerInfo := types.ContainerInfo(*cm)
-	return &containerInfo
 }
 
 // Key returns container's id.
