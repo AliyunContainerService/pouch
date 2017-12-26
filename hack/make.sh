@@ -48,14 +48,15 @@ function main ()
 	pouchd > $TMP/log 2>&1 &
 
 	# wait until pouch daemon is ready
+	daemon_timeout_time=30
 	while true;
 	do
-		COUNT=`ps -ef | grep pouchd | grep -v grep | wc -l`
-		if [ $COUNT = 0 ];then
-			echo "failed to start pouch daemon."
-			return 1
-		elif [ -S /var/run/pouchd.sock ];then
+		if [ -S /var/run/pouchd.sock ];then
+			echo "Succeed to start pouch daemon"
 			break
+		elif (( $((daemon_timeout_time--)) == 0 ));then
+			echo "Failed to start pouch daemon"
+			return 1
 		else
 			sleep 1
 		fi
