@@ -22,7 +22,6 @@ func (suite *APIImageDeleteSuite) SetUpTest(c *check.C) {
 // TestDeleteNonExisting tests deleting a non-existing image return error.
 func (suite *APIImageDeleteSuite) TestDeleteNonExisting(c *check.C) {
 	img := "TestDeleteNonExisting"
-	resp, err := request.Delete("/images/" + img)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Delete(c, "/images/"+img)
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }

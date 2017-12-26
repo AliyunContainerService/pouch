@@ -34,34 +34,29 @@ func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err = request.Get(c, "/containers/"+cname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/start")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Post(c, "/containers/"+cname+"/stop")
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+cname)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestNonExistingContainer tests stop a non-existing container return 404.
 func (suite *APIContainerStopSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
-	resp, err := request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Post(c, "/containers/"+cname+"/stop")
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
 
 // TestInvalidParam tests using invalid parameter return.

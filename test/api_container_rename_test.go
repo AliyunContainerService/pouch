@@ -36,22 +36,21 @@ func (suite *APIContainerRenameSuite) TestRenameOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	resp, err := request.Post("/containers/create", request.WithQuery(q),
-		request.WithJSONBody(obj), request.WithHeader("Content-Type", "application/json"))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
 
-	resp, err = request.Get("/containers/" + oldname + "/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
+
+	resp, err = request.Get(c, "/containers/"+oldname+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 
 	newq := url.Values{}
 	newq.Add("name", newname)
-	resp, err = request.Post("/containers/"+oldname+"/rename", request.WithQuery(newq))
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	query = request.WithQuery(newq)
+	resp, err = request.Post(c, "/containers/"+oldname+"/rename", query)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 
-	resp, err = request.Delete("/containers/" + newname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+newname)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }

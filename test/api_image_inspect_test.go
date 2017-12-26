@@ -21,8 +21,6 @@ func (suite *APIImageInspectSuite) SetUpTest(c *check.C) {
 
 // TestImageInspectOk tests inspecting images is OK.
 func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
-	path := "/images/" + busyboxImage + "/json"
-	resp, err := request.Get(path)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Get(c, "/images/"+busyboxImage+"/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 }

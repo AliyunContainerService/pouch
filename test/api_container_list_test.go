@@ -21,7 +21,6 @@ func (suite *APIContainerListSuite) SetUpTest(c *check.C) {
 
 // TestListOk test api is ok with default parameters.
 func (suite *APIContainerListSuite) TestListOk(c *check.C) {
-	resp, err := request.Get("/containers/json")
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	resp, err := request.Get(c, "/containers/json")
+	c.Assert(resp.StatusCode, check.Equals, 200, err.Error())
 }

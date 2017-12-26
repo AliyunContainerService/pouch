@@ -34,22 +34,18 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	path := "/containers/create"
 	query := request.WithQuery(q)
 	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, query, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
 	// Decode response
 	got := types.ContainerCreateResp{}
-	request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	c.Assert(got.ID, check.NotNil)
+	request.DecodeToStruct(c, resp.Body, &got)
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+cname)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestNilName tests creating container without giving name should succeed.
@@ -59,22 +55,18 @@ func (suite *APIContainerCreateSuite) TestNilName(c *check.C) {
 		"HostConfig": map[string]interface{}{},
 	}
 
-	path := "/containers/create"
 	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	resp, err := request.Post(c, "/containers/create", body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
 	// Decode response
 	got := types.ContainerCreateResp{}
-	request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
+	request.DecodeToStruct(c, resp.Body, &got)
 	c.Assert(got.ID, check.NotNil)
 	c.Assert(got.Name, check.NotNil)
 
-	resp, err = request.Delete("/containers/" + got.Name)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+got.Name)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestDupContainer tests create a duplicate container, return 409.
@@ -86,22 +78,19 @@ func (suite *APIContainerCreateSuite) TestDupContainer(c *check.C) {
 		"Image":      busyboxImage,
 		"HostConfig": map[string]interface{}{},
 	}
-	path := "/containers/create"
+
 	query := request.WithQuery(q)
 	body := request.WithJSONBody(obj)
 
-	resp, err := request.Post(path, query, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 201, err.Error())
 
 	// Create a duplicate container
-	resp, err = request.Post(path, query, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 409)
+	resp, err = request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 409, err.Error())
 
-	resp, err = request.Delete("/containers/" + cname)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	resp, err = request.Delete(c, "/containers/"+cname)
+	c.Assert(resp.StatusCode, check.Equals, 204, err.Error())
 }
 
 // TestBadParam tests using bad parameter return 400.
@@ -118,11 +107,9 @@ func (suite *APIContainerCreateSuite) TestNonExistingImg(c *check.C) {
 		"Image":      "non-existing",
 		"HostConfig": map[string]interface{}{},
 	}
-	path := "/containers/create"
 	query := request.WithQuery(q)
 	body := request.WithJSONBody(obj)
 
-	resp, err := request.Post(path, query, body)
-	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	resp, err := request.Post(c, "/containers/create", query, body)
+	c.Assert(resp.StatusCode, check.Equals, 404, err.Error())
 }
