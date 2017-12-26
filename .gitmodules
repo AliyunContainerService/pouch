@@ -1,0 +1,3 @@
+[submodule "extra/libnetwork"]
+	path = extra/libnetwork
+	url = https://github.com/docker/libnetwork
