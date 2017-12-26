@@ -6,13 +6,13 @@ import (
 	"reflect"
 
 	"github.com/alibaba/pouch/apis/server"
+	"github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/bridge"
-	"github.com/alibaba/pouch/cri"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -28,8 +28,9 @@ type Daemon struct {
 	imageMgr       mgr.ImageMgr
 	volumeMgr      mgr.VolumeMgr
 	networkMgr     mgr.NetworkMgr
-	criManager 	   *cri.CRIManager
+	criMgr         mgr.CriMgr
 	server         server.Server
+	criService     *cri.Service
 }
 
 // router represents the router of daemon.
@@ -104,11 +105,16 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
-	criManager, err := internal.GenCRIManager(d)
+	criMgr, err := internal.GenCriMgr(d)
 	if err != nil {
 		return err
 	}
-	d.criManager = criManager
+	d.criMgr = criMgr
+
+	d.criService, err = cri.NewService(d.config, criMgr)
+	if err != nil {
+		return err
+	}
 
 	d.server = server.Server{
 		Config:       d.config,
@@ -128,15 +134,15 @@ func (d *Daemon) Run() error {
 	httpServerCloseCh := make(chan struct{})
 	go func() {
 		if err := d.server.Start(); err != nil {
-			logrus.Errorf("Failed to start http server: %v", err)
+			logrus.Errorf("failed to start http server: %v", err)
 		}
 		close(httpServerCloseCh)
 	}()
 
 	grpcServerCloseCh := make(chan struct{})
 	go func() {
-		if err := d.criManager.Serve(); err != nil {
-			logrus.Errorf("Failed to start grpc server: %v", err)
+		if err := d.criService.Serve(); err != nil {
+			logrus.Errorf("failed to start grpc server: %v", err)
 		}
 		close(grpcServerCloseCh)
 	}()

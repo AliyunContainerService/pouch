@@ -7,7 +7,6 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
-	"github.com/alibaba/pouch/cri"
 )
 
 // DaemonProvider provides resources which are needed by container manager and are from daemon.
@@ -46,7 +45,7 @@ func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error)
 	return mgr.NewNetworkManager(cfg, d.MetaStore())
 }
 
-// GenCRIManager generates a CRIMgr instance according to config cfg.
-func GenCRIManager(d DaemonProvider) (*cri.CRIManager, error) {
-	return cri.NewCRIManager(d.Config(), d.CtrMgr(), d.ImgMgr())
+// GenCriMgr generates a CriMgr instance.
+func GenCriMgr(d DaemonProvider) (mgr.CriMgr, error) {
+	return mgr.NewCriManager(d.CtrMgr(), d.ImgMgr())
 }
