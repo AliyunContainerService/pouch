@@ -30,9 +30,7 @@ paths:
             type: "string"
             example: "OK"
         500:
-          description: "server error"
-          schema:
-            $ref: '#/definitions/Error'
+          $ref: "#/responses/500ErrorResponse"
 
   /version:
     get:
@@ -44,9 +42,7 @@ paths:
             $ref: '#/definitions/SystemVersion'
           description: "no error"
         500:
-          description: "server error"
-          schema:
-            $ref: '#/definitions/Error'
+          $ref: "#/responses/500ErrorResponse"
 
   /info:
     get:
@@ -58,9 +54,7 @@ paths:
             $ref: '#/definitions/SystemInfo'
           description: "no error"
         500:
-          schema:
-            $ref: '#/definitions/Error'
-          description: "server error"
+          $ref: "#/responses/500ErrorResponse"
 
   /images/create:
     post:
@@ -78,9 +72,7 @@ paths:
             $ref: '#/definitions/Error'
           description: "image not found"
         500:
-          schema:
-            $ref: '#/definitions/Error'
-          description: "server error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "fromImage"
           in: "query"
@@ -109,7 +101,7 @@ paths:
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
 
-  /images/{name}/json:
+  /images/{imageid}/json:
     get:
       summary: "Inspect a image"
       description: "Return the information about image"
@@ -137,15 +129,9 @@ paths:
             application/json:
               message: "No such image: e216a057b1cb"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
-        - name: "name"
-          in: "path"
-          description: "Image name or id"
-          type: "string"
-          required: true
+        - $ref: "#/parameters/imageid"
 
   /images/json:
     get:
@@ -191,9 +177,7 @@ paths:
                 Labels: {}
                 Containers: 5
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "all"
           in: "query"
@@ -228,20 +212,14 @@ paths:
             items:
               $ref: "#/definitions/SearchResultItem"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
 
-  /images/{name}:
+  /images/{imageid}:
     delete:
       summary: "Remove an image"
       description: "Remove an image by reference."
       parameters:
-        - name: name
-          in: path
-          required: true
-          description: "Image reference"
-          type: string
+        - $ref: "#/parameters/imageid"
       responses:
         204:
           description: "No error"
@@ -253,9 +231,7 @@ paths:
             application/json:
               message: "No such image: c2ada9df5af8"
         500:
-          schema:
-            $ref: "#/definitions/Error"
-          description: "Server deletes an image error"
+          $ref: "#/responses/500ErrorResponse"
 
   /containers/create:
     post:
@@ -301,9 +277,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/json:
@@ -319,22 +293,11 @@ paths:
           schema:
             $ref: "#/definitions/ContainerJSON"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
         - name: "size"
           in: "query"
           type: "boolean"
@@ -354,20 +317,14 @@ paths:
             items:
               $ref: "#/definitions/Container"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
 
   /containers/{id}/rename:
     post:
       summary: "Rename a container"
       operationId: "ContainerRename"
       parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
         - name: "name"
           in: "query"
           required: true
@@ -377,20 +334,13 @@ paths:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         409:
           description: "name already in use"
           schema:
             $ref: "#/definitions/Error"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/start:
@@ -398,11 +348,7 @@ paths:
       summary: "Start a container"
       operationId: "ContainerStart"
       parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
         - name: "detachKeys"
           in: "query"
           description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
@@ -411,16 +357,9 @@ paths:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/stop:
@@ -428,11 +367,7 @@ paths:
       summary: "Stop a container"
       operationId: "ContainerStop"
       parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
         - name: "t"
           in: "query"
           description: "Number of seconds to wait before killing the container"
@@ -441,16 +376,9 @@ paths:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/pause:
@@ -458,25 +386,14 @@ paths:
       summary: "Pause a container"
       operationId: "ContainerPause"
       parameters:
-        - name : "id"
-          in : "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
       responses:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/unpause:
@@ -484,37 +401,22 @@ paths:
       summary: "Unpause a container"
       operationId: "ContainerUnpause"
       parameters:
-        - name : "id"
-          in : "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
       responses:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
-  /containers/{name}:
+  /containers/{id}:
     delete:
       summary: "Remove one container"
       operationId: "ContainerRemove"
       parameters:
-        - name: "name"
-          in: "path"
-          required: true
-          description: "ID or name of the container"
-          type: "string"
+        - $ref: "#/parameters/id"
         - name: "force"
           in: "query"
           description: "If the container is running, force query is used to kill it and remove it forcefully."
@@ -523,16 +425,9 @@ paths:
         204:
           description: "no error"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/exec:
@@ -550,30 +445,19 @@ paths:
           schema:
             $ref: "#/definitions/ExecCreateResp"
         404:
-          description: "no such container"
-          schema:
-            $ref: "#/definitions/Error"
-          examples:
-            application/json:
-              message: "No such container: c2ada9df5af8"
+          $ref: "#/responses/404ErrorResponse"
         409:
           description: "container is paused"
           schema:
             $ref: "#/definitions/Error"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
+        - $ref: "#/parameters/id"
         - name: "body"
           in: "body"
           schema:
             $ref: "#/definitions/ExecCreateConfig"
-          required: true
-        - name: "id"
-          in: "path"
-          description: "ID or name of container"
-          type: "string"
           required: true
       tags: ["Exec"]
 
@@ -636,9 +520,7 @@ paths:
                     type: "tmpfs"
               Warnings: []
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "filters"
           in: "query"
@@ -670,9 +552,7 @@ paths:
           schema:
             $ref: "#/definitions/VolumeInfo"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "body"
           in: "body"
@@ -681,6 +561,7 @@ paths:
           schema:
             $ref: "#/definitions/VolumeCreateConfig"
       tags: ["Volume"]
+
   /networks/create:
     post:
       summary: "Create a network"
@@ -697,9 +578,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/definitions/Error"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "NetworkCreateRequest"
           in: "body"
@@ -708,6 +587,7 @@ paths:
           schema:
             $ref: "#/definitions/NetworkCreateRequest"
       tags: ["Network"]
+
 definitions:
   Error:
     type: "object"
@@ -1746,3 +1626,27 @@ definitions:
     properties:
       Network:
         type: "string"
+
+parameters:
+  id:
+    name: id
+    in: path
+    required: true
+    description: ID or name of the container
+    type: string
+  imageid:
+    name: imageid
+    in: path
+    required: true
+    description: Image name or id
+    type: string
+
+responses:
+  404ErrorResponse:
+    description: An unexpected 404 error occured.
+    schema:
+      $ref: "#/definitions/Error"
+  500ErrorResponse:
+    description: An unexpected server error occured.
+    schema:
+      $ref: "#/definitions/Error"
