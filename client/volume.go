@@ -3,8 +3,8 @@ package client
 import "github.com/alibaba/pouch/apis/types"
 
 // VolumeCreate creates a volume
-func (client *APIClient) VolumeCreate(req *types.VolumeCreateRequest) (*types.VolumeInfo, error) {
-	resp, err := client.post("/volumes/create", nil, req)
+func (client *APIClient) VolumeCreate(config *types.VolumeCreateConfig) (*types.VolumeInfo, error) {
+	resp, err := client.post("/volumes/create", nil, config)
 	if err != nil {
 		return nil, err
 	}

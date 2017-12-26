@@ -12,7 +12,9 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ContainerJSON container JSON
+// ContainerJSON an array of ContainerJSON contains response of Engine API:
+// GET "/containers/json"
+//
 // swagger:model ContainerJSON
 
 type ContainerJSON struct {

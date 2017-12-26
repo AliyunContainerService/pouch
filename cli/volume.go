@@ -90,7 +90,7 @@ func (v *VolumeCreateCommand) runVolumeCreate(args []string) error {
 }
 
 func (v *VolumeCreateCommand) volumeCreate() error {
-	volumeReq := &types.VolumeCreateRequest{
+	volumeReq := &types.VolumeCreateConfig{
 		Driver:     v.driver,
 		Name:       v.name,
 		DriverOpts: map[string]string{},
@@ -111,14 +111,14 @@ func (v *VolumeCreateCommand) volumeCreate() error {
 	return nil
 }
 
-func parseVolume(volumeReq *types.VolumeCreateRequest, v *VolumeCreateCommand) error {
+func parseVolume(volumeCreateConfig *types.VolumeCreateConfig, v *VolumeCreateCommand) error {
 	// analyze labels.
 	for _, label := range v.labels {
 		l := strings.Split(label, "=")
 		if len(label) != 2 {
 			return fmt.Errorf("unknown label %s: label format must be key=value", label)
 		}
-		volumeReq.Labels[l[0]] = l[1]
+		volumeCreateConfig.Labels[l[0]] = l[1]
 	}
 
 	// analyze options.
@@ -127,7 +127,7 @@ func parseVolume(volumeReq *types.VolumeCreateRequest, v *VolumeCreateCommand) e
 		if len(opt) != 2 {
 			return fmt.Errorf("unknown option %s: option format must be key=value", option)
 		}
-		volumeReq.DriverOpts[opt[0]] = opt[1]
+		volumeCreateConfig.DriverOpts[opt[0]] = opt[1]
 	}
 
 	// analyze selectors.
@@ -136,7 +136,7 @@ func parseVolume(volumeReq *types.VolumeCreateRequest, v *VolumeCreateCommand) e
 		if len(s) != 2 {
 			return fmt.Errorf("unknown selector %s: selector format must be key=value", selector)
 		}
-		volumeReq.DriverOpts["selector."+s[0]] = s[1]
+		volumeCreateConfig.DriverOpts["selector."+s[0]] = s[1]
 	}
 	return nil
 }

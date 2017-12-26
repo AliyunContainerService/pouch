@@ -12,10 +12,10 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// VolumeConfig config used to create a volume
-// swagger:model VolumeConfig
+// VolumeCreateConfig config used to create a volume
+// swagger:model VolumeCreateConfig
 
-type VolumeConfig struct {
+type VolumeCreateConfig struct {
 
 	// Name of the volume driver to use.
 	Driver string `json:"Driver,omitempty"`
@@ -30,16 +30,16 @@ type VolumeConfig struct {
 	Name string `json:"Name,omitempty"`
 }
 
-/* polymorph VolumeConfig Driver false */
+/* polymorph VolumeCreateConfig Driver false */
 
-/* polymorph VolumeConfig DriverOpts false */
+/* polymorph VolumeCreateConfig DriverOpts false */
 
-/* polymorph VolumeConfig Labels false */
+/* polymorph VolumeCreateConfig Labels false */
 
-/* polymorph VolumeConfig Name false */
+/* polymorph VolumeCreateConfig Name false */
 
-// Validate validates this volume config
-func (m *VolumeConfig) Validate(formats strfmt.Registry) error {
+// Validate validates this volume create config
+func (m *VolumeCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if len(res) > 0 {
@@ -49,7 +49,7 @@ func (m *VolumeConfig) Validate(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *VolumeConfig) MarshalBinary() ([]byte, error) {
+func (m *VolumeCreateConfig) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -57,8 +57,8 @@ func (m *VolumeConfig) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *VolumeConfig) UnmarshalBinary(b []byte) error {
-	var res VolumeConfig
+func (m *VolumeCreateConfig) UnmarshalBinary(b []byte) error {
+	var res VolumeCreateConfig
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

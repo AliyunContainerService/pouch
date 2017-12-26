@@ -20,37 +20,48 @@ type EndpointSettings struct {
 	// aliases
 	Aliases []string `json:"Aliases"`
 
-	// DriverOpts is a mapping of driver options and values. These options are passed directly to the driver and are driver specific
+	// DriverOpts is a mapping of driver options and values. These options
+	// are passed directly to the driver and are driver specific.
+	//
 	DriverOpts map[string]string `json:"DriverOpts,omitempty"`
 
-	// Unique ID for the service endpoint in a Sandbox
+	// Unique ID for the service endpoint in a Sandbox.
+	//
 	EndpointID string `json:"EndpointID,omitempty"`
 
-	// Gateway address for this network
+	// Gateway address for this network.
+	//
 	Gateway string `json:"Gateway,omitempty"`
 
-	// Global IPv6 address
+	// Global IPv6 address.
+	//
 	GlobalIPV6Address string `json:"GlobalIPv6Address,omitempty"`
 
-	// Mask length of the global IPv6 address
+	// Mask length of the global IPv6 address.
+	//
 	GlobalIPV6PrefixLen int64 `json:"GlobalIPv6PrefixLen,omitempty"`
 
-	// IPv4 address
+	// IPv4 address.
+	//
 	IPAddress string `json:"IPAddress,omitempty"`
 
-	// Mask length of the IPv4 address
+	// Mask length of the IPv4 address.
+	//
 	IPPrefixLen int64 `json:"IPPrefixLen,omitempty"`
 
-	// IPv6 gateway address
+	// IPv6 gateway address.
+	//
 	IPV6Gateway string `json:"IPv6Gateway,omitempty"`
 
 	// links
 	Links []string `json:"Links"`
 
-	// MAC address for the endpoint on this network"
+	// MAC address for the endpoint on this network.
+	//
 	MacAddress string `json:"MacAddress,omitempty"`
 
-	// Unique ID of the network."
+	// Unique ID of the network.
+	//
 	NetworkID string `json:"NetworkID,omitempty"`
 }
 
