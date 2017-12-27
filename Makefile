@@ -2,8 +2,6 @@
 GOBUILD=go build
 GOCLEAN=go clean
 GOTEST=go test
-ORIG_GOPATH=$(shell go env GOPATH)
-GOPATH=$(ORIG_GOPATH):$(ORIG_GOPATH)/src/github.com/docker/libnetwork/Godeps/_workspace
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//')
 
 # Binary name of CLI and Daemon
@@ -14,28 +12,26 @@ CLI_BINARY_NAME=pouch
 DESTDIR=/usr/local
 
 .PHONY: build
-build: pre server client
+build: server client
 
 .PHONY: pre
 pre:
-	@ git submodule update --init
-	@ mkdir -p $(ORIG_GOPATH)/src/github.com/docker
-	@ - [ -L $(ORIG_GOPATH)/src/github.com/docker/libnetwork ] && rm -f $(ORIG_GOPATH)/src/github.com/docker/libnetwork
-	@ - ln -s $(shell pwd)/extra/libnetwork $(ORIG_GOPATH)/src/github.com/docker/libnetwork
+	@./hack/build pre
 
 .PHONY: server
-server: modules
-	GOOS=linux $(GOBUILD) -o $(BINARY_NAME)
+server: pre modules
+	@./hack/build server
 
-.PHONY: client
+.PHONY: pre client
 client:
-	$(GOBUILD) -o $(CLI_BINARY_NAME) github.com/alibaba/pouch/cli
+	@./hack/build client
 
 .PHONY: clean
 clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 	rm -f $(CLI_BINARY_NAME)
+	./hack/build clean
 	./hack/module --clean
 
 .PHONY: check
@@ -59,19 +55,12 @@ lint: ## run go lint
 .PHONY: vet
 vet: # run go vet
 	@echo $@
-	@test -z "$$(go vet ${GOPACKAGES} 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v '(exit status 1)' | tee /dev/stderr)"
+	@test -z "$$(./hack/build vet)"
 
 .PHONY: unit-test
 unit-test: pre ## run go test
 	@echo $@
-	@for d in $$(go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra'); \
-	do \
-		go test -coverprofile=profile.out -covermode=atomic $${d} ; \
-		if [ -f profile.out ] ; then \
-			cat profile.out >> coverage.txt ;\
-			rm profile.out >/dev/null 2>&1 ; \
-		fi \
-	done
+	@./hack/build unit-test
 
 .PHONY: validate-swagger
 validate-swagger: ## run swagger validate
@@ -83,7 +72,7 @@ modules:
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/local
-	
+
 # build binaries
 # install them to /usr/local/bin/
 # remove binaries
