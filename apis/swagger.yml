@@ -220,6 +220,11 @@ paths:
       description: "Remove an image by reference."
       parameters:
         - $ref: "#/parameters/imageid"
+        - name: "force"
+          in: "query"
+          description: "Remove the image even if it is being used"
+          type: "boolean"
+          default: false
       responses:
         204:
           description: "No error"

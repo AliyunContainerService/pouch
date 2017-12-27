@@ -7,7 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rmiDescription = "Remove one or more images by reference"
+var rmiDescription = "Remove one or more images by reference." +
+	"When the image is being used by a container, you must specify -f to delete it." +
+	"But it is strongly discouraged, because the container will be in abnormal status."
 
 // RmiCommand use to implement 'rmi' command, it remove one or more images by reference
 type RmiCommand struct {
@@ -57,6 +59,11 @@ func (rmi *RmiCommand) runRmi(args []string) error {
 
 // rmiExample shows examples in rmi command, and is used in auto-generated cli docs.
 func rmiExample() string {
-	return `$ pouch rmi docker.io/library/busybox:latest
-docker.io/library/busybox:latest`
+	return `$ pouch rmi registry.hub.docker.com/library/busybox:latest
+registry.hub.docker.com/library/busybox:latest
+$ pouch create --name test registry.hub.docker.com/library/busybox:latest
+container ID: e5952417f9ee94621bbeaec532be1803ae2dedeb11a80f578a6d621e04a95afd, name: test
+$ pouch rmi registry.hub.docker.com/library/busybox:latest
+Error: failed to remove image: {"message":"Unable to remove the image \"registry.hub.docker.com/library/busybox:latest\" (must force) - container e5952417f9ee94621bbeaec532be1803ae2dedeb11a80f578a6d621e04a95afd is using this image"}
+`
 }

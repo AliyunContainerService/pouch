@@ -199,7 +199,9 @@ func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	metas, err := s.ContainerMgr.List(ctx)
+	metas, err := s.ContainerMgr.List(ctx, func(meta *mgr.ContainerMeta) bool {
+		return true
+	})
 	if err != nil {
 		return err
 	}

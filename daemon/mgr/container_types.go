@@ -13,6 +13,10 @@ const (
 	DefaultStopTimeout = 10
 )
 
+// ContainerFilter defines a function to filter
+// container in the store.
+type ContainerFilter func(*ContainerMeta) bool
+
 type containerExecConfig struct {
 	types.ExecCreateConfig
 

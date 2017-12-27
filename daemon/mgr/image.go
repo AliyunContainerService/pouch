@@ -33,7 +33,7 @@ type ImageMgr interface {
 	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
 
 	// RemoveImage deletes an image by reference.
-	RemoveImage(ctx context.Context, name string, option *ImageRemoveOption) error
+	RemoveImage(ctx context.Context, image *types.ImageInfo, option *ImageRemoveOption) error
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -129,12 +129,7 @@ func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.I
 }
 
 // RemoveImage deletes an image by reference.
-func (mgr *ImageManager) RemoveImage(ctx context.Context, name string, option *ImageRemoveOption) error {
-	image, err := mgr.cache.get(name)
-	if err != nil {
-		return err
-	}
-
+func (mgr *ImageManager) RemoveImage(ctx context.Context, image *types.ImageInfo, option *ImageRemoveOption) error {
 	if err := mgr.client.RemoveImage(ctx, image.Name); err != nil {
 		return err
 	}
