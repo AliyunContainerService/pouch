@@ -24,7 +24,8 @@ func (suite *APIImageCreateSuite) SetUpTest(c *check.C) {
 // TestImageCreateOk tests creating an image is OK.
 func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
-	q.Add("fromImage", busyboxImage)
+	q.Add("fromImage", "registry.hub.docker.com/library/busybox")
+	q.Add("tag", "latest")
 	path := "/images/create"
 	query := request.WithQuery(q)
 	resp, err := request.Post(path, query)
