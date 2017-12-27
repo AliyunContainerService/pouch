@@ -41,6 +41,40 @@ func (suite *APIContainerStartSuite) TestNonExistingContainer(c *check.C) {
 	CheckRespStatus(c, resp, 404)
 }
 
+// TestStartStoppedContainer tests start a contain in stopped state is OK.
+func (suite *APIContainerStartSuite) TestStartStoppedContainer(c *check.C) {
+	cname := "TestStartStoppedContainer"
+
+	CreateBusyboxContainerOk(c, cname)
+
+	StartContainerOk(c, cname)
+
+	StopContainerOk(c, cname)
+
+	resp, err := request.Post("/containers/" + cname + "/start")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+
+	DelContainerForceOk(c, cname)
+}
+
+// TestStartPausedContainer tests start a contain in paused state will fail.
+func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
+	cname := "TestStartPausedContainer"
+
+	CreateBusyboxContainerOk(c, cname)
+
+	StartContainerOk(c, cname)
+
+	PauseContainerOk(c, cname)
+
+	resp, err := request.Post("/containers/" + cname + "/start")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 500)
+
+	DelContainerForceOk(c, cname)
+}
+
 // TestInvalidParam tests using invalid parameter return.
 func (suite *APIContainerStartSuite) TestInvalidParam(c *check.C) {
 	//TODO
