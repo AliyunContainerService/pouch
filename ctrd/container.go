@@ -326,7 +326,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		}),
 	}
 
-	// check snaphost exist or not.
+	// check snapshot exist or not.
 	if _, err := c.GetSnapshot(ctx, id); err != nil {
 		return errors.Wrapf(err, "failed to create container, id: %s", id)
 	}
