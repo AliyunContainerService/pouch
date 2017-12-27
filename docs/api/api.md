@@ -149,14 +149,14 @@ Run a command inside a running container.
 |Type|Name|Description|Schema|
 |---|---|---|---|
 |**Path**|**id**  <br>*required*|ID or name of container|string|
-|**Body**|**body**  <br>*required*||[ExecConfig](#execconfig)|
+|**Body**|**body**  <br>*required*||[ExecCreateConfig](#execcreateconfig)|
 
 
 #### Responses
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**201**|no error|string|
+|**201**|no error|[ExecCreateResp](#execcreateresp)|
 |**404**|no such container|[Error](#error)|
 |**409**|container is paused|[Error](#error)|
 |**500**|Server error|[Error](#error)|
@@ -175,23 +175,6 @@ Run a command inside a running container.
 #### Tags
 
 * Exec
-
-
-#### Example HTTP request
-
-##### Request body
-```
-json :
-{
-  "AttachStdin" : false,
-  "AttachStdout" : true,
-  "AttachStderr" : true,
-  "DetachKeys" : "ctrl-p,ctrl-q",
-  "Tty" : false,
-  "Cmd" : [ "date" ],
-  "Env" : [ "FOO=bar", "BAZ=quux" ]
-}
-```
 
 
 #### Example HTTP response
@@ -218,10 +201,10 @@ Return low-level information about a container.
 
 #### Parameters
 
-|Type|Name|Description|Schema|Default|
-|---|---|---|---|---|
-|**Path**|**id**  <br>*required*|ID or name of the container|string||
-|**Query**|**size**  <br>*optional*|Return the size of container as fields `SizeRw` and `SizeRootFs`|boolean|`"false"`|
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**size**  <br>*optional*|Return the size of container as fields `SizeRw` and `SizeRootFs`|boolean|
 
 
 #### Responses
@@ -462,10 +445,10 @@ DELETE /containers/{name}
 
 #### Parameters
 
-|Type|Name|Description|Schema|Default|
-|---|---|---|---|---|
-|**Path**|**name**  <br>*required*|ID or name of the container|string||
-|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|`"false"`|
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**name**  <br>*required*|ID or name of the container|string|
+|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|
 
 
 #### Responses
@@ -509,15 +492,7 @@ Starts a previously set up exec instance. If detach is true, this endpoint retur
 |Type|Name|Description|Schema|
 |---|---|---|---|
 |**Path**|**id**  <br>*required*|Exec instance ID|string|
-|**Body**|**execStartConfig**  <br>*optional*||[execStartConfig](#execstart-execstartconfig)|
-
-<a name="execstart-execstartconfig"></a>
-**execStartConfig**
-
-|Name|Description|Schema|
-|---|---|---|
-|**Detach**  <br>*optional*|Detach from the command.|boolean|
-|**Tty**  <br>*optional*|Allocate a pseudo-TTY.|boolean|
+|**Body**|**execStartConfig**  <br>*optional*||[ExecStartConfig](#execstartconfig)|
 
 
 #### Responses
@@ -542,6 +517,18 @@ Starts a previously set up exec instance. If detach is true, this endpoint retur
 #### Tags
 
 * Exec
+
+
+#### Example HTTP request
+
+##### Request body
+```
+json :
+{
+  "Detach" : false,
+  "Tty" : false
+}
+```
 
 
 <a name="images-create-post"></a>
@@ -596,11 +583,11 @@ Return a list of stored images.
 
 #### Parameters
 
-|Type|Name|Description|Schema|Default|
-|---|---|---|---|---|
-|**Query**|**all**  <br>*optional*|Show all images. Only images from a final layer (no children) are shown by default.|boolean|`"false"`|
-|**Query**|**digests**  <br>*optional*|Show digest information as a `RepoDigests` field on each image.|boolean|`"false"`|
-|**Query**|**filters**  <br>*optional*|A JSON encoded value of the filters (a `map[string][]string`) to process on the images list. Available filters:<br><br>- `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)<br>- `dangling=true`<br>- `label=key` or `label="key=value"` of an image label<br>- `reference`=(`<image-name>[:<tag>]`)<br>- `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)|string||
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Query**|**all**  <br>*optional*|Show all images. Only images from a final layer (no children) are shown by default.|boolean|
+|**Query**|**digests**  <br>*optional*|Show digest information as a `RepoDigests` field on each image.|boolean|
+|**Query**|**filters**  <br>*optional*|A JSON encoded value of the filters (a `map[string][]string`) to process on the images list. Available filters:<br><br>- `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)<br>- `dangling=true`<br>- `label=key` or `label="key=value"` of an image label<br>- `reference`=(`<image-name>[:<tag>]`)<br>- `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)|string|
 
 
 #### Responses
@@ -777,6 +764,44 @@ GET /info
 |**500**|server error|[Error](#error)|
 
 
+<a name="networkcreate"></a>
+### Create a network
+```
+POST /networks/create
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Body**|**NetworkCreateRequest**  <br>*required*|Network configuration|[NetworkCreateRequest](#networkcreaterequest)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**201**|The network was created successfully|[NetworkCreateResponse](#networkcreateresponse)|
+|**400**|bad parameter|[Error](#error)|
+|**500**|Server error|[Error](#error)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Network
+
+
 <a name="version-get"></a>
 ### Get Pouchd version
 ```
@@ -862,7 +887,7 @@ POST /volumes/create
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
-|**Body**|**VolumeConfig**  <br>*required*|Volume configuration|[VolumeConfig](#volumeconfig)|
+|**Body**|**body**  <br>*required*|Volume configuration|[VolumeCreateConfig](#volumecreateconfig)|
 
 
 #### Responses
@@ -909,10 +934,20 @@ json :
 <a name="definitions"></a>
 ## Definitions
 
+<a name="configreference"></a>
+### ConfigReference
+specifies the source which provides a network's configuration
+
+
+|Name|Schema|
+|---|---|
+|**Network**  <br>*optional*|string|
+
+
 <a name="container"></a>
 ### Container
 Container contains response of Engine API:
-GET "/containers/json""
+GET "/containers/json"
 
 
 |Name|Description|Schema|
@@ -1029,40 +1064,11 @@ response returned by daemon when container create successfully
 |**Warnings**  <br>*required*|Warnings encountered when creating the container|< string > array|
 
 
-<a name="containerinfo"></a>
-### ContainerInfo
-
-|Name|Description|Schema|
-|---|---|---|
-|**AppArmorProfile**  <br>*optional*||string|
-|**Args**  <br>*optional*|The arguments to the command being run|< string > array|
-|**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
-|**Created**  <br>*optional*|The time the container was created|string|
-|**Driver**  <br>*optional*||string|
-|**ExecIDs**  <br>*optional*||string|
-|**GraphDriver**  <br>*optional*||[GraphDriverData](#graphdriverdata)|
-|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
-|**HostnamePath**  <br>*optional*||string|
-|**HostsPath**  <br>*optional*||string|
-|**Id**  <br>*optional*|The ID of the container|string|
-|**Image**  <br>*optional*|The container's image|string|
-|**LogPath**  <br>*optional*||string|
-|**MountLabel**  <br>*optional*||string|
-|**Mounts**  <br>*optional*||< [MountPoint](#mountpoint) > array|
-|**Name**  <br>*optional*||string|
-|**NetworkSettings**  <br>*optional*||[NetworkSettings](#networksettings)|
-|**Node**  <br>*optional*|TODO|object|
-|**Path**  <br>*optional*|The path to the command being run|string|
-|**ProcessLabel**  <br>*optional*||string|
-|**ResolvConfPath**  <br>*optional*||string|
-|**RestartCount**  <br>*optional*||integer|
-|**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
-|**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
-|**State**  <br>*optional*||[ContainerState](#containerstate)|
-
-
 <a name="containerjson"></a>
 ### ContainerJSON
+an array of ContainerJSON contains response of Engine API:
+GET "/containers/json"
+
 
 |Name|Description|Schema|
 |---|---|---|
@@ -1115,17 +1121,17 @@ Configuration for a network endpoint.
 |Name|Description|Schema|
 |---|---|---|
 |**Aliases**  <br>*optional*|**Example** : `[ "server_x", "server_y" ]`|< string > array|
-|**DriverOpts**  <br>*optional*|DriverOpts is a mapping of driver options and values. These options are passed directly to the driver and are driver specific  <br>**Example** : `{<br>  "com.example.some-label" : "some-value",<br>  "com.example.some-other-label" : "some-other-value"<br>}`|< string, string > map|
-|**EndpointID**  <br>*optional*|Unique ID for the service endpoint in a Sandbox  <br>**Example** : `"b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"`|string|
-|**Gateway**  <br>*optional*|Gateway address for this network  <br>**Example** : `"172.17.0.1"`|string|
-|**GlobalIPv6Address**  <br>*optional*|Global IPv6 address  <br>**Example** : `"2001:db8::5689"`|string|
-|**GlobalIPv6PrefixLen**  <br>*optional*|Mask length of the global IPv6 address  <br>**Example** : `64`|integer (int64)|
-|**IPAddress**  <br>*optional*|IPv4 address  <br>**Example** : `"172.17.0.4"`|string|
-|**IPPrefixLen**  <br>*optional*|Mask length of the IPv4 address  <br>**Example** : `16`|integer|
-|**IPv6Gateway**  <br>*optional*|IPv6 gateway address  <br>**Example** : `"2001:db8:2::100"`|string|
+|**DriverOpts**  <br>*optional*|DriverOpts is a mapping of driver options and values. These options<br>are passed directly to the driver and are driver specific.  <br>**Example** : `{<br>  "com.example.some-label" : "some-value",<br>  "com.example.some-other-label" : "some-other-value"<br>}`|< string, string > map|
+|**EndpointID**  <br>*optional*|Unique ID for the service endpoint in a Sandbox.  <br>**Example** : `"b88f5b905aabf2893f3cbc4ee42d1ea7980bbc0a92e2c8922b1e1795298afb0b"`|string|
+|**Gateway**  <br>*optional*|Gateway address for this network.  <br>**Example** : `"172.17.0.1"`|string|
+|**GlobalIPv6Address**  <br>*optional*|Global IPv6 address.  <br>**Example** : `"2001:db8::5689"`|string|
+|**GlobalIPv6PrefixLen**  <br>*optional*|Mask length of the global IPv6 address.  <br>**Example** : `64`|integer (int64)|
+|**IPAddress**  <br>*optional*|IPv4 address.  <br>**Example** : `"172.17.0.4"`|string|
+|**IPPrefixLen**  <br>*optional*|Mask length of the IPv4 address.  <br>**Example** : `16`|integer|
+|**IPv6Gateway**  <br>*optional*|IPv6 gateway address.  <br>**Example** : `"2001:db8:2::100"`|string|
 |**Links**  <br>*optional*|**Example** : `[ "container_1", "container_2" ]`|< string > array|
-|**MacAddress**  <br>*optional*|MAC address for the endpoint on this network"  <br>**Example** : `"02:42:ac:11:00:04"`|string|
-|**NetworkID**  <br>*optional*|Unique ID of the network."  <br>**Example** : `"08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"`|string|
+|**MacAddress**  <br>*optional*|MAC address for the endpoint on this network.  <br>**Example** : `"02:42:ac:11:00:04"`|string|
+|**NetworkID**  <br>*optional*|Unique ID of the network.  <br>**Example** : `"08754567f1f40222263eab4102e1c733ae697e8e354aa9cd6e18d7402835292a"`|string|
 
 
 <a name="error"></a>
@@ -1134,24 +1140,6 @@ Configuration for a network endpoint.
 |Name|Schema|
 |---|---|
 |**message**  <br>*optional*|string|
-
-
-<a name="execconfig"></a>
-### ExecConfig
-Exec configuration
-
-
-|Name|Description|Schema|
-|---|---|---|
-|**AttachStderr**  <br>*optional*|Attach to `stderr` of the exec command.|boolean|
-|**AttachStdin**  <br>*optional*|Attach to `stdin` of the exec command.|boolean|
-|**AttachStdout**  <br>*optional*|Attach to `stdout` of the exec command.|boolean|
-|**Cmd**  <br>*optional*|Command to run, as a string or array of strings.|< string > array|
-|**DetachKeys**  <br>*optional*|Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string|
-|**Env**  <br>*optional*|A list of environment variables in the form `["VAR=value", ...]`.|< string > array|
-|**Privileged**  <br>*optional*|Runs the exec process with extended privileges.  <br>**Default** : `false`|boolean|
-|**Tty**  <br>*optional*|Allocate a pseudo-TTY.|boolean|
-|**User**  <br>*optional*|The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`.|string|
 
 
 <a name="execcreateconfig"></a>
@@ -1170,8 +1158,8 @@ Exec configuration
 |**User**  <br>*optional*|User that will run the command|string|
 
 
-<a name="execcreateresponse"></a>
-### ExecCreateResponse
+<a name="execcreateresp"></a>
+### ExecCreateResp
 
 |Name|Schema|
 |---|---|
@@ -1250,6 +1238,31 @@ Container configuration that depends on the host we are running on
 |**Type**  <br>*optional*|enum (json-file, syslog, journald, gelf, fluentd, awslogs, splunk, etwlogs, none)|
 
 
+<a name="ipam"></a>
+### IPAM
+represents IP Address Management
+
+
+|Name|Schema|
+|---|---|
+|**Config**  <br>*optional*|< [IPAMConfig](#ipamconfig) > array|
+|**Driver**  <br>*optional*|string|
+|**Options**  <br>*optional*|< string, string > map|
+
+
+<a name="ipamconfig"></a>
+### IPAMConfig
+represents IPAM configurations
+
+
+|Name|Schema|
+|---|---|
+|**AuxAddress**  <br>*optional*|< string, string > map|
+|**Gateway**  <br>*optional*|string|
+|**IPRange**  <br>*optional*|string|
+|**Subnet**  <br>*optional*|string|
+
+
 <a name="ipaddress"></a>
 ### IPAddress
 Address represents an IPv4 or IPv6 IP address.
@@ -1291,6 +1304,49 @@ A mount point inside a container
 |**RW**  <br>*optional*|boolean|
 |**Source**  <br>*optional*|string|
 |**Type**  <br>*optional*|string|
+
+
+<a name="networkcreate"></a>
+### NetworkCreate
+is the expected body of the "create network" http request message
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Attachable**  <br>*optional*|Attachable means the network can be attached or not.|boolean|
+|**CheckDuplicate**  <br>*optional*|CheckDuplicate is used to check the network is duplicate or not.|boolean|
+|**ConfigFrom**  <br>*optional*||[ConfigReference](#configreference)|
+|**ConfigOnly**  <br>*optional*||boolean|
+|**Driver**  <br>*optional*|Driver means the network's driver.|string|
+|**EnableIPv6**  <br>*optional*||boolean|
+|**IPAM**  <br>*optional*||[IPAM](#ipam)|
+|**Ingress**  <br>*optional*|Ingress checks the network is ingress network or not.|boolean|
+|**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
+|**Labels**  <br>*optional*||< string, string > map|
+|**Options**  <br>*optional*||< string, string > map|
+|**Scope**  <br>*optional*|Scope means the network's scope.|string|
+
+
+<a name="networkcreaterequest"></a>
+### NetworkCreateRequest
+contains the request for the remote API: POST /networks/create
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Name**  <br>*optional*|Name is the name of the network.|string|
+|**NetworkCreate**  <br>*optional*||[NetworkCreate](#networkcreate)|
+
+
+<a name="networkcreateresponse"></a>
+### NetworkCreateResponse
+contains the response for the remote API: POST /networks/create
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**ID**  <br>*optional*|ID is the id of the network.|string|
+|**Warning**  <br>*optional*|Warning means the message of create network result.|string|
 
 
 <a name="networksettings"></a>
@@ -1393,8 +1449,8 @@ The status of the container. For example, "running" or "exited".
 |**Version**  <br>*optional*|version of Pouch Daemon  <br>**Example** : `"0.1.2"`|string|
 
 
-<a name="volumeconfig"></a>
-### VolumeConfig
+<a name="volumecreateconfig"></a>
+### VolumeCreateConfig
 config used to create a volume
 
 
@@ -1404,19 +1460,6 @@ config used to create a volume
 |**DriverOpts**  <br>*optional*|A mapping of driver options and values. These options are passed directly to the driver and are driver specific.|< string, string > map|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**Name**  <br>*optional*|The new volume's name. If not specified, Docker generates a name.|string|
-
-
-<a name="volumecreaterequest"></a>
-### VolumeCreateRequest
-VolumeCreateRequest contains the response for the remote API: POST /volumes/create
-
-
-|Name|Description|Schema|
-|---|---|---|
-|**Driver**  <br>*optional*|Driver is the Driver name used to create the volume.|string|
-|**DriverOpts**  <br>*optional*|DriverOpts holds the driver specific options to use for when creating the volume.|< string, string > map|
-|**Labels**  <br>*optional*|Labels is metadata specific to the volume.|< string, string > map|
-|**Name**  <br>*optional*|Name is the name of the volume.|string|
 
 
 <a name="volumeinfo"></a>

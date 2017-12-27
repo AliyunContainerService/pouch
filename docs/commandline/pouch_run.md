@@ -18,7 +18,7 @@ $ pouch run --name test registry.hub.docker.com/library/busybox:latest echo "hi"
 $ pouch ps
 Name   ID       Status    Image                                            Runtime   Created
 test   23f852   stopped   registry.hub.docker.com/library/busybox:latest   runc      4 seconds ago
-pouch run -i --name test registry.hub.docker.com/library/busybox:latest echo "hi"
+$ pouch run -i --name test registry.hub.docker.com/library/busybox:latest echo "hi"
 hi
 $ pouch ps
 Name   ID       Status    Image                                            Runtime   Created
