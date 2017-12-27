@@ -32,7 +32,7 @@ func WithQuery(query url.Values) Option {
 	}
 }
 
-// WithJSONBody sets the body in http.Request
+// WithJSONBody encodes the input data to JSON and sets it to the body in http.Request
 func WithJSONBody(obj interface{}) Option {
 	return func(r *http.Request) error {
 		b := bytes.NewBuffer([]byte{})
@@ -45,8 +45,8 @@ func WithJSONBody(obj interface{}) Option {
 			}
 		}
 		r.Body = ioutil.NopCloser(b)
+		r.Header.Set("Content-Type", "application/json")
 		return nil
-
 	}
 }
 
