@@ -32,3 +32,16 @@ func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
 }
+
+// TestImageCreateNil tests fromImage is nil.
+func (suite *APIImageCreateSuite) TestImageCreateNil(c *check.C) {
+	q := url.Values{}
+	q.Add("fromImage", "")
+
+	path := "/images/create"
+	query := request.WithQuery(q)
+
+	resp, err := request.Post(path, query)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 400)
+}
