@@ -3,6 +3,7 @@ package ctrd
 import (
 	"context"
 
+	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/opencontainers/image-spec/identity"
@@ -12,6 +13,8 @@ const defaultSnapshotterName = "overlayfs"
 
 // CreateSnapshot creates a active snapshot with image's name and id.
 func (c *Client) CreateSnapshot(ctx context.Context, id, ref string) error {
+	ctx = leases.WithLease(ctx, c.lease.ID())
+
 	image, err := c.client.ImageService().Get(ctx, ref)
 	if err != nil {
 		return err
