@@ -18,6 +18,7 @@ build: pre server client
 
 .PHONY: pre
 pre:
+	@ git submodule update --init
 	@ mkdir -p $(ORIG_GOPATH)/src/github.com/docker
 	@ - [ -L $(ORIG_GOPATH)/src/github.com/docker/libnetwork ] && rm -f $(ORIG_GOPATH)/src/github.com/docker/libnetwork
 	@ - ln -s $(shell pwd)/extra/libnetwork $(ORIG_GOPATH)/src/github.com/docker/libnetwork
@@ -38,7 +39,7 @@ clean:
 	./module --clean
 
 .PHONY: check
-check: fmt lint vet validate-swagger
+check: pre fmt lint vet validate-swagger
 
 .PHONY: fmt
 fmt: ## run go fmt
