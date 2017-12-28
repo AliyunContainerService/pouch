@@ -2,9 +2,8 @@
 GOBUILD=go build
 GOCLEAN=go clean
 GOTEST=go test
-ORIG_GOPATH=$(shell go env GOPATH)
-GOPATH=$(ORIG_GOPATH):$(ORIG_GOPATH)/src/github.com/docker/libnetwork/Godeps/_workspace
-GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//')
+GOPATH=$(shell go env GOPATH)
+GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | sed 's/^_//')
 
 # Binary name of CLI and Daemon
 BINARY_NAME=pouchd
@@ -14,14 +13,7 @@ CLI_BINARY_NAME=pouch
 DESTDIR=/usr/local
 
 .PHONY: build
-build: pre server client
-
-.PHONY: pre
-pre:
-	@ git submodule update --init
-	@ mkdir -p $(ORIG_GOPATH)/src/github.com/docker
-	@ - [ -L $(ORIG_GOPATH)/src/github.com/docker/libnetwork ] && rm -f $(ORIG_GOPATH)/src/github.com/docker/libnetwork
-	@ - ln -s $(shell pwd)/extra/libnetwork $(ORIG_GOPATH)/src/github.com/docker/libnetwork
+build: server client
 
 .PHONY: server
 server: modules
@@ -39,7 +31,7 @@ clean:
 	./hack/module --clean
 
 .PHONY: check
-check: pre fmt lint vet validate-swagger
+check: fmt lint vet validate-swagger
 
 .PHONY: fmt
 fmt: ## run go fmt
@@ -62,7 +54,7 @@ vet: # run go vet
 	@test -z "$$(go vet ${GOPACKAGES} 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v '(exit status 1)' | tee /dev/stderr)"
 
 .PHONY: unit-test
-unit-test: pre ## run go test
+unit-test: ## run go test
 	@echo $@
 	@for d in $$(go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra'); \
 	do \
