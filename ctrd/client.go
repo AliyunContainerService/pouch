@@ -75,7 +75,7 @@ func NewClient(cfg Config) (*Client, error) {
 			ids: make(map[string]struct{}),
 		},
 		watch: &watch{
-			containers: make(map[string]containerPack),
+			containers: make(map[string]*containerPack),
 			client:     cli,
 		},
 	}, nil
