@@ -1,0 +1,85 @@
+#!/bin/bash
+
+BUILDPATH=/tmp/pouchbuild
+
+DIR="$( cd "$( dirname "$0" )/.." && pwd )"
+cd $DIR/
+GOPATH=$BUILDPATH:$BUILDPATH/src/github.com/docker/libnetwork/Godeps/_workspace
+
+# Go parameters
+GOBUILD="go build"
+
+# Binary name of CLI and Daemon
+BINARY_NAME=pouchd
+CLI_BINARY_NAME=pouch
+
+function pre()
+{
+    mkdir -p $BUILDPATH
+
+    git submodule update --init
+
+	mkdir -p $BUILDPATH/src/github.com/docker
+	[ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
+	ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
+
+	mkdir -p $BUILDPATH/src/github.com/alibaba
+	[ -L $BUILDPATH/src/github.com/alibaba/pouch ] && rm -f $BUILDPATH/src/github.com/alibaba/pouch
+	ln -s $DIR $BUILDPATH/src/github.com/alibaba/pouch
+}
+
+function server()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
+    GOOS=linux $GOBUILD -o $BINARY_NAME
+}
+
+function client()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    echo "$GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli"
+    $GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli
+}
+
+function vet()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    GOPACKAGES=`go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//'`
+    go vet $GOPACKAGES 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v "exit status 1" | tee /dev/stderr
+}
+
+function unit-test()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra'`
+	do
+		go test -coverprofile=profile.out -covermode=atomic $d
+		if [ -f profile.out ] ; then
+			cat profile.out >> coverage.txt
+			rm profile.out >/dev/null 2>&1
+		fi
+	done
+}
+
+function clean()
+{
+    rm -f $BUILDPATH/src/github.com/docker/libnetwork
+    rm -f $BUILDPATH/src/github.com/alibaba/pouch
+    rm -rf $BUILDPATH
+}
+
+function main ()
+{
+	if [[ $# < 1 ]]; then
+		targets="pre"
+	else
+		targets=($@)
+	fi
+
+	for target in ${targets[@]}; do
+		$target
+	done
+}
+
+main "$@"
