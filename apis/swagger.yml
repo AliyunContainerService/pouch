@@ -1241,6 +1241,7 @@ definitions:
       User:
         type: "string"
         description: "User that will run the command"
+        x-nullable: false
       Privileged:
         type: "boolean"
         description: "Is the container in privileged mode"
@@ -1264,7 +1265,8 @@ definitions:
         description: "Escape keys for detach"
       Cmd:
         type: "array"
-        description:  "Execution commands and args"
+        description: "Execution commands and args"
+        minItems: 1
         items:
           type: "string"
 

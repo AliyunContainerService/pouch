@@ -59,10 +59,6 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 
 	name := mux.Vars(req)["name"]
 
-	if len(config.Cmd) == 0 {
-		return fmt.Errorf("no exec process specified")
-	}
-
 	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
 	if err != nil {
 		return err

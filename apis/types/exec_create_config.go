@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ExecCreateConfig exec create config
@@ -27,6 +28,7 @@ type ExecCreateConfig struct {
 	AttachStdout bool `json:"AttachStdout,omitempty"`
 
 	// Execution commands and args
+	// Min Items: 1
 	Cmd []string `json:"Cmd"`
 
 	// Execute in detach mode
@@ -82,6 +84,12 @@ func (m *ExecCreateConfig) validateCmd(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Cmd) { // not required
 		return nil
+	}
+
+	iCmdSize := int64(len(m.Cmd))
+
+	if err := validate.MinItems("Cmd", "body", iCmdSize, 1); err != nil {
+		return err
 	}
 
 	return nil
