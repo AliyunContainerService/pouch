@@ -19,4 +19,9 @@ before_install:
   - sudo apt-get install -y -qq autoconf automake
 
 script:
-  - sudo make test
+  # PATH is not set under sudo, then we set up path mannually.
+  # Ref https://unix.stackexchange.com/questions/83191/how-to-make-sudo-preserve-path
+  - sudo env PATH=$PATH hack/make.sh build unit-test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
