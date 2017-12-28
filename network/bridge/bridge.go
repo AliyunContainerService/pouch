@@ -55,7 +55,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		IPAM: ipam,
 	}
 
-	create := types.NetworkCreateRequest{
+	create := types.NetworkCreateConfig{
 		Name:          "bridge",
 		NetworkCreate: networkCreate,
 	}

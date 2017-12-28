@@ -23,7 +23,7 @@ import (
 // NetworkMgr defines interface to manage container network.
 type NetworkMgr interface {
 	// NetworkCreate is used to create network.
-	NetworkCreate(ctx context.Context, create apitypes.NetworkCreateRequest) (*types.Network, error)
+	NetworkCreate(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error)
 
 	// NetworkRemove is used to delete an existing network.
 	NetworkRemove(ctx context.Context, name string) error
@@ -75,7 +75,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store) (*NetworkManager, 
 }
 
 // NetworkCreate is used to create network.
-func (nm *NetworkManager) NetworkCreate(ctx context.Context, create apitypes.NetworkCreateRequest) (*types.Network, error) {
+func (nm *NetworkManager) NetworkCreate(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error) {
 	name := create.Name
 	driver := create.NetworkCreate.Driver
 	id := randomid.Generate()
@@ -185,7 +185,7 @@ func bridgeDriverOptions() nwconfig.Option {
 	return nwconfig.OptionDriverConfig("bridge", bridgeOption)
 }
 
-func networkOptions(create apitypes.NetworkCreateRequest) ([]libnetwork.NetworkOption, error) {
+func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOption, error) {
 	// TODO: parse network config.
 	networkCreate := create.NetworkCreate
 	nwOptions := []libnetwork.NetworkOption{

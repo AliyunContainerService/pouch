@@ -11,8 +11,8 @@ type container struct {
 	runtime string
 }
 
-func (c *container) config() *types.ContainerConfigWrapper {
-	config := &types.ContainerConfigWrapper{
+func (c *container) config() *types.ContainerCreateConfig {
+	config := &types.ContainerCreateConfig{
 		HostConfig: &types.HostConfig{},
 	}
 

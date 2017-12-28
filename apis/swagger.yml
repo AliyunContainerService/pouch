@@ -255,7 +255,7 @@ paths:
           in: "body"
           description: "Container to create"
           schema:
-            $ref: "#/definitions/ContainerConfigWrapper"
+            $ref: "#/definitions/ContainerCreateConfig"
           required: true
       responses:
         201:
@@ -577,7 +577,7 @@ paths:
         201:
           description: "The network was created successfully"
           schema:
-            $ref: "#/definitions/NetworkCreateResponse"
+            $ref: "#/definitions/NetworkCreateResp"
         400:
           description: "bad parameter"
           schema:
@@ -585,12 +585,12 @@ paths:
         500:
           $ref: "#/responses/500ErrorResponse"
       parameters:
-        - name: "NetworkCreateRequest"
+        - name: "NetworkCreateConfig"
           in: "body"
           required: true
           description: "Network configuration"
           schema:
-            $ref: "#/definitions/NetworkCreateRequest"
+            $ref: "#/definitions/NetworkCreateConfig"
       tags: ["Network"]
 
 definitions:
@@ -650,9 +650,9 @@ definitions:
       ContainersPaused:
         type: "integer"
 
-  ContainerConfigWrapper:
+  ContainerCreateConfig:
     description: | 
-      ContainerConfigWrapper is used for API "POST /containers/create".
+      ContainerCreateConfig is used for API "POST /containers/create".
       It wraps all kinds of config used in container creation.
       It can be used to encode client params in client and unmarshal request body in daemon side.
     allOf:
@@ -1533,7 +1533,7 @@ definitions:
         type: "string"
         example: "4443"
 
-  NetworkCreateRequest:
+  NetworkCreateConfig:
     type: "object"
     description: "contains the request for the remote API: POST /networks/create"
     properties:
@@ -1543,7 +1543,7 @@ definitions:
       NetworkCreate:
         $ref: "#/definitions/NetworkCreate"
 
-  NetworkCreateResponse:
+  NetworkCreateResp:
     type: "object"
     description: "contains the response for the remote API: POST /networks/create"
     properties:

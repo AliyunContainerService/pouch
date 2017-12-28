@@ -93,7 +93,7 @@ func (n *NetworkCreateCommand) runNetworkCreate(args []string) error {
 		return fmt.Errorf("network name cannot be empty")
 	}
 
-	networkRequest := &types.NetworkCreateRequest{
+	networkRequest := &types.NetworkCreateConfig{
 		Name: name,
 	}
 

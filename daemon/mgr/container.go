@@ -25,7 +25,7 @@ import (
 //ContainerMgr as an interface defines all operations against container.
 type ContainerMgr interface {
 	// Create a new container.
-	Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error)
+	Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error)
 
 	// Start a container.
 	Start(ctx context.Context, id, detachKeys string) error
@@ -244,7 +244,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerConfigWrapper) (*types.ContainerCreateResp, error) {
+func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
 	// TODO: check request validate.
 	if config.HostConfig == nil {
 		return nil, fmt.Errorf("host config and network config can not be nil")
@@ -646,7 +646,7 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 	return nil
 }
 
-func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.ContainerConfigWrapper) error {
+func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.ContainerCreateConfig) error {
 	logrus.Debugf("bind volumes: %v", c.HostConfig.Binds)
 	// TODO: parse c.HostConfig.VolumesFrom
 

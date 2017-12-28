@@ -100,7 +100,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 }
 
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	var config types.ContainerConfigWrapper
+	var config types.ContainerCreateConfig
 
 	if err := json.NewDecoder(req.Body).Decode(&config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
