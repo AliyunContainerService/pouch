@@ -47,6 +47,7 @@ func setupFlags(cmd *cobra.Command) {
 
 	flagSet.StringVar(&cfg.HomeDir, "home-dir", "/var/lib/pouch", "Specify root dir of pouchd")
 	flagSet.StringArrayVarP(&cfg.Listen, "listen", "l", []string{"unix:///var/run/pouchd.sock"}, "Specify listening addresses of Pouchd")
+	flagSet.StringVar(&cfg.ListenCRI, "listen-cri", "/var/run/pouchcri.sock", "Specify listening address of CRI")
 	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
 	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
 	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "/usr/local/bin/containerd", "Specify the path of containerd binary")

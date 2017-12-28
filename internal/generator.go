@@ -13,6 +13,7 @@ import (
 type DaemonProvider interface {
 	Config() *config.Config
 	Containerd() *ctrd.Client
+	CtrMgr() mgr.ContainerMgr
 	ImgMgr() mgr.ImageMgr
 	VolMgr() mgr.VolumeMgr
 	NetMgr() mgr.NetworkMgr
@@ -42,4 +43,9 @@ func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
 // GenNetworkMgr generates a NetworkMgr instance according to config cfg.
 func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error) {
 	return mgr.NewNetworkManager(cfg, d.MetaStore())
+}
+
+// GenCriMgr generates a CriMgr instance.
+func GenCriMgr(d DaemonProvider) (mgr.CriMgr, error) {
+	return mgr.NewCriManager(d.CtrMgr(), d.ImgMgr())
 }

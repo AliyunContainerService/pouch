@@ -17,6 +17,9 @@ type Config struct {
 	// Server listening address.
 	Listen []string
 
+	// ListenCRI is the listening address which serves CRI.
+	ListenCRI string
+
 	// Debug refers to the log mode.
 	Debug bool
 

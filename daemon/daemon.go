@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/alibaba/pouch/apis/server"
+	"github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
@@ -27,7 +28,9 @@ type Daemon struct {
 	imageMgr       mgr.ImageMgr
 	volumeMgr      mgr.VolumeMgr
 	networkMgr     mgr.NetworkMgr
+	criMgr         mgr.CriMgr
 	server         server.Server
+	criService     *cri.Service
 }
 
 // router represents the router of daemon.
@@ -102,6 +105,17 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
+	criMgr, err := internal.GenCriMgr(d)
+	if err != nil {
+		return err
+	}
+	d.criMgr = criMgr
+
+	d.criService, err = cri.NewService(d.config, criMgr)
+	if err != nil {
+		return err
+	}
+
 	d.server = server.Server{
 		Config:       d.config,
 		ContainerMgr: containerMgr,
@@ -117,7 +131,28 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
-	return d.server.Start()
+	httpServerCloseCh := make(chan struct{})
+	go func() {
+		if err := d.server.Start(); err != nil {
+			logrus.Errorf("failed to start http server: %v", err)
+		}
+		close(httpServerCloseCh)
+	}()
+
+	grpcServerCloseCh := make(chan struct{})
+	go func() {
+		if err := d.criService.Serve(); err != nil {
+			logrus.Errorf("failed to start grpc server: %v", err)
+		}
+		close(grpcServerCloseCh)
+	}()
+
+	// Stop pouchd if both server stopped.
+	<-httpServerCloseCh
+	logrus.Infof("HTTP server stopped")
+	<-grpcServerCloseCh
+	logrus.Infof("GRPC server stopped")
+	return nil
 }
 
 // Shutdown stops daemon.
@@ -128,6 +163,11 @@ func (d *Daemon) Shutdown() error {
 // Config gets config of daemon.
 func (d *Daemon) Config() *config.Config {
 	return &d.config
+}
+
+// CtrMgr gets manager of container.
+func (d *Daemon) CtrMgr() mgr.ContainerMgr {
+	return d.containerMgr
 }
 
 // ImgMgr gets manager of image.
