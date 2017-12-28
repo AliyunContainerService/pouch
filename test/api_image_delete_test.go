@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/url"
+
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -25,4 +27,21 @@ func (suite *APIImageDeleteSuite) TestDeleteNonExisting(c *check.C) {
 	resp, err := request.Delete("/images/" + img)
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 404)
+}
+
+// TestDeleteUsingImage tests deleting an image in use by running container will fail.
+func (suite *APIImageDeleteSuite) TestDeleteUsingImage(c *check.C) {
+	cname := "TestDeleteUsingImage"
+	CreateBusyboxContainerOk(c, cname)
+	StartContainerOk(c, cname)
+
+	q := url.Values{}
+	q.Add("fromImage", helloworldImage)
+	q.Add("tag", "latest")
+
+	resp, err := request.Delete("/images/" + busyboxImage)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 500)
+
+	DelContainerForceOk(c, cname)
 }

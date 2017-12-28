@@ -4,6 +4,7 @@ import (
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/go-check/check"
 )
 
@@ -21,8 +22,25 @@ func (suite *APIImageInspectSuite) SetUpTest(c *check.C) {
 
 // TestImageInspectOk tests inspecting images is OK.
 func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
-	path := "/images/" + busyboxImage + "/json"
-	resp, err := request.Get(path)
+	resp, err := request.Get("/images/" + busyboxImage + "/json")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
+
+	got := types.ImageInfo{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	// TODO: More specific check is needed
+	c.Assert(got.Name, check.Equals, busyboxImage)
+	c.Assert(got.ID, check.NotNil)
+	c.Assert(got.CreatedAt, check.NotNil)
+	c.Assert(got.Digest, check.Matches, "sha256.*")
+	c.Assert(got.Size, check.NotNil)
+}
+
+// TestImageInspectNotFound tests inspecting non-existing images.
+func (suite *APIImageInspectSuite) TestImageInspectNotFound(c *check.C) {
+	resp, err := request.Get("/images/" + "TestImageInspectNotFound" + "/json")
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 404)
 }
