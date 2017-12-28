@@ -54,7 +54,8 @@ type ContainerConfig struct {
 	Hostname string `json:"Hostname,omitempty"`
 
 	// The name of the image to use when creating the container
-	Image string `json:"Image,omitempty"`
+	// Required: true
+	Image string `json:"Image"`
 
 	// User-defined key/value metadata.
 	Labels map[string]string `json:"Labels,omitempty"`
@@ -168,6 +169,11 @@ func (m *ContainerConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateImage(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateOnBuild(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -251,6 +257,15 @@ func (m *ContainerConfig) validateExposedPorts(formats strfmt.Registry) error {
 			continue
 		}
 
+	}
+
+	return nil
+}
+
+func (m *ContainerConfig) validateImage(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("Image", "body", string(m.Image)); err != nil {
+		return err
 	}
 
 	return nil

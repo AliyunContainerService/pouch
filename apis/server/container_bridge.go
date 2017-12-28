@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
 )
 
@@ -46,13 +47,17 @@ func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	name := mux.Vars(req)["name"]
-
 	config := &types.ExecCreateConfig{}
-
+	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
-		return err
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+	// validate request body
+	if err := config.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	name := mux.Vars(req)["name"]
 
 	if len(config.Cmd) == 0 {
 		return fmt.Errorf("no exec process specified")
@@ -71,13 +76,17 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 }
 
 func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	name := mux.Vars(req)["name"]
-
 	config := &types.ExecStartConfig{}
-
+	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
-		return err
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+	// validate request body
+	if err := config.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	name := mux.Vars(req)["name"]
 
 	var attach *mgr.AttachConfig
 
@@ -100,15 +109,19 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 }
 
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	var config types.ContainerCreateConfig
-
-	if err := json.NewDecoder(req.Body).Decode(&config); err != nil {
+	config := &types.ContainerCreateConfig{}
+	// decode request body
+	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := config.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
 	name := req.FormValue("name")
 
-	container, err := s.ContainerMgr.Create(ctx, name, &config)
+	container, err := s.ContainerMgr.Create(ctx, name, config)
 	if err != nil {
 		return err
 	}
