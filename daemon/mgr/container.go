@@ -140,9 +140,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 
 		logrus.Errorf("failed to recover container: %s,  %v", containerMeta.ID, err)
 		// release io
-		io.Stdin.Close()
-		io.Stdout.Close()
-		io.Stderr.Close()
+		io.Close()
 		mgr.IOs.Remove(containerMeta.ID)
 
 		return nil
@@ -379,9 +377,7 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		//TODO get and set exit code
 
 		// release io
-		io.Stderr.Close()
-		io.Stdout.Close()
-		io.Stdin.Close()
+		io.Close()
 		mgr.IOs.Remove(c.ID())
 	}
 
@@ -617,9 +613,7 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 
 	// release resource
 	if io := mgr.IOs.Get(id); io != nil {
-		io.Stderr.Close()
-		io.Stdout.Close()
-		io.Stdin.Close()
+		io.Close()
 		mgr.IOs.Remove(id)
 	}
 
@@ -645,9 +639,7 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 		}
 
 		// close io
-		io.Stderr.Close()
-		io.Stdout.Close()
-		io.Stdin.Close()
+		io.Close()
 		mgr.IOs.Remove(id)
 	}
 	mgr.ExecProcesses.Remove(id)

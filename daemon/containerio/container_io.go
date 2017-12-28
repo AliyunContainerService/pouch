@@ -50,6 +50,14 @@ func NewIO(opt *Option) *IO {
 	}
 }
 
+// Close closes the container's io.
+func (io *IO) Close() error {
+	io.Stderr.Close()
+	io.Stdout.Close()
+	io.Stdin.Close()
+	return nil
+}
+
 // ContainerIO used to control the container's stdio.
 type ContainerIO struct {
 	Option
