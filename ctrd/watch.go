@@ -16,22 +16,11 @@ type Message struct {
 	exitCode uint32
 	exitTime time.Time
 	err      error
-	startErr error
 }
 
-// StartError returns the error of start exec process or container.
-func (m *Message) StartError() error {
-	return m.startErr
-}
-
-// Error returns the error contained in Message.
-func (m *Message) Error() error {
+// RawError returns the error contained in Message.
+func (m *Message) RawError() error {
 	return m.err
-}
-
-// HasError returns true if the error in message is not nil.
-func (m *Message) HasError() bool {
-	return m.err != nil
 }
 
 // ExitCode returns the exit code in Message.

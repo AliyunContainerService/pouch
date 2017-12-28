@@ -70,7 +70,7 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		}
 
 		if err := <-fail; err != nil {
-			msg.startErr = err
+			msg.err = err
 		}
 
 		for _, hook := range c.hooks {
@@ -208,8 +208,8 @@ func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64)
 		msg = waitExit()
 	}
 
-	if msg.Error() != nil {
-		if errtypes.IsTimeout(msg.Error()) {
+	if msg.RawError() != nil {
+		if errtypes.IsTimeout(msg.RawError()) {
 			// timeout, use SIGKILL to retry.
 			if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
 				if !errdefs.IsNotFound(err) {
@@ -221,7 +221,7 @@ func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64)
 			}
 		}
 	}
-	if err := msg.Error(); err != nil && errtypes.IsTimeout(err) {
+	if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
 		return nil, err
 	}
 

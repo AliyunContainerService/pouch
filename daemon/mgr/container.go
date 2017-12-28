@@ -611,8 +611,8 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 	c.meta.State.FinishedAt = time.Now().String()
 	c.meta.State.Status = types.StatusStopped
 
-	if m.HasError() {
-		c.meta.State.Error = m.Error().Error()
+	if err := m.RawError(); err != nil {
+		c.meta.State.Error = err.Error()
 	}
 
 	// release resource
@@ -640,7 +640,7 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 
 func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
 	if io := mgr.IOs.Get(id); io != nil {
-		if err := m.StartError(); err != nil {
+		if err := m.RawError(); err != nil {
 			fmt.Fprintf(io.Stdout, "%v\n", err)
 		}
 
