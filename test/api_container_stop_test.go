@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/url"
+
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -41,7 +43,26 @@ func (suite *APIContainerStopSuite) TestNonExistingContainer(c *check.C) {
 	CheckRespStatus(c, resp, 404)
 }
 
+// TestStopWait tests waiting before stopping container.
+func (suite *APIContainerStopSuite) TestStopWait(c *check.C) {
+	cname := "TestStopOk"
+
+	CreateBusyboxContainerOk(c, cname)
+	StartContainerOk(c, cname)
+
+	q := url.Values{}
+	q.Add("t", "1")
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/containers/"+cname+"/stop", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+
+	DelContainerForceOk(c, cname)
+}
+
 // TestInvalidParam tests using invalid parameter return.
 func (suite *APIContainerStopSuite) TestInvalidParam(c *check.C) {
 	//TODO
+	// 1. invalid timeout value
 }
