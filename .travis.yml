@@ -19,7 +19,7 @@ before_install:
   - sudo apt-get install -y -qq autoconf automake
 
 script:
-  - sudo make test
+  - sudo make -e test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
