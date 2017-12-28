@@ -39,7 +39,7 @@ API is an HTTP API served by Pouch Engine.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|string|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Example HTTP response
@@ -74,7 +74,7 @@ POST /containers/create
 |**400**|bad parameter|[Error](#error)|
 |**404**|no such image|[Error](#error)|
 |**409**|conflict|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Consumes
@@ -125,12 +125,41 @@ GET /containers/json
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary containers that matches the query|< [Container](#container) > array|
-|**500**|Server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
 
 * `application/json`
+
+
+<a name="containerremove"></a>
+### Remove one container
+```
+DELETE /containers/{id}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Container
 
 
 <a name="containerexec"></a>
@@ -148,7 +177,7 @@ Run a command inside a running container.
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
-|**Path**|**id**  <br>*required*|ID or name of container|string|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
 |**Body**|**body**  <br>*required*||[ExecCreateConfig](#execcreateconfig)|
 
 
@@ -157,9 +186,9 @@ Run a command inside a running container.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**201**|no error|[ExecCreateResp](#execcreateresp)|
-|**404**|no such container|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
 |**409**|container is paused|[Error](#error)|
-|**500**|Server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Consumes
@@ -175,17 +204,6 @@ Run a command inside a running container.
 #### Tags
 
 * Exec
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerinspect"></a>
@@ -212,8 +230,8 @@ Return low-level information about a container.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[ContainerJSON](#containerjson)|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
@@ -224,17 +242,6 @@ Return low-level information about a container.
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerpause"></a>
@@ -256,24 +263,13 @@ POST /containers/{id}/pause
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerrename"></a>
@@ -296,25 +292,14 @@ POST /containers/{id}/rename
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
 |**409**|name already in use|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerstart"></a>
@@ -337,24 +322,13 @@ POST /containers/{id}/start
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerstop"></a>
@@ -377,24 +351,13 @@ POST /containers/{id}/stop
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="containerunpause"></a>
@@ -416,64 +379,13 @@ POST /containers/{id}/unpause
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Tags
 
 * Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
-
-
-<a name="containerremove"></a>
-### Remove one container
-```
-DELETE /containers/{name}
-```
-
-
-#### Parameters
-
-|Type|Name|Description|Schema|
-|---|---|---|---|
-|**Path**|**name**  <br>*required*|ID or name of the container|string|
-|**Query**|**force**  <br>*optional*|If the container is running, force query is used to kill it and remove it forcefully.|boolean|
-
-
-#### Responses
-
-|HTTP Code|Description|Schema|
-|---|---|---|
-|**204**|no error|No Content|
-|**404**|no such container|[Error](#error)|
-|**500**|server error|[Error](#error)|
-
-
-#### Tags
-
-* Container
-
-
-#### Example HTTP response
-
-##### Response 404
-```
-json :
-{
-  "message" : "No such container: c2ada9df5af8"
-}
-```
 
 
 <a name="execstart"></a>
@@ -556,7 +468,7 @@ POST /images/create
 |---|---|---|
 |**200**|no error|No Content|
 |**404**|image not found|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Consumes
@@ -595,7 +507,7 @@ Return a list of stored images.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary image data for the images matching the query|< [ImageInfo](#imageinfo) > array|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
@@ -646,7 +558,7 @@ GET /images/search
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|No error|< [SearchResultItem](#searchresultitem) > array|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
@@ -654,10 +566,10 @@ GET /images/search
 * `application/json`
 
 
-<a name="images-name-delete"></a>
+<a name="images-imageid-delete"></a>
 ### Remove an image
 ```
-DELETE /images/{name}
+DELETE /images/{imageid}
 ```
 
 
@@ -667,9 +579,10 @@ Remove an image by reference.
 
 #### Parameters
 
-|Type|Name|Description|Schema|
-|---|---|---|---|
-|**Path**|**name**  <br>*required*|Image reference|string|
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**imageid**  <br>*required*|Image name or id|string||
+|**Query**|**force**  <br>*optional*|Remove the image even if it is being used|boolean|`"false"`|
 
 
 #### Responses
@@ -678,7 +591,7 @@ Remove an image by reference.
 |---|---|---|
 |**204**|No error|No Content|
 |**404**|no such image|[Error](#error)|
-|**500**|Server deletes an image error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Example HTTP response
@@ -695,7 +608,7 @@ json :
 <a name="imageinspect"></a>
 ### Inspect a image
 ```
-GET /images/{name}/json
+GET /images/{imageid}/json
 ```
 
 
@@ -707,7 +620,7 @@ Return the information about image
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
-|**Path**|**name**  <br>*required*|Image name or id|string|
+|**Path**|**imageid**  <br>*required*|Image name or id|string|
 
 
 #### Responses
@@ -716,7 +629,7 @@ Return the information about image
 |---|---|---|
 |**200**|no error|[ImageInfo](#imageinfo)|
 |**404**|no such image|[Error](#error)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
@@ -761,7 +674,7 @@ GET /info
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[SystemInfo](#systeminfo)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 <a name="networkcreate"></a>
@@ -784,7 +697,7 @@ POST /networks/create
 |---|---|---|
 |**201**|The network was created successfully|[NetworkCreateResponse](#networkcreateresponse)|
 |**400**|bad parameter|[Error](#error)|
-|**500**|Server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Consumes
@@ -814,7 +727,7 @@ GET /version
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[SystemVersion](#systemversion)|
-|**500**|server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 <a name="volumelist"></a>
@@ -836,7 +749,7 @@ GET /volumes
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary volume data that matches the query|[VolumeListResp](#volumelistresp)|
-|**500**|Server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Produces
@@ -895,7 +808,7 @@ POST /volumes/create
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**201**|The volume was created successfully|[VolumeInfo](#volumeinfo)|
-|**500**|Server error|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
 
 
 #### Consumes
