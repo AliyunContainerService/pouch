@@ -7,7 +7,7 @@ import (
 )
 
 func setupNetwork(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
-	s.Hostname = c.Config.Hostname
+	s.Hostname = c.Config.Hostname.String()
 	//TODO setup network parameters
 	return nil
 }

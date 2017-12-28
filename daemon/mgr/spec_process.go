@@ -45,13 +45,11 @@ func setupProcessCwd(ctx context.Context, c *ContainerMeta, s *specs.Spec) error
 }
 
 func setupProcessTTY(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
-	if c.Config.Tty != nil {
-		s.Process.Terminal = *c.Config.Tty
-		if s.Process.Env != nil {
-			s.Process.Env = append(s.Process.Env, "TERM=xterm")
-		} else {
-			s.Process.Env = []string{"TERM=xterm"}
-		}
+	s.Process.Terminal = c.Config.Tty
+	if s.Process.Env != nil {
+		s.Process.Env = append(s.Process.Env, "TERM=xterm")
+	} else {
+		s.Process.Env = []string{"TERM=xterm"}
 	}
 	return nil
 }

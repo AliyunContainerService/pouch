@@ -17,7 +17,7 @@ func (c *container) config() *types.ContainerCreateConfig {
 	}
 
 	// TODO
-	config.Tty = &c.tty
+	config.Tty = c.tty
 
 	// set bind volume
 	if c.volume != nil {
