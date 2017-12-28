@@ -2,9 +2,36 @@ package mgr
 
 import (
 	"fmt"
+	"strings"
 
+	apitypes "github.com/alibaba/pouch/apis/types"
+
+	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+)
+
+const (
+	// kubePrefix is used to idenfify the containers/sandboxes on the node managed by kubelet.
+	kubePrefix = "k8s"
+
+	// annotationPrefix is used to distinguish between annotations and labels.
+	annotationPrefix = "annotation."
+
+	// Internal pouch labels used to identify whether a container is a sandbox
+	// or a regular container.
+	containerTypeLabelKey       = "io.kubernetes.pouch.type"
+	containerTypeLabelSandbox   = "sandbox"
+	containerTypeLabelContainer = "container"
+
+	// sandboxContainerName is a string to include in the pouch container so
+	// that users can easily identify the sandboxes.
+	sandboxContainerName = "POD"
+
+	// nameDelimiter is used to construct pouch container names.
+	nameDelimiter = "_"
+
+	defaultSandboxImage = "k8s.gcr.io/pause-amd64:3.0"
 )
 
 // CriMgr as an interface defines all operations against CRI.
@@ -38,10 +65,87 @@ func (c *CriManager) Version(ctx context.Context, r *runtime.VersionRequest) (*r
 	return nil, fmt.Errorf("Version Not Implemented Yet")
 }
 
+func makeLabels(labels, annotations map[string]string) map[string]string {
+	m := make(map[string]string)
+
+	for k, v := range labels {
+		m[k] = v
+	}
+	for k, v := range annotations {
+		// Use prefix to distinguish between annotations and labels.
+		m[fmt.Sprintf("%s%s", annotationPrefix, k)] = v
+	}
+
+	return m
+}
+
+// makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
+func (c *CriManager) makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
+	// Merge annotations and labels because pouch supports only labels.
+	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
+	// Apply a label to distinguish sandboxes from regular containers.
+	labels[containerTypeLabelKey] = containerTypeLabelSandbox
+
+	hc := &apitypes.HostConfig{}
+	createConfig := &apitypes.ContainerCreateConfig{
+		ContainerConfig: apitypes.ContainerConfig{
+			Hostname: config.Hostname,
+			Image:    image,
+			Labels:   labels,
+		},
+		HostConfig:       hc,
+		NetworkingConfig: &apitypes.NetworkingConfig{},
+	}
+
+	return createConfig, nil
+}
+
+// makeSandboxName generates sandbox name from sandbox metadata. The name
+// generated is unique as long as sandbox metadata is unique.
+func makeSandboxName(c *runtime.PodSandboxConfig) string {
+	return strings.Join([]string{
+		kubePrefix,                            // 0
+		sandboxContainerName,                  // 1
+		c.Metadata.Name,                       // 2
+		c.Metadata.Namespace,                  // 3
+		c.Metadata.Uid,                        // 4
+		fmt.Sprintf("%d", c.Metadata.Attempt), // 5
+	}, nameDelimiter)
+}
+
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
 // the sandbox is in ready state.
 func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (*runtime.RunPodSandboxResponse, error) {
-	return nil, fmt.Errorf("RunPodSandbox Not Implemented Yet")
+	config := r.GetConfig()
+
+	// Step 1: Prepare image for the sandbox.
+	// TODO: make sandbox image configurable.
+	image := defaultSandboxImage
+
+	// TODO: make sure the image exists.
+
+	// Step 2: Create the sandbox container.
+	createConfig, err := c.makeSandboxPouchConfig(config, image)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
+	}
+
+	sandboxName := makeSandboxName(config)
+
+	createResp, err := c.ContainerMgr.Create(ctx, sandboxName, createConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
+	}
+
+	// Step 3: Start the sandbox container.
+	err = c.ContainerMgr.Start(ctx, createResp.ID, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
+	}
+
+	// TODO: setup networking for the sandbox.
+
+	return &runtime.RunPodSandboxResponse{PodSandboxId: createResp.ID}, nil
 }
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
