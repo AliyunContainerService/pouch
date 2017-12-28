@@ -12,10 +12,10 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// NetworkCreateResponse contains the response for the remote API: POST /networks/create
-// swagger:model NetworkCreateResponse
+// NetworkCreateResp contains the response for the remote API: POST /networks/create
+// swagger:model NetworkCreateResp
 
-type NetworkCreateResponse struct {
+type NetworkCreateResp struct {
 
 	// ID is the id of the network.
 	ID string `json:"ID,omitempty"`
@@ -24,12 +24,12 @@ type NetworkCreateResponse struct {
 	Warning string `json:"Warning,omitempty"`
 }
 
-/* polymorph NetworkCreateResponse ID false */
+/* polymorph NetworkCreateResp ID false */
 
-/* polymorph NetworkCreateResponse Warning false */
+/* polymorph NetworkCreateResp Warning false */
 
-// Validate validates this network create response
-func (m *NetworkCreateResponse) Validate(formats strfmt.Registry) error {
+// Validate validates this network create resp
+func (m *NetworkCreateResp) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if len(res) > 0 {
@@ -39,7 +39,7 @@ func (m *NetworkCreateResponse) Validate(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *NetworkCreateResponse) MarshalBinary() ([]byte, error) {
+func (m *NetworkCreateResp) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -47,8 +47,8 @@ func (m *NetworkCreateResponse) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *NetworkCreateResponse) UnmarshalBinary(b []byte) error {
-	var res NetworkCreateResponse
+func (m *NetworkCreateResp) UnmarshalBinary(b []byte) error {
+	var res NetworkCreateResp
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

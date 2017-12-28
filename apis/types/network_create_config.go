@@ -12,10 +12,10 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// NetworkCreateRequest contains the request for the remote API: POST /networks/create
-// swagger:model NetworkCreateRequest
+// NetworkCreateConfig contains the request for the remote API: POST /networks/create
+// swagger:model NetworkCreateConfig
 
-type NetworkCreateRequest struct {
+type NetworkCreateConfig struct {
 
 	// Name is the name of the network.
 	Name string `json:"Name,omitempty"`
@@ -24,12 +24,12 @@ type NetworkCreateRequest struct {
 	NetworkCreate *NetworkCreate `json:"NetworkCreate,omitempty"`
 }
 
-/* polymorph NetworkCreateRequest Name false */
+/* polymorph NetworkCreateConfig Name false */
 
-/* polymorph NetworkCreateRequest NetworkCreate false */
+/* polymorph NetworkCreateConfig NetworkCreate false */
 
-// Validate validates this network create request
-func (m *NetworkCreateRequest) Validate(formats strfmt.Registry) error {
+// Validate validates this network create config
+func (m *NetworkCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateNetworkCreate(formats); err != nil {
@@ -43,7 +43,7 @@ func (m *NetworkCreateRequest) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *NetworkCreateRequest) validateNetworkCreate(formats strfmt.Registry) error {
+func (m *NetworkCreateConfig) validateNetworkCreate(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.NetworkCreate) { // not required
 		return nil
@@ -63,7 +63,7 @@ func (m *NetworkCreateRequest) validateNetworkCreate(formats strfmt.Registry) er
 }
 
 // MarshalBinary interface implementation
-func (m *NetworkCreateRequest) MarshalBinary() ([]byte, error) {
+func (m *NetworkCreateConfig) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -71,8 +71,8 @@ func (m *NetworkCreateRequest) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *NetworkCreateRequest) UnmarshalBinary(b []byte) error {
-	var res NetworkCreateRequest
+func (m *NetworkCreateConfig) UnmarshalBinary(b []byte) error {
+	var res NetworkCreateConfig
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

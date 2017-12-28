@@ -12,13 +12,13 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ContainerConfigWrapper ContainerConfigWrapper is used for API "POST /containers/create".
+// ContainerCreateConfig ContainerCreateConfig is used for API "POST /containers/create".
 // It wraps all kinds of config used in container creation.
 // It can be used to encode client params in client and unmarshal request body in daemon side.
 //
-// swagger:model ContainerConfigWrapper
+// swagger:model ContainerCreateConfig
 
-type ContainerConfigWrapper struct {
+type ContainerCreateConfig struct {
 	ContainerConfig
 
 	// host config
@@ -29,7 +29,7 @@ type ContainerConfigWrapper struct {
 }
 
 // UnmarshalJSON unmarshals this object from a JSON structure
-func (m *ContainerConfigWrapper) UnmarshalJSON(raw []byte) error {
+func (m *ContainerCreateConfig) UnmarshalJSON(raw []byte) error {
 
 	var aO0 ContainerConfig
 	if err := swag.ReadJSON(raw, &aO0); err != nil {
@@ -54,7 +54,7 @@ func (m *ContainerConfigWrapper) UnmarshalJSON(raw []byte) error {
 }
 
 // MarshalJSON marshals this object to a JSON structure
-func (m ContainerConfigWrapper) MarshalJSON() ([]byte, error) {
+func (m ContainerCreateConfig) MarshalJSON() ([]byte, error) {
 	var _parts [][]byte
 
 	aO0, err := swag.WriteJSON(m.ContainerConfig)
@@ -82,8 +82,8 @@ func (m ContainerConfigWrapper) MarshalJSON() ([]byte, error) {
 	return swag.ConcatJSON(_parts...), nil
 }
 
-// Validate validates this container config wrapper
-func (m *ContainerConfigWrapper) Validate(formats strfmt.Registry) error {
+// Validate validates this container create config
+func (m *ContainerCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.ContainerConfig.Validate(formats); err != nil {
@@ -100,7 +100,7 @@ func (m *ContainerConfigWrapper) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ContainerConfigWrapper) validateNetworkingConfig(formats strfmt.Registry) error {
+func (m *ContainerCreateConfig) validateNetworkingConfig(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.NetworkingConfig) { // not required
 		return nil
@@ -120,7 +120,7 @@ func (m *ContainerConfigWrapper) validateNetworkingConfig(formats strfmt.Registr
 }
 
 // MarshalBinary interface implementation
-func (m *ContainerConfigWrapper) MarshalBinary() ([]byte, error) {
+func (m *ContainerCreateConfig) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -128,8 +128,8 @@ func (m *ContainerConfigWrapper) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *ContainerConfigWrapper) UnmarshalBinary(b []byte) error {
-	var res ContainerConfigWrapper
+func (m *ContainerCreateConfig) UnmarshalBinary(b []byte) error {
+	var res ContainerCreateConfig
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
