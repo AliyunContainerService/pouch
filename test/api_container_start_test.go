@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/url"
+
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -71,6 +73,25 @@ func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
 	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
+
+	DelContainerForceOk(c, cname)
+}
+
+// TestStartDetachKeyWork test detatch-keys works.
+func (suite *APIContainerStartSuite) TestStartDetachKeyWork(c *check.C) {
+	cname := "TestStartDetachKeyWork"
+
+	CreateBusyboxContainerOk(c, cname)
+
+	q := url.Values{}
+	q.Add("detachKeys", "EOF")
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/containers/"+cname+"/start", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+
+	// TODO: check the "EOF" detatchkey really works.
 
 	DelContainerForceOk(c, cname)
 }
