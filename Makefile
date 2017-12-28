@@ -36,7 +36,7 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 	rm -f $(CLI_BINARY_NAME)
-	./module --clean
+	./hack/module --clean
 
 .PHONY: check
 check: pre fmt lint vet validate-swagger
@@ -73,9 +73,9 @@ validate-swagger: ## run swagger validate
 
 .PHONY: modules
 modules:
-	@./module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
-	@./module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
-	@./module --add-volume=github.com/alibaba/pouch/volume/modules/local
+	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
+	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
+	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/local
 	
 # build binaries
 # install them to /usr/local/bin/
