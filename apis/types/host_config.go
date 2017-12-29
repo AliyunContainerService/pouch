@@ -143,6 +143,8 @@ type HostConfig struct {
 
 	// A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`.
 	VolumesFrom []string `json:"VolumesFrom"`
+
+	Resources
 }
 
 // UnmarshalJSON unmarshals this object from a JSON structure
@@ -284,6 +286,12 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.VolumeDriver = data.VolumeDriver
 
 	m.VolumesFrom = data.VolumesFrom
+
+	var aO1 Resources
+	if err := swag.ReadJSON(raw, &aO1); err != nil {
+		return err
+	}
+	m.Resources = aO1
 
 	return nil
 }
@@ -432,6 +440,12 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	}
 	_parts = append(_parts, jsonData)
 
+	aO1, err := swag.WriteJSON(m.Resources)
+	if err != nil {
+		return nil, err
+	}
+	_parts = append(_parts, aO1)
+
 	return swag.ConcatJSON(_parts...), nil
 }
 
@@ -500,6 +514,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateVolumesFrom(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.Resources.Validate(formats); err != nil {
 		res = append(res, err)
 	}
 
