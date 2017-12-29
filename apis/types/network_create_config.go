@@ -20,45 +20,66 @@ type NetworkCreateConfig struct {
 	// Name is the name of the network.
 	Name string `json:"Name,omitempty"`
 
-	// network create
-	NetworkCreate *NetworkCreate `json:"NetworkCreate,omitempty"`
+	NetworkCreate
 }
 
-/* polymorph NetworkCreateConfig Name false */
+// UnmarshalJSON unmarshals this object from a JSON structure
+func (m *NetworkCreateConfig) UnmarshalJSON(raw []byte) error {
 
-/* polymorph NetworkCreateConfig NetworkCreate false */
+	var data struct {
+		Name string `json:"Name,omitempty"`
+	}
+	if err := swag.ReadJSON(raw, &data); err != nil {
+		return err
+	}
+
+	m.Name = data.Name
+
+	var aO1 NetworkCreate
+	if err := swag.ReadJSON(raw, &aO1); err != nil {
+		return err
+	}
+	m.NetworkCreate = aO1
+
+	return nil
+}
+
+// MarshalJSON marshals this object to a JSON structure
+func (m NetworkCreateConfig) MarshalJSON() ([]byte, error) {
+	var _parts [][]byte
+
+	var data struct {
+		Name string `json:"Name,omitempty"`
+	}
+
+	data.Name = m.Name
+
+	jsonData, err := swag.WriteJSON(data)
+	if err != nil {
+		return nil, err
+	}
+	_parts = append(_parts, jsonData)
+
+	aO1, err := swag.WriteJSON(m.NetworkCreate)
+	if err != nil {
+		return nil, err
+	}
+	_parts = append(_parts, aO1)
+
+	return swag.ConcatJSON(_parts...), nil
+}
 
 // Validate validates this network create config
 func (m *NetworkCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateNetworkCreate(formats); err != nil {
-		// prop
+	if err := m.NetworkCreate.Validate(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *NetworkCreateConfig) validateNetworkCreate(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.NetworkCreate) { // not required
-		return nil
-	}
-
-	if m.NetworkCreate != nil {
-
-		if err := m.NetworkCreate.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("NetworkCreate")
-			}
-			return err
-		}
-	}
-
 	return nil
 }
 

@@ -1681,12 +1681,12 @@ definitions:
   NetworkCreateConfig:
     type: "object"
     description: "contains the request for the remote API: POST /networks/create"
-    properties:
-      Name:
-        description: "Name is the name of the network."
-        type: "string"
-      NetworkCreate:
-        $ref: "#/definitions/NetworkCreate"
+    allOf:
+      - properties:
+          Name:
+            description: "Name is the name of the network."
+            type: "string"
+      - $ref: "#/definitions/NetworkCreate"
 
   NetworkCreateResp:
     type: "object"
