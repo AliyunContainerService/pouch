@@ -19,13 +19,13 @@ function pre()
 
     git submodule update --init
 
-	mkdir -p $BUILDPATH/src/github.com/docker
-	[ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
-	ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
+    mkdir -p $BUILDPATH/src/github.com/docker
+    [ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
+    ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
 
-	mkdir -p $BUILDPATH/src/github.com/alibaba
-	[ -L $BUILDPATH/src/github.com/alibaba/pouch ] && rm -f $BUILDPATH/src/github.com/alibaba/pouch
-	ln -s $DIR $BUILDPATH/src/github.com/alibaba/pouch
+    mkdir -p $BUILDPATH/src/github.com/alibaba
+    [ -L $BUILDPATH/src/github.com/alibaba/pouch ] && rm -f $BUILDPATH/src/github.com/alibaba/pouch
+    ln -s $DIR $BUILDPATH/src/github.com/alibaba/pouch
 }
 
 function server()
@@ -53,13 +53,13 @@ function unit-test()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
     for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra'`
-	do
-		go test -coverprofile=profile.out -covermode=atomic $d
-		if [ -f profile.out ] ; then
-			cat profile.out >> coverage.txt
-			rm profile.out >/dev/null 2>&1
-		fi
-	done
+    do
+        go test -coverprofile=profile.out -covermode=atomic $d
+        if [ -f profile.out ] ; then
+            cat profile.out >> coverage.txt
+            rm profile.out >/dev/null 2>&1
+        fi
+    done
 }
 
 function clean()
@@ -71,15 +71,15 @@ function clean()
 
 function main ()
 {
-	if [[ $# < 1 ]]; then
-		targets="pre"
-	else
-		targets=($@)
-	fi
+    if [[ $# < 1 ]]; then
+        targets="pre"
+    else
+        targets=($@)
+    fi
 
-	for target in ${targets[@]}; do
-		$target
-	done
+    for target in ${targets[@]}; do
+        $target
+    done
 }
 
 main "$@"
