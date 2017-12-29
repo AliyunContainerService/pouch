@@ -63,7 +63,7 @@ POST /containers/create
 |Type|Name|Description|Schema|
 |---|---|---|---|
 |**Query**|**name**  <br>*optional*|Assign the specified name to the container. Must match `/?[a-zA-Z0-9_-]+`.|string|
-|**Body**|**body**  <br>*required*|Container to create|[ContainerConfigWrapper](#containerconfigwrapper)|
+|**Body**|**body**  <br>*required*|Container to create|[ContainerCreateConfig](#containercreateconfig)|
 
 
 #### Responses
@@ -160,6 +160,134 @@ DELETE /containers/{id}
 #### Tags
 
 * Container
+
+
+<a name="containerattach"></a>
+### Attach to a container
+```
+POST /containers/{id}/attach
+```
+
+
+#### Description
+Attach to a container to read its output or send it input. You can attach to the same container multiple times and you can reattach to containers that have been detached.
+
+Either the `stream` or `logs` parameter must be `true` for this endpoint to do anything.
+
+### Hijacking
+
+This endpoint hijacks the HTTP connection to transport `stdin`, `stdout`, and `stderr` on the same socket.
+
+This is the response from the daemon for an attach request:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/vnd.raw-stream
+
+[STREAM]
+```
+
+After the headers and two new lines, the TCP connection can now be used for raw, bidirectional communication between the client and server.
+
+To hint potential proxies about connection hijacking, the Docker client can also optionally send connection upgrade headers.
+
+For example, the client sends this request to upgrade the connection:
+
+```
+POST /containers/16253994b7c4/attach?stream=1&stdout=1 HTTP/1.1
+Upgrade: tcp
+Connection: Upgrade
+```
+
+The Docker daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
+
+```
+HTTP/1.1 101 UPGRADED
+Content-Type: application/vnd.raw-stream
+Connection: Upgrade
+Upgrade: tcp
+
+[STREAM]
+```
+
+### Stream format
+
+When the TTY setting is disabled in [`POST /containers/create`](#operation/ContainerCreate), the stream over the hijacked connected is multiplexed to separate out `stdout` and `stderr`. The stream consists of a series of frames, each containing a header and a payload.
+
+The header contains the information which the stream writes (`stdout` or `stderr`). It also contains the size of the associated frame encoded in the last four bytes (`uint32`).
+
+It is encoded on the first eight bytes like this:
+
+```go
+header := [8]byte{STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}
+```
+
+`STREAM_TYPE` can be:
+
+- 0: `stdin` (is written on `stdout`)
+- 1: `stdout`
+- 2: `stderr`
+
+`SIZE1, SIZE2, SIZE3, SIZE4` are the four bytes of the `uint32` size encoded as big endian.
+
+Following the header is the payload, which is the specified number of bytes of `STREAM_TYPE`.
+
+The simplest way to implement this protocol is the following:
+
+1. Read 8 bytes.
+2. Choose `stdout` or `stderr` depending on the first byte.
+3. Extract the frame size from the last four bytes.
+4. Read the extracted size and output it on the correct output.
+5. Goto 1.
+
+### Stream format when using a TTY
+
+When the TTY setting is enabled in [`POST /containers/create`](#operation/ContainerCreate), the stream is not multiplexed. The data exchanged over the hijacked connection is simply the raw data from the process PTY and client's `stdin`.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string||
+|**Query**|**detachKeys**  <br>*optional*|Override the key sequence for detaching a container.Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.|string||
+|**Query**|**logs**  <br>*optional*|Replay previous logs from the container.<br><br>This is useful for attaching to a container that has started and you want to output everything since the container started.<br><br>If `stream` is also enabled, once all the previous output has been returned, it will seamlessly transition into streaming current output.|boolean|`"false"`|
+|**Query**|**stderr**  <br>*optional*|Attach to `stderr`|boolean|`"false"`|
+|**Query**|**stdin**  <br>*optional*|Attach to `stdin`|boolean|`"false"`|
+|**Query**|**stdout**  <br>*optional*|Attach to `stdout`|boolean|`"false"`|
+|**Query**|**stream**  <br>*optional*|Stream attached streams from the time the request was made onwards|boolean|`"false"`|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**101**|no error, hints proxy about hijacking|No Content|
+|**200**|no error, no upgrade header found|No Content|
+|**400**|bad parameter|[Error](#error)|
+|**404**|no such container|[Error](#error)|
+|**500**|server error|[Error](#error)|
+
+
+#### Produces
+
+* `application/vnd.raw-stream`
+
+
+#### Tags
+
+* Container
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
 
 
 <a name="containerexec"></a>
@@ -688,14 +816,14 @@ POST /networks/create
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
-|**Body**|**NetworkCreateRequest**  <br>*required*|Network configuration|[NetworkCreateRequest](#networkcreaterequest)|
+|**Body**|**NetworkCreateConfig**  <br>*required*|Network configuration|[NetworkCreateConfig](#networkcreateconfig)|
 
 
 #### Responses
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**201**|The network was created successfully|[NetworkCreateResponse](#networkcreateresponse)|
+|**201**|The network was created successfully|[NetworkCreateResp](#networkcreateresp)|
 |**400**|bad parameter|[Error](#error)|
 |**500**|An unexpected server error occured.|[Error](#error)|
 
@@ -896,7 +1024,7 @@ Configuration for a container that is portable between hosts
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
-|**Image**  <br>*optional*|The name of the image to use when creating the container|string|
+|**Image**  <br>*required*|The name of the image to use when creating the container|string|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
@@ -919,9 +1047,9 @@ Configuration for a container that is portable between hosts
 |**additionalProperties**  <br>*optional*|object|
 
 
-<a name="containerconfigwrapper"></a>
-### ContainerConfigWrapper
-ContainerConfigWrapper is used for API "POST /containers/create".
+<a name="containercreateconfig"></a>
+### ContainerCreateConfig
+ContainerCreateConfig is used for API "POST /containers/create".
 It wraps all kinds of config used in container creation.
 It can be used to encode client params in client and unmarshal request body in daemon side.
 
@@ -941,7 +1069,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
-|**Image**  <br>*optional*|The name of the image to use when creating the container|string|
+|**Image**  <br>*required*|The name of the image to use when creating the container|string|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
@@ -954,10 +1082,10 @@ It can be used to encode client params in client and unmarshal request body in d
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
 |**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.  <br>**Default** : `false`|boolean|
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
-|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containerconfigwrapper-volumes)|
+|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containercreateconfig-volumes)|
 |**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
 
-<a name="containerconfigwrapper-volumes"></a>
+<a name="containercreateconfig-volumes"></a>
 **Volumes**
 
 |Name|Schema|
@@ -1240,8 +1368,8 @@ is the expected body of the "create network" http request message
 |**Scope**  <br>*optional*|Scope means the network's scope.|string|
 
 
-<a name="networkcreaterequest"></a>
-### NetworkCreateRequest
+<a name="networkcreateconfig"></a>
+### NetworkCreateConfig
 contains the request for the remote API: POST /networks/create
 
 
@@ -1251,8 +1379,8 @@ contains the request for the remote API: POST /networks/create
 |**NetworkCreate**  <br>*optional*||[NetworkCreate](#networkcreate)|
 
 
-<a name="networkcreateresponse"></a>
-### NetworkCreateResponse
+<a name="networkcreateresp"></a>
+### NetworkCreateResp
 contains the response for the remote API: POST /networks/create
 
 
