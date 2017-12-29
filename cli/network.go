@@ -100,7 +100,7 @@ func (n *NetworkCreateCommand) runNetworkCreate(args []string) error {
 	if n.driver == "" {
 		return fmt.Errorf("network driver cannot be empty")
 	}
-	networkCreate := &types.NetworkCreate{
+	networkCreate := types.NetworkCreate{
 		Driver: n.driver,
 	}
 

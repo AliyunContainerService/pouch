@@ -42,7 +42,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		Config: []*types.IPAMConfig{ipamV4Conf},
 	}
 
-	networkCreate := &types.NetworkCreate{
+	networkCreate := types.NetworkCreate{
 		Driver:     "bridge",
 		EnableIPV6: false,
 		Options: map[string]string{
