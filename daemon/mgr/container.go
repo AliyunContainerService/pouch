@@ -247,7 +247,10 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
 	// TODO: check request validate.
 	if config.HostConfig == nil {
-		return nil, fmt.Errorf("host config and network config can not be nil")
+		return nil, fmt.Errorf("HostConfig cannot be nil")
+	}
+	if config.NetworkingConfig == nil {
+		return nil, fmt.Errorf("NetworkingConfig cannot be nil")
 	}
 
 	id, err := mgr.generateID()
