@@ -121,6 +121,14 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 
 	name := req.FormValue("name")
 
+	// to do compensation to potential nil pointer after validation
+	if config.HostConfig == nil {
+		config.HostConfig = &types.HostConfig{}
+	}
+	if config.NetworkingConfig == nil {
+		config.NetworkingConfig = &types.NetworkingConfig{}
+	}
+
 	container, err := s.ContainerMgr.Create(ctx, name, config)
 	if err != nil {
 		return err

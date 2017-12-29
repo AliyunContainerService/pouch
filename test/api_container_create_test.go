@@ -123,27 +123,6 @@ func (suite *APIContainerCreateSuite) TestBadParam(c *check.C) {
 	// 2. Invalid Parameters
 }
 
-// TestHostConfigNil tests using bad parameter return 500.
-func (suite *APIContainerCreateSuite) TestHostConfigNil(c *check.C) {
-	cname := "TestHostConfigNil"
-	q := url.Values{}
-	q.Add("name", cname)
-	query := request.WithQuery(q)
-
-	// HostConfig is nil.
-	obj := map[string]interface{}{
-		"Image":      busyboxImage,
-		"HostConfig": nil,
-	}
-
-	body := request.WithJSONBody(obj)
-
-	resp, err := request.Post("/containers/create", query, body)
-	c.Assert(err, check.IsNil)
-
-	CheckRespStatus(c, resp, 500)
-}
-
 // TestAllocateTTY tests allocating tty is OK.
 func (suite *APIContainerCreateSuite) TestAllocateTTY(c *check.C) {
 	cname := "TestAllocateTTY"
