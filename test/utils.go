@@ -12,7 +12,8 @@ import (
 
 // const defines common image name
 const (
-	busyboxImage = "registry.hub.docker.com/library/busybox:latest"
+	busyboxImage    = "registry.hub.docker.com/library/busybox:latest"
+	helloworldImage = "registry.hub.docker.com/library/hello-world"
 )
 
 // VerifyCondition is used to check the condition value.

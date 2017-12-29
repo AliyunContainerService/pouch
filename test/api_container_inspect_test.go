@@ -43,6 +43,7 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 
 	c.Assert(got.Image, check.Equals, busyboxImage)
 	c.Assert(got.Name, check.Equals, cname)
+	c.Assert(got.Created, check.NotNil)
 
 	DelContainerForceOk(c, cname)
 }
@@ -55,7 +56,23 @@ func (suite *APIContainerInspectSuite) TestNonExistingContainer(c *check.C) {
 	CheckRespStatus(c, resp, 404)
 }
 
-// TestRespValid tests the response of inspect is accurate.
-func (suite *APIContainerInspectSuite) TestRespValid(c *check.C) {
-	// TODO
+// TestInspectPid tests the response of inspect has process pid.
+func (suite *APIContainerInspectSuite) TestInspectPid(c *check.C) {
+	cname := "TestInspectPid"
+
+	CreateBusyboxContainerOk(c, cname)
+
+	StartContainerOk(c, cname)
+
+	resp, err := request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(got.State.Pid, check.NotNil)
+
+	DelContainerForceOk(c, cname)
 }
