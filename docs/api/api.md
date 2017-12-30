@@ -1372,11 +1372,24 @@ is the expected body of the "create network" http request message
 ### NetworkCreateConfig
 contains the request for the remote API: POST /networks/create
 
+*Polymorphism* : Composition
+
 
 |Name|Description|Schema|
 |---|---|---|
+|**Attachable**  <br>*optional*|Attachable means the network can be attached or not.|boolean|
+|**CheckDuplicate**  <br>*optional*|CheckDuplicate is used to check the network is duplicate or not.|boolean|
+|**ConfigFrom**  <br>*optional*||[ConfigReference](#configreference)|
+|**ConfigOnly**  <br>*optional*||boolean|
+|**Driver**  <br>*optional*|Driver means the network's driver.|string|
+|**EnableIPv6**  <br>*optional*||boolean|
+|**IPAM**  <br>*optional*||[IPAM](#ipam)|
+|**Ingress**  <br>*optional*|Ingress checks the network is ingress network or not.|boolean|
+|**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
+|**Labels**  <br>*optional*||< string, string > map|
 |**Name**  <br>*optional*|Name is the name of the network.|string|
-|**NetworkCreate**  <br>*optional*||[NetworkCreate](#networkcreate)|
+|**Options**  <br>*optional*||< string, string > map|
+|**Scope**  <br>*optional*|Scope means the network's scope.|string|
 
 
 <a name="networkcreateresp"></a>
