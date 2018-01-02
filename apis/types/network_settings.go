@@ -15,7 +15,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// NetworkSettings NetworkSettings exposes the network settings in the API
+// NetworkSettings NetworkSettings exposes the network settings in the API.
 // swagger:model NetworkSettings
 
 type NetworkSettings struct {
@@ -33,7 +33,7 @@ type NetworkSettings struct {
 	LinkLocalIPV6PrefixLen int64 `json:"LinkLocalIPv6PrefixLen,omitempty"`
 
 	// Information about all networks that the container is connected to
-	Networks map[string]EndpointSettings `json:"Networks,omitempty"`
+	Networks map[string]*EndpointSettings `json:"Networks,omitempty"`
 
 	// ports
 	Ports PortMap `json:"Ports,omitempty"`

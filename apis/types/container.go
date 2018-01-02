@@ -10,9 +10,10 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
-// Container Container contains response of Engine API:
+// Container an array of Container contains response of Engine API:
 // GET "/containers/json"
 //
 // swagger:model Container
@@ -22,10 +23,15 @@ type Container struct {
 	// command
 	Command string `json:"Command,omitempty"`
 
-	// created
+	// Created time of container in daemon. !! Incompatibility !! Moby has a type of int64.
 	Created string `json:"Created,omitempty"`
 
-	// host config
+	// In Moby's API, HostConfig field in Container struct has following type
+	// struct { NetworkMode string `json:",omitempty"` }
+	// In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,
+	// So Pouch changes this type to be the complete HostConfig.
+	// Incompatibility exists, ATTENTION.
+	//
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
 	// ID
@@ -40,8 +46,14 @@ type Container struct {
 	// labels
 	Labels map[string]string `json:"Labels,omitempty"`
 
+	// Set of mount point in a container.
+	Mounts []MountPoint `json:"Mounts"`
+
 	// names
 	Names []string `json:"Names"`
+
+	// network settings
+	NetworkSettings map[string]*EndpointSettings `json:"NetworkSettings,omitempty"`
 
 	// size root fs
 	SizeRootFs int64 `json:"SizeRootFs,omitempty"`
@@ -70,7 +82,11 @@ type Container struct {
 
 /* polymorph Container Labels false */
 
+/* polymorph Container Mounts false */
+
 /* polymorph Container Names false */
+
+/* polymorph Container NetworkSettings false */
 
 /* polymorph Container SizeRootFs false */
 
@@ -84,7 +100,17 @@ type Container struct {
 func (m *Container) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateMounts(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateNames(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateNetworkSettings(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -95,10 +121,36 @@ func (m *Container) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Container) validateMounts(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Mounts) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Mounts); i++ {
+
+	}
+
+	return nil
+}
+
 func (m *Container) validateNames(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Names) { // not required
 		return nil
+	}
+
+	return nil
+}
+
+func (m *Container) validateNetworkSettings(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.NetworkSettings) { // not required
+		return nil
+	}
+
+	if err := validate.Required("NetworkSettings", "body", m.NetworkSettings); err != nil {
+		return err
 	}
 
 	return nil

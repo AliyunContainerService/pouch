@@ -12,8 +12,8 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ContainerJSON an array of ContainerJSON contains response of Engine API:
-// GET "/containers/json"
+// ContainerJSON ContainerJSON contains response of Engine API:
+// GET "/containers/{id}/json"
 //
 // swagger:model ContainerJSON
 
@@ -37,6 +37,9 @@ type ContainerJSON struct {
 	// exec ids
 	ExecIds string `json:"ExecIDs,omitempty"`
 
+	// graph driver
+	GraphDriver *GraphDriverData `json:"GraphDriver,omitempty"`
+
 	// host config
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
@@ -58,8 +61,14 @@ type ContainerJSON struct {
 	// mount label
 	MountLabel string `json:"MountLabel,omitempty"`
 
+	// Set of mount point in a container.
+	Mounts []MountPoint `json:"Mounts"`
+
 	// name
 	Name string `json:"Name,omitempty"`
+
+	// NetworkSettings exposes the network settings in the API.
+	NetworkSettings *NetworkSettings `json:"NetworkSettings,omitempty"`
 
 	// The path to the command being run
 	Path string `json:"Path,omitempty"`
@@ -74,10 +83,10 @@ type ContainerJSON struct {
 	RestartCount int64 `json:"RestartCount,omitempty"`
 
 	// The total size of all the files in this container.
-	SizeRootFs int64 `json:"SizeRootFs,omitempty"`
+	SizeRootFs *int64 `json:"SizeRootFs,omitempty"`
 
 	// The size of files that have been created or changed by this container.
-	SizeRw int64 `json:"SizeRw,omitempty"`
+	SizeRw *int64 `json:"SizeRw,omitempty"`
 
 	// The state of the container.
 	State *ContainerState `json:"State,omitempty"`
@@ -95,6 +104,8 @@ type ContainerJSON struct {
 
 /* polymorph ContainerJSON ExecIDs false */
 
+/* polymorph ContainerJSON GraphDriver false */
+
 /* polymorph ContainerJSON HostConfig false */
 
 /* polymorph ContainerJSON HostnamePath false */
@@ -109,7 +120,11 @@ type ContainerJSON struct {
 
 /* polymorph ContainerJSON MountLabel false */
 
+/* polymorph ContainerJSON Mounts false */
+
 /* polymorph ContainerJSON Name false */
+
+/* polymorph ContainerJSON NetworkSettings false */
 
 /* polymorph ContainerJSON Path false */
 
@@ -135,6 +150,21 @@ func (m *ContainerJSON) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateConfig(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateGraphDriver(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateMounts(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateNetworkSettings(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -170,6 +200,57 @@ func (m *ContainerJSON) validateConfig(formats strfmt.Registry) error {
 		if err := m.Config.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("Config")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateGraphDriver(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.GraphDriver) { // not required
+		return nil
+	}
+
+	if m.GraphDriver != nil {
+
+		if err := m.GraphDriver.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("GraphDriver")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateMounts(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Mounts) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Mounts); i++ {
+
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateNetworkSettings(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.NetworkSettings) { // not required
+		return nil
+	}
+
+	if m.NetworkSettings != nil {
+
+		if err := m.NetworkSettings.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("NetworkSettings")
 			}
 			return err
 		}
