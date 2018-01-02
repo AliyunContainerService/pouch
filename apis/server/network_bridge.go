@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-func (s *Server) createNetwork(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	config := &types.NetworkCreateConfig{}
 	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
@@ -24,7 +24,6 @@ func (s *Server) createNetwork(ctx context.Context, resp http.ResponseWriter, re
 
 	network, err := s.NetworkMgr.NetworkCreate(ctx, *config)
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
 
@@ -32,10 +31,9 @@ func (s *Server) createNetwork(ctx context.Context, resp http.ResponseWriter, re
 		ID: network.ID,
 	}
 
-	resp.WriteHeader(http.StatusCreated)
-	return json.NewEncoder(resp).Encode(networkCreateResp)
+	return EncodeResponse(rw, http.StatusCreated, networkCreateResp)
 }
 
-func (s *Server) deleteNetwork(ctx context.Context, resp http.ResponseWriter, req *http.Request) error {
+func (s *Server) deleteNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	return nil
 }
