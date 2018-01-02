@@ -2,6 +2,8 @@ package ctrd
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -12,16 +14,52 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/remotes"
 	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/image-spec/specs-go/v1"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
+
+// GetImageConfig returns the image's configure.
+func (c *Client) GetImageConfig(ctx context.Context, ref string) (v1.ImageConfig, error) {
+	var (
+		ociimage v1.Image
+		config   v1.ImageConfig
+	)
+
+	image, err := c.client.GetImage(ctx, ref)
+	if err != nil {
+		return config, err
+	}
+
+	ic, err := image.Config(ctx)
+	if err != nil {
+		return config, err
+	}
+	switch ic.MediaType {
+	case v1.MediaTypeImageConfig, images.MediaTypeDockerSchema2Config:
+		p, err := content.ReadBlob(ctx, image.ContentStore(), ic.Digest)
+		if err != nil {
+			return config, err
+		}
+
+		if err := json.Unmarshal(p, &ociimage); err != nil {
+			return config, err
+		}
+		config = ociimage.Config
+	default:
+		return config, fmt.Errorf("unknown image config media type %s", ic.MediaType)
+	}
+
+	return config, nil
+}
 
 // RemoveImage deletes an image.
 func (c *Client) RemoveImage(ctx context.Context, ref string) error {

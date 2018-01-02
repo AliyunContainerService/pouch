@@ -36,7 +36,11 @@ func setupProcessEnv(ctx context.Context, c *ContainerMeta, s *specs.Spec) error
 }
 
 func setupProcessCwd(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
-	s.Process.Cwd = c.Config.WorkingDir
+	if c.Config.WorkingDir == "" {
+		s.Process.Cwd = "/"
+	} else {
+		s.Process.Cwd = c.Config.WorkingDir
+	}
 	return nil
 }
 

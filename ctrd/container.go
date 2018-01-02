@@ -319,12 +319,12 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 
 	// create container
 	specOptions := []oci.SpecOpts{
-		oci.WithImageConfig(img),
+		// oci.WithImageConfig(img),
 		oci.WithRootFSPath("rootfs"),
 	}
-	if args := container.Spec.Process.Args; len(args) != 0 {
-		specOptions = append(specOptions, oci.WithProcessArgs(args...))
-	}
+	// if args := container.Spec.Process.Args; len(args) != 0 {
+	// 	specOptions = append(specOptions, oci.WithProcessArgs(args...))
+	// }
 
 	options := []containerd.NewContainerOpts{
 		containerd.WithSpec(container.Spec, specOptions...),
