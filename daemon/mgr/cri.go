@@ -1,10 +1,12 @@
 package mgr
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/reference"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"golang.org/x/net/context"
@@ -247,9 +249,42 @@ func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 	return nil, fmt.Errorf("Status Not Implemented Yet")
 }
 
+// imageToCriImage converts pouch image API to CRI image API.
+func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
+	ref, err := reference.Parse(image.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	size := uint64(image.Size)
+	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
+	return &runtime.Image{
+		Id:          image.Digest,
+		RepoTags:    []string{fmt.Sprintf("%s:%s", ref.Name, ref.Tag)},
+		RepoDigests: []string{fmt.Sprintf("%s@%s", ref.Name, image.Digest)},
+		Size_:       size,
+	}, nil
+}
+
 // ListImages lists existing images.
 func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesRequest) (*runtime.ListImagesResponse, error) {
-	return nil, fmt.Errorf("ListImages Not Implemented Yet")
+	// TODO: handle image list filters.
+	imageList, err := c.ImageMgr.ListImages(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	images := make([]*runtime.Image, 0, len(imageList))
+	for _, i := range imageList {
+		image, err := imageToCriImage(&i)
+		if err != nil {
+			// TODO: log an error message?
+			continue
+		}
+		images = append(images, image)
+	}
+
+	return &runtime.ListImagesResponse{Images: images}, nil
 }
 
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
@@ -259,7 +294,24 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 
 // PullImage pulls an image with authentication config.
 func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest) (*runtime.PullImageResponse, error) {
-	return nil, fmt.Errorf("PullImage Not Implemented Yet")
+	// TODO: authentication.
+	imageRef := r.GetImage().GetImage()
+	ref, err := reference.Parse(imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.ImageMgr.PullImage(ctx, ref.Name, ref.Tag, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return nil, err
+	}
+
+	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return &runtime.PullImageResponse{ImageRef: imageInfo.ID}, nil
 }
 
 // RemoveImage removes the image.
