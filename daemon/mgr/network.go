@@ -194,10 +194,6 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 		libnetwork.NetworkOptionLabels(networkCreate.Labels),
 	}
 
-	if networkCreate.Ingress {
-		libnetwork.NetworkOptionIngress()
-	}
-
 	if networkCreate.Internal {
 		nwOptions = append(nwOptions, libnetwork.NetworkOptionInternalNetwork())
 	}

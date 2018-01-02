@@ -1332,7 +1332,7 @@ definitions:
 
   Container:
     description: |
-      Container contains response of Engine API:
+      an array of Container contains response of Engine API:
       GET "/containers/json"
     type: "object"
     properties:
@@ -1352,6 +1352,7 @@ definitions:
       Command:
         type: "string"
       Created:
+        description: "Created time of container in daemon. !! Incompatibility !! Moby has a type of int64."
         type: "string"
       SizeRw:
         type: "integer"
@@ -1368,8 +1369,24 @@ definitions:
       Status:
         type: "string"
       HostConfig:
-        type: "object"
-        $ref: '#/definitions/HostConfig'
+        description: |
+          In Moby's API, HostConfig field in Container struct has following type 
+          struct { NetworkMode string `json:",omitempty"` }
+          In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,
+          So Pouch changes this type to be the complete HostConfig.
+          Incompatibility exists, ATTENTION.
+        $ref: "#/definitions/HostConfig"
+        x-nullable: false
+      Mounts:
+        type: "array"
+        description: "Set of mount point in a container."
+        items:
+          $ref: "#definitions/MountPoint"
+      NetworkSettings:
+        additionalProperties:
+          $ref: "#/definitions/EndpointSettings"
+          x-nullable: true
+
 
   NetworkingConfig:
     description: "Configuration for a network used to create a container."
@@ -1637,8 +1654,8 @@ definitions:
   
   ContainerJSON:
     description: | 
-      an array of ContainerJSON contains response of Engine API:
-      GET "/containers/json"
+      ContainerJSON contains response of Engine API:
+      GET "/containers/{id}/json"
     type: "object"
     properties:
       Id:
@@ -1689,12 +1706,24 @@ definitions:
         description: "The size of files that have been created or changed by this container."
         type: "integer"
         format: "int64"
+        x-nullable: true
       SizeRootFs:
         description: "The total size of all the files in this container."
         type: "integer"
         format: "int64"
+        x-nullable: true
       Config:
         $ref: "#/definitions/ContainerConfig"
+      GraphDriver:
+        $ref: "#/definitions/GraphDriverData"
+      Mounts:
+        type: "array"
+        description: "Set of mount point in a container."
+        items:
+          $ref: "#definitions/MountPoint"
+      NetworkSettings:
+        description: "NetworkSettings exposes the network settings in the API."
+        $ref: "#/definitions/NetworkSettings"
 
   ContainerState:
     type: "object"
@@ -1782,7 +1811,7 @@ definitions:
         type: "string"
 
   NetworkSettings:
-    description: "NetworkSettings exposes the network settings in the API"
+    description: "NetworkSettings exposes the network settings in the API."
     type: "object"
     properties:
       Bridge:
@@ -1832,6 +1861,7 @@ definitions:
         type: "object"
         additionalProperties:
           $ref: "#/definitions/EndpointSettings"
+          x-nullable: true
 
   IPAddress:
     description: Address represents an IPv4 or IPv6 IP address.
@@ -1916,9 +1946,6 @@ definitions:
         Driver:
           type: "string"
           description: "Driver means the network's driver."
-        Scope:
-          type: "string"
-          description: "Scope means the network's scope."
         EnableIPv6:
           type: "boolean"
         IPAM:
@@ -1927,17 +1954,6 @@ definitions:
         Internal:
           type: "boolean"
           description: "Internal checks the network is internal network or not."
-        Attachable:
-          type: "boolean"
-          description: "Attachable means the network can be attached or not."
-        Ingress:
-          type: "boolean"
-          description: "Ingress checks the network is ingress network or not."
-        ConfigOnly:
-          type: "boolean"
-        ConfigFrom:
-          type: "object"
-          $ref: "#/definitions/ConfigReference"
         Options:
           type: "object"
           additionalProperties:
@@ -1976,13 +1992,6 @@ definitions:
         type: "object"
         additionalProperties:
           type: "string"
-
-  ConfigReference:
-    type: "object"
-    description: "specifies the source which provides a network's configuration"
-    properties:
-      Network:
-        type: "string"
 
 parameters:
   id:
