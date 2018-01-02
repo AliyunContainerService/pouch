@@ -941,9 +941,9 @@ definitions:
 
   HostConfig:
     description: "Container configuration that depends on the host we are running on"
+    type: "object"
     allOf:
-      - type: "object"
-        properties:
+      - properties:
           # Applicable to all platforms
           Binds:
             type: "array"
@@ -1124,6 +1124,211 @@ definitions:
               - "default"
               - "process"
               - "hyperv"
+      - $ref: "#/definitions/Resources"
+
+  Resources:
+    description: "A container's resources (cgroups config, ulimits, etc)"
+    type: "object"
+    properties:
+      # Applicable to all platforms
+      CpuShares:
+        description: "An integer value representing this container's relative CPU weight versus other containers."
+        type: "integer"
+      Memory:
+        description: "Memory limit in bytes."
+        type: "integer"
+        default: 0
+      # Applicable to UNIX platforms
+      CgroupParent:
+        description: "Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist."
+        type: "string"
+      BlkioWeight:
+        description: "Block IO weight (relative weight)."
+        type: "integer"
+        format: "uint16"
+        x-nullable: false
+        minimum: 0
+        maximum: 1000
+      BlkioWeightDevice:
+        description: |
+          Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            Path:
+              type: "string"
+            Weight:
+              type: "integer"
+              format: "uint16"
+              x-nullable: false
+              minimum: 0
+      BlkioDeviceReadBps:
+        description: |
+          Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+        type: "array"
+        items:
+          $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceWriteBps:
+        description: |
+          Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+        type: "array"
+        items:
+          $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceReadIOps:
+        description: |
+          Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+        type: "array"
+        items:
+          $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceWriteIOps:
+        description: |
+          Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+        type: "array"
+        items:
+          $ref: "#/definitions/ThrottleDevice"
+      CpuPeriod:
+        description: |
+          CPU CFS (Completely Fair Scheduler) period.
+          The length of a CPU period in microseconds.
+        type: "integer"
+        format: "int64"
+      CpuQuota:
+        description: |
+          CPU CFS (Completely Fair Scheduler) quota.
+          Microseconds of CPU time that the container can get in a CPU period."
+        type: "integer"
+        format: "int64"
+      CpuRealtimePeriod:
+        description: "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
+        type: "integer"
+        format: "int64"
+      CpuRealtimeRuntime:
+        description: "The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
+        type: "integer"
+        format: "int64"
+      CpusetCpus:
+        description: "CPUs in which to allow execution (e.g., `0-3`, `0,1`)"
+        type: "string"
+        example: "0-3"
+      CpusetMems:
+        description: "Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems."
+        type: "string"
+      Devices:
+        description: "A list of devices to add to the container."
+        type: "array"
+        items:
+          $ref: "#/definitions/DeviceMapping"
+      DeviceCgroupRules:
+        description: "a list of cgroup rules to apply to the container"
+        type: "array"
+        items:
+          type: "string"
+          example: "c 13:* rwm"
+      DiskQuota:
+        description: "Disk limit (in bytes)."
+        type: "integer"
+        format: "int64"
+      KernelMemory:
+        description: "Kernel memory limit in bytes."
+        type: "integer"
+        format: "int64"
+      MemoryReservation:
+        description: "Memory soft limit in bytes."
+        type: "integer"
+        format: "int64"
+      MemorySwap:
+        description: "Total memory limit (memory + swap). Set as `-1` to enable unlimited swap."
+        type: "integer"
+        format: "int64"
+      MemorySwappiness:
+        description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
+        type: "integer"
+        format: "int64"
+        minimum: 0
+        maximum: 100
+      NanoCPUs:
+        description: "CPU quota in units of 10<sup>-9</sup> CPUs."
+        type: "integer"
+        format: "int64"
+      OomKillDisable:
+        description: "Disable OOM Killer for the container."
+        type: "boolean"
+        x-nullable: true
+      PidsLimit:
+        description: |
+          Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.
+        type: "integer"
+        format: "int64"
+      Ulimits:
+        description: |
+          A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            Name:
+              description: "Name of ulimit"
+              type: "string"
+            Soft:
+              description: "Soft limit"
+              type: "integer"
+            Hard:
+              description: "Hard limit"
+              type: "integer"
+      # Applicable to Windows
+      CpuCount:
+        description: |
+          The number of usable CPUs (Windows only).
+
+          On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
+        type: "integer"
+        format: "int64"
+      CpuPercent:
+        description: |
+          The usable percentage of the available CPUs (Windows only).
+          On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
+        type: "integer"
+        format: "int64"
+      IOMaximumIOps:
+        description: "Maximum IOps for the container system drive (Windows only)"
+        type: "integer"
+        format: "uint64"
+      IOMaximumBandwidth:
+        description: "Maximum IO in bytes per second for the container system drive (Windows only)"
+        type: "integer"
+        format: "uint64"
+
+  ThrottleDevice:
+    type: "object"
+    properties:
+      Path:
+        description: "Device path"
+        type: "string"
+      Rate:
+        description: "Rate"
+        type: "integer"
+        format: "uint64"
+        x-nullable: false
+        minimum: 0
+
+  DeviceMapping:
+    type: "object"
+    description: "A device mapping between the host and container"
+    properties:
+      PathOnHost:
+        description: "path on host of the device mapping"
+        type: "string"
+      PathInContainer:
+        description: "path in container of the device mapping"
+        type: "string"
+      CgroupPermissions:
+        description: "cgroup permissions of the device"
+        type: "string"
+    example:
+      PathOnHost: "/dev/deviceName"
+      PathInContainer: "/dev/deviceName"
+      CgroupPermissions: "mrw"
 
   Container:
     description: |
