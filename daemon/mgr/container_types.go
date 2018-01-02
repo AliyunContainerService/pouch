@@ -6,6 +6,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
+
+	"github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const (
@@ -119,8 +121,32 @@ type ContainerMeta struct {
 }
 
 // Key returns container's id.
-func (m *ContainerMeta) Key() string {
-	return m.ID
+func (meta *ContainerMeta) Key() string {
+	return meta.ID
+}
+
+func (meta *ContainerMeta) merge(getconfig func() (v1.ImageConfig, error)) error {
+	config, err := getconfig()
+	if err != nil {
+		return err
+	}
+
+	if len(meta.Config.Entrypoint) == 0 {
+		meta.Config.Entrypoint = config.Entrypoint
+	}
+	if len(meta.Config.Cmd) == 0 {
+		meta.Config.Cmd = config.Cmd
+	}
+	if meta.Config.Env == nil {
+		meta.Config.Env = config.Env
+	} else {
+		meta.Config.Env = append(meta.Config.Env, config.Env...)
+	}
+	if meta.Config.WorkingDir == "" {
+		meta.Config.WorkingDir = config.WorkingDir
+	}
+
+	return nil
 }
 
 // Container represents the container instance in runtime.

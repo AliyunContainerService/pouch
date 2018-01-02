@@ -17,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -283,7 +284,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 
-	containerMeta := &ContainerMeta{
+	meta := &ContainerMeta{
 		State: &types.ContainerState{
 			StartedAt: time.Now().UTC().Format(utils.TimeLayout),
 			Status:    types.StatusCreated,
@@ -295,8 +296,15 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		HostConfig: config.HostConfig,
 	}
 
+	// merge image's config into container's meta
+	if err := meta.merge(func() (v1.ImageConfig, error) {
+		return mgr.Client.GetImageConfig(ctx, config.Image)
+	}); err != nil {
+		return nil, err
+	}
+
 	container := &Container{
-		meta: containerMeta,
+		meta: meta,
 	}
 
 	container.Lock()
