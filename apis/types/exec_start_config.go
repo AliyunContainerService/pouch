@@ -17,10 +17,10 @@ import (
 
 type ExecStartConfig struct {
 
-	// detach
+	// ExecStart will first check if it's detached
 	Detach bool `json:"Detach,omitempty"`
 
-	// tty
+	// Check if there's a tty
 	Tty bool `json:"Tty,omitempty"`
 }
 

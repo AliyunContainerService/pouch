@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/pkg/reference"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
+	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
@@ -91,7 +92,7 @@ func (c *CriManager) makeSandboxPouchConfig(config *runtime.PodSandboxConfig, im
 	hc := &apitypes.HostConfig{}
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
-			Hostname: config.Hostname,
+			Hostname: strfmt.Hostname(config.Hostname),
 			Image:    image,
 			Labels:   labels,
 		},

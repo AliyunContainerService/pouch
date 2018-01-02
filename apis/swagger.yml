@@ -810,11 +810,14 @@ definitions:
   ContainerConfig:
     type: "object"
     description: "Configuration for a container that is portable between hosts"
-    required: [Image]
+    required: 
+      - Image
     properties:
       Hostname:
         description: "The hostname to use for the container, as a valid RFC 1123 hostname."
         type: "string"
+        format: hostname
+        minLength: 1
       Domainname:
         description: "The domain name to use for the container."
         type: "string"
@@ -824,14 +827,16 @@ definitions:
       AttachStdin:
         description: "Whether to attach to `stdin`."
         type: "boolean"
-        default: false
+        x-nullable: false
       AttachStdout:
         description: "Whether to attach to `stdout`."
         type: "boolean"
+        x-nullable: false
         default: true
       AttachStderr:
         description: "Whether to attach to `stderr`."
         type: "boolean"
+        x-nullable: false
         default: true
       ExposedPorts:
         description: "An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`"
@@ -844,15 +849,15 @@ definitions:
       Tty:
         description: "Attach standard streams to a TTY, including `stdin` if it is not closed."
         type: "boolean"
-        default: false
+        x-nullable: false
       OpenStdin:
         description: "Open `stdin`"
         type: "boolean"
-        default: false
+        x-nullable: false
       StdinOnce:
         description: "Close `stdin` after one attached client disconnects"
         type: "boolean"
-        default: false
+        x-nullable: false
       Env:
         description: |
           A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
@@ -867,6 +872,7 @@ definitions:
       ArgsEscaped:
         description: "Command is already escaped (Windows only)"
         type: "boolean"
+        x-nullable: false
       Image:
         description: "The name of the image to use when creating the container"
         type: "string"
@@ -874,12 +880,11 @@ definitions:
       Volumes:
         description: "An object mapping mount point paths inside the container to empty objects."
         type: "object"
-        properties:
-          additionalProperties:
-            type: "object"
-            enum:
-              - {}
-            default: {}
+        additionalProperties:
+          type: "object"
+          enum:
+            - {}
+          default: {}
       WorkingDir:
         description: "The working directory for commands to run in."
         type: "string"
@@ -910,6 +915,7 @@ definitions:
         description: "Signal to stop a container as a string or unsigned integer."
         type: "string"
         default: "SIGTERM"
+        x-nullable: false
       StopTimeout:
         description: "Timeout to stop a container in seconds."
         type: "integer"
@@ -1645,8 +1651,10 @@ definitions:
     type: "object"
     properties:
       Detach:
+        description: ExecStart will first check if it's detached
         type: "boolean"
       Tty:
+        description: Check if there's a tty
         type: "boolean"
     example:
       Detach: false
@@ -1774,7 +1782,8 @@ definitions:
   Status:
     description: The status of the container. For example, "running" or "exited".
     type: "string"
-    enum: ["created", "running", "stopped","paused", "restarting", "removing", "exited", "dead"]
+    enum: ["created", "running", "stopped", "paused", "restarting", "removing", "exited", "dead"]
+
   GraphDriverData:
     description: "Information about a container's graph driver."
     type: "object"
