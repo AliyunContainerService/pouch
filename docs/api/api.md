@@ -975,31 +975,22 @@ json :
 <a name="definitions"></a>
 ## Definitions
 
-<a name="configreference"></a>
-### ConfigReference
-specifies the source which provides a network's configuration
-
-
-|Name|Schema|
-|---|---|
-|**Network**  <br>*optional*|string|
-
-
 <a name="container"></a>
 ### Container
-Container contains response of Engine API:
+an array of Container contains response of Engine API:
 GET "/containers/json"
 
 
 |Name|Description|Schema|
 |---|---|---|
 |**Command**  <br>*optional*||string|
-|**Created**  <br>*optional*||string|
-|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
+|**Created**  <br>*optional*|Created time of container in daemon. !! Incompatibility !! Moby has a type of int64.|string|
+|**HostConfig**  <br>*optional*|In Moby's API, HostConfig field in Container struct has following type <br>struct { NetworkMode string `json:",omitempty"` }<br>In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,<br>So Pouch changes this type to be the complete HostConfig.<br>Incompatibility exists, ATTENTION.|[HostConfig](#hostconfig)|
 |**ID**  <br>*optional*||string|
 |**Image**  <br>*optional*||string|
 |**ImageID**  <br>*optional*||string|
 |**Labels**  <br>*optional*||< string, string > map|
+|**Mounts**  <br>*optional*|Set of mount point in a container.|< [#definitions/MountPoint](#definitions-mountpoint) > array|
 |**Names**  <br>*optional*|**Example** : `[ "container_1", "container_2" ]`|< string > array|
 |**SizeRootFs**  <br>*optional*||integer (int64)|
 |**SizeRw**  <br>*optional*||integer (int64)|
@@ -1016,35 +1007,28 @@ Configuration for a container that is portable between hosts
 |---|---|---|
 |**ArgsEscaped**  <br>*optional*|Command is already escaped (Windows only)|boolean|
 |**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
-|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
+|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
-|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
+|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
 |**Image**  <br>*required*|The name of the image to use when creating the container|string|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
 |**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
-|**OpenStdin**  <br>*optional*|Open `stdin`  <br>**Default** : `false`|boolean|
+|**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
-|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects  <br>**Default** : `false`|boolean|
+|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
-|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.  <br>**Default** : `false`|boolean|
+|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.|boolean|
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
-|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containerconfig-volumes)|
+|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
 |**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
-
-<a name="containerconfig-volumes"></a>
-**Volumes**
-
-|Name|Schema|
-|---|---|
-|**additionalProperties**  <br>*optional*|object|
 
 
 <a name="containercreateconfig"></a>
@@ -1060,7 +1044,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |---|---|---|
 |**ArgsEscaped**  <br>*optional*|Command is already escaped (Windows only)|boolean|
 |**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
-|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.  <br>**Default** : `false`|boolean|
+|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
@@ -1068,29 +1052,22 @@ It can be used to encode client params in client and unmarshal request body in d
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
-|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.|string|
+|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
 |**Image**  <br>*required*|The name of the image to use when creating the container|string|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
 |**NetworkingConfig**  <br>*optional*||[NetworkingConfig](#networkingconfig)|
 |**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
-|**OpenStdin**  <br>*optional*|Open `stdin`  <br>**Default** : `false`|boolean|
+|**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
-|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects  <br>**Default** : `false`|boolean|
+|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
-|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.  <br>**Default** : `false`|boolean|
+|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.|boolean|
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
-|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|[Volumes](#containercreateconfig-volumes)|
+|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
 |**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
-
-<a name="containercreateconfig-volumes"></a>
-**Volumes**
-
-|Name|Schema|
-|---|---|
-|**additionalProperties**  <br>*optional*|object|
 
 
 <a name="containercreateresp"></a>
@@ -1107,8 +1084,8 @@ response returned by daemon when container create successfully
 
 <a name="containerjson"></a>
 ### ContainerJSON
-an array of ContainerJSON contains response of Engine API:
-GET "/containers/json"
+ContainerJSON contains response of Engine API:
+GET "/containers/{id}/json"
 
 
 |Name|Description|Schema|
@@ -1119,6 +1096,7 @@ GET "/containers/json"
 |**Created**  <br>*optional*|The time the container was created|string|
 |**Driver**  <br>*optional*||string|
 |**ExecIDs**  <br>*optional*||string|
+|**GraphDriver**  <br>*optional*||[GraphDriverData](#graphdriverdata)|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
 |**HostnamePath**  <br>*optional*||string|
 |**HostsPath**  <br>*optional*||string|
@@ -1126,7 +1104,9 @@ GET "/containers/json"
 |**Image**  <br>*optional*|The container's image|string|
 |**LogPath**  <br>*optional*||string|
 |**MountLabel**  <br>*optional*||string|
+|**Mounts**  <br>*optional*|Set of mount point in a container.|< [#definitions/MountPoint](#definitions-mountpoint) > array|
 |**Name**  <br>*optional*||string|
+|**NetworkSettings**  <br>*optional*|NetworkSettings exposes the network settings in the API.|[NetworkSettings](#networksettings)|
 |**Path**  <br>*optional*|The path to the command being run|string|
 |**ProcessLabel**  <br>*optional*||string|
 |**ResolvConfPath**  <br>*optional*||string|
@@ -1152,6 +1132,18 @@ GET "/containers/json"
 |**Running**  <br>*optional*|Whether this container is running.<br><br>Note that a running container can be _paused_. The `Running` and `Paused`<br>booleans are not mutually exclusive:<br><br>When pausing a container (on Linux), the cgroups freezer is used to suspend<br>all processes in the container. Freezing the process requires the process to<br>be running. As a result, paused containers are both `Running` _and_ `Paused`.<br><br>Use the `Status` field instead to determine if a container's state is "running".|boolean|
 |**StartedAt**  <br>*optional*|The time when this container was last started.|string|
 |**Status**  <br>*optional*||[Status](#status)|
+
+
+<a name="devicemapping"></a>
+### DeviceMapping
+A device mapping between the host and container
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**CgroupPermissions**  <br>*optional*|cgroup permissions of the device|string|
+|**PathInContainer**  <br>*optional*|path in container of the device mapping|string|
+|**PathOnHost**  <br>*optional*|path on host of the device mapping|string|
 
 
 <a name="endpointsettings"></a>
@@ -1210,10 +1202,10 @@ Configuration for a network endpoint.
 <a name="execstartconfig"></a>
 ### ExecStartConfig
 
-|Name|Schema|
-|---|---|
-|**Detach**  <br>*optional*|boolean|
-|**Tty**  <br>*optional*|boolean|
+|Name|Description|Schema|
+|---|---|---|
+|**Detach**  <br>*optional*|ExecStart will first check if it's detached|boolean|
+|**Tty**  <br>*optional*|Check if there's a tty|boolean|
 
 
 <a name="graphdriverdata"></a>
@@ -1238,23 +1230,52 @@ Container configuration that depends on the host we are running on
 |---|---|---|
 |**AutoRemove**  <br>*optional*|Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set.|boolean|
 |**Binds**  <br>*optional*|A list of volume bindings for this container. Each volume binding is a string in one of these forms:<br><br>- `host-src:container-dest` to bind-mount a host path into the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `host-src:container-dest:ro` to make the bind mount read-only inside the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest` to bind-mount a volume managed by a volume driver into the container. `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest:ro` to mount the volume read-only inside the container.  `container-dest` must be an _absolute_ path.|< string > array|
+|**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
+|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#hostconfig-blkioweightdevice) > array|
 |**CapAdd**  <br>*optional*|A list of kernel capabilities to add to the container.|< string > array|
 |**CapDrop**  <br>*optional*|A list of kernel capabilities to drop from the container.|< string > array|
 |**Cgroup**  <br>*optional*|Cgroup to use for the container.|string|
+|**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**ConsoleSize**  <br>*optional*|Initial console size, as an `[height, width]` array. (Windows only)|< integer > array|
 |**ContainerIDFile**  <br>*optional*|Path to a file where the container ID is written|string|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br><br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
+|**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
+|**CpusetCpus**  <br>*optional*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
+|**CpusetMems**  <br>*optional*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
+|**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
+|**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
+|**DiskQuota**  <br>*optional*|Disk limit (in bytes).|integer (int64)|
 |**Dns**  <br>*optional*|A list of DNS servers for the container to use.|< string > array|
 |**DnsOptions**  <br>*optional*|A list of DNS options.|< string > array|
 |**DnsSearch**  <br>*optional*|A list of DNS search domains.|< string > array|
 |**ExtraHosts**  <br>*optional*|A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.|< string > array|
 |**GroupAdd**  <br>*optional*|A list of additional groups that the container process will run as.|< string > array|
+|**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
 |**IpcMode**  <br>*optional*|IPC sharing mode for the container. Possible values are:<br>- `"none"`: own private IPC namespace, with /dev/shm not mounted<br>- `"private"`: own private IPC namespace<br>- `"shareable"`: own private IPC namespace, with a possibility to share it with other containers<br>- `"container:<name\|id>"`: join another (shareable) container's IPC namespace<br>- `"host"`: use the host system's IPC namespace<br>If not specified, daemon default is used, which can either be `"private"`<br>or `"shareable"`, depending on daemon version and configuration.|string|
 |**Isolation**  <br>*optional*|Isolation technology of the container. (Windows only)|enum (default, process, hyperv)|
+|**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Links**  <br>*optional*|A list of links for the container in the form `container_name:alias`.|< string > array|
 |**LogConfig**  <br>*optional*|The logging configuration for this container|[LogConfig](#hostconfig-logconfig)|
+|**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
+|**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
+|**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.  <br>**Example** : `500`|integer|
 |**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
 |**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|< string, [PortBinding](#portbinding) > map|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
@@ -1266,9 +1287,18 @@ Container configuration that depends on the host we are running on
 |**Sysctls**  <br>*optional*|A list of kernel parameters (sysctls) to set in the container. For example: `{"net.ipv4.ip_forward": "1"}`|< string, string > map|
 |**Tmpfs**  <br>*optional*|A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example: `{ "/run": "rw,noexec,nosuid,size=65536k" }`.|< string, string > map|
 |**UTSMode**  <br>*optional*|UTS namespace to use for the container.|string|
+|**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#hostconfig-ulimits) > array|
 |**UsernsMode**  <br>*optional*|Sets the usernamespace mode for the container when usernamespace remapping option is enabled.|string|
 |**VolumeDriver**  <br>*optional*|Driver that this container uses to mount volumes.|string|
 |**VolumesFrom**  <br>*optional*|A list of volumes to inherit from another container, specified in the form `<container name>[:<ro\|rw>]`.|< string > array|
+
+<a name="hostconfig-blkioweightdevice"></a>
+**BlkioWeightDevice**
+
+|Name|Description|Schema|
+|---|---|---|
+|**Path**  <br>*optional*||string|
+|**Weight**  <br>*optional*|**Minimum value** : `0`|integer (uint16)|
 
 <a name="hostconfig-logconfig"></a>
 **LogConfig**
@@ -1277,6 +1307,15 @@ Container configuration that depends on the host we are running on
 |---|---|
 |**Config**  <br>*optional*|< string, string > map|
 |**Type**  <br>*optional*|enum (json-file, syslog, journald, gelf, fluentd, awslogs, splunk, etwlogs, none)|
+
+<a name="hostconfig-ulimits"></a>
+**Ulimits**
+
+|Name|Description|Schema|
+|---|---|---|
+|**Hard**  <br>*optional*|Hard limit|integer|
+|**Name**  <br>*optional*|Name of ulimit|string|
+|**Soft**  <br>*optional*|Soft limit|integer|
 
 
 <a name="ipam"></a>
@@ -1354,18 +1393,13 @@ is the expected body of the "create network" http request message
 
 |Name|Description|Schema|
 |---|---|---|
-|**Attachable**  <br>*optional*|Attachable means the network can be attached or not.|boolean|
 |**CheckDuplicate**  <br>*optional*|CheckDuplicate is used to check the network is duplicate or not.|boolean|
-|**ConfigFrom**  <br>*optional*||[ConfigReference](#configreference)|
-|**ConfigOnly**  <br>*optional*||boolean|
 |**Driver**  <br>*optional*|Driver means the network's driver.|string|
 |**EnableIPv6**  <br>*optional*||boolean|
 |**IPAM**  <br>*optional*||[IPAM](#ipam)|
-|**Ingress**  <br>*optional*|Ingress checks the network is ingress network or not.|boolean|
 |**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
 |**Labels**  <br>*optional*||< string, string > map|
 |**Options**  <br>*optional*||< string, string > map|
-|**Scope**  <br>*optional*|Scope means the network's scope.|string|
 
 
 <a name="networkcreateconfig"></a>
@@ -1377,19 +1411,14 @@ contains the request for the remote API: POST /networks/create
 
 |Name|Description|Schema|
 |---|---|---|
-|**Attachable**  <br>*optional*|Attachable means the network can be attached or not.|boolean|
 |**CheckDuplicate**  <br>*optional*|CheckDuplicate is used to check the network is duplicate or not.|boolean|
-|**ConfigFrom**  <br>*optional*||[ConfigReference](#configreference)|
-|**ConfigOnly**  <br>*optional*||boolean|
 |**Driver**  <br>*optional*|Driver means the network's driver.|string|
 |**EnableIPv6**  <br>*optional*||boolean|
 |**IPAM**  <br>*optional*||[IPAM](#ipam)|
-|**Ingress**  <br>*optional*|Ingress checks the network is ingress network or not.|boolean|
 |**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
 |**Labels**  <br>*optional*||< string, string > map|
 |**Name**  <br>*optional*|Name is the name of the network.|string|
 |**Options**  <br>*optional*||< string, string > map|
-|**Scope**  <br>*optional*|Scope means the network's scope.|string|
 
 
 <a name="networkcreateresp"></a>
@@ -1405,7 +1434,7 @@ contains the response for the remote API: POST /networks/create
 
 <a name="networksettings"></a>
 ### NetworkSettings
-NetworkSettings exposes the network settings in the API
+NetworkSettings exposes the network settings in the API.
 
 
 |Name|Description|Schema|
@@ -1455,6 +1484,62 @@ entries are added to the mapping table.
 *Type* : < string, < [PortBinding](#portbinding) > array > map
 
 
+<a name="resources"></a>
+### Resources
+A container's resources (cgroups config, ulimits, etc)
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
+|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#resources-blkioweightdevice) > array|
+|**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br><br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
+|**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
+|**CpusetCpus**  <br>*optional*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
+|**CpusetMems**  <br>*optional*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
+|**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
+|**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
+|**DiskQuota**  <br>*optional*|Disk limit (in bytes).|integer (int64)|
+|**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
+|**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
+|**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
+|**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
+|**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#resources-ulimits) > array|
+
+<a name="resources-blkioweightdevice"></a>
+**BlkioWeightDevice**
+
+|Name|Description|Schema|
+|---|---|---|
+|**Path**  <br>*optional*||string|
+|**Weight**  <br>*optional*|**Minimum value** : `0`|integer (uint16)|
+
+<a name="resources-ulimits"></a>
+**Ulimits**
+
+|Name|Description|Schema|
+|---|---|---|
+|**Hard**  <br>*optional*|Hard limit|integer|
+|**Name**  <br>*optional*|Name of ulimit|string|
+|**Soft**  <br>*optional*|Soft limit|integer|
+
+
 <a name="searchresultitem"></a>
 ### SearchResultItem
 search result item in search results.
@@ -1501,6 +1586,15 @@ The status of the container. For example, "running" or "exited".
 |**KernelVersion**  <br>*optional*|Operating system kernel version  <br>**Example** : `"3.13.0-106-generic"`|string|
 |**Os**  <br>*optional*|Operating system type of underlying system  <br>**Example** : `"linux"`|string|
 |**Version**  <br>*optional*|version of Pouch Daemon  <br>**Example** : `"0.1.2"`|string|
+
+
+<a name="throttledevice"></a>
+### ThrottleDevice
+
+|Name|Description|Schema|
+|---|---|---|
+|**Path**  <br>*optional*|Device path|string|
+|**Rate**  <br>*optional*|Rate  <br>**Minimum value** : `0`|integer (uint64)|
 
 
 <a name="volumecreateconfig"></a>
