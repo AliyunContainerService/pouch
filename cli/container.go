@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/alibaba/pouch/apis/types"
 )
 
@@ -10,9 +13,10 @@ type container struct {
 	volume  []string
 	runtime string
 	env     []string
+	labels  []string
 }
 
-func (c *container) config() *types.ContainerCreateConfig {
+func (c *container) config() (*types.ContainerCreateConfig, error) {
 	config := &types.ContainerCreateConfig{
 		HostConfig: &types.HostConfig{},
 	}
@@ -20,6 +24,17 @@ func (c *container) config() *types.ContainerCreateConfig {
 	// TODO
 	config.Tty = c.tty
 	config.Env = c.env
+
+	// set labels
+	config.Labels = make(map[string]string)
+	for _, label := range c.labels {
+		fields := strings.SplitN(label, "=", 2)
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("invalid label: %s", label)
+		}
+		k, v := fields[0], fields[1]
+		config.Labels[k] = v
+	}
 
 	// set bind volume
 	if c.volume != nil {
@@ -31,5 +46,5 @@ func (c *container) config() *types.ContainerCreateConfig {
 		config.HostConfig.Runtime = c.runtime
 	}
 
-	return config
+	return config, nil
 }

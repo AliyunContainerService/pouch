@@ -254,6 +254,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		Image:   meta.Config.Image,
 		Created: meta.State.StartedAt,
 		State:   &types.ContainerState{Pid: meta.State.Pid},
+		Config:  meta.Config,
 	}
 	return EncodeResponse(rw, http.StatusOK, container)
 }

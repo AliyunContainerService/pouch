@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/go-check/check"
@@ -93,5 +95,26 @@ func (suite *PouchCreateSuite) TestCreateInWrongWay(c *check.C) {
 	} {
 		res := command.PouchRun("create", tc.args)
 		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+	}
+}
+
+// TestCreateWithLabels tries to test create a container with label.
+func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
+	label := "abc=123"
+	name := "create-label"
+
+	res := command.PouchRun("create", "--name", name, "-l", label, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.Config.Labels, check.NotNil)
+
+	if result.Config.Labels["abc"] != "123" {
+		c.Errorf("failed to set label: %s", label)
 	}
 }
