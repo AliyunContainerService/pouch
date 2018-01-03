@@ -9,6 +9,7 @@ type container struct {
 	tty     bool
 	volume  []string
 	runtime string
+	env     []string
 }
 
 func (c *container) config() *types.ContainerCreateConfig {
@@ -18,6 +19,7 @@ func (c *container) config() *types.ContainerCreateConfig {
 
 	// TODO
 	config.Tty = c.tty
+	config.Env = c.env
 
 	// set bind volume
 	if c.volume != nil {

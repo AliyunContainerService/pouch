@@ -176,6 +176,11 @@ func (c *Container) Name() string {
 	return c.meta.Name
 }
 
+// Config returns container's config.
+func (c *Container) Config() *types.ContainerConfig {
+	return c.meta.Config
+}
+
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
 	return c.meta.State.Status == types.StatusRunning
