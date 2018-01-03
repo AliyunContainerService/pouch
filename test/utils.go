@@ -159,3 +159,16 @@ func isContainerStateEqual(c *check.C, cname string, status string) (bool, error
 
 	return string(got.State.Status) == status, nil
 }
+
+// DelNetworkOk deletes the network and asserts success.
+func DelNetworkOk(c *check.C, cname string) {
+	resp, err := DelNetwork(c, cname)
+	c.Assert(err, check.IsNil)
+
+	CheckRespStatus(c, resp, 204)
+}
+
+// DelNetwork  deletes the network.
+func DelNetwork(c *check.C, cname string) (*http.Response, error) {
+	return request.Delete("/networks/" + cname)
+}
