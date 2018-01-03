@@ -51,6 +51,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
 	flagSet.BoolVarP(&rc.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
 	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
+	flagSet.StringSliceVarP(&rc.env, "env", "e", nil, "Set environment variables for container")
 }
 
 // runRun is the entry of run command.

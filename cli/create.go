@@ -44,6 +44,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.BoolVarP(&cc.tty, "tty", "t", false, "Allocate a tty device")
 	flagSet.StringSliceVarP(&cc.volume, "volume", "v", nil, "Bind mount volumes to container")
 	flagSet.StringVar(&cc.runtime, "runtime", "", "Specify oci runtime")
+	flagSet.StringSliceVarP(&cc.env, "env", "e", nil, "Set environment variables for container")
 }
 
 // runCreate is the entry of create command.

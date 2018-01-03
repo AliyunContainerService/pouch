@@ -82,3 +82,19 @@ func (suite *PouchStartSuite) TestStartInWrongWay(c *check.C) {
 		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
 	}
 }
+
+// TestStartWithEnv starts a container with env.
+func (suite *PouchStartSuite) TestStartWithEnv(c *check.C) {
+	name := "start-env"
+	env := "abc=123"
+
+	command.PouchRun("create", "--name", name, "-e", env, busyboxImage).Assert(c, icmd.Success)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	output := command.PouchRun("exec", name, "/bin/env").Stdout()
+	if !strings.Contains(output, env) {
+		c.Errorf("failed to set env: %s, %s", env, output)
+	}
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+}

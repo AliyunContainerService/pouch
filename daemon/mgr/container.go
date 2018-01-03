@@ -230,10 +230,16 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		return err
 	}
 
+	c, err := mgr.container(execConfig.ContainerID)
+	if err != nil {
+		return err
+	}
+
 	process := &specs.Process{
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
 		Cwd:      "/",
+		Env:      c.Config().Env,
 	}
 
 	return mgr.Client.ExecContainer(ctx, &ctrd.Process{
