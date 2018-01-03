@@ -7,6 +7,7 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/reference"
+	"github.com/alibaba/pouch/version"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/go-openapi/strfmt"
@@ -15,6 +16,9 @@ import (
 )
 
 const (
+	pouchRuntimeName         = "pouch"
+	kubeletRuntimeAPIVersion = "0.1.0"
+
 	// kubePrefix is used to idenfify the containers/sandboxes on the node managed by kubelet.
 	kubePrefix = "k8s"
 
@@ -65,7 +69,12 @@ func NewCriManager(ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
 
 // Version returns the runtime name, runtime version and runtime API version.
 func (c *CriManager) Version(ctx context.Context, r *runtime.VersionRequest) (*runtime.VersionResponse, error) {
-	return nil, fmt.Errorf("Version Not Implemented Yet")
+	return &runtime.VersionResponse{
+		Version:           kubeletRuntimeAPIVersion,
+		RuntimeName:       pouchRuntimeName,
+		RuntimeVersion:    version.Version,
+		RuntimeApiVersion: version.APIVersion,
+	}, nil
 }
 
 func makeLabels(labels, annotations map[string]string) map[string]string {
