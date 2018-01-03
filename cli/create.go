@@ -46,6 +46,8 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.runtime, "runtime", "", "Specify oci runtime")
 	flagSet.StringSliceVarP(&cc.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringSliceVarP(&cc.labels, "--label", "l", nil, "Set label for a container")
+	flagSet.StringVar(&cc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
+	flagSet.StringVarP(&cc.workdir, "workdir", "w", "", "Set the working directory in a container")
 }
 
 // runCreate is the entry of create command.

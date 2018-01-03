@@ -53,6 +53,8 @@ func (rc *RunCommand) addFlags() {
 	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
 	flagSet.StringSliceVarP(&rc.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringSliceVarP(&rc.labels, "--label", "l", nil, "Set label for a container")
+	flagSet.StringVar(&rc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
+	flagSet.StringVarP(&rc.workdir, "workdir", "w", "", "Set the working directory in a container")
 }
 
 // runRun is the entry of run command.

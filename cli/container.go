@@ -8,12 +8,14 @@ import (
 )
 
 type container struct {
-	name    string
-	tty     bool
-	volume  []string
-	runtime string
-	env     []string
-	labels  []string
+	labels     []string
+	name       string
+	tty        bool
+	volume     []string
+	runtime    string
+	env        []string
+	entrypoint string
+	workdir    string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -45,6 +47,9 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	if c.runtime != "" {
 		config.HostConfig.Runtime = c.runtime
 	}
+
+	config.Entrypoint = strings.Fields(c.entrypoint)
+	config.WorkingDir = c.workdir
 
 	return config, nil
 }
