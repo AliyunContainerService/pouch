@@ -58,7 +58,7 @@ func (e *ExecCommand) runExec(args []string) error {
 
 	createExecConfig := &types.ExecCreateConfig{
 		Cmd:          strings.Fields(command),
-		Tty:          e.Terminal,
+		Tty:          e.Terminal || e.Interactive,
 		Detach:       e.Detach,
 		AttachStderr: !e.Detach,
 		AttachStdout: !e.Detach,
