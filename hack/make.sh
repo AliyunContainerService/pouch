@@ -65,6 +65,8 @@ function target()
 				break
 			elif (( $((daemon_timeout_time--)) == 0 ));then
 				echo "Failed to start pouch daemon"
+				echo "pouch daemon log:"
+				cat $TMP/log 
 				return 1
 			else
 				sleep 1
