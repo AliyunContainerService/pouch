@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/network/types"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/docker/libnetwork"
@@ -22,17 +23,17 @@ import (
 
 // NetworkMgr defines interface to manage container network.
 type NetworkMgr interface {
-	// NetworkCreate is used to create network.
-	NetworkCreate(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error)
+	// Create is used to create network.
+	Create(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error)
 
 	// NetworkRemove is used to delete an existing network.
-	NetworkRemove(ctx context.Context, name string) error
+	Remove(ctx context.Context, name string) error
 
-	// NetworkList returns all networks on this host.
-	NetworkList(ctx context.Context, labels map[string]string) ([]*types.Network, error)
+	// List returns all networks on this host.
+	List(ctx context.Context, labels map[string]string) ([]*types.Network, error)
 
-	// NetworkInfo returns the information of network that specified name/id.
-	NetworkInfo(ctx context.Context, name string) (*types.Network, error)
+	// Get returns the information of network that specified name/id.
+	Get(ctx context.Context, name string) (*types.Network, error)
 
 	// EndpointCreate is used to create network endpoint.
 	EndpointCreate(ctx context.Context, name string) error
@@ -74,8 +75,8 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store) (*NetworkManager, 
 	}, nil
 }
 
-// NetworkCreate is used to create network.
-func (nm *NetworkManager) NetworkCreate(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error) {
+// Create is used to create network.
+func (nm *NetworkManager) Create(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error) {
 	name := create.Name
 	driver := create.NetworkCreate.Driver
 	id := randomid.Generate()
@@ -100,10 +101,13 @@ func (nm *NetworkManager) NetworkCreate(ctx context.Context, create apitypes.Net
 	return &network, nil
 }
 
-// NetworkRemove is used to delete an existing network.
-func (nm *NetworkManager) NetworkRemove(ctx context.Context, name string) error {
+// Remove is used to delete an existing network.
+func (nm *NetworkManager) Remove(ctx context.Context, name string) error {
 	nw, err := nm.controller.NetworkByName(name)
-	if err != nil && err != libnetwork.ErrNoSuchNetwork(name) {
+	if err != nil {
+		if err == libnetwork.ErrNoSuchNetwork(name) {
+			return errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
 		return err
 	}
 	if nw == nil {
@@ -113,16 +117,19 @@ func (nm *NetworkManager) NetworkRemove(ctx context.Context, name string) error 
 	return nw.Delete()
 }
 
-// NetworkList returns all networks on this host.
-func (nm *NetworkManager) NetworkList(ctx context.Context, labels map[string]string) ([]*types.Network, error) {
+// List returns all networks on this host.
+func (nm *NetworkManager) List(ctx context.Context, labels map[string]string) ([]*types.Network, error) {
 	// TODO
 	return nil, nil
 }
 
-// NetworkInfo returns the information of network that specified name/id.
-func (nm *NetworkManager) NetworkInfo(ctx context.Context, name string) (*types.Network, error) {
+// Get returns the information of network that specified name/id.
+func (nm *NetworkManager) Get(ctx context.Context, name string) (*types.Network, error) {
 	n, err := nm.controller.NetworkByName(name)
-	if err != nil && err != libnetwork.ErrNoSuchNetwork(name) {
+	if err != nil {
+		if err == libnetwork.ErrNoSuchNetwork(name) {
+			return nil, errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
 		return nil, err
 	}
 
@@ -210,7 +217,7 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 	return nwOptions, nil
 }
 
-func getIpamConfig(data []*apitypes.IPAMConfig) ([]*libnetwork.IpamConf, []*libnetwork.IpamConf, error) {
+func getIpamConfig(data []apitypes.IPAMConfig) ([]*libnetwork.IpamConf, []*libnetwork.IpamConf, error) {
 	ipamV4Cfg := []*libnetwork.IpamConf{}
 	ipamV6Cfg := []*libnetwork.IpamConf{}
 	for _, d := range data {
