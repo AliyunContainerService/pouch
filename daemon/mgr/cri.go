@@ -26,6 +26,7 @@ const (
 	containerTypeLabelKey       = "io.kubernetes.pouch.type"
 	containerTypeLabelSandbox   = "sandbox"
 	containerTypeLabelContainer = "container"
+	sandboxIDLabelKey           = "io.kubernetes.sandbox.id"
 
 	// sandboxContainerName is a string to include in the pouch container so
 	// that users can easily identify the sandboxes.
@@ -173,14 +174,120 @@ func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 	return nil, fmt.Errorf("ListPodSandbox Not Implemented Yet")
 }
 
+// generateEnvList converts KeyValue list to a list of strings, in the form of
+// '<key>=<value>', which can be understood by pouch.
+func generateEnvList(envs []*runtime.KeyValue) (result []string) {
+	for _, env := range envs {
+		result = append(result, fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
+	return
+}
+
+// modifyContainerNamespaceOptions apply namespace options for container.
+func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandboxID string, hostConfig *apitypes.HostConfig) {
+	sandboxNSMode := fmt.Sprintf("container:%v", podSandboxID)
+
+	hostConfig.PidMode = sandboxNSMode
+	hostConfig.NetworkMode = sandboxNSMode
+	hostConfig.IpcMode = sandboxNSMode
+	hostConfig.UTSMode = sandboxNSMode
+}
+
+// applyContainerSecurityContext updates pouch container options according to security context.
+func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxID string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
+	// TODO: modify Config and HostConfig.
+
+	modifyContainerNamespaceOptions(lc.SecurityContext.GetNamespaceOptions(), podSandboxID, hc)
+
+	return nil
+}
+
+// Apply Linux-specific options if applicable.
+func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, podSandboxID string) error {
+	if lc := config.GetLinux(); lc != nil {
+		// TODO: resource restriction.
+
+		// Apply security context.
+		if err := applyContainerSecurityContext(lc, podSandboxID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
+			return fmt.Errorf("failed to apply container security context for container %q: %v", config.Metadata.Name, err)
+		}
+	}
+
+	// TODO: apply cgroupParent derived from the sandbox config.
+
+	return nil
+}
+
+func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) string {
+	return strings.Join([]string{
+		kubePrefix,                            // 0
+		c.Metadata.Name,                       // 1
+		s.Metadata.Name,                       // 2: sandbox name
+		s.Metadata.Namespace,                  // 3: sandbox namespace
+		s.Metadata.Uid,                        // 4: sandbox uid
+		fmt.Sprintf("%d", c.Metadata.Attempt), // 5
+	}, nameDelimiter)
+}
+
 // CreateContainer creates a new container in the given PodSandbox.
 func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (*runtime.CreateContainerResponse, error) {
-	return nil, fmt.Errorf("CreateContainer Not Implemented Yet")
+	config := r.GetConfig()
+	sandboxConfig := r.GetSandboxConfig()
+	podSandboxID := r.GetPodSandboxId()
+
+	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
+	// Apply the container type lable.
+	labels[containerTypeLabelKey] = containerTypeLabelContainer
+	// Write the sandbox ID in the labels.
+	labels[sandboxIDLabelKey] = podSandboxID
+
+	image := ""
+	if iSpec := config.GetImage(); iSpec != nil {
+		image = iSpec.Image
+	}
+	createConfig := &apitypes.ContainerCreateConfig{
+		ContainerConfig: apitypes.ContainerConfig{
+			// TODO: wait for them to be fully supported.
+			// Entrypoint:		config.Command,
+			// Cmd:			config.Args,
+			Env:        generateEnvList(config.GetEnvs()),
+			Image:      image,
+			WorkingDir: config.WorkingDir,
+			Labels:     labels,
+			// Interactive containers:
+			OpenStdin: config.Stdin,
+			StdinOnce: config.StdinOnce,
+			Tty:       config.Tty,
+		},
+		HostConfig: &apitypes.HostConfig{
+		// TODO: generate mount bindings.
+		},
+		NetworkingConfig: &apitypes.NetworkingConfig{},
+	}
+	c.updateCreateConfig(createConfig, config, sandboxConfig, podSandboxID)
+
+	// TODO: devices and security option configurations.
+
+	containerName := makeContainerName(sandboxConfig, config)
+
+	createResp, err := c.ContainerMgr.Create(ctx, containerName, createConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create container for sandbox %q: %v", podSandboxID, err)
+	}
+
+	return &runtime.CreateContainerResponse{ContainerId: createResp.ID}, nil
 }
 
 // StartContainer starts the container.
 func (c *CriManager) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (*runtime.StartContainerResponse, error) {
-	return nil, fmt.Errorf("StartContainer Not Implemented Yet")
+	containerID := r.GetContainerId()
+
+	err := c.ContainerMgr.Start(ctx, containerID, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to start container %q: %v", containerID, err)
+	}
+
+	return &runtime.StartContainerResponse{}, nil
 }
 
 // StopContainer stops a running container with a grace period (i.e., timeout).
