@@ -1,12 +1,16 @@
 package request
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"time"
 
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -127,4 +131,35 @@ func newRequest(method, url string, opts ...Option) (*http.Request, error) {
 	//fmt.Println(req)
 
 	return req, nil
+}
+
+// Hijack posts hijack request.
+func Hijack(endpoint string, opts ...Option) (*http.Response, net.Conn, *bufio.Reader, error) {
+	// Noneed to pass baseurl as it is a unix connect.
+	req, err := newRequest(http.MethodPost, endpoint, opts...)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	//req.Header.Set("Connection", "Upgrade")
+	//req.Header.Set("Upgrade", "tcp")
+
+	req.Host = environment.PouchdUnixDomainSock
+	defaultTimeout := time.Second * 10
+	conn, err := net.DialTimeout("unix", req.Host, defaultTimeout)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	clientconn := httputil.NewClientConn(conn, nil)
+	defer clientconn.Close()
+
+	// Ignore response here.
+	resp, err := clientconn.Do(req)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	rwc, br := clientconn.Hijack()
+
+	return resp, rwc, br, nil
 }

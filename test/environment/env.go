@@ -13,6 +13,9 @@ var (
 	// PouchdAddress is default pouchd address
 	PouchdAddress = "unix:///var/run/pouchd.sock"
 
+	// PouchdUnixDomainSock is the default unix domain socket file used by pouchd.
+	PouchdUnixDomainSock = "/var/run/pouchd.sock"
+
 	// TLSConfig is default tls config
 	TLSConfig = utils.TLSConfig{}
 )
