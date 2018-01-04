@@ -127,10 +127,6 @@ func (m *Container) validateMounts(formats strfmt.Registry) error {
 		return nil
 	}
 
-	for i := 0; i < len(m.Mounts); i++ {
-
-	}
-
 	return nil
 }
 

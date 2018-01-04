@@ -1387,7 +1387,7 @@ definitions:
         type: "array"
         description: "Set of mount point in a container."
         items:
-          $ref: "#definitions/MountPoint"
+          $ref: "#/definitions/MountPoint"
       NetworkSettings:
         additionalProperties:
           $ref: "#/definitions/EndpointSettings"
@@ -1728,7 +1728,7 @@ definitions:
         type: "array"
         description: "Set of mount point in a container."
         items:
-          $ref: "#definitions/MountPoint"
+          $ref: "#/definitions/MountPoint"
       NetworkSettings:
         description: "NetworkSettings exposes the network settings in the API."
         $ref: "#/definitions/NetworkSettings"
@@ -1801,6 +1801,7 @@ definitions:
   MountPoint:
     type: "object"
     description: "A mount point inside a container"
+    x-nullable: false
     properties:
       Type:
         type: "string"
