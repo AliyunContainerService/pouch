@@ -397,7 +397,18 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
 func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
-	return nil, fmt.Errorf("ImageStatus Not Implemented Yet")
+	imageRef := r.GetImage().GetImage()
+	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	image, err := imageToCriImage(imageInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &runtime.ImageStatusResponse{Image: image}, nil
 }
 
 // PullImage pulls an image with authentication config.
@@ -424,7 +435,18 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 
 // RemoveImage removes the image.
 func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
-	return nil, fmt.Errorf("RemoveImage Not Implemented Yet")
+	imageRef := r.GetImage().GetImage()
+	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.ImageMgr.RemoveImage(ctx, imageInfo, &ImageRemoveOption{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &runtime.RemoveImageResponse{}, nil
 }
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
