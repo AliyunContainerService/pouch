@@ -710,6 +710,38 @@ paths:
             $ref: "#/definitions/VolumeCreateConfig"
       tags: ["Volume"]
 
+  /volumes/{id}:
+    get:
+      summary: "Inspect a volume"
+      operationId: "VolumeInspect"
+      produces: ["application/json"]
+      responses:
+        200:
+          description: "No error"
+          schema:
+            $ref: "#/definitions/VolumeInfo"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/id"
+      tags: ["Volume"]
+
+    delete: 
+      summary: "Delete a volume"
+      operationId: "VolumeDelete"
+      responses:
+        204:
+          description: "No error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/id"
+      tags: ["Volume"]
+
   /networks/create:
     post:
       summary: "Create a network"

@@ -47,6 +47,7 @@ func initRoute(s *Server) http.Handler {
 
 	// volume
 	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
+	r.Path("/volumes/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getVolume))
 	r.Path("/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
 
 	// metrics

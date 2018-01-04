@@ -22,8 +22,8 @@ type VolumeMgr interface {
 	// List returns all volumes on this host.
 	List(ctx context.Context, labels map[string]string) ([]string, error)
 
-	// Info returns the information of volume that specified name/id.
-	Info(ctx context.Context, name string) (*types.Volume, error)
+	// Get returns the information of volume that specified name/id.
+	Get(ctx context.Context, name string) (*types.Volume, error)
 
 	// Path returns the mount path of volume.
 	Path(ctx context.Context, name string) (string, error)
@@ -109,8 +109,8 @@ func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]
 	return vm.core.ListVolumeName(labels)
 }
 
-// Info returns the information of volume that specified name/id.
-func (vm *VolumeManager) Info(ctx context.Context, name string) (*types.Volume, error) {
+// Get returns the information of volume that specified name/id.
+func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, error) {
 	id := types.VolumeID{
 		Name: name,
 	}
