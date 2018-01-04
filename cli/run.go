@@ -22,6 +22,7 @@ type RunCommand struct {
 	detachKeys string
 	attach     bool
 	stdin      bool
+	detach     bool
 }
 
 // Init initialize run command.
@@ -55,6 +56,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringSliceVarP(&rc.labels, "--label", "l", nil, "Set label for a container")
 	flagSet.StringVar(&rc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
 	flagSet.StringVarP(&rc.workdir, "workdir", "w", "", "Set the working directory in a container")
+	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
 }
 
 // runRun is the entry of run command.
@@ -87,6 +89,15 @@ func (rc *RunCommand) runRun(args []string) error {
 	// pouch run not specify --name
 	if containerName == "" {
 		containerName = result.Name
+	}
+
+	if (rc.attach || rc.stdin) && rc.detach {
+		return fmt.Errorf("Conflicting options: -a (or -i) and -d")
+	}
+
+	// default attach container's stdout and stderr
+	if !rc.detach {
+		rc.attach = true
 	}
 
 	wait := make(chan struct{})
@@ -134,14 +145,14 @@ func (rc *RunCommand) runRun(args []string) error {
 // runExample shows examples in run command, and is used in auto-generated cli docs.
 func runExample() string {
 	return `$ pouch run --name test registry.hub.docker.com/library/busybox:latest echo "hi"
-23f8529fddf7c8bbea70e2c12353e47dbfa5eacda9d58ff8665269614456424b
-$ pouch ps
-Name   ID       Status    Image                                            Runtime   Created
-test   23f852   stopped   registry.hub.docker.com/library/busybox:latest   runc      4 seconds ago
-$ pouch run -i --name test registry.hub.docker.com/library/busybox:latest echo "hi"
 hi
 $ pouch ps
 Name   ID       Status    Image                                            Runtime   Created
-test   883ea9   stopped   registry.hub.docker.com/library/busybox:latest   runc      5 seconds ago
+test   23f852   stopped   registry.hub.docker.com/library/busybox:latest   runc      4 seconds ago
+$ pouch run -d --name test registry.hub.docker.com/library/busybox:latest
+90719b5f9a455b3314a49e72e3ecb9962f215e0f90153aa8911882acf2ba2c84
+$ pouch ps
+Name   ID       Status    Image                                            Runtime   Created
+test   90719b   stopped   registry.hub.docker.com/library/busybox:latest   runc      5 seconds ago
 	`
 }
