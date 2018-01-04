@@ -196,3 +196,29 @@ func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
 		c.Fatalf("expect container %s to be exited: %s\n", name, out)
 	}
 }
+
+// TestRunWithIPCMode is to verify --specific IPC mode when running a container.
+// TODO: test container ipc namespace mode.
+func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
+	name := "test-run-with-ipc-mode"
+
+	res := command.PouchRun("run", "--name", name, "--ipc", "host", busyboxImage)
+	res.Assert(c, icmd.Success)
+}
+
+// TestRunWithPIDMode is to verify --specific PID mode when running a container.
+// TODO: test container pid namespace mode.
+func (suite *PouchRunSuite) TestRunWithPIDMode(c *check.C) {
+	name := "test-run-with-pid-mode"
+
+	res := command.PouchRun("run", "--name", name, "--pid", "host", busyboxImage)
+	res.Assert(c, icmd.Success)
+}
+
+// TestRunWithUTSMode is to verify --specific UTS mode when running a container.
+func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
+	name := "test-run-with-uts-mode"
+
+	res := command.PouchRun("run", "--name", name, "--uts", "host", busyboxImage)
+	res.Assert(c, icmd.Success)
+}
