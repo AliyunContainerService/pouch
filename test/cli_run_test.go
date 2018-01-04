@@ -34,11 +34,23 @@ func (suite *PouchRunSuite) TearDownTest(c *check.C) {
 func (suite *PouchRunSuite) TestRun(c *check.C) {
 	name := "test-run"
 
-	_ = command.PouchRun("run", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("ps").Assert(c, icmd.Success)
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output %s: should contains container %s\n", out, name)
+	}
+}
+
+// TestRunPrintHi is to verify run container with executing a command.
+func (suite *PouchRunSuite) TestRunPrintHi(c *check.C) {
+	name := "test-run-print-hi"
+
+	res := command.PouchRun("run", "--name", name, busyboxImage, "echo", "hi")
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, "hi") {
+		c.Fatalf("upexpected output %s expected hi\n", out)
 	}
 }
 
