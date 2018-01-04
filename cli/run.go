@@ -52,11 +52,15 @@ func (rc *RunCommand) addFlags() {
 	flagSet.BoolVarP(&rc.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
 	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
 	flagSet.StringSliceVarP(&rc.env, "env", "e", nil, "Set environment variables for container")
+	flagSet.StringSliceVarP(&rc.labels, "--label", "l", nil, "Set label for a container")
 }
 
 // runRun is the entry of run command.
 func (rc *RunCommand) runRun(args []string) error {
-	config := rc.config()
+	config, err := rc.config()
+	if err != nil {
+		return fmt.Errorf("failed to run container: %v", err)
+	}
 
 	ref, err := reference.Parse(args[0])
 	if err != nil {

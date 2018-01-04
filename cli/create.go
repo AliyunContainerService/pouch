@@ -45,11 +45,15 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringSliceVarP(&cc.volume, "volume", "v", nil, "Bind mount volumes to container")
 	flagSet.StringVar(&cc.runtime, "runtime", "", "Specify oci runtime")
 	flagSet.StringSliceVarP(&cc.env, "env", "e", nil, "Set environment variables for container")
+	flagSet.StringSliceVarP(&cc.labels, "--label", "l", nil, "Set label for a container")
 }
 
 // runCreate is the entry of create command.
 func (cc *CreateCommand) runCreate(args []string) error {
-	config := cc.config()
+	config, err := cc.config()
+	if err != nil {
+		return fmt.Errorf("failed to create container: %v", err)
+	}
 
 	ref, err := reference.Parse(args[0])
 	if err != nil {
