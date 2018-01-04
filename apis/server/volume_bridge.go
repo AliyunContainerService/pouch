@@ -49,6 +49,15 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 	return EncodeResponse(rw, http.StatusCreated, volume)
 }
 
+func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	name := mux.Vars(req)["name"]
+	volume, err := s.VolumeMgr.Get(ctx, name)
+	if err != nil {
+		return err
+	}
+	return EncodeResponse(rw, http.StatusOK, volume)
+}
+
 func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	name := mux.Vars(req)["name"]
 

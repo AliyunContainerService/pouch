@@ -688,7 +688,7 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 			source = randomid.Generate()
 		}
 		if !path.IsAbs(source) {
-			_, err := mgr.VolumeMgr.Info(ctx, source)
+			_, err := mgr.VolumeMgr.Get(ctx, source)
 			if err != nil {
 				opts := map[string]string{
 					"backend": "local",
