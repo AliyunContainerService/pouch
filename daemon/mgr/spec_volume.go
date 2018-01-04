@@ -14,15 +14,20 @@ func setupMounts(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 		return nil
 	}
 	for _, v := range c.HostConfig.Binds {
-		sd := strings.SplitN(v, ":", 2)
-		if len(sd) != 2 {
+		sd := strings.Split(v, ":")
+		lensd := len(sd)
+		if lensd < 2 || lensd > 3 {
 			return fmt.Errorf("unknown bind: %s", v)
 		}
+		opt := []string{"rbind"}
+		if lensd == 3 {
+			opt = append(opt, sd[2])
+		}
 		mounts = append(mounts, specs.Mount{
-			Destination: sd[0],
-			Source:      sd[1],
+			Destination: sd[1],
+			Source:      sd[0],
 			Type:        "bind",
-			Options:     []string{"rbind"},
+			Options:     opt,
 		})
 	}
 	s.Mounts = mounts
