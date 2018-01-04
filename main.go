@@ -9,6 +9,7 @@ import (
 
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
@@ -58,6 +59,9 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
 	flagSet.BoolVarP(&printVersion, "version", "v", false, "Print daemon version")
 	flagSet.StringVar(&cfg.DefaultRuntime, "default-runtime", "runc", "Default OCI Runtime")
+	flagSet.BoolVar(&cfg.IsLxcfsEnabled, "enable-lxcfs", false, "Enable Lxcfs to make container to isolate /proc")
+	flagSet.StringVar(&cfg.LxcfsBinPath, "lxcfs", "/usr/local/bin/lxcfs", "Specify the path of lxcfs binary")
+	flagSet.StringVar(&cfg.LxcfsHome, "lxcfs-home", "/var/lib/lxc/lxcfs", "Specify the mount dir of lxcfs")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
@@ -99,6 +103,11 @@ func runDaemon() error {
 			},
 		},
 	}
+
+	if err := checkLxcfsCfg(); err != nil {
+		return err
+	}
+	processes = setLxcfsProcess(processes)
 	defer processes.StopAll()
 
 	if err := processes.RunAll(); err != nil {
@@ -145,4 +154,43 @@ func initLog() {
 		TimestampFormat: "2006-01-02 15:04:05.000000000",
 	}
 	logrus.SetFormatter(formatter)
+}
+
+// define lxcfs processe.
+func setLxcfsProcess(processes exec.Processes) exec.Processes {
+	if !cfg.IsLxcfsEnabled {
+		return processes
+	}
+
+	lxcfsProcess := &exec.Process{
+		Path: cfg.LxcfsBinPath,
+		Args: []string{
+			cfg.LxcfsHome,
+		},
+	}
+	processes = append(processes, lxcfsProcess)
+
+	if cfg.LxcfsHome[len(cfg.LxcfsHome)-1:] == "/" {
+		cfg.LxcfsHome = cfg.LxcfsHome[0 : len(cfg.LxcfsHome)-2]
+	}
+	lxcfs.IsLxcfsEnabled = cfg.IsLxcfsEnabled
+	lxcfs.LxcfsHomeDir = cfg.LxcfsHome
+	lxcfs.LxcfsParentDir = path.Dir(cfg.LxcfsHome)
+
+	return processes
+}
+
+// check lxcfs config
+func checkLxcfsCfg() error {
+	if !cfg.IsLxcfsEnabled {
+		return nil
+	}
+	if !path.IsAbs(cfg.LxcfsHome) {
+		return fmt.Errorf("invalid lxcfs home dir: %s", cfg.LxcfsHome)
+	}
+
+	if _, err := os.Stat(cfg.LxcfsBinPath); err != nil {
+		return fmt.Errorf("invalid lxcfs bin path: %s", cfg.LxcfsBinPath)
+	}
+	return nil
 }

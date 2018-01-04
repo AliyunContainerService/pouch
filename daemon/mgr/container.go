@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -291,6 +292,17 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// create a snapshot with image.
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
 		return nil, err
+	}
+
+	// set lxcfs binds
+	if config.ContainerConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
+		config.HostConfig.Binds = append(config.HostConfig.Binds, lxcfs.LxcfsParentDir+":/var/lib/lxc:shared")
+		sourceDir := lxcfs.LxcfsHomeDir + "/proc/"
+		destDir := "/proc/"
+		for _, procFile := range lxcfs.LxcfsProcFiles {
+			bind := fmt.Sprintf("%s%s:%s%s", sourceDir, procFile, destDir, procFile)
+			config.HostConfig.Binds = append(config.HostConfig.Binds, bind)
+		}
 	}
 
 	meta := &ContainerMeta{
