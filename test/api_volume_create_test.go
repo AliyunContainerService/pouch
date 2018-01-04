@@ -37,5 +37,5 @@ func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 	path = "/volumes/" + vol
 	resp, err = request.Delete(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	c.Assert(resp.StatusCode, check.Equals, 204)
 }

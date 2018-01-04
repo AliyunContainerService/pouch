@@ -7,6 +7,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/network"
+	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/docker/libnetwork/drivers/bridge"
 	"github.com/docker/libnetwork/netlabel"
@@ -26,8 +27,10 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 	}
 
 	// clear exist bridge network
-	if err := manager.NetworkRemove(ctx, "bridge"); err != nil {
-		return err
+	if err := manager.Remove(ctx, "bridge"); err != nil {
+		if !errtypes.IsNotfound(err) {
+			return err
+		}
 	}
 
 	ipamV4Conf := &types.IPAMConfig{
@@ -39,7 +42,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 
 	ipam := &types.IPAM{
 		Driver: "default",
-		Config: []*types.IPAMConfig{ipamV4Conf},
+		Config: []types.IPAMConfig{*ipamV4Conf},
 	}
 
 	networkCreate := types.NetworkCreate{
@@ -60,6 +63,6 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		NetworkCreate: networkCreate,
 	}
 
-	_, err := manager.NetworkCreate(ctx, create)
+	_, err := manager.Create(ctx, create)
 	return err
 }

@@ -55,7 +55,8 @@ func initRoute(s *Server) http.Handler {
 
 	// network
 	r.Path("/networks/create").Methods(http.MethodPost).Handler(s.filter(s.createNetwork))
-	r.Path("/networks/{id:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
+	r.Path("/networks/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getNetwork))
+	r.Path("/networks/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
 
 	if s.Config.Debug {
 		profilerSetup(r)

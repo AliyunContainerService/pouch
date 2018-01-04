@@ -23,6 +23,5 @@ func (suite *APINetworkDeleteSuite) SetUpTest(c *check.C) {
 func (suite *APINetworkDeleteSuite) TestNetworkDelNonExisting(c *check.C) {
 	resp, err := request.Delete("/networks/" + "TestNetworkDelNonExisting")
 	c.Assert(err, check.IsNil)
-	// TODO: change to 404 once delete API has been implemented.
-	CheckRespStatus(c, resp, 200)
+	CheckRespStatus(c, resp, 404)
 }

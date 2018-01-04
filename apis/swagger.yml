@@ -768,6 +768,43 @@ paths:
             $ref: "#/definitions/NetworkCreateConfig"
       tags: ["Network"]
 
+  /networks/{id}:
+    get:
+      summary: "Inspect a network"
+      operationId: "NetworkInspect"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            $ref: "#/definitions/NetworkInspectResp"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/id"
+      tags: ["Network"]
+
+    delete:
+      summary: "Remove a network"
+      operationId: "NetworkDelete"
+      responses:
+        204:
+          description: "No error"
+        403:
+          description: "operation not supported for pre-defined networks"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/id"
+      tags: ["Network"]
+
 definitions:
   Error:
     type: "object"
@@ -1979,31 +2016,68 @@ definitions:
         type: "string"
 
   NetworkCreate:
-      type: "object"
-      description: "is the expected body of the \"create network\" http request message"
-      properties:
-        CheckDuplicate:
-          type: "boolean"
-          description: "CheckDuplicate is used to check the network is duplicate or not."
-        Driver:
+    type: "object"
+    description: "is the expected body of the \"create network\" http request message"
+    properties:
+      CheckDuplicate:
+        type: "boolean"
+        description: "CheckDuplicate is used to check the network is duplicate or not."
+      Driver:
+        type: "string"
+        description: "Driver means the network's driver."
+      EnableIPv6:
+        type: "boolean"
+      IPAM:
+        type: "object"
+        $ref: "#/definitions/IPAM"
+      Internal:
+        type: "boolean"
+        description: "Internal checks the network is internal network or not."
+      Options:
+        type: "object"
+        additionalProperties:
           type: "string"
-          description: "Driver means the network's driver."
-        EnableIPv6:
-          type: "boolean"
-        IPAM:
-          type: "object"
-          $ref: "#/definitions/IPAM"
-        Internal:
-          type: "boolean"
-          description: "Internal checks the network is internal network or not."
-        Options:
-          type: "object"
-          additionalProperties:
-            type: "string"
-        Labels:
-          type: "object"
-          additionalProperties:
-            type: "string"
+      Labels:
+        type: "object"
+        additionalProperties:
+          type: "string"
+
+  NetworkInspectResp:
+    type: "object"
+    description: "is the expected body of the 'GET networks/{id}'' http request message"
+    properties:
+      Name:
+        type: "string"
+        description: "Name is the requested name of the network"
+      ID:
+        type: "string"
+        description: "ID uniquely identifies a network on a single machine"
+      Scope:
+        type: "string"
+        description: "Scope describes the level at which the network exists."
+      Driver:
+        type: "string"
+        description: "Driver means the network's driver."
+      EnableIPv6:
+        type: "boolean"
+        description: "EnableIPv6 represents whether to enable IPv6."
+      IPAM:
+        type: "object"
+        description: "IPAM is the network's IP Address Management."
+        $ref: "#/definitions/IPAM"
+      Internal:
+        type: "boolean"
+        description: "Internal checks the network is internal network or not."
+      Options:
+        type: "object"
+        description: "Options holds the network specific options to use for when creating the network."
+        additionalProperties:
+          type: "string"
+      Labels:
+        type: "object"
+        description: "Labels holds metadata specific to the network being created."
+        additionalProperties:
+          type: "string"
 
   IPAM:
     type: "object"
@@ -2023,6 +2097,7 @@ definitions:
   IPAMConfig:
     description: "represents IPAM configurations"
     type: "object"
+    x-nullable: false
     properties:
       Subnet:
         type: "string"

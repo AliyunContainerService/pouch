@@ -64,6 +64,6 @@ func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
 		return err
 	}
-	rw.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
