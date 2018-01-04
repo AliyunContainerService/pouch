@@ -98,3 +98,25 @@ func (suite *PouchStartSuite) TestStartWithEnv(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithEntrypoint starts a container with  entrypoint.
+func (suite *PouchStartSuite) TestStartWithEntrypoint(c *check.C) {
+	name := "start-entrypoint"
+
+	command.PouchRun("create", "--name", name, "--entrypoint", "echo hello", busyboxImage).Assert(c, icmd.Success)
+	output := command.PouchRun("start", "-a", name).Stdout()
+	if !strings.Contains(output, "hello") {
+		c.Errorf("failed to start a container with entrypoint: %s", output)
+	}
+}
+
+// TestStartWithWorkDir starts a container with work dir.
+func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
+	name := "start-workdir"
+
+	command.PouchRun("create", "--name", name, "--entrypoint", "pwd", "-w", "/tmp", busyboxImage).Assert(c, icmd.Success)
+	output := command.PouchRun("start", "-a", name).Stdout()
+	if !strings.Contains(output, "/tmp") {
+		c.Errorf("failed to start a container with workdir: %s", output)
+	}
+}

@@ -211,28 +211,26 @@ func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64)
 		if !errdefs.IsNotFound(err) {
 			return nil, errors.Wrap(err, "failed to kill task")
 		}
-	} else {
-		// wait for the task to exit.
-		msg = waitExit()
+		goto clean
 	}
+	// wait for the task to exit.
+	msg = waitExit()
 
-	if msg.RawError() != nil {
-		if errtypes.IsTimeout(msg.RawError()) {
-			// timeout, use SIGKILL to retry.
-			if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
-				if !errdefs.IsNotFound(err) {
-					return nil, errors.Wrap(err, "failed to kill task")
-				}
-
-			} else {
-				msg = waitExit()
+	if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
+		// timeout, use SIGKILL to retry.
+		if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
+			if !errdefs.IsNotFound(err) {
+				return nil, errors.Wrap(err, "failed to kill task")
 			}
+			goto clean
 		}
+		msg = waitExit()
 	}
 	if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
 		return nil, err
 	}
 
+clean:
 	if err := pack.container.Delete(ctx); err != nil {
 		if !errdefs.IsNotFound(err) {
 			return msg, errors.Wrap(err, "failed to delete container")
