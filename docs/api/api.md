@@ -843,6 +843,68 @@ POST /networks/create
 * Network
 
 
+<a name="networkinspect"></a>
+### Inspect a network
+```
+GET /networks/{id}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|No error|[NetworkInspectResp](#networkinspectresp)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Network
+
+
+<a name="networkdelete"></a>
+### Remove a network
+```
+DELETE /networks/{id}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|No error|No Content|
+|**403**|operation not supported for pre-defined networks|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Network
+
+
 <a name="version-get"></a>
 ### Get Pouchd version
 ```
@@ -970,6 +1032,67 @@ json :
 ```
 
 
+<a name="volumeinspect"></a>
+### Inspect a volume
+```
+GET /volumes/{id}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|No error|[VolumeInfo](#volumeinfo)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Volume
+
+
+<a name="volumedelete"></a>
+### Delete a volume
+```
+DELETE /volumes/{id}
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|No error|No Content|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Volume
+
+
 
 
 <a name="definitions"></a>
@@ -990,7 +1113,7 @@ GET "/containers/json"
 |**Image**  <br>*optional*||string|
 |**ImageID**  <br>*optional*||string|
 |**Labels**  <br>*optional*||< string, string > map|
-|**Mounts**  <br>*optional*|Set of mount point in a container.|< [#definitions/MountPoint](#definitions-mountpoint) > array|
+|**Mounts**  <br>*optional*|Set of mount point in a container.|< [MountPoint](#mountpoint) > array|
 |**Names**  <br>*optional*|**Example** : `[ "container_1", "container_2" ]`|< string > array|
 |**SizeRootFs**  <br>*optional*||integer (int64)|
 |**SizeRw**  <br>*optional*||integer (int64)|
@@ -1104,7 +1227,7 @@ GET "/containers/{id}/json"
 |**Image**  <br>*optional*|The container's image|string|
 |**LogPath**  <br>*optional*||string|
 |**MountLabel**  <br>*optional*||string|
-|**Mounts**  <br>*optional*|Set of mount point in a container.|< [#definitions/MountPoint](#definitions-mountpoint) > array|
+|**Mounts**  <br>*optional*|Set of mount point in a container.|< [MountPoint](#mountpoint) > array|
 |**Name**  <br>*optional*||string|
 |**NetworkSettings**  <br>*optional*|NetworkSettings exposes the network settings in the API.|[NetworkSettings](#networksettings)|
 |**Path**  <br>*optional*|The path to the command being run|string|
@@ -1430,6 +1553,24 @@ contains the response for the remote API: POST /networks/create
 |---|---|---|
 |**ID**  <br>*optional*|ID is the id of the network.|string|
 |**Warning**  <br>*optional*|Warning means the message of create network result.|string|
+
+
+<a name="networkinspectresp"></a>
+### NetworkInspectResp
+is the expected body of the 'GET networks/{id}'' http request message
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Driver**  <br>*optional*|Driver means the network's driver.|string|
+|**EnableIPv6**  <br>*optional*|EnableIPv6 represents whether to enable IPv6.|boolean|
+|**ID**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
+|**IPAM**  <br>*optional*|IPAM is the network's IP Address Management.|[IPAM](#ipam)|
+|**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
+|**Labels**  <br>*optional*|Labels holds metadata specific to the network being created.|< string, string > map|
+|**Name**  <br>*optional*|Name is the requested name of the network|string|
+|**Options**  <br>*optional*|Options holds the network specific options to use for when creating the network.|< string, string > map|
+|**Scope**  <br>*optional*|Scope describes the level at which the network exists.|string|
 
 
 <a name="networksettings"></a>
