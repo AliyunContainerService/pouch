@@ -19,6 +19,9 @@ type container struct {
 	entrypoint string
 	workdir    string
 	hostname   string
+	cpushare   int64
+	cpusetcpus string
+	cpusetmems string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -54,6 +57,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	config.Entrypoint = strings.Fields(c.entrypoint)
 	config.WorkingDir = c.workdir
 	config.Hostname = strfmt.Hostname(c.hostname)
+
+	// cgroup
+	config.HostConfig.CPUShares = c.cpushare
+	config.HostConfig.CpusetCpus = c.cpusetcpus
+	config.HostConfig.CpusetMems = c.cpusetmems
 
 	return config, nil
 }

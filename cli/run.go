@@ -58,6 +58,9 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVarP(&rc.workdir, "workdir", "w", "", "Set the working directory in a container")
 	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
 	flagSet.StringVar(&rc.hostname, "hostname", "", "Set container's hostname")
+	flagSet.Int64Var(&rc.cpushare, "cpu-share", 0, "CPU shares")
+	flagSet.StringVar(&rc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
+	flagSet.StringVar(&rc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
 }
 
 // runRun is the entry of run command.
