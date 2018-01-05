@@ -120,7 +120,7 @@ func (c containerList) Swap(i, j int) {
 
 // Less implements the sort interface.
 func (c containerList) Less(i, j int) bool {
-	iValue, _ := time.Parse(utils.TimeLayout, c[i].Created)
-	jValue, _ := time.Parse(utils.TimeLayout, c[j].Created)
+	iValue := time.Unix(0, c[i].Created)
+	jValue := time.Unix(0, c[j].Created)
 	return iValue.After(jValue)
 }

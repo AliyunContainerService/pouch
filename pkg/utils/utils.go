@@ -51,17 +51,13 @@ func FormatSize(size int64) string {
 }
 
 // FormatTimeInterval is used to show the time interval from input time to now.
-func FormatTimeInterval(input string) (formattedTime string, err error) {
-	start, err := time.Parse(TimeLayout, input)
-	if err != nil {
-		return "", errInvalid
-	}
+func FormatTimeInterval(input int64) (formattedTime string, err error) {
+	start := time.Unix(0, input)
 	diff := time.Now().Sub(start)
 
 	// That should not happen.
 	if diff < 0 {
-		formattedTime += "-"
-		diff = 0 - diff
+		return "", errInvalid
 	}
 
 	if diff >= Year {

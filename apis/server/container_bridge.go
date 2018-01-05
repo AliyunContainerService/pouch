@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -231,18 +232,21 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 	containerList := make([]types.Container, 0, len(metas))
 
 	for _, m := range metas {
+		t, _ := time.Parse(utils.TimeLayout, m.Created)
 		container := types.Container{
 			ID:         m.ID,
 			Names:      []string{m.Name},
 			Image:      m.Config.Image,
 			Command:    strings.Join(m.Config.Cmd, " "),
-			Created:    m.Created,
+			Created:    t.UnixNano(),
 			Labels:     m.Config.Labels,
 			HostConfig: m.HostConfig,
 		}
 
+		// TODO encapsulate this into a single function
 		if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
-			startAt, err := utils.FormatTimeInterval(m.State.StartedAt)
+			start, _ := time.Parse(utils.TimeLayout, m.State.StartedAt)
+			startAt, err := utils.FormatTimeInterval(start.UnixNano())
 			if err != nil {
 				return err
 			}
