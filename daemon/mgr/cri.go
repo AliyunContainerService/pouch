@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	"k8s.io/kubernetes/pkg/kubelet/server/streaming"
 )
 
 const (
@@ -49,21 +51,37 @@ type CriMgr interface {
 
 	// ImageServiceServer is interface of CRI image service.
 	runtime.ImageServiceServer
+
+	// StreamServerStart starts stream server of CRI.
+	StreamServerStart() error
 }
 
 // CriManager is an implementation of interface CriMgr.
 type CriManager struct {
 	ContainerMgr ContainerMgr
 	ImageMgr     ImageMgr
+	// StreamServer is the stream server of CRI serves container streaming request.
+	StreamServer streaming.Server
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
+func NewCriManager(cfg *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
 	c := &CriManager{
 		ContainerMgr: ctrMgr,
 		ImageMgr:     imgMgr,
 	}
+
+	var err error
+	c.StreamServer, err = newStreamServer(ctrMgr, cfg.StreamServerAddress, cfg.StreamServerPort)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stream server: %v", err)
+	}
 	return c, nil
+}
+
+// StreamServerStart starts stream server of CRI.
+func (c *CriManager) StreamServerStart() error {
+	return c.StreamServer.Start(true)
 }
 
 // TODO: Move the underlying functions to their respective files in the future.
@@ -343,17 +361,20 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 
 // Exec prepares a streaming endpoint to execute a command in the container, and returns the address.
 func (c *CriManager) Exec(ctx context.Context, r *runtime.ExecRequest) (*runtime.ExecResponse, error) {
-	return nil, fmt.Errorf("Exec Not Implemented Yet")
+	// TODO: check that container is running.
+	return c.StreamServer.GetExec(r)
 }
 
 // Attach prepares a streaming endpoint to attach to a running container, and returns the address.
 func (c *CriManager) Attach(ctx context.Context, r *runtime.AttachRequest) (*runtime.AttachResponse, error) {
-	return nil, fmt.Errorf("Attach Not Implemented Yet")
+	// TODO: check that container is running.
+	return c.StreamServer.GetAttach(r)
 }
 
 // PortForward prepares a streaming endpoint to forward ports from a PodSandbox, and returns the address.
 func (c *CriManager) PortForward(ctx context.Context, r *runtime.PortForwardRequest) (*runtime.PortForwardResponse, error) {
-	return nil, fmt.Errorf("PortForward Not Implemented Yet")
+	// TODO: check that sandbox is running.
+	return c.StreamServer.GetPortForward(r)
 }
 
 // UpdateRuntimeConfig updates the runtime config. Currently only handles podCIDR updates.

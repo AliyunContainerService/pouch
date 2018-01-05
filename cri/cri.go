@@ -27,8 +27,6 @@ func NewService(cfg config.Config, criMgr mgr.CriMgr) (*Service, error) {
 		criMgr: criMgr,
 	}
 
-	// TODO: Prepare streaming server.
-
 	runtime.RegisterRuntimeServiceServer(s.server, s.criMgr)
 	runtime.RegisterImageServiceServer(s.server, s.criMgr)
 
