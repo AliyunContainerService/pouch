@@ -120,3 +120,19 @@ func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
 		c.Errorf("failed to start a container with workdir: %s", output)
 	}
 }
+
+// TestStartWithHostname starts a container with hostname.
+func (suite *PouchStartSuite) TestStartWithHostname(c *check.C) {
+	name := "start-hostname"
+	hostname := "pouch"
+
+	command.PouchRun("create", "--name", name, "--hostname", hostname, busyboxImage).Assert(c, icmd.Success)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	output := command.PouchRun("exec", name, "hostname").Stdout()
+	if !strings.Contains(output, hostname) {
+		c.Errorf("failed to set hostname: %s, %s", hostname, output)
+	}
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+}

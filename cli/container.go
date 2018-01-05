@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+
+	strfmt "github.com/go-openapi/strfmt"
 )
 
 type container struct {
@@ -16,6 +18,7 @@ type container struct {
 	env        []string
 	entrypoint string
 	workdir    string
+	hostname   string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -50,6 +53,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	config.Entrypoint = strings.Fields(c.entrypoint)
 	config.WorkingDir = c.workdir
+	config.Hostname = strfmt.Hostname(c.hostname)
 
 	return config, nil
 }
