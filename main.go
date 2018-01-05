@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/alibaba/pouch/daemon"
@@ -162,17 +163,15 @@ func setLxcfsProcess(processes exec.Processes) exec.Processes {
 		return processes
 	}
 
-	lxcfsProcess := &exec.Process{
+	p := &exec.Process{
 		Path: cfg.LxcfsBinPath,
 		Args: []string{
 			cfg.LxcfsHome,
 		},
 	}
-	processes = append(processes, lxcfsProcess)
+	processes = append(processes, p)
+	cfg.LxcfsHome = strings.TrimSuffix(cfg.LxcfsHome, "/")
 
-	if cfg.LxcfsHome[len(cfg.LxcfsHome)-1:] == "/" {
-		cfg.LxcfsHome = cfg.LxcfsHome[0 : len(cfg.LxcfsHome)-2]
-	}
 	lxcfs.IsLxcfsEnabled = cfg.IsLxcfsEnabled
 	lxcfs.LxcfsHomeDir = cfg.LxcfsHome
 	lxcfs.LxcfsParentDir = path.Dir(cfg.LxcfsHome)
@@ -185,12 +184,21 @@ func checkLxcfsCfg() error {
 	if !cfg.IsLxcfsEnabled {
 		return nil
 	}
+
 	if !path.IsAbs(cfg.LxcfsHome) {
 		return fmt.Errorf("invalid lxcfs home dir: %s", cfg.LxcfsHome)
 	}
 
 	if _, err := os.Stat(cfg.LxcfsBinPath); err != nil {
 		return fmt.Errorf("invalid lxcfs bin path: %s", cfg.LxcfsBinPath)
+	}
+
+	if _, err := os.Stat(cfg.LxcfsHome); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(cfg.LxcfsHome, 0755); err != nil {
+				return fmt.Errorf("failed to LxcfsHome %s: %v", cfg.LxcfsHome, err)
+			}
+		}
 	}
 	return nil
 }
