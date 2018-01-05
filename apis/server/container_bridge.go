@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -225,13 +227,14 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 
 	containerList := make([]types.Container, 0, len(metas))
 	for _, m := range metas {
+		t, _ := time.Parse(utils.TimeLayout, m.Created)
 		container := types.Container{
 			ID:         m.ID,
 			Names:      []string{m.Name},
 			Status:     string(m.State.Status),
 			Image:      m.Config.Image,
 			Command:    strings.Join(m.Config.Cmd, " "),
-			Created:    m.State.StartedAt,
+			Created:    t.UnixNano(),
 			Labels:     m.Config.Labels,
 			HostConfig: m.HostConfig,
 		}

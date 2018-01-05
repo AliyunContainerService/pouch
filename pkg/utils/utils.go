@@ -51,8 +51,8 @@ func FormatSize(size int64) string {
 }
 
 // FormatCreatedTime is used to show the time from creation to now.
-func FormatCreatedTime(created string) (formattedTime string, err error) {
-	start, err := time.Parse(TimeLayout, created)
+func FormatCreatedTime(created int64) (formattedTime string, err error) {
+	start := time.Unix(0, created)
 	if err != nil {
 		return "", errInvalid
 	}
