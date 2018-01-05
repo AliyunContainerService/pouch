@@ -21,6 +21,9 @@ var setupFunc = []SetupFunc{
 	// cgroup
 	setupCgroupCPUShare,
 	setupCgroupCPUSet,
+	setupCgroupMemory,
+	setupCgroupMemorySwap,
+	setupCgroupMemorySwappiness,
 
 	// namespaces
 	setupUserNamespace,

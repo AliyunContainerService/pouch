@@ -61,6 +61,9 @@ func (rc *RunCommand) addFlags() {
 	flagSet.Int64Var(&rc.cpushare, "cpu-share", 0, "CPU shares")
 	flagSet.StringVar(&rc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
 	flagSet.StringVar(&rc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
+	flagSet.Int64Var(&rc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.StringVarP(&rc.memory, "memory", "m", "", "Container memory limit")
+	flagSet.StringVar(&rc.memorySwap, "memory-swap", "", "Container swap limit")
 }
 
 // runRun is the entry of run command.
