@@ -18,6 +18,10 @@ var setupFunc = []SetupFunc{
 	setupProcessUser,
 	setupCap,
 
+	// cgroup
+	setupCgroupCPUShare,
+	setupCgroupCPUSet,
+
 	// namespaces
 	setupUserNamespace,
 	setupNetworkNamespace,

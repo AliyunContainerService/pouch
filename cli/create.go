@@ -49,6 +49,9 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
 	flagSet.StringVarP(&cc.workdir, "workdir", "w", "", "Set the working directory in a container")
 	flagSet.StringVar(&cc.hostname, "hostname", "", "Set container's hostname")
+	flagSet.Int64Var(&cc.cpushare, "cpu-share", 0, "CPU shares")
+	flagSet.StringVar(&cc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
+	flagSet.StringVar(&cc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
 }
 
 // runCreate is the entry of create command.
