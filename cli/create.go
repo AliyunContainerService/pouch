@@ -55,6 +55,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.Int64Var(&cc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
 	flagSet.StringVarP(&cc.memory, "memory", "m", "", "Container memory limit")
 	flagSet.StringVar(&cc.memorySwap, "memory-swap", "", "Container swap limit")
+	flagSet.StringSliceVarP(&cc.devices, "device", "", nil, "Add a host device to the container")
 }
 
 // runCreate is the entry of create command.

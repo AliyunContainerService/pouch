@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -50,7 +51,88 @@ func (suite *PouchRunSuite) TestRunPrintHi(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	if out := res.Combined(); !strings.Contains(out, "hi") {
-		c.Fatalf("upexpected output %s expected hi\n", out)
+		c.Fatalf("unexpected output %s expected hi\n", out)
+	}
+}
+
+// TestRunDeviceMapping is to verify --device param when running a container.
+func (suite *PouchRunSuite) TestRunDeviceMapping(c *check.C) {
+	if _, err := os.Stat("/dev/zero"); err != nil {
+		c.Skip("Host does not have /dev/zero")
+	}
+
+	name := "test-run-device-mapping"
+	testDev := "/dev/testDev"
+
+	res := command.PouchRun("run", "--name", name, "--device", "/dev/zero:"+testDev, busyboxImage, "ls", testDev)
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, testDev) {
+		c.Fatalf("unexpected output %s expected %s\n", out, testDev)
+	}
+}
+
+// TestRunDevicePermissions is to verify --device permissions mode when running a container.
+func (suite *PouchRunSuite) TestRunDevicePermissions(c *check.C) {
+	if _, err := os.Stat("/dev/zero"); err != nil {
+		c.Skip("Host does not have /dev/zero")
+	}
+
+	name := "test-run-device-permissions"
+	testDev := "/dev/testDev"
+	permissions := "crw-rw-rw-"
+
+	res := command.PouchRun("run", "--name", name, "--device", "/dev/zero:"+testDev+":rwm", busyboxImage, "ls", "-l", testDev)
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.HasPrefix(out, permissions) {
+		c.Fatalf("Output should begin with %s, got %s\n", permissions, out)
+	}
+}
+
+// TestRunDeviceInvalidMode is to verify --device wrong mode when running a container.
+func (suite *PouchRunSuite) TestRunDeviceInvalidMode(c *check.C) {
+	name := "test-run-device-with-wrong-mode"
+	wrongMode := "rxm"
+
+	res := command.PouchRun("run", "--name", name, "--device", "/dev/zero:/dev/zero:"+wrongMode, busyboxImage, "ls", "/dev/zero")
+	c.Assert(res.Error, check.NotNil)
+
+	expected := "invalid device mode"
+	if out := res.Combined(); !strings.Contains(out, expected) {
+		c.Fatalf("Output should contain %s unexpected output %s. \n", expected, out)
+	}
+}
+
+// TestRunDeviceDirectory is to verify --device with a device directory when running a container.
+func (suite *PouchRunSuite) TestRunDeviceDirectory(c *check.C) {
+	if _, err := os.Stat("/dev/snd"); err != nil {
+		c.Skip("Host does not have direcory /dev/snd")
+	}
+
+	name := "test-run-with-directory-device"
+	srcDev := "/dev/snd"
+
+	res := command.PouchRun("run", "--name", name, "--device", srcDev+":/dev:rwm", busyboxImage, "ls", "-l", "/dev")
+	res.Assert(c, icmd.Success)
+
+	// /dev/snd contans two device: timer, seq
+	expected := "timer"
+	if out := res.Combined(); !strings.Contains(out, expected) {
+		c.Fatalf("Output should contain %s, got %s\n", expected, out)
+	}
+}
+
+// TestRunWithBadDevice is to verify --device with bad device dir when running a container.
+func (suite *PouchRunSuite) TestRunDeviceWithBadDevice(c *check.C) {
+	name := "test-run-with-bad-device"
+
+	res := command.PouchRun("run", "--name", name, "--device", "/etc", busyboxImage, "ls", "/etc")
+	c.Assert(res.Error, check.NotNil)
+
+	expected := "not a device node"
+	if out := res.Combined(); !strings.Contains(out, expected) {
+		c.Fatalf("Output should contain %s unexpected output %s. \n", expected, out)
 	}
 }
 
