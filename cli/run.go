@@ -57,6 +57,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
 	flagSet.StringVarP(&rc.workdir, "workdir", "w", "", "Set the working directory in a container")
 	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
+	flagSet.StringVar(&rc.hostname, "hostname", "", "Set container's hostname")
 }
 
 // runRun is the entry of run command.

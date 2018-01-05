@@ -31,6 +31,11 @@ func setupPidNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) 
 func setupUtsNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
 	ns := specs.LinuxNamespace{Type: specs.UTSNamespace}
 	setNamespace(s, ns)
+
+	// set hostname
+	if hostname := meta.Config.Hostname.String(); hostname != "" {
+		s.Hostname = hostname
+	}
 	return nil
 }
 

@@ -48,6 +48,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringSliceVarP(&cc.labels, "--label", "l", nil, "Set label for a container")
 	flagSet.StringVar(&cc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
 	flagSet.StringVarP(&cc.workdir, "workdir", "w", "", "Set the working directory in a container")
+	flagSet.StringVar(&cc.hostname, "hostname", "", "Set container's hostname")
 }
 
 // runCreate is the entry of create command.
