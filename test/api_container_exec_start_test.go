@@ -33,17 +33,37 @@ func checkEchoSuccess(c *check.C, conn net.Conn, br *bufio.Reader, exp string) {
 	c.Assert(string(got), check.Equals, exp, check.Commentf("Expected %s, got %s", exp, string(got)))
 }
 
-// TestContainerExecStartOk tests start exec is OK.
-func (suite *APIContainerExecStartSuite) TestContainerExecStartOk(c *check.C) {
-	cname := "TestContainerCreateExecStartOk"
+// TestContainerExecStartWithoutUpgrade tests start exec without upgrade which will return 200 OK.
+func (suite *APIContainerExecStartSuite) TestContainerExecStartWithoutUpgrade(c *check.C) {
+	cname := "TestContainerCreateExecStartWithoutUpgrade"
 
 	CreateBusyboxContainerOk(c, cname)
 
 	StartContainerOk(c, cname)
 
-	got := CreateExecEchoOk(c, cname)
+	execid := CreateExecEchoOk(c, cname)
 
-	resp, conn, reader, err := StartContainerExec(c, got, false, false)
+	obj := map[string]interface{}{}
+	resp, conn, br, err := request.Hijack("/exec/"+execid+"/start", request.WithJSONBody(obj))
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	checkEchoSuccess(c, conn, br, "test")
+
+	DelContainerForceOk(c, cname)
+}
+
+// TestContainerExecStartOk tests start exec.
+func (suite *APIContainerExecStartSuite) TestContainerExecStart(c *check.C) {
+	cname := "TestContainerCreateExecStart"
+
+	CreateBusyboxContainerOk(c, cname)
+
+	StartContainerOk(c, cname)
+
+	execid := CreateExecEchoOk(c, cname)
+
+	resp, conn, reader, err := StartContainerExec(c, execid, false, false)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 101)
 

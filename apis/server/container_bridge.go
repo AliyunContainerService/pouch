@@ -83,6 +83,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	}
 
 	name := mux.Vars(req)["name"]
+	_, upgrade := req.Header["Upgrade"]
 
 	var attach *mgr.AttachConfig
 
@@ -97,7 +98,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 			Stdin:   config.Tty,
 			Stdout:  true,
 			Stderr:  true,
-			Upgrade: true,
+			Upgrade: upgrade,
 		}
 	}
 
