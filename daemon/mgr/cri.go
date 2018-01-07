@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/version"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -18,6 +20,9 @@ import (
 const (
 	pouchRuntimeName         = "pouch"
 	kubeletRuntimeAPIVersion = "0.1.0"
+
+	runtimeNotReadyReason = "Pouch daemon not ready"
+	networkNotReadyReason = "network plugin not ready"
 
 	// kubePrefix is used to idenfify the containers/sandboxes on the node managed by kubelet.
 	kubePrefix = "k8s"
@@ -53,6 +58,7 @@ type CriMgr interface {
 
 // CriManager is an implementation of interface CriMgr.
 type CriManager struct {
+	config       config.Config
 	ContainerMgr ContainerMgr
 	ImageMgr     ImageMgr
 }
@@ -363,7 +369,40 @@ func (c *CriManager) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateR
 
 // Status returns the status of the runtime.
 func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*runtime.StatusResponse, error) {
-	return nil, fmt.Errorf("Status Not Implemented Yet")
+	runtimeCondition := &runtime.RuntimeCondition{
+		Type:   runtime.RuntimeReady,
+		Status: true,
+	}
+	networkCondition := &runtime.RuntimeCondition{
+		Type:   runtime.NetworkReady,
+		Status: true,
+	}
+
+	conditions := []*runtime.RuntimeCondition{runtimeCondition, networkCondition}
+
+	//Todo check if the client is serving
+	runtimeCondition.Status = false
+	runtimeCondition.Reason = runtimeNotReadyReason
+	runtimeCondition.Message = fmt.Sprintf("pouch: failed to get pouch version: errType")
+
+	//Todo check the status of network plugin
+	networkCondition.Status = false
+	networkCondition.Reason = networkNotReadyReason
+	networkCondition.Message = fmt.Sprintf("pouch: network plugin is not ready: errorType")
+
+	resp := &runtime.StatusResponse{
+		Status: &runtime.RuntimeStatus{Conditions: conditions},
+	}
+
+	if r.Verbose {
+		configByt, err := json.Marshal(c.config)
+		if err != nil {
+			return nil, err
+		}
+		resp.Info = make(map[string]string)
+		resp.Info["config"] = string(configByt)
+	}
+	return resp, nil
 }
 
 // imageToCriImage converts pouch image API to CRI image API.
