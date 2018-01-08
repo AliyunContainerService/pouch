@@ -20,6 +20,7 @@ type containerList []*types.Container
 // PsCommand is used to implement 'ps' command.
 type PsCommand struct {
 	baseCommand
+	flagQuiet bool
 }
 
 // Init initializes PsCommand command.
@@ -40,7 +41,9 @@ func (p *PsCommand) Init(c *Cli) {
 
 // addFlags adds flags for specific command.
 func (p *PsCommand) addFlags() {
-	// TODO: add flags here
+	flagSet := p.cmd.Flags()
+	flagSet.SetInterspersed(false)
+	flagSet.BoolVarP(&p.flagQuiet, "quiet", "q", false, "Only display numeric IDs")
 }
 
 // runPs is the entry of PsCommand command.
@@ -51,6 +54,13 @@ func (p *PsCommand) runPs(args []string) error {
 	containers, err := apiClient.ContainerList()
 	if err != nil {
 		return fmt.Errorf("failed to get container list: %v", err)
+	}
+
+	if p.flagQuiet {
+		for _, c := range containers {
+			fmt.Println(c.ID[:6])
+		}
+		return nil
 	}
 
 	sort.Sort(containers)
