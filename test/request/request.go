@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -16,6 +17,8 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/environment"
 )
+
+var defaultTimeout = time.Second * 10
 
 // Option defines a type used to update http.Request.
 type Option func(*http.Request) error
@@ -135,16 +138,12 @@ func newRequest(method, url string, opts ...Option) (*http.Request, error) {
 
 // Hijack posts hijack request.
 func Hijack(endpoint string, opts ...Option) (*http.Response, net.Conn, *bufio.Reader, error) {
-	// Noneed to pass baseurl as it is a unix connect.
 	req, err := newRequest(http.MethodPost, endpoint, opts...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	//req.Header.Set("Connection", "Upgrade")
-	//req.Header.Set("Upgrade", "tcp")
 
 	req.Host = environment.PouchdUnixDomainSock
-	defaultTimeout := time.Second * 10
 	conn, err := net.DialTimeout("unix", req.Host, defaultTimeout)
 	if err != nil {
 		return nil, nil, nil, err
@@ -153,13 +152,31 @@ func Hijack(endpoint string, opts ...Option) (*http.Response, net.Conn, *bufio.R
 	clientconn := httputil.NewClientConn(conn, nil)
 	defer clientconn.Close()
 
-	// Ignore response here.
+	// For hijack request, pouchd server will return 200 status or
+	// 101 status for switching protocol. For the 200 status code, http
+	// proto has definied:
+	//
+	//	If there is no Content-Length or chunked Transfer-Encoding on
+	//	a *Response and the status is not 1xx, 204 or 304, then the
+	//	body is unbounded.
+	//
+	//	For this case, the response is always terminated by the first
+	//	empty line after the header fields.
+	//	More details in RFC 2616, section 4.4.
+	//
+	// "persistent connection closed" is expectd error for 200 status.
 	resp, err := clientconn.Do(req)
-	if err != nil {
-		return nil, nil, nil, err
+	if err != httputil.ErrPersistEOF {
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		if resp.StatusCode != http.StatusSwitchingProtocols {
+			resp.Body.Close()
+			return nil, nil, nil, fmt.Errorf("unable to upgrade proto, got http status: %v", resp.StatusCode)
+		}
 	}
 
 	rwc, br := clientconn.Hijack()
-
 	return resp, rwc, br, nil
 }

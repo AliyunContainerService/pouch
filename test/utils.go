@@ -199,25 +199,15 @@ func CreateExecEchoOk(c *check.C, cname string) string {
 	return got.ID
 }
 
-// StartContainerExecOk starts executing a process in the container and asserts success.
-func StartContainerExecOk(c *check.C, execid string, tty bool, detach bool) {
-	resp, conn, _, err := StartContainerExec(c, execid, tty, detach)
-	c.Assert(err, check.IsNil)
-
-	// TODO: fix to use 200
-	CheckRespStatus(c, resp, 101)
-	defer conn.Close()
-}
-
 // StartContainerExec starts executing a process in the container.
 func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http.Response, net.Conn, *bufio.Reader, error) {
-
 	obj := map[string]interface{}{
 		"Detach": detach,
 		"Tty":    tty,
 	}
-	body := request.WithJSONBody(obj)
 
-	resp, conn, reader, err := request.Hijack("/exec/"+execid+"/start", body, request.WithHeader("Content-Type", "text/plain"))
-	return resp, conn, reader, err
+	return request.Hijack("/exec/"+execid+"/start",
+		request.WithHeader("Connection", "Upgrade"),
+		request.WithHeader("Upgrade", "tcp"),
+		request.WithJSONBody(obj))
 }
