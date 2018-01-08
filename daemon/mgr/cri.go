@@ -363,7 +363,23 @@ func (c *CriManager) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateR
 
 // Status returns the status of the runtime.
 func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*runtime.StatusResponse, error) {
-	return nil, fmt.Errorf("Status Not Implemented Yet")
+	runtimeCondition := &runtime.RuntimeCondition{
+		Type:   runtime.RuntimeReady,
+		Status: true,
+	}
+	networkCondition := &runtime.RuntimeCondition{
+		Type:   runtime.NetworkReady,
+		Status: true,
+	}
+
+	// TODO: check network status of CRI when it is ready.
+
+	return &runtime.StatusResponse{
+		Status: &runtime.RuntimeStatus{Conditions: []*runtime.RuntimeCondition{
+			runtimeCondition,
+			networkCondition,
+		}},
+	}, nil
 }
 
 // imageToCriImage converts pouch image API to CRI image API.
