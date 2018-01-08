@@ -52,6 +52,9 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.Int64Var(&cc.cpushare, "cpu-share", 0, "CPU shares")
 	flagSet.StringVar(&cc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
 	flagSet.StringVar(&cc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
+	flagSet.Int64Var(&cc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.StringVarP(&cc.memory, "memory", "m", "", "Container memory limit")
+	flagSet.StringVar(&cc.memorySwap, "memory-swap", "", "Container swap limit")
 }
 
 // runCreate is the entry of create command.

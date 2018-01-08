@@ -250,12 +250,13 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 	}
 
 	container := types.ContainerJSON{
-		ID:      meta.ID,
-		Name:    meta.Name,
-		Image:   meta.Config.Image,
-		Created: meta.State.StartedAt,
-		State:   meta.State,
-		Config:  meta.Config,
+		ID:         meta.ID,
+		Name:       meta.Name,
+		Image:      meta.Config.Image,
+		Created:    meta.State.StartedAt,
+		State:      meta.State,
+		Config:     meta.Config,
+		HostConfig: meta.HostConfig,
 	}
 	return EncodeResponse(rw, http.StatusOK, container)
 }

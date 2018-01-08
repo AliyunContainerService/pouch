@@ -6,22 +6,26 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
+	units "github.com/docker/go-units"
 	strfmt "github.com/go-openapi/strfmt"
 )
 
 type container struct {
-	labels     []string
-	name       string
-	tty        bool
-	volume     []string
-	runtime    string
-	env        []string
-	entrypoint string
-	workdir    string
-	hostname   string
-	cpushare   int64
-	cpusetcpus string
-	cpusetmems string
+	labels           []string
+	name             string
+	tty              bool
+	volume           []string
+	runtime          string
+	env              []string
+	entrypoint       string
+	workdir          string
+	hostname         string
+	cpushare         int64
+	cpusetcpus       string
+	cpusetmems       string
+	memory           string
+	memorySwap       string
+	memorySwappiness int64
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -62,6 +66,30 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	config.HostConfig.CPUShares = c.cpushare
 	config.HostConfig.CpusetCpus = c.cpusetcpus
 	config.HostConfig.CpusetMems = c.cpusetmems
+
+	if c.memorySwappiness != -1 && (c.memorySwappiness < 0 || c.memorySwappiness > 100) {
+		return nil, fmt.Errorf("invalid memory swappiness: %d (it's range is 0-100)", c.memorySwappiness)
+	}
+	config.HostConfig.MemorySwappiness = &c.memorySwappiness
+
+	if c.memory != "" {
+		v, err := units.RAMInBytes(c.memory)
+		if err != nil {
+			return nil, err
+		}
+		config.HostConfig.Memory = v
+	}
+	if c.memorySwap != "" {
+		if c.memorySwap == "-1" {
+			config.HostConfig.MemorySwap = -1
+		} else {
+			v, err := units.RAMInBytes(c.memorySwap)
+			if err != nil {
+				return nil, err
+			}
+			config.HostConfig.MemorySwap = v
+		}
+	}
 
 	return config, nil
 }
