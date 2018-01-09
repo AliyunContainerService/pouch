@@ -201,3 +201,37 @@ func (suite *APIContainerCreateSuite) TestRuntime(c *check.C) {
 	// TODO: verify runtime
 	DelContainerForceOk(c, cname)
 }
+
+// TestLxcfsEnable is OK.
+func (suite *APIContainerCreateSuite) TestLxcfsEnable(c *check.C) {
+	cname := "TestLxcfsEnable"
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+
+	isEnable := true
+
+	obj := map[string]interface{}{
+		"Image":       busyboxImage,
+		"EnableLxcfs": isEnable,
+	}
+
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	c.Assert(err, check.IsNil)
+
+	CheckRespStatus(c, resp, 201)
+
+	resp, err = request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(got.Config.EnableLxcfs, check.Equals, isEnable)
+
+	DelContainerForceOk(c, cname)
+}

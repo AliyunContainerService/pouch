@@ -38,6 +38,9 @@ type ContainerConfig struct {
 	// The domain name to use for the container.
 	Domainname string `json:"Domainname,omitempty"`
 
+	// Whether to enable lxcfs.
+	EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 	// The entry point for the container as a string or an array of strings.
 	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
 	//
@@ -109,6 +112,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig Cmd false */
 
 /* polymorph ContainerConfig Domainname false */
+
+/* polymorph ContainerConfig EnableLxcfs false */
 
 /* polymorph ContainerConfig Entrypoint false */
 

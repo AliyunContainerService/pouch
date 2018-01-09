@@ -44,4 +44,13 @@ type Config struct {
 
 	// Default OCI Runtime
 	DefaultRuntime string
+
+	// Enable lxcfs
+	IsLxcfsEnabled bool
+
+	// LxcfsBinPath is the absolute path of lxcfs binary
+	LxcfsBinPath string
+
+	// LxcfsHome is the absolute path of lxcfs
+	LxcfsHome string
 }
