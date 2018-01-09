@@ -1,6 +1,7 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -39,10 +40,10 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 	{
 		command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
-		res := command.PouchRun("ps").Assert(c, icmd.Success)
+		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "created")
+		c.Assert(kv[name].status[0], check.Equals, "created")
 		c.Assert(kv[name].image, check.Equals, busyboxImage)
 	}
 
@@ -53,17 +54,52 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		res := command.PouchRun("ps").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "running")
+		c.Assert(kv[name].status[0], check.Equals, "Up")
 	}
 
 	// stop
 	{
 		command.PouchRun("stop", name).Assert(c, icmd.Success)
 
-		res := command.PouchRun("ps").Assert(c, icmd.Success)
+		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status, check.Equals, "stopped")
+		c.Assert(kv[name].status[0], check.Equals, "stopped")
+	}
+}
+
+// TestPsAll tests "pouch ps -a" work
+func (suite *PouchPsSuite) TestPsAll(c *check.C) {
+	name := "ps-all"
+
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps").Assert(c, icmd.Success)
+	lines := strings.Split(res.Combined(), "\n")
+
+	// show running containers default
+	c.Assert(lines[1], check.Equals, "")
+
+	res = command.PouchRun("ps", "-a").Assert(c, icmd.Success)
+	kv := psToKV(res.Combined())
+
+	c.Assert(kv[name].status[0], check.Equals, "created")
+}
+
+// TestPsQuiet tests "pouch ps -q" work
+func (suite *PouchPsSuite) TestPsQuiet(c *check.C) {
+	name := "ps-quiet"
+
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps", "-q", "-a").Assert(c, icmd.Success)
+	lines := strings.Split(res.Combined(), "\n")
+
+	for _, line := range lines {
+		if line != "" {
+			match, _ := regexp.MatchString("^[0-9a-f]{6}$", line)
+			c.Assert(match, check.Equals, true)
+		}
 	}
 }
 
@@ -71,7 +107,8 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 type psTable struct {
 	id      string
 	name    string
-	status  string
+	status  []string
+	created []string
 	image   string
 	runtime string
 }
@@ -88,13 +125,23 @@ func psToKV(ps string) map[string]psTable {
 		}
 
 		items := strings.Fields(line)
-		res[items[0]] = psTable{
-			id:      items[1],
-			name:    items[0],
-			status:  items[2],
-			image:   items[3],
-			runtime: items[4],
+
+		pst := psTable{}
+		pst.name = items[0]
+		pst.id = items[1]
+
+		if items[2] == "Up" {
+			pst.status = items[2:5]
+			pst.created = items[5:8]
+			pst.image = items[8]
+			pst.runtime = items[9]
+		} else {
+			pst.status = items[2:3]
+			pst.created = items[3:6]
+			pst.image = items[6]
+			pst.runtime = items[7]
 		}
+		res[items[0]] = pst
 	}
 	return res
 }

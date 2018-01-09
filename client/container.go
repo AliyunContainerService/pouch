@@ -14,7 +14,7 @@ type ContainerAPIClient interface {
 	ContainerStart(name, detachKeys string) error
 	ContainerStop(name, timeout string) error
 	ContainerRemove(name string, force bool) error
-	ContainerList() ([]*types.Container, error)
+	ContainerList(all bool) ([]*types.Container, error)
 	ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error)
 	ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)
 	ContainerStartExec(execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)
@@ -88,8 +88,13 @@ func (client *APIClient) ContainerRemove(name string, force bool) error {
 }
 
 // ContainerList returns the list of containers.
-func (client *APIClient) ContainerList() ([]*types.Container, error) {
-	resp, err := client.get("/containers/json", nil)
+func (client *APIClient) ContainerList(all bool) ([]*types.Container, error) {
+	q := url.Values{}
+	if all {
+		q.Set("all", "true")
+	}
+
+	resp, err := client.get("/containers/json", q)
 	if err != nil {
 		return nil, err
 	}

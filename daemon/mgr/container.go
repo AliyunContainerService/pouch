@@ -45,7 +45,7 @@ type ContainerMgr interface {
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
 	// List returns the list of containers.
-	List(ctx context.Context, filter ContainerFilter) ([]*ContainerMeta, error)
+	List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error)
 
 	// CreateExec creates exec process's environment.
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
@@ -307,13 +307,13 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	meta := &ContainerMeta{
 		State: &types.ContainerState{
-			StartedAt: time.Now().UTC().Format(utils.TimeLayout),
-			Status:    types.StatusCreated,
+			Status: types.StatusCreated,
 		},
 		ID:         id,
 		Image:      image.Name,
 		Name:       name,
 		Config:     &config.ContainerConfig,
+		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
 	}
 
@@ -400,7 +400,7 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		}
 		c.meta.State.Pid = int64(pid)
 	} else {
-		c.meta.State.FinishedAt = time.Now().String()
+		c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 		c.meta.State.Error = err.Error()
 		c.meta.State.Pid = 0
 		//TODO get and set exit code
@@ -521,7 +521,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 }
 
 // List returns the container's list.
-func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter) ([]*ContainerMeta, error) {
+func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error) {
 	metas := []*ContainerMeta{}
 
 	list, err := mgr.Store.List()
@@ -535,7 +535,11 @@ func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter) (
 			return nil, fmt.Errorf("failed to get container list, invalid meta type")
 		}
 		if filter != nil && filter(m) {
-			metas = append(metas, m)
+			if option.All {
+				metas = append(metas, m)
+			} else if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
+				metas = append(metas, m)
+			}
 		}
 	}
 
@@ -625,7 +629,7 @@ func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) 
 func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message) error {
 	c.meta.State.Pid = -1
 	c.meta.State.ExitCode = int64(m.ExitCode())
-	c.meta.State.FinishedAt = time.Now().String()
+	c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 	c.meta.State.Status = types.StatusStopped
 
 	if err := m.RawError(); err != nil {

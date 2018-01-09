@@ -87,7 +87,7 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 
 	containers, err := s.ContainerMgr.List(ctx, func(meta *mgr.ContainerMeta) bool {
 		return meta.Image == image.Name
-	})
+	}, &mgr.ContainerListOption{All: true})
 	if err != nil {
 		return err
 	}

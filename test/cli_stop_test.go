@@ -39,7 +39,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
-	res := command.PouchRun("ps")
+	res := command.PouchRun("ps", "-a")
 
 	// FIXME: It's better if we use inspect to filter status.
 	if out := res.Combined(); !strings.Contains(out, "stopped") {
@@ -50,7 +50,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	command.PouchRun("stop", name, "3").Assert(c, icmd.Success)
 
-	res = command.PouchRun("ps")
+	res = command.PouchRun("ps", "-a")
 
 	// FIXME: It's better if we use inspect to filter status.
 	if out := res.Combined(); !strings.Contains(out, "stopped") {

@@ -50,18 +50,14 @@ func FormatSize(size int64) string {
 	return fmt.Sprintf("%.2f %s", formattedSize, suffixes[count])
 }
 
-// FormatCreatedTime is used to show the time from creation to now.
-func FormatCreatedTime(created string) (formattedTime string, err error) {
-	start, err := time.Parse(TimeLayout, created)
-	if err != nil {
-		return "", errInvalid
-	}
+// FormatTimeInterval is used to show the time interval from input time to now.
+func FormatTimeInterval(input int64) (formattedTime string, err error) {
+	start := time.Unix(0, input)
 	diff := time.Now().Sub(start)
 
 	// That should not happen.
 	if diff < 0 {
-		formattedTime += "-"
-		diff = 0 - diff
+		return "", errInvalid
 	}
 
 	if diff >= Year {
@@ -70,51 +66,44 @@ func FormatCreatedTime(created string) (formattedTime string, err error) {
 		if year > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Month {
 		month := int(diff / Month)
 		formattedTime += strconv.Itoa(month) + " month"
 		if month > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Week {
 		week := int(diff / Week)
 		formattedTime += strconv.Itoa(week) + " week"
 		if week > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Day {
 		day := int(diff / Day)
 		formattedTime += strconv.Itoa(day) + " day"
 		if day > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Hour {
 		hour := int(diff / Hour)
 		formattedTime += strconv.Itoa(hour) + " hour"
 		if hour > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Minute {
 		minute := int(diff / Minute)
 		formattedTime += strconv.Itoa(minute) + " minute"
 		if minute > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else if diff >= Second {
 		second := int(diff / Second)
 		formattedTime += strconv.Itoa(second) + " second"
 		if second > 1 {
 			formattedTime += "s"
 		}
-		formattedTime += " ago"
 	} else {
-		formattedTime += "0 second ago"
+		formattedTime += "0 second"
 	}
 
 	return formattedTime, nil
