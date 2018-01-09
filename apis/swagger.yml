@@ -1467,7 +1467,7 @@ definitions:
       NetworkSettings:
         type: "object"
         properties:
-          etworks:
+          networks:
             additionalProperties:
               $ref: "#/definitions/EndpointSettings"
               x-nullable: true

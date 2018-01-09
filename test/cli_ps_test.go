@@ -1,6 +1,7 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -64,6 +65,41 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		kv := psToKV(res.Combined())
 
 		c.Assert(kv[name].status[0], check.Equals, "stopped")
+	}
+}
+
+// TestPsAll tests "pouch ps -a" work
+func (suite *PouchPsSuite) TestPsAll(c *check.C) {
+	name := "ps-all"
+
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps").Assert(c, icmd.Success)
+	lines := strings.Split(res.Combined(), "\n")
+
+	// show running containers default
+	c.Assert(lines[1], check.Equals, "")
+
+	res = command.PouchRun("ps", "-a").Assert(c, icmd.Success)
+	kv := psToKV(res.Combined())
+
+	c.Assert(kv[name].status[0], check.Equals, "created")
+}
+
+// TestPsQuiet tests "pouch ps -q" work
+func (suite *PouchPsSuite) TestPsQuiet(c *check.C) {
+	name := "ps-quiet"
+
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps", "-q", "-a").Assert(c, icmd.Success)
+	lines := strings.Split(res.Combined(), "\n")
+
+	for _, line := range lines {
+		if line != "" {
+			match, _ := regexp.MatchString("^[0-9a-f]{6}$", line)
+			c.Assert(match, check.Equals, true)
+		}
 	}
 }
 
