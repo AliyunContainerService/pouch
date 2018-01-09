@@ -27,6 +27,12 @@ function install_pouch ()
 	# copy pouch daemon and pouch cli to PATH
 	echo "Install pouch."
 	cp -f $DIR/pouch $DIR/pouchd /usr/local/bin/
+	
+	# install lxcfs
+	echo "Install lxcfs"
+	apt-get install lxcfs
+	# MUST stop lxcfs service, so pouchd could take over it.
+	service lxcfs stop
 }
 
 function target()
@@ -54,7 +60,7 @@ function target()
 
 		#start pouch daemon
 		echo "start pouch daemon"
-		pouchd > $TMP/log 2>&1 &
+		pouchd --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
 
 		# wait until pouch daemon is ready
 		daemon_timeout_time=30
