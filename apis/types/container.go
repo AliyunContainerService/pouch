@@ -23,8 +23,8 @@ type Container struct {
 	// command
 	Command string `json:"Command,omitempty"`
 
-	// Created time of container in daemon. !! Incompatibility !! Moby has a type of int64.
-	Created string `json:"Created,omitempty"`
+	// Created time of container in daemon.
+	Created int64 `json:"Created,omitempty"`
 
 	// In Moby's API, HostConfig field in Container struct has following type
 	// struct { NetworkMode string `json:",omitempty"` }
@@ -53,7 +53,7 @@ type Container struct {
 	Names []string `json:"Names"`
 
 	// network settings
-	NetworkSettings map[string]*EndpointSettings `json:"NetworkSettings,omitempty"`
+	NetworkSettings *ContainerNetworkSettings `json:"NetworkSettings,omitempty"`
 
 	// size root fs
 	SizeRootFs int64 `json:"SizeRootFs,omitempty"`
@@ -145,8 +145,14 @@ func (m *Container) validateNetworkSettings(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.Required("NetworkSettings", "body", m.NetworkSettings); err != nil {
-		return err
+	if m.NetworkSettings != nil {
+
+		if err := m.NetworkSettings.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("NetworkSettings")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -163,6 +169,63 @@ func (m *Container) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Container) UnmarshalBinary(b []byte) error {
 	var res Container
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// ContainerNetworkSettings container network settings
+// swagger:model ContainerNetworkSettings
+
+type ContainerNetworkSettings struct {
+
+	// networks
+	Networks map[string]*EndpointSettings `json:"Networks,omitempty"`
+}
+
+/* polymorph ContainerNetworkSettings Networks false */
+
+// Validate validates this container network settings
+func (m *ContainerNetworkSettings) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateNetworks(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ContainerNetworkSettings) validateNetworks(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Networks) { // not required
+		return nil
+	}
+
+	if err := validate.Required("NetworkSettings"+"."+"Networks", "body", m.Networks); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *ContainerNetworkSettings) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *ContainerNetworkSettings) UnmarshalBinary(b []byte) error {
+	var res ContainerNetworkSettings
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

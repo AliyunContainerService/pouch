@@ -1431,8 +1431,9 @@ definitions:
       Command:
         type: "string"
       Created:
-        description: "Created time of container in daemon. !! Incompatibility !! Moby has a type of int64."
-        type: "string"
+        description: "Created time of container in daemon."
+        type: "integer"
+        format: "int64"
       SizeRw:
         type: "integer"
         format: "int64"
@@ -1462,9 +1463,12 @@ definitions:
         items:
           $ref: "#/definitions/MountPoint"
       NetworkSettings:
-        additionalProperties:
-          $ref: "#/definitions/EndpointSettings"
-          x-nullable: true
+        type: "object"
+        properties:
+          Networks:
+            additionalProperties:
+              $ref: "#/definitions/EndpointSettings"
+              x-nullable: true
 
 
   NetworkingConfig:

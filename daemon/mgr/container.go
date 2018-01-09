@@ -307,14 +307,14 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	meta := &ContainerMeta{
 		State: &types.ContainerState{
-			StartedAt: time.Now().UTC().Format(utils.TimeLayout),
-			Status:    types.StatusCreated,
+			Status: types.StatusCreated,
 		},
 		ID:         id,
 		Image:      image.Name,
 		Name:       name,
 		Config:     &config.ContainerConfig,
 		HostConfig: config.HostConfig,
+		Created:    time.Now().UTC().Format(utils.TimeLayout),
 	}
 
 	// merge image's config into container's meta
