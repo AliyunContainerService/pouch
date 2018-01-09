@@ -3,6 +3,7 @@ package mgr
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -90,6 +91,37 @@ func makeLabels(labels, annotations map[string]string) map[string]string {
 	}
 
 	return m
+}
+
+// extractLabels converts raw pouch labels to the CRI labels and annotations.
+func extractLabels(input map[string]string) (map[string]string, map[string]string) {
+	labels := make(map[string]string)
+	annotations := make(map[string]string)
+	for k, v := range input {
+		// Check if the key is used internally by the cri manager.
+		internal := false
+		for _, internalKey := range []string{
+			containerTypeLabelKey,
+			sandboxIDLabelKey,
+		} {
+			if k == internalKey {
+				internal = true
+				break
+			}
+		}
+		if internal {
+			continue
+		}
+
+		// Check if the label should be treated as an annotation.
+		if strings.HasPrefix(k, annotationPrefix) {
+			annotations[strings.TrimPrefix(k, annotationPrefix)] = v
+			continue
+		}
+		labels[k] = v
+	}
+
+	return labels, annotations
 }
 
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
@@ -227,6 +259,14 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 	return nil
 }
 
+func parseUint32(s string) (uint32, error) {
+	n, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(n), nil
+}
+
 func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) string {
 	return strings.Join([]string{
 		kubePrefix,                            // 0
@@ -236,6 +276,28 @@ func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) 
 		s.Metadata.Uid,                        // 4: sandbox uid
 		fmt.Sprintf("%d", c.Metadata.Attempt), // 5
 	}, nameDelimiter)
+}
+
+func parseContainerName(name string) (*runtime.ContainerMetadata, error) {
+	format := fmt.Sprintf("%s_${container name}_${sandbox name}_${sandbox namespace}_${sandbox uid}_${attempt times}", kubePrefix)
+
+	parts := strings.Split(name, nameDelimiter)
+	if len(parts) != 6 {
+		return nil, fmt.Errorf("failed to parse container name: %q, which should be %s", name, format)
+	}
+	if parts[0] != kubePrefix {
+		return nil, fmt.Errorf("container is not managed by kubernetes: %q", name)
+	}
+
+	attempt, err := parseUint32(parts[5])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse the attempt times in container name: %q: %v", name, err)
+	}
+
+	return &runtime.ContainerMetadata{
+		Name:    parts[1],
+		Attempt: attempt,
+	}, nil
 }
 
 // CreateContainer creates a new container in the given PodSandbox.
@@ -301,17 +363,124 @@ func (c *CriManager) StartContainer(ctx context.Context, r *runtime.StartContain
 
 // StopContainer stops a running container with a grace period (i.e., timeout).
 func (c *CriManager) StopContainer(ctx context.Context, r *runtime.StopContainerRequest) (*runtime.StopContainerResponse, error) {
-	return nil, fmt.Errorf("StopContainer Not Implemented Yet")
+	containerID := r.GetContainerId()
+
+	err := c.ContainerMgr.Stop(ctx, containerID, r.GetTimeout())
+	if err != nil {
+		return nil, fmt.Errorf("failed to stop container %q: %v", containerID, err)
+	}
+
+	return &runtime.StopContainerResponse{}, nil
 }
 
 // RemoveContainer removes the container.
 func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveContainerRequest) (*runtime.RemoveContainerResponse, error) {
-	return nil, fmt.Errorf("RemoveContainer Not Implemented Yet")
+	containerID := r.GetContainerId()
+
+	err := c.ContainerMgr.Remove(ctx, containerID, &ContainerRemoveOption{Volume: true, Force: true})
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove container %q: %v", containerID, err)
+	}
+
+	return &runtime.RemoveContainerResponse{}, nil
+}
+
+func toCriContainerState(status apitypes.Status) runtime.ContainerState {
+	switch status {
+	case apitypes.StatusRunning:
+		return runtime.ContainerState_CONTAINER_RUNNING
+	case apitypes.StatusExited:
+		return runtime.ContainerState_CONTAINER_EXITED
+	case apitypes.StatusCreated:
+		return runtime.ContainerState_CONTAINER_CREATED
+	default:
+		return runtime.ContainerState_CONTAINER_UNKNOWN
+	}
+}
+
+func toCriContainer(c *ContainerMeta) (*runtime.Container, error) {
+	state := toCriContainerState(c.State.Status)
+	metadata, err := parseContainerName(c.Name)
+	if err != nil {
+		return nil, err
+	}
+	labels, annotations := extractLabels(c.Config.Labels)
+	sandboxID := c.Config.Labels[sandboxIDLabelKey]
+
+	return &runtime.Container{
+		Id:           c.ID,
+		PodSandboxId: sandboxID,
+		Metadata:     metadata,
+		Image:        &runtime.ImageSpec{Image: c.Config.Image},
+		ImageRef:     c.Image,
+		State:        state,
+		// TODO: fill "CreatedAt" when it is appropriate.
+		Labels:      labels,
+		Annotations: annotations,
+	}, nil
+}
+
+func filterCRIContainers(containers []*runtime.Container, filter *runtime.ContainerFilter) []*runtime.Container {
+	if filter == nil {
+		return containers
+	}
+
+	filtered := []*runtime.Container{}
+	for _, c := range containers {
+		if filter.GetId() != "" && filter.GetId() != c.Id {
+			continue
+		}
+		if filter.GetPodSandboxId() != "" && filter.GetPodSandboxId() != c.PodSandboxId {
+			continue
+		}
+		if filter.GetState() != nil && filter.GetState().GetState() != c.State {
+			continue
+		}
+		if filter.GetLabelSelector() != nil {
+			match := true
+			for k, v := range filter.GetLabelSelector() {
+				value, ok := c.Labels[k]
+				if !ok || v != value {
+					match = false
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+		filtered = append(filtered, c)
+	}
+
+	return filtered
 }
 
 // ListContainers lists all containers matching the filter.
 func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (*runtime.ListContainersResponse, error) {
-	return nil, fmt.Errorf("ListContainers Not Implemented Yet")
+	opts := &ContainerListOption{All: true}
+	filter := func(c *ContainerMeta) bool {
+		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer
+	}
+
+	// Filter *only* (non-sandbox) containers.
+	containerList, err := c.ContainerMgr.List(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list container: %v", err)
+	}
+
+	containers := make([]*runtime.Container, 0, len(containerList))
+	for _, c := range containerList {
+		container, err := toCriContainer(c)
+		if err != nil {
+			// TODO: log an error message?
+			continue
+		}
+		containers = append(containers, container)
+	}
+
+	result := filterCRIContainers(containers, r.GetFilter())
+
+	return &runtime.ListContainersResponse{Containers: result}, nil
 }
 
 // ContainerStatus inspects the container and returns the status.
