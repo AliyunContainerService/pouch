@@ -32,70 +32,75 @@ type container struct {
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
-	config := &types.ContainerCreateConfig{
-		HostConfig: &types.HostConfig{},
+	labels, err := parseLabels(c.labels)
+	if err != nil {
+		return nil, err
 	}
 
-	// TODO
-	config.Tty = c.tty
-	config.Env = c.env
+	if err := validateMemorySwappiness(c.memorySwappiness); err != nil {
+		return nil, err
+	}
 
-	// set labels
-	config.Labels = make(map[string]string)
-	for _, label := range c.labels {
+	memory, err := parseMemory(c.memory)
+	if err != nil {
+		return nil, err
+	}
+
+	memorySwap, err := parseMemorySwap(c.memorySwap)
+	if err != nil {
+		return nil, err
+	}
+
+	deviceMappings, err := parseDeviceMappings(c.devices)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &types.ContainerCreateConfig{
+		ContainerConfig: types.ContainerConfig{
+			Tty:         c.tty,
+			Env:         c.env,
+			EnableLxcfs: c.enableLxcfs,
+			Entrypoint:  strings.Fields(c.entrypoint),
+			WorkingDir:  c.workdir,
+			Hostname:    strfmt.Hostname(c.hostname),
+			Labels:      labels,
+		},
+
+		HostConfig: &types.HostConfig{
+			Binds:   c.volume,
+			Runtime: c.runtime,
+			Resources: types.Resources{
+				CPUShares:        c.cpushare,
+				CpusetCpus:       c.cpusetcpus,
+				CpusetMems:       c.cpusetmems,
+				Devices:          deviceMappings,
+				Memory:           memory,
+				MemorySwap:       memorySwap,
+				MemorySwappiness: &c.memorySwappiness,
+			},
+		},
+	}
+
+	return config, nil
+}
+
+func parseLabels(labels []string) (map[string]string, error) {
+	results := make(map[string]string)
+	for _, label := range labels {
 		fields := strings.SplitN(label, "=", 2)
 		if len(fields) != 2 {
 			return nil, fmt.Errorf("invalid label: %s", label)
 		}
 		k, v := fields[0], fields[1]
-		config.Labels[k] = v
+		results[k] = v
 	}
+	return results, nil
+}
 
-	// set bind volume
-	if c.volume != nil {
-		config.HostConfig.Binds = c.volume
-	}
-
-	// set runtime
-	if c.runtime != "" {
-		config.HostConfig.Runtime = c.runtime
-	}
-
-	config.Entrypoint = strings.Fields(c.entrypoint)
-	config.WorkingDir = c.workdir
-	config.Hostname = strfmt.Hostname(c.hostname)
-
-	// cgroup
-	config.HostConfig.CPUShares = c.cpushare
-	config.HostConfig.CpusetCpus = c.cpusetcpus
-	config.HostConfig.CpusetMems = c.cpusetmems
-
-	if c.memorySwappiness != -1 && (c.memorySwappiness < 0 || c.memorySwappiness > 100) {
-		return nil, fmt.Errorf("invalid memory swappiness: %d (it's range is 0-100)", c.memorySwappiness)
-	}
-	config.HostConfig.MemorySwappiness = &c.memorySwappiness
-
-	if c.memory != "" {
-		v, err := units.RAMInBytes(c.memory)
-		if err != nil {
-			return nil, err
-		}
-		config.HostConfig.Memory = v
-	}
-	if c.memorySwap != "" {
-		if c.memorySwap == "-1" {
-			config.HostConfig.MemorySwap = -1
-		} else {
-			v, err := units.RAMInBytes(c.memorySwap)
-			if err != nil {
-				return nil, err
-			}
-			config.HostConfig.MemorySwap = v
-		}
-	}
-	// parse device mappings
-	deviceMappings := []*types.DeviceMapping{}
-	for _, device := range c.devices {
+func parseDeviceMappings(devices []string) ([]*types.DeviceMapping, error) {
+	results := []*types.DeviceMapping{}
+	for _, device := range devices {
 		deviceMapping, err := runconfig.ParseDevice(device)
 		if err != nil {
 			return nil, fmt.Errorf("parse devices error: %s", err)
@@ -103,11 +108,39 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		if !runconfig.ValidDeviceMode(deviceMapping.CgroupPermissions) {
 			return nil, fmt.Errorf("%s invalid device mode: %s", device, deviceMapping.CgroupPermissions)
 		}
-		deviceMappings = append(deviceMappings, deviceMapping)
+		results = append(results, deviceMapping)
 	}
-	config.HostConfig.Devices = deviceMappings
+	return results, nil
+}
 
-	config.EnableLxcfs = c.enableLxcfs
+func parseMemory(memory string) (int64, error) {
+	if memory == "" {
+		return 0, nil
+	}
+	result, err := units.RAMInBytes(memory)
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
 
-	return config, nil
+func parseMemorySwap(memorySwap string) (int64, error) {
+	if memorySwap == "" {
+		return 0, nil
+	}
+	if memorySwap == "-1" {
+		return -1, nil
+	}
+	result, err := units.RAMInBytes(memorySwap)
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
+func validateMemorySwappiness(memorySwappiness int64) error {
+	if memorySwappiness != -1 && (memorySwappiness < 0 || memorySwappiness > 100) {
+		return fmt.Errorf("invalid memory swappiness: %d (its range is -1 or 0-100)", memorySwappiness)
+	}
+	return nil
 }
