@@ -59,6 +59,9 @@ type HostConfig struct {
 	// A list of DNS search domains.
 	DNSSearch []string `json:"DnsSearch"`
 
+	// Whether to enable lxcfs.
+	EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 	// A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.
 	//
 	ExtraHosts []string `json:"ExtraHosts"`
@@ -171,6 +174,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		DNSSearch []string `json:"DnsSearch,omitempty"`
 
+		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 		ExtraHosts []string `json:"ExtraHosts,omitempty"`
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
@@ -240,6 +245,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.DNSOptions = data.DNSOptions
 
 	m.DNSSearch = data.DNSSearch
+
+	m.EnableLxcfs = data.EnableLxcfs
 
 	m.ExtraHosts = data.ExtraHosts
 
@@ -321,6 +328,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		DNSSearch []string `json:"DnsSearch,omitempty"`
 
+		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 		ExtraHosts []string `json:"ExtraHosts,omitempty"`
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
@@ -387,6 +396,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	data.DNSOptions = m.DNSOptions
 
 	data.DNSSearch = m.DNSSearch
+
+	data.EnableLxcfs = m.EnableLxcfs
 
 	data.ExtraHosts = m.ExtraHosts
 

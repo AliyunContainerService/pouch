@@ -132,9 +132,9 @@ func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	if err := json.Unmarshal([]byte(output), result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.Config.EnableLxcfs, check.NotNil)
+	c.Assert(result.HostConfig.EnableLxcfs, check.NotNil)
 
-	if result.Config.EnableLxcfs != true {
+	if result.HostConfig.EnableLxcfs != true {
 		c.Errorf("failed to set EnableLxcfs")
 	}
 }

@@ -212,8 +212,10 @@ func (suite *APIContainerCreateSuite) TestLxcfsEnable(c *check.C) {
 	isEnable := true
 
 	obj := map[string]interface{}{
-		"Image":       busyboxImage,
-		"EnableLxcfs": isEnable,
+		"Image": busyboxImage,
+		"HostConfig": map[string]interface{}{
+			"EnableLxcfs": isEnable,
+		},
 	}
 
 	body := request.WithJSONBody(obj)
@@ -231,7 +233,7 @@ func (suite *APIContainerCreateSuite) TestLxcfsEnable(c *check.C) {
 	err = request.DecodeBody(&got, resp.Body)
 	c.Assert(err, check.IsNil)
 
-	c.Assert(got.Config.EnableLxcfs, check.Equals, isEnable)
+	c.Assert(got.HostConfig.EnableLxcfs, check.Equals, isEnable)
 
 	DelContainerForceOk(c, cname)
 }

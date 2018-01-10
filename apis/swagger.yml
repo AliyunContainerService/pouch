@@ -1000,10 +1000,6 @@ definitions:
         type: "array"
         items:
           type: "string"
-      EnableLxcfs:
-        description: "Whether to enable lxcfs."
-        type: "boolean"
-        x-nullable: false
   
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
@@ -1209,6 +1205,10 @@ definitions:
               - "default"
               - "process"
               - "hyperv"
+          EnableLxcfs:
+            description: "Whether to enable lxcfs."
+            type: "boolean"
+            x-nullable: false
       - $ref: "#/definitions/Resources"
 
   Resources:
