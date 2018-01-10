@@ -64,6 +64,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.Int64Var(&rc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
 	flagSet.StringVarP(&rc.memory, "memory", "m", "", "Container memory limit")
 	flagSet.StringVar(&rc.memorySwap, "memory-swap", "", "Container swap limit")
+	flagSet.StringSliceVarP(&rc.devices, "device", "", nil, "Add a host device to the container")
 }
 
 // runRun is the entry of run command.
@@ -161,5 +162,7 @@ $ pouch run -d --name test registry.hub.docker.com/library/busybox:latest
 $ pouch ps
 Name   ID       Status    Image                                            Runtime   Created
 test   90719b   stopped   registry.hub.docker.com/library/busybox:latest   runc      5 seconds ago
+$ pouch run --device /dev/zero:/dev/testDev:rwm --name test registry.hub.docker.com/library/busybox:latest ls -l /dev/testDev
+crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
 	`
 }

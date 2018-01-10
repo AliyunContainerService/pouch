@@ -37,6 +37,9 @@ var setupFunc = []SetupFunc{
 
 	// network spec
 	setupNetwork,
+
+	// host device spec
+	setupDevices,
 }
 
 // Register is used to registe spec setup function.

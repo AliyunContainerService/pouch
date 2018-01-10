@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/runconfig"
 
 	units "github.com/docker/go-units"
 	strfmt "github.com/go-openapi/strfmt"
@@ -26,6 +27,7 @@ type container struct {
 	memory           string
 	memorySwap       string
 	memorySwappiness int64
+	devices          []string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -90,6 +92,19 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			config.HostConfig.MemorySwap = v
 		}
 	}
+	// parse device mappings
+	deviceMappings := []*types.DeviceMapping{}
+	for _, device := range c.devices {
+		deviceMapping, err := runconfig.ParseDevice(device)
+		if err != nil {
+			return nil, fmt.Errorf("parse devices error: %s", err)
+		}
+		if !runconfig.ValidDeviceMode(deviceMapping.CgroupPermissions) {
+			return nil, fmt.Errorf("%s invalid device mode: %s", device, deviceMapping.CgroupPermissions)
+		}
+		deviceMappings = append(deviceMappings, deviceMapping)
+	}
+	config.HostConfig.Devices = deviceMappings
 
 	return config, nil
 }
