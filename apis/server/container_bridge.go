@@ -276,7 +276,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		ID:         meta.ID,
 		Name:       meta.Name,
 		Image:      meta.Config.Image,
-		Created:    meta.State.StartedAt,
+		Created:    meta.Created,
 		State:      meta.State,
 		Config:     meta.Config,
 		HostConfig: meta.HostConfig,
