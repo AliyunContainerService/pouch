@@ -3,15 +3,12 @@ package mgr
 import (
 	"bytes"
 	"fmt"
-	"strconv"
-	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
-	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
@@ -79,85 +76,6 @@ func (c *CriManager) Version(ctx context.Context, r *runtime.VersionRequest) (*r
 	}, nil
 }
 
-func makeLabels(labels, annotations map[string]string) map[string]string {
-	m := make(map[string]string)
-
-	for k, v := range labels {
-		m[k] = v
-	}
-	for k, v := range annotations {
-		// Use prefix to distinguish between annotations and labels.
-		m[fmt.Sprintf("%s%s", annotationPrefix, k)] = v
-	}
-
-	return m
-}
-
-// extractLabels converts raw pouch labels to the CRI labels and annotations.
-func extractLabels(input map[string]string) (map[string]string, map[string]string) {
-	labels := make(map[string]string)
-	annotations := make(map[string]string)
-	for k, v := range input {
-		// Check if the key is used internally by the cri manager.
-		internal := false
-		for _, internalKey := range []string{
-			containerTypeLabelKey,
-			sandboxIDLabelKey,
-		} {
-			if k == internalKey {
-				internal = true
-				break
-			}
-		}
-		if internal {
-			continue
-		}
-
-		// Check if the label should be treated as an annotation.
-		if strings.HasPrefix(k, annotationPrefix) {
-			annotations[strings.TrimPrefix(k, annotationPrefix)] = v
-			continue
-		}
-		labels[k] = v
-	}
-
-	return labels, annotations
-}
-
-// makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
-func (c *CriManager) makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
-	// Merge annotations and labels because pouch supports only labels.
-	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
-	// Apply a label to distinguish sandboxes from regular containers.
-	labels[containerTypeLabelKey] = containerTypeLabelSandbox
-
-	hc := &apitypes.HostConfig{}
-	createConfig := &apitypes.ContainerCreateConfig{
-		ContainerConfig: apitypes.ContainerConfig{
-			Hostname: strfmt.Hostname(config.Hostname),
-			Image:    image,
-			Labels:   labels,
-		},
-		HostConfig:       hc,
-		NetworkingConfig: &apitypes.NetworkingConfig{},
-	}
-
-	return createConfig, nil
-}
-
-// makeSandboxName generates sandbox name from sandbox metadata. The name
-// generated is unique as long as sandbox metadata is unique.
-func makeSandboxName(c *runtime.PodSandboxConfig) string {
-	return strings.Join([]string{
-		kubePrefix,                            // 0
-		sandboxContainerName,                  // 1
-		c.Metadata.Name,                       // 2
-		c.Metadata.Namespace,                  // 3
-		c.Metadata.Uid,                        // 4
-		fmt.Sprintf("%d", c.Metadata.Attempt), // 5
-	}, nameDelimiter)
-}
-
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
 // the sandbox is in ready state.
 func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (*runtime.RunPodSandboxResponse, error) {
@@ -170,7 +88,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// TODO: make sure the image exists.
 
 	// Step 2: Create the sandbox container.
-	createConfig, err := c.makeSandboxPouchConfig(config, image)
+	createConfig, err := makeSandboxPouchConfig(config, image)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
 	}
@@ -213,91 +131,6 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 // ListPodSandbox returns a list of Sandbox.
 func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (*runtime.ListPodSandboxResponse, error) {
 	return nil, fmt.Errorf("ListPodSandbox Not Implemented Yet")
-}
-
-// generateEnvList converts KeyValue list to a list of strings, in the form of
-// '<key>=<value>', which can be understood by pouch.
-func generateEnvList(envs []*runtime.KeyValue) (result []string) {
-	for _, env := range envs {
-		result = append(result, fmt.Sprintf("%s=%s", env.Key, env.Value))
-	}
-	return
-}
-
-// modifyContainerNamespaceOptions apply namespace options for container.
-func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandboxID string, hostConfig *apitypes.HostConfig) {
-	sandboxNSMode := fmt.Sprintf("container:%v", podSandboxID)
-
-	hostConfig.PidMode = sandboxNSMode
-	hostConfig.NetworkMode = sandboxNSMode
-	hostConfig.IpcMode = sandboxNSMode
-	hostConfig.UTSMode = sandboxNSMode
-}
-
-// applyContainerSecurityContext updates pouch container options according to security context.
-func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxID string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
-	// TODO: modify Config and HostConfig.
-
-	modifyContainerNamespaceOptions(lc.SecurityContext.GetNamespaceOptions(), podSandboxID, hc)
-
-	return nil
-}
-
-// Apply Linux-specific options if applicable.
-func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, podSandboxID string) error {
-	if lc := config.GetLinux(); lc != nil {
-		// TODO: resource restriction.
-
-		// Apply security context.
-		if err := applyContainerSecurityContext(lc, podSandboxID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
-			return fmt.Errorf("failed to apply container security context for container %q: %v", config.Metadata.Name, err)
-		}
-	}
-
-	// TODO: apply cgroupParent derived from the sandbox config.
-
-	return nil
-}
-
-func parseUint32(s string) (uint32, error) {
-	n, err := strconv.ParseUint(s, 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	return uint32(n), nil
-}
-
-func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) string {
-	return strings.Join([]string{
-		kubePrefix,                            // 0
-		c.Metadata.Name,                       // 1
-		s.Metadata.Name,                       // 2: sandbox name
-		s.Metadata.Namespace,                  // 3: sandbox namespace
-		s.Metadata.Uid,                        // 4: sandbox uid
-		fmt.Sprintf("%d", c.Metadata.Attempt), // 5
-	}, nameDelimiter)
-}
-
-func parseContainerName(name string) (*runtime.ContainerMetadata, error) {
-	format := fmt.Sprintf("%s_${container name}_${sandbox name}_${sandbox namespace}_${sandbox uid}_${attempt times}", kubePrefix)
-
-	parts := strings.Split(name, nameDelimiter)
-	if len(parts) != 6 {
-		return nil, fmt.Errorf("failed to parse container name: %q, which should be %s", name, format)
-	}
-	if parts[0] != kubePrefix {
-		return nil, fmt.Errorf("container is not managed by kubernetes: %q", name)
-	}
-
-	attempt, err := parseUint32(parts[5])
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse the attempt times in container name: %q: %v", name, err)
-	}
-
-	return &runtime.ContainerMetadata{
-		Name:    parts[1],
-		Attempt: attempt,
-	}, nil
 }
 
 // CreateContainer creates a new container in the given PodSandbox.
@@ -383,76 +216,6 @@ func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	}
 
 	return &runtime.RemoveContainerResponse{}, nil
-}
-
-func toCriContainerState(status apitypes.Status) runtime.ContainerState {
-	switch status {
-	case apitypes.StatusRunning:
-		return runtime.ContainerState_CONTAINER_RUNNING
-	case apitypes.StatusExited:
-		return runtime.ContainerState_CONTAINER_EXITED
-	case apitypes.StatusCreated:
-		return runtime.ContainerState_CONTAINER_CREATED
-	default:
-		return runtime.ContainerState_CONTAINER_UNKNOWN
-	}
-}
-
-func toCriContainer(c *ContainerMeta) (*runtime.Container, error) {
-	state := toCriContainerState(c.State.Status)
-	metadata, err := parseContainerName(c.Name)
-	if err != nil {
-		return nil, err
-	}
-	labels, annotations := extractLabels(c.Config.Labels)
-	sandboxID := c.Config.Labels[sandboxIDLabelKey]
-
-	return &runtime.Container{
-		Id:           c.ID,
-		PodSandboxId: sandboxID,
-		Metadata:     metadata,
-		Image:        &runtime.ImageSpec{Image: c.Config.Image},
-		ImageRef:     c.Image,
-		State:        state,
-		// TODO: fill "CreatedAt" when it is appropriate.
-		Labels:      labels,
-		Annotations: annotations,
-	}, nil
-}
-
-func filterCRIContainers(containers []*runtime.Container, filter *runtime.ContainerFilter) []*runtime.Container {
-	if filter == nil {
-		return containers
-	}
-
-	filtered := []*runtime.Container{}
-	for _, c := range containers {
-		if filter.GetId() != "" && filter.GetId() != c.Id {
-			continue
-		}
-		if filter.GetPodSandboxId() != "" && filter.GetPodSandboxId() != c.PodSandboxId {
-			continue
-		}
-		if filter.GetState() != nil && filter.GetState().GetState() != c.State {
-			continue
-		}
-		if filter.GetLabelSelector() != nil {
-			match := true
-			for k, v := range filter.GetLabelSelector() {
-				value, ok := c.Labels[k]
-				if !ok || v != value {
-					match = false
-					break
-				}
-			}
-			if !match {
-				continue
-			}
-		}
-		filtered = append(filtered, c)
-	}
-
-	return filtered
 }
 
 // ListContainers lists all containers matching the filter.
@@ -548,23 +311,6 @@ func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 			runtimeCondition,
 			networkCondition,
 		}},
-	}, nil
-}
-
-// imageToCriImage converts pouch image API to CRI image API.
-func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
-	ref, err := reference.Parse(image.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	size := uint64(image.Size)
-	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
-	return &runtime.Image{
-		Id:          image.Digest,
-		RepoTags:    []string{fmt.Sprintf("%s:%s", ref.Name, ref.Tag)},
-		RepoDigests: []string{fmt.Sprintf("%s@%s", ref.Name, image.Digest)},
-		Size_:       size,
 	}, nil
 }
 
