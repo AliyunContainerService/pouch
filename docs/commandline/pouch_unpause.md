@@ -7,7 +7,7 @@ Unpause a paused container
 Unpause a paused container in Pouchd. when unpausing, the paused container will resumes the process execution within the container.The container you unpaused will be running again if no error occurs.
 
 ```
-pouch unpause [container] [flags]
+pouch unpause CONTAINER
 ```
 
 ### Examples

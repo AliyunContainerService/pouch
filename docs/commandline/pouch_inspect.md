@@ -7,7 +7,7 @@ Get the detailed information of container
 Return detailed information on Pouch container
 
 ```
-pouch inspect [container] [flags]
+pouch inspect CONTAINER
 ```
 
 ### Examples

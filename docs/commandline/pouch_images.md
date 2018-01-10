@@ -7,13 +7,13 @@ List all images
 List all images in Pouchd.This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE.All local images will be shown in a table format you can use.
 
 ```
-pouch images [flags]
+pouch images [OPTIONS]
 ```
 
 ### Examples
 
 ```
-$ pouch images ls
+$ pouch images
 IMAGE ID             IMAGE NAME                                               SIZE
 bbc3a0323522         docker.io/library/busybox:latest                         703.14 KB
 b81f317384d7         docker.io/library/nginx:latest                           42.39 MB

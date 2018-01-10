@@ -7,7 +7,7 @@ Generate docs
 Generate docs
 
 ```
-pouch gen-doc [container] [flags]
+pouch gen-doc
 ```
 
 ### Options

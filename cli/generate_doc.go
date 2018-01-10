@@ -21,7 +21,7 @@ type GenDocCommand struct {
 func (g *GenDocCommand) Init(c *Cli) {
 	g.cli = c
 	g.cmd = &cobra.Command{
-		Use:   "gen-doc [container]",
+		Use:   "gen-doc",
 		Short: "Generate docs",
 		Long:  genDocDescription,
 		Args:  cobra.NoArgs,

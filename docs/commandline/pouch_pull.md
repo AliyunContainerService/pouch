@@ -7,7 +7,7 @@ Pull an image from registry
 Pull an image or a repository from a registry. Most of your images will be created on top of a base image from the registry. So, you can pull and try prebuilt images contained by registry without needing to define and configure your own.
 
 ```
-pouch pull [image] [flags]
+pouch pull IMAGE
 ```
 
 ### Examples

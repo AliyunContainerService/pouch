@@ -7,7 +7,7 @@ Create a pouch network
 Create a network in pouchd. It must specify network's name and driver. You can use 'network driver' to get drivers that pouch support.
 
 ```
-pouch network create [name] [flags]
+pouch network create [OPTIONS] [NAME]
 ```
 
 ### Examples

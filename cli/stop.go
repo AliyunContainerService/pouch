@@ -22,10 +22,10 @@ type StopCommand struct {
 func (s *StopCommand) Init(c *Cli) {
 	s.cli = c
 	s.cmd = &cobra.Command{
-		Use:   "stop [container]",
+		Use:   "stop [OPTIONS] CONTAINER",
 		Short: "Stop a running container",
 		Long:  stopDescription,
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return s.runStop(args)
 		},

@@ -13,7 +13,7 @@ be released.
 
 
 ```
-pouch rm container [flags]
+pouch rm [OPTIONS] CONTAINER [CONTAINER...]
 ```
 
 ### Examples

@@ -7,7 +7,7 @@ Stop a running container
 Stop a running container in Pouchd. Waiting the given number of seconds before forcefully killing the container.This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. The container that you stopped will be terminated. 
 
 ```
-pouch stop [container] [flags]
+pouch stop [OPTIONS] CONTAINER
 ```
 
 ### Examples

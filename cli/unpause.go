@@ -20,7 +20,7 @@ type UnpauseCommand struct {
 func (p *UnpauseCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
-		Use:   "unpause [container]",
+		Use:   "unpause CONTAINER",
 		Short: "Unpause a paused container",
 		Long:  unpauseDescription,
 		Args:  cobra.ExactArgs(1),
