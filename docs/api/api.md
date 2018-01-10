@@ -120,6 +120,13 @@ GET /containers/json
 ```
 
 
+#### Parameters
+
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Query**|**all**  <br>*optional*|Return all containers. By default, only running containers are shown|boolean|`"false"`|
+
+
 #### Responses
 
 |HTTP Code|Description|Schema|
@@ -1107,7 +1114,7 @@ GET "/containers/json"
 |Name|Description|Schema|
 |---|---|---|
 |**Command**  <br>*optional*||string|
-|**Created**  <br>*optional*|Created time of container in daemon. !! Incompatibility !! Moby has a type of int64.|string|
+|**Created**  <br>*optional*|Created time of container in daemon.|integer (int64)|
 |**HostConfig**  <br>*optional*|In Moby's API, HostConfig field in Container struct has following type <br>struct { NetworkMode string `json:",omitempty"` }<br>In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,<br>So Pouch changes this type to be the complete HostConfig.<br>Incompatibility exists, ATTENTION.|[HostConfig](#hostconfig)|
 |**ID**  <br>*optional*||string|
 |**Image**  <br>*optional*||string|
@@ -1115,6 +1122,7 @@ GET "/containers/json"
 |**Labels**  <br>*optional*||< string, string > map|
 |**Mounts**  <br>*optional*|Set of mount point in a container.|< [MountPoint](#mountpoint) > array|
 |**Names**  <br>*optional*|**Example** : `[ "container_1", "container_2" ]`|< string > array|
+|**NetworkSettings**  <br>*optional*||object|
 |**SizeRootFs**  <br>*optional*||integer (int64)|
 |**SizeRw**  <br>*optional*||integer (int64)|
 |**State**  <br>*optional*||string|
@@ -1134,6 +1142,7 @@ Configuration for a container that is portable between hosts
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
+|**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
@@ -1171,6 +1180,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
+|**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
