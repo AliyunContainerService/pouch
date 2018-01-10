@@ -156,10 +156,11 @@ func (suite *PouchRunSuite) TestRunInWrongWay(c *check.C) {
 func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 	name := "test-run-lxcfs"
 
-	res := command.PouchRun("run", "--name", name, "--enableLxcfs=true", busyboxImage, "cat", "/proc/uptime")
+	res := command.PouchRun("run", "--name", name, "-m", "512M", "--enableLxcfs=true", busyboxImage, "head", "-n", "1", "/proc/meminfo")
 	res.Assert(c, icmd.Success)
 
-	if out := res.Combined(); !strings.Contains(out, " 0.0") {
-		c.Fatalf("upexpected output %s expected %s\n", out, " 0.0")
+	// the memory should be equal to 512M
+	if out := res.Combined(); !strings.Contains(out, "524288 kB") {
+		c.Fatalf("upexpected output %s expected %s\n", out, "524288 kB")
 	}
 }
