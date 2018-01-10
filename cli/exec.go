@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -43,6 +42,7 @@ func (e *ExecCommand) Init(c *Cli) {
 // addFlags adds flags for specific command.
 func (e *ExecCommand) addFlags() {
 	flagSet := e.cmd.Flags()
+	flagSet.SetInterspersed(false)
 	flagSet.BoolVarP(&e.Detach, "detach", "d", false, "Run the process in the background")
 	flagSet.BoolVarP(&e.Terminal, "tty", "t", false, "Allocate a tty device")
 	flagSet.BoolVarP(&e.Interactive, "interactive", "i", false, "Open container's STDIN")
@@ -54,10 +54,10 @@ func (e *ExecCommand) runExec(args []string) error {
 
 	// create exec process.
 	id := args[0]
-	command := args[1]
+	command := args[1:]
 
 	createExecConfig := &types.ExecCreateConfig{
-		Cmd:          strings.Fields(command),
+		Cmd:          command,
 		Tty:          e.Terminal || e.Interactive,
 		Detach:       e.Detach,
 		AttachStderr: !e.Detach,
