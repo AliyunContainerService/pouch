@@ -28,6 +28,7 @@ type container struct {
 	memorySwap       string
 	memorySwappiness int64
 	devices          []string
+	enableLxcfs      bool
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -105,6 +106,8 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		deviceMappings = append(deviceMappings, deviceMapping)
 	}
 	config.HostConfig.Devices = deviceMappings
+
+	config.EnableLxcfs = c.enableLxcfs
 
 	return config, nil
 }
