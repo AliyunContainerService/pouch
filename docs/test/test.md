@@ -52,6 +52,16 @@ There are two ways to trigger unit test.
 	ok  	github.com/alibaba/pouch/client	0.094s
 
 	```
+Note: If you are testing modules importing "github.com/docker/libnetwork/xxx", there may be errors like following:
+
+	```
+	#go test ./daemon/mgr/
+	../../docker/libnetwork/config/config.go:6:2: cannot find package "github.com/BurntSushi/toml" in any of:
+		/usr/local/go/src/github.com/BurntSushi/toml (from $GOROOT)
+		/home/sit/letty/src/github.com/BurntSushi/toml (from $GOPATH)
+		<snip>
+	```
+In this case, you may have to run unit test from Makefile. In this way, it will call `hack/build` script, and do setup related to libnetwork package location before running unit test. 
 
 ## Integration Testing
 
