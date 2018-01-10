@@ -244,21 +244,12 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 			HostConfig: m.HostConfig,
 		}
 
-		// TODO encapsulate this into a single function
-		if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
-			start, _ := time.Parse(utils.TimeLayout, m.State.StartedAt)
-			startAt, err := utils.FormatTimeInterval(start.UnixNano())
-			if err != nil {
-				return err
-			}
-
-			container.Status = "Up " + startAt
-			if m.State.Status == types.StatusPaused {
-				container.Status += "(paused)"
-			}
-		} else {
-			container.Status = string(m.State.Status)
+		status, err := m.FormatStatus()
+		if err != nil {
+			return err
 		}
+
+		container.Status = status
 
 		containerList = append(containerList, container)
 	}
