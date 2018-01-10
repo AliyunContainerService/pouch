@@ -1,7 +1,9 @@
 package main
 
 import (
+	"math"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -159,7 +161,16 @@ func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 	res := command.PouchRun("run", "--name", name, "--enableLxcfs=true", busyboxImage, "cat", "/proc/uptime")
 	res.Assert(c, icmd.Success)
 
-	if out := res.Combined(); !strings.Contains(out, " 0.0") {
-		c.Fatalf("upexpected output %s expected %s\n", out, " 0.0")
+	out := res.Combined()
+
+	// As different test machine may have different uptime, set 10s as the max value.
+	maxtime := 10.0
+	for _, v := range strings.Fields(out) {
+		f, err := strconv.ParseFloat(v, 64)
+		c.Assert(err, check.IsNil)
+
+		if math.Max(f, maxtime) == f && math.Abs(f-maxtime) > 0.0001 {
+			c.Fatalf("upexpected output %s \n", out)
+		}
 	}
 }
