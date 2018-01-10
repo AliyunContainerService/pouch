@@ -56,6 +56,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVarP(&cc.memory, "memory", "m", "", "Container memory limit")
 	flagSet.StringVar(&cc.memorySwap, "memory-swap", "", "Container swap limit")
 	flagSet.StringSliceVarP(&cc.devices, "device", "", nil, "Add a host device to the container")
+	flagSet.BoolVar(&cc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
 }
 
 // runCreate is the entry of create command.

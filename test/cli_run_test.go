@@ -151,3 +151,15 @@ func (suite *PouchRunSuite) TestRunInWrongWay(c *check.C) {
 		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
 	}
 }
+
+// TestRunEnableLxcfs is to verify run container with lxcfs.
+func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
+	name := "test-run-lxcfs"
+
+	res := command.PouchRun("run", "--name", name, "--enableLxcfs=true", busyboxImage, "cat", "/proc/uptime")
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, " 0.0") {
+		c.Fatalf("upexpected output %s expected %s\n", out, " 0.0")
+	}
+}

@@ -118,3 +118,23 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 		c.Errorf("failed to set label: %s", label)
 	}
 }
+
+// TestCreateEnableLxcfs tries to test create a container with lxcfs.
+func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
+	name := "create-lxcfs"
+
+	res := command.PouchRun("create", "--name", name, "--enableLxcfs=true", busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.Config.EnableLxcfs, check.NotNil)
+
+	if result.Config.EnableLxcfs != true {
+		c.Errorf("failed to set EnableLxcfs")
+	}
+}
