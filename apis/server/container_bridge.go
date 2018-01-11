@@ -233,23 +233,26 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 	containerList := make([]types.Container, 0, len(metas))
 
 	for _, m := range metas {
-		t, _ := time.Parse(utils.TimeLayout, m.Created)
-		container := types.Container{
-			ID:         m.ID,
-			Names:      []string{m.Name},
-			Image:      m.Config.Image,
-			Command:    strings.Join(m.Config.Cmd, " "),
-			Created:    t.UnixNano(),
-			Labels:     m.Config.Labels,
-			HostConfig: m.HostConfig,
-		}
-
 		status, err := m.FormatStatus()
 		if err != nil {
 			return err
 		}
 
-		container.Status = status
+		t, err := time.Parse(utils.TimeLayout, m.Created)
+		if err != nil {
+			return err
+		}
+
+		container := types.Container{
+			ID:         m.ID,
+			Names:      []string{m.Name},
+			Image:      m.Config.Image,
+			Command:    strings.Join(m.Config.Cmd, " "),
+			Status:     status,
+			Created:    t.UnixNano(),
+			Labels:     m.Config.Labels,
+			HostConfig: m.HostConfig,
+		}
 
 		containerList = append(containerList, container)
 	}

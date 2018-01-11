@@ -160,19 +160,25 @@ func (meta *ContainerMeta) merge(getconfig func() (v1.ImageConfig, error)) error
 func (meta *ContainerMeta) FormatStatus() (string, error) {
 	var status string
 
-	if meta.State.Status == types.StatusRunning || meta.State.Status == types.StatusPaused {
-		start, _ := time.Parse(utils.TimeLayout, meta.State.StartedAt)
-		startAt, err := utils.FormatTimeInterval(start.UnixNano())
-		if err != nil {
-			return "", err
-		}
+	// return status if container is not running
+	if meta.State.Status != types.StatusRunning && meta.State.Status != types.StatusPaused {
+		return string(meta.State.Status), nil
+	}
 
-		status = "Up " + startAt
-		if meta.State.Status == types.StatusPaused {
-			status += "(paused)"
-		}
-	} else {
-		status = string(meta.State.Status)
+	// format container status if container is running
+	start, err := time.Parse(utils.TimeLayout, meta.State.StartedAt)
+	if err != nil {
+		return "", err
+	}
+
+	startAt, err := utils.FormatTimeInterval(start.UnixNano())
+	if err != nil {
+		return "", err
+	}
+
+	status = "Up " + startAt
+	if meta.State.Status == types.StatusPaused {
+		status += "(paused)"
 	}
 	return status, nil
 }
