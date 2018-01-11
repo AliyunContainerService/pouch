@@ -36,9 +36,6 @@ type Config struct {
 	// /usr/local/bin is the default.
 	ContainerdPath string
 
-	// Containerd's config file.
-	ContainerdConfig string
-
 	// TLS configuration
 	TLS utils.TLSConfig
 
