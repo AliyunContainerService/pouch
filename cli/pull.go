@@ -35,7 +35,7 @@ func (p *PullCommand) Init(c *Cli) {
 		Use:   "pull [image]",
 		Short: "Pull an image from registry",
 		Long:  pullDescription,
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.runPull(args)
 		},
