@@ -64,7 +64,7 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 		},
 	} {
 		output, err := tc.input.FormatStatus()
-		assert.Equal(t, output, tc.expected)
-		assert.Equal(t, err, tc.err)
+		assert.Equal(t, output, tc.expected, tc.name)
+		assert.Equal(t, err, tc.err, tc.name)
 	}
 }
