@@ -62,3 +62,16 @@ func (suite *PouchRmiSuite) TestRmiInWrongWay(c *check.C) {
 		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
 	}
 }
+
+// TestRmiWithImageID tests "pouch rmi {ID}" work.
+func (suite *PouchRmiSuite) TestRmiWithImageID(c *check.C) {
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+
+	busyBoxImageID := busyboxImageDigest[:12]
+	command.PouchRun("rmi", busyBoxImageID).Assert(c, icmd.Success)
+
+	res := command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, busyboxImage)
+	}
+}

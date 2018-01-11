@@ -21,6 +21,11 @@ type Ref struct {
 
 // String returns reference in string.
 func (r Ref) String() string {
+	// abandon tag if Name is numeric ID
+	if isImageID(r.Name) && r.Tag == defaultTag {
+		return r.Name
+	}
+
 	return fmt.Sprintf("%s:%s", r.Name, r.Tag)
 }
 

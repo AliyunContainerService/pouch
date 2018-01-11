@@ -65,3 +65,9 @@ func oneOrMore(exp ...*regexp.Regexp) *regexp.Regexp {
 func group(exp ...*regexp.Regexp) *regexp.Regexp {
 	return regexp.MustCompile("(?:" + concat(exp...).String() + ")")
 }
+
+// isImageID returns true if input is a numeric ID of image,otherwise it returns false.
+func isImageID(input string) bool {
+	match, _ := regexp.MatchString("^[0-9a-f]+$", input)
+	return match
+}
