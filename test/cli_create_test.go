@@ -138,3 +138,44 @@ func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 		c.Errorf("failed to set EnableLxcfs")
 	}
 }
+
+// TestCreateWithEnv tests creating container with env
+func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
+	name := "TestCreateWithEnv"
+
+	res := command.PouchRun("create", "--name", name, "-e TEST=true", busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	ok := false
+	for _, v := range result.Config.Env {
+		if strings.Contains(v, "TEST=true") {
+			ok = true
+		}
+	}
+	c.Assert(ok, check.Equals, true)
+}
+
+// TestCreateWithWorkDir tests creating container with a workdir works.
+func (suite *PouchCreateSuite) TestCreateWithWorkDir(c *check.C) {
+	name := "TestCreateWithWorkDir"
+
+	res := command.PouchRun("create", "--name", name, "-w /tmp/test", busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(strings.TrimSpace(result.Config.WorkingDir), check.Equals, "/tmp/test")
+
+	// TODO: check the work directory has been created.
+}
