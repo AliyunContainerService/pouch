@@ -66,6 +66,21 @@ func TestSandboxNameRoundTrip(t *testing.T) {
 	assert.Equal(t, config.Metadata, actualMetadata)
 }
 
+func TestToCriSandboxState(t *testing.T) {
+	testCases := []struct {
+		input    apitypes.Status
+		expected runtime.PodSandboxState
+	}{
+		{input: apitypes.StatusRunning, expected: runtime.PodSandboxState_SANDBOX_READY},
+		{input: apitypes.StatusExited, expected: runtime.PodSandboxState_SANDBOX_NOTREADY},
+	}
+
+	for _, test := range testCases {
+		actual := toCriSandboxState(test.input)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
 // Container related unit tests.
 
 func TestContainerNameRoundTrip(t *testing.T) {
@@ -85,7 +100,7 @@ func TestContainerNameRoundTrip(t *testing.T) {
 	assert.Equal(t, config.Metadata, actualMetadata)
 }
 
-func TestConvertPouchStatusToCriContainerState(t *testing.T) {
+func TestToCriContainerState(t *testing.T) {
 	testCases := []struct {
 		input    apitypes.Status
 		expected runtime.ContainerState
