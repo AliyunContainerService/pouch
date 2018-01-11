@@ -295,7 +295,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// set lxcfs binds
-	if config.ContainerConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
+	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
 		config.HostConfig.Binds = append(config.HostConfig.Binds, lxcfs.LxcfsParentDir+":/var/lib/lxc:shared")
 		sourceDir := lxcfs.LxcfsHomeDir + "/proc/"
 		destDir := "/proc/"

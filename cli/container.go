@@ -58,13 +58,12 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
-			Tty:         c.tty,
-			Env:         c.env,
-			EnableLxcfs: c.enableLxcfs,
-			Entrypoint:  strings.Fields(c.entrypoint),
-			WorkingDir:  c.workdir,
-			Hostname:    strfmt.Hostname(c.hostname),
-			Labels:      labels,
+			Tty:        c.tty,
+			Env:        c.env,
+			Entrypoint: strings.Fields(c.entrypoint),
+			WorkingDir: c.workdir,
+			Hostname:   strfmt.Hostname(c.hostname),
+			Labels:     labels,
 		},
 
 		HostConfig: &types.HostConfig{
@@ -79,6 +78,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				MemorySwap:       memorySwap,
 				MemorySwappiness: &c.memorySwappiness,
 			},
+			EnableLxcfs: c.enableLxcfs,
 		},
 	}
 
