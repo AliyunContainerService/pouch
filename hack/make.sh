@@ -48,6 +48,10 @@ function target()
 	unit-test)
 		docker run -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
 		;;
+	cri-test)
+		cd $SOURCEDIR
+		env PATH=$GOROOT/bin:$PATH $SOURCEDIR/hack/cri-test/test-cri.sh
+		;;
 	integration-test)
 		docker run -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
 
