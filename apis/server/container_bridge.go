@@ -233,31 +233,25 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 	containerList := make([]types.Container, 0, len(metas))
 
 	for _, m := range metas {
-		t, _ := time.Parse(utils.TimeLayout, m.Created)
+		status, err := m.FormatStatus()
+		if err != nil {
+			return err
+		}
+
+		t, err := time.Parse(utils.TimeLayout, m.Created)
+		if err != nil {
+			return err
+		}
+
 		container := types.Container{
 			ID:         m.ID,
 			Names:      []string{m.Name},
 			Image:      m.Config.Image,
 			Command:    strings.Join(m.Config.Cmd, " "),
+			Status:     status,
 			Created:    t.UnixNano(),
 			Labels:     m.Config.Labels,
 			HostConfig: m.HostConfig,
-		}
-
-		// TODO encapsulate this into a single function
-		if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
-			start, _ := time.Parse(utils.TimeLayout, m.State.StartedAt)
-			startAt, err := utils.FormatTimeInterval(start.UnixNano())
-			if err != nil {
-				return err
-			}
-
-			container.Status = "Up " + startAt
-			if m.State.Status == types.StatusPaused {
-				container.Status += "(paused)"
-			}
-		} else {
-			container.Status = string(m.State.Status)
 		}
 
 		containerList = append(containerList, container)

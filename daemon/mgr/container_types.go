@@ -3,9 +3,11 @@ package mgr
 import (
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -152,6 +154,33 @@ func (meta *ContainerMeta) merge(getconfig func() (v1.ImageConfig, error)) error
 	}
 
 	return nil
+}
+
+// FormatStatus format container status
+func (meta *ContainerMeta) FormatStatus() (string, error) {
+	var status string
+
+	// return status if container is not running
+	if meta.State.Status != types.StatusRunning && meta.State.Status != types.StatusPaused {
+		return string(meta.State.Status), nil
+	}
+
+	// format container status if container is running
+	start, err := time.Parse(utils.TimeLayout, meta.State.StartedAt)
+	if err != nil {
+		return "", err
+	}
+
+	startAt, err := utils.FormatTimeInterval(start.UnixNano())
+	if err != nil {
+		return "", err
+	}
+
+	status = "Up " + startAt
+	if meta.State.Status == types.StatusPaused {
+		status += "(paused)"
+	}
+	return status, nil
 }
 
 // Container represents the container instance in runtime.
