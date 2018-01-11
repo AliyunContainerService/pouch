@@ -40,6 +40,11 @@ const (
 	defaultSandboxImage = "k8s.gcr.io/pause-amd64:3.0"
 )
 
+var (
+	// Default timeout for stopping container.
+	defaultStopTimeout = int64(10)
+)
+
 // CriMgr as an interface defines all operations against CRI.
 type CriMgr interface {
 	// RuntimeServiceServer is interface of CRI runtime service.
@@ -114,13 +119,67 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 // StopPodSandbox stops the sandbox. If there are any running containers in the
 // sandbox, they should be forcibly terminated.
 func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (*runtime.StopPodSandboxResponse, error) {
-	return nil, fmt.Errorf("StopPodSandbox Not Implemented Yet")
+	podSandboxID := r.GetPodSandboxId()
+
+	opts := &ContainerListOption{All: true}
+	filter := func(c *ContainerMeta) bool {
+		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
+	}
+
+	containers, err := c.ContainerMgr.List(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+	}
+
+	// Stop all containers in the sandbox.
+	for _, container := range containers {
+		err = c.ContainerMgr.Stop(ctx, container.ID, defaultStopTimeout)
+		if err != nil {
+			// TODO: log an error message or break?
+		}
+	}
+
+	// TODO: tear down sandbox's network.
+
+	// Stop the sandbox container.
+	err = c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+	}
+
+	return &runtime.StopPodSandboxResponse{}, nil
 }
 
 // RemovePodSandbox removes the sandbox. If there are running containers in the
 // sandbox, they should be forcibly removed.
 func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodSandboxRequest) (*runtime.RemovePodSandboxResponse, error) {
-	return nil, fmt.Errorf("RemovePodSandbox Not Implemented Yet")
+	podSandboxID := r.GetPodSandboxId()
+
+	opts := &ContainerListOption{All: true}
+	filter := func(c *ContainerMeta) bool {
+		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
+	}
+
+	containers, err := c.ContainerMgr.List(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+	}
+
+	// Remove all containers in the sandbox.
+	for _, container := range containers {
+		err = c.ContainerMgr.Remove(ctx, container.ID, &ContainerRemoveOption{Volume: true, Force: true})
+		if err != nil {
+			// TODO: log an error message or break?
+		}
+	}
+
+	// Remove the sandbox container.
+	err = c.ContainerMgr.Remove(ctx, podSandboxID, &ContainerRemoveOption{Volume: true, Force: true})
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+	}
+
+	return &runtime.RemovePodSandboxResponse{}, nil
 }
 
 // PodSandboxStatus returns the status of the PodSandbox.
