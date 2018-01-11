@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	osexec "os/exec"
 	"os/signal"
 	"path"
 	"strings"
@@ -52,7 +53,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ListenCRI, "listen-cri", "/var/run/pouchcri.sock", "Specify listening address of CRI")
 	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
 	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
-	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "/usr/local/bin/containerd", "Specify the path of containerd binary")
+	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "", "Specify the path of containerd binary")
 	flagSet.StringVar(&cfg.ContainerdConfig, "containerd-config", "/etc/containerd/config.toml", "Specify the path of containerd configuration file")
 	flagSet.StringVar(&cfg.TLS.Key, "tlskey", "", "Specify key file of TLS")
 	flagSet.StringVar(&cfg.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
@@ -92,9 +93,20 @@ func runDaemon() error {
 	if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
 		os.RemoveAll(cfg.ContainerdAddr)
 	}
+
+	containerdBinaryFile := "containerd"
+	if cfg.ContainerdPath != "" {
+		containerdBinaryFile = cfg.ContainerdPath
+	}
+
+	containerdPath, err := osexec.LookPath(containerdBinaryFile)
+	if err != nil {
+		return fmt.Errorf("failed to find containerd binary %s: %s", containerdBinaryFile, err)
+	}
+
 	var processes exec.Processes = []*exec.Process{
 		{
-			Path: cfg.ContainerdPath,
+			Path: containerdPath,
 			Args: []string{
 				"-c", cfg.ContainerdConfig,
 				"-a", cfg.ContainerdAddr,
