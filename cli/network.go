@@ -175,6 +175,6 @@ func (n *NetworkRemoveCommand) runNetworkRemove(args []string) error {
 
 // networkRemoveExample shows examples in network remove command, and is used in auto-generated cli docs.
 func networkRemoveExample() string {
-	return `$ pouch network rm pouch-net
+	return `$ pouch network remove pouch-net
 Removed: pouch-net`
 }
