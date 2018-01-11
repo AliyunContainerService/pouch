@@ -10,14 +10,15 @@ import (
 // Common durations that is .
 // There are some definitions for units of Day and larger .
 const (
-	Second     = time.Second
-	Minute     = Second * 60
-	Hour       = Minute * 60
-	Day        = Hour * 24
-	Week       = Day * 7
-	Month      = Day * 30
-	Year       = Day * 365
-	TimeLayout = "2006-01-02 15:04:05"
+	Second = time.Second
+	Minute = Second * 60
+	Hour   = Minute * 60
+	Day    = Hour * 24
+	Week   = Day * 7
+	Month  = Day * 30
+	Year   = Day * 365
+
+	TimeLayout = time.RFC3339Nano
 )
 
 var errInvalid = errors.New("invalid time")
