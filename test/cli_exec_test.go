@@ -68,3 +68,47 @@ func (suite *PouchExecSuite) TestExecMultiCommands(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", out, name)
 	}
 }
+
+// TestExecEcho tests exec prints the output.
+func (suite *PouchExecSuite) TestExecEcho(c *check.C) {
+	name := "TestExecEcho"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	out := command.PouchRun("exec", name, "echo", "test").Stdout()
+	if !strings.Contains(out, "test") {
+		c.Errorf("failed to exec in container: %s", out)
+	}
+}
+
+// TestExecStoppedContainer test exec in a stopped container fail.
+func (suite *PouchExecSuite) TestExecStoppedContainer(c *check.C) {
+	name := "TestExecStoppedContainer"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	out := command.PouchRun("exec", name, "echo", "test").Stderr()
+	if !strings.Contains(out, "failed") {
+		c.Errorf("should fail to exec in stopped container: %s", out)
+	}
+}
+
+// TestExecInteractive test "-i" option works.
+func (suite *PouchExecSuite) TestExecInteractive(c *check.C) {
+	//TODO
+}
+
+// TestExecAfterContainerRestart test exec in a restart container should work.
+func (suite *PouchExecSuite) TestExecAfterContainerRestart(c *check.C) {
+	name := "TestExecAfterContainerRestart"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	out := command.PouchRun("exec", name, "echo", "test").Stdout()
+	if !strings.Contains(out, "test") {
+		c.Errorf("failed to exec in container: %s", out)
+	}
+}
