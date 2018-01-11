@@ -16,3 +16,14 @@ func (client *APIClient) NetworkCreate(req *types.NetworkCreateConfig) (*types.N
 
 	return network, err
 }
+
+// NetworkRemove removes a network.
+func (client *APIClient) NetworkRemove(networkID string) error {
+	resp, err := client.delete("/networks/"+networkID, nil)
+	if err != nil {
+		return err
+	}
+
+	ensureCloseReader(resp)
+	return err
+}
