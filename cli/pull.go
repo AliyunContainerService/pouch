@@ -32,7 +32,7 @@ func (p *PullCommand) Init(c *Cli) {
 	p.cli = c
 
 	p.cmd = &cobra.Command{
-		Use:   "pull [image]",
+		Use:   "pull IMAGE",
 		Short: "Pull an image from registry",
 		Long:  pullDescription,
 		Args:  cobra.MinimumNArgs(1),

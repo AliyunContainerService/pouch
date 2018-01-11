@@ -29,7 +29,7 @@ type RunCommand struct {
 func (rc *RunCommand) Init(c *Cli) {
 	rc.cli = c
 	rc.cmd = &cobra.Command{
-		Use:   "run a container",
+		Use:   "run [OPTIONS] IMAGE [ARG...]",
 		Short: "Create a new container and start it",
 		Long:  runDescription,
 		Args:  cobra.MinimumNArgs(1),

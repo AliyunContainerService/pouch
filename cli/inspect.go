@@ -19,7 +19,7 @@ type InspectCommand struct {
 func (p *InspectCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
-		Use:   "inspect [container]",
+		Use:   "inspect CONTAINER",
 		Short: "Get the detailed information of container",
 		Long:  inspectDescription,
 		Args:  cobra.ExactArgs(1),

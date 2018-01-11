@@ -21,7 +21,7 @@ type PauseCommand struct {
 func (p *PauseCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
-		Use:   "pause [container]",
+		Use:   "pause CONTAINER",
 		Short: "Pause a running container",
 		Long:  pauseDescription,
 		Args:  cobra.ExactArgs(1),

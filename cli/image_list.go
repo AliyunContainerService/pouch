@@ -32,7 +32,7 @@ type ImagesCommand struct {
 func (i *ImagesCommand) Init(c *Cli) {
 	i.cli = c
 	i.cmd = &cobra.Command{
-		Use:   "images",
+		Use:   "images [OPTIONS]",
 		Short: "List all images",
 		Long:  imagesDescription,
 		Args:  cobra.NoArgs,

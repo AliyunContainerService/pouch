@@ -21,7 +21,7 @@ type RmiCommand struct {
 func (rmi *RmiCommand) Init(c *Cli) {
 	rmi.cli = c
 	rmi.cmd = &cobra.Command{
-		Use:   "rmi image ",
+		Use:   "rmi [OPTIONS] IMAGE [IMAGE...]",
 		Short: "Remove one or more images by reference",
 		Long:  rmiDescription,
 		Args:  cobra.MinimumNArgs(1),

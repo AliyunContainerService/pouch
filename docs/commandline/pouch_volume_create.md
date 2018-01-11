@@ -7,7 +7,7 @@ Create a volume
 Create a volume in pouchd. It must specify volume's name, size and driver. You can use 'volume driver' to get drivers that pouch support.
 
 ```
-pouch volume create [args] [flags]
+pouch volume create [OPTIONS]
 ```
 
 ### Examples

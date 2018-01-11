@@ -7,7 +7,7 @@ Pause a running container
 Pause a running container object in Pouchd. when pausing, the container will pause its running but hold all the relevant resource.This is useful when you wish to pause a container for a while and to restore the running status later.The container you paused will pause without being terminated.
 
 ```
-pouch pause [container] [flags]
+pouch pause CONTAINER
 ```
 
 ### Examples

@@ -7,7 +7,7 @@ Rename a container with newName
 Rename a container object in Pouchd. You can change the name of one container identified by its name or ID. The container you renamed is ready to be used by its new name.
 
 ```
-pouch rename [container] [newName] [flags]
+pouch rename CONTAINER NEWNAME
 ```
 
 ### Examples

@@ -7,7 +7,7 @@ Exec a process in a running container
 Exec a process in a running container
 
 ```
-pouch exec [container] [flags]
+pouch exec [OPTIONS] CONTAINER COMMAND [ARG...]
 ```
 
 ### Options

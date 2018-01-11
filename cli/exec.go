@@ -27,7 +27,7 @@ type ExecCommand struct {
 func (e *ExecCommand) Init(c *Cli) {
 	e.cli = c
 	e.cmd = &cobra.Command{
-		Use:   "exec [container]",
+		Use:   "exec [OPTIONS] CONTAINER COMMAND [ARG...]",
 		Short: "Exec a process in a running container",
 		Long:  execDescription,
 		Args:  cobra.MinimumNArgs(2),

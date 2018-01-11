@@ -21,7 +21,7 @@ type ImageInspectCommand struct {
 func (i *ImageInspectCommand) Init(c *Cli) {
 	i.cli = c
 	i.cmd = &cobra.Command{
-		Use:   "inspect image",
+		Use:   "inspect [OPTIONS] IMAGE",
 		Short: "Display detailed information on one image",
 		Long:  imageInspectDescription,
 		Args:  cobra.ExactArgs(1),

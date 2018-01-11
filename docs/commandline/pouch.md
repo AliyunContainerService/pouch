@@ -27,7 +27,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch inspect](pouch_inspect.md)	 - Get the detailed information of container
 * [pouch network](pouch_network.md)	 - Manage pouch networks
 * [pouch pause](pouch_pause.md)	 - Pause a running container
-* [pouch ps](pouch_ps.md)	 - List all containers
+* [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers

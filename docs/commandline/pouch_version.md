@@ -7,7 +7,7 @@ Print versions about Pouch CLI and Pouchd
 Print versions about Pouch CLI and Pouchd
 
 ```
-pouch version [flags]
+pouch version
 ```
 
 ### Examples

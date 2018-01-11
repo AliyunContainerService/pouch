@@ -24,7 +24,7 @@ type RmCommand struct {
 func (r *RmCommand) Init(c *Cli) {
 	r.cli = c
 	r.cmd = &cobra.Command{
-		Use:   "rm container",
+		Use:   "rm [OPTIONS] CONTAINER [CONTAINER...]",
 		Short: "Remove one or more containers",
 		Long:  rmDescription,
 		Args:  cobra.MinimumNArgs(1),

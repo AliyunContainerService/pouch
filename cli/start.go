@@ -27,10 +27,10 @@ type StartCommand struct {
 func (s *StartCommand) Init(c *Cli) {
 	s.cli = c
 	s.cmd = &cobra.Command{
-		Use:   "start [container]",
+		Use:   "start [OPTIONS] CONTAINER",
 		Short: "Start a created or stopped container",
 		Long:  startDescription,
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return s.runStart(args)
 		},

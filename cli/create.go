@@ -24,7 +24,7 @@ type CreateCommand struct {
 func (cc *CreateCommand) Init(c *Cli) {
 	cc.cli = c
 	cc.cmd = &cobra.Command{
-		Use:   "create [image]",
+		Use:   "create [OPTIONS] IMAGE [ARG...]",
 		Short: "Create a new container with specified image",
 		Long:  createDescription,
 		Args:  cobra.MinimumNArgs(1),

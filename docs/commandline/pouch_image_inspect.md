@@ -7,7 +7,7 @@ Display detailed information on one image
 Return detailed information on Pouch image
 
 ```
-pouch image inspect image [flags]
+pouch image inspect [OPTIONS] IMAGE
 ```
 
 ### Examples

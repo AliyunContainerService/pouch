@@ -7,7 +7,7 @@ Create a new container with specified image
 Create a static container object in Pouchd. When creating, all configuration user input will be stored in memory store of Pouchd. This is useful when you wish to create a container configuration ahead of time so that Pouchd will preserve the resource in advance. The container you created is ready to start when you need it.
 
 ```
-pouch create [image] [flags]
+pouch create [OPTIONS] IMAGE [ARG...]
 ```
 
 ### Examples
@@ -20,11 +20,24 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
 ### Options
 
 ```
-  -h, --help             help for create
-      --name string      Specify name of container
-      --runtime string   Specify oci runtime
-  -t, --tty              Allocate a tty device
-  -v, --volume strings   Bind mount volumes to container
+      --cpu-share int          CPU shares
+      --cpuset-cpus string     CPUs in cpuset
+      --cpuset-mems string     MEMs in cpuset
+      --device strings         Add a host device to the container
+      --enableLxcfs            Enable lxcfs
+      --entrypoint string      Overwrite the default entrypoint
+  -e, --env strings            Set environment variables for container
+  -h, --help                   help for create
+      --hostname string        Set container's hostname
+  -l, --label strings          Set label for a container
+  -m, --memory string          Container memory limit
+      --memory-swap string     Container swap limit
+      --memory-wappiness int   Container memory swappiness [0, 100] (default -1)
+      --name string            Specify name of container
+      --runtime string         Specify oci runtime
+  -t, --tty                    Allocate a tty device
+  -v, --volume strings         Bind mount volumes to container
+  -w, --workdir string         Set the working directory in a container
 ```
 
 ### Options inherited from parent commands

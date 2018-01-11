@@ -30,7 +30,7 @@ type PsCommand struct {
 func (p *PsCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
-		Use:   "ps",
+		Use:   "ps [OPTIONS]",
 		Short: "List containers",
 		Long:  psDescription,
 		Args:  cobra.NoArgs,

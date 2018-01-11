@@ -60,7 +60,7 @@ func (v *VolumeCreateCommand) Init(c *Cli) {
 	v.cli = c
 
 	v.cmd = &cobra.Command{
-		Use:   "create [args]",
+		Use:   "create [OPTIONS]",
 		Short: "Create a volume",
 		Long:  volumeCreateDescription,
 		Args:  cobra.NoArgs,
@@ -164,7 +164,7 @@ type VolumeRemoveCommand struct {
 func (v *VolumeRemoveCommand) Init(c *Cli) {
 	v.cli = c
 	v.cmd = &cobra.Command{
-		Use:     "remove <name>",
+		Use:     "remove VOLUME",
 		Aliases: []string{"rm"},
 		Short:   "Remove volume",
 		Long:    volumeRmDescription,

@@ -56,14 +56,14 @@ func (n *NetworkCreateCommand) Init(c *Cli) {
 	n.cli = c
 
 	n.cmd = &cobra.Command{
-		Use:   "create [name]",
+		Use:   "create [OPTIONS] [NAME]",
 		Short: "Create a pouch network",
 		Long:  networkCreateDescription,
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return n.runNetworkCreate(args)
 		},
 		Example: networkCreateExample(),
-		Args:    cobra.MaximumNArgs(1),
 	}
 
 	n.addFlags()
