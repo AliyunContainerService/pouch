@@ -31,6 +31,7 @@ func (n *NetworkCommand) Init(c *Cli) {
 
 	c.AddCommand(n, &NetworkCreateCommand{})
 	c.AddCommand(n, &NetworkRemoveCommand{})
+	c.AddCommand(n, &NetworkInspectCommand{})
 }
 
 // networkCreateDescription is used to describe network create command in detail and auto generate command doc.
@@ -177,4 +178,63 @@ func (n *NetworkRemoveCommand) runNetworkRemove(args []string) error {
 func networkRemoveExample() string {
 	return `$ pouch network remove pouch-net
 Removed: pouch-net`
+}
+
+// networkInspectDescription is used to describe network inspect command in detail and auto generate command doc.
+var networkInspectDescription = "Inspect a network in pouchd. " +
+	"It must specify network's name."
+
+// NetworkInspectCommand is used to implement 'network inspect' command.
+type NetworkInspectCommand struct {
+	baseCommand
+
+	name string
+}
+
+// Init initializes NetworkInspectCommand command.
+func (n *NetworkInspectCommand) Init(c *Cli) {
+	n.cli = c
+
+	n.cmd = &cobra.Command{
+		Use:   "inspect [OPTIONS] NAME",
+		Short: "Inspect a pouch network",
+		Long:  networkInspectDescription,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return n.runNetworkInspect(args)
+		},
+		Example: networkInspectExample(),
+	}
+
+	n.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (n *NetworkInspectCommand) addFlags() {
+	//TODO add flags
+}
+
+// runNetworkInspect is the entry of NetworkInspectCommand command.
+func (n *NetworkInspectCommand) runNetworkInspect(args []string) error {
+	name := args[0]
+
+	apiClient := n.cli.Client()
+	resp, err := apiClient.NetworkInspect(name)
+	if err != nil {
+		return err
+	}
+
+	n.cli.Print(resp)
+	return nil
+}
+
+// networkInspectExample shows examples in network inspect command, and is used in auto-generated cli docs.
+func networkInspectExample() string {
+	return `$ pouch network inspect net1
+Name:         net1
+Scope:        
+Driver:       bridge
+EnableIPV6:   false
+ID:           c33c2646dc8ce9162faa65d17e80582475bbe53dc70ba0dc4def4b71e44551d6
+Internal:     false`
 }
