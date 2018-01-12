@@ -9,9 +9,9 @@ import (
 
 // TLSConfig contains information of tls which users can specify
 type TLSConfig struct {
-	CA           string
-	Cert         string
-	Key          string
+	CA           string `json:"tlscacert,omitempty"`
+	Cert         string `json:"tlscert,omitempty"`
+	Key          string `json:"tlskey,omitempty"`
 	VerifyRemote bool
 }
 
