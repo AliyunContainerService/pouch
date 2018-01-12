@@ -70,6 +70,7 @@ func buildNetworkInspectResp(n *networktypes.Network) *types.NetworkInspectResp 
 		Internal:   info.Internal(),
 		Options:    info.DriverOptions(),
 		Labels:     info.Labels(),
+		IPAM:       &types.IPAM{},
 	}
 	buildIpamResources(network, info)
 	return network

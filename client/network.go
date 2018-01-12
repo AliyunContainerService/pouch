@@ -27,3 +27,18 @@ func (client *APIClient) NetworkRemove(networkID string) error {
 	ensureCloseReader(resp)
 	return err
 }
+
+//NetworkInspect inspects a network.
+func (client *APIClient) NetworkInspect(networkID string) (*types.NetworkInspectResp, error) {
+	resp, err := client.get("/networks/"+networkID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	network := &types.NetworkInspectResp{}
+
+	err = decodeBody(network, resp.Body)
+	ensureCloseReader(resp)
+
+	return network, err
+}
