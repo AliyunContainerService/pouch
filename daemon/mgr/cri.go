@@ -184,7 +184,40 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 // PodSandboxStatus returns the status of the PodSandbox.
 func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (*runtime.PodSandboxStatusResponse, error) {
-	return nil, fmt.Errorf("PodSandboxStatus Not Implemented Yet")
+	podSandboxID := r.GetPodSandboxId()
+	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
+	}
+
+	// Parse the timestamps.
+	createdAt, err := toCriTimestamp(sandbox.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse timestamp for sandbox %q: %v", podSandboxID, err)
+	}
+
+	// Translate container to sandbox state.
+	state := runtime.PodSandboxState_SANDBOX_NOTREADY
+	if sandbox.State.Status == apitypes.StatusRunning {
+		state = runtime.PodSandboxState_SANDBOX_READY
+	}
+
+	metadata, err := parseSandboxName(sandbox.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
+	}
+	labels, annotations := extractLabels(sandbox.Config.Labels)
+	status := &runtime.PodSandboxStatus{
+		Id:          sandbox.ID,
+		State:       state,
+		CreatedAt:   createdAt,
+		Metadata:    metadata,
+		Labels:      labels,
+		Annotations: annotations,
+		// TODO: network status and linux specific pod status.
+	}
+
+	return &runtime.PodSandboxStatusResponse{Status: status}, nil
 }
 
 // ListPodSandbox returns a list of Sandbox.
@@ -307,7 +340,100 @@ func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContaine
 
 // ContainerStatus inspects the container and returns the status.
 func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerStatusRequest) (*runtime.ContainerStatusResponse, error) {
-	return nil, fmt.Errorf("ContainerStatus Not Implemented Yet")
+	id := r.GetContainerId()
+	container, err := c.ContainerMgr.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container status of %q: %v", id, err)
+	}
+
+	// Parse the timestamps.
+	var createdAt, startedAt, finishedAt int64
+	for _, item := range []struct {
+		t *int64
+		s string
+	}{
+		{t: &createdAt, s: container.Created},
+		{t: &startedAt, s: container.State.StartedAt},
+		{t: &finishedAt, s: container.State.FinishedAt},
+	} {
+		*item.t, err = toCriTimestamp(item.s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse timestamp for container %q: %v", id, err)
+		}
+	}
+
+	// Convert the mounts.
+	mounts := make([]*runtime.Mount, 0, len(container.Mounts))
+	for _, m := range container.Mounts {
+		mounts = append(mounts, &runtime.Mount{
+			HostPath:      m.Source,
+			ContainerPath: m.Destination,
+			Readonly:      !m.RW,
+			// Note: can't set SeLinuxRelabel.
+		})
+	}
+
+	// Interpret container states.
+	var state runtime.ContainerState
+	var reason, message string
+	if container.State.Status == apitypes.StatusRunning {
+		// Container is running.
+		state = runtime.ContainerState_CONTAINER_RUNNING
+	} else {
+		// Container is *not* running. We need to get more details.
+		//		* Case 1: container has run and exited with non-zero finishedAt time
+		//		* Case 2: container has failed to start; it has a zero finishedAt
+		//				  time, but a non-zero exit code.
+		//		* Case 3: container has been created, but not started (yet).
+		if finishedAt != 0 {
+			state = runtime.ContainerState_CONTAINER_EXITED
+			switch {
+			case container.State.OOMKilled:
+				reason = "OOMKilled"
+			case container.State.ExitCode == 0:
+				reason = "Completed"
+			default:
+				reason = "Error"
+			}
+		} else if container.State.ExitCode != 0 {
+			state = runtime.ContainerState_CONTAINER_EXITED
+			// Adjust finishedAt and startedAt time to createdAt time to avoid confusion.
+			finishedAt, startedAt = createdAt, createdAt
+			reason = "ContainerCannotRun"
+		} else {
+			state = runtime.ContainerState_CONTAINER_CREATED
+		}
+		message = container.State.Error
+	}
+
+	exitCode := int32(container.State.ExitCode)
+
+	metadata, err := parseContainerName(container.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container status of %q: %v", id, err)
+	}
+
+	labels, annotations := extractLabels(container.Config.Labels)
+
+	status := &runtime.ContainerStatus{
+		Id:          container.ID,
+		Metadata:    metadata,
+		Image:       &runtime.ImageSpec{Image: container.Config.Image},
+		ImageRef:    container.Image,
+		Mounts:      mounts,
+		ExitCode:    exitCode,
+		State:       state,
+		CreatedAt:   createdAt,
+		StartedAt:   startedAt,
+		FinishedAt:  finishedAt,
+		Reason:      reason,
+		Message:     message,
+		Labels:      labels,
+		Annotations: annotations,
+		// TODO: LogPath.
+	}
+
+	return &runtime.ContainerStatusResponse{Status: status}, nil
 }
 
 // ContainerStats returns stats of the container. If the container does not
