@@ -96,6 +96,10 @@ uninstall:
 integration-test:
 	@bash -c "env PATH=$(PATH) hack/make.sh check build integration-test"
 
+.PHONY: cri-test
+cri-test:
+	@bash -c "env PATH=$(PATH) hack/make.sh check build cri-test"
+
 .PHONY: test
 test:
-	@bash -c "env PATH=$(PATH) hack/make.sh check build unit-test integration-test"
+	@bash -c "env PATH=$(PATH) hack/make.sh check build unit-test integration-test cri-test"
