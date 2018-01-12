@@ -54,7 +54,6 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
 	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
 	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "", "Specify the path of containerd binary")
-	flagSet.StringVar(&cfg.ContainerdConfig, "containerd-config", "/etc/containerd/config.toml", "Specify the path of containerd configuration file")
 	flagSet.StringVar(&cfg.TLS.Key, "tlskey", "", "Specify key file of TLS")
 	flagSet.StringVar(&cfg.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
 	flagSet.StringVar(&cfg.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
@@ -108,7 +107,6 @@ func runDaemon() error {
 		{
 			Path: containerdPath,
 			Args: []string{
-				"-c", cfg.ContainerdConfig,
 				"-a", cfg.ContainerdAddr,
 				"--root", path.Join(cfg.HomeDir, "containerd/root"),
 				"--state", path.Join(cfg.HomeDir, "containerd/state"),
