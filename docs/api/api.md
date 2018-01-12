@@ -1142,7 +1142,6 @@ Configuration for a container that is portable between hosts
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
@@ -1180,7 +1179,6 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
@@ -1390,6 +1388,7 @@ Container configuration that depends on the host we are running on
 |**Dns**  <br>*optional*|A list of DNS servers for the container to use.|< string > array|
 |**DnsOptions**  <br>*optional*|A list of DNS options.|< string > array|
 |**DnsSearch**  <br>*optional*|A list of DNS search domains.|< string > array|
+|**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**ExtraHosts**  <br>*optional*|A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.|< string > array|
 |**GroupAdd**  <br>*optional*|A list of additional groups that the container process will run as.|< string > array|
 |**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
