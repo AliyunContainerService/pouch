@@ -1,6 +1,8 @@
 package client
 
-import "github.com/alibaba/pouch/apis/types"
+import (
+	"github.com/alibaba/pouch/apis/types"
+)
 
 // VolumeCreate creates a volume.
 func (client *APIClient) VolumeCreate(config *types.VolumeCreateConfig) (*types.VolumeInfo, error) {
@@ -38,4 +40,16 @@ func (client *APIClient) VolumeInspect(name string) (*types.VolumeInfo, error) {
 	ensureCloseReader(resp)
 
 	return volume, err
+}
+
+// VolumeList returns the list of volumes.
+func (client *APIClient) VolumeList() (*types.VolumeListResp, error) {
+	resp, err := client.get("/volumes", nil)
+
+	volumeListResp := &types.VolumeListResp{}
+
+	err = decodeBody(volumeListResp, resp.Body)
+	ensureCloseReader(resp)
+
+	return volumeListResp, err
 }

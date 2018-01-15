@@ -34,6 +34,7 @@ func (v *VolumeCommand) Init(c *Cli) {
 	c.AddCommand(v, &VolumeCreateCommand{})
 	c.AddCommand(v, &VolumeRemoveCommand{})
 	c.AddCommand(v, &VolumeInspectCommand{})
+	c.AddCommand(v, &VolumeListCommand{})
 }
 
 // RunE is the entry of VolumeCommand command.
@@ -259,4 +260,65 @@ CreatedAt:
 Driver:
 Mountpoint:
 Name:         a02217023fc477876a5483100b87d84d8845d5ac7c0c706717f2ff6edc0cf425`
+}
+
+// volumeListDescription is used to describe volume list command in detail and auto generate command doc.
+var volumeListDescription = "List volumes in pouchd. " +
+	"It lists the volume's name"
+
+// VolumeListCommand is used to implement 'volume rm' command.
+type VolumeListCommand struct {
+	baseCommand
+}
+
+// Init initializes VolumeListCommand command.
+func (v *VolumeListCommand) Init(c *Cli) {
+	v.cli = c
+	v.cmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List volumes",
+		Long:    volumeListDescription,
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runVolumeList(args)
+		},
+		Example: volumeListExample(),
+	}
+	v.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (v *VolumeListCommand) addFlags() {}
+
+// runVolumeList is the entry of VolumeListCommand command.
+func (v *VolumeListCommand) runVolumeList(args []string) error {
+	logrus.Debugf("list the volumes")
+
+	apiClient := v.cli.Client()
+
+	volumeList, err := apiClient.VolumeList()
+	if err != nil {
+		return err
+	}
+
+	display := v.cli.NewTableDisplay()
+	display.AddRow([]string{"Name:"})
+
+	for _, v := range volumeList.Volumes {
+		display.AddRow([]string{v.Name})
+	}
+
+	display.Flush()
+
+	return nil
+}
+
+// volumeListExample shows examples in volume list command, and is used in auto-generated cli docs.
+func volumeListExample() string {
+	return `$ pouch volume list
+Name:
+pouch-volume-1
+pouch-volume-2
+pouch-volume-3`
 }

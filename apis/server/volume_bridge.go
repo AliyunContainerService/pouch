@@ -77,3 +77,16 @@ func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *
 	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
+
+func (s *Server) listVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	volumes, err := s.VolumeMgr.List(ctx, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	respVolumes := types.VolumeListResp{Volumes: []*types.VolumeInfo{}, Warnings: nil}
+	for _, name := range volumes {
+		respVolumes.Volumes = append(respVolumes.Volumes, &types.VolumeInfo{Name: name})
+	}
+	return EncodeResponse(rw, http.StatusOK, respVolumes)
+}

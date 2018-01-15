@@ -211,3 +211,33 @@ func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http
 		request.WithHeader("Upgrade", "tcp"),
 		request.WithJSONBody(obj))
 }
+
+// CreateVolume creates a volume in pouchd.
+func CreateVolume(c *check.C, name, driver string) error {
+	obj := map[string]interface{}{
+		"Driver": driver,
+		"Name":   name,
+	}
+	path := "/volumes/create"
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post(path, body)
+	defer resp.Body.Close()
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 201)
+
+	return err
+}
+
+// RemoveVolume removes a volume in pouchd.
+func RemoveVolume(c *check.C, name string) error {
+	path := "/volumes/" + name
+	resp, err := request.Delete(path)
+	defer resp.Body.Close()
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 204)
+
+	return err
+}
