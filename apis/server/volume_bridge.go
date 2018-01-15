@@ -49,16 +49,27 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 	return EncodeResponse(rw, http.StatusCreated, volume)
 }
 
-func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 	volume, err := s.VolumeMgr.Get(ctx, name)
 	if err != nil {
 		return err
 	}
-	return EncodeResponse(rw, http.StatusOK, volume)
+	respVolume := types.VolumeInfo{
+		Name:       volume.Name,
+		Driver:     volume.Driver(),
+		Mountpoint: volume.Path(),
+		CreatedAt:  volume.CreationTimestamp.Format("2006-1-2 15:04:05"),
+		Labels:     volume.Labels,
+		Status: map[string]interface{}{
+			"size": volume.Size(),
+		},
+	}
+
+	return EncodeResponse(rw, http.StatusOK, respVolume)
 }
 
-func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
