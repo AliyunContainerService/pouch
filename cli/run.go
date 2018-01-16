@@ -66,6 +66,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.memorySwap, "memory-swap", "", "Container swap limit")
 	flagSet.StringSliceVarP(&rc.devices, "device", "", nil, "Add a host device to the container")
 	flagSet.BoolVar(&rc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
+	flagSet.StringVar(&rc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 }
 
 // runRun is the entry of run command.

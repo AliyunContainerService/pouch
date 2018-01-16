@@ -215,6 +215,11 @@ func (c *Container) Config() *types.ContainerConfig {
 	return c.meta.Config
 }
 
+// HostConfig returns container's hostconfig.
+func (c *Container) HostConfig() *types.HostConfig {
+	return c.meta.HostConfig
+}
+
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
 	return c.meta.State.Status == types.StatusRunning
@@ -223,6 +228,11 @@ func (c *Container) IsRunning() bool {
 // IsStopped returns container is stopped or not.
 func (c *Container) IsStopped() bool {
 	return c.meta.State.Status == types.StatusStopped
+}
+
+// IsExited returns container is exited or not.
+func (c *Container) IsExited() bool {
+	return c.meta.State.Status == types.StatusExited
 }
 
 // IsCreated returns container is created or not.
@@ -246,4 +256,17 @@ func (c *Container) StopTimeout() int64 {
 		return *c.meta.Config.StopTimeout
 	}
 	return DefaultStopTimeout
+}
+
+// ContainerRestartPolicy represents the policy is used to manage container.
+type ContainerRestartPolicy types.RestartPolicy
+
+// IsNone returns the container don't need to be restarted or not.
+func (p ContainerRestartPolicy) IsNone() bool {
+	return p.Name == "" || p.Name == "no"
+}
+
+// IsAlways returns the container need to be restarted or not.
+func (p ContainerRestartPolicy) IsAlways() bool {
+	return p.Name == "always"
 }

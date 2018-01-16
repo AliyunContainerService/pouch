@@ -113,6 +113,9 @@ type HostConfig struct {
 	// Mount the container's root filesystem as read only.
 	ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
+	// Restart policy to be used to manage the container
+	RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
 	// Runtime to use with this container.
 	Runtime string `json:"Runtime,omitempty"`
 
@@ -202,6 +205,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
+		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
 		Runtime string `json:"Runtime,omitempty"`
 
 		SecurityOpt []string `json:"SecurityOpt,omitempty"`
@@ -273,6 +278,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.PublishAllPorts = data.PublishAllPorts
 
 	m.ReadonlyRootfs = data.ReadonlyRootfs
+
+	m.RestartPolicy = data.RestartPolicy
 
 	m.Runtime = data.Runtime
 
@@ -356,6 +363,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
+		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
 		Runtime string `json:"Runtime,omitempty"`
 
 		SecurityOpt []string `json:"SecurityOpt,omitempty"`
@@ -424,6 +433,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	data.PublishAllPorts = m.PublishAllPorts
 
 	data.ReadonlyRootfs = m.ReadonlyRootfs
+
+	data.RestartPolicy = m.RestartPolicy
 
 	data.Runtime = m.Runtime
 
@@ -513,6 +524,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validatePortBindings(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRestartPolicy(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -711,6 +726,25 @@ func (m *HostConfig) validatePortBindings(formats strfmt.Registry) error {
 
 	if err := validate.Required("PortBindings", "body", m.PortBindings); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *HostConfig) validateRestartPolicy(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RestartPolicy) { // not required
+		return nil
+	}
+
+	if m.RestartPolicy != nil {
+
+		if err := m.RestartPolicy.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("RestartPolicy")
+			}
+			return err
+		}
 	}
 
 	return nil

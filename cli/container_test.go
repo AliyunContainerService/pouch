@@ -7,6 +7,63 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseRestartPolicy(t *testing.T) {
+	type TestCase struct {
+		input         string
+		expectedName  string
+		expectedCount int64
+		err           error
+	}
+
+	cases := []TestCase{
+		{
+			input:         "always",
+			expectedName:  "always",
+			expectedCount: 0,
+			err:           nil,
+		},
+		{
+			input:         "no",
+			expectedName:  "no",
+			expectedCount: 0,
+			err:           nil,
+		},
+		{
+			input:         "unless-stopped",
+			expectedName:  "unless-stopped",
+			expectedCount: 0,
+			err:           nil,
+		},
+		{
+			input:         "on-failure:1",
+			expectedName:  "on-failure",
+			expectedCount: 1,
+			err:           nil,
+		},
+		{
+			input:         "on-failure",
+			expectedName:  "on-failure",
+			expectedCount: 0,
+			err:           nil,
+		},
+		{
+			input:         "on-failure:1:2",
+			expectedName:  "on-failure",
+			expectedCount: 0,
+			err:           fmt.Errorf("invalid restart policy: %s", "on-failure:1:2"),
+		},
+	}
+
+	for _, cs := range cases {
+		policy, err := parseRestartPolicy(cs.input)
+		assert.Equal(t, cs.err, err)
+		if err == nil {
+			assert.Equal(t, cs.expectedName, policy.Name)
+			assert.Equal(t, cs.expectedCount, policy.MaximumRetryCount)
+		}
+	}
+}
+
 func TestParseLabels(t *testing.T) {
 	type result struct {
 		labels map[string]string

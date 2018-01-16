@@ -88,6 +88,9 @@ type ContainerManager struct {
 	// Cache stores all containers in memory.
 	// Element operated in cache must have a type of *Container.
 	cache *collect.SafeMap
+
+	// monitor is used to handle container's event, eg: exit, stop and so on.
+	monitor *ContainerMonitor
 }
 
 // NewContainerManager creates a brand new container manager.
@@ -103,10 +106,11 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		ExecProcesses: collect.NewSafeMap(),
 		cache:         collect.NewSafeMap(),
 		Config:        cfg,
+		monitor:       NewContainerMonitor(),
 	}
 
-	mgr.Client.SetStopHooks(mgr.stoppedAndRelease)
 	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
+	mgr.Client.SetExecExitHooks(mgr.execExitedAndRelease)
 
 	return mgr, mgr.Restore(ctx)
 }
@@ -649,9 +653,9 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	return nil
 }
 
-// stoppedAndRelease be register into ctrd as a callback function, when the running container suddenly
-// stopped, "ctrd" will call it to set the container's state and release resouce and so on.
-func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error {
+// exitedAndRelease be register into ctrd as a callback function, when the running container suddenly
+// exited, "ctrd" will call it to set the container's state and release resouce and so on.
+func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
 	// update container info
 	c, err := mgr.container(id)
 	if err != nil {
@@ -661,12 +665,41 @@ func (mgr *ContainerManager) stoppedAndRelease(id string, m *ctrd.Message) error
 	c.Lock()
 	defer c.Unlock()
 
-	return mgr.markStoppedAndRelease(c, m)
+	if err := mgr.markStoppedAndRelease(c, m); err != nil {
+		return err
+	}
+
+	c.meta.State.Status = types.StatusExited
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+	}
+
+	// send exit event to monitor
+	mgr.monitor.PostEvent(ContainerExitEvent(c).WithHandle(func(container *Container) error {
+		// check status and restart policy
+		container.Lock()
+
+		if !container.IsExited() {
+			container.Unlock()
+			return nil
+		}
+		policy := (*ContainerRestartPolicy)(container.HostConfig().RestartPolicy)
+		if policy == nil || policy.IsNone() {
+			container.Unlock()
+			return nil
+		}
+
+		container.Unlock()
+
+		return mgr.Start(context.TODO(), container.ID(), container.DetachKeys)
+	}))
+
+	return nil
 }
 
-// exitedAndRelease be register into ctrd as a callback function, when the exec process in a container
+// execExitedAndRelease be register into ctrd as a callback function, when the exec process in a container
 // exited, "ctrd" will call it to release resource and so on.
-func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
+func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) error {
 	if io := mgr.IOs.Get(id); io != nil {
 		if err := m.RawError(); err != nil {
 			fmt.Fprintf(io.Stdout, "%v\n", err)
