@@ -11,3 +11,6 @@ var BuildTime = time.Now().Format(time.RFC3339Nano)
 
 // APIVersion means the api version daemon serves
 var APIVersion = "1.24"
+
+// GOVersion is the go version to build Pouch
+var GOVersion = "go1.9.1"
