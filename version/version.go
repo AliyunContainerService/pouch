@@ -3,7 +3,7 @@ package version
 import "time"
 
 // Version represents the version of pouchd.
-const Version = "0.1.0-dev"
+const Version = "0.1.0-rc0"
 
 // BuildTime is the time when this binary of daemon is built
 // FIXME: this is dynamical. We need a fixed build time.
