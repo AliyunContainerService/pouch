@@ -31,11 +31,13 @@ func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	// TODO: More specific check is needed
+	c.Assert(got.Config, check.NotNil)
 	c.Assert(got.Name, check.Equals, busyboxImage)
 	c.Assert(got.ID, check.NotNil)
 	c.Assert(got.CreatedAt, check.NotNil)
 	c.Assert(got.Digest, check.Matches, "sha256.*")
 	c.Assert(got.Size, check.NotNil)
+	c.Assert(got.Tag, check.Equals, "latest")
 }
 
 // TestImageInspectNotFound tests inspecting non-existing images.

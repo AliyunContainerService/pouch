@@ -550,7 +550,12 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
 func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
 	imageRef := r.GetImage().GetImage()
-	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	ref, err := reference.Parse(imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
 		return nil, err
 	}
@@ -577,7 +582,7 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 		return nil, err
 	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +593,12 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 // RemoveImage removes the image.
 func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
 	imageRef := r.GetImage().GetImage()
-	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	ref, err := reference.Parse(imageRef)
+	if err != nil {
+		return nil, err
+	}
+
+	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
 		return nil, err
 	}

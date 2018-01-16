@@ -17,6 +17,9 @@ import (
 
 type ImageInfo struct {
 
+	// config
+	Config *ContainerConfig `json:"Config,omitempty"`
+
 	// Time of image creation
 	CreatedAt string `json:"CreatedAt,omitempty"`
 
@@ -36,6 +39,8 @@ type ImageInfo struct {
 	Tag string `json:"Tag,omitempty"`
 }
 
+/* polymorph ImageInfo Config false */
+
 /* polymorph ImageInfo CreatedAt false */
 
 /* polymorph ImageInfo Digest false */
@@ -52,9 +57,33 @@ type ImageInfo struct {
 func (m *ImageInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateConfig(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ImageInfo) validateConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Config) { // not required
+		return nil
+	}
+
+	if m.Config != nil {
+
+		if err := m.Config.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("Config")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

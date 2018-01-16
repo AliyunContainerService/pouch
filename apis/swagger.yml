@@ -1589,6 +1589,8 @@ definitions:
       Size:
         description: "size of image's taking disk space."
         type: "integer"
+      Config:
+        $ref: "#/definitions/ContainerConfig"
 
   SearchResultItem:
     type: "object"

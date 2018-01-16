@@ -94,7 +94,20 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 
 		// TODO(Wei Fu): the go-digest will deprecate the Hex() method.
 		// We need to use Encoded() if update the go-digest version.
+		imageConfig, err := c.GetImageConfig(ctx, ref.String())
+		cfg := &types.ContainerConfig{
+			// TODO: add more fields
+			User:       imageConfig.User,
+			Env:        imageConfig.Env,
+			Entrypoint: imageConfig.Entrypoint,
+			Cmd:        imageConfig.Cmd,
+			WorkingDir: imageConfig.WorkingDir,
+			Labels:     imageConfig.Labels,
+			StopSignal: imageConfig.StopSignal,
+		}
+
 		images = append(images, types.ImageInfo{
+			Config:    cfg,
 			CreatedAt: image.CreatedAt.Format(utils.TimeLayout),
 			Name:      image.Name,
 			ID:        truncateID(digest.Hex()),
