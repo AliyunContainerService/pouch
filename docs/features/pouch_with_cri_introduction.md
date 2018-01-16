@@ -7,7 +7,7 @@ CRI (_Container Runtime Interface_) consists of a [protobuf API](https://git.k8s
 
 This diagram explains how the Container Runtime Interface works:
 
-![CRI works](static_files/pouch_cri_works.png)
+![CRI works](../static_files/pouch_cri_works.png)
 
 ## Why need to implement CRI in pouch
 
@@ -34,4 +34,4 @@ After these steps, a pod and its corresponding application container is created 
 
 This diagram briefly explains pouch CRI internal module workflow：
 
-![CRI workflow](static_files/pouch_whith_cri_work_flow.png)
+![CRI workflow](../static_files/pouch_whith_cri_work_flow.png)

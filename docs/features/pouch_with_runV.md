@@ -12,11 +12,11 @@ Supporting hypervisor-based OCI runtime is one of Pouch's goals. Pouch allows us
 
 Here is the architecture of Pouch's supporting both runV and runC:
 
-![pouch_with_runv_architecture](static_files/pouch_with_runv_architecture.png)
+![pouch_with_runv_architecture](../static_files/pouch_with_runv_architecture.png)
 
 ## Prerequisites Installation
 
-Before installing, We should remind one important thing: **Pouch with runv can only work on PHYSICAL MACHINE**. Nested VMs currently are not supported yet. In addition, we should make sure that `containerd` and `pouchd` are already installed on the physical machine which is described in [INSTALLATION.md](../INSTALLATION.md).
+Before installing, We should remind one important thing: **Pouch with runv can only work on PHYSICAL MACHINE**. Nested VMs currently are not supported yet. In addition, we should make sure that `containerd` and `pouchd` are already installed on the physical machine which is described in [INSTALLATION.md](../../INSTALLATION.md).
 
 Make sure things above have been done. And then there are another three prerequisites to install before experiencing hypervisor-based containers:
 
