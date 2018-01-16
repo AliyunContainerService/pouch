@@ -443,6 +443,17 @@ func filterCRIContainers(containers []*runtime.Container, filter *runtime.Contai
 	return filtered
 }
 
+// containerNetns returns the network namespace of the given container.
+func containerNetns(container *ContainerMeta) (string, error) {
+	pid := container.State.Pid
+	if pid == 0 {
+		// Pouch reports pid 0 for an exited container.
+		return "", fmt.Errorf("can't find network namespace for the terminated container %q", container.ID)
+	}
+
+	return fmt.Sprintf("/proc/%v/ns/net", pid), nil
+}
+
 // Image related tool functions.
 
 // imageToCriImage converts pouch image API to CRI image API.

@@ -342,6 +342,42 @@
 			"revisionTime": "2017-09-11T20:35:56Z"
 		},
 		{
+			"checksumSHA1": "ym448FWZpZNMLeS6bDFqG+3X5FE=",
+			"path": "github.com/containernetworking/cni/libcni",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
+			"checksumSHA1": "Kh/msV2XTuYy0UB63hhoKcKfkyY=",
+			"path": "github.com/containernetworking/cni/pkg/invoke",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
+			"checksumSHA1": "kgSp8eemMPHCvxZdxva5OU94jIo=",
+			"path": "github.com/containernetworking/cni/pkg/types",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
+			"checksumSHA1": "lmLYXYR/twmBu+6U678QNF+BQlQ=",
+			"path": "github.com/containernetworking/cni/pkg/types/020",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
+			"checksumSHA1": "r6qX7lyz4pweijiXjWMcxvm4wQQ=",
+			"path": "github.com/containernetworking/cni/pkg/types/current",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
+			"checksumSHA1": "Y9KLxL9fFDnFHaDGOUfDkcbyV0U=",
+			"path": "github.com/containernetworking/cni/pkg/version",
+			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
+			"revisionTime": "2018-01-10T16:53:04Z"
+		},
+		{
 			"checksumSHA1": "tkdJGOYqk/F/YIDedKl5CllvbYA=",
 			"path": "github.com/contiv/executor",
 			"revision": "337a1adae71d5814d0a11c41c0f11d292b7a7625",
@@ -353,6 +389,12 @@
 			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
 			"revisionTime": "2017-08-27T12:01:20Z",
 			"tree": true
+		},
+		{
+			"checksumSHA1": "je2SUpKP4rZR5hpk1VidpPYGUWA=",
+			"path": "github.com/cri-o/ocicni/pkg/ocicni",
+			"revision": "17d9dd2837c6facb27b618c441193e5e912f3212",
+			"revisionTime": "2018-01-11T00:30:19Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
@@ -385,6 +427,12 @@
 			"path": "github.com/fatih/structs",
 			"revision": "7e5a8eef611ee84dd359503f3969f80df4c50723",
 			"revisionTime": "2017-06-12T12:55:44Z"
+		},
+		{
+			"checksumSHA1": "7NP1qUMF8Kx1y0zANxx0e+oq9Oo=",
+			"path": "github.com/fsnotify/fsnotify",
+			"revision": "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9",
+			"revisionTime": "2018-01-10T05:33:47Z"
 		},
 		{
 			"checksumSHA1": "OED5RsS1Us385a/VH6IAlSl0xHo=",

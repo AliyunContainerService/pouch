@@ -7,8 +7,11 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
+
+	"github.com/sirupsen/logrus"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"golang.org/x/net/context"
@@ -60,15 +63,21 @@ type CriMgr interface {
 type CriManager struct {
 	ContainerMgr ContainerMgr
 	ImageMgr     ImageMgr
+	CniMgr       CniMgr
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
-	c := &CriManager{
+func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
+	cniMgr, err := NewCniManager(&config.CriConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new cni manager: %v", err)
+	}
+
+	return &CriManager{
 		ContainerMgr: ctrMgr,
 		ImageMgr:     imgMgr,
-	}
-	return c, nil
+		CniMgr:       cniMgr,
+	}, nil
 }
 
 // TODO: Move the underlying functions to their respective files in the future.
@@ -110,16 +119,30 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
 	}
+	id := createResp.ID
 
 	// Step 3: Start the sandbox container.
-	err = c.ContainerMgr.Start(ctx, createResp.ID, "")
+	err = c.ContainerMgr.Start(ctx, id, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
 	}
 
-	// TODO: setup networking for the sandbox.
+	// Step 4: Setup networking for the sandbox.
+	container, err := c.ContainerMgr.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	netnsPath, err := containerNetns(container)
+	if err != nil {
+		return nil, err
+	}
+	err = c.CniMgr.SetUpPodNetwork(config, id, netnsPath)
+	if err != nil {
+		// If setup network failed, don't break now.
+		logrus.Errorf("failed to setup network for sandbox %q: %v", id, err)
+	}
 
-	return &runtime.RunPodSandboxResponse{PodSandboxId: createResp.ID}, nil
+	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
 }
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the

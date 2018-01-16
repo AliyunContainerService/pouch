@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/alibaba/pouch/apis/server"
-	"github.com/alibaba/pouch/cri"
+	cri "github.com/alibaba/pouch/cri/service"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/meta"
