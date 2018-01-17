@@ -33,11 +33,12 @@ Pouch can pack, deliver and run any application. It provides applications with a
 
 Pouch's most important features are:
 
-- **Security**: Pouch is designed to be secure by default. Include lots of security features, like hypervisor-based container technology, lxcfs, patched Linux kernel and so on.
-- **P2P distribution**: Pouch utilizes [Dragonfly](https://github.com/alibaba/dragonfly), a P2P-base distribution system, to achieve lightning-fast container image distribution.
+- **Strong isolation**: Pouch is designed to be secure by default. Include lots of security features, like hypervisor-based container technology, lxcfs, patched Linux kernel and so on.
 - **Rich container**: Besides the common ways of running container, Pouch includes a `rich container` mode, which integrates more services, hooks, and many others container internals to guarantee container's running like usual.
+- **P2P distribution**: Pouch utilizes [Dragonfly](https://github.com/alibaba/dragonfly), a P2P-base distribution system, to achieve lightning-fast container image distribution.
 - **Kernel compatibility**: Enables OCI-compatible runtimes to work on old kernel versions, like linux kernel 2.6.32+.
-- **Simplicty**: Very few steps needed to setup Pouch.
+- **Stability**: Pouch has been running on tens of thousand nodes in Alibaba stably, and helped all online transactions of Alibaba's 2017 Singles Day smoothly on millions of containers.
+- **Simplicity**: Very few steps needed to setup Pouch.
 
 ## Architecture
 
