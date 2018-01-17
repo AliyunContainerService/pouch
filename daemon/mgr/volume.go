@@ -7,8 +7,11 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/daemon/meta"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/volume"
 	"github.com/alibaba/pouch/volume/types"
+
+	"github.com/pkg/errors"
 )
 
 // VolumeMgr defines interface to manage container volume.
@@ -92,7 +95,12 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	id := types.VolumeID{
 		Name: name,
 	}
-	return vm.core.RemoveVolume(id)
+	if err := vm.core.RemoveVolume(id); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
+	}
+	return nil
 }
 
 // List returns all volumes on this host.
@@ -114,7 +122,14 @@ func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, e
 	id := types.VolumeID{
 		Name: name,
 	}
-	return vm.core.GetVolume(id)
+	vol, err := vm.core.GetVolume(id)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
+		return nil, err
+	}
+	return vol, nil
 }
 
 // Path returns the mount path of volume.
