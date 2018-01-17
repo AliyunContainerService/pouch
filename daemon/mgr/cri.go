@@ -189,7 +189,30 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 
 // ListPodSandbox returns a list of Sandbox.
 func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (*runtime.ListPodSandboxResponse, error) {
-	return nil, fmt.Errorf("ListPodSandbox Not Implemented Yet")
+	opts := &ContainerListOption{All: true}
+	filter := func(c *ContainerMeta) bool {
+		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelSandbox
+	}
+
+	// Filter *only* (sandbox) containers.
+	sandboxList, err := c.ContainerMgr.List(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list sandbox: %v", err)
+	}
+
+	sandboxes := make([]*runtime.PodSandbox, 0, len(sandboxList))
+	for _, s := range sandboxList {
+		sandbox, err := toCriSandbox(s)
+		if err != nil {
+			// TODO: log an error message?
+			continue
+		}
+		sandboxes = append(sandboxes, sandbox)
+	}
+
+	result := filterCRISandboxes(sandboxes, r.GetFilter())
+
+	return &runtime.ListPodSandboxResponse{Items: result}, nil
 }
 
 // CreateContainer creates a new container in the given PodSandbox.

@@ -134,6 +134,64 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	return createConfig, nil
 }
 
+func toCriSandboxState(status apitypes.Status) runtime.PodSandboxState {
+	switch status {
+	case apitypes.StatusRunning:
+		return runtime.PodSandboxState_SANDBOX_READY
+	default:
+		return runtime.PodSandboxState_SANDBOX_NOTREADY
+	}
+}
+
+func toCriSandbox(c *ContainerMeta) (*runtime.PodSandbox, error) {
+	state := toCriSandboxState(c.State.Status)
+	metadata, err := parseSandboxName(c.Name)
+	if err != nil {
+		return nil, err
+	}
+	labels, annotations := extractLabels(c.Config.Labels)
+	return &runtime.PodSandbox{
+		Id:       c.ID,
+		Metadata: metadata,
+		State:    state,
+		// TODO: fill "CreatedAt" when it is appropriate.
+		Labels:      labels,
+		Annotations: annotations,
+	}, nil
+}
+
+func filterCRISandboxes(sandboxes []*runtime.PodSandbox, filter *runtime.PodSandboxFilter) []*runtime.PodSandbox {
+	if filter == nil {
+		return sandboxes
+	}
+
+	filtered := []*runtime.PodSandbox{}
+	for _, s := range sandboxes {
+		if filter.GetId() != "" && filter.GetId() != s.Id {
+			continue
+		}
+		if filter.GetState() != nil && filter.GetState().GetState() != s.State {
+			continue
+		}
+		if filter.GetLabelSelector() != nil {
+			match := true
+			for k, v := range filter.GetLabelSelector() {
+				value, ok := s.Labels[k]
+				if !ok || v != value {
+					match = false
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+		filtered = append(filtered, s)
+	}
+
+	return filtered
+}
+
 // Container related tool functions.
 
 func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) string {
