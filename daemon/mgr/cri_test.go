@@ -25,6 +25,22 @@ func TestParseUint32(t *testing.T) {
 	}
 }
 
+func TestToCriTimestamp(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected int64
+	}{
+		{input: "", expected: int64(0)},
+		{input: "2018-01-12T07:38:32.245589846Z", expected: int64(1515742712245589846)},
+	}
+
+	for _, test := range testCases {
+		actual, err := toCriTimestamp(test.input)
+		assert.NoError(t, err)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
 func TestLabelsAndAnnotationsRoundTrip(t *testing.T) {
 	expectedLabels := map[string]string{"label.123.abc": "foo", "label.456.efg": "bar"}
 	expectedAnnotations := map[string]string{"annotation.abc.123": "uvw", "annotation.def.456": "xyz"}

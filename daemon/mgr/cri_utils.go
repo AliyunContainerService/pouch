@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/reference"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/go-openapi/strfmt"
 
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -18,6 +20,19 @@ func parseUint32(s string) (uint32, error) {
 		return 0, err
 	}
 	return uint32(n), nil
+}
+
+func toCriTimestamp(t string) (int64, error) {
+	if t == "" {
+		return 0, nil
+	}
+
+	result, err := time.Parse(utils.TimeLayout, t)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.UnixNano(), nil
 }
 
 // generateEnvList converts KeyValue list to a list of strings, in the form of
