@@ -61,6 +61,8 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 200)
 
+	time.Sleep(5000 * time.Millisecond)
+
 	resp, err = request.Delete("/images/" + helloworldImage + ":latest")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
