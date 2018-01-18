@@ -122,7 +122,7 @@ func doUnmap(ctx driver.Context, v *types.Volume, rbdmap RBDMap) error {
 	name := v.Name
 
 	for _, rbd := range rbdmap.MapDevice {
-	   if rbd.Image != name || rbd.Pool != poolName {
+		if rbd.Image != name || rbd.Pool != poolName {
 			continue
 		}
 		ctx.Log.Debugf("Ceph unmapping volume %s/%s at device %q", poolName, name, strings.TrimSpace(rbd.Device))
