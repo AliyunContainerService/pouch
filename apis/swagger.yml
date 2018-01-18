@@ -1060,6 +1060,10 @@ definitions:
                 type: "object"
                 additionalProperties:
                   type: "string"
+          RestartPolicy:
+            type: "object"
+            description: "Restart policy to be used to manage the container"
+            $ref: "#/definitions/RestartPolicy"
           NetworkMode:
             type: "string"
             description: "Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to."
@@ -2007,6 +2011,15 @@ definitions:
         description: "Host port number that the container's port is mapped to."
         type: "string"
         example: "4443"
+
+  RestartPolicy:
+    description: "Define container's restart policy"
+    type: "object"
+    properties:
+      Name:
+        type: "string"
+      MaximumRetryCount:
+        type: "integer"
 
   NetworkCreateConfig:
     type: "object"

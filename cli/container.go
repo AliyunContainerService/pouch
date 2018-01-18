@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -29,6 +30,7 @@ type container struct {
 	memorySwappiness int64
 	devices          []string
 	enableLxcfs      bool
+	restartPolicy    string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -56,6 +58,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	restartPolicy, err := parseRestartPolicy(c.restartPolicy)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
 			Tty:        c.tty,
@@ -78,7 +85,8 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				MemorySwap:       memorySwap,
 				MemorySwappiness: &c.memorySwappiness,
 			},
-			EnableLxcfs: c.enableLxcfs,
+			EnableLxcfs:   c.enableLxcfs,
+			RestartPolicy: restartPolicy,
 		},
 	}
 
@@ -143,4 +151,35 @@ func validateMemorySwappiness(memorySwappiness int64) error {
 		return fmt.Errorf("invalid memory swappiness: %d (its range is -1 or 0-100)", memorySwappiness)
 	}
 	return nil
+}
+
+func parseRestartPolicy(restartPolicy string) (*types.RestartPolicy, error) {
+	policy := &types.RestartPolicy{}
+
+	if restartPolicy == "" {
+		policy.Name = "no"
+		return policy, nil
+	}
+
+	fields := strings.Split(restartPolicy, ":")
+	policy.Name = fields[0]
+
+	switch policy.Name {
+	case "always", "unless-stopped", "no":
+	case "on-failure":
+		if len(fields) > 2 {
+			return nil, fmt.Errorf("invalid restart policy: %s", restartPolicy)
+		}
+		if len(fields) == 2 {
+			n, err := strconv.Atoi(fields[1])
+			if err != nil {
+				return nil, fmt.Errorf("invalid restart policy: %v", err)
+			}
+			policy.MaximumRetryCount = int64(n)
+		}
+	default:
+		return nil, fmt.Errorf("invalid restart policy: %s", restartPolicy)
+	}
+
+	return policy, nil
 }
