@@ -24,3 +24,18 @@ func (client *APIClient) VolumeRemove(name string) error {
 
 	return err
 }
+
+// VolumeInfo returns a volume's information.
+func (client *APIClient) VolumeInfo(name string) (*types.VolumeInfo, error) {
+	resp, err := client.get("/volumes/"+name, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	volume := &types.VolumeInfo{}
+
+	err = decodeBody(volume, resp.Body)
+	ensureCloseReader(resp)
+
+	return volume, err
+}

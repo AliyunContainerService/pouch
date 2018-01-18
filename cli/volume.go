@@ -12,7 +12,7 @@ import (
 
 // volumeDescription is used to describe volume command in detail and auto generate command doc.
 var volumeDescription = "Manager the volumes in pouchd. " +
-	"It contains the functions of create/remove/list/inspect volume, 'driver' is used to list drivers that pouch support. " +
+	"It contains the functions of create/remove/list/info volume, 'driver' is used to list drivers that pouch support. " +
 	"The default volume driver is local, it will make a directory to bind into container."
 
 // VolumeCommand is used to implement 'volume' command.
@@ -33,6 +33,7 @@ func (v *VolumeCommand) Init(c *Cli) {
 
 	c.AddCommand(v, &VolumeCreateCommand{})
 	c.AddCommand(v, &VolumeRemoveCommand{})
+	c.AddCommand(v, &VolumeInfoCommand{})
 }
 
 // RunE is the entry of VolumeCommand command.
@@ -200,4 +201,60 @@ func (v *VolumeRemoveCommand) runVolumeRm(args []string) error {
 func volumeRmExample() string {
 	return `$ pouch volume rm pouch-volume
 Removed: pouch-volume`
+}
+
+// volumeInfoDescription is used to describe volume information and auto generate command doc.
+var volumeInfoDescription = "Get a volume's information. " +
+	"It need specify volume's name, and then return the volume's information that include driver, mountpoint and so on."
+
+// VolumeInfoCommand is used to implement 'volume info' command.
+type VolumeInfoCommand struct {
+	baseCommand
+}
+
+// Init initializes VolumeInfoCommand command.
+func (v *VolumeInfoCommand) Init(c *Cli) {
+	v.cli = c
+	v.cmd = &cobra.Command{
+		Use:     "info VOLUME",
+		Aliases: []string{"info"},
+		Short:   "info volume",
+		Long:    volumeInfoDescription,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runVolumeInfo(args)
+		},
+		Example: volumeInfoExample(),
+	}
+	v.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (v *VolumeInfoCommand) addFlags() {}
+
+// runVolumeInfo is the entry of VolumeInfoCommand command.
+func (v *VolumeInfoCommand) runVolumeInfo(args []string) error {
+	name := args[0]
+
+	logrus.Debugf("get a the information of volume: %s", name)
+
+	apiClient := v.cli.Client()
+
+	volume, err := apiClient.VolumeInfo(name)
+	if err != nil {
+		return err
+	}
+
+	v.cli.Print(volume)
+	return err
+}
+
+// volumeInfoExample shows examples in volume info command, and is used in auto-generated cli docs.
+func volumeInfoExample() string {
+	return `$ pouch volume info pouch-volume
+Name:         pouch-volume
+Scope:
+CreatedAt:    2018-1-15 10:50:36
+Driver:       local
+Mountpoint:   /mnt/local/pouch-volume`
 }
