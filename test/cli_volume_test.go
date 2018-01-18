@@ -25,8 +25,6 @@ func (suite *PouchVolumeSuite) SetUpSuite(c *check.C) {
 }
 
 // TestVolumeWorks tests "pouch volume" work.
-//
-// TODO: use volume inspect to check value.
 func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -36,5 +34,6 @@ func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 	}
 
 	command.PouchRun("volume", "create", "--name", funcname).Assert(c, icmd.Success)
+	command.PouchRun("volume", "inspect", funcname).Assert(c, icmd.Success)
 	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
 }

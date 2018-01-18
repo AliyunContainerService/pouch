@@ -33,6 +33,7 @@ func (v *VolumeCommand) Init(c *Cli) {
 
 	c.AddCommand(v, &VolumeCreateCommand{})
 	c.AddCommand(v, &VolumeRemoveCommand{})
+	c.AddCommand(v, &VolumeInspectCommand{})
 }
 
 // RunE is the entry of VolumeCommand command.
@@ -153,20 +154,21 @@ Driver:       local`
 
 // volumeRmDescription is used to describe volume rm command in detail and auto generate command doc.
 var volumeRmDescription = "Remove a volume in pouchd. " +
-	"It need specify volume's name, when the volume is exist and is unuse, it will be remove."
+	"It must specify volume's name, and the volume will be removed when it is existent and unused."
 
 // VolumeRemoveCommand is used to implement 'volume rm' command.
 type VolumeRemoveCommand struct {
 	baseCommand
+	name string
 }
 
 // Init initializes VolumeRemoveCommand command.
 func (v *VolumeRemoveCommand) Init(c *Cli) {
 	v.cli = c
 	v.cmd = &cobra.Command{
-		Use:     "remove VOLUME",
+		Use:     "remove [OPTIONS] NAME",
 		Aliases: []string{"rm"},
-		Short:   "Remove volume",
+		Short:   "Remove a volume",
 		Long:    volumeRmDescription,
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -200,4 +202,61 @@ func (v *VolumeRemoveCommand) runVolumeRm(args []string) error {
 func volumeRmExample() string {
 	return `$ pouch volume rm pouch-volume
 Removed: pouch-volume`
+}
+
+// volumeInspectDescription is used to describe volume inspect command in detail and auto generate command doc.
+var volumeInspectDescription = "Inspect a volume in pouchd. " +
+	"It must specify volume's name."
+
+// VolumeInspectCommand is used to implement 'volume inspect' command.
+type VolumeInspectCommand struct {
+	baseCommand
+
+	name string
+}
+
+// Init initializes VolumeInspectCommand command.
+func (v *VolumeInspectCommand) Init(c *Cli) {
+	v.cli = c
+	v.cmd = &cobra.Command{
+		Use:   "inspect [OPTIONS] NAME",
+		Short: "Inspect a pouch volume",
+		Long:  volumeInspectDescription,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runVolumeInspect(args)
+		},
+		Example: volumeInspectExample(),
+	}
+	v.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (v *VolumeInspectCommand) addFlags() {}
+
+// runVolumeInspect is the entry of VolumeInspectCommand command.
+func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
+	name := args[0]
+
+	logrus.Debugf("inspect a volume: %s", name)
+
+	apiClient := v.cli.Client()
+
+	resp, err := apiClient.VolumeInspect(name)
+	if err != nil {
+		return err
+	}
+
+	v.cli.Print(resp)
+	return nil
+}
+
+// volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.
+func volumeInspectExample() string {
+	return `$ pouch volume inspect a02217023fc477876a5483100b87d84d8845d5ac7c0c706717f2ff6edc0cf425
+Scope:
+CreatedAt:
+Driver:
+Mountpoint:
+Name:         a02217023fc477876a5483100b87d84d8845d5ac7c0c706717f2ff6edc0cf425`
 }
