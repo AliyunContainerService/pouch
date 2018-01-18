@@ -39,21 +39,21 @@ function target()
 {
 	case $1 in
 	check)
-		docker run --rm -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
 		;;
 	build)
-		docker run --rm -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"
 		install_pouch
 		;;
 	unit-test)
-		docker run --rm -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
 		;;
 	cri-test)
 		cd $SOURCEDIR
 		env PATH=$GOROOT/bin:$PATH $SOURCEDIR/hack/cri-test/test-cri.sh
 		;;
 	integration-test)
-		docker run --rm -ti -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
 
 		if [[ $SOURCEDIR != $DIR ]];then
 			[ -d $SOURCEDIR ] && rm -rf $SOURCEDIR
