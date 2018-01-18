@@ -90,7 +90,11 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// TODO: make sandbox image configurable.
 	image := defaultSandboxImage
 
-	// TODO: make sure the image exists.
+	// Make sure the sandbox image exists.
+	err := c.ensureSandboxImageExists(ctx, image)
+	if err != nil {
+		return nil, err
+	}
 
 	// Step 2: Create the sandbox container.
 	createConfig, err := makeSandboxPouchConfig(config, image)

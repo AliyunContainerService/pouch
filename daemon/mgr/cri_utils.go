@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/go-openapi/strfmt"
 
+	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -364,4 +366,25 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 		RepoDigests: []string{fmt.Sprintf("%s@%s", ref.Name, image.Digest)},
 		Size_:       size,
 	}, nil
+}
+
+// ensureSandboxImageExists pulls the image when it's not present.
+func (c *CriManager) ensureSandboxImageExists(ctx context.Context, image string) error {
+	_, err := c.ImageMgr.GetImage(ctx, image)
+	// TODO: maybe we should distinguish NotFound error with others.
+	if err == nil {
+		return nil
+	}
+
+	ref, err := reference.Parse(image)
+	if err != nil {
+		return fmt.Errorf("parse image name failed: %v", err)
+	}
+
+	err = c.ImageMgr.PullImage(ctx, ref.Name, ref.Tag, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return fmt.Errorf("pull sandbox image %q failed: %v", image, err)
+	}
+
+	return nil
 }
