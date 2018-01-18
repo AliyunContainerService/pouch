@@ -30,9 +30,19 @@ function install_pouch ()
 	
 	# install lxcfs
 	echo "Install lxcfs"
-	apt-get install lxcfs
-	# MUST stop lxcfs service, so pouchd could take over it.
-	service lxcfs stop
+	if grep -qi "ubuntu" /etc/issue ; then
+		apt-get install lxcfs
+		if (( $? != 0 )); then
+			add-apt-repository ppa:ubuntu-lxc/lxcfs-stable -y
+			apt-get update
+			apt-get install lxcfs
+		fi
+
+		# MUST stop lxcfs service, so pouchd could take over it.
+		service lxcfs stop
+	else
+		$DIR/pouch/hack/install_lxcfs_on_centos.sh
+	fi
 }
 
 function target()
@@ -64,7 +74,11 @@ function target()
 
 		#start pouch daemon
 		echo "start pouch daemon"
-		pouchd --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
+		if stat /usr/bin/lxcfs ; then
+			pouchd --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
+		else
+			pouchd > $TMP/log 2>&1 &
+		fi
 
 		# wait until pouch daemon is ready
 		daemon_timeout_time=30
