@@ -26,4 +26,6 @@ Manager the networks in pouchd. It contains the functions of create/remove/list/
 
 * [pouch](pouch.md)	 - An efficient container engine
 * [pouch network create](pouch_network_create.md)	 - Create a pouch network
+* [pouch network inspect](pouch_network_inspect.md)	 - Inspect a pouch network
+* [pouch network remove](pouch_network_remove.md)	 - Remove a pouch network
 
