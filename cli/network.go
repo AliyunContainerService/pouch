@@ -135,8 +135,6 @@ var networkRemoveDescription = "Remove a network in pouchd. " +
 // NetworkRemoveCommand is used to implement 'network remove' command.
 type NetworkRemoveCommand struct {
 	baseCommand
-
-	name string
 }
 
 // Init initializes NetworkRemoveCommand command.
@@ -187,8 +185,6 @@ var networkInspectDescription = "Inspect a network in pouchd. " +
 // NetworkInspectCommand is used to implement 'network inspect' command.
 type NetworkInspectCommand struct {
 	baseCommand
-
-	name string
 }
 
 // Init initializes NetworkInspectCommand command.

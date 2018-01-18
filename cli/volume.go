@@ -159,7 +159,6 @@ var volumeRmDescription = "Remove a volume in pouchd. " +
 // VolumeRemoveCommand is used to implement 'volume rm' command.
 type VolumeRemoveCommand struct {
 	baseCommand
-	name string
 }
 
 // Init initializes VolumeRemoveCommand command.
@@ -211,8 +210,6 @@ var volumeInspectDescription = "Inspect a volume in pouchd. " +
 // VolumeInspectCommand is used to implement 'volume inspect' command.
 type VolumeInspectCommand struct {
 	baseCommand
-
-	name string
 }
 
 // Init initializes VolumeInspectCommand command.
@@ -253,10 +250,10 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.
 func volumeInspectExample() string {
-	return `$ pouch volume inspect a02217023fc477876a5483100b87d84d8845d5ac7c0c706717f2ff6edc0cf425
+	return `$ pouch volume inspect pouch-volume
+Mountpoint:   /mnt/local/pouch-volume
+Name:         pouch-volume
 Scope:
-CreatedAt:
-Driver:
-Mountpoint:
-Name:         a02217023fc477876a5483100b87d84d8845d5ac7c0c706717f2ff6edc0cf425`
+CreatedAt:    2018-1-17 14:09:30
+Driver:       local`
 }
