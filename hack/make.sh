@@ -41,7 +41,7 @@ function install_pouch ()
 		# MUST stop lxcfs service, so pouchd could take over it.
 		service lxcfs stop
 	else
-		$DIR/pouch/hack/install_lxcfs_on_centos.sh
+		sh -x $DIR/hack/install_lxcfs_on_centos.sh
 	fi
 }
 
