@@ -161,6 +161,5 @@ func doUnmap(ctx driver.Context, v *types.Volume, rbdmap RBDMap) error {
 		}
 		break
 	}
-
 	return nil
 }
