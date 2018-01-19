@@ -89,8 +89,9 @@ func devicesFromPath(pathOnHost, pathInContainer, cgroupPermissions string) (dev
 	return devs, devPermissions, fmt.Errorf("error gathering device information while adding custom device %q: %s", pathOnHost, err)
 }
 
-func setupDevices(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupDevices(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	var devs []specs.LinuxDevice
+	s := spec.s
 	devPermissions := s.Linux.Resources.Devices
 	if meta.HostConfig.Privileged {
 		hostDevices, err := devices.HostDevices()

@@ -8,7 +8,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func setupMounts(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	mounts := s.Mounts
 	if c.HostConfig == nil {
 		return nil

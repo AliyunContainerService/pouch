@@ -6,7 +6,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func setupCgroupCPUShare(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupCgroupCPUShare(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	if s.Linux.Resources.CPU == nil {
 		s.Linux.Resources.CPU = &specs.LinuxCPU{}
 	}
@@ -17,7 +18,8 @@ func setupCgroupCPUShare(ctx context.Context, meta *ContainerMeta, s *specs.Spec
 	return nil
 }
 
-func setupCgroupCPUSet(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupCgroupCPUSet(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	if s.Linux.Resources.CPU == nil {
 		s.Linux.Resources.CPU = &specs.LinuxCPU{}
 	}

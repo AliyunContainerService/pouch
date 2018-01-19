@@ -6,8 +6,17 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+// SpecWrapper wraps the container's specs and add manager operations.
+type SpecWrapper struct {
+	s *specs.Spec
+
+	ctrMgr ContainerMgr
+	volMgr VolumeMgr
+	netMgr NetworkMgr
+}
+
 // SetupFunc defines spec setup function type.
-type SetupFunc func(ctx context.Context, m *ContainerMeta, s *specs.Spec) error
+type SetupFunc func(ctx context.Context, m *ContainerMeta, s *SpecWrapper) error
 
 var setupFunc = []SetupFunc{
 	// process

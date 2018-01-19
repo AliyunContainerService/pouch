@@ -7,28 +7,31 @@ import (
 )
 
 // TODO
-func setupUserNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupUserNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	return nil
 }
 
 // TODO
-func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	return nil
 }
 
-func setupIpcNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupIpcNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	ns := specs.LinuxNamespace{Type: specs.IPCNamespace}
 	setNamespace(s, ns)
 	return nil
 }
 
-func setupPidNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupPidNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	ns := specs.LinuxNamespace{Type: specs.PIDNamespace}
 	setNamespace(s, ns)
 	return nil
 }
 
-func setupUtsNamespace(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupUtsNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	ns := specs.LinuxNamespace{Type: specs.UTSNamespace}
 	setNamespace(s, ns)
 
