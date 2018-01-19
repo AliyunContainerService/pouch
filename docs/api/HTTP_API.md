@@ -1412,6 +1412,7 @@ Container configuration that depends on the host we are running on
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
 |**ReadonlyRootfs**  <br>*optional*|Mount the container's root filesystem as read only.|boolean|
+|**RestartPolicy**  <br>*optional*|Restart policy to be used to manage the container|[RestartPolicy](#restartpolicy)|
 |**Runtime**  <br>*optional*|Runtime to use with this container.|string|
 |**SecurityOpt**  <br>*optional*|A list of string values to customize labels for MLS systems, such as SELinux.|< string > array|
 |**ShmSize**  <br>*optional*|Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.  <br>**Minimum value** : `0`|integer|
@@ -1688,6 +1689,17 @@ A container's resources (cgroups config, ulimits, etc)
 |**Hard**  <br>*optional*|Hard limit|integer|
 |**Name**  <br>*optional*|Name of ulimit|string|
 |**Soft**  <br>*optional*|Soft limit|integer|
+
+
+<a name="restartpolicy"></a>
+### RestartPolicy
+Define container's restart policy
+
+
+|Name|Schema|
+|---|---|
+|**MaximumRetryCount**  <br>*optional*|integer|
+|**Name**  <br>*optional*|string|
 
 
 <a name="searchresultitem"></a>

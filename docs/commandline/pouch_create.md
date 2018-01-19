@@ -34,6 +34,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --memory-swap string     Container swap limit
       --memory-wappiness int   Container memory swappiness [0, 100] (default -1)
       --name string            Specify name of container
+      --restart string         Restart policy to apply when container exits
       --runtime string         Specify oci runtime
   -t, --tty                    Allocate a tty device
   -v, --volume strings         Bind mount volumes to container

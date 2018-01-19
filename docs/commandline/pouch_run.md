@@ -49,6 +49,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --memory-swap string     Container swap limit
       --memory-wappiness int   Container memory swappiness [0, 100] (default -1)
       --name string            Specify name of container
+      --restart string         Restart policy to apply when container exits
       --runtime string         Specify oci runtime
   -t, --tty                    Allocate a tty device
   -v, --volume strings         Bind mount volumes to container

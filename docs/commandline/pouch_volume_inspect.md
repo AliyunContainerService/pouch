@@ -1,26 +1,30 @@
-## pouch volume remove
+## pouch volume inspect
 
-Remove a volume
+Inspect a pouch volume
 
 ### Synopsis
 
-Remove a volume in pouchd. It must specify volume's name, and the volume will be removed when it is existent and unused.
+Inspect a volume in pouchd. It must specify volume's name.
 
 ```
-pouch volume remove [OPTIONS] NAME
+pouch volume inspect [OPTIONS] NAME
 ```
 
 ### Examples
 
 ```
-$ pouch volume rm pouch-volume
-Removed: pouch-volume
+$ pouch volume inspect pouch-volume
+Mountpoint:   /mnt/local/pouch-volume
+Name:         pouch-volume
+Scope:
+CreatedAt:    2018-1-17 14:09:30
+Driver:       local
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for inspect
 ```
 
 ### Options inherited from parent commands
