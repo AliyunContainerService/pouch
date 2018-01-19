@@ -16,7 +16,58 @@ To be added.
 
 ### CentOS
 
-To be added.
+To install Pouch, you need a maintained version of CentOS 7 Archived versions aren’t supported or tested.
+
+We have put rpm package to Aliyun mirrors, you can install pouch using Pouch repository. If you install Pouch for the first on a new host machine, you need to set up the Pouch repository. Then, you can install and update Pouch from repository.
+
+**1.Install yum-utils**
+
+Install required packages. yum-utils provides the yum-config-manager utility.
+
+```bash
+sudo yum install -y yum-utils
+```
+
+**2. Set up the pouch repository**
+
+Use the following command to add Pouch repository.
+
+```bash
+sudo yum-config-manager \
+    --add-repo \
+    http://mirrors.aliyun.com/opsx/opsx-centos7.repo
+sudo yum update
+```
+
+**3. Install pouch**
+
+Run the following command to install the latest version of Pouch. If it's the first time to install Pouch on your host, you will be prompted to accept the GPG key, and the key's fingerprint will be shown. 
+
+```bash
+sudo yum install pouch 
+```
+
+After installing Pouch, the `pouch` group is created, but no users are added to the group.
+
+**4. Start pouch**
+
+```bash
+sudo systemctl start pouch
+```
+
+Afterwards, you can pull an image and run Pouch containers.
+
+**5. Uninstall pouch**
+
+```bash
+sudo yum remove pouch
+```
+
+After running the `remove` command, images, containers, volumes, or customized configuration files on your host are not automatically removed. To delete all images, containers and volumes, execute the following command:
+
+```bash
+sudo rm -rf /var/lib/pouch
+```
 
 ## Developer Quick-Start
 
