@@ -26,5 +26,6 @@ Manager the volumes in pouchd. It contains the functions of create/remove/list/i
 
 * [pouch](pouch.md)	 - An efficient container engine
 * [pouch volume create](pouch_volume_create.md)	 - Create a volume
-* [pouch volume remove](pouch_volume_remove.md)	 - Remove volume
+* [pouch volume inspect](pouch_volume_inspect.md)	 - Inspect a pouch volume
+* [pouch volume remove](pouch_volume_remove.md)	 - Remove a volume
 
