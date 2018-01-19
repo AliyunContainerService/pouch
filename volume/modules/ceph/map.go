@@ -122,44 +122,44 @@ func doUnmap(ctx driver.Context, v *types.Volume, rbdmap RBDMap) error {
 	name := v.Name
 
 	for _, rbd := range rbdmap.MapDevice {
-		if rbd.Image == name && rbd.Pool == poolName {
-			ctx.Log.Debugf("Ceph unmapping volume %s/%s at device %q", poolName, name, strings.TrimSpace(rbd.Device))
-
-			// Check device is exist or not.
-			if _, err := os.Stat(rbd.Device); err != nil {
-				ctx.Log.Errorf("Ceph trying to unmap device %q for %s/%s that does not exist, continuing",
-					poolName, name, rbd.Device)
-				continue
-			}
-
-			// Unmap device.
-			exit, _, stderr, err := exec.Run(defaultTimeout, bin, "unmap", rbd.Device)
-			if err != nil {
-				ctx.Log.Errorf("Ceph could not unmap volume %q (device %q): %d (%v) (%s)",
-					name, rbd.Device, exit, err, stderr)
-				return err
-			} else if exit != 0 {
-				err = fmt.Errorf("Ceph could not unmap volume %q (device %q): %d (%s)",
-					name, rbd.Device, exit, stderr)
-				ctx.Log.Error(err)
-				return err
-			}
-
-			// Check have unmapped or not.
-			rbdmap2, err := showMapped(ctx)
-			if err != nil {
-				return err
-			}
-			for _, rbd2 := range rbdmap2.MapDevice {
-				if rbd.Image == rbd2.Image && rbd.Pool == rbd2.Pool {
-					return fmt.Errorf("could not unmap volume %q, device: %q is exist",
-						name, rbd.Image)
-				}
-			}
-
-			break
+		if rbd.Image != name || rbd.Pool != poolName {
+			continue
 		}
-	}
+		ctx.Log.Debugf("Ceph unmapping volume %s/%s at device %q", poolName, name, strings.TrimSpace(rbd.Device))
 
+		// Check device is exist or not.
+		if _, err := os.Stat(rbd.Device); err != nil {
+			ctx.Log.Errorf("Ceph trying to unmap device %q for %s/%s that does not exist, continuing",
+				poolName, name, rbd.Device)
+			continue
+		}
+
+		// Unmap device.
+		exit, _, stderr, err := exec.Run(defaultTimeout, bin, "unmap", rbd.Device)
+		if err != nil {
+			ctx.Log.Errorf("Ceph could not unmap volume %q (device %q): %d (%v) (%s)",
+				name, rbd.Device, exit, err, stderr)
+			return err
+		}
+		if exit != 0 {
+			err = fmt.Errorf("Ceph could not unmap volume %q (device %q): %d (%s)",
+				name, rbd.Device, exit, stderr)
+			ctx.Log.Error(err)
+			return err
+		}
+
+		// Check have unmapped or not.
+		rbdmap2, err := showMapped(ctx)
+		if err != nil {
+			return err
+		}
+		for _, rbd2 := range rbdmap2.MapDevice {
+			if rbd.Image == rbd2.Image && rbd.Pool == rbd2.Pool {
+				return fmt.Errorf("could not unmap volume %q, device: %q is exist",
+					name, rbd.Image)
+			}
+		}
+		break
+	}
 	return nil
 }
