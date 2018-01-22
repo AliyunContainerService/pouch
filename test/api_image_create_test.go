@@ -67,3 +67,19 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.StatusCode, check.Equals, 204)
 }
+
+// TestImageCreateWithoutRegistry tests creating an image only by name, will use "latest" by default.
+func (suite *APIImageCreateSuite) TestImageCreateWithoutRegistry(c *check.C) {
+	q := url.Values{}
+	q.Add("fromImage", helloworldImageOnlyRepoName)
+	query := request.WithQuery(q)
+	resp, err := request.Post("/images/create", query)
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 200)
+
+	time.Sleep(5000 * time.Millisecond)
+
+	resp, err = request.Delete("/images/" + helloworldImageOnlyRepoName + ":latest")
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 204)
+}

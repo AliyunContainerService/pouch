@@ -63,6 +63,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.IsLxcfsEnabled, "enable-lxcfs", false, "Enable Lxcfs to make container to isolate /proc")
 	flagSet.StringVar(&cfg.LxcfsBinPath, "lxcfs", "/usr/local/bin/lxcfs", "Specify the path of lxcfs binary")
 	flagSet.StringVar(&cfg.LxcfsHome, "lxcfs-home", "/var/lib/lxc/lxcfs", "Specify the mount dir of lxcfs")
+	flagSet.StringVar(&cfg.DefaultRegistry, "default-registry", "registry.hub.docker.com/library/", "Default Image Registry")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.

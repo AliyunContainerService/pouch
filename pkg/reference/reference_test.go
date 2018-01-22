@@ -62,14 +62,6 @@ func TestParse(t *testing.T) {
 				Tag:  "3",
 			},
 			err: nil,
-		}, {
-			name:  "OnlyRepoName",
-			input: "busybox",
-			expected: Ref{
-				Name: defaultRegistry + "busybox",
-				Tag:  "latest",
-			},
-			err: nil,
 		},
 	} {
 		ref, err := Parse(tc.input)
