@@ -46,6 +46,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/images/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getImage))
 
 	// volume
+	r.Path("/volumes").Methods(http.MethodGet).Handler(s.filter(s.listVolume))
 	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
 	r.Path("/volumes/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getVolume))
 	r.Path("/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
