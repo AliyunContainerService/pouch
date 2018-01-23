@@ -3,9 +3,11 @@ package main
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -162,5 +164,35 @@ func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 	// the memory should be equal to 512M
 	if out := res.Combined(); !strings.Contains(out, "524288 kB") {
 		c.Fatalf("upexpected output %s expected %s\n", out, "524288 kB")
+	}
+}
+
+// TestRunRestartPolicyAlways is to verify restart policy always works.
+func (suite *PouchRunSuite) TestRunRestartPolicyAlways(c *check.C) {
+	name := "TestRunRestartPolicyAlways"
+
+	command.PouchRun("run", "--name", name, "-d", "--restart=always", busyboxImage, "sh", "-c", "sleep 2").Assert(c, icmd.Success)
+	time.Sleep(2500 * time.Millisecond)
+
+	res := command.PouchRun("ps")
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("expect container %s to be up: %s\n", name, out)
+	}
+}
+
+// TestRunRestartPolicyNone is to verify restart policy none works.
+func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
+	name := "TestRunRestartPolicyNone"
+
+	command.PouchRun("run", "--name", name, "-d", "--restart=no", busyboxImage, "sh", "-c", "sleep 1").Assert(c, icmd.Success)
+	time.Sleep(2000 * time.Millisecond)
+
+	res := command.PouchRun("ps")
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); strings.Contains(out, name) {
+		c.Fatalf("expect container %s to be exited: %s\n", name, out)
 	}
 }
