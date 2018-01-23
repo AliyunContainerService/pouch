@@ -372,9 +372,15 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID())
 	}
+	sw := &SpecWrapper{
+		s:      s,
+		ctrMgr: mgr,
+		volMgr: mgr.VolumeMgr,
+		netMgr: mgr.NetworkMgr,
+	}
 
 	for _, setup := range SetupFuncs() {
-		if err = setup(ctx, c.meta, s); err != nil {
+		if err = setup(ctx, c.meta, sw); err != nil {
 			return err
 		}
 	}

@@ -9,12 +9,13 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func setupCap(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupCap(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
 	//TODO setup capabilities
 	return nil
 }
 
-func setupProcessArgs(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupProcessArgs(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	args := c.Config.Entrypoint
 	if args == nil {
 		args = []string{}
@@ -26,7 +27,8 @@ func setupProcessArgs(ctx context.Context, c *ContainerMeta, s *specs.Spec) erro
 	return nil
 }
 
-func setupProcessEnv(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupProcessEnv(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	if s.Process.Env == nil {
 		s.Process.Env = c.Config.Env
 	} else {
@@ -35,7 +37,8 @@ func setupProcessEnv(ctx context.Context, c *ContainerMeta, s *specs.Spec) error
 	return nil
 }
 
-func setupProcessCwd(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupProcessCwd(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	if c.Config.WorkingDir == "" {
 		s.Process.Cwd = "/"
 	} else {
@@ -44,7 +47,8 @@ func setupProcessCwd(ctx context.Context, c *ContainerMeta, s *specs.Spec) error
 	return nil
 }
 
-func setupProcessTTY(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupProcessTTY(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	s.Process.Terminal = c.Config.Tty
 	if s.Process.Env != nil {
 		s.Process.Env = append(s.Process.Env, "TERM=xterm")
@@ -54,7 +58,7 @@ func setupProcessTTY(ctx context.Context, c *ContainerMeta, s *specs.Spec) error
 	return nil
 }
 
-func setupProcessUser(ctx context.Context, c *ContainerMeta, s *specs.Spec) (err error) {
+func setupProcessUser(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) (err error) {
 	if c.Config.User != "" {
 		fields := strings.SplitN(c.Config.User, ":", 2)
 		var u, g string

@@ -13,7 +13,8 @@ func getCgroupMemory(s *specs.Spec) *specs.LinuxMemory {
 	return s.Linux.Resources.Memory
 }
 
-func setupCgroupMemory(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupCgroupMemory(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	mem := getCgroupMemory(s)
 
 	v := meta.HostConfig.Memory
@@ -21,7 +22,8 @@ func setupCgroupMemory(ctx context.Context, meta *ContainerMeta, s *specs.Spec) 
 	return nil
 }
 
-func setupCgroupMemorySwap(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupCgroupMemorySwap(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	mem := getCgroupMemory(s)
 
 	v := meta.HostConfig.MemorySwap
@@ -29,7 +31,8 @@ func setupCgroupMemorySwap(ctx context.Context, meta *ContainerMeta, s *specs.Sp
 	return nil
 }
 
-func setupCgroupMemorySwappiness(ctx context.Context, meta *ContainerMeta, s *specs.Spec) error {
+func setupCgroupMemorySwappiness(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
 	mem := getCgroupMemory(s)
 
 	var v uint64
