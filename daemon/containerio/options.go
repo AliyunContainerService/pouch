@@ -1,6 +1,7 @@
 package containerio
 
 import (
+	"bytes"
 	"net/http"
 )
 
@@ -12,6 +13,7 @@ type Option struct {
 	hijack        http.Hijacker
 	hijackUpgrade bool
 	stdinBackend  string
+	memBuffer     *bytes.Buffer
 }
 
 // NewOption creates the Option instance.
@@ -75,5 +77,16 @@ func WithHijack(hi http.Hijacker, upgrade bool) func(*Option) {
 func WithStdinHijack() func(*Option) {
 	return func(opt *Option) {
 		opt.stdinBackend = "hijack"
+	}
+}
+
+// WithMemBuffer specified the memory buffer backend.
+func WithMemBuffer(memBuffer *bytes.Buffer) func(*Option) {
+	return func(opt *Option) {
+		if opt.backends == nil {
+			opt.backends = make(map[string]struct{})
+		}
+		opt.backends["memBuffer"] = struct{}{}
+		opt.memBuffer = memBuffer
 	}
 }
