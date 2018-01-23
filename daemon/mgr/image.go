@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/registry"
 
 	"github.com/pkg/errors"
@@ -92,12 +93,34 @@ func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, out 
 		return err
 	}
 
+	ctx, cancel = context.WithCancel(pctx)
+	imageConfig, err := mgr.client.GetImageConfig(ctx, image+":"+tag)
+	cancel()
+
+	if err != nil {
+		return err
+	}
+
+	cfg := &types.ContainerConfig{
+		// TODO: add more fields
+		User:       imageConfig.User,
+		Env:        imageConfig.Env,
+		Entrypoint: imageConfig.Entrypoint,
+		Cmd:        imageConfig.Cmd,
+		WorkingDir: imageConfig.WorkingDir,
+		Labels:     imageConfig.Labels,
+		StopSignal: imageConfig.StopSignal,
+	}
+
 	// FIXME need to refactor it and the image's list interface.
 	mgr.cache.put(&types.ImageInfo{
-		Name:   img.Name(),
-		ID:     strings.TrimPrefix(string(img.Target().Digest), "sha256:")[:12],
-		Digest: string(img.Target().Digest),
-		Size:   img.Target().Size,
+		Config:    cfg,
+		CreatedAt: time.Now().UTC().Format(utils.TimeLayout),
+		Name:      img.Name(),
+		ID:        strings.TrimPrefix(string(img.Target().Digest), "sha256:")[:12],
+		Digest:    string(img.Target().Digest),
+		Size:      img.Target().Size,
+		Tag:       tag,
 	})
 
 	return nil

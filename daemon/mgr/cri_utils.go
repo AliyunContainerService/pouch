@@ -358,6 +358,12 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 		return nil, err
 	}
 
+	uid := &runtime.Int64Value{}
+	imageUID, username := getUserFromImageUser(image.Config.User)
+	if imageUID != nil {
+		uid.Value = *imageUID
+	}
+
 	size := uint64(image.Size)
 	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
 	return &runtime.Image{
@@ -365,6 +371,8 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 		RepoTags:    []string{fmt.Sprintf("%s:%s", ref.Name, ref.Tag)},
 		RepoDigests: []string{fmt.Sprintf("%s@%s", ref.Name, image.Digest)},
 		Size_:       size,
+		Uid:         uid,
+		Username:    username,
 	}, nil
 }
 
@@ -387,4 +395,35 @@ func (c *CriManager) ensureSandboxImageExists(ctx context.Context, image string)
 	}
 
 	return nil
+}
+
+// getUserFromImageUser gets uid or user name of the image user.
+// If user is numeric, it will be treated as uid; or else, it is treated as user name.
+func getUserFromImageUser(imageUser string) (*int64, string) {
+	user := parseUserFromImageUser(imageUser)
+	// return both nil if user is not specified in the image.
+	if user == "" {
+		return nil, ""
+	}
+	// user could be either uid or user name. Try to interpret as numeric uid.
+	uid, err := strconv.ParseInt(user, 10, 64)
+	if err != nil {
+		// If user is non numeric, assume it's user name.
+		return nil, user
+	}
+	// If user is a numeric uid.
+	return &uid, ""
+}
+
+// parseUserFromImageUser splits the user out of an user:group string.
+func parseUserFromImageUser(id string) string {
+	if id == "" {
+		return id
+	}
+	// split instances where the id may contain user:group
+	if strings.Contains(id, ":") {
+		return strings.Split(id, ":")[0]
+	}
+	// no group, just return the id
+	return id
 }
