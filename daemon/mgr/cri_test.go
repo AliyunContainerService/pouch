@@ -132,3 +132,74 @@ func TestToCriContainerState(t *testing.T) {
 		assert.Equal(t, test.expected, actual)
 	}
 }
+
+func TestFilterCRISandboxes(t *testing.T) {
+	testSandboxes := []*runtime.PodSandbox{
+		{
+			Id:       "1",
+			Metadata: &runtime.PodSandboxMetadata{Name: "name-1", Attempt: 1},
+			State:    runtime.PodSandboxState_SANDBOX_READY,
+			Labels:   map[string]string{"a": "b"},
+		},
+		{
+			Id:       "2",
+			Metadata: &runtime.PodSandboxMetadata{Name: "name-2", Attempt: 2},
+			State:    runtime.PodSandboxState_SANDBOX_NOTREADY,
+			Labels:   map[string]string{"c": "d"},
+		},
+		{
+			Id:       "2",
+			Metadata: &runtime.PodSandboxMetadata{Name: "name-3", Attempt: 3},
+			State:    runtime.PodSandboxState_SANDBOX_NOTREADY,
+			Labels:   map[string]string{"e": "f"},
+		},
+	}
+	for desc, test := range map[string]struct {
+		filter *runtime.PodSandboxFilter
+		expect []*runtime.PodSandbox
+	}{
+		"no filter": {
+			expect: testSandboxes,
+		},
+		"id filter": {
+			filter: &runtime.PodSandboxFilter{Id: "2"},
+			expect: []*runtime.PodSandbox{testSandboxes[1], testSandboxes[2]},
+		},
+		"state filter": {
+			filter: &runtime.PodSandboxFilter{
+				State: &runtime.PodSandboxStateValue{
+					State: runtime.PodSandboxState_SANDBOX_READY,
+				},
+			},
+			expect: []*runtime.PodSandbox{testSandboxes[0]},
+		},
+		"label filter": {
+			filter: &runtime.PodSandboxFilter{
+				LabelSelector: map[string]string{"e": "f"},
+			},
+			expect: []*runtime.PodSandbox{testSandboxes[2]},
+		},
+		"mixed filter not matched": {
+			filter: &runtime.PodSandboxFilter{
+				State: &runtime.PodSandboxStateValue{
+					State: runtime.PodSandboxState_SANDBOX_NOTREADY,
+				},
+				LabelSelector: map[string]string{"a": "b"},
+			},
+			expect: []*runtime.PodSandbox{},
+		},
+		"mixed filter matched": {
+			filter: &runtime.PodSandboxFilter{
+				State: &runtime.PodSandboxStateValue{
+					State: runtime.PodSandboxState_SANDBOX_NOTREADY,
+				},
+				LabelSelector: map[string]string{"c": "d"},
+				Id:            "2",
+			},
+			expect: []*runtime.PodSandbox{testSandboxes[1]},
+		},
+	} {
+		filtered := filterCRISandboxes(testSandboxes, test.filter)
+		assert.Equal(t, test.expect, filtered, desc)
+	}
+}
