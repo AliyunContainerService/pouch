@@ -33,7 +33,7 @@ type Resources struct {
 	// Turn on/off file-level throttle
 	BlkFileLevelSwitch int64 `json:"BlkFileLevelSwitch,omitempty"`
 
-	// Add an absolute path in container instance, which will be under controll
+	// Add an absolute path in container instance, which will be under control
 	BlkFileThrottlePath []string `json:"BlkFileThrottlePath"`
 
 	// Limit metadata write rate (transactions per second) to a device or file
