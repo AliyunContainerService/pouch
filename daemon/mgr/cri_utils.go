@@ -367,7 +367,7 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 	size := uint64(image.Size)
 	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
 	return &runtime.Image{
-		Id:          image.Digest,
+		Id:          image.ID,
 		RepoTags:    []string{fmt.Sprintf("%s:%s", ref.Name, ref.Tag)},
 		RepoDigests: []string{fmt.Sprintf("%s@%s", ref.Name, image.Digest)},
 		Size_:       size,
