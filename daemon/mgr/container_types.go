@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"bytes"
 	"net/http"
 	"sync"
 	"time"
@@ -30,11 +31,16 @@ type containerExecConfig struct {
 
 // AttachConfig wraps some infos of attaching.
 type AttachConfig struct {
+	Stdin  bool
+	Stdout bool
+	Stderr bool
+
+	// Attach using http.
 	Hijack  http.Hijacker
-	Stdin   bool
-	Stdout  bool
-	Stderr  bool
 	Upgrade bool
+
+	// Attach using memory buffer.
+	MemBuffer *bytes.Buffer
 }
 
 // ContainerRemoveOption wraps the container remove interface params.

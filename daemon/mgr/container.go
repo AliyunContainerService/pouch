@@ -618,9 +618,15 @@ func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) 
 	}
 
 	if attach != nil {
-		options = append(options, containerio.WithHijack(attach.Hijack, attach.Upgrade))
-		if attach.Stdin {
-			options = append(options, containerio.WithStdinHijack())
+		if attach.Hijack != nil {
+			// Attaching using http.
+			options = append(options, containerio.WithHijack(attach.Hijack, attach.Upgrade))
+			if attach.Stdin {
+				options = append(options, containerio.WithStdinHijack())
+			}
+		} else if attach.MemBuffer != nil {
+			// Attaching using memory buffer.
+			options = append(options, containerio.WithMemBuffer(attach.MemBuffer))
 		}
 	} else if !exec {
 		options = append(options, containerio.WithRawFile())
