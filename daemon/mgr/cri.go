@@ -482,7 +482,35 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 // ExecSync executes a command in the container, and returns the stdout output.
 // If command exits with a non-zero exit code, an error is returned.
 func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (*runtime.ExecSyncResponse, error) {
-	return nil, fmt.Errorf("ExecSync Not Implemented Yet")
+	// TODO: handle timeout.
+	id := r.GetContainerId()
+
+	createConfig := &apitypes.ExecCreateConfig{
+		Cmd: r.GetCmd(),
+	}
+
+	execid, err := c.ContainerMgr.CreateExec(ctx, id, createConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exec for container %q: %v", id, err)
+	}
+
+	var output bytes.Buffer
+	startConfig := &apitypes.ExecStartConfig{}
+	attachConfig := &AttachConfig{
+		Stdout:    true,
+		Stderr:    true,
+		MemBuffer: &output,
+	}
+
+	err = c.ContainerMgr.StartExec(ctx, execid, startConfig, attachConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
+	}
+
+	return &runtime.ExecSyncResponse{
+		// TODO: seperate stdout and stderr, what about exit code?
+		Stdout: output.Bytes(),
+	}, nil
 }
 
 // Exec prepares a streaming endpoint to execute a command in the container, and returns the address.
