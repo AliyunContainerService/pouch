@@ -31,6 +31,9 @@ type container struct {
 	devices          []string
 	enableLxcfs      bool
 	restartPolicy    string
+	ipcMode          string
+	pidMode          string
+	utsMode          string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -87,6 +90,9 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			RestartPolicy: restartPolicy,
+			IpcMode:       c.ipcMode,
+			PidMode:       c.pidMode,
+			UTSMode:       c.utsMode,
 		},
 	}
 

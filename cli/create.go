@@ -58,6 +58,9 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringSliceVarP(&cc.devices, "device", "", nil, "Add a host device to the container")
 	flagSet.BoolVar(&cc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
 	flagSet.StringVar(&cc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
+	flagSet.StringVar(&cc.ipcMode, "ipc", "", "IPC namespace to use")
+	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
+	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
 }
 
 // runCreate is the entry of create command.

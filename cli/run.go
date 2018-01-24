@@ -67,6 +67,9 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringSliceVarP(&rc.devices, "device", "", nil, "Add a host device to the container")
 	flagSet.BoolVar(&rc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
 	flagSet.StringVar(&rc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
+	flagSet.StringVar(&rc.ipcMode, "ipc", "", "IPC namespace to use")
+	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
+	flagSet.StringVar(&rc.utsMode, "uts", "", "UTS namespace to use")
 }
 
 // runRun is the entry of run command.
