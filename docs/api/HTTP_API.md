@@ -1494,6 +1494,7 @@ An object containing all details of an image at API side
 
 |Name|Description|Schema|
 |---|---|---|
+|**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
 |**CreatedAt**  <br>*optional*|Time of image creation|string|
 |**Digest**  <br>*optional*|digest of image.|string|
 |**ID**  <br>*optional*|ID of an image.|string|
