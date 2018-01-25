@@ -29,14 +29,17 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
   -e, --env strings            Set environment variables for container
   -h, --help                   help for create
       --hostname string        Set container's hostname
+      --ipc string             IPC namespace to use
   -l, --label strings          Set label for a container
   -m, --memory string          Container memory limit
       --memory-swap string     Container swap limit
       --memory-wappiness int   Container memory swappiness [0, 100] (default -1)
       --name string            Specify name of container
+      --pid string             PID namespace to use
       --restart string         Restart policy to apply when container exits
       --runtime string         Specify oci runtime
   -t, --tty                    Allocate a tty device
+      --uts string             UTS namespace to use
   -v, --volume strings         Bind mount volumes to container
   -w, --workdir string         Set the working directory in a container
 ```
