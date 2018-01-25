@@ -20,6 +20,25 @@ import (
 
 type Resources struct {
 
+	// Limit buffered write rate (bytes per second) to a device or file
+	BlkBufferWriteBps int64 `json:"BlkBufferWriteBps,omitempty"`
+
+	// Turn on/off buffered write switch
+	BlkBufferWriteSwitch int64 `json:"BlkBufferWriteSwitch,omitempty"`
+
+	// Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+	//
+	BlkDeviceBufferWriteBps []*ThrottleDevice `json:"BlkDeviceBufferWriteBps"`
+
+	// Turn on/off file-level throttle
+	BlkFileLevelSwitch int64 `json:"BlkFileLevelSwitch,omitempty"`
+
+	// Add an absolute path in container instance, which will be under controll
+	BlkFileThrottlePath []string `json:"BlkFileThrottlePath"`
+
+	// Limit metadata write rate (transactions per second) to a device or file
+	BlkMetaWriteTps int64 `json:"BlkMetaWriteTps,omitempty"`
+
 	// Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
 	//
 	BlkioDeviceReadBps []*ThrottleDevice `json:"BlkioDeviceReadBps"`
@@ -28,6 +47,14 @@ type Resources struct {
 	//
 	BlkioDeviceReadIOps []*ThrottleDevice `json:"BlkioDeviceReadIOps"`
 
+	// Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+	//
+	BlkioDeviceReadLowBps []*ThrottleDevice `json:"BlkioDeviceReadLowBps"`
+
+	// Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+	//
+	BlkioDeviceReadLowIOps []*ThrottleDevice `json:"BlkioDeviceReadLowIOps"`
+
 	// Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
 	//
 	BlkioDeviceWriteBps []*ThrottleDevice `json:"BlkioDeviceWriteBps"`
@@ -35,6 +62,14 @@ type Resources struct {
 	// Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
 	//
 	BlkioDeviceWriteIOps []*ThrottleDevice `json:"BlkioDeviceWriteIOps"`
+
+	// Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+	//
+	BlkioDeviceWriteLowBps []*ThrottleDevice `json:"BlkioDeviceWriteLowBps"`
+
+	// Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+	//
+	BlkioDeviceWriteLowIOps []*ThrottleDevice `json:"BlkioDeviceWriteLowIOps"`
 
 	// Block IO weight (relative weight).
 	// Maximum: 1000
@@ -131,13 +166,33 @@ type Resources struct {
 	Ulimits []*ResourcesUlimitsItems0 `json:"Ulimits"`
 }
 
+/* polymorph Resources BlkBufferWriteBps false */
+
+/* polymorph Resources BlkBufferWriteSwitch false */
+
+/* polymorph Resources BlkDeviceBufferWriteBps false */
+
+/* polymorph Resources BlkFileLevelSwitch false */
+
+/* polymorph Resources BlkFileThrottlePath false */
+
+/* polymorph Resources BlkMetaWriteTps false */
+
 /* polymorph Resources BlkioDeviceReadBps false */
 
 /* polymorph Resources BlkioDeviceReadIOps false */
 
+/* polymorph Resources BlkioDeviceReadLowBps false */
+
+/* polymorph Resources BlkioDeviceReadLowIOps false */
+
 /* polymorph Resources BlkioDeviceWriteBps false */
 
 /* polymorph Resources BlkioDeviceWriteIOps false */
+
+/* polymorph Resources BlkioDeviceWriteLowBps false */
+
+/* polymorph Resources BlkioDeviceWriteLowIOps false */
 
 /* polymorph Resources BlkioWeight false */
 
@@ -195,6 +250,16 @@ type Resources struct {
 func (m *Resources) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateBlkDeviceBufferWriteBps(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateBlkFileThrottlePath(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateBlkioDeviceReadBps(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -205,12 +270,32 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateBlkioDeviceReadLowBps(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateBlkioDeviceReadLowIOps(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateBlkioDeviceWriteBps(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateBlkioDeviceWriteIOps(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateBlkioDeviceWriteLowBps(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateBlkioDeviceWriteLowIOps(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -248,6 +333,42 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Resources) validateBlkDeviceBufferWriteBps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkDeviceBufferWriteBps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.BlkDeviceBufferWriteBps); i++ {
+
+		if swag.IsZero(m.BlkDeviceBufferWriteBps[i]) { // not required
+			continue
+		}
+
+		if m.BlkDeviceBufferWriteBps[i] != nil {
+
+			if err := m.BlkDeviceBufferWriteBps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("BlkDeviceBufferWriteBps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Resources) validateBlkFileThrottlePath(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkFileThrottlePath) { // not required
+		return nil
+	}
+
 	return nil
 }
 
@@ -305,6 +426,60 @@ func (m *Resources) validateBlkioDeviceReadIOps(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Resources) validateBlkioDeviceReadLowBps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkioDeviceReadLowBps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.BlkioDeviceReadLowBps); i++ {
+
+		if swag.IsZero(m.BlkioDeviceReadLowBps[i]) { // not required
+			continue
+		}
+
+		if m.BlkioDeviceReadLowBps[i] != nil {
+
+			if err := m.BlkioDeviceReadLowBps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("BlkioDeviceReadLowBps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Resources) validateBlkioDeviceReadLowIOps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkioDeviceReadLowIOps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.BlkioDeviceReadLowIOps); i++ {
+
+		if swag.IsZero(m.BlkioDeviceReadLowIOps[i]) { // not required
+			continue
+		}
+
+		if m.BlkioDeviceReadLowIOps[i] != nil {
+
+			if err := m.BlkioDeviceReadLowIOps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("BlkioDeviceReadLowIOps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *Resources) validateBlkioDeviceWriteBps(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.BlkioDeviceWriteBps) { // not required
@@ -349,6 +524,60 @@ func (m *Resources) validateBlkioDeviceWriteIOps(formats strfmt.Registry) error 
 			if err := m.BlkioDeviceWriteIOps[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("BlkioDeviceWriteIOps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Resources) validateBlkioDeviceWriteLowBps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkioDeviceWriteLowBps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.BlkioDeviceWriteLowBps); i++ {
+
+		if swag.IsZero(m.BlkioDeviceWriteLowBps[i]) { // not required
+			continue
+		}
+
+		if m.BlkioDeviceWriteLowBps[i] != nil {
+
+			if err := m.BlkioDeviceWriteLowBps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("BlkioDeviceWriteLowBps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Resources) validateBlkioDeviceWriteLowIOps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.BlkioDeviceWriteLowIOps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.BlkioDeviceWriteLowIOps); i++ {
+
+		if swag.IsZero(m.BlkioDeviceWriteLowIOps[i]) { // not required
+			continue
+		}
+
+		if m.BlkioDeviceWriteLowIOps[i] != nil {
+
+			if err := m.BlkioDeviceWriteLowIOps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("BlkioDeviceWriteLowIOps" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
