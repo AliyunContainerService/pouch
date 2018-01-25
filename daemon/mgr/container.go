@@ -163,7 +163,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.IsStopped() && !c.IsCreated() && !option.Force {
+	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !option.Force {
 		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID())
 	}
 
