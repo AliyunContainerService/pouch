@@ -119,8 +119,18 @@ func (nm *NetworkManager) Remove(ctx context.Context, name string) error {
 
 // List returns all networks on this host.
 func (nm *NetworkManager) List(ctx context.Context, labels map[string]string) ([]*types.Network, error) {
-	// TODO
-	return nil, nil
+	nw := nm.controller.Networks()
+	var net []*types.Network
+	for _, n := range nw {
+		nm := &types.Network{
+			Name:    n.Name(),
+			ID:      n.ID(),
+			Type:    n.Type(),
+			Network: n,
+		}
+		net = append(net, nm)
+	}
+	return net, nil
 }
 
 // Get returns the information of network that specified name/id.

@@ -37,6 +37,23 @@ func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req 
 	return EncodeResponse(rw, http.StatusCreated, networkCreateResp)
 }
 
+func (s *Server) listNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	networks, err := s.NetworkMgr.List(ctx, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	respNetworks := types.NetworkListResp{Networks: []*types.NetworkInfo{}, Warnings: nil}
+	for _, net := range networks {
+		respNetworks.Networks = append(respNetworks.Networks, &types.NetworkInfo{
+			Name:   net.Name,
+			ID:     net.ID,
+			Driver: net.Type,
+		})
+	}
+	return EncodeResponse(rw, http.StatusOK, respNetworks)
+}
+
 func (s *Server) getNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 

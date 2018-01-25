@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -32,6 +33,7 @@ func (n *NetworkCommand) Init(c *Cli) {
 	c.AddCommand(n, &NetworkCreateCommand{})
 	c.AddCommand(n, &NetworkRemoveCommand{})
 	c.AddCommand(n, &NetworkInspectCommand{})
+	c.AddCommand(n, &NetworkListCommand{})
 }
 
 // networkCreateDescription is used to describe network create command in detail and auto generate command doc.
@@ -233,4 +235,72 @@ Driver:       bridge
 EnableIPV6:   false
 ID:           c33c2646dc8ce9162faa65d17e80582475bbe53dc70ba0dc4def4b71e44551d6
 Internal:     false`
+}
+
+// networkListDescription is used to describe network list command in detail and auto generate command doc.
+var networkListDescription = "List networks in pouchd. " +
+	"It lists the network's Id, name, driver and scope."
+
+// NetworkListCommand is used to implement 'network list' command.
+type NetworkListCommand struct {
+	baseCommand
+}
+
+// Init initializes NetworkListCommand command.
+func (n *NetworkListCommand) Init(c *Cli) {
+	n.cli = c
+
+	n.cmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List pouch networks",
+		Long:    networkListDescription,
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return n.runNetworkList(args)
+		},
+		Example: networkListExample(),
+	}
+
+	n.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (n *NetworkListCommand) addFlags() {
+	//TODO add flags
+}
+
+// runNetworkList is the entry of NetworkListCommand command.
+func (n *NetworkListCommand) runNetworkList(args []string) error {
+	logrus.Debugf("list the networks")
+
+	apiClient := n.cli.Client()
+	resp, err := apiClient.NetworkList()
+	if err != nil {
+		return err
+	}
+
+	display := n.cli.NewTableDisplay()
+	display.AddRow([]string{"NETWORK ID", "NAME", "DRIVER", "SCOPE"})
+	for _, network := range resp.Networks {
+		display.AddRow([]string{
+			network.ID[:10],
+			network.Name,
+			network.Driver,
+			network.Scope,
+		})
+	}
+
+	display.Flush()
+	return nil
+}
+
+// networkListExample shows examples in network list command, and is used in auto-generated cli docs.
+func networkListExample() string {
+	return `$ pouch network ls
+NETWORK ID   NAME   DRIVER    SCOPE
+6f7aba8a58   net2   bridge
+55f134176c   net3   bridge
+e495f50913   net1   bridge
+`
 }
