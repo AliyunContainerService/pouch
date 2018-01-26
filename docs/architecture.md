@@ -59,4 +59,4 @@ Pouchd is designed decoupled from the very beginning. It makes Pouchd quite easy
 
 **Manager** is main processor of Pouchd. It deals proper object from requests, and does the corresponding work. There are five managers currently in Pouchd: container manager, image manager, newtork manager, volume manager and system manager.
 
-**ctrd** is containerd client in Pouchd. When managers need to communicate with container, ctrd is the right thing to do this work. Managers call functions in ctrd and send request torwards containerd. In addition, when state of container changes, containerd is the first component to be awared of this, and ctrd has container watch goroutines to detect this and update inner data stored in cache.
+**ctrd** is containerd client in Pouchd. When managers need to communicate with containerd, ctrd is the right thing to do this work. Managers call functions in ctrd and send request torwards containerd. In addition, when state of container changes, containerd is the first component to be awared of this, and ctrd has container watch goroutines to detect this and update inner data stored in cache.
