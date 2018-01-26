@@ -25,7 +25,6 @@ func (suite *PouchPullSuite) SetUpSuite(c *check.C) {
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchPullSuite) TearDownTest(c *check.C) {
-	environment.PruneAllImages(apiClient)
 }
 
 // TestPullWorks tests "pouch pull" work.
