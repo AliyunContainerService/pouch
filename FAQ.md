@@ -49,6 +49,12 @@ If you are choosing overall container solution for a 100+ nodes cluster wide sce
 
 What is more, in data center's architecture, Kubernetes and Pouch locate in different layers. We can say that Kubernete is in the upper layer torwards Pouch. Actually we can combine Kubernetes and Pouch in a very efficient way. Pouch takes a role of runtime solution, and Kubernetes plays a role of orchestration. Pouch takes over fine-grained resource from infrastucture, like CPU, memory, network, disk and so on. Then it provides these resource metrics to upper Kubernetes for scheduling usage. When Kubernetes runs to meet application's maintenance demand, it can pass the request down to Pouch to provide secure and isolated container carriers for applications.
 
+## What is Pouch's rich container?
+
+Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generlized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
+
+Rich container mode is not the default mode Pouch provides. It is an additional mode pouch brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
+
 ## What is version rule of Pouch ?
 
 We set the version rule of Pouch on the basis of [SemVer](http://semver.org/). Briefly speaking, we follow version number of MAJOR.MINOR.PATCH, such as 0.2.1, 1.1.3. For more details, please refer to [SemVer](http://semver.org/).
