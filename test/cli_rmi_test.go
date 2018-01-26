@@ -19,7 +19,7 @@ func init() {
 // SetUpSuite does common setup in the beginning of each test suite.
 func (suite *PouchRmiSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
+	environment.PruneAllContainers(apiClient)
 }
 
 // TestRmiWorks tests "pouch rmi" work.
