@@ -12,6 +12,7 @@ Organization of document is as following:
     * [HTTP API changelog](#http-api-changelog)
     * [CRI gRPC API](#grpc-api)
     * [CRI gRPC changelog](#grpc-api-changelog)
+* [Kubernetes](#kubernetes)
 * [Contributions](#contributions)
 * [Test Guide](#test-guide)
 * [Underlying Tech](#underlying-tech)
@@ -48,6 +49,10 @@ Document [GRPC-API.md](api/GRPC_API.md) contains all raw gRPC API details. Pouch
 ### gRPC API Changelog
 
 Document [GRPC-API-CHANGELOG.md](api/GRPC_API_CHANGELOG.md) contains GRPC API changelog. In principle, gRPC API of Pouch should always keep still even if more versions are released. However, when pouch evolves, more functionality, direction adjustment and bugfix in API would make gRPC API change, and we pouch provides gRPC API changelog to track all the evloving.
+
+## Kubernetes
+
+[Kubernetes](kubernetes) contains all docs about pouch with kubernetes. At the very beginning design of Pouch, pouch team deicded to treat itself as a reliable runtime option for kubernetes. To support kubernetes, pouch has implemented Container Runtime Interface(CRI) directly. Introduction of kubernetes and pouch, how to get started with them combined, and how to test and architecture of them are all included in this document folder.
 
 ## Test Guide
 
