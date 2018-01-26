@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/alibaba/pouch/pkg/utils"
@@ -60,5 +61,26 @@ func TestParseHost(t *testing.T) {
 
 		assert.Equal(basePath, p.expectBasePath)
 		assert.Equal(addr, p.expectAddr)
+	}
+}
+
+func Test_generateBaseURL(t *testing.T) {
+	type args struct {
+		u   *url.URL
+		tls utils.TLSConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateBaseURL(tt.args.u, tt.args.tls); got != tt.want {
+				t.Errorf("generateBaseURL() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
