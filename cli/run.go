@@ -70,6 +70,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.ipcMode, "ipc", "", "IPC namespace to use")
 	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&rc.utsMode, "uts", "", "UTS namespace to use")
+	flagSet.StringSliceVar(&rc.sysctls, "sysctl", nil, "Sysctl options")
 }
 
 // runRun is the entry of run command.

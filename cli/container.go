@@ -34,6 +34,7 @@ type container struct {
 	ipcMode          string
 	pidMode          string
 	utsMode          string
+	sysctls          []string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -66,6 +67,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	sysctls, err := parseSysctls(c.sysctls)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
 			Tty:        c.tty,
@@ -93,10 +99,24 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			IpcMode:       c.ipcMode,
 			PidMode:       c.pidMode,
 			UTSMode:       c.utsMode,
+			Sysctls:       sysctls,
 		},
 	}
 
 	return config, nil
+}
+
+func parseSysctls(sysctls []string) (map[string]string, error) {
+	results := make(map[string]string)
+	for _, sysctl := range sysctls {
+		fields := strings.SplitN(sysctl, "=", 2)
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("invalid sysctl: %s: sysctl must be in format of key=value", sysctl)
+		}
+		k, v := fields[0], fields[1]
+		results[k] = v
+	}
+	return results, nil
 }
 
 func parseLabels(labels []string) (map[string]string, error) {

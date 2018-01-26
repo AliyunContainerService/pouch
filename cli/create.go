@@ -61,6 +61,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.ipcMode, "ipc", "", "IPC namespace to use")
 	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
+	flagSet.StringSliceVar(&cc.sysctls, "sysctl", nil, "Sysctl options")
 }
 
 // runCreate is the entry of create command.
