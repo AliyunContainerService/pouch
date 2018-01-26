@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -117,10 +119,6 @@ func TestParseLabels(t *testing.T) {
 		assert.Equal(t, testCase.expected.err, err)
 		assert.Equal(t, testCase.expected.labels, labels)
 	}
-}
-
-func TestParseDeviceMappings(t *testing.T) {
-
 }
 
 func TestParseMemory(t *testing.T) {
@@ -255,5 +253,31 @@ func TestValidateMemorySwappiness(t *testing.T) {
 	for _, testCase := range testCases {
 		err := validateMemorySwappiness(testCase.input)
 		assert.Equal(t, testCase.expected, err)
+	}
+}
+
+func Test_parseDeviceMappings(t *testing.T) {
+	type args struct {
+		devices []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []*types.DeviceMapping
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseDeviceMappings(tt.args.devices)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseDeviceMappings() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseDeviceMappings() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
