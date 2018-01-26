@@ -1281,7 +1281,7 @@ definitions:
          type: "integer"
          format: "int64"
       BlkFileThrottlePath:
-         description: "Add an absolute path in container instance, which will be under controll"
+         description: "Add an absolute path in container instance, which will be under control"
          type: "array"
          items:
            type: "string"
@@ -1526,11 +1526,10 @@ definitions:
       NetworkSettings:
         type: "object"
         properties:
-          networks:
+          Networks:
             additionalProperties:
               $ref: "#/definitions/EndpointSettings"
               x-nullable: true
-
 
   NetworkingConfig:
     description: "Configuration for a network used to create a container."
