@@ -71,6 +71,12 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&rc.utsMode, "uts", "", "UTS namespace to use")
 	flagSet.StringSliceVar(&rc.sysctls, "sysctl", nil, "Sysctl options")
+	flagSet.Uint16Var(&rc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
+	flagSet.Var(&rc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
+	flagSet.Var(&rc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
+	flagSet.Var(&rc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
+	flagSet.Var(&rc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
+	flagSet.Var(&rc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
 }
 
 // runRun is the entry of run command.
