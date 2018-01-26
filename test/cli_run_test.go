@@ -30,7 +30,6 @@ func (suite *PouchRunSuite) SetUpSuite(c *check.C) {
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchRunSuite) TearDownTest(c *check.C) {
-	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 }
 
 // TestRun is to verify the correctness of run container with specified name.

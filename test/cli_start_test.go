@@ -30,7 +30,6 @@ func (suite *PouchStartSuite) SetUpSuite(c *check.C) {
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchStartSuite) TearDownTest(c *check.C) {
-	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 }
 
 // TestStartCommand tests "pouch start" work.

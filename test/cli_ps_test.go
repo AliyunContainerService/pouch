@@ -27,7 +27,6 @@ func (suite *PouchPsSuite) SetUpSuite(c *check.C) {
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchPsSuite) TearDownTest(c *check.C) {
-	environment.PruneAllContainers(apiClient)
 }
 
 // TestPsWorks tests "pouch ps" work.

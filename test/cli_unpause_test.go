@@ -24,7 +24,6 @@ func (suite *PouchUnpauseSuite) SetUpSuite(c *check.C) {
 
 // TearDownTest does cleanup work in the end of each test.
 func (suite *PouchUnpauseSuite) TearDownTest(c *check.C) {
-	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
 }
 
 // TestStopWorks tests "pouch unpause" work.
