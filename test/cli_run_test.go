@@ -23,7 +23,7 @@ func init() {
 func (suite *PouchRunSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	c.Assert(environment.PruneAllContainers(apiClient), check.IsNil)
+	environment.PruneAllContainers(apiClient)
 
 	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
