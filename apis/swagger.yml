@@ -1276,6 +1276,57 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/ThrottleDevice"
+      BlkFileLevelSwitch:
+         description: "Turn on/off file-level throttle"
+         type: "integer"
+         format: "int64"
+      BlkFileThrottlePath:
+         description: "Add an absolute path in container instance, which will be under controll"
+         type: "array"
+         items:
+           type: "string"
+      BlkBufferWriteBps:
+         description: "Limit buffered write rate (bytes per second) to a device or file"
+         type: "integer"
+         format: "int64"
+      BlkBufferWriteSwitch:
+         description: "Turn on/off buffered write switch"
+         type: "integer"
+         format: "int64"
+      BlkDeviceBufferWriteBps:
+         description: |
+           Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+         type: "array"
+         items:
+           $ref: "#/definitions/ThrottleDevice"
+      BlkMetaWriteTps:
+         description: "Limit metadata write rate (transactions per second) to a device or file"
+         type: "integer"
+         format: "int64"
+      BlkioDeviceReadLowBps:
+         description: |
+           Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+         type: "array"
+         items:
+           $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceReadLowIOps:
+         description: |
+           Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+         type: "array"
+         items:
+           $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceWriteLowBps:
+         description: |
+           Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+         type: "array"
+         items:
+           $ref: "#/definitions/ThrottleDevice"
+      BlkioDeviceWriteLowIOps:
+         description: |
+           Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
+         type: "array"
+         items:
+           $ref: "#/definitions/ThrottleDevice"
       CpuPeriod:
         description: |
           CPU CFS (Completely Fair Scheduler) period.
