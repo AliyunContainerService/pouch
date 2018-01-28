@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/registry"
 
 	"github.com/pkg/errors"
@@ -180,11 +181,19 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 	c.Lock()
 	defer c.Unlock()
 
-	image, ok := c.refs[idOrRef]
+	// use reference to parse idOrRef and add default tag if missing
+	ref, err := reference.ParseNamedReference(idOrRef)
+	if err != nil {
+		return nil, err
+	}
+	ref = reference.WithDefaultTagIfMissing(ref)
+
+	image, ok := c.refs[ref.String()]
 	if ok {
 		return image, nil
 	}
 
+	// use trie to fetch image if the idOrRef is the image ID
 	var images []*types.ImageInfo
 
 	fn := func(prefix patricia.Prefix, item patricia.Item) error {

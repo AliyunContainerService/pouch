@@ -42,6 +42,22 @@ func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 	}
 }
 
+// TestCreateNameByImageID is to verify the correctness of creating contaier with specified name by image id.
+func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
+	name := "create-normal-by-image-id"
+
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[busyboxImage][0]
+
+	res = command.PouchRun("create", "--name", name, imageID)
+
+	res.Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("unexpected output %s expected %s\n", out, name)
+	}
+}
+
 // TestCreateDuplicateContainerName is to verify duplicate container names.
 func (suite *PouchCreateSuite) TestCreateDuplicateContainerName(c *check.C) {
 	name := "duplicate"

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/spf13/cobra"
 )
 
@@ -81,12 +80,7 @@ func (cc *CreateCommand) runCreate(args []string) error {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
 
-	ref, err := reference.Parse(args[0])
-	if err != nil {
-		return fmt.Errorf("failed to create container: %v", err)
-	}
-	config.Image = ref.String()
-
+	config.Image = args[0]
 	if len(args) > 1 {
 		config.Cmd = args[1:]
 	}

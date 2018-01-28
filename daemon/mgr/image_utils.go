@@ -2,13 +2,17 @@ package mgr
 
 import (
 	"regexp"
-	"strings"
+
+	"github.com/alibaba/pouch/pkg/reference"
 )
 
-// FIXME: need refactor this function.
 // addRegistry add default registry if needed.
 func (mgr *ImageManager) addRegistry(input string) string {
-	if strings.Contains(input, "/") || isNumericID(input) {
+	if isNumericID(input) {
+		return input
+	}
+
+	if _, ok := reference.Domain(input); ok {
 		return input
 	}
 	return mgr.DefaultRegistry + input

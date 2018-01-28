@@ -47,6 +47,22 @@ func (suite *PouchRmiSuite) TestRmiForce(c *check.C) {
 	}
 }
 
+// TestRmiByImageID tests "pouch rmi {ID}" work.
+func (suite *PouchRmiSuite) TestRmiByImageID(c *check.C) {
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[busyboxImage][0]
+
+	command.PouchRun("rmi", imageID).Assert(c, icmd.Success)
+
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, busyboxImage)
+	}
+}
+
 // TestRmiInWrongWay run rmi in wrong ways.
 func (suite *PouchRmiSuite) TestRmiInWrongWay(c *check.C) {
 	for _, tc := range []struct {

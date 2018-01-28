@@ -601,17 +601,19 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest) (*runtime.PullImageResponse, error) {
 	// TODO: authentication.
 	imageRef := r.GetImage().GetImage()
-	ref, err := reference.Parse(imageRef)
+
+	namedRef, err := reference.ParseNamedReference(imageRef)
+	if err != nil {
+		return nil, err
+	}
+	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
+
+	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.ImageMgr.PullImage(ctx, ref.Name, ref.Tag, bytes.NewBuffer([]byte{}))
-	if err != nil {
-		return nil, err
-	}
-
-	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
+	imageInfo, err := c.ImageMgr.GetImage(ctx, taggedRef.String())
 	if err != nil {
 		return nil, err
 	}
