@@ -64,7 +64,7 @@ func (i *ImagesCommand) runImages(args []string) error {
 
 	if i.flagQuiet {
 		for _, image := range imageList {
-			fmt.Println(image.ID)
+			fmt.Println(utils.TruncateID(image.ID))
 		}
 		return nil
 	}
@@ -80,14 +80,14 @@ func (i *ImagesCommand) runImages(args []string) error {
 	for _, image := range imageList {
 		if i.flagDigest {
 			display.AddRow([]string{
-				image.ID,
+				utils.TruncateID(image.ID),
 				image.Name,
 				image.Digest,
 				fmt.Sprintf("%s", imageSize(image.Size)),
 			})
 		} else {
 			display.AddRow([]string{
-				image.ID,
+				utils.TruncateID(image.ID),
 				image.Name,
 				fmt.Sprintf("%s", imageSize(image.Size)),
 			})

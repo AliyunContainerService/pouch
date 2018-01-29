@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/go-check/check"
@@ -36,7 +37,7 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 		res := command.PouchRun("images").Assert(c, icmd.Success)
 		items := imagesListToKV(res.Combined())[busyboxImage]
 
-		c.Assert(items[0], check.Equals, image.ID)
+		c.Assert(items[0], check.Equals, utils.TruncateID(image.ID))
 	}
 
 	// with -q and --quiet
@@ -45,7 +46,7 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 		resQuiet := command.PouchRun("images", "--quiet").Assert(c, icmd.Success)
 
 		c.Assert(resQ.Combined(), check.Equals, resQuiet.Combined())
-		c.Assert(strings.TrimSpace(resQ.Combined()), check.Equals, image.ID)
+		c.Assert(strings.TrimSpace(resQ.Combined()), check.Equals, utils.TruncateID(image.ID))
 	}
 
 	// with --digest

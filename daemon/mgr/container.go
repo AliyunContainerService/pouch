@@ -323,7 +323,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	// merge image's config into container's meta
 	if err := meta.merge(func() (v1.ImageConfig, error) {
-		return mgr.Client.GetImageConfig(ctx, config.Image)
+		ociimage, err := mgr.Client.GetOciImage(ctx, config.Image)
+		if err != nil {
+			return ociimage.Config, err
+		}
+		return ociimage.Config, nil
 	}); err != nil {
 		return nil, err
 	}

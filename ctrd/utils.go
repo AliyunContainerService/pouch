@@ -3,16 +3,21 @@ package ctrd
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
-
+	"github.com/opencontainers/go-digest"
+	"github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -65,4 +70,56 @@ func resolver() (remotes.Resolver, error) {
 	}
 
 	return docker.NewResolver(options), nil
+}
+
+// generateID generates image's ID by the SHA256 hash of its configuration JSON.
+func generateID(config *types.ImageInfo) (digest.Digest, error) {
+	var ID digest.Digest
+
+	b, err := json.Marshal(config)
+	if err != nil {
+		return ID, err
+	}
+
+	ID = digest.FromBytes(b)
+	return ID, nil
+}
+
+// rootFSToAPIType transfer the rootfs from OCI format to Pouch format.
+func rootFSToAPIType(rootFs *v1.RootFS) types.ImageInfoRootFS {
+	var layers []string
+	for _, l := range rootFs.DiffIDs {
+		layers = append(layers, l.String())
+	}
+	return types.ImageInfoRootFS{
+		Type:   rootFs.Type,
+		Layers: layers,
+	}
+}
+
+// ociImageToPouchImage transfer the image from OCI format to Pouch format.
+func ociImageToPouchImage(ociImage v1.Image) (types.ImageInfo, error) {
+	imageConfig := ociImage.Config
+	cfg := &types.ContainerConfig{
+		// TODO: add more fields
+		User:       imageConfig.User,
+		Env:        imageConfig.Env,
+		Entrypoint: imageConfig.Entrypoint,
+		Cmd:        imageConfig.Cmd,
+		WorkingDir: imageConfig.WorkingDir,
+		Labels:     imageConfig.Labels,
+		StopSignal: imageConfig.StopSignal,
+	}
+
+	rootFs := rootFSToAPIType(&ociImage.RootFS)
+
+	// FIXME need to refactor it and the ociImage's list interface.
+	imageInfo := types.ImageInfo{
+		Architecture: ociImage.Architecture,
+		Config:       cfg,
+		CreatedAt:    ociImage.Created.Format(utils.TimeLayout),
+		Os:           ociImage.OS,
+		RootFS:       &rootFs,
+	}
+	return imageInfo, nil
 }

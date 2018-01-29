@@ -1624,6 +1624,7 @@ definitions:
       ID:
         description: "ID of an image."
         type: "string"
+        x-nullable: false
       Name:
         description: "name of an image."
         type: "string"
@@ -1634,13 +1635,40 @@ definitions:
         description: "digest of image."
         type: "string"
       CreatedAt:
-        description: "Time of image creation"
+        description: "time of image creation."
         type: "string"
+        x-nullable: false
       Size:
         description: "size of image's taking disk space."
         type: "integer"
+        x-nullable: false
       Config:
         $ref: "#/definitions/ContainerConfig"
+      Architecture:
+        description: "the CPU architecture."
+        type: "string"
+        x-nullable: false
+      Os:
+        description: "the name of the operating system."
+        type: "string"
+        x-nullable: false
+      RootFS:
+        description: "the rootfs key references the layer content addresses used by the image."
+        type: "object"
+        required: [Type]
+        properties:
+          Type:
+            description: "type of the rootfs"
+            type: "string"
+            x-nullable: false
+          Layers:
+            description: "an array of layer content hashes"
+            type: "array"
+            items:
+              type: "string"
+          BaseLayer:
+            description: "the base layer content hash."
+            type: "string"
 
   SearchResultItem:
     type: "object"

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -108,4 +109,15 @@ func FormatTimeInterval(input int64) (formattedTime string, err error) {
 	}
 
 	return formattedTime, nil
+}
+
+// TruncateID is used to transfer image ID from digest to short ID.
+func TruncateID(id string) string {
+	var shortLen = 12
+
+	id = strings.TrimPrefix(id, "sha256:")
+	if len(id) > shortLen {
+		return id[:shortLen]
+	}
+	return id
 }
