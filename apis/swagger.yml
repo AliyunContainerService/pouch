@@ -1504,13 +1504,18 @@ definitions:
     type: "object"
     properties:
       EndpointsConfig:
-        $ref: "#/definitions/EndpointSettings"
+        additionalProperties:
+          $ref: "#/definitions/EndpointSettings"
+          x-nullable: true
 
   EndpointSettings:
     description: "Configuration for a network endpoint."
     type: "object"
     properties:
       # Configurations
+      IPAMConfig:
+        $ref: "#/definitions/EndpointIPAMConfig"
+        x-nullable: true
       Links:
         type: "array"
         items:
@@ -1584,6 +1589,23 @@ definitions:
         example:
           com.example.some-label: "some-value"
           com.example.some-other-label: "some-other-value"
+
+  EndpointIPAMConfig:
+    description: "IPAM configurations for the endpoint"
+    type: "object"
+    properties:
+      IPv4Address:
+        description: "ipv4 address"
+        type: "string"
+      IPv6Address:
+        description: "ipv6 address"
+        type: "string"
+      LinkLocalIPs:
+        description: "link to the list of local ip"
+        type: "array"
+        x-nullable: false
+        items:
+          type: "string"
 
   ImageInfo:
     description: "An object containing all details of an image at API side"

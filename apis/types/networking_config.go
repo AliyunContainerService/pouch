@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // NetworkingConfig Configuration for a network used to create a container.
@@ -18,7 +19,7 @@ import (
 type NetworkingConfig struct {
 
 	// endpoints config
-	EndpointsConfig *EndpointSettings `json:"EndpointsConfig,omitempty"`
+	EndpointsConfig map[string]*EndpointSettings `json:"EndpointsConfig,omitempty"`
 }
 
 /* polymorph NetworkingConfig EndpointsConfig false */
@@ -44,14 +45,8 @@ func (m *NetworkingConfig) validateEndpointsConfig(formats strfmt.Registry) erro
 		return nil
 	}
 
-	if m.EndpointsConfig != nil {
-
-		if err := m.EndpointsConfig.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("EndpointsConfig")
-			}
-			return err
-		}
+	if err := validate.Required("EndpointsConfig", "body", m.EndpointsConfig); err != nil {
+		return err
 	}
 
 	return nil

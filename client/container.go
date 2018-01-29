@@ -10,7 +10,7 @@ import (
 
 // ContainerAPIClient defines methods of Container client.
 type ContainerAPIClient interface {
-	ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error)
+	ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error)
 	ContainerStart(name, detachKeys string) error
 	ContainerStop(name, timeout string) error
 	ContainerRemove(name string, force bool) error
@@ -24,10 +24,11 @@ type ContainerAPIClient interface {
 }
 
 // ContainerCreate creates a new container based in the given configuration.
-func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, containerName string) (*types.ContainerCreateResp, error) {
+func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error) {
 	createConfig := types.ContainerCreateConfig{
-		ContainerConfig: config,
-		HostConfig:      hostConfig,
+		ContainerConfig:  config,
+		HostConfig:       hostConfig,
+		NetworkingConfig: networkConfig,
 	}
 
 	q := url.Values{}

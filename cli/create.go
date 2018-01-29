@@ -62,6 +62,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
 	flagSet.StringSliceVar(&cc.sysctls, "sysctl", nil, "Sysctl options")
+	flagSet.StringSliceVar(&cc.network, "net", nil, "Set networks to container")
 	flagSet.Uint16Var(&cc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Var(&cc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
 	flagSet.Var(&cc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
@@ -89,7 +90,7 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	containerName := cc.name
 
 	apiClient := cc.cli.Client()
-	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, containerName)
+	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
