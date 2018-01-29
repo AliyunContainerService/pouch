@@ -811,6 +811,20 @@ paths:
         - $ref: "#/parameters/id"
       tags: ["Network"]
 
+  /networks:
+      get:
+        summary: "List networks"
+        operationId: "NetworkList"
+        produces: ["application/json"]
+        responses:
+          200:
+            description: "Summary networks that matches the query"
+            schema:
+                $ref: "#/definitions/NetworkListResp"
+          500:
+            $ref: "#/responses/500ErrorResponse"
+        tags: ["Network"]
+
 definitions:
   Error:
     type: "object"
@@ -2185,6 +2199,41 @@ definitions:
         description: "Labels holds metadata specific to the network being created."
         additionalProperties:
           type: "string"
+
+  NetworkInfo:
+      type: "object"
+      description: "NetworkInfo represents the configuration of a network"
+      properties:
+        Name:
+          description: "Name is the name of the network."
+          type: "string"
+        ID:
+          type: "string"
+          description: "ID uniquely identifies a network on a single machine"
+        Driver:
+          type: "string"
+          description: "Driver is the Driver name used to create the network"
+        Scope:
+          type: "string"
+          description: "Scope describes the level at which the network exists"
+
+
+  NetworkListResp:
+      type: "object"
+      required: [Networks, Warnings]
+      properties:
+        Networks:
+          type: "array"
+          x-nullable: false
+          description: "List of networks"
+          items:
+            $ref: "#/definitions/NetworkInfo"
+        Warnings:
+          type: "array"
+          x-nullable: false
+          description: "Warnings that occurred when fetching the list of networks"
+          items:
+            type: "string"
 
   IPAM:
     type: "object"

@@ -28,7 +28,7 @@ func (client *APIClient) NetworkRemove(networkID string) error {
 	return err
 }
 
-//NetworkInspect inspects a network.
+// NetworkInspect inspects a network.
 func (client *APIClient) NetworkInspect(networkID string) (*types.NetworkInspectResp, error) {
 	resp, err := client.get("/networks/"+networkID, nil)
 	if err != nil {
@@ -36,6 +36,21 @@ func (client *APIClient) NetworkInspect(networkID string) (*types.NetworkInspect
 	}
 
 	network := &types.NetworkInspectResp{}
+
+	err = decodeBody(network, resp.Body)
+	ensureCloseReader(resp)
+
+	return network, err
+}
+
+// NetworkList lists all the networks.
+func (client *APIClient) NetworkList() (*types.NetworkListResp, error) {
+	resp, err := client.get("/networks", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	network := &types.NetworkListResp{}
 
 	err = decodeBody(network, resp.Body)
 	ensureCloseReader(resp)

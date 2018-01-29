@@ -55,6 +55,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 
 	// network
+	r.Path("/networks").Methods(http.MethodGet).Handler(s.filter(s.listNetwork))
 	r.Path("/networks/create").Methods(http.MethodPost).Handler(s.filter(s.createNetwork))
 	r.Path("/networks/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getNetwork))
 	r.Path("/networks/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
