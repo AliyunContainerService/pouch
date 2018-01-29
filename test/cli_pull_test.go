@@ -51,6 +51,10 @@ func (suite *PouchPullSuite) TestPullWorks(c *check.C) {
 	// with :1.27.2
 	version := busybox + ":1.27.2"
 	checkPull(version, version)
+
+	// without registry
+	withoutRegistry := "busybox:latest"
+	checkPull(withoutRegistry, latest)
 }
 
 // TestPullInWrongWay pulls in wrong way.
