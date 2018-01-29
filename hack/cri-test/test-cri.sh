@@ -23,7 +23,7 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 
 # CRI_FOCUS focuses the test to run.
 # With the CRI manager completes its function, we may need to expand this field.
-CRI_FOCUS=${CRI_FOCUS:-"basic operations on PodSandbox|runtime info"}
+CRI_FOCUS=${CRI_FOCUS:-"basic operations on PodSandbox|basic operations on container|runtime info"}
 
 # CRI_SKIP skips the test to skip.
 CRI_SKIP=${CRI_SKIP:-""}
