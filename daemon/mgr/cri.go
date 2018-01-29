@@ -585,7 +585,9 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 
 	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
-		return nil, err
+		// TODO: seperate ErrImageNotFound with others.
+		// Now we just return empty if the error occured.
+		return &runtime.ImageStatusResponse{}, nil
 	}
 
 	image, err := imageToCriImage(imageInfo)
@@ -628,7 +630,9 @@ func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequ
 
 	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
-		return nil, err
+		// TODO: seperate ErrImageNotFound with others.
+		// Now we just return empty if the error occured.
+		return &runtime.RemoveImageResponse{}, nil
 	}
 
 	err = c.ImageMgr.RemoveImage(ctx, imageInfo, &ImageRemoveOption{})
