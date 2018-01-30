@@ -1257,15 +1257,7 @@ definitions:
           Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.
         type: "array"
         items:
-          type: "object"
-          properties:
-            Path:
-              type: "string"
-            Weight:
-              type: "integer"
-              format: "uint16"
-              x-nullable: false
-              minimum: 0
+          $ref: "#/definitions/WeightDevice"
       BlkioDeviceReadBps:
         description: |
           Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
@@ -1290,57 +1282,6 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/ThrottleDevice"
-      BlkFileLevelSwitch:
-         description: "Turn on/off file-level throttle"
-         type: "integer"
-         format: "int64"
-      BlkFileThrottlePath:
-         description: "Add an absolute path in container instance, which will be under control"
-         type: "array"
-         items:
-           type: "string"
-      BlkBufferWriteBps:
-         description: "Limit buffered write rate (bytes per second) to a device or file"
-         type: "integer"
-         format: "int64"
-      BlkBufferWriteSwitch:
-         description: "Turn on/off buffered write switch"
-         type: "integer"
-         format: "int64"
-      BlkDeviceBufferWriteBps:
-         description: |
-           Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
-         type: "array"
-         items:
-           $ref: "#/definitions/ThrottleDevice"
-      BlkMetaWriteTps:
-         description: "Limit metadata write rate (transactions per second) to a device or file"
-         type: "integer"
-         format: "int64"
-      BlkioDeviceReadLowBps:
-         description: |
-           Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
-         type: "array"
-         items:
-           $ref: "#/definitions/ThrottleDevice"
-      BlkioDeviceReadLowIOps:
-         description: |
-           Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
-         type: "array"
-         items:
-           $ref: "#/definitions/ThrottleDevice"
-      BlkioDeviceWriteLowBps:
-         description: |
-           Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
-         type: "array"
-         items:
-           $ref: "#/definitions/ThrottleDevice"
-      BlkioDeviceWriteLowIOps:
-         description: |
-           Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.
-         type: "array"
-         items:
-           $ref: "#/definitions/ThrottleDevice"
       CpuPeriod:
         description: |
           CPU CFS (Completely Fair Scheduler) period.
@@ -1463,6 +1404,19 @@ definitions:
         description: "Rate"
         type: "integer"
         format: "uint64"
+        x-nullable: false
+        minimum: 0
+
+  WeightDevice:
+    type: "object"
+    description: "Weight for BlockIO Device"
+    properties:
+      Path:
+        description: "Weight Device"
+        type: "string"
+      Weight:
+        type: "integer"
+        format: "uint16"
         x-nullable: false
         minimum: 0
 

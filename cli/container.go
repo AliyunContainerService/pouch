@@ -13,28 +13,34 @@ import (
 )
 
 type container struct {
-	labels           []string
-	name             string
-	tty              bool
-	volume           []string
-	runtime          string
-	env              []string
-	entrypoint       string
-	workdir          string
-	hostname         string
-	cpushare         int64
-	cpusetcpus       string
-	cpusetmems       string
-	memory           string
-	memorySwap       string
-	memorySwappiness int64
-	devices          []string
-	enableLxcfs      bool
-	restartPolicy    string
-	ipcMode          string
-	pidMode          string
-	utsMode          string
-	sysctls          []string
+	labels               []string
+	name                 string
+	tty                  bool
+	volume               []string
+	runtime              string
+	env                  []string
+	entrypoint           string
+	workdir              string
+	hostname             string
+	cpushare             int64
+	cpusetcpus           string
+	cpusetmems           string
+	memory               string
+	memorySwap           string
+	memorySwappiness     int64
+	devices              []string
+	enableLxcfs          bool
+	restartPolicy        string
+	ipcMode              string
+	pidMode              string
+	utsMode              string
+	sysctls              []string
+	blkioWeight          uint16
+	blkioWeightDevice    WeightDevice
+	blkioDeviceReadBps   ThrottleBpsDevice
+	blkioDeviceWriteBps  ThrottleBpsDevice
+	blkioDeviceReadIOps  ThrottleIOpsDevice
+	blkioDeviceWriteIOps ThrottleIOpsDevice
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -86,13 +92,19 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Binds:   c.volume,
 			Runtime: c.runtime,
 			Resources: types.Resources{
-				CPUShares:        c.cpushare,
-				CpusetCpus:       c.cpusetcpus,
-				CpusetMems:       c.cpusetmems,
-				Devices:          deviceMappings,
-				Memory:           memory,
-				MemorySwap:       memorySwap,
-				MemorySwappiness: &c.memorySwappiness,
+				CPUShares:            c.cpushare,
+				CpusetCpus:           c.cpusetcpus,
+				CpusetMems:           c.cpusetmems,
+				Devices:              deviceMappings,
+				Memory:               memory,
+				MemorySwap:           memorySwap,
+				MemorySwappiness:     &c.memorySwappiness,
+				BlkioWeight:          c.blkioWeight,
+				BlkioWeightDevice:    c.blkioWeightDevice.value(),
+				BlkioDeviceReadBps:   c.blkioDeviceReadBps.value(),
+				BlkioDeviceReadIOps:  c.blkioDeviceReadIOps.value(),
+				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.value(),
+				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			RestartPolicy: restartPolicy,

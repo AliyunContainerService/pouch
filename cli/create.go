@@ -62,6 +62,12 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
 	flagSet.StringSliceVar(&cc.sysctls, "sysctl", nil, "Sysctl options")
+	flagSet.Uint16Var(&cc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
+	flagSet.Var(&cc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
+	flagSet.Var(&cc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
+	flagSet.Var(&cc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
+	flagSet.Var(&cc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
+	flagSet.Var(&cc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
 }
 
 // runCreate is the entry of create command.
