@@ -118,6 +118,27 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 	}
 }
 
+// TestCreateWithSysctls tries to test create a container with sysctls.
+func (suite *PouchCreateSuite) TestCreateWithSysctls(c *check.C) {
+	sysctl := "net.ipv4.ip_forward=1"
+	name := "create-sysctl"
+
+	res := command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.Sysctls, check.NotNil)
+
+	if result.HostConfig.Sysctls["net.ipv4.ip_forward"] != "1" {
+		c.Errorf("failed to set sysctl: %s", sysctl)
+	}
+}
+
 // TestCreateEnableLxcfs tries to test create a container with lxcfs.
 func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	name := "create-lxcfs"

@@ -49,6 +49,9 @@ var setupFunc = []SetupFunc{
 
 	// host device spec
 	setupDevices,
+
+	// linux-platform-specifc spec
+	setupSysctl,
 }
 
 // Register is used to registe spec setup function.

@@ -134,3 +134,19 @@ func (suite *PouchStartSuite) TestStartWithHostname(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithSysctls starts a container with sysctls.
+func (suite *PouchStartSuite) TestStartWithSysctls(c *check.C) {
+	sysctl := "net.ipv4.ip_forward=1"
+	name := "start-sysctl"
+
+	command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	output := command.PouchRun("exec", name, "cat", "/proc/sys/net/ipv4/ip_forward").Stdout()
+	if !strings.Contains(output, "1") {
+		c.Errorf("failed to start a container with sysctls: %s", output)
+	}
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+}

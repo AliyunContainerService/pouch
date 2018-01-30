@@ -130,6 +130,17 @@ func parseSandboxName(name string) (*runtime.PodSandboxMetadata, error) {
 	}, nil
 }
 
+// applySandboxLinuxOptions applies LinuxPodSandboxConfig to pouch's HostConfig and ContainerCreateConfig.
+func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandboxConfig, createConfig *apitypes.ContainerCreateConfig, image string) error {
+	if lc == nil {
+		return nil
+	}
+
+	// Set sysctls.
+	hc.Sysctls = lc.Sysctls
+	return nil
+}
+
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
 func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
@@ -146,6 +157,12 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 		},
 		HostConfig:       hc,
 		NetworkingConfig: &apitypes.NetworkingConfig{},
+	}
+
+	// Apply linux-specific options.
+	err := applySandboxLinuxOptions(hc, config.GetLinux(), createConfig, image)
+	if err != nil {
+		return nil, err
 	}
 
 	return createConfig, nil

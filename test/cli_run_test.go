@@ -232,3 +232,19 @@ func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
 	res.Assert(c, icmd.Success)
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
+
+// TestRunWithSysctls is to verify run container with sysctls.
+func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
+	sysctl := "net.ipv4.ip_forward=1"
+	name := "run-sysctl"
+
+	res := command.PouchRun("run", "--name", name, "--sysctl", sysctl, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("exec", name, "cat", "/proc/sys/net/ipv4/ip_forward").Stdout()
+	if !strings.Contains(output, "1") {
+		c.Fatalf("failed to run a container with sysctls: %s", output)
+	}
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
