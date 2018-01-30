@@ -135,7 +135,7 @@ type ThrottleIOpsDevice struct {
 func getValidThrottleDeviceIOps(val string) (*types.ThrottleDevice, error) {
 	pairs := strings.Split(val, ":")
 	if len(pairs) != 2 {
-		return nil, fmt.Errorf("bad format for throttle device: %s. Corrent format should be <device-id>:<rate>, rate unit is optional and can be b/B, k/K, m/M... ", val)
+		return nil, fmt.Errorf("bad format for throttle device: %s. Correct format should be <device-id>:<rate>, rate unit is optional and can be b/B, k/K, m/M... ", val)
 	}
 
 	rate, err := strconv.ParseUint(pairs[1], 10, 64)

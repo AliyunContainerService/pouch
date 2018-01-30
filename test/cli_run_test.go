@@ -245,6 +245,13 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	if !strings.Contains(output, "1") {
 		c.Fatalf("failed to run a container with sysctls: %s", output)
 	}
+}
 
+// TestRunWithBlkioWeight is to verify --specific Blkio Weight when running a container.
+func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
+	name := "test-run-with-blkio-weight"
+
+	res := command.PouchRun("run", "--name", name, "--blkio-weight", "500", busyboxImage)
+	res.Assert(c, icmd.Success)
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
