@@ -86,6 +86,10 @@ func (nm *NetworkManager) Create(ctx context.Context, create apitypes.NetworkCre
 		return nil, errors.Wrap(err, "failed to build network's options")
 	}
 
+	if net, err := nm.controller.NetworkByName(name); err == nil && net != nil {
+		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, fmt.Sprintf("network %s already exists", name))
+	}
+
 	net, err := nm.controller.NewNetwork(driver, name, id, nwOptions...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create network")
