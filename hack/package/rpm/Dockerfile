@@ -1,7 +1,6 @@
 FROM centos:7.2.1511
 
-# install wget to download golang source code
-# install git
+# install required softs
 RUN yum update -y \
     && yum install -y \
     wget \
@@ -42,4 +41,5 @@ RUN git clone https://github.com/zzchun/pouch.git /go/src/github.com/alibaba/pou
 # go binary path is /usr/local/go/bin
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-WORKDIR /go/src/github.com/alibaba/pouch
+WORKDIR /go/src/github.com/alibaba/pouch/hack/package
+

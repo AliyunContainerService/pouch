@@ -1,0 +1,29 @@
+Source: pouch
+Section: admin
+Priority: optional
+Maintainer: Pouch <pouch-dev@list.alibaba-inc.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: https://github.com/alibaba/pouch
+Vcs-Browser: https://github.com/alibaba/pouch
+Vcs-Git: git://github.com/alibaba/pouch.git
+
+Package: pouch
+Architecture: amd64
+Depends: iptables, ${misc:Depends}, ${perl:Depends}, ${shlibs:Depends}
+Recommends: aufs-tools,
+            ca-certificates,
+            cgroupfs-mount | cgroup-lite,
+            git,
+            pigz,
+            xz-utils,
+            ${apparmor:Recommends}
+Description: Pouch is an open-source project created by Alibaba Group to promote the container technology movement.
+ Pouch's vision is to advance container ecosystem and promote container standards OCI, so that container technologies
+ become the foundation for application development in the Cloud era.
+ .
+ Pouch can pack, deliver and run any application. It provides applications with a lightweight runtime environment with
+ strong isolation and minimal overhead. Pouch isolates applications from varying runtime environment, and minimizes
+ operational workload. Pouch minimizes the effort for application developers to write Cloud-native applications, or to
+ migrate legacy ones to a Cloud platform.
+
