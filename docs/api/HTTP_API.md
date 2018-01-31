@@ -1386,22 +1386,12 @@ Container configuration that depends on the host we are running on
 |---|---|---|
 |**AutoRemove**  <br>*optional*|Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set.|boolean|
 |**Binds**  <br>*optional*|A list of volume bindings for this container. Each volume binding is a string in one of these forms:<br><br>- `host-src:container-dest` to bind-mount a host path into the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `host-src:container-dest:ro` to make the bind mount read-only inside the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest` to bind-mount a volume managed by a volume driver into the container. `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest:ro` to mount the volume read-only inside the container.  `container-dest` must be an _absolute_ path.|< string > array|
-|**BlkBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device or file|integer (int64)|
-|**BlkBufferWriteSwitch**  <br>*optional*|Turn on/off buffered write switch|integer (int64)|
-|**BlkDeviceBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkFileLevelSwitch**  <br>*optional*|Turn on/off file-level throttle|integer (int64)|
-|**BlkFileThrottlePath**  <br>*optional*|Add an absolute path in container instance, which will be under control|< string > array|
-|**BlkMetaWriteTps**  <br>*optional*|Limit metadata write rate (transactions per second) to a device or file|integer (int64)|
 |**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceReadLowBps**  <br>*optional*|Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceReadLowIOps**  <br>*optional*|Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceWriteLowBps**  <br>*optional*|Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceWriteLowIOps**  <br>*optional*|Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
-|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#hostconfig-blkioweightdevice) > array|
+|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
 |**CapAdd**  <br>*optional*|A list of kernel capabilities to add to the container.|< string > array|
 |**CapDrop**  <br>*optional*|A list of kernel capabilities to drop from the container.|< string > array|
 |**Cgroup**  <br>*optional*|Cgroup to use for the container.|string|
@@ -1459,14 +1449,6 @@ Container configuration that depends on the host we are running on
 |**UsernsMode**  <br>*optional*|Sets the usernamespace mode for the container when usernamespace remapping option is enabled.|string|
 |**VolumeDriver**  <br>*optional*|Driver that this container uses to mount volumes.|string|
 |**VolumesFrom**  <br>*optional*|A list of volumes to inherit from another container, specified in the form `<container name>[:<ro\|rw>]`.|< string > array|
-
-<a name="hostconfig-blkioweightdevice"></a>
-**BlkioWeightDevice**
-
-|Name|Description|Schema|
-|---|---|---|
-|**Path**  <br>*optional*||string|
-|**Weight**  <br>*optional*|**Minimum value** : `0`|integer (uint16)|
 
 <a name="hostconfig-logconfig"></a>
 **LogConfig**
@@ -1712,22 +1694,12 @@ A container's resources (cgroups config, ulimits, etc)
 
 |Name|Description|Schema|
 |---|---|---|
-|**BlkBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device or file|integer (int64)|
-|**BlkBufferWriteSwitch**  <br>*optional*|Turn on/off buffered write switch|integer (int64)|
-|**BlkDeviceBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkFileLevelSwitch**  <br>*optional*|Turn on/off file-level throttle|integer (int64)|
-|**BlkFileThrottlePath**  <br>*optional*|Add an absolute path in container instance, which will be under control|< string > array|
-|**BlkMetaWriteTps**  <br>*optional*|Limit metadata write rate (transactions per second) to a device or file|integer (int64)|
 |**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceReadLowBps**  <br>*optional*|Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceReadLowIOps**  <br>*optional*|Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceWriteLowBps**  <br>*optional*|Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioDeviceWriteLowIOps**  <br>*optional*|Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
-|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#resources-blkioweightdevice) > array|
+|**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br><br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
@@ -1752,14 +1724,6 @@ A container's resources (cgroups config, ulimits, etc)
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#resources-ulimits) > array|
-
-<a name="resources-blkioweightdevice"></a>
-**BlkioWeightDevice**
-
-|Name|Description|Schema|
-|---|---|---|
-|**Path**  <br>*optional*||string|
-|**Weight**  <br>*optional*|**Minimum value** : `0`|integer (uint16)|
 
 <a name="resources-ulimits"></a>
 **Ulimits**
@@ -1875,6 +1839,17 @@ Volume represents the configuration of a volume for the container.
 |---|---|---|
 |**Volumes**  <br>*required*|List of volumes|< [VolumeInfo](#volumeinfo) > array|
 |**Warnings**  <br>*required*|Warnings that occurred when fetching the list of volumes|< string > array|
+
+
+<a name="weightdevice"></a>
+### WeightDevice
+Weight for BlockIO Device
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Path**  <br>*optional*|Weight Device|string|
+|**Weight**  <br>*optional*|**Minimum value** : `0`|integer (uint16)|
 
 
 
