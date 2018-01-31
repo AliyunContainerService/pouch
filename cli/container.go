@@ -41,6 +41,11 @@ type container struct {
 	blkioDeviceWriteBps  ThrottleBpsDevice
 	blkioDeviceReadIOps  ThrottleIOpsDevice
 	blkioDeviceWriteIOps ThrottleIOpsDevice
+
+	//add for rich container mode
+	rich		     bool
+	richMode	     string
+	initScript	     string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -86,6 +91,9 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			WorkingDir: c.workdir,
 			Hostname:   strfmt.Hostname(c.hostname),
 			Labels:     labels,
+			Rich:	    c.rich,
+			RichMode:   c.richMode,
+			InitScript: c.initScript,
 		},
 
 		HostConfig: &types.HostConfig{
