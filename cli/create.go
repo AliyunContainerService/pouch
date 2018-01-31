@@ -43,6 +43,38 @@ func (cc *CreateCommand) addFlags() {
 
 	c := addCommonFlags(flagSet)
 	cc.container = c
+	flagSet.StringVar(&cc.name, "name", "", "Specify name of container")
+	flagSet.BoolVarP(&cc.tty, "tty", "t", false, "Allocate a tty device")
+	flagSet.StringSliceVarP(&cc.volume, "volume", "v", nil, "Bind mount volumes to container")
+	flagSet.StringVar(&cc.runtime, "runtime", "", "Specify oci runtime")
+	flagSet.StringSliceVarP(&cc.env, "env", "e", nil, "Set environment variables for container")
+	flagSet.StringSliceVarP(&cc.labels, "label", "l", nil, "Set label for a container")
+	flagSet.StringVar(&cc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
+	flagSet.StringVarP(&cc.workdir, "workdir", "w", "", "Set the working directory in a container")
+	flagSet.StringVar(&cc.hostname, "hostname", "", "Set container's hostname")
+	flagSet.Int64Var(&cc.cpushare, "cpu-share", 0, "CPU shares")
+	flagSet.StringVar(&cc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
+	flagSet.StringVar(&cc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
+	flagSet.Int64Var(&cc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.StringVarP(&cc.memory, "memory", "m", "", "Container memory limit")
+	flagSet.StringVar(&cc.memorySwap, "memory-swap", "", "Container swap limit")
+	flagSet.StringSliceVarP(&cc.devices, "device", "", nil, "Add a host device to the container")
+	flagSet.BoolVar(&cc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
+	flagSet.StringVar(&cc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
+	flagSet.StringVar(&cc.ipcMode, "ipc", "", "IPC namespace to use")
+	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
+	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
+	flagSet.StringSliceVar(&cc.sysctls, "sysctl", nil, "Sysctl options")
+	flagSet.Uint16Var(&cc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
+	flagSet.Var(&cc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
+	flagSet.Var(&cc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
+	flagSet.Var(&cc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
+	flagSet.Var(&cc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
+	flagSet.Var(&cc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
+
+	flagSet.BoolVar(&cc.rich, "rich", false, "Start container in rich container mode. (default false)")
+	flagSet.StringVar(&cc.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
+	flagSet.StringVar(&cc.initScript, "initscript", "", "Initial script executed in container")
 }
 
 // runCreate is the entry of create command.
