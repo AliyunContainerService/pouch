@@ -812,6 +812,31 @@ GET /info
 |**500**|An unexpected server error occured.|[Error](#error)|
 
 
+<a name="networklist"></a>
+### List networks
+```
+GET /networks
+```
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|Summary networks that matches the query|[NetworkListResp](#networklistresp)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Network
+
+
 <a name="networkcreate"></a>
 ### Create a network
 ```
@@ -1361,10 +1386,20 @@ Container configuration that depends on the host we are running on
 |---|---|---|
 |**AutoRemove**  <br>*optional*|Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set.|boolean|
 |**Binds**  <br>*optional*|A list of volume bindings for this container. Each volume binding is a string in one of these forms:<br><br>- `host-src:container-dest` to bind-mount a host path into the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `host-src:container-dest:ro` to make the bind mount read-only inside the container. Both `host-src`, and `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest` to bind-mount a volume managed by a volume driver into the container. `container-dest` must be an _absolute_ path.<br>- `volume-name:container-dest:ro` to mount the volume read-only inside the container.  `container-dest` must be an _absolute_ path.|< string > array|
+|**BlkBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device or file|integer (int64)|
+|**BlkBufferWriteSwitch**  <br>*optional*|Turn on/off buffered write switch|integer (int64)|
+|**BlkDeviceBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkFileLevelSwitch**  <br>*optional*|Turn on/off file-level throttle|integer (int64)|
+|**BlkFileThrottlePath**  <br>*optional*|Add an absolute path in container instance, which will be under control|< string > array|
+|**BlkMetaWriteTps**  <br>*optional*|Limit metadata write rate (transactions per second) to a device or file|integer (int64)|
 |**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadLowBps**  <br>*optional*|Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadLowIOps**  <br>*optional*|Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteLowBps**  <br>*optional*|Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteLowIOps**  <br>*optional*|Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#hostconfig-blkioweightdevice) > array|
 |**CapAdd**  <br>*optional*|A list of kernel capabilities to add to the container.|< string > array|
@@ -1494,13 +1529,25 @@ An object containing all details of an image at API side
 
 |Name|Description|Schema|
 |---|---|---|
+|**Architecture**  <br>*optional*|the CPU architecture.|string|
 |**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
-|**CreatedAt**  <br>*optional*|Time of image creation|string|
+|**CreatedAt**  <br>*optional*|time of image creation.|string|
 |**Digest**  <br>*optional*|digest of image.|string|
 |**ID**  <br>*optional*|ID of an image.|string|
 |**Name**  <br>*optional*|name of an image.|string|
+|**Os**  <br>*optional*|the name of the operating system.|string|
+|**RootFS**  <br>*optional*|the rootfs key references the layer content addresses used by the image.|[RootFS](#imageinfo-rootfs)|
 |**Size**  <br>*optional*|size of image's taking disk space.|integer|
 |**Tag**  <br>*optional*|tag of an image.|string|
+
+<a name="imageinfo-rootfs"></a>
+**RootFS**
+
+|Name|Description|Schema|
+|---|---|---|
+|**BaseLayer**  <br>*optional*|the base layer content hash.|string|
+|**Layers**  <br>*optional*|an array of layer content hashes|< string > array|
+|**Type**  <br>*required*|type of the rootfs|string|
 
 
 <a name="mountpoint"></a>
@@ -1566,6 +1613,19 @@ contains the response for the remote API: POST /networks/create
 |**Warning**  <br>*optional*|Warning means the message of create network result.|string|
 
 
+<a name="networkinfo"></a>
+### NetworkInfo
+NetworkInfo represents the configuration of a network
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Driver**  <br>*optional*|Driver is the Driver name used to create the network|string|
+|**ID**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
+|**Name**  <br>*optional*|Name is the name of the network.|string|
+|**Scope**  <br>*optional*|Scope describes the level at which the network exists|string|
+
+
 <a name="networkinspectresp"></a>
 ### NetworkInspectResp
 is the expected body of the 'GET networks/{id}'' http request message
@@ -1582,6 +1642,15 @@ is the expected body of the 'GET networks/{id}'' http request message
 |**Name**  <br>*optional*|Name is the requested name of the network|string|
 |**Options**  <br>*optional*|Options holds the network specific options to use for when creating the network.|< string, string > map|
 |**Scope**  <br>*optional*|Scope describes the level at which the network exists.|string|
+
+
+<a name="networklistresp"></a>
+### NetworkListResp
+
+|Name|Description|Schema|
+|---|---|---|
+|**Networks**  <br>*required*|List of networks|< [NetworkInfo](#networkinfo) > array|
+|**Warnings**  <br>*required*|Warnings that occurred when fetching the list of networks|< string > array|
 
 
 <a name="networksettings"></a>
@@ -1643,10 +1712,20 @@ A container's resources (cgroups config, ulimits, etc)
 
 |Name|Description|Schema|
 |---|---|---|
+|**BlkBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device or file|integer (int64)|
+|**BlkBufferWriteSwitch**  <br>*optional*|Turn on/off buffered write switch|integer (int64)|
+|**BlkDeviceBufferWriteBps**  <br>*optional*|Limit buffered write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkFileLevelSwitch**  <br>*optional*|Turn on/off file-level throttle|integer (int64)|
+|**BlkFileThrottlePath**  <br>*optional*|Add an absolute path in container instance, which will be under control|< string > array|
+|**BlkMetaWriteTps**  <br>*optional*|Limit metadata write rate (transactions per second) to a device or file|integer (int64)|
 |**BlkioDeviceReadBps**  <br>*optional*|Limit read rate (bytes per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadLowBps**  <br>*optional*|Limit sync/direct read rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceReadLowIOps**  <br>*optional*|Limit sync/direct read rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteLowBps**  <br>*optional*|Limit sync/direct write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
+|**BlkioDeviceWriteLowIOps**  <br>*optional*|Limit sync/direct write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [BlkioWeightDevice](#resources-blkioweightdevice) > array|
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
