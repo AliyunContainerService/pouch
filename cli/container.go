@@ -37,6 +37,7 @@ type container struct {
 	utsMode              string
 	sysctls              []string
 	network              []string
+	securityOpt          []string
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
 	blkioDeviceReadBps   ThrottleBpsDevice
@@ -114,6 +115,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			PidMode:       c.pidMode,
 			UTSMode:       c.utsMode,
 			Sysctls:       sysctls,
+			SecurityOpt:   c.securityOpt,
 		},
 	}
 

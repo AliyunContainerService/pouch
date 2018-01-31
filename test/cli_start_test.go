@@ -150,3 +150,16 @@ func (suite *PouchStartSuite) TestStartWithSysctls(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithAppArmor starts a container with security option AppArmor.
+func (suite *PouchStartSuite) TestStartWithAppArmor(c *check.C) {
+	appArmor := "apparmor=unconfined"
+	name := "start-apparmor"
+
+	command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	// TODO: do the test more strictly with effective AppArmor profile.
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+}

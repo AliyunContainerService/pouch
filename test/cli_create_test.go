@@ -139,6 +139,33 @@ func (suite *PouchCreateSuite) TestCreateWithSysctls(c *check.C) {
 	}
 }
 
+// TestCreateWithAppArmor tries to test create a container with security option AppArmor.
+func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
+	appArmor := "apparmor=unconfined"
+	name := "create-apparmor"
+
+	res := command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.SecurityOpt, check.NotNil)
+
+	exist := false
+	for _, opt := range result.HostConfig.SecurityOpt {
+		if opt == appArmor {
+			exist = true
+		}
+	}
+	if !exist {
+		c.Errorf("failed to set AppArmor in security-opt")
+	}
+}
+
 // TestCreateEnableLxcfs tries to test create a container with lxcfs.
 func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	name := "create-lxcfs"

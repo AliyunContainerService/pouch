@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -97,4 +98,23 @@ func (mgr *ContainerManager) generateName(id string) string {
 		}
 	}
 	return name
+}
+
+func parseSecurityOpt(meta *ContainerMeta, securityOpts []string) error {
+	for _, opt := range securityOpts {
+		fields := strings.SplitN(opt, "=", 2)
+		if len(fields) != 2 {
+			return fmt.Errorf("invalid --security-opt %q: it should be in format of key=value", opt)
+		}
+
+		switch fields[0] {
+		// TODO: handle other security options.
+		case "apparmor":
+			meta.AppArmorProfile = fields[1]
+		default:
+			return fmt.Errorf("invalid --security-opt %q: unknown type", opt)
+		}
+	}
+
+	return nil
 }

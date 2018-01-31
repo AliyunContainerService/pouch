@@ -52,6 +52,8 @@ var setupFunc = []SetupFunc{
 
 	// linux-platform-specifc spec
 	setupSysctl,
+	setupAppArmor,
+
 	// blkio spec
 	setupBlkio,
 }
