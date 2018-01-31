@@ -1,0 +1,120 @@
+#!/bin/sh
+# kFreeBSD do not accept scripts as interpreters, using #!/bin/sh and sourcing.
+if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
+    set "$0" "$@"; INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
+fi
+### BEGIN INIT INFO
+# Provides:          pouch
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description:  Pouch is an open-source project created to promote the container technology movement.
+# Description:
+#  Pouch is an open-source project created by Alibaba Group to promote the container technology movement.
+#  Pouch's vision is to advance container ecosystem and promote container standards OCI(Open Container Initiative),
+#  so that container technologies become the foundation for application development in the Cloud era.
+#  Pouch can pack, deliver and run any application. It provides applications with a lightweight runtime environment
+#  with strong isolation and minimal overhead. Pouch isolates applications from varying runtime environment,
+#  and minimizes operational workload. Pouch minimizes the effort for application developers to write Cloud-native
+#  applications, or to migrate legacy ones to a Cloud platform.
+### END INIT INFO
+
+# Pouch pouch-dev@list.alibaba-inc.com
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+BASE=pouch
+
+POUCHD=/usr/bin/pouchd
+POUCH_LOGFILE=/var/log/$BASE.log
+#POUCH_OPTS=" --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs"
+POUCH_OPTS=""
+POUCH_DESC="Pouch"
+
+# Get lsb functions
+. /lib/lsb/init-functions
+
+# Check pouch is present
+if [ ! -x $POUCHD ]; then
+	log_failure_msg "$POUCHD not present or not executable"
+	exit 1
+fi
+
+check_init() {
+	# use upstart to manage pouchd
+	if [ -x /sbin/initctl ] && /sbin/initctl version 2>/dev/null | grep -q upstart; then
+		log_failure_msg "$POUCH_DESC is managed via upstart, try using service $BASE $1"
+		exit 1
+	fi
+}
+
+fail_unless_root() {
+	if [ "$(id -u)" != '0' ]; then
+		log_failure_msg "$POUCH_DESC must be run as root"
+		exit 1
+	fi
+}
+
+case "$1" in
+	start)
+		check_init
+
+		fail_unless_root
+
+		touch "$POUCH_LOGFILE"
+		chgrp pouch "$POUCH_LOGFILE"
+
+		ulimit -n 1048576
+
+		# Having non-zero limits causes performance problems due to accounting overhead
+		# in the kernel. We recommend using cgroups to do container-local accounting.
+		if [ "$BASH" ]; then
+			ulimit -u unlimited
+		else
+			ulimit -p unlimited
+		fi
+
+		service lxcfs stop
+
+		log_begin_msg "Starting $POUCH_DESC: $BASE"
+		start-stop-daemon --start --background \
+			--no-close \
+			--exec "$POUCHD" \
+				$POUCH_OPTS \
+				>> "$POUCH_LOGFILE" 2>&1
+		log_end_msg $?
+		;;
+
+	stop)
+		check_init
+		fail_unless_root
+		log_begin_msg "Stopping $POUCH_DESC: $BASE"
+		start-stop-daemon --stop --exec $POUCHD --retry 10
+		log_end_msg $?
+		;;
+
+	restart)
+		check_init
+		fail_unless_root
+		service lxcfs stop
+		$0 stop
+		$0 start
+		;;
+
+	force-reload)
+		check_init
+		fail_unless_root
+		$0 restart
+		;;
+
+	status)
+		check_init
+		status_of_proc "$POUCHD" "$POUCH_DESC"
+		;;
+
+	*)
+		echo "Usage: service pouch {start|stop|restart|status}"
+		exit 1
+		;;
+esac
