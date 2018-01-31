@@ -58,6 +58,9 @@ type ContainerConfig struct {
 	// Required: true
 	Image string `json:"Image"`
 
+	// Initial script executed in container. The script will be executed before entrypoint or command
+	InitScript string `json:"InitScript,omitempty"`
+
 	// User-defined key/value metadata.
 	Labels map[string]string `json:"Labels,omitempty"`
 
@@ -72,6 +75,12 @@ type ContainerConfig struct {
 
 	// Open `stdin`
 	OpenStdin bool `json:"OpenStdin,omitempty"`
+
+	// Whether to start container in rich container mode. (default false)
+	Rich bool `json:"Rich,omitempty"`
+
+	// Choose one rich container mode.(default dumb-init)
+	RichMode string `json:"RichMode,omitempty"`
 
 	// Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.
 	Shell []string `json:"Shell"`
@@ -120,6 +129,8 @@ type ContainerConfig struct {
 
 /* polymorph ContainerConfig Image false */
 
+/* polymorph ContainerConfig InitScript false */
+
 /* polymorph ContainerConfig Labels false */
 
 /* polymorph ContainerConfig MacAddress false */
@@ -129,6 +140,10 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig OnBuild false */
 
 /* polymorph ContainerConfig OpenStdin false */
+
+/* polymorph ContainerConfig Rich false */
+
+/* polymorph ContainerConfig RichMode false */
 
 /* polymorph ContainerConfig Shell false */
 
@@ -181,6 +196,11 @@ func (m *ContainerConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateOnBuild(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRichMode(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -298,6 +318,49 @@ func (m *ContainerConfig) validateOnBuild(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.OnBuild) { // not required
 		return nil
+	}
+
+	return nil
+}
+
+var containerConfigTypeRichModePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["dumb-init","sbin-init","systemd"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		containerConfigTypeRichModePropEnum = append(containerConfigTypeRichModePropEnum, v)
+	}
+}
+
+const (
+	// ContainerConfigRichModeDumbInit captures enum value "dumb-init"
+	ContainerConfigRichModeDumbInit string = "dumb-init"
+	// ContainerConfigRichModeSbinInit captures enum value "sbin-init"
+	ContainerConfigRichModeSbinInit string = "sbin-init"
+	// ContainerConfigRichModeSystemd captures enum value "systemd"
+	ContainerConfigRichModeSystemd string = "systemd"
+)
+
+// prop value enum
+func (m *ContainerConfig) validateRichModeEnum(path, location string, value string) error {
+	if err := validate.Enum(path, location, value, containerConfigTypeRichModePropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *ContainerConfig) validateRichMode(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RichMode) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateRichModeEnum("RichMode", "body", m.RichMode); err != nil {
+		return err
 	}
 
 	return nil

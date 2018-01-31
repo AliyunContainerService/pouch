@@ -69,9 +69,6 @@ type HostConfig struct {
 	// A list of additional groups that the container process will run as.
 	GroupAdd []string `json:"GroupAdd"`
 
-	// Initial script executed in container. The script will be executed before entrypoint or command
-	InitScript string `json:"InitScript,omitempty"`
-
 	// IPC sharing mode for the container. Possible values are:
 	// - `"none"`: own private IPC namespace, with /dev/shm not mounted
 	// - `"private"`: own private IPC namespace
@@ -118,12 +115,6 @@ type HostConfig struct {
 
 	// Restart policy to be used to manage the container
 	RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
-
-	// Whether to start container in rich container mode. (default false)
-	Rich bool `json:"Rich,omitempty"`
-
-	// Choose one rich container mode.(default dumb-init)
-	RichMode string `json:"RichMode,omitempty"`
 
 	// Runtime to use with this container.
 	Runtime string `json:"Runtime,omitempty"`
@@ -192,8 +183,6 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
 
-		InitScript string `json:"InitScript,omitempty"`
-
 		IpcMode string `json:"IpcMode,omitempty"`
 
 		Isolation string `json:"Isolation,omitempty"`
@@ -217,10 +206,6 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
-
-		Rich bool `json:"Rich,omitempty"`
-
-		RichMode string `json:"RichMode,omitempty"`
 
 		Runtime string `json:"Runtime,omitempty"`
 
@@ -272,8 +257,6 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 	m.GroupAdd = data.GroupAdd
 
-	m.InitScript = data.InitScript
-
 	m.IpcMode = data.IpcMode
 
 	m.Isolation = data.Isolation
@@ -297,10 +280,6 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.ReadonlyRootfs = data.ReadonlyRootfs
 
 	m.RestartPolicy = data.RestartPolicy
-
-	m.Rich = data.Rich
-
-	m.RichMode = data.RichMode
 
 	m.Runtime = data.Runtime
 
@@ -362,8 +341,6 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
 
-		InitScript string `json:"InitScript,omitempty"`
-
 		IpcMode string `json:"IpcMode,omitempty"`
 
 		Isolation string `json:"Isolation,omitempty"`
@@ -387,10 +364,6 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
-
-		Rich bool `json:"Rich,omitempty"`
-
-		RichMode string `json:"RichMode,omitempty"`
 
 		Runtime string `json:"Runtime,omitempty"`
 
@@ -439,8 +412,6 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 	data.GroupAdd = m.GroupAdd
 
-	data.InitScript = m.InitScript
-
 	data.IpcMode = m.IpcMode
 
 	data.Isolation = m.Isolation
@@ -464,10 +435,6 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	data.ReadonlyRootfs = m.ReadonlyRootfs
 
 	data.RestartPolicy = m.RestartPolicy
-
-	data.Rich = m.Rich
-
-	data.RichMode = m.RichMode
 
 	data.Runtime = m.Runtime
 
@@ -561,10 +528,6 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateRestartPolicy(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRichMode(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -782,40 +745,6 @@ func (m *HostConfig) validateRestartPolicy(formats strfmt.Registry) error {
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-var hostConfigTypeRichModePropEnum []interface{}
-
-func init() {
-	var res []string
-	if err := json.Unmarshal([]byte(`["dumb-init","sbin-init","systemd"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		hostConfigTypeRichModePropEnum = append(hostConfigTypeRichModePropEnum, v)
-	}
-}
-
-// property enum
-func (m *HostConfig) validateRichModeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, hostConfigTypeRichModePropEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *HostConfig) validateRichMode(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.RichMode) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateRichModeEnum("RichMode", "body", m.RichMode); err != nil {
-		return err
 	}
 
 	return nil
