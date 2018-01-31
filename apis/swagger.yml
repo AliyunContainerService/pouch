@@ -1078,7 +1078,21 @@ definitions:
         type: "array"
         items:
           type: "string"
-  
+      Rich:
+        type: "boolean"
+        description: "Whether to start container in rich container mode. (default false)"
+        x-nullable: false
+      RichMode:
+        type: "string"
+        description: "Choose one rich container mode.(default dumb-init)"
+        enum:
+          - "dumb-init"
+          - "sbin-init"
+          - "systemd"
+      InitScript:
+        type: "string"
+        description: "Initial script executed in container. The script will be executed before entrypoint or command"        
+ 
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
     type: "object"
@@ -1291,20 +1305,6 @@ definitions:
             description: "Whether to enable lxcfs."
             type: "boolean"
             x-nullable: false
-          Rich:
-            type: "boolean"
-            description: "Whether to start container in rich container mode. (default false)"
-            x-nullable: false
-          RichMode:
-            type: "string"
-            description: "Choose one rich container mode.(default dumb-init)"
-            enum:
-             - "dumb-init"
-             - "sbin-init"
-             - "systemd"
-          InitScript:
-            type: "string"
-            description: "Initial script executed in container. The script will be executed before entrypoint or command"
       - $ref: "#/definitions/Resources"
 
   Resources:
