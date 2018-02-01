@@ -245,6 +245,20 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	if !strings.Contains(output, "1") {
 		c.Fatalf("failed to run a container with sysctls: %s", output)
 	}
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
+// TestRunWithAppArmor is to verify run container with security option AppArmor.
+func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
+	appArmor := "apparmor=unconfined"
+	name := "run-apparmor"
+
+	res := command.PouchRun("run", "--name", name, "--security-opt", appArmor, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	// TODO: do the test more strictly with effective AppArmor profile.
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestRunWithBlkioWeight is to verify --specific Blkio Weight when running a container.

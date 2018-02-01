@@ -330,6 +330,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		meta.Config.NetworkDisabled = true
 	}
 
+	if err := parseSecurityOpt(meta, config.HostConfig.SecurityOpt); err != nil {
+		return nil, err
+	}
+
 	// merge image's config into container's meta
 	if err := meta.merge(func() (v1.ImageConfig, error) {
 		ociimage, err := mgr.Client.GetOciImage(ctx, config.Image)
@@ -437,7 +441,8 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 		c.meta.State.Error = err.Error()
 		c.meta.State.Pid = 0
-		//TODO get and set exit code
+		//TODO: make exit code more correct.
+		c.meta.State.ExitCode = 127
 
 		// release io
 		io.Close()

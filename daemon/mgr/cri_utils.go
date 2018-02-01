@@ -271,9 +271,51 @@ func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandbox
 	hostConfig.UTSMode = sandboxNSMode
 }
 
+// getAppArmorSecurityOpts gets appArmor options from container config.
+func getAppArmorSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string, error) {
+	profile := sc.ApparmorProfile
+	if profile == "" || profile == ProfileRuntimeDefault {
+		// Pouch should applies the default profile by default.
+		return nil, nil
+	}
+
+	// Return unconfined profile explicitly.
+	if profile == ProfileNameUnconfined {
+		return []string{fmt.Sprintf("apparmor=%s", profile)}, nil
+	}
+
+	if !strings.HasPrefix(profile, ProfileNamePrefix) {
+		return nil, fmt.Errorf("undefault profile name should prefix with %q", ProfileNamePrefix)
+	}
+	profile = strings.TrimPrefix(profile, ProfileNamePrefix)
+
+	return []string{fmt.Sprintf("apparmor=%s", profile)}, nil
+}
+
+// modifyHostConfig applies security context config to pouch's HostConfig.
+func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *apitypes.HostConfig) error {
+	if sc == nil {
+		return nil
+	}
+
+	// TODO: apply other security options.
+
+	// Apply appArmor options.
+	appArmorSecurityOpts, err := getAppArmorSecurityOpts(sc)
+	if err != nil {
+		return fmt.Errorf("failed to generate appArmor security options: %v", err)
+	}
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, appArmorSecurityOpts...)
+
+	return nil
+}
+
 // applyContainerSecurityContext updates pouch container options according to security context.
 func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxID string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
-	// TODO: modify Config and HostConfig.
+	err := modifyHostConfig(lc.SecurityContext, hc)
+	if err != nil {
+		return err
+	}
 
 	modifyContainerNamespaceOptions(lc.SecurityContext.GetNamespaceOptions(), podSandboxID, hc)
 
