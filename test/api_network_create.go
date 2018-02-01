@@ -37,6 +37,29 @@ func (suite *APINetworkCreateSuite) TestNetworkCreateOk(c *check.C) {
 	//DelNetworkOk(c, nname)
 }
 
+// TestNetworkCreateExistentName tests if creating network with an existent name returns error.
+func (suite *APINetworkCreateSuite) TestNetworkCreateExistentName(c *check.C) {
+	nname := "TestNetworkCreateExistentName"
+	obj := map[string]interface{}{
+		"Name":   nname,
+		"Driver": "bridge",
+	}
+
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post("/networks/create", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	resp, err = request.Post("/networks/create", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 409)
+
+	// delete network TestNetworkCreateExistentName
+	resp, err = request.Delete("/networks/" + "TestNetworkCreateExistentName")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+}
+
 // TestNetworkCreateNilName tests creating network without name returns error.
 func (suite *APINetworkCreateSuite) TestNetworkCreateNilName(c *check.C) {
 	obj := map[string]interface{}{

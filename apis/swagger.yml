@@ -763,6 +763,10 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/Error"
+        409:
+          description: "name already in use"
+          schema:
+            $ref: "#/definitions/Error"
         500:
           $ref: "#/responses/500ErrorResponse"
       parameters:
