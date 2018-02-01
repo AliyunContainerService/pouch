@@ -62,7 +62,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.StringVar(&cc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&cc.utsMode, "uts", "", "UTS namespace to use")
 	flagSet.StringSliceVar(&cc.sysctls, "sysctl", nil, "Sysctl options")
-	flagSet.StringSliceVar(&cc.network, "net", nil, "Set networks to container")
+	flagSet.StringSliceVar(&cc.networks, "net", nil, "Set networks to container")
 	flagSet.StringSliceVar(&cc.securityOpt, "security-opt", nil, "Security Options")
 	flagSet.Uint16Var(&cc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Var(&cc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")

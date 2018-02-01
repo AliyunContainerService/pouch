@@ -323,8 +323,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	// set network settings
 	meta.NetworkSettings = &types.NetworkSettings{}
-	if config.NetworkingConfig.EndpointsConfig != nil &&
-		len(config.NetworkingConfig.EndpointsConfig) > 0 {
+	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		meta.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	} else {
 		meta.Config.NetworkDisabled = true
@@ -385,13 +384,10 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	c.DetachKeys = detachKeys
 
 	// initialise network endpoint
-	if c.meta.NetworkSettings.Networks != nil && len(c.meta.NetworkSettings.Networks) > 0 {
-		for name, endpointSetting := range c.meta.NetworkSettings.Networks {
-			_, err := mgr.NetworkMgr.EndpointCreate(ctx, c.ID(), name, c.meta.NetworkSettings, endpointSetting)
-			if err != nil {
-				logrus.Errorf("fail to create endpoint, err: %v", err)
-				return err
-			}
+	for name, endpointSetting := range c.meta.NetworkSettings.Networks {
+		if _, err := mgr.NetworkMgr.EndpointCreate(ctx, c.ID(), name, c.meta.NetworkSettings, endpointSetting); err != nil {
+			logrus.Errorf("failed to create endpoint: %v", err)
+			return err
 		}
 	}
 
