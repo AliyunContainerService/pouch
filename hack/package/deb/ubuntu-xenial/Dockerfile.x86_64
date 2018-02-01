@@ -1,0 +1,55 @@
+FROM ubuntu:16.04
+
+RUN apt-get update \
+	&& apt-get install -y \
+	apt-utils \
+	gnupg-agent \
+	wget \
+	curl \
+	vim \
+	apparmor \
+	bash-completion \
+	btrfs-tools \
+	build-essential \
+	cmake \
+	curl \
+	ca-certificates \
+	debhelper \
+	dh-apparmor \
+	dh-systemd \
+	git \
+	libapparmor-dev \
+	libdevmapper-dev \
+	libltdl-dev \
+	libseccomp-dev \
+	pkg-config \
+	vim-common \
+	libsystemd-dev \
+	--no-install-recommends \
+	&& apt-get clean
+
+# set go version this image use
+ENV GO_VERSION=1.9.1
+ENV ARCH=amd64
+
+# install golang which version is GO_VERSION
+RUN wget --quiet https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${ARCH}.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz \
+    && rm go${GO_VERSION}.linux-${ARCH}.tar.gz
+
+# create GOPATH
+RUN mkdir /go
+ENV GOPATH=/go
+
+# set go binary path to local $PATH
+# go binary path is /usr/local/go/bin
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+ENV DOCKER_BUILDTAGS apparmor pkcs11 seccomp selinux
+ENV RUNC_BUILDTAGS apparmor seccomp selinux
+ENV DISTRO ubuntu
+ENV SUITE xenial
+
+COPY . /go/src/github.com/alibaba/pouch
+
+WORKDIR /go/src/github.com/alibaba/pouch

@@ -22,8 +22,8 @@ pre:
 server: pre modules
 	@./hack/build server
 
-.PHONY: pre client
-client:
+.PHONY: client
+client: pre
 	@./hack/build client
 
 .PHONY: clean
