@@ -24,34 +24,33 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --blkio-weight-device value   Block IO weight (relative device weight) (default [])
       --cap-add strings             Add Linux capabilities
       --cap-drop strings            Drop Linux capabilities
-      --cpu-share int               CPU shares
-      --cpuset-cpus string          CPUs in cpuset
-      --cpuset-mems string          MEMs in cpuset
+      --cpu-share int               CPU shares (relative weight)
+      --cpuset-cpus string          CPUs in which to allow execution (0-3, 0,1)
+      --cpuset-mems string          MEMs in which to allow execution (0-3, 0,1)
       --device strings              Add a host device to the container
       --device-read-bps value       Limit read rate (bytes per second) from a device (default [])
       --device-read-iops value      Limit read rate (IO per second) from a device (default [])
       --device-write-bps value      Limit write rate (bytes per second) from a device (default [])
       --device-write-iops value     Limit write rate (IO per second) from a device (default [])
-      --enableLxcfs                 Enable lxcfs
-      --entrypoint string           Overwrite the default entrypoint
+      --enableLxcfs                 Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
+      --entrypoint string           Overwrite the default ENTRYPOINT of the image
   -e, --env strings                 Set environment variables for container
   -h, --help                        help for create
       --hostname string             Set container's hostname
       --intel-rdt-l3-cbm string     Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
       --ipc string                  IPC namespace to use
-  -l, --label strings               Set label for a container
-  -m, --memory string               Container memory limit
-      --memory-swap string          Container swap limit
+  -l, --label strings               Set labels for a container
+  -m, --memory string               Memory limit
+      --memory-swap string          Swap limit equal to memory + swap, '-1' to enable unlimited swap
       --memory-wappiness int        Container memory swappiness [0, 100] (default -1)
       --name string                 Specify name of container
       --net strings                 Set networks to container
       --pid string                  PID namespace to use
-      --privileged                  Give extended privileges to the container
       --restart string              Restart policy to apply when container exits
-      --runtime string              Specify oci runtime
+      --runtime string              OCI runtime to use for this container
       --security-opt strings        Security Options
       --sysctl strings              Sysctl options
-  -t, --tty                         Allocate a tty device
+  -t, --tty                         Allocate a pseudo-TTY
   -u, --user string                 UID
       --uts string                  UTS namespace to use
   -v, --volume strings              Bind mount volumes to container
