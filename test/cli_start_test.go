@@ -163,3 +163,13 @@ func (suite *PouchStartSuite) TestStartWithAppArmor(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithCapability starts a container with capability.
+func (suite *PouchStartSuite) TestStartWithCapability(c *check.C) {
+	capability := "NET_ADMIN"
+	name := "start-capability"
+
+	res := command.PouchRun("create", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}

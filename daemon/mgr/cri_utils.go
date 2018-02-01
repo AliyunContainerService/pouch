@@ -300,6 +300,12 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 
 	// TODO: apply other security options.
 
+	// Apply capability options.
+	if sc.GetCapabilities() != nil {
+		hostConfig.CapAdd = sc.GetCapabilities().GetAddCapabilities()
+		hostConfig.CapDrop = sc.GetCapabilities().GetDropCapabilities()
+	}
+
 	// Apply appArmor options.
 	appArmorSecurityOpts, err := getAppArmorSecurityOpts(sc)
 	if err != nil {

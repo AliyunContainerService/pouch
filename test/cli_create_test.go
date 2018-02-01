@@ -166,6 +166,33 @@ func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
 	}
 }
 
+// TestCreateWithCapability tries to test create a container with capability.
+func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
+	capability := "NET_ADMIN"
+	name := "create-capability"
+
+	res := command.PouchRun("create", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.CapAdd, check.NotNil)
+
+	exist := false
+	for _, cap := range result.HostConfig.CapAdd {
+		if cap == capability {
+			exist = true
+		}
+	}
+	if !exist {
+		c.Errorf("failed to set capability")
+	}
+}
+
 // TestCreateEnableLxcfs tries to test create a container with lxcfs.
 func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	name := "create-lxcfs"
