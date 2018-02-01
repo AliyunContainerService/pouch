@@ -36,7 +36,7 @@ type container struct {
 	pidMode              string
 	utsMode              string
 	sysctls              []string
-	network              []string
+	networks             []string
 	securityOpt          []string
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
@@ -81,6 +81,27 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	var networkMode string
+	if len(c.networks) == 0 {
+		networkMode = "bridge"
+	}
+	networkingConfig := &types.NetworkingConfig{
+		EndpointsConfig: map[string]*types.EndpointSettings{},
+	}
+	for _, network := range c.networks {
+		name, ip, err := parseNetwork(network)
+		if err != nil {
+			return nil, err
+		}
+
+		networkingConfig.EndpointsConfig[name] = &types.EndpointSettings{
+			IPAddress: ip,
+			IPAMConfig: &types.EndpointIPAMConfig{
+				IPV4Address: ip,
+			},
+		}
+	}
+
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
 			Tty:        c.tty,
@@ -116,30 +137,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			UTSMode:       c.utsMode,
 			Sysctls:       sysctls,
 			SecurityOpt:   c.securityOpt,
+			NetworkMode:   networkMode,
 		},
-	}
 
-	if len(c.network) == 0 {
-		config.HostConfig.NetworkMode = "bridge"
+		NetworkingConfig: networkingConfig,
 	}
-	networkingConfig := &types.NetworkingConfig{
-		EndpointsConfig: map[string]*types.EndpointSettings{},
-	}
-	for _, network := range c.network {
-		name, ip, err := parseNetwork(network)
-		if err != nil {
-			return nil, err
-		}
-
-		networkingConfig.EndpointsConfig[name] = &types.EndpointSettings{
-			IPAddress: ip,
-			IPAMConfig: &types.EndpointIPAMConfig{
-				IPV4Address: ip,
-			},
-		}
-
-	}
-	config.NetworkingConfig = networkingConfig
 
 	return config, nil
 }
@@ -254,7 +256,7 @@ func parseNetwork(network string) (string, string, error) {
 		ip   string
 	)
 	if network == "" {
-		return "", "", fmt.Errorf("invalid network: is nil")
+		return "", "", fmt.Errorf("invalid network: cannot be empty")
 	}
 	arr := strings.Split(network, ":")
 	switch len(arr) {
