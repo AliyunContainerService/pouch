@@ -16,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
 
+	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +28,10 @@ var (
 )
 
 func main() {
+	if reexec.Init() {
+		return
+	}
+
 	var cmdServe = &cobra.Command{
 		Use:          "pouchd",
 		Args:         cobra.NoArgs,

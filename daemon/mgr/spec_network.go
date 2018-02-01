@@ -9,5 +9,6 @@ func setupNetwork(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) erro
 
 	s.Hostname = c.Config.Hostname.String()
 	//TODO setup network parameters
+
 	return nil
 }

@@ -3,6 +3,9 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -87,8 +90,26 @@ func setupUserNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrap
 	return nil
 }
 
-// TODO
 func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
+	ns := specs.LinuxNamespace{Type: specs.NetworkNamespace}
+	setNamespace(s, ns)
+
+	for _, ns := range s.Linux.Namespaces {
+		if ns.Type == "network" && ns.Path == "" && !meta.Config.NetworkDisabled {
+			target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
+			if err != nil {
+				return err
+			}
+
+			s.Hooks = &specs.Hooks{
+				Prestart: []specs.Hook{{
+					Path: target, // FIXME: cross-platform
+					Args: []string{"libnetwork-setkey", meta.ID, spec.netMgr.Controller().ID()},
+				}},
+			}
+		}
+	}
 	return nil
 }
 

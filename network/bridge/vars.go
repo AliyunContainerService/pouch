@@ -15,4 +15,7 @@ const (
 
 	// DefaultGateway defines the default bridge gateway.
 	DefaultGateway = "172.17.0.1"
+
+	// DefaultBindingIP defines the default binding ip.
+	DefaultBindingIP = "0.0.0.0"
 )

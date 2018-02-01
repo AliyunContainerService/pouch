@@ -321,6 +321,15 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		HostConfig: config.HostConfig,
 	}
 
+	// set network settings
+	meta.NetworkSettings = &types.NetworkSettings{}
+	if config.NetworkingConfig.EndpointsConfig != nil &&
+		len(config.NetworkingConfig.EndpointsConfig) > 0 {
+		meta.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
+	} else {
+		meta.Config.NetworkDisabled = true
+	}
+
 	// merge image's config into container's meta
 	if err := meta.merge(func() (v1.ImageConfig, error) {
 		ociimage, err := mgr.Client.GetOciImage(ctx, config.Image)
@@ -370,6 +379,17 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID())
 	}
 	c.DetachKeys = detachKeys
+
+	// initialise network endpoint
+	if c.meta.NetworkSettings.Networks != nil && len(c.meta.NetworkSettings.Networks) > 0 {
+		for name, endpointSetting := range c.meta.NetworkSettings.Networks {
+			_, err := mgr.NetworkMgr.EndpointCreate(ctx, c.ID(), name, c.meta.NetworkSettings, endpointSetting)
+			if err != nil {
+				logrus.Errorf("fail to create endpoint, err: %v", err)
+				return err
+			}
+		}
+	}
 
 	// new a default spec.
 	s, err := ctrd.NewDefaultSpec(ctx, c.ID())

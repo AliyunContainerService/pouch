@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,7 @@ type container struct {
 	pidMode              string
 	utsMode              string
 	sysctls              []string
+	network              []string
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
 	blkioDeviceReadBps   ThrottleBpsDevice
@@ -114,6 +116,28 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Sysctls:       sysctls,
 		},
 	}
+
+	if len(c.network) == 0 {
+		config.HostConfig.NetworkMode = "bridge"
+	}
+	networkingConfig := &types.NetworkingConfig{
+		EndpointsConfig: map[string]*types.EndpointSettings{},
+	}
+	for _, network := range c.network {
+		name, ip, err := parseNetwork(network)
+		if err != nil {
+			return nil, err
+		}
+
+		networkingConfig.EndpointsConfig[name] = &types.EndpointSettings{
+			IPAddress: ip,
+			IPAMConfig: &types.EndpointIPAMConfig{
+				IPV4Address: ip,
+			},
+		}
+
+	}
+	config.NetworkingConfig = networkingConfig
 
 	return config, nil
 }
@@ -220,4 +244,34 @@ func parseRestartPolicy(restartPolicy string) (*types.RestartPolicy, error) {
 	}
 
 	return policy, nil
+}
+
+func parseNetwork(network string) (string, string, error) {
+	var (
+		name string
+		ip   string
+	)
+	if network == "" {
+		return "", "", fmt.Errorf("invalid network: is nil")
+	}
+	arr := strings.Split(network, ":")
+	switch len(arr) {
+	case 1:
+		if ipaddr := net.ParseIP(arr[0]); ipaddr != nil {
+			ip = arr[0]
+		} else {
+			name = arr[0]
+		}
+	default:
+		name = arr[0]
+		ip = arr[1]
+	}
+
+	if ip != "" {
+		if ipaddr := net.ParseIP(ip); ipaddr == nil {
+			return "", "", fmt.Errorf("invalid network ip: %s", ip)
+		}
+	}
+
+	return name, ip, nil
 }

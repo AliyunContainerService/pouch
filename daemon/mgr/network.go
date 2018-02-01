@@ -14,11 +14,13 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 
+	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/docker/libnetwork/options"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // NetworkMgr defines interface to manage container network.
@@ -36,7 +38,7 @@ type NetworkMgr interface {
 	Get(ctx context.Context, name string) (*types.Network, error)
 
 	// EndpointCreate is used to create network endpoint.
-	EndpointCreate(ctx context.Context, name string) error
+	EndpointCreate(ctx context.Context, containerID, network string, networkConfig *apitypes.NetworkSettings, endpointConfig *apitypes.EndpointSettings) (string, error)
 
 	// EndpointRemove is used to create network endpoint.
 	EndpointRemove(ctx context.Context, name string) error
@@ -46,6 +48,9 @@ type NetworkMgr interface {
 
 	// EndpointInfo returns the information of endpoint that specified name/id.
 	EndpointInfo(ctx context.Context, name string) (*types.Endpoint, error)
+
+	// Controller returns the network controller.
+	Controller() libnetwork.NetworkController
 }
 
 // NetworkManager is the default implement of interface NetworkMgr.
@@ -58,6 +63,9 @@ type NetworkManager struct {
 func NewNetworkManager(cfg *config.Config, store *meta.Store) (*NetworkManager, error) {
 	// Create a new controller instance
 	cfg.NetworkConfg.MetaPath = path.Dir(store.BaseDir)
+	cfg.NetworkConfg.ExecRoot = network.DefaultExecRoot
+
+	initNetworkLog(cfg)
 
 	ctlOptions, err := controllerOptions(cfg.NetworkConfg)
 	if err != nil {
@@ -156,9 +164,71 @@ func (nm *NetworkManager) Get(ctx context.Context, name string) (*types.Network,
 }
 
 // EndpointCreate is used to create network endpoint.
-func (nm *NetworkManager) EndpointCreate(ctx context.Context, name string) error {
-	// TODO
-	return nil
+func (nm *NetworkManager) EndpointCreate(ctx context.Context, containerID, network string, networkConfig *apitypes.NetworkSettings, endpointConfig *apitypes.EndpointSettings) (string, error) {
+	logrus.Infof("create endpoint for container [%s] on network [%s]", containerID, network)
+
+	n, err := nm.controller.NetworkByName(network)
+	if err != nil {
+		if err == libnetwork.ErrNoSuchNetwork(network) {
+			return "", errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
+		return "", err
+	}
+
+	// create endpoint
+	epOptions, err := endpointOptions(n, networkConfig, endpointConfig)
+	if err != nil {
+		return "", err
+	}
+
+	endpointName := containerID[:8]
+	ep, err := n.CreateEndpoint(endpointName, epOptions...)
+	if err != nil {
+		logrus.Errorf("failed to create endpoint, err: %v", err)
+		return "", err
+	}
+
+	// create sandbox
+	sb := nm.getNetworkSandbox(containerID)
+	if sb == nil {
+		var sandboxOptions []libnetwork.SandboxOption
+
+		//sandboxOptions = append(sandboxOptions, libnetwork.OptionUseDefaultSandbox())
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionUseExternalKey())
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionHostname(containerID))
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionDomainname(""))
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionHostsPath(path.Join(nm.store.BaseDir, containerID, "hosts")))
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionResolvConfPath(path.Join(nm.store.BaseDir, containerID, "resolv.conf")))
+
+		sb, err = nm.controller.NewSandbox(containerID, sandboxOptions...)
+		if err != nil {
+			logrus.Errorf("failed to create sandbox, err: %v", err)
+			return "", err
+		}
+	}
+	networkConfig.SandboxID = sb.ID()
+	networkConfig.SandboxKey = sb.Key()
+
+	// endpoint joins into sandbox
+	joinOptions, err := joinOptions(endpointConfig)
+	if err != nil {
+		return "", err
+	}
+	if err := ep.Join(sb, joinOptions...); err != nil {
+		logrus.Errorf("failed to join sandbox, err: %v", err)
+		return "", err
+	}
+
+	// update endpoint settings
+	epInfo := ep.Info()
+	if epInfo.Gateway() != nil {
+		endpointConfig.Gateway = epInfo.Gateway().String()
+	}
+	if epInfo.GatewayIPv6().To16() != nil {
+		endpointConfig.IPV6Gateway = epInfo.GatewayIPv6().String()
+	}
+
+	return endpointName, nil
 }
 
 // EndpointRemove is used to create network endpoint.
@@ -179,12 +249,25 @@ func (nm *NetworkManager) EndpointInfo(ctx context.Context, name string) (*types
 	return nil, nil
 }
 
+// Controller returns the network controller.
+func (nm *NetworkManager) Controller() libnetwork.NetworkController {
+	return nm.controller
+}
+
 func controllerOptions(cfg network.Config) ([]nwconfig.Option, error) {
 	// TODO: parse network control config.
 	options := []nwconfig.Option{}
+
 	if cfg.MetaPath != "" {
 		options = append(options, nwconfig.OptionDataDir(cfg.MetaPath))
 	}
+
+	if cfg.ExecRoot != "" {
+		options = append(options, nwconfig.OptionExecRoot(cfg.ExecRoot))
+	}
+
+	options = append(options, nwconfig.OptionDefaultDriver("bridge"))
+	options = append(options, nwconfig.OptionDefaultNetwork("bridge"))
 
 	// set bridge options
 	options = append(options, bridgeDriverOptions())
@@ -247,4 +330,63 @@ func getIpamConfig(data []apitypes.IPAMConfig) ([]*libnetwork.IpamConf, []*libne
 		}
 	}
 	return ipamV4Cfg, ipamV6Cfg, nil
+}
+
+func (nm *NetworkManager) getNetworkSandbox(id string) libnetwork.Sandbox {
+	var sb libnetwork.Sandbox
+	nm.controller.WalkSandboxes(func(s libnetwork.Sandbox) bool {
+		if s.ContainerID() == id {
+			sb = s
+			return true
+		}
+		return false
+	})
+	return sb
+}
+
+func initNetworkLog(cfg *config.Config) {
+	if cfg.Debug {
+		netlog.SetLevel(netlog.DebugLevel)
+	}
+
+	formatter := &netlog.TextFormatter{
+		ForceColors:     true,
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05.000000000",
+	}
+	netlog.SetFormatter(formatter)
+}
+
+func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
+	var createOptions []libnetwork.EndpointOption
+
+	if epConfig != nil {
+		ipam := epConfig.IPAMConfig
+		if ipam != nil && (ipam.IPV4Address != "" || ipam.IPV6Address != "" || len(ipam.LinkLocalIps) > 0) {
+			var ipList []net.IP
+			for _, ips := range ipam.LinkLocalIps {
+				if ip := net.ParseIP(ips); ip != nil {
+					ipList = append(ipList, ip)
+				}
+			}
+			createOptions = append(createOptions,
+				libnetwork.CreateOptionIpam(net.ParseIP(ipam.IPV4Address), net.ParseIP(ipam.IPV6Address), ipList, nil))
+		}
+
+		for _, alias := range epConfig.Aliases {
+			createOptions = append(createOptions, libnetwork.CreateOptionMyAlias(alias))
+		}
+	}
+
+	genericOption := options.Generic{}
+	createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(genericOption))
+
+	return createOptions, nil
+}
+
+func joinOptions(epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
+	var joinOptions []libnetwork.EndpointOption
+	// TODO: parse endpoint's links
+
+	return joinOptions, nil
 }

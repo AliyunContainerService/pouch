@@ -71,6 +71,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
 	flagSet.StringVar(&rc.utsMode, "uts", "", "UTS namespace to use")
 	flagSet.StringSliceVar(&rc.sysctls, "sysctl", nil, "Sysctl options")
+	flagSet.StringSliceVar(&rc.network, "net", nil, "Set networks to container")
 	flagSet.Uint16Var(&rc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Var(&rc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
 	flagSet.Var(&rc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
@@ -98,7 +99,7 @@ func (rc *RunCommand) runRun(args []string) error {
 	containerName := rc.name
 
 	apiClient := rc.cli.Client()
-	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, containerName)
+	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to run container: %v", err)
 	}
