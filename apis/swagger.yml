@@ -1375,7 +1375,6 @@ definitions:
       CpuCount:
         description: |
           The number of usable CPUs (Windows only).
-
           On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
         type: "integer"
         format: "int64"
@@ -1393,6 +1392,29 @@ definitions:
         description: "Maximum IO in bytes per second for the container system drive (Windows only)"
         type: "integer"
         format: "uint64"
+      IntelRdtL3Cbm:
+        description: "IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available."
+        type: "string"
+
+      # applicable to AliKenerl 4.9
+      ScheLatSwitch:
+        description: "ScheLatSwitch enables scheduler latency count in cpuacct"
+        type: "integer"
+        format: "int64"
+      MemoryWmarkRatio:
+        description: | 
+          MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. 
+          The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.
+        type: "integer"
+        format: "int64"
+      MemoryExtra:
+        description: "MemoryExtra is an integer value representing this container's memory high water mark percentage."
+        type: "integer"
+        format: "int64"
+      MemoryForceEmptyCtl:
+        description: "MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup."
+        type: "integer"
+        format: "int64"
 
   ThrottleDevice:
     type: "object"
