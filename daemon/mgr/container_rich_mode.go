@@ -13,7 +13,7 @@ const(
 	inter_rich_mode_env = "ali_run_mode=common_vm"
 )
 
-func richContainerMode(c *ContainerMeta) []string {
+func richContainerModeEnv(c *ContainerMeta) []string {
 	var(
 		ret []string = []string{}
 		setRichMode = false
@@ -26,6 +26,7 @@ func richContainerMode(c *ContainerMeta) []string {
 	for _,e := range envs {
 		if e == inter_rich_mode_env {
 			setRichMode = true
+			richMode = types.ContainerConfigRichModeSystemd
 			break
 		}
 	}
@@ -49,3 +50,4 @@ func richContainerMode(c *ContainerMeta) []string {
 
 	return ret
 }
+
