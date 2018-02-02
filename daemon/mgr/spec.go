@@ -64,6 +64,9 @@ var setupFunc = []SetupFunc{
 
 	// annotations in spec
 	setupAnnotations,
+
+	//hook
+	setupHook,
 }
 
 // Register is used to registe spec setup function.
