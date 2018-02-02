@@ -266,7 +266,55 @@ func Test_parseDeviceMappings(t *testing.T) {
 		want    []*types.DeviceMapping
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "deviceMapping1",
+			args: args{
+				devices: []string{"/dev/deviceName:/dev/deviceName:mrw"},
+			},
+			want: []*types.DeviceMapping{
+				{
+					PathOnHost:        "/dev/deviceName",
+					PathInContainer:   "/dev/deviceName",
+					CgroupPermissions: "mrw",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "deviceMapping2",
+			args: args{
+				devices: []string{"/dev/deviceName:"},
+			},
+			want: []*types.DeviceMapping{
+				{
+					PathOnHost:        "/dev/deviceName",
+					PathInContainer:   "/dev/deviceName",
+					CgroupPermissions: "rwm",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "deviceMappingWrong1",
+			args: args{
+				devices: []string{"/dev/deviceName:/dev/deviceName:rrw"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "deviceMappingWrong2",
+			args: args{
+				devices: []string{"/dev/deviceName:/dev/deviceName:arw"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "deviceMappingWrong3",
+			args: args{
+				devices: []string{"/dev/deviceName:/dev/deviceName:mrw:mrw"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
