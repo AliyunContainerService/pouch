@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 BUILDPATH=/tmp/pouchbuild
 
 DIR="$( cd "$( dirname "$0" )/.." && pwd )"
