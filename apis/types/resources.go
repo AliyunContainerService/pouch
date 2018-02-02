@@ -49,7 +49,6 @@ type Resources struct {
 	CgroupParent string `json:"CgroupParent,omitempty"`
 
 	// The number of usable CPUs (Windows only).
-	//
 	// On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
 	//
 	CPUCount int64 `json:"CpuCount,omitempty"`
@@ -99,11 +98,20 @@ type Resources struct {
 	// Maximum IOps for the container system drive (Windows only)
 	IOMaximumIOps uint64 `json:"IOMaximumIOps,omitempty"`
 
+	// IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.
+	IntelRdtL3Cbm string `json:"IntelRdtL3Cbm,omitempty"`
+
 	// Kernel memory limit in bytes.
 	KernelMemory int64 `json:"KernelMemory,omitempty"`
 
 	// Memory limit in bytes.
 	Memory int64 `json:"Memory,omitempty"`
+
+	// MemoryExtra is an integer value representing this container's memory high water mark percentage.
+	MemoryExtra int64 `json:"MemoryExtra,omitempty"`
+
+	// MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.
+	MemoryForceEmptyCtl int64 `json:"MemoryForceEmptyCtl,omitempty"`
 
 	// Memory soft limit in bytes.
 	MemoryReservation int64 `json:"MemoryReservation,omitempty"`
@@ -116,6 +124,11 @@ type Resources struct {
 	// Minimum: 0
 	MemorySwappiness *int64 `json:"MemorySwappiness,omitempty"`
 
+	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
+	// The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.
+	//
+	MemoryWmarkRatio int64 `json:"MemoryWmarkRatio,omitempty"`
+
 	// CPU quota in units of 10<sup>-9</sup> CPUs.
 	NanoCpus int64 `json:"NanoCPUs,omitempty"`
 
@@ -125,6 +138,9 @@ type Resources struct {
 	// Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.
 	//
 	PidsLimit int64 `json:"PidsLimit,omitempty"`
+
+	// ScheLatSwitch enables scheduler latency count in cpuacct
+	ScheLatSwitch int64 `json:"ScheLatSwitch,omitempty"`
 
 	// A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
 	//
@@ -173,9 +189,15 @@ type Resources struct {
 
 /* polymorph Resources IOMaximumIOps false */
 
+/* polymorph Resources IntelRdtL3Cbm false */
+
 /* polymorph Resources KernelMemory false */
 
 /* polymorph Resources Memory false */
+
+/* polymorph Resources MemoryExtra false */
+
+/* polymorph Resources MemoryForceEmptyCtl false */
 
 /* polymorph Resources MemoryReservation false */
 
@@ -183,11 +205,15 @@ type Resources struct {
 
 /* polymorph Resources MemorySwappiness false */
 
+/* polymorph Resources MemoryWmarkRatio false */
+
 /* polymorph Resources NanoCPUs false */
 
 /* polymorph Resources OomKillDisable false */
 
 /* polymorph Resources PidsLimit false */
+
+/* polymorph Resources ScheLatSwitch false */
 
 /* polymorph Resources Ulimits false */
 
