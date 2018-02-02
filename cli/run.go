@@ -73,6 +73,8 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringSliceVar(&rc.sysctls, "sysctl", nil, "Sysctl options")
 	flagSet.StringSliceVar(&rc.networks, "net", nil, "Set networks to container")
 	flagSet.StringSliceVar(&rc.securityOpt, "security-opt", nil, "Security Options")
+	flagSet.StringSliceVar(&rc.capAdd, "cap-add", nil, "Add Linux capabilities")
+	flagSet.StringSliceVar(&rc.capDrop, "cap-drop", nil, "Drop Linux capabilities")
 	flagSet.Uint16Var(&rc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Var(&rc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
 	flagSet.Var(&rc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")

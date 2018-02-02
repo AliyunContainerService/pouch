@@ -38,6 +38,8 @@ type container struct {
 	sysctls              []string
 	networks             []string
 	securityOpt          []string
+	capAdd               []string
+	capDrop              []string
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
 	blkioDeviceReadBps   ThrottleBpsDevice
@@ -138,6 +140,8 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Sysctls:       sysctls,
 			SecurityOpt:   c.securityOpt,
 			NetworkMode:   networkMode,
+			CapAdd:        c.capAdd,
+			CapDrop:       c.capDrop,
 		},
 
 		NetworkingConfig: networkingConfig,

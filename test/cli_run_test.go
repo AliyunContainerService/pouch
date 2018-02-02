@@ -261,6 +261,16 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunWithCapability is to verify run container with capability.
+func (suite *PouchRunSuite) TestRunWithCapability(c *check.C) {
+	capability := "NET_ADMIN"
+	name := "run-capability"
+
+	res := command.PouchRun("run", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunWithBlkioWeight is to verify --specific Blkio Weight when running a container.
 func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
 	name := "test-run-with-blkio-weight"

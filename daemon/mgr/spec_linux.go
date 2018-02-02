@@ -4,6 +4,8 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+
+	"github.com/docker/docker/daemon/caps"
 )
 
 const (
@@ -52,6 +54,24 @@ func setupAppArmor(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) 
 	default:
 		spec.s.Process.ApparmorProfile = appArmorProfile
 	}
+
+	return nil
+}
+
+func setupCapabilities(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	var caplist []string
+	var err error
+
+	capabilities := spec.s.Process.Capabilities
+	if meta.HostConfig.Privileged {
+		caplist = caps.GetAllCapabilities()
+	} else if caplist, err = caps.TweakCapabilities(capabilities.Effective, meta.HostConfig.CapAdd, meta.HostConfig.CapDrop); err != nil {
+		return err
+	}
+	capabilities.Effective = caplist
+	capabilities.Bounding = caplist
+	capabilities.Permitted = caplist
+	capabilities.Inheritable = caplist
 
 	return nil
 }

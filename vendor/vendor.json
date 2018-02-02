@@ -356,6 +356,12 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "ttq59lEvvhcPqd+hDXxclaIXQQs=",
+			"path": "github.com/docker/docker/daemon/caps",
+			"revision": "53a58da551e961b3710bbbdfabbc162c3f5f30f6",
+			"revisionTime": "2018-01-31T23:13:00Z"
+		},
+		{
 			"checksumSHA1": "Oq8DJr2mCWo5McNwdMFVwBsieXQ=",
 			"path": "github.com/docker/go-events",
 			"revision": "2b8ed96d2a422bf205adcdfa05272dc12c81613b",
@@ -709,6 +715,12 @@
 			"path": "github.com/stretchr/testify/assert",
 			"revision": "2b8ed96d2a422bf205adcdfa05272dc12c81613b",
 			"revisionTime": "2017-11-08T19:22:26Z"
+		},
+		{
+			"checksumSHA1": "PgEklGW56c5RLHqQhORxt6jS3fY=",
+			"path": "github.com/syndtr/gocapability/capability",
+			"revision": "db04d3cc01c8b54962a58ec7e491717d06cfcc16",
+			"revisionTime": "2017-07-04T07:02:18Z"
 		},
 		{
 			"checksumSHA1": "AHk1Y+L/rkf1jKAmqttDefEWeJw=",
