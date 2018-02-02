@@ -857,6 +857,7 @@ POST /networks/create
 |---|---|---|
 |**201**|The network was created successfully|[NetworkCreateResp](#networkcreateresp)|
 |**400**|bad parameter|[Error](#error)|
+|**409**|name already in use|[Error](#error)|
 |**500**|An unexpected server error occured.|[Error](#error)|
 
 
@@ -1302,6 +1303,18 @@ A device mapping between the host and container
 |**PathOnHost**  <br>*optional*|path on host of the device mapping|string|
 
 
+<a name="endpointipamconfig"></a>
+### EndpointIPAMConfig
+IPAM configurations for the endpoint
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**IPv4Address**  <br>*optional*|ipv4 address|string|
+|**IPv6Address**  <br>*optional*|ipv6 address|string|
+|**LinkLocalIPs**  <br>*optional*|link to the list of local ip|< string > array|
+
+
 <a name="endpointsettings"></a>
 ### EndpointSettings
 Configuration for a network endpoint.
@@ -1315,6 +1328,7 @@ Configuration for a network endpoint.
 |**Gateway**  <br>*optional*|Gateway address for this network.  <br>**Example** : `"172.17.0.1"`|string|
 |**GlobalIPv6Address**  <br>*optional*|Global IPv6 address.  <br>**Example** : `"2001:db8::5689"`|string|
 |**GlobalIPv6PrefixLen**  <br>*optional*|Mask length of the global IPv6 address.  <br>**Example** : `64`|integer (int64)|
+|**IPAMConfig**  <br>*optional*||[EndpointIPAMConfig](#endpointipamconfig)|
 |**IPAddress**  <br>*optional*|IPv4 address.  <br>**Example** : `"172.17.0.4"`|string|
 |**IPPrefixLen**  <br>*optional*|Mask length of the IPv4 address.  <br>**Example** : `16`|integer|
 |**IPv6Gateway**  <br>*optional*|IPv6 gateway address.  <br>**Example** : `"2001:db8:2::100"`|string|
@@ -1658,10 +1672,7 @@ NetworkSettings exposes the network settings in the API.
 ### NetworkingConfig
 Configuration for a network used to create a container.
 
-
-|Name|Schema|
-|---|---|
-|**EndpointsConfig**  <br>*optional*|[EndpointSettings](#endpointsettings)|
+*Type* : object
 
 
 <a name="portbinding"></a>
