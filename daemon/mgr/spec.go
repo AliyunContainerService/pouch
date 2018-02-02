@@ -54,6 +54,9 @@ var setupFunc = []SetupFunc{
 	setupSysctl,
 	// blkio spec
 	setupBlkio,
+
+	//hook
+	setupHook,
 }
 
 // Register is used to registe spec setup function.

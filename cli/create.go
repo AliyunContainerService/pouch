@@ -68,6 +68,10 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.Var(&cc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flagSet.Var(&cc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
 	flagSet.Var(&cc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
+
+	flagSet.BoolVar(&cc.rich, "rich", false, "Start container in rich container mode. (default false)")
+	flagSet.StringVar(&cc.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
+	flagSet.StringVar(&cc.initScript, "initscript", "", "Initial script executed in container")
 }
 
 // runCreate is the entry of create command.

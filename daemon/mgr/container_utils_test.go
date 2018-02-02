@@ -8,7 +8,7 @@ import (
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/collect"
-	"github.com/docker/libnetwork/config"
+	"github.com/alibaba/pouch/daemon/config"
 )
 
 func TestContainerManager_containerID(t *testing.T) {

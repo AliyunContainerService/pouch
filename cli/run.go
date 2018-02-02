@@ -77,6 +77,10 @@ func (rc *RunCommand) addFlags() {
 	flagSet.Var(&rc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flagSet.Var(&rc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
 	flagSet.Var(&rc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
+
+	flagSet.BoolVar(&rc.rich, "rich", false, "Start container in rich container mode. (default false)")
+	flagSet.StringVar(&rc.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
+	flagSet.StringVar(&rc.initScript, "initscript", "", "Initial script executed in container")
 }
 
 // runRun is the entry of run command.
