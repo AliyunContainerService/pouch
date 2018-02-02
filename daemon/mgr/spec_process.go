@@ -36,7 +36,7 @@ func setupProcessEnv(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) e
 	}
 
 	//set env for rich container mode
-	s.Process.Env = append(s.Process.Env, richContainerMode(c)...)
+	s.Process.Env = append(s.Process.Env, richContainerModeEnv(c)...)
 
 	return nil
 }
