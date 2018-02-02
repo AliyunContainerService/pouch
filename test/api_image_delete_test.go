@@ -26,7 +26,7 @@ func (suite *APIImageDeleteSuite) TestDeleteNonExisting(c *check.C) {
 	img := "TestDeleteNonExisting"
 	resp, err := request.Delete("/images/" + img)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }
 
 // TestDeleteUsingImage tests deleting an image in use by running container will fail.
@@ -41,7 +41,7 @@ func (suite *APIImageDeleteSuite) TestDeleteUsingImage(c *check.C) {
 
 	resp, err := request.Delete("/images/" + busyboxImage)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 500)
+	CheckRespStatus(c, resp, 500)
 
 	DelContainerForceOk(c, cname)
 }

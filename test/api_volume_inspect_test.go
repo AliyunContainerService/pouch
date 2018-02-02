@@ -31,19 +31,19 @@ func (suite *APIVolumeInspectSuite) TestVolumeInspectOk(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 201)
 
 	// Test volume inspect feature.
 	path = "/volumes/" + vol
 	resp, err = request.Get(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	// Delete the volume.
 	path = "/volumes/" + vol
 	resp, err = request.Delete(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	CheckRespStatus(c, resp, 204)
 }
 
 // TestVolumeInspectNotFound tests if inspecting a nonexistent volume returns error.
@@ -53,6 +53,6 @@ func (suite *APIVolumeInspectSuite) TestVolumeInspectNotFound(c *check.C) {
 	path := "/volumes/" + vol
 	resp, err := request.Get(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 
 }

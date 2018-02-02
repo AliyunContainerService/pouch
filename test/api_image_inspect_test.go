@@ -24,7 +24,7 @@ func (suite *APIImageInspectSuite) SetUpTest(c *check.C) {
 func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 	resp, err := request.Get("/images/" + busyboxImage + "/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	got := types.ImageInfo{}
 	err = request.DecodeBody(&got, resp.Body)
@@ -44,5 +44,5 @@ func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 func (suite *APIImageInspectSuite) TestImageInspectNotFound(c *check.C) {
 	resp, err := request.Get("/images/" + "TestImageInspectNotFound" + "/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 404)
+	CheckRespStatus(c, resp, 404)
 }

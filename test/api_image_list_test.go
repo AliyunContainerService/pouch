@@ -25,7 +25,7 @@ func (suite *APIImageListSuite) SetUpTest(c *check.C) {
 func (suite *APIImageListSuite) TestImageListOk(c *check.C) {
 	resp, err := request.Get("/images/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 }
 
 // TestImageListAll tests listing all images layers.
@@ -36,7 +36,7 @@ func (suite *APIImageListSuite) TestImageListAll(c *check.C) {
 
 	resp, err := request.Get("/images/json", query)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	// TODO: Add more check
 }
@@ -49,7 +49,7 @@ func (suite *APIImageListSuite) TestImageListDigest(c *check.C) {
 
 	resp, err := request.Get("/images/json", query)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 }
 
 // TestImageListFilter tests listing images with filter.

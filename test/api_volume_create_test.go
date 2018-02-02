@@ -32,10 +32,10 @@ func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 201)
 
 	path = "/volumes/" + vol
 	resp, err = request.Delete(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	CheckRespStatus(c, resp, 204)
 }
