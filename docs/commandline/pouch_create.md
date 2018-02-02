@@ -41,9 +41,11 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --memory-swap string          Container swap limit
       --memory-wappiness int        Container memory swappiness [0, 100] (default -1)
       --name string                 Specify name of container
+      --net strings                 Set networks to container
       --pid string                  PID namespace to use
       --restart string              Restart policy to apply when container exits
       --runtime string              Specify oci runtime
+      --security-opt strings        Security Options
       --sysctl strings              Sysctl options
   -t, --tty                         Allocate a tty device
       --uts string                  UTS namespace to use
