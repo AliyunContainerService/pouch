@@ -32,7 +32,7 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 	c.Assert(err, check.IsNil)
 	defer resp.Body.Close()
 
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	got := types.SystemInfo{}
 	err = json.NewDecoder(resp.Body).Decode(&got)
@@ -49,7 +49,7 @@ func (suite *APISystemSuite) TestVersion(c *check.C) {
 	c.Assert(err, check.IsNil)
 	defer resp.Body.Close()
 
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	got := types.SystemVersion{}
 	err = json.NewDecoder(resp.Body).Decode(&got)

@@ -31,17 +31,17 @@ func (suite *APINetworkListSuite) TestNetworkListOk(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, body)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 201)
 
 	// List the created network.
 	path = "/networks"
 	resp, err = request.Get(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	// Delete the network.
 	path = "/networks/" + net
 	resp, err = request.Delete(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	CheckRespStatus(c, resp, 204)
 }

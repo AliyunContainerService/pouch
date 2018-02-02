@@ -34,7 +34,7 @@ func (suite *APIVolumeListSuite) TestVolumeListOk(c *check.C) {
 	path := "/volumes"
 	resp, err := request.Get(path)
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	// Check list result.
 	volumeListResp := &types.VolumeListResp{}
