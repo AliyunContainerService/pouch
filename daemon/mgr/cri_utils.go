@@ -301,6 +301,7 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 	// TODO: apply other security options.
 
 	// Apply capability options.
+	hostConfig.Privileged = sc.Privileged
 	if sc.GetCapabilities() != nil {
 		hostConfig.CapAdd = sc.GetCapabilities().GetAddCapabilities()
 		hostConfig.CapDrop = sc.GetCapabilities().GetDropCapabilities()

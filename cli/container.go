@@ -31,6 +31,7 @@ type container struct {
 	memorySwappiness     int64
 	devices              []string
 	enableLxcfs          bool
+	privileged           bool
 	restartPolicy        string
 	ipcMode              string
 	pidMode              string
@@ -133,6 +134,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
 			},
 			EnableLxcfs:   c.enableLxcfs,
+			Privileged:    c.privileged,
 			RestartPolicy: restartPolicy,
 			IpcMode:       c.ipcMode,
 			PidMode:       c.pidMode,

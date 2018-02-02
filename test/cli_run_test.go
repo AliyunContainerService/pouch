@@ -271,6 +271,15 @@ func (suite *PouchRunSuite) TestRunWithCapability(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunWithPrivilege is to verify run container with privilege.
+func (suite *PouchRunSuite) TestRunWithPrivilege(c *check.C) {
+	name := "run-privilege"
+
+	res := command.PouchRun("run", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunWithBlkioWeight is to verify --specific Blkio Weight when running a container.
 func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
 	name := "test-run-with-blkio-weight"

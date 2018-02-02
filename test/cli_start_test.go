@@ -173,3 +173,12 @@ func (suite *PouchStartSuite) TestStartWithCapability(c *check.C) {
 	res.Assert(c, icmd.Success)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithPrivilege starts a container with privilege.
+func (suite *PouchStartSuite) TestStartWithPrivilege(c *check.C) {
+	name := "start-privilege"
+
+	res := command.PouchRun("create", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}

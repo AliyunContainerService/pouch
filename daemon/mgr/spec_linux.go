@@ -48,8 +48,15 @@ func setupAppArmor(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) 
 	switch appArmorProfile {
 	case ProfileNameUnconfined:
 		return nil
-	case ProfileRuntimeDefault, "":
+	case ProfileRuntimeDefault:
 		// TODO: handle runtime default case.
+		return nil
+	case "":
+		if meta.HostConfig.Privileged {
+			return nil
+		}
+		// TODO: if user does not specify the AppArmor and the container is not in privilege mode,
+		// we need to specify it as default case, handle it later.
 		return nil
 	default:
 		spec.s.Process.ApparmorProfile = appArmorProfile
