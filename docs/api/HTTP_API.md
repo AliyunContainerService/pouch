@@ -1412,7 +1412,7 @@ Container configuration that depends on the host we are running on
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**ConsoleSize**  <br>*optional*|Initial console size, as an `[height, width]` array. (Windows only)|< integer > array|
 |**ContainerIDFile**  <br>*optional*|Path to a file where the container ID is written|string|
-|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br><br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
 |**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
@@ -1432,15 +1432,19 @@ Container configuration that depends on the host we are running on
 |**GroupAdd**  <br>*optional*|A list of additional groups that the container process will run as.|< string > array|
 |**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
 |**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
 |**IpcMode**  <br>*optional*|IPC sharing mode for the container. Possible values are:<br>- `"none"`: own private IPC namespace, with /dev/shm not mounted<br>- `"private"`: own private IPC namespace<br>- `"shareable"`: own private IPC namespace, with a possibility to share it with other containers<br>- `"container:<name\|id>"`: join another (shareable) container's IPC namespace<br>- `"host"`: use the host system's IPC namespace<br>If not specified, daemon default is used, which can either be `"private"`<br>or `"shareable"`, depending on daemon version and configuration.|string|
 |**Isolation**  <br>*optional*|Isolation technology of the container. (Windows only)|enum (default, process, hyperv)|
 |**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Links**  <br>*optional*|A list of links for the container in the form `container_name:alias`.|< string > array|
 |**LogConfig**  <br>*optional*|The logging configuration for this container|[LogConfig](#hostconfig-logconfig)|
 |**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.|integer (int64)|
 |**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
 |**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
 |**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.|integer (int64)|
 |**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
@@ -1453,6 +1457,7 @@ Container configuration that depends on the host we are running on
 |**ReadonlyRootfs**  <br>*optional*|Mount the container's root filesystem as read only.|boolean|
 |**RestartPolicy**  <br>*optional*|Restart policy to be used to manage the container|[RestartPolicy](#restartpolicy)|
 |**Runtime**  <br>*optional*|Runtime to use with this container.|string|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct|integer (int64)|
 |**SecurityOpt**  <br>*optional*|A list of string values to customize labels for MLS systems, such as SELinux.|< string > array|
 |**ShmSize**  <br>*optional*|Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.  <br>**Minimum value** : `0`|integer|
 |**StorageOpt**  <br>*optional*|Storage driver options for this container, in the form `{"size": "120G"}`.|< string, string > map|
@@ -1712,7 +1717,7 @@ A container's resources (cgroups config, ulimits, etc)
 |**BlkioWeight**  <br>*optional*|Block IO weight (relative weight).  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
-|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br><br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
 |**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
@@ -1726,14 +1731,19 @@ A container's resources (cgroups config, ulimits, etc)
 |**DiskQuota**  <br>*optional*|Disk limit (in bytes).|integer (int64)|
 |**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
 |**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
 |**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.|integer (int64)|
 |**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
 |**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
 |**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.|integer (int64)|
 |**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#resources-ulimits) > array|
 
 <a name="resources-ulimits"></a>

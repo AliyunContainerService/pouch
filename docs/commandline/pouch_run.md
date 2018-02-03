@@ -34,6 +34,8 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -a, --attach                      Attach container's STDOUT and STDERR
       --blkio-weight uint16         Block IO (relative weight), between 10 and 1000, or 0 to disable
       --blkio-weight-device value   Block IO weight (relative device weight) (default [])
+      --cap-add strings             Add Linux capabilities
+      --cap-drop strings            Drop Linux capabilities
       --cpu-share int               CPU shares
       --cpuset-cpus string          CPUs in cpuset
       --cpuset-mems string          MEMs in cpuset
