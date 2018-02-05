@@ -57,9 +57,9 @@ type container struct {
 	IntelRdtL3Cbm        string
 
 	//add for rich container mode
-	rich		     bool
-	richMode	     string
-	initScript	     string
+	rich       bool
+	richMode   string
+	initScript string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
