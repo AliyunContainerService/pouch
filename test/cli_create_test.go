@@ -193,6 +193,22 @@ func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
 	}
 }
 
+// TestCreateWithPrivilege tries to test create a container with privilege.
+func (suite *PouchCreateSuite) TestCreateWithPrivilege(c *check.C) {
+	name := "create-privilege"
+
+	res := command.PouchRun("create", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.Privileged, check.Equals, true)
+}
+
 // TestCreateEnableLxcfs tries to test create a container with lxcfs.
 func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	name := "create-lxcfs"

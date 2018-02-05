@@ -66,6 +66,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringVar(&rc.memorySwap, "memory-swap", "", "Container swap limit")
 	flagSet.StringSliceVarP(&rc.devices, "device", "", nil, "Add a host device to the container")
 	flagSet.BoolVar(&rc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
+	flagSet.BoolVar(&rc.privileged, "privileged", false, "Give extended privileges to the container")
 	flagSet.StringVar(&rc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 	flagSet.StringVar(&rc.ipcMode, "ipc", "", "IPC namespace to use")
 	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
