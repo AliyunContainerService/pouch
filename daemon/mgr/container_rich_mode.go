@@ -2,11 +2,12 @@ package mgr
 
 import (
 	"fmt"
+
 	"github.com/alibaba/pouch/apis/types"
 )
 
-const(
-	rich_mode_env = "rich_mode=true"
+const (
+	rich_mode_env        = "rich_mode=true"
 	rich_mode_launch_env = "rich_mode_launch_manner"
 
 	//for ali internal
@@ -14,16 +15,16 @@ const(
 )
 
 func richContainerModeEnv(c *ContainerMeta) []string {
-	var(
-		ret []string = []string{}
-		setRichMode = false
-		richMode = ""
+	var (
+		ret         []string = []string{}
+		setRichMode          = false
+		richMode             = ""
 	)
 
 	envs := c.Config.Env
 
 	//if set inter_rich_mode_env, you can also run in rich container mode
-	for _,e := range envs {
+	for _, e := range envs {
 		if e == inter_rich_mode_env {
 			setRichMode = true
 			richMode = types.ContainerConfigRichModeSystemd
@@ -50,4 +51,3 @@ func richContainerModeEnv(c *ContainerMeta) []string {
 
 	return ret
 }
-
