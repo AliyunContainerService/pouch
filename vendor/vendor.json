@@ -712,6 +712,18 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "dZco6VUDLAAr8bpGJibQONFCblQ=",
+			"path": "github.com/opencontainers/selinux/go-selinux",
+			"revision": "76b408a8e68e301b8245ba414ab600a0d1d797d9",
+			"revisionTime": "2018-01-04T21:15:34Z"
+		},
+		{
+			"checksumSHA1": "6+RKZPTLnmLcjCDXF+Z96QejmPs=",
+			"path": "github.com/opencontainers/selinux/go-selinux/label",
+			"revision": "76b408a8e68e301b8245ba414ab600a0d1d797d9",
+			"revisionTime": "2018-01-04T21:15:34Z"
+		},
+		{
 			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
 			"path": "github.com/pborman/uuid",
 			"revision": "e790cca94e6cc75c7064b1332e63811d4aae1a53",
