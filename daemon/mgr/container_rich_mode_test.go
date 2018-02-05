@@ -1,15 +1,17 @@
 package mgr
 
 import (
-	"github.com/alibaba/pouch/apis/types"
-	"testing"
 	"strings"
+	"testing"
+
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func convertEnvArrayToMap(envs []string) map[string]string {
 	m := map[string]string{}
-	for _,e := range envs {
+	for _, e := range envs {
 		kvs := strings.Split(e, "=")
 		if len(kvs) == 2 {
 			m[kvs[0]] = kvs[1]
@@ -19,7 +21,7 @@ func convertEnvArrayToMap(envs []string) map[string]string {
 	return m
 }
 
-func TestRichModeSet(t *testing.T)  {
+func TestRichModeSet(t *testing.T) {
 	c := &ContainerMeta{
 		Config: &types.ContainerConfig{
 			Rich: true,
@@ -44,7 +46,7 @@ func TestRichModeSet(t *testing.T)  {
 	//test set rich mode manner, not set rich mode
 	c = &ContainerMeta{
 		Config: &types.ContainerConfig{
-			Rich: false,
+			Rich:     false,
 			RichMode: types.ContainerConfigRichModeSystemd,
 		},
 	}
@@ -54,7 +56,7 @@ func TestRichModeSet(t *testing.T)  {
 	//test set rich mode manner
 	c = &ContainerMeta{
 		Config: &types.ContainerConfig{
-			Rich: true,
+			Rich:     true,
 			RichMode: types.ContainerConfigRichModeSystemd,
 		},
 	}
@@ -76,5 +78,3 @@ func TestRichModeSet(t *testing.T)  {
 	assert.Equal(t, "true", mEnvs5["rich_mode"])
 	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs5[rich_mode_launch_env])
 }
-
-
