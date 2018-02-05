@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	richModeEnv = "rich_mode=true"
+	richModeEnv       = "rich_mode=true"
 	richModeLaunchEnv = "rich_mode_launch_manner"
 
 	//for ali internal
@@ -16,9 +16,9 @@ const (
 
 func richContainerModeEnv(c *ContainerMeta) []string {
 	var (
-		ret         	     = []string{}
-		setRichMode          = false
-		richMode             = ""
+		ret         = []string{}
+		setRichMode = false
+		richMode    = ""
 	)
 
 	envs := c.Config.Env
