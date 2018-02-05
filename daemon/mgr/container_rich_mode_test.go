@@ -32,7 +32,7 @@ func TestRichModeSet(t *testing.T) {
 	mEnvs1 := convertEnvArrayToMap(envs1)
 
 	assert.Equal(t, "true", mEnvs1["rich_mode"])
-	assert.Equal(t, types.ContainerConfigRichModeDumbInit, mEnvs1[rich_mode_launch_env])
+	assert.Equal(t, types.ContainerConfigRichModeDumbInit, mEnvs1[richModeLaunchEnv])
 
 	//test not set rich mode
 	c = &ContainerMeta{
@@ -63,18 +63,18 @@ func TestRichModeSet(t *testing.T) {
 	envs4 := richContainerModeEnv(c)
 	mEnvs4 := convertEnvArrayToMap(envs4)
 	assert.Equal(t, "true", mEnvs4["rich_mode"])
-	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs4[rich_mode_launch_env])
+	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs4[richModeLaunchEnv])
 
 	//test set rich mode by env
 	c = &ContainerMeta{
 		Config: &types.ContainerConfig{
 			Env: []string{
-				inter_rich_mode_env,
+				interRichModeEnv,
 			},
 		},
 	}
 	envs5 := richContainerModeEnv(c)
 	mEnvs5 := convertEnvArrayToMap(envs5)
 	assert.Equal(t, "true", mEnvs5["rich_mode"])
-	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs5[rich_mode_launch_env])
+	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs5[richModeLaunchEnv])
 }

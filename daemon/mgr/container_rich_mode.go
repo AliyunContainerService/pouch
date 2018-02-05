@@ -7,16 +7,16 @@ import (
 )
 
 const (
-	rich_mode_env        = "rich_mode=true"
-	rich_mode_launch_env = "rich_mode_launch_manner"
+	richModeEnv = "rich_mode=true"
+	richModeLaunchEnv = "rich_mode_launch_manner"
 
 	//for ali internal
-	inter_rich_mode_env = "ali_run_mode=common_vm"
+	interRichModeEnv = "ali_run_mode=common_vm"
 )
 
 func richContainerModeEnv(c *ContainerMeta) []string {
 	var (
-		ret         []string = []string{}
+		ret         	     = []string{}
 		setRichMode          = false
 		richMode             = ""
 	)
@@ -25,7 +25,7 @@ func richContainerModeEnv(c *ContainerMeta) []string {
 
 	//if set inter_rich_mode_env, you can also run in rich container mode
 	for _, e := range envs {
-		if e == inter_rich_mode_env {
+		if e == interRichModeEnv {
 			setRichMode = true
 			richMode = types.ContainerConfigRichModeSystemd
 			break
@@ -46,7 +46,7 @@ func richContainerModeEnv(c *ContainerMeta) []string {
 	}
 
 	if setRichMode {
-		ret = append(ret, rich_mode_env, fmt.Sprintf("%s=%s", rich_mode_launch_env, richMode))
+		ret = append(ret, richModeEnv, fmt.Sprintf("%s=%s", richModeLaunchEnv, richMode))
 	}
 
 	return ret
