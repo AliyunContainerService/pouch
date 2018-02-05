@@ -164,6 +164,19 @@ func (suite *PouchStartSuite) TestStartWithAppArmor(c *check.C) {
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 }
 
+// TestStartWithSeccomp starts a container with security option seccomp.
+func (suite *PouchStartSuite) TestStartWithSeccomp(c *check.C) {
+	seccomp := "seccomp=unconfined"
+	name := "start-seccomp"
+
+	command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	// TODO: do the test more strictly with effective seccomp profile.
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+}
+
 // TestStartWithCapability starts a container with capability.
 func (suite *PouchStartSuite) TestStartWithCapability(c *check.C) {
 	capability := "NET_ADMIN"

@@ -61,6 +61,9 @@ type ContainerMeta struct {
 	// app armor profile
 	AppArmorProfile string `json:"AppArmorProfile,omitempty"`
 
+	// seccomp profile
+	SeccompProfile string `json:"SeccompProfile,omitempty"`
+
 	// The arguments to the command being run
 	Args []string `json:"Args"`
 

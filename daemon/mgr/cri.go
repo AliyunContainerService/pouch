@@ -286,7 +286,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		},
 		NetworkingConfig: &apitypes.NetworkingConfig{},
 	}
-	c.updateCreateConfig(createConfig, config, sandboxConfig, podSandboxID)
+	err := c.updateCreateConfig(createConfig, config, sandboxConfig, podSandboxID)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: devices and security option configurations.
 

@@ -2,10 +2,14 @@ package mgr
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/docker/docker/daemon/caps"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 const (
@@ -13,6 +17,10 @@ const (
 	ProfileNamePrefix = "localhost/"
 	// ProfileRuntimeDefault indicates that we should use or create a runtime default profile.
 	ProfileRuntimeDefault = "runtime/default"
+	// ProfileDockerDefault indicates that we should use or create a docker default profile.
+	ProfileDockerDefault = "docker/default"
+	// ProfilePouchDefault indicates that we should use or create a pouch default profile.
+	ProfilePouchDefault = "pouch/default"
 	// ProfileNameUnconfined is a string indicating one should run a pod/containerd without a security profile.
 	ProfileNameUnconfined = "unconfined"
 )
@@ -60,6 +68,33 @@ func setupAppArmor(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) 
 		return nil
 	default:
 		spec.s.Process.ApparmorProfile = appArmorProfile
+	}
+
+	return nil
+}
+
+func setupSeccomp(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	if meta.HostConfig.Privileged {
+		return nil
+	}
+
+	// TODO: check whether seccomp is enable in your kernel, if not, cannot run a custom seccomp prifle.
+	seccompProfile := meta.SeccompProfile
+	switch seccompProfile {
+	case ProfileNameUnconfined:
+		return nil
+	case ProfilePouchDefault, "":
+		spec.s.Linux.Seccomp = seccomp.DefaultProfile(spec.s)
+	default:
+		spec.s.Linux.Seccomp = &specs.LinuxSeccomp{}
+		data, err := ioutil.ReadFile(seccompProfile)
+		if err != nil {
+			return fmt.Errorf("failed to load seccomp profile %q: %v", seccompProfile, err)
+		}
+		err = json.Unmarshal(data, spec.s.Linux.Seccomp)
+		if err != nil {
+			return fmt.Errorf("failed to decode seccomp profile %q: %v", seccompProfile, err)
+		}
 	}
 
 	return nil

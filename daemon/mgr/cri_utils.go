@@ -292,6 +292,27 @@ func getAppArmorSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]strin
 	return []string{fmt.Sprintf("apparmor=%s", profile)}, nil
 }
 
+// getSeccompSecurityOpts get container seccomp options from container seccomp profiles.
+func getSeccompSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string, error) {
+	profile := sc.SeccompProfilePath
+	if profile == "" || profile == ProfileNameUnconfined {
+		return []string{fmt.Sprintf("seccomp=%s", ProfileNameUnconfined)}, nil
+	}
+
+	// Return unconfined profile explicitly.
+	if profile == ProfileDockerDefault {
+		// return nil so pouch will load the default seccomp profile.
+		return nil, nil
+	}
+
+	if !strings.HasPrefix(profile, ProfileNamePrefix) {
+		return nil, fmt.Errorf("undefault profile should prefix with %q", ProfileNamePrefix)
+	}
+	profile = strings.TrimPrefix(profile, ProfileNamePrefix)
+
+	return []string{fmt.Sprintf("seccomp=%s", profile)}, nil
+}
+
 // modifyHostConfig applies security context config to pouch's HostConfig.
 func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *apitypes.HostConfig) error {
 	if sc == nil {
@@ -306,6 +327,13 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 		hostConfig.CapAdd = sc.GetCapabilities().GetAddCapabilities()
 		hostConfig.CapDrop = sc.GetCapabilities().GetDropCapabilities()
 	}
+
+	// Apply seccomp options.
+	seccompSecurityOpts, err := getSeccompSecurityOpts(sc)
+	if err != nil {
+		return fmt.Errorf("failed to generate seccomp security options: %v", err)
+	}
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, seccompSecurityOpts...)
 
 	// Apply appArmor options.
 	appArmorSecurityOpts, err := getAppArmorSecurityOpts(sc)
