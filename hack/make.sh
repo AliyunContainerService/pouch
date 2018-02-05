@@ -84,7 +84,7 @@ function target()
 		daemon_timeout_time=30
 		while true;
 		do
-			if [[ -S /var/run/pouchd.sock ]];then
+			if pouch version; then
 				echo "Succeed to start pouch daemon"
 				break
 			elif (( $((daemon_timeout_time--)) == 0 ));then
