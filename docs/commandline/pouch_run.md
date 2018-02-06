@@ -60,6 +60,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --name string                 Specify name of container
       --net strings                 Set networks to container
       --pid string                  PID namespace to use
+      --privileged                  Give extended privileges to the container
       --restart string              Restart policy to apply when container exits
       --runtime string              Specify oci runtime
       --security-opt strings        Security Options
