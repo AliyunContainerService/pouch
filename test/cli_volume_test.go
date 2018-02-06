@@ -10,7 +10,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchVolumeSuite is the test suite fo help CLI.
+// PouchVolumeSuite is the test suite fo volume CLI.
 type PouchVolumeSuite struct{}
 
 func init() {
