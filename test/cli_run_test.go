@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -287,4 +288,25 @@ func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
 	res := command.PouchRun("run", "--name", name, "--blkio-weight", "500", busyboxImage)
 	res.Assert(c, icmd.Success)
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
+// TestRunWithLocalVolume is to verify run container with -v volume works.
+func (suite *PouchRunSuite) TestRunWithLocalVolume(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	name := funcname
+
+	command.PouchRun("volume", "create", "--name", funcname).Assert(c, icmd.Success)
+	command.PouchRun("run", "--name", name, "-v", funcname+":/tmp", busyboxImage, "touch", "/tmp/test").Assert(c, icmd.Success)
+
+	// check the existence of /mnt/local/function/test
+	icmd.RunCommand("stat", "/mnt/local/"+funcname+"/test").Assert(c, icmd.Success)
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
 }
