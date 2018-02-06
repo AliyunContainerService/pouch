@@ -117,7 +117,7 @@ func parseVolume(volumeCreateConfig *types.VolumeCreateConfig, v *VolumeCreateCo
 	// analyze labels.
 	for _, label := range v.labels {
 		l := strings.Split(label, "=")
-		if len(label) != 2 {
+		if len(l) != 2 {
 			return fmt.Errorf("unknown label %s: label format must be key=value", label)
 		}
 		volumeCreateConfig.Labels[l[0]] = l[1]

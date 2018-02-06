@@ -124,3 +124,16 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWrongDriver(c *check.C) {
 	command.PouchRun("volume", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
 	command.PouchRun("volume", "remove", funcname)
 }
+
+// TestVolumeCreateWithLabel tests creating volume with label.
+func (suite *PouchVolumeSuite) TestVolumeCreateWithLabel(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	command.PouchRun("volume", "create", "--name", funcname, "--label", "test=foo").Assert(c, icmd.Success)
+	command.PouchRun("volume", "remove", funcname)
+}
