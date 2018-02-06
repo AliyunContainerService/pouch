@@ -43,7 +43,7 @@ func generateEnvList(envs []*runtime.KeyValue) (result []string) {
 	for _, env := range envs {
 		result = append(result, fmt.Sprintf("%s=%s", env.Key, env.Value))
 	}
-	return
+	return result
 }
 
 func makeLabels(labels, annotations map[string]string) map[string]string {
