@@ -149,7 +149,7 @@ func IsContainerRunning(c *check.C, cname string) (bool, error) {
 func isContainerStateEqual(c *check.C, cname string, status string) (bool, error) {
 	resp, err := request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
+	CheckRespStatus(c, resp, 200)
 
 	defer resp.Body.Close()
 	got := types.ContainerJSON{}
@@ -226,7 +226,7 @@ func CreateVolume(c *check.C, name, driver string) error {
 	defer resp.Body.Close()
 
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 201)
+	CheckRespStatus(c, resp, 201)
 
 	return err
 }
@@ -238,7 +238,7 @@ func RemoveVolume(c *check.C, name string) error {
 	defer resp.Body.Close()
 
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 204)
+	CheckRespStatus(c, resp, 204)
 
 	return err
 }
