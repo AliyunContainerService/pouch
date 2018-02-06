@@ -166,6 +166,33 @@ func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
 	}
 }
 
+// TestCreateWithSeccomp tries to test create a container with security option seccomp.
+func (suite *PouchCreateSuite) TestCreateWithSeccomp(c *check.C) {
+	seccomp := "seccomp=unconfined"
+	name := "create-seccomp"
+
+	res := command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.SecurityOpt, check.NotNil)
+
+	exist := false
+	for _, opt := range result.HostConfig.SecurityOpt {
+		if opt == seccomp {
+			exist = true
+		}
+	}
+	if !exist {
+		c.Errorf("failed to set seccomp in security-opt")
+	}
+}
+
 // TestCreateWithCapability tries to test create a container with capability.
 func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
 	capability := "NET_ADMIN"

@@ -111,6 +111,8 @@ func parseSecurityOpt(meta *ContainerMeta, securityOpts []string) error {
 		// TODO: handle other security options.
 		case "apparmor":
 			meta.AppArmorProfile = fields[1]
+		case "seccomp":
+			meta.SeccompProfile = fields[1]
 		default:
 			return fmt.Errorf("invalid --security-opt %q: unknown type", opt)
 		}

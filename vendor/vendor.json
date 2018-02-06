@@ -156,6 +156,12 @@
 			"revisionTime": "2017-12-05T05:15:20Z"
 		},
 		{
+			"checksumSHA1": "IqqBK06hDnn7N1nd9YT9mwrr96w=",
+			"path": "github.com/containerd/containerd/contrib/seccomp",
+			"revision": "89623f28b87a6004d4b785663257362d1658a729",
+			"revisionTime": "2017-12-05T05:15:20Z"
+		},
+		{
 			"checksumSHA1": "5q0XKUS32i7Ya0eRUaLEKGTdALw=",
 			"path": "github.com/containerd/containerd/dialer",
 			"revision": "89623f28b87a6004d4b785663257362d1658a729",

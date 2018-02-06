@@ -262,6 +262,19 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunWithSeccomp is to verify run container with security option seccomp.
+func (suite *PouchRunSuite) TestRunWithSeccomp(c *check.C) {
+	seccomp := "seccomp=unconfined"
+	name := "run-seccomp"
+
+	res := command.PouchRun("run", "--name", name, "--security-opt", seccomp, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	// TODO: do the test more strictly with effective seccomp profile.
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunWithCapability is to verify run container with capability.
 func (suite *PouchRunSuite) TestRunWithCapability(c *check.C) {
 	capability := "NET_ADMIN"
