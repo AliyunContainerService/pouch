@@ -3,8 +3,10 @@ package mgr
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
 
@@ -506,9 +508,29 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
+	execInspect, err := c.ContainerMgr.InspectExec(ctx, execid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
+	}
+
+	var result *ctrd.Message
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	select {
+	case <-ticker.C:
+		return nil, fmt.Errorf("timeout to get exec result for container %q", id)
+	case result = <-execInspect.ExitCh:
+	}
+
+	var stderr []byte
+	if result.RawError() != nil {
+		stderr = []byte(result.RawError().Error())
+	}
+
 	return &runtime.ExecSyncResponse{
-		// TODO: seperate stdout and stderr, what about exit code?
-		Stdout: output.Bytes(),
+		Stdout:   output.Bytes(),
+		Stderr:   stderr,
+		ExitCode: int32(result.ExitCode()),
 	}, nil
 }
 
