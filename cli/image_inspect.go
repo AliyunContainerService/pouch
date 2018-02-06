@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/spf13/cobra"
 )
 
@@ -34,13 +33,8 @@ func (i *ImageInspectCommand) Init(c *Cli) {
 
 // runInpsect is used to inspect image.
 func (i *ImageInspectCommand) runInspect(args []string) error {
-	ref, err := reference.Parse(args[0])
-	if err != nil {
-		return fmt.Errorf("failed to inspect image: %v", err)
-	}
-
 	apiClient := i.cli.Client()
-	image, err := apiClient.ImageInspect(ref.String())
+	image, err := apiClient.ImageInspect(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to inspect image: %v", err)
 	}

@@ -51,13 +51,14 @@ func (p *PullCommand) addFlags() {
 
 // runPull is the entry of pull command.
 func (p *PullCommand) runPull(args []string) error {
-	ref, err := reference.Parse(args[0])
+	namedRef, err := reference.ParseNamedReference(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
+	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
 
 	apiClient := p.cli.Client()
-	responseBody, err := apiClient.ImagePull(ref.Name, ref.Tag)
+	responseBody, err := apiClient.ImagePull(taggedRef.Name(), taggedRef.Tag())
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}

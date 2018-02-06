@@ -82,14 +82,13 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			return nil, err
 		}
 
-		ref, err := reference.Parse(image.Name)
+		refNamed, err := reference.ParseNamedReference(image.Name)
 		if err != nil {
 			return nil, err
 		}
+		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
 
-		// TODO(Wei Fu): the go-digest will deprecate the Hex() method.
-		// We need to use Encoded() if update the go-digest version.
-		ociImage, err := c.GetOciImage(ctx, ref.String())
+		ociImage, err := c.GetOciImage(ctx, image.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +98,7 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 		if err != nil {
 			return nil, err
 		}
-		imageInfo.Tag = ref.Tag
+		imageInfo.Tag = refTagged.Tag()
 		imageInfo.Name = image.Name
 		imageInfo.Digest = digest.String()
 		imageInfo.Size = size
@@ -171,6 +170,14 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 		return types.ImageInfo{}, err
 	}
 
+	// FIXME: please make sure that all the information about imageInfo is
+	// the same to what we do in the ListImages. If not, the imageInfo.ID will
+	// be different.
+	size, err := img.Size(ctx)
+	if err != nil {
+		return types.ImageInfo{}, err
+	}
+
 	logrus.Infof("success to pull image: %s", img.Name())
 
 	ociImage, err := c.GetOciImage(ctx, ref)
@@ -181,14 +188,15 @@ func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.J
 	imageInfo, err := ociImageToPouchImage(ociImage)
 
 	// fill struct ImageInfo
-	name, err := reference.Parse(img.Name())
+	refNamed, err := reference.ParseNamedReference(img.Name())
 	if err != nil {
 		return types.ImageInfo{}, err
 	}
-	imageInfo.Tag = name.Tag
+	refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+	imageInfo.Tag = refTagged.Tag()
 	imageInfo.Name = img.Name()
 	imageInfo.Digest = img.Target().Digest.String()
-	imageInfo.Size = img.Target().Size
+	imageInfo.Size = size
 
 	// generate image ID by imageInfo JSON.
 	imageID, err := generateID(&imageInfo)

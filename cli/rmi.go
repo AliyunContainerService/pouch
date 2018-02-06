@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/spf13/cobra"
 )
 
@@ -43,17 +42,11 @@ func (rmi *RmiCommand) runRmi(args []string) error {
 	apiClient := rmi.cli.Client()
 
 	for _, name := range args {
-		ref, err := reference.Parse(name)
-		if err != nil {
+		if err := apiClient.ImageRemove(name, rmi.force); err != nil {
 			return fmt.Errorf("failed to remove image: %v", err)
 		}
-
-		if err := apiClient.ImageRemove(ref.String(), rmi.force); err != nil {
-			return fmt.Errorf("failed to remove image: %v", err)
-		}
-		fmt.Printf("%s\n", ref.String())
+		fmt.Printf("%s\n", name)
 	}
-
 	return nil
 }
 

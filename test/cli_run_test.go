@@ -59,6 +59,23 @@ func (suite *PouchRunSuite) TestRunPrintHi(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunPrintHiByImageID is to verify run container with executing a command by image ID.
+func (suite *PouchRunSuite) TestRunPrintHiByImageID(c *check.C) {
+	name := "test-run-print-hi-by-image-id"
+
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[busyboxImage][0]
+
+	res = command.PouchRun("run", "--name", name, imageID, "echo", "hi")
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, "hi") {
+		c.Fatalf("unexpected output %s expected hi\n", out)
+	}
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunDeviceMapping is to verify --device param when running a container.
 func (suite *PouchRunSuite) TestRunDeviceMapping(c *check.C) {
 	if _, err := os.Stat("/dev/zero"); err != nil {
