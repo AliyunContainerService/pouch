@@ -137,3 +137,16 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithLabel(c *check.C) {
 	command.PouchRun("volume", "create", "--name", funcname, "--label", "test=foo").Assert(c, icmd.Success)
 	command.PouchRun("volume", "remove", funcname)
 }
+
+// TestVolumeCreateWithSelector tests creating volume with --selector.
+func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	command.PouchRun("volume", "create", "--name", funcname, "--selector", "test=foo").Assert(c, icmd.Success)
+	command.PouchRun("volume", "remove", funcname)
+}
