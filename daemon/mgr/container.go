@@ -3,6 +3,7 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -829,6 +830,16 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 			}
 
 			source = mountPath
+		} else {
+			// Create the host path if it doesn't exist.
+			_, err := os.Stat(source)
+			if err != nil && !os.IsNotExist(err) {
+				return errors.Errorf("failed to stat %q: %v", source, err)
+			}
+			err = os.MkdirAll(source, 0755)
+			if err != nil {
+				return errors.Errorf("failed to mkdir %q: %v", source, err)
+			}
 		}
 
 		switch len(arr) {

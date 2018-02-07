@@ -284,7 +284,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			Tty:       config.Tty,
 		},
 		HostConfig: &apitypes.HostConfig{
-		// TODO: generate mount bindings.
+			Binds: generateMountBindings(config.GetMounts()),
 		},
 		NetworkingConfig: &apitypes.NetworkingConfig{},
 	}

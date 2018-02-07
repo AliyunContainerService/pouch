@@ -22,7 +22,14 @@ func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error
 		}
 		opt := []string{"rbind"}
 		if lensd == 3 {
-			opt = append(opt, sd[2])
+			opt = append(opt, strings.Split(sd[2], ",")...)
+			// Set rootfs propagation, default setting is private.
+			if strings.Contains(sd[2], "rshared") {
+				s.Linux.RootfsPropagation = "rshared"
+			}
+			if strings.Contains(sd[2], "rslave") && s.Linux.RootfsPropagation != "rshared" {
+				s.Linux.RootfsPropagation = "rslave"
+			}
 		}
 		mounts = append(mounts, specs.Mount{
 			Destination: sd[1],
