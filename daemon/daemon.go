@@ -147,11 +147,21 @@ func (d *Daemon) Run() error {
 		close(grpcServerCloseCh)
 	}()
 
-	// Stop pouchd if both server stopped.
+	streamServerCloseCh := make(chan struct{})
+	go func() {
+		if d.criMgr.StreamServerStart(); err != nil {
+			logrus.Errorf("failed to start stream server: %v", err)
+		}
+		close(streamServerCloseCh)
+	}()
+
+	// Stop pouchd if all servers stopped.
 	<-httpServerCloseCh
 	logrus.Infof("HTTP server stopped")
 	<-grpcServerCloseCh
 	logrus.Infof("GRPC server stopped")
+	<-streamServerCloseCh
+	logrus.Infof("Stream server stopped")
 	return nil
 }
 

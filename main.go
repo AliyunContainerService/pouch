@@ -56,6 +56,8 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.HomeDir, "home-dir", "/var/lib/pouch", "Specify root dir of pouchd")
 	flagSet.StringArrayVarP(&cfg.Listen, "listen", "l", []string{"unix:///var/run/pouchd.sock"}, "Specify listening addresses of Pouchd")
 	flagSet.StringVar(&cfg.ListenCRI, "listen-cri", "/var/run/pouchcri.sock", "Specify listening address of CRI")
+	flagSet.StringVar(&cfg.StreamServerAddress, "stream-addr", "", "The ip address streaming server of CRI is listening on. The default host interface is used if not specified.")
+	flagSet.StringVar(&cfg.StreamServerPort, "stream-port", "10010", "The port streaming server of CRI is listening on.")
 	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
 	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
 	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "", "Specify the path of containerd binary")

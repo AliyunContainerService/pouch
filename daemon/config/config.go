@@ -20,6 +20,13 @@ type Config struct {
 	// ListenCRI is the listening address which serves CRI.
 	ListenCRI string
 
+	// StreamServerAddress is the ip address streaming server of CRI is listening on.
+	// The default host interface is used if not specified.
+	StreamServerAddress string
+
+	// StreamServerPort is the port streaming server of CRI is listening on.
+	StreamServerPort string
+
 	// Debug refers to the log mode.
 	Debug bool
 
