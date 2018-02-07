@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -27,6 +28,15 @@ type containerExecConfig struct {
 
 	// Save the container's id into exec config.
 	ContainerID string
+
+	// Get exit message from exitCh, we could only get it once.
+	// Do we need to get the result of exec many times?
+	exitCh chan *ctrd.Message
+}
+
+// ContainerExecInspect holds low-level information about exec command.
+type ContainerExecInspect struct {
+	ExitCh chan *ctrd.Message
 }
 
 // AttachConfig wraps some infos of attaching.
