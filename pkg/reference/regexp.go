@@ -30,6 +30,8 @@ var (
 		zeroOrMore(expression("/"), regComponent))
 
 	regTag = expression(`:\w[\w.-]*$`)
+
+	regDigest = expression(`@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,}`)
 )
 
 // expression converts literal into regexp.

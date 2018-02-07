@@ -2382,15 +2382,16 @@ definitions:
         description: "ID of an image."
         type: "string"
         x-nullable: false
-      Name:
-        description: "name of an image."
-        type: "string"
-      Tag:
-        description: "tag of an image."
-        type: "string"
-      Digest:
-        description: "digest of image."
-        type: "string"
+      RepoTags:
+        description: "repository with tag."
+        type: "array"
+        items:
+          type: "string"
+      RepoDigests:
+        description: "repository with digest."
+        type: "array"
+        items:
+          type: "string"
       CreatedAt:
         description: "time of image creation."
         type: "string"

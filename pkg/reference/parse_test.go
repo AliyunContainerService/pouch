@@ -120,10 +120,13 @@ func TestParse(t *testing.T) {
 			},
 			err: nil,
 		}, {
-			name:     "sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
-			input:    "sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc",
-			expected: digestReference("sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc"),
-			err:      nil,
+			name:  "Digest",
+			input: "registry.hub.docker.com/library/busybox@sha256:1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac75b7083da748db",
+			expected: digestReference{
+				Named:  namedReference{"registry.hub.docker.com/library/busybox"},
+				digest: "sha256:1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac75b7083da748db",
+			},
+			err: nil,
 		},
 	} {
 		ref, err := Parse(tc.input)

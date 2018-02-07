@@ -27,26 +27,23 @@ type ImageInfo struct {
 	// time of image creation.
 	CreatedAt string `json:"CreatedAt,omitempty"`
 
-	// digest of image.
-	Digest string `json:"Digest,omitempty"`
-
 	// ID of an image.
 	ID string `json:"ID,omitempty"`
 
-	// name of an image.
-	Name string `json:"Name,omitempty"`
-
 	// the name of the operating system.
 	Os string `json:"Os,omitempty"`
+
+	// repository with digest.
+	RepoDigests []string `json:"RepoDigests"`
+
+	// repository with tag.
+	RepoTags []string `json:"RepoTags"`
 
 	// root f s
 	RootFS *ImageInfoRootFS `json:"RootFS,omitempty"`
 
 	// size of image's taking disk space.
 	Size int64 `json:"Size,omitempty"`
-
-	// tag of an image.
-	Tag string `json:"Tag,omitempty"`
 }
 
 /* polymorph ImageInfo Architecture false */
@@ -55,25 +52,33 @@ type ImageInfo struct {
 
 /* polymorph ImageInfo CreatedAt false */
 
-/* polymorph ImageInfo Digest false */
-
 /* polymorph ImageInfo ID false */
 
-/* polymorph ImageInfo Name false */
-
 /* polymorph ImageInfo Os false */
+
+/* polymorph ImageInfo RepoDigests false */
+
+/* polymorph ImageInfo RepoTags false */
 
 /* polymorph ImageInfo RootFS false */
 
 /* polymorph ImageInfo Size false */
-
-/* polymorph ImageInfo Tag false */
 
 // Validate validates this image info
 func (m *ImageInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateConfig(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRepoDigests(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRepoTags(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -103,6 +108,24 @@ func (m *ImageInfo) validateConfig(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *ImageInfo) validateRepoDigests(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RepoDigests) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *ImageInfo) validateRepoTags(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RepoTags) { // not required
+		return nil
 	}
 
 	return nil

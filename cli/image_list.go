@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -80,17 +81,41 @@ func (i *ImagesCommand) runImages(args []string) error {
 	}
 
 	for _, image := range imageList {
+		var name reference.Named
+		var digest string
+		if len(image.RepoTags) > 0 {
+			name, err = reference.ParseNamedReference(image.RepoTags[0])
+			if err != nil {
+				return err
+			}
+			digestName, err := reference.ParseNamedReference(image.RepoDigests[0])
+			if err != nil {
+				return err
+			}
+			if digestd, ok := digestName.(reference.Digested); ok {
+				digest = digestd.Digest()
+			}
+		} else {
+			name, err = reference.ParseNamedReference(image.RepoDigests[0])
+			if err != nil {
+				return err
+			}
+			if digestd, ok := name.(reference.Digested); ok {
+				digest = digestd.Digest()
+			}
+		}
+
 		if i.flagDigest {
 			display.AddRow([]string{
 				utils.TruncateID(image.ID),
-				image.Name,
-				image.Digest,
+				name.String(),
+				digest,
 				fmt.Sprintf("%s", imageSize(image.Size)),
 			})
 		} else {
 			display.AddRow([]string{
 				utils.TruncateID(image.ID),
-				image.Name,
+				name.String(),
 				fmt.Sprintf("%s", imageSize(image.Size)),
 			})
 		}
