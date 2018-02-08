@@ -131,6 +131,9 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
+	// set image proxy
+	ctrd.SetImageProxy(d.config.ImageProxy)
+
 	httpServerCloseCh := make(chan struct{})
 	go func() {
 		if err := d.server.Start(); err != nil {
