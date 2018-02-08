@@ -266,6 +266,21 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunWithUser is to verify run container with user.
+func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
+	user := "1001"
+	name := "run-user"
+
+	res := command.PouchRun("run", "--name", name, "--user", user, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("exec", name, "id", "-u").Stdout()
+	if !strings.Contains(output, user) {
+		c.Fatalf("failed to run a container with user: %s", output)
+	}
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunWithAppArmor is to verify run container with security option AppArmor.
 func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	appArmor := "apparmor=unconfined"

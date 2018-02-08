@@ -372,8 +372,23 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 	return nil
 }
 
+// modifyContainerConfig applies container security context config to pouch's Config.
+func modifyContainerConfig(sc *runtime.LinuxContainerSecurityContext, config *apitypes.ContainerConfig) {
+	if sc == nil {
+		return
+	}
+	if sc.RunAsUser != nil {
+		config.User = strconv.FormatInt(sc.GetRunAsUser().Value, 10)
+	}
+	if sc.RunAsUsername != "" {
+		config.User = sc.RunAsUsername
+	}
+}
+
 // applyContainerSecurityContext updates pouch container options according to security context.
 func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxID string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
+	modifyContainerConfig(lc.SecurityContext, config)
+
 	err := modifyHostConfig(lc.SecurityContext, hc)
 	if err != nil {
 		return err

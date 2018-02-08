@@ -119,6 +119,18 @@ func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
 	}
 }
 
+// TestStartWithUser starts a container with user.
+func (suite *PouchStartSuite) TestStartWithUser(c *check.C) {
+	name := "start-user"
+	user := "1001"
+
+	command.PouchRun("create", "--name", name, "--user", user, busyboxImage, "id", "-u")
+	output := command.PouchRun("start", "-a", name).Stdout()
+	if !strings.Contains(output, user) {
+		c.Errorf("failed to start a container with user: %s", output)
+	}
+}
+
 // TestStartWithHostname starts a container with hostname.
 func (suite *PouchStartSuite) TestStartWithHostname(c *check.C) {
 	name := "start-hostname"
