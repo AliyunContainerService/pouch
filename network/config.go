@@ -7,10 +7,11 @@ var DefaultExecRoot = "/var/run/pouch"
 type Config struct {
 	Type string
 
-	// meta store
-	MetaPath string
-	// exec root
-	ExecRoot string
+	MetaPath   string // meta store
+	ExecRoot   string // exec root
+	DNS        []string
+	DNSOptions []string
+	DNSSearch  []string
 
 	// bridge config
 	BridgeConfig BridgeConfig

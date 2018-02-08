@@ -366,8 +366,9 @@ func Test_parseSysctls(t *testing.T) {
 
 func Test_parseNetwork(t *testing.T) {
 	type net struct {
-		name string
-		ip   string
+		name      string
+		parameter string
+		mode      string
 	}
 	type result struct {
 		network net
@@ -383,43 +384,58 @@ func Test_parseNetwork(t *testing.T) {
 			input: "",
 			expect: result{
 				err:     fmt.Errorf("invalid network: cannot be empty"),
-				network: net{name: "", ip: ""},
+				network: net{name: "", parameter: "", mode: ""},
 			},
 		},
 		{
 			input: "121.0.0.1",
 			expect: result{
 				err:     nil,
-				network: net{name: "", ip: "121.0.0.1"},
+				network: net{name: "", parameter: "121.0.0.1", mode: ""},
 			},
 		},
 		{
 			input: "myHost",
 			expect: result{
 				err:     nil,
-				network: net{name: "myHost", ip: ""},
+				network: net{name: "myHost", parameter: "", mode: ""},
 			},
 		},
 		{
 			input: "myHost:121.0.0.1",
 			expect: result{
 				err:     nil,
-				network: net{name: "myHost", ip: "121.0.0.1"},
+				network: net{name: "myHost", parameter: "121.0.0.1", mode: ""},
 			},
 		},
 		{
-			input: "myHost:myHost",
+			input: "container:9ca6ac",
 			expect: result{
-				err:     fmt.Errorf("invalid network ip: %s", "myHost"),
-				network: net{name: "", ip: ""},
+				err:     nil,
+				network: net{name: "container", parameter: "9ca6ac", mode: ""},
+			},
+		},
+		{
+			input: "bridge:121.0.0.1:mode",
+			expect: result{
+				err:     nil,
+				network: net{name: "bridge", parameter: "121.0.0.1", mode: "mode"},
+			},
+		},
+		{
+			input: "bridge:mode",
+			expect: result{
+				err:     nil,
+				network: net{name: "bridge", parameter: "", mode: "mode"},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
-		name, ip, error := parseNetwork(testCase.input)
+		name, parameter, mode, error := parseNetwork(testCase.input)
 		assert.Equal(t, testCase.expect.err, error)
 		assert.Equal(t, testCase.expect.network.name, name)
-		assert.Equal(t, testCase.expect.network.ip, ip)
+		assert.Equal(t, testCase.expect.network.parameter, parameter)
+		assert.Equal(t, testCase.expect.network.mode, mode)
 	}
 }

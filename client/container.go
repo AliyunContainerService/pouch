@@ -24,11 +24,11 @@ type ContainerAPIClient interface {
 }
 
 // ContainerCreate creates a new container based in the given configuration.
-func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error) {
+func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkingConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error) {
 	createConfig := types.ContainerCreateConfig{
 		ContainerConfig:  config,
 		HostConfig:       hostConfig,
-		NetworkingConfig: networkConfig,
+		NetworkingConfig: networkingConfig,
 	}
 
 	q := url.Values{}

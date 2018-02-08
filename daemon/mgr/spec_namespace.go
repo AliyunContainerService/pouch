@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -91,8 +92,29 @@ func setupUserNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrap
 }
 
 func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	if meta.Config.NetworkDisabled {
+		return nil
+	}
+
 	s := spec.s
 	ns := specs.LinuxNamespace{Type: specs.NetworkNamespace}
+
+	networkMode := meta.HostConfig.NetworkMode
+	if IsContainer(networkMode) {
+		origContainer, err := spec.ctrMgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
+		if err != nil {
+			return err
+		}
+		if meta.ID == origContainer.ID {
+			return fmt.Errorf("can not join own network")
+		} else if origContainer.State.Status != types.StatusRunning {
+			return fmt.Errorf("can not join network of a non running container: %s", origContainer.ID)
+		}
+
+		ns.Path = fmt.Sprintf("/proc/%d/ns/net", origContainer.State.Pid)
+	} else if IsHost(networkMode) {
+		ns.Path = meta.NetworkSettings.SandboxKey
+	}
 	setNamespace(s, ns)
 
 	for _, ns := range s.Linux.Namespaces {
@@ -104,7 +126,7 @@ func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecW
 
 			s.Hooks = &specs.Hooks{
 				Prestart: []specs.Hook{{
-					Path: target, // FIXME: cross-platform
+					Path: target,
 					Args: []string{"libnetwork-setkey", meta.ID, spec.netMgr.Controller().ID()},
 				}},
 			}

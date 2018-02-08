@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 
@@ -50,7 +51,8 @@ type NetworkCreateCommand struct {
 	ipRange    string
 	ipamDriver string
 	ipamOpts   []string
-	subnet     []string
+	subnet     string
+	enableIPv6 bool
 	options    []string
 	labels     []string
 }
@@ -81,8 +83,9 @@ func (n *NetworkCreateCommand) addFlags() {
 	flagSet.StringVarP(&n.driver, "driver", "d", "bridge", "the driver of network")
 	flagSet.StringVar(&n.gateway, "gateway", "", "the gateway of network")
 	flagSet.StringVar(&n.ipRange, "ip-range", "", "the range of network's ip")
-	flagSet.StringSliceVar(&n.subnet, "subnet", nil, "the subnet of network")
-	flagSet.StringVar(&n.ipamDriver, "ipam-driver", "", "the ipam driver of network")
+	flagSet.StringVar(&n.subnet, "subnet", "", "the subnet of network")
+	flagSet.StringVar(&n.ipamDriver, "ipam-driver", "default", "the ipam driver of network")
+	flagSet.BoolVar(&n.enableIPv6, "enable-ipv6", false, "enable ipv6 network")
 	flagSet.StringSliceVarP(&n.options, "option", "o", nil, "create network with options")
 	flagSet.StringSliceVarP(&n.labels, "label", "l", nil, "create network with labels")
 }
@@ -97,18 +100,10 @@ func (n *NetworkCreateCommand) runNetworkCreate(args []string) error {
 		return fmt.Errorf("network name cannot be empty")
 	}
 
-	networkRequest := &types.NetworkCreateConfig{
-		Name: name,
+	networkRequest, err := n.buildNetworkCreateRequest(name)
+	if err != nil {
+		return err
 	}
-
-	if n.driver == "" {
-		return fmt.Errorf("network driver cannot be empty")
-	}
-	networkCreate := types.NetworkCreate{
-		Driver: n.driver,
-	}
-
-	networkRequest.NetworkCreate = networkCreate
 
 	apiClient := n.cli.Client()
 	resp, err := apiClient.NetworkCreate(networkRequest)
@@ -124,9 +119,75 @@ func (n *NetworkCreateCommand) runNetworkCreate(args []string) error {
 	return nil
 }
 
+func (n *NetworkCreateCommand) buildNetworkCreateRequest(name string) (*types.NetworkCreateConfig, error) {
+	if n.driver == "" {
+		return nil, fmt.Errorf("network driver cannot be empty")
+	}
+
+	options, err := parseSliceToMap(n.options)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := parseSliceToMap(n.labels)
+	if err != nil {
+		return nil, err
+	}
+
+	ipamOptions, err := parseSliceToMap(n.ipamOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	ipam := &types.IPAM{
+		Driver:  n.ipamDriver,
+		Options: ipamOptions,
+		Config:  []types.IPAMConfig{},
+	}
+
+	if n.subnet != "" || n.gateway != "" || n.ipRange != "" {
+		ipamConfig := types.IPAMConfig{
+			AuxAddress: make(map[string]string),
+			Subnet:     n.subnet,
+			Gateway:    n.gateway,
+			IPRange:    n.ipRange,
+		}
+		ipam.Config = append(ipam.Config, ipamConfig)
+	}
+
+	networkCreate := types.NetworkCreate{
+		Driver:         n.driver,
+		EnableIPV6:     n.enableIPv6,
+		Internal:       false,
+		CheckDuplicate: true,
+		Options:        options,
+		Labels:         labels,
+		IPAM:           ipam,
+	}
+	networkRequest := &types.NetworkCreateConfig{
+		Name:          name,
+		NetworkCreate: networkCreate,
+	}
+
+	return networkRequest, nil
+}
+
+func parseSliceToMap(slices []string) (map[string]string, error) {
+	maps := map[string]string{}
+
+	for _, s := range slices {
+		kv := strings.Split(s, "=")
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("invalid slice format: %s", s)
+		}
+		maps[kv[0]] = kv[1]
+	}
+	return maps, nil
+}
+
 // networkCreateExample shows examples in network create command, and is used in auto-generated cli docs.
 func networkCreateExample() string {
-	return `$ pouch network create -n pouchnet -d bridge --gateway 192.168.1.1 --ip-range 192.168.1.1/24 --subnet 192.168.1.1/24
+	return `$ pouch network create -n pouchnet -d bridge --gateway 192.168.1.1 --subnet 192.168.1.0/24
 pouchnet: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9`
 }
 
@@ -144,10 +205,11 @@ func (n *NetworkRemoveCommand) Init(c *Cli) {
 	n.cli = c
 
 	n.cmd = &cobra.Command{
-		Use:   "remove [OPTIONS] NAME",
-		Short: "Remove a pouch network",
-		Long:  networkRemoveDescription,
-		Args:  cobra.ExactArgs(1),
+		Use:     "remove [OPTIONS] NAME",
+		Aliases: []string{"rm"},
+		Short:   "Remove a pouch network",
+		Long:    networkRemoveDescription,
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return n.runNetworkRemove(args)
 		},

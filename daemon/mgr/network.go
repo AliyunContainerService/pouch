@@ -38,7 +38,7 @@ type NetworkMgr interface {
 	Get(ctx context.Context, name string) (*types.Network, error)
 
 	// EndpointCreate is used to create network endpoint.
-	EndpointCreate(ctx context.Context, containerID, network string, networkConfig *apitypes.NetworkSettings, endpointConfig *apitypes.EndpointSettings) (string, error)
+	EndpointCreate(ctx context.Context, endpoint *types.Endpoint) (string, error)
 
 	// EndpointRemove is used to create network endpoint.
 	EndpointRemove(ctx context.Context, name string) error
@@ -57,6 +57,7 @@ type NetworkMgr interface {
 type NetworkManager struct {
 	store      *meta.Store
 	controller libnetwork.NetworkController
+	config     network.Config
 }
 
 // NewNetworkManager creates a brand new network manager.
@@ -80,6 +81,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store) (*NetworkManager, 
 	return &NetworkManager{
 		store:      store,
 		controller: controller,
+		config:     cfg.NetworkConfg,
 	}, nil
 }
 
@@ -168,8 +170,13 @@ func (nm *NetworkManager) Get(ctx context.Context, name string) (*types.Network,
 }
 
 // EndpointCreate is used to create network endpoint.
-func (nm *NetworkManager) EndpointCreate(ctx context.Context, containerID, network string, networkConfig *apitypes.NetworkSettings, endpointConfig *apitypes.EndpointSettings) (string, error) {
-	logrus.Infof("create endpoint for container [%s] on network [%s]", containerID, network)
+func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.Endpoint) (string, error) {
+	containerID := endpoint.Owner
+	network := endpoint.Name
+	networkConfig := endpoint.NetworkConfig
+	endpointConfig := endpoint.EndpointConfig
+
+	logrus.Debugf("create endpoint for container [%s] on network [%s]", containerID, network)
 
 	n, err := nm.controller.NetworkByName(network)
 	if err != nil {
@@ -195,14 +202,11 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, containerID, netwo
 	// create sandbox
 	sb := nm.getNetworkSandbox(containerID)
 	if sb == nil {
-		var sandboxOptions []libnetwork.SandboxOption
-
-		//sandboxOptions = append(sandboxOptions, libnetwork.OptionUseDefaultSandbox())
-		sandboxOptions = append(sandboxOptions, libnetwork.OptionUseExternalKey())
-		sandboxOptions = append(sandboxOptions, libnetwork.OptionHostname(containerID))
-		sandboxOptions = append(sandboxOptions, libnetwork.OptionDomainname(""))
-		sandboxOptions = append(sandboxOptions, libnetwork.OptionHostsPath(path.Join(nm.store.BaseDir, containerID, "hosts")))
-		sandboxOptions = append(sandboxOptions, libnetwork.OptionResolvConfPath(path.Join(nm.store.BaseDir, containerID, "resolv.conf")))
+		sandboxOptions, err := nm.sandboxOptions(endpoint)
+		if err != nil {
+			logrus.Errorf("failed to build sandbox options, err: %v", err)
+			return "", err
+		}
 
 		sb, err = nm.controller.NewSandbox(containerID, sandboxOptions...)
 		if err != nil {
@@ -294,8 +298,22 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 	networkCreate := create.NetworkCreate
 	nwOptions := []libnetwork.NetworkOption{
 		libnetwork.NetworkOptionEnableIPv6(networkCreate.EnableIPV6),
-		libnetwork.NetworkOptionDriverOpts(networkCreate.Options),
 		libnetwork.NetworkOptionLabels(networkCreate.Labels),
+	}
+
+	// parse options
+	if v, ok := networkCreate.Options["persist"]; ok && v == "true" {
+		nwOptions = append(nwOptions, libnetwork.NetworkOptionPersist(true))
+		delete(networkCreate.Options, "persist")
+	}
+	if v, ok := networkCreate.Options["dynamic"]; ok && v == "true" {
+		nwOptions = append(nwOptions, libnetwork.NetworkOptionDynamic())
+		delete(networkCreate.Options, "dynamic")
+	}
+	nwOptions = append(nwOptions, libnetwork.NetworkOptionDriverOpts(networkCreate.Options))
+
+	if create.Name == "ingress" {
+		nwOptions = append(nwOptions, libnetwork.NetworkOptionIngress())
 	}
 
 	if networkCreate.Internal {
@@ -386,6 +404,69 @@ func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, e
 	createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(genericOption))
 
 	return createOptions, nil
+}
+
+func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork.SandboxOption, error) {
+	var (
+		sandboxOptions []libnetwork.SandboxOption
+		dns            []string
+		dnsSearch      []string
+		dnsOptions     []string
+	)
+
+	sandboxOptions = append(sandboxOptions, libnetwork.OptionHostname(string(endpoint.Hostname)), libnetwork.OptionDomainname(endpoint.Domainname))
+
+	if IsHost(endpoint.NetworkMode) {
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionUseDefaultSandbox())
+		if len(endpoint.ExtraHosts) == 0 {
+			sandboxOptions = append(sandboxOptions, libnetwork.OptionOriginHostsPath("/etc/hosts"))
+		}
+		if len(endpoint.DNS) == 0 && len(nm.config.DNS) == 0 &&
+			len(endpoint.DNSSearch) == 0 && len(nm.config.DNSSearch) == 0 &&
+			len(endpoint.DNSOptions) == 0 && len(nm.config.DNSOptions) == 0 {
+			sandboxOptions = append(sandboxOptions, libnetwork.OptionOriginResolvConfPath("/etc/resolv.conf"))
+		}
+	} else {
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionUseExternalKey())
+	}
+
+	sandboxOptions = append(sandboxOptions, libnetwork.OptionHostsPath(endpoint.HostsPath))
+	sandboxOptions = append(sandboxOptions, libnetwork.OptionResolvConfPath(endpoint.ResolvConfPath))
+
+	// parse DNS
+	if len(endpoint.DNS) > 0 {
+		dns = endpoint.DNS
+	} else if len(nm.config.DNS) > 0 {
+		dns = nm.config.DNS
+	}
+	for _, d := range dns {
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNS(d))
+	}
+
+	// parse DNS Search
+	if len(endpoint.DNSSearch) > 0 {
+		dnsSearch = endpoint.DNSSearch
+	} else if len(nm.config.DNSSearch) > 0 {
+		dnsSearch = nm.config.DNSSearch
+	}
+	for _, ds := range dnsSearch {
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNSSearch(ds))
+	}
+
+	// parse DNS Options
+	if len(endpoint.DNSOptions) > 0 {
+		dnsOptions = endpoint.DNSOptions
+	} else if len(nm.config.DNSOptions) > 0 {
+		dnsOptions = nm.config.DNSOptions
+	}
+	for _, ds := range dnsOptions {
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNSOptions(ds))
+	}
+
+	// TODO: secondary ip address
+	// TODO: parse extra hosts
+	// TODO: port mapping
+	return sandboxOptions, nil
 }
 
 func joinOptions(epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
