@@ -91,6 +91,33 @@ func extractLabels(input map[string]string) (map[string]string, map[string]strin
 	return labels, annotations
 }
 
+func generateMountBindings(mounts []*runtime.Mount) []string {
+	result := make([]string, 0, len(mounts))
+	for _, m := range mounts {
+		bind := fmt.Sprintf("%s:%s", m.HostPath, m.ContainerPath)
+		var attrs []string
+		if m.Readonly {
+			attrs = append(attrs, "ro")
+		}
+		if m.SelinuxRelabel {
+			attrs = append(attrs, "Z")
+		}
+		switch m.Propagation {
+		case runtime.MountPropagation_PROPAGATION_PRIVATE:
+			// noop, default mode is private.
+		case runtime.MountPropagation_PROPAGATION_BIDIRECTIONAL:
+			attrs = append(attrs, "rshared")
+		case runtime.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+			attrs = append(attrs, "rslave")
+		}
+		if len(attrs) > 0 {
+			bind = fmt.Sprintf("%s:%s", bind, strings.Join(attrs, ","))
+		}
+		result = append(result, bind)
+	}
+	return result
+}
+
 // Sandbox related tool functions.
 
 // makeSandboxName generates sandbox name from sandbox metadata. The name
