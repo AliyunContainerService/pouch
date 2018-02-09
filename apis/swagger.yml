@@ -674,6 +674,28 @@ paths:
           type: "boolean"
           default: false
       tags: ["Container"]
+  /containers/{id}/update:
+    post:
+      summary: "Update the configurations of a container"
+      operationId: "ContainerUpdate"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "updateConfig"
+          in: "body"
+          schema:
+            $ref: "#/definitions/UpdateConfig"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
 
   /volumes:
     get:
@@ -1293,6 +1315,28 @@ definitions:
             x-nullable: false
       - $ref: "#/definitions/Resources"
 
+  UpdateConfig:
+    description: "UpdateConfig holds the mutable attributes of a Container. Those attributes can be updated at runtime."
+    allOf:
+      - $ref: "#/definitions/Resources"
+      - properties:
+          RestartPolicy:
+            $ref: "#/definitions/RestartPolicy"
+          Image:
+            type: "string"
+            description: "Image ID or Name"
+          Env:
+            description: |
+              A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+            type: "array"
+            items:
+              type: "string"
+          Labels:
+            description: "List of labels set to container."
+            type: "object"
+            additionalProperties:
+              type: "string"
+
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"
     type: "object"
@@ -1404,7 +1448,7 @@ definitions:
         description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
         type: "integer"
         format: "int64"
-        minimum: 0
+        minimum: -1
         maximum: 100
       NanoCPUs:
         description: "CPU quota in units of 10<sup>-9</sup> CPUs."

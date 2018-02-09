@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//ContainerMgr as an interface defines all operations against container.
+// ContainerMgr as an interface defines all operations against container.
 type ContainerMgr interface {
 	// Create a new container.
 	Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error)
@@ -62,11 +63,14 @@ type ContainerMgr interface {
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
 
-	// Rename renames a container
+	// Rename renames a container.
 	Rename(ctx context.Context, oldName string, newName string) error
 
-	// Get the detailed information of container
+	// Get the detailed information of container.
 	Get(ctx context.Context, name string) (*ContainerMeta, error)
+
+	// Update updates the configurations of a container.
+	Update(ctx context.Context, name string, config *types.UpdateConfig) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -462,6 +466,10 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID())
 	}
+
+	// TODO Hardcode for test
+	s.Linux.CgroupsPath = filepath.Join("/", c.ID())
+
 	sw := &SpecWrapper{
 		s:      s,
 		ctrMgr: mgr,
@@ -681,6 +689,83 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	mgr.NameToID.Put(newName, c.ID())
 
 	c.meta.Name = newName
+	c.Write(mgr.Store)
+
+	return nil
+}
+
+// Update updates the configurations of a container.
+func (mgr *ContainerManager) Update(ctx context.Context, name string, config *types.UpdateConfig) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	// update ContainerConfig of a container.
+	if !c.IsStopped() && config.Image != "" || len(config.Env) > 0 {
+		return fmt.Errorf("Only can update the container's image or Env when it is stopped")
+	}
+
+	if config.Image != "" {
+		image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
+		if err != nil {
+			return err
+		}
+		// TODO Image param is duplicate in ContainerMeta
+		c.meta.Config.Image = image.Name
+		c.meta.Image = image.Name
+	}
+
+	if len(config.Env) != 0 {
+		for k, v := range config.Env {
+			c.meta.Config.Env[k] = v
+		}
+	}
+
+	if len(config.Labels) != 0 {
+		for k, v := range config.Labels {
+			c.meta.Config.Labels[k] = v
+		}
+	}
+
+	// update resources of container.
+	resources := config.Resources
+	cResources := &c.meta.HostConfig.Resources
+	if resources.BlkioWeight != 0 {
+		cResources.BlkioWeight = resources.BlkioWeight
+	}
+	if resources.CPUShares != 0 {
+		cResources.CPUShares = resources.CPUShares
+	}
+	if resources.CpusetCpus != "" {
+		cResources.CpusetCpus = resources.CpusetCpus
+	}
+	if resources.CpusetMems != "" {
+		cResources.CpusetMems = resources.CpusetMems
+	}
+	if resources.Memory != 0 {
+		cResources.Memory = resources.Memory
+	}
+	if resources.MemorySwap != 0 {
+		cResources.MemorySwap = resources.MemorySwap
+	}
+
+	// update HostConfig of a container.
+	if config.RestartPolicy.Name != "" {
+		c.meta.HostConfig.RestartPolicy = config.RestartPolicy
+	}
+
+	// If container is not running, update container metadata struct is enough,
+	// resources will be updated when the container is started again,
+	// If container is running, we need to update configs to the real world.
+	if c.IsRunning() {
+		return mgr.Client.UpdateResources(ctx, c.ID(), c.meta.HostConfig.Resources)
+	}
+
+	// store disk.
 	c.Write(mgr.Store)
 
 	return nil
