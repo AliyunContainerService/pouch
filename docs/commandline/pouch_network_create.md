@@ -13,7 +13,7 @@ pouch network create [OPTIONS] [NAME]
 ### Examples
 
 ```
-$ pouch network create -n pouchnet -d bridge --gateway 192.168.1.1 --ip-range 192.168.1.1/24 --subnet 192.168.1.1/24
+$ pouch network create -n pouchnet -d bridge --gateway 192.168.1.1 --subnet 192.168.1.0/24
 pouchnet: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
 ```
 
@@ -21,14 +21,15 @@ pouchnet: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
 
 ```
   -d, --driver string        the driver of network (default "bridge")
+      --enable-ipv6          enable ipv6 network
       --gateway string       the gateway of network
   -h, --help                 help for create
       --ip-range string      the range of network's ip
-      --ipam-driver string   the ipam driver of network
+      --ipam-driver string   the ipam driver of network (default "default")
   -l, --label strings        create network with labels
   -n, --name string          the name of network
   -o, --option strings       create network with options
-      --subnet strings       the subnet of network
+      --subnet string        the subnet of network
 ```
 
 ### Options inherited from parent commands
