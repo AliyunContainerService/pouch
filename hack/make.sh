@@ -43,6 +43,21 @@ function install_pouch ()
 	else
 		sh -x $DIR/hack/install_lxcfs_on_centos.sh
 	fi
+
+	# install nsenter
+	echo "Install nsenter"
+	if grep -qi "ubuntu" /etc/issue ; then
+		apt-get install libncurses5-dev libslang2-dev gettext zlib1g-dev libselinux1-dev debhelper lsb-release pkg-config po-debconf autoconf automake autopoint libtool
+		wget https://www.kernel.org/pub/linux/utils/util-linux/v2.24/util-linux-2.24.1.tar.gz -P $TMP
+		tar xf $TMP/util-linux-2.24.1.tar.gz -C $TMP && cd $TMP/util-linux-2.24.1
+		./autogen.sh
+		autoreconf -vfi
+		./configure && make 
+		cp ./nsenter /usr/local/bin
+		cd $DIR/
+	else
+		yum install -y util-linux
+	fi
 }
 
 function target()

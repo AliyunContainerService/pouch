@@ -1,4 +1,4 @@
-package cri
+package service
 
 import (
 	"net"
@@ -38,11 +38,11 @@ func NewService(cfg config.Config, criMgr mgr.CriMgr) (*Service, error) {
 // Serve starts grpc server.
 func (s *Service) Serve() error {
 	// Unlink to cleanup the previous socket file.
-	if err := syscall.Unlink(s.config.ListenCRI); err != nil && !os.IsNotExist(err) {
+	if err := syscall.Unlink(s.config.CriConfig.Listen); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
-	l, err := net.Listen("unix", s.config.ListenCRI)
+	l, err := net.Listen("unix", s.config.CriConfig.Listen)
 	if err != nil {
 		return err
 	}

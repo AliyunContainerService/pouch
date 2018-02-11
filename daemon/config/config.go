@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/volume"
@@ -14,11 +15,11 @@ type Config struct {
 	// Network config
 	NetworkConfg network.Config
 
+	// CRI config.
+	CriConfig cri.Config
+
 	// Server listening address.
 	Listen []string
-
-	// ListenCRI is the listening address which serves CRI.
-	ListenCRI string
 
 	// Debug refers to the log mode.
 	Debug bool
