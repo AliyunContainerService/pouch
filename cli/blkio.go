@@ -18,15 +18,15 @@ type WeightDevice struct {
 func getValidateWeightDevice(val string) (*types.WeightDevice, error) {
 	pairs := strings.Split(val, ":")
 	if len(pairs) != 2 {
-		return nil, fmt.Errorf("bad format for weight device: %s. Correct format should be <device-id>:<weight>, weight has no unit, should be in [10, 1000]", val)
+		return nil, fmt.Errorf("invalid weight device %s: format must be <device-id>:<weight> with weight in range [10, 1000]", val)
 	}
 
 	weight, err := strconv.ParseUint(pairs[1], 10, 0)
 	if err != nil {
-		return nil, fmt.Errorf("invalid weight for device: %s", val)
+		return nil, fmt.Errorf("invalid weight device %s: weight cannot be less than 0", val)
 	}
 	if weight > 0 && (weight < 10 || weight > 1000) {
-		return nil, fmt.Errorf("invalid weight for device: %s, weight should be in [10, 1000]", val)
+		return nil, fmt.Errorf("invalid weight device %s: weight must be in range [10, 1000]", val)
 	}
 
 	return &types.WeightDevice{
@@ -78,12 +78,12 @@ type ThrottleBpsDevice struct {
 func getValidThrottleDeviceBps(val string) (*types.ThrottleDevice, error) {
 	pairs := strings.Split(val, ":")
 	if len(pairs) != 2 {
-		return nil, fmt.Errorf("bad format for throttle device: %s. Correct format should be <device-id>:<rate>, rate unit is optional and can be b/B, k/K, m/M... ", val)
+		return nil, fmt.Errorf("invalid throttle device %s: format must be <device-id>:<rate> with optional rate unit", val)
 	}
 
 	rate, err := units.RAMInBytes(pairs[1])
 	if err != nil || rate < 0 {
-		return nil, fmt.Errorf("invalid rate for device %s, rate mustn't be negative", pairs[0])
+		return nil, fmt.Errorf("invalid rate %s for device %s: cannot be negative", pairs[1], pairs[0])
 	}
 
 	return &types.ThrottleDevice{
@@ -135,12 +135,12 @@ type ThrottleIOpsDevice struct {
 func getValidThrottleDeviceIOps(val string) (*types.ThrottleDevice, error) {
 	pairs := strings.Split(val, ":")
 	if len(pairs) != 2 {
-		return nil, fmt.Errorf("bad format for throttle device: %s. Correct format should be <device-id>:<rate>, rate unit is optional and can be b/B, k/K, m/M... ", val)
+		return nil, fmt.Errorf("invalid throttle device %s: format must be <device-id>:<rate> with optional rate unit", val)
 	}
 
 	rate, err := strconv.ParseUint(pairs[1], 10, 64)
 	if err != nil || rate < 0 {
-		return nil, fmt.Errorf("invalid rate for device %s, rate mustn't be negative", pairs[0])
+		return nil, fmt.Errorf("invalid rate %s for device %s: rate cannot be negative", pairs[1], pairs[0])
 	}
 
 	return &types.ThrottleDevice{
