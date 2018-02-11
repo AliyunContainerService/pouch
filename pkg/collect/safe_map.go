@@ -8,14 +8,14 @@ type SafeMap struct {
 	inner map[string]interface{}
 }
 
-// NewSafeMap generate a instance of SafeMap type.
+// NewSafeMap generates a instance of SafeMap type.
 func NewSafeMap() *SafeMap {
 	return &SafeMap{
 		inner: make(map[string]interface{}, 16),
 	}
 }
 
-// Get return a value from inner map safely.
+// Get returns a value from inner map safely.
 func (m *SafeMap) Get(k string) *Value {
 	m.RLock()
 	defer m.RUnlock()
@@ -25,7 +25,7 @@ func (m *SafeMap) Get(k string) *Value {
 	return &Value{v, ok}
 }
 
-// Put store a key-value pair into inner map safely.
+// Put stores a key-value pair into inner map safely.
 func (m *SafeMap) Put(k string, v interface{}) {
 	m.Lock()
 	defer m.Unlock()
@@ -45,44 +45,56 @@ type Value struct {
 	ok   bool
 }
 
-// Result return the origin data and status in map.
+// Result returns the origin data and status in map.
 func (v *Value) Result() (interface{}, bool) {
 	return v.data, v.ok
 }
 
-// Exist return the data exist in map or not.
+// Exist returns the data exist in map or not.
 func (v *Value) Exist() bool {
 	return v.ok
 }
 
-// String return data as string.
+// String returns data as string.
 func (v *Value) String() (string, bool) {
 	if !v.ok || v.data == nil {
 		return "", v.ok
 	}
-	return v.data.(string), v.ok
+	if result, ok := v.data.(string); ok {
+		return result, ok
+	}
+	return "", false
 }
 
-// Int return data as int.
+// Int returns data as int.
 func (v *Value) Int() (int, bool) {
 	if !v.ok || v.data == nil {
 		return 0, v.ok
 	}
-	return v.data.(int), v.ok
+	if result, ok := v.data.(int); ok {
+		return result, ok
+	}
+	return 0, false
 }
 
-// Int32 return data as int32.
+// Int32 returns data as int32.
 func (v *Value) Int32() (int32, bool) {
 	if !v.ok || v.data == nil {
 		return 0, v.ok
 	}
-	return v.data.(int32), v.ok
+	if result, ok := v.data.(int32); ok {
+		return result, ok
+	}
+	return 0, false
 }
 
-// Int64 return data as int64.
+// Int64 returns data as int64.
 func (v *Value) Int64() (int64, bool) {
 	if !v.ok || v.data == nil {
 		return 0, v.ok
 	}
-	return v.data.(int64), v.ok
+	if result, ok := v.data.(int64); ok {
+		return result, ok
+	}
+	return 0, false
 }
