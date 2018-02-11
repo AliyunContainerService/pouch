@@ -109,7 +109,7 @@ func TestParseLabels(t *testing.T) {
 			input: []string{"ThisIsALableWithoutEqualMark"},
 			expected: result{
 				labels: nil,
-				err:    fmt.Errorf("invalid label: %s", "ThisIsALableWithoutEqualMark"),
+				err:    fmt.Errorf("invalid label ThisIsALableWithoutEqualMark: label must be in format of key=value"),
 			},
 		},
 	}
@@ -256,69 +256,66 @@ func TestValidateMemorySwappiness(t *testing.T) {
 	}
 }
 
-func Test_parseDeviceMappings(t *testing.T) {
+func Test_parseDeviceMapping(t *testing.T) {
 	type args struct {
-		devices []string
+		device string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    []*types.DeviceMapping
+		want    *types.DeviceMapping
 		wantErr bool
 	}{
 		{
 			name: "deviceMapping1",
 			args: args{
-				devices: []string{"/dev/deviceName:/dev/deviceName:mrw"},
+				device: "/dev/deviceName:/dev/deviceName:mrw",
 			},
-			want: []*types.DeviceMapping{
-				{
-					PathOnHost:        "/dev/deviceName",
-					PathInContainer:   "/dev/deviceName",
-					CgroupPermissions: "mrw",
-				},
+			want: &types.DeviceMapping{
+				PathOnHost:        "/dev/deviceName",
+				PathInContainer:   "/dev/deviceName",
+				CgroupPermissions: "mrw",
 			},
+
 			wantErr: false,
 		},
 		{
 			name: "deviceMapping2",
 			args: args{
-				devices: []string{"/dev/deviceName:"},
+				device: "/dev/deviceName:",
 			},
-			want: []*types.DeviceMapping{
-				{
-					PathOnHost:        "/dev/deviceName",
-					PathInContainer:   "/dev/deviceName",
-					CgroupPermissions: "rwm",
-				},
+			want: &types.DeviceMapping{
+				PathOnHost:        "/dev/deviceName",
+				PathInContainer:   "/dev/deviceName",
+				CgroupPermissions: "rwm",
 			},
 			wantErr: false,
 		},
 		{
 			name: "deviceMappingWrong1",
 			args: args{
-				devices: []string{"/dev/deviceName:/dev/deviceName:rrw"},
+				device: "/dev/deviceName:/dev/deviceName:rrw",
 			},
 			wantErr: true,
 		},
 		{
 			name: "deviceMappingWrong2",
 			args: args{
-				devices: []string{"/dev/deviceName:/dev/deviceName:arw"},
+				device: "/dev/deviceName:/dev/deviceName:arw",
 			},
 			wantErr: true,
 		},
 		{
 			name: "deviceMappingWrong3",
 			args: args{
-				devices: []string{"/dev/deviceName:/dev/deviceName:mrw:mrw"},
+				device: "/dev/deviceName:/dev/deviceName:mrw:mrw",
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDeviceMappings(tt.args.devices)
+			got, err := parseDevice(tt.args.device)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseDeviceMappings() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -352,7 +349,7 @@ func Test_parseSysctls(t *testing.T) {
 			input: []string{"ab"},
 			expect: result{
 				sysctls: nil,
-				err:     fmt.Errorf("invalid sysctl: %s: sysctl must be in format of key=value", "ab"),
+				err:     fmt.Errorf("invalid sysctl %s: sysctl must be in format of key=value", "ab"),
 			},
 		},
 	}

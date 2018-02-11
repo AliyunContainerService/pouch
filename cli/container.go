@@ -164,22 +164,30 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 func parseSysctls(sysctls []string) (map[string]string, error) {
 	results := make(map[string]string)
 	for _, sysctl := range sysctls {
-		fields := strings.SplitN(sysctl, "=", 2)
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("invalid sysctl: %s: sysctl must be in format of key=value", sysctl)
+		fields, err := parseSysctl(sysctl)
+		if err != nil {
+			return nil, err
 		}
 		k, v := fields[0], fields[1]
 		results[k] = v
 	}
 	return results, nil
+}
+
+func parseSysctl(sysctl string) ([]string, error) {
+	fields := strings.SplitN(sysctl, "=", 2)
+	if len(fields) != 2 {
+		return nil, fmt.Errorf("invalid sysctl %s: sysctl must be in format of key=value", sysctl)
+	}
+	return fields, nil
 }
 
 func parseLabels(labels []string) (map[string]string, error) {
 	results := make(map[string]string)
 	for _, label := range labels {
-		fields := strings.SplitN(label, "=", 2)
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("invalid label: %s", label)
+		fields, err := parseLabel(label)
+		if err != nil {
+			return nil, err
 		}
 		k, v := fields[0], fields[1]
 		results[k] = v
@@ -187,19 +195,35 @@ func parseLabels(labels []string) (map[string]string, error) {
 	return results, nil
 }
 
+func parseLabel(label string) ([]string, error) {
+	fields := strings.SplitN(label, "=", 2)
+	if len(fields) != 2 {
+		return nil, fmt.Errorf("invalid label %s: label must be in format of key=value", label)
+	}
+	return fields, nil
+}
+
 func parseDeviceMappings(devices []string) ([]*types.DeviceMapping, error) {
 	results := []*types.DeviceMapping{}
 	for _, device := range devices {
-		deviceMapping, err := runconfig.ParseDevice(device)
+		deviceMapping, err := parseDevice(device)
 		if err != nil {
-			return nil, fmt.Errorf("parse devices error: %s", err)
-		}
-		if !runconfig.ValidDeviceMode(deviceMapping.CgroupPermissions) {
-			return nil, fmt.Errorf("%s invalid device mode: %s", device, deviceMapping.CgroupPermissions)
+			return nil, err
 		}
 		results = append(results, deviceMapping)
 	}
 	return results, nil
+}
+
+func parseDevice(device string) (*types.DeviceMapping, error) {
+	deviceMapping, err := runconfig.ParseDevice(device)
+	if err != nil {
+		return nil, fmt.Errorf("parse devices error: %s", err)
+	}
+	if !runconfig.ValidDeviceMode(deviceMapping.CgroupPermissions) {
+		return nil, fmt.Errorf("%s invalid device mode: %s", device, deviceMapping.CgroupPermissions)
+	}
+	return deviceMapping, nil
 }
 
 func parseMemory(memory string) (int64, error) {
