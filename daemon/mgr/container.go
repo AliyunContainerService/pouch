@@ -363,7 +363,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		meta.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
 
-	if err := parseSecurityOpt(meta, config.HostConfig.SecurityOpt); err != nil {
+	if err := parseSecurityOpts(meta, config.HostConfig.SecurityOpt); err != nil {
 		return nil, err
 	}
 
