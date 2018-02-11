@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// NetworkModeInit is used to initilize network mode, include host and nono network.
+// NetworkModeInit is used to initilize network mode, include host and none network.
 func NetworkModeInit(ctx context.Context, config network.Config, manager mgr.NetworkMgr) error {
 	// init none network
 	if n, _ := manager.Get(ctx, "none"); n == nil {

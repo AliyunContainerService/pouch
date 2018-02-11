@@ -175,8 +175,12 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 
 	// if the container is running, force to stop it.
 	if c.IsRunning() && option.Force {
-		if _, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout()); err != nil && !errtypes.IsNotfound(err) {
-			return errors.Wrapf(err, "failed to remove container: %s", c.ID())
+		msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout())
+		if err != nil && !errtypes.IsNotfound(err) {
+			return errors.Wrapf(err, "failed to destory container: %s", c.ID())
+		}
+		if err := mgr.markStoppedAndRelease(c, msg); err != nil {
+			return errors.Wrapf(err, "failed to mark container: %s stop status", c.ID())
 		}
 	}
 
@@ -345,13 +349,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// set network settings
-	meta.NetworkSettings = &types.NetworkSettings{}
 	networkMode := config.HostConfig.NetworkMode
 	if networkMode == "" {
-		//FIXME: Removing it, when stop container have deleted endpoints
-		//config.HostConfig.NetworkMode = "bridge"
+		config.HostConfig.NetworkMode = "bridge"
 		meta.Config.NetworkDisabled = true
 	}
+	meta.NetworkSettings = new(types.NetworkSettings)
 	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		meta.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	}
@@ -439,13 +442,15 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	}
 
 	// initialise network endpoint
-	for name, endpointSetting := range c.meta.NetworkSettings.Networks {
-		endpoint := mgr.buildContainerEndpoint(c.meta)
-		endpoint.Name = name
-		endpoint.EndpointConfig = endpointSetting
-		if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
-			logrus.Errorf("failed to create endpoint: %v", err)
-			return err
+	if c.meta.NetworkSettings != nil {
+		for name, endpointSetting := range c.meta.NetworkSettings.Networks {
+			endpoint := mgr.buildContainerEndpoint(c.meta)
+			endpoint.Name = name
+			endpoint.EndpointConfig = endpointSetting
+			if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
+				logrus.Errorf("failed to create endpoint: %v", err)
+				return err
+			}
 		}
 	}
 
@@ -739,6 +744,19 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	if io := mgr.IOs.Get(c.ID()); io != nil {
 		io.Close()
 		mgr.IOs.Remove(c.ID())
+	}
+
+	// release network
+	if c.meta.NetworkSettings != nil {
+		for name, epConfig := range c.meta.NetworkSettings.Networks {
+			endpoint := mgr.buildContainerEndpoint(c.meta)
+			endpoint.Name = name
+			endpoint.EndpointConfig = epConfig
+			if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
+				logrus.Errorf("failed to remove endpoint: %v", err)
+				return err
+			}
+		}
 	}
 
 	// update meta
