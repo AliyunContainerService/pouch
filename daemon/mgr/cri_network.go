@@ -3,6 +3,7 @@ package mgr
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/alibaba/pouch/cri"
 
@@ -26,7 +27,7 @@ type CniMgr interface {
 	TearDownPodNetwork(config *runtime.PodSandboxConfig) error
 
 	// GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the pod sandbox.
-	GetPodNetworkStatus(config *runtime.PodSandboxConfig) (string, error)
+	GetPodNetworkStatus(netnsPath string) (string, error)
 
 	// Status returns error if the network plugin is in error state.
 	Status() error
@@ -73,11 +74,11 @@ func (c *CniManager) Name() string {
 // are launched.
 func (c *CniManager) SetUpPodNetwork(config *runtime.PodSandboxConfig, id string, netnsPath string) error {
 	podNetwork := ocicni.PodNetwork{
-		Name:      config.GetMetadata().GetName(),
-		Namespace: config.GetMetadata().GetNamespace(),
-		ID:        id,
-		NetNS:     netnsPath,
-		// TODO: portmapping.
+		Name:         config.GetMetadata().GetName(),
+		Namespace:    config.GetMetadata().GetNamespace(),
+		ID:           id,
+		NetNS:        netnsPath,
+		PortMappings: toCNIPortMappings(config.GetPortMappings()),
 	}
 
 	_, err := c.plugin.SetUpPod(podNetwork)
@@ -104,11 +105,38 @@ func (c *CniManager) TearDownPodNetwork(config *runtime.PodSandboxConfig) error 
 }
 
 // GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the pod sandbox.
-func (c *CniManager) GetPodNetworkStatus(config *runtime.PodSandboxConfig) (string, error) {
-	return "", fmt.Errorf("GetPodNetworkStatus Not Implemented Yet")
+func (c *CniManager) GetPodNetworkStatus(netnsPath string) (string, error) {
+	// TODO: we need more validation tests.
+	podNetwork := ocicni.PodNetwork{
+		NetNS: netnsPath,
+	}
+
+	ip, err := c.plugin.GetPodNetworkStatus(podNetwork)
+	if err != nil {
+		return "", fmt.Errorf("failed to get pod network status: %v", err)
+	}
+
+	return ip, nil
 }
 
 // Status returns error if the network plugin is in error state.
 func (c *CniManager) Status() error {
 	return fmt.Errorf("Status Not Implemented Yet")
+}
+
+// toCNIPortMappings converts CRI port mappings to CNI.
+func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapping {
+	var portMappings []ocicni.PortMapping
+	for _, mapping := range criPortMappings {
+		if mapping.HostPort <= 0 {
+			continue
+		}
+		portMappings = append(portMappings, ocicni.PortMapping{
+			HostPort:      mapping.HostPort,
+			ContainerPort: mapping.ContainerPort,
+			Protocol:      strings.ToLower(mapping.Protocol.String()),
+			HostIP:        mapping.HostIp,
+		})
+	}
+	return portMappings
 }

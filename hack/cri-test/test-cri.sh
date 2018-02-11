@@ -23,7 +23,7 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 
 # CRI_FOCUS focuses the test to run.
 # With the CRI manager completes its function, we may need to expand this field.
-CRI_FOCUS=${CRI_FOCUS:-"PodSandbox|AppArmor|Privileged is true|basic operations on container|Runtime info|mount propagation|volume and device|RunAsUser"}
+CRI_FOCUS=${CRI_FOCUS:-"PodSandbox|AppArmor|Privileged is true|basic operations on container|Runtime info|mount propagation|volume and device|RunAsUser|container port"}
 
 # CRI_SKIP skips the test to skip.
 CRI_SKIP=${CRI_SKIP:-"RunAsUserName"}
@@ -38,6 +38,50 @@ fi
 
 # For multiple GOPATHs, keep the first one only
 GOPATH=${GOPATH%%:*}
+
+# Install CNI first
+mkdir -p /etc/cni/net.d /opt/cni/bin
+
+git clone https://github.com/containernetworking/plugins $GOPATH/src/github.com/containernetworking/plugins
+cd $GOPATH/src/github.com/containernetworking/plugins
+
+./build.sh
+cp bin/* /opt/cni/bin
+
+# Create CNI configuration file
+sh -c 'cat >/etc/cni/net.d/10-mynet.conflist <<-EOF
+{
+    "cniVersion": "0.3.1",
+    "name": "mynet",
+    "plugins": [
+        {
+            "type": "bridge",
+            "bridge": "cni0",
+            "isGateway": true,
+            "ipMasq": true,
+            "ipam": {
+                "type": "host-local",
+                "subnet": "10.30.0.0/16",
+                "routes": [
+                    { "dst": "0.0.0.0/0"   }
+                ]
+            }
+        },
+        {
+            "type": "portmap",
+            "capabilities": {"portMappings": true},
+            "snat": true
+        }
+    ]
+}
+EOF'
+
+sh -c 'cat >/etc/cni/net.d/99-loopback.conf <<-EOF
+{
+    "cniVersion": "0.3.1",
+    "type": "loopback"
+}
+EOF'
 
 CRITEST=${GOPATH}/bin/critest
 CRITOOL_PKG=github.com/kubernetes-incubator/cri-tools

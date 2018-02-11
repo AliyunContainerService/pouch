@@ -132,10 +132,11 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, err
 	}
-	netnsPath, err := containerNetns(container)
-	if err != nil {
-		return nil, err
+	netnsPath := containerNetns(container)
+	if netnsPath == "" {
+		return nil, fmt.Errorf("failed to find network namespace path for sandbox %q", id)
 	}
+
 	err = c.CniMgr.SetUpPodNetwork(config, id, netnsPath)
 	if err != nil {
 		// If setup network failed, don't break now.
@@ -236,6 +237,17 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
 	}
 	labels, annotations := extractLabels(sandbox.Config.Labels)
+
+	// TODO: check if the sandbox's network is in host mode.
+	var ip string
+	netnsPath := containerNetns(sandbox)
+	if netnsPath != "" {
+		ip, err = c.CniMgr.GetPodNetworkStatus(netnsPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	status := &runtime.PodSandboxStatus{
 		Id:          sandbox.ID,
 		State:       state,
@@ -243,7 +255,8 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		Metadata:    metadata,
 		Labels:      labels,
 		Annotations: annotations,
-		// TODO: network status and linux specific pod status.
+		Network:     &runtime.PodSandboxNetworkStatus{Ip: ip},
+		// TODO: linux specific pod status.
 	}
 
 	return &runtime.PodSandboxStatusResponse{Status: status}, nil
