@@ -17,6 +17,9 @@ const (
 	busyboxImage                = "registry.hub.docker.com/library/busybox:latest"
 	helloworldImage             = "registry.hub.docker.com/library/hello-world"
 	helloworldImageOnlyRepoName = "hello-world"
+
+	GateWay = "192.168.1.1"
+	Subnet  = "192.168.1.0/24"
 )
 
 // VerifyCondition is used to check the condition value.

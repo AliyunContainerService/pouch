@@ -21,6 +21,9 @@ func init() {
 func (suite *PouchNetworkSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+
+	// Remove all Containers, in case there are legacy containers connecting network.
+	environment.PruneAllContainers(apiClient)
 }
 
 // TestNetworkDefault tests the creation of default bridge network.
@@ -42,9 +45,16 @@ func (suite *PouchNetworkSuite) TestNetworkWorks(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("network", "create", "--name", funcname, "-d", "bridge",
-		"--gateway", "192.168.1.1", "--ip-range", "192.168.1.1/24",
-		"--subnet", "192.168.1.1/24").Assert(c, icmd.Success)
+	// Remove network in case there is legacy network which may impacts test.
+	defer command.PouchRun("network", "remove", funcname)
+
+	gateway := "192.168.4.1"
+	subnet := "192.168.4.0/24"
+
+	command.PouchRun("network", "create", "--name", funcname,
+		"-d", "bridge",
+		"--gateway", gateway,
+		"--subnet", subnet).Assert(c, icmd.Success)
 	command.PouchRun("network", "inspect", funcname).Assert(c, icmd.Success)
 
 	// Assign network to a container works
@@ -96,7 +106,15 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("network", "create", "--name", funcname, "--label", "test=foo").Assert(c, icmd.Success)
+	gateway := "192.168.3.1"
+	subnet := "192.168.3.0/24"
+
+	command.PouchRun("network", "create",
+		"--name", funcname,
+		"-d", "bridge",
+		"--gateway", gateway,
+		"--subnet", subnet,
+		"--label", "test=foo").Assert(c, icmd.Success)
 	command.PouchRun("network", "remove", funcname)
 }
 
@@ -109,7 +127,15 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("network", "create", "--name", funcname, "--option", "test=foo").Assert(c, icmd.Success)
+	gateway := "192.168.100.1"
+	subnet := "192.168.100.0/24"
+
+	command.PouchRun("network", "create",
+		"--name", funcname,
+		"-d", "bridge",
+		"--gateway", gateway,
+		"--subnet", subnet,
+		"--option", "test=foo").Assert(c, icmd.Success)
 	command.PouchRun("network", "remove", funcname)
 }
 
@@ -127,7 +153,22 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 		Err:      "already exist",
 	}
 
-	command.PouchRun("network", "create", "--name", funcname).Assert(c, icmd.Success)
-	command.PouchRun("network", "create", "--name", funcname).Compare(expct)
+	gateway1 := "192.168.101.1"
+	subnet1 := "192.168.101.0/24"
+	gateway2 := "192.168.102.1"
+	subnet2 := "192.168.102.0/24"
+
+	command.PouchRun("network", "create",
+		"--name", funcname,
+		"-d", "bridge",
+		"--gateway", gateway1,
+		"--subnet", subnet1).Assert(c, icmd.Success)
+
+	command.PouchRun("network", "create",
+		"--name", funcname,
+		"-d", "bridge",
+		"--gateway", gateway2,
+		"--subnet", subnet2).Compare(expct)
+
 	command.PouchRun("network", "remove", funcname)
 }

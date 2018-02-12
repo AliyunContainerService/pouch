@@ -26,7 +26,16 @@ func (suite *APINetworkListSuite) TestNetworkListOk(c *check.C) {
 	obj := map[string]interface{}{
 		"Name":   net,
 		"Driver": "bridge",
+		"IPAM": map[string]interface{}{
+			"Config": []map[string]interface{}{
+				{
+					"Gateway": GateWay,
+					"Subnet":  Subnet,
+				},
+			},
+		},
 	}
+
 	path := "/networks/create"
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post(path, body)
