@@ -23,18 +23,47 @@ func (suite *PouchNetworkSuite) SetUpSuite(c *check.C) {
 	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
-// TestNetworkDefault tests the creation of default bridge network.
+// TestNetworkDefault tests the creation of default bridge/none/host network.
 func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
 	// After pouchd is launched, default netowrk bridge is created
 	// check the existence of default network: bridge
 	command.PouchRun("network", "inspect", "bridge").Assert(c, icmd.Success)
 
+	command.PouchRun("network", "inspect", "none").Assert(c, icmd.Success)
+
+	command.PouchRun("network", "inspect", "host").Assert(c, icmd.Success)
+
 	// Check the existence of link: p0
 	icmd.RunCommand("ip", "link", "show", "dev", "p0").Assert(c, icmd.Success)
+
+	{
+		// Assign the none network to a container.
+		expct := icmd.Expected{
+			Out: "",
+		}
+		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "r").Compare(expct)
+		command.PouchRun("rm", "-f", funcname)
+	}
+	{
+		routeOnHost := icmd.RunCommand("ip", "r").Stdout()
+		// Assign the host network to a container.
+		expct := icmd.Expected{
+			Out: routeOnHost,
+		}
+		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "r").Compare(expct)
+		command.PouchRun("rm", "-f", funcname)
+	}
 }
 
-// TestNetworkWorks tests "pouch network" work.
-func (suite *PouchNetworkSuite) TestNetworkWorks(c *check.C) {
+// TestNetworkBridgeWorks tests bridge network works.
+func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	var funcname string

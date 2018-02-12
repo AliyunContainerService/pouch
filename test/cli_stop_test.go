@@ -34,6 +34,8 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	name := "stop-normal"
 
 	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-f", name)
+
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
