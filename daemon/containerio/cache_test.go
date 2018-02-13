@@ -7,6 +7,8 @@ import (
 	"github.com/alibaba/pouch/pkg/collect"
 )
 
+var testCache = NewCache()
+
 func TestNewCache(t *testing.T) {
 	tests := []struct {
 		name string
@@ -31,13 +33,43 @@ func TestCache_Put(t *testing.T) {
 		id string
 		io *IO
 	}
+
+	var f fields
+	f.m = testCache.m
+
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name:   "cachePutIONil",
+			fields: f,
+			args: args{
+				id: "123",
+				io: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "cachePutIdNil",
+			fields: f,
+			args: args{
+				id: "",
+				io: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "cachePutIdDup",
+			fields: f,
+			args: args{
+				id: "123",
+				io: &IO{},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -64,7 +96,36 @@ func TestCache_Get(t *testing.T) {
 		args   args
 		want   *IO
 	}{
-	// TODO: Add test cases.
+		{
+			name: "cacheGetNilId",
+			fields: fields{
+				m: testCache.m,
+			},
+			args: args{
+				id: "",
+			},
+			want: nil,
+		},
+		{
+			name: "cacheGetIdNotFound",
+			fields: fields{
+				m: testCache.m,
+			},
+			args: args{
+				id: "abc",
+			},
+			want: nil,
+		},
+		{
+			name: "cacheGetIdNotFound",
+			fields: fields{
+				m: testCache.m,
+			},
+			args: args{
+				id: "123",
+			},
+			want: &IO{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,7 +151,24 @@ func TestCache_Remove(t *testing.T) {
 		fields fields
 		args   args
 	}{
-	// TODO: Add test cases.
+		{
+			name: "cacheRmOk",
+			fields: fields{
+				m: testCache.m,
+			},
+			args: args{
+				id: "123",
+			},
+		},
+		{
+			name: "cacheRmNil",
+			fields: fields{
+				m: testCache.m,
+			},
+			args: args{
+				id: "",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
