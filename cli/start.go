@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -52,6 +53,7 @@ func (s *StartCommand) runStart(args []string) error {
 	container := args[0]
 
 	// attach to io.
+	ctx := context.Background()
 	apiClient := s.cli.Client()
 
 	var wait chan struct{}
@@ -66,7 +68,7 @@ func (s *StartCommand) runStart(args []string) error {
 			}
 		}()
 
-		conn, br, err := apiClient.ContainerAttach(container, s.stdin)
+		conn, br, err := apiClient.ContainerAttach(ctx, container, s.stdin)
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
@@ -83,7 +85,7 @@ func (s *StartCommand) runStart(args []string) error {
 	}
 
 	// start container
-	if err := apiClient.ContainerStart(container, s.detachKeys); err != nil {
+	if err := apiClient.ContainerStart(ctx, container, s.detachKeys); err != nil {
 		return fmt.Errorf("failed to start container %s: %v", container, err)
 	}
 

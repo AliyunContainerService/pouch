@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -32,9 +33,10 @@ func (p *InspectCommand) Init(c *Cli) {
 
 // runInspect is the entry of InspectCommand command.
 func (p *InspectCommand) runInspect(args []string) error {
+	ctx := context.Background()
 	apiClient := p.cli.Client()
 	name := args[0]
-	container, err := apiClient.ContainerGet(name)
+	container, err := apiClient.ContainerGet(ctx, name)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -33,11 +34,12 @@ func (p *UnpauseCommand) Init(c *Cli) {
 
 // runUnpause is the entry of unpause command.
 func (p *UnpauseCommand) runUnpause(args []string) error {
+	ctx := context.Background()
 	apiClient := p.cli.Client()
 
 	container := args[0]
 
-	if err := apiClient.ContainerUnpause(container); err != nil {
+	if err := apiClient.ContainerUnpause(ctx, container); err != nil {
 		return fmt.Errorf("failed to unpause container %s: %v", container, err)
 	}
 	return nil

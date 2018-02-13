@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -95,8 +96,9 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 	containerName := rc.name
 
+	ctx := context.Background()
 	apiClient := rc.cli.Client()
-	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
+	result, err := apiClient.ContainerCreate(ctx, config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to run container: %v", err)
 	}
@@ -131,7 +133,7 @@ func (rc *RunCommand) runRun(args []string) error {
 			}
 		}()
 
-		conn, br, err := apiClient.ContainerAttach(containerName, rc.stdin)
+		conn, br, err := apiClient.ContainerAttach(ctx, containerName, rc.stdin)
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
@@ -147,7 +149,7 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 
 	// start container
-	if err := apiClient.ContainerStart(containerName, rc.detachKeys); err != nil {
+	if err := apiClient.ContainerStart(ctx, containerName, rc.detachKeys); err != nil {
 		return fmt.Errorf("failed to run container %s: %v", containerName, err)
 	}
 

@@ -3,6 +3,7 @@ package client
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -31,19 +32,19 @@ type Response struct {
 	Body       io.ReadCloser
 }
 
-func (client *APIClient) get(path string, query url.Values) (*Response, error) {
-	return client.sendRequest("GET", path, query, nil)
+func (client *APIClient) get(ctx context.Context, path string, query url.Values) (*Response, error) {
+	return client.sendRequest(ctx, "GET", path, query, nil)
 }
 
-func (client *APIClient) post(path string, query url.Values, obj interface{}) (*Response, error) {
-	return client.sendRequest("POST", path, query, obj)
+func (client *APIClient) post(ctx context.Context, path string, query url.Values, obj interface{}) (*Response, error) {
+	return client.sendRequest(ctx, "POST", path, query, obj)
 }
 
-func (client *APIClient) delete(path string, query url.Values) (*Response, error) {
-	return client.sendRequest("DELETE", path, query, nil)
+func (client *APIClient) delete(ctx context.Context, path string, query url.Values) (*Response, error) {
+	return client.sendRequest(ctx, "DELETE", path, query, nil)
 }
 
-func (client *APIClient) hijack(path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
+func (client *APIClient) hijack(ctx context.Context, path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
 	req, err := client.newRequest("POST", path, query, obj, header)
 	if err != nil {
 		return nil, nil, err
@@ -103,13 +104,13 @@ func (client *APIClient) newRequest(method, path string, query url.Values, obj i
 	return req, err
 }
 
-func (client *APIClient) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
+func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, obj interface{}) (*Response, error) {
 	req, err := client.newRequest(method, path, query, obj, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.HTTPCli.Do(req)
+	resp, err := cancellableDo(ctx, client.HTTPCli, req)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +130,33 @@ func (client *APIClient) sendRequest(method, path string, query url.Values, obj 
 		Status:     resp.Status,
 		Body:       resp.Body,
 	}, nil
+}
+
+func cancellableDo(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+	type contextResp struct {
+		response *http.Response
+		err      error
+	}
+
+	ctxResp := make(chan contextResp, 1)
+	go func() {
+		resp, err := client.Do(req)
+		ctxResp <- contextResp{
+			response: resp,
+			err:      err,
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		tr := client.Transport.(*http.Transport)
+		tr.CancelRequest(req)
+		<-ctxResp
+		return nil, ctx.Err()
+
+	case resp := <-ctxResp:
+		return resp.response, resp.err
+	}
 }
 
 func getAPIPath(path string, query url.Values) string {

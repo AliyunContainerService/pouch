@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -87,8 +88,9 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	}
 	containerName := cc.name
 
+	ctx := context.Background()
 	apiClient := cc.cli.Client()
-	result, err := apiClient.ContainerCreate(config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
+	result, err := apiClient.ContainerCreate(ctx, config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}

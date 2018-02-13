@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -39,10 +40,11 @@ func (rmi *RmiCommand) addFlags() {
 
 // runRmi is the entry of rmi command
 func (rmi *RmiCommand) runRmi(args []string) error {
+	ctx := context.Background()
 	apiClient := rmi.cli.Client()
 
 	for _, name := range args {
-		if err := apiClient.ImageRemove(name, rmi.force); err != nil {
+		if err := apiClient.ImageRemove(ctx, name, rmi.force); err != nil {
 			return fmt.Errorf("failed to remove image: %v", err)
 		}
 		fmt.Printf("%s\n", name)

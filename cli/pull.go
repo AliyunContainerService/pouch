@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,8 +58,9 @@ func (p *PullCommand) runPull(args []string) error {
 	}
 	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
 
+	ctx := context.Background()
 	apiClient := p.cli.Client()
-	responseBody, err := apiClient.ImagePull(taggedRef.Name(), taggedRef.Tag())
+	responseBody, err := apiClient.ImagePull(ctx, taggedRef.Name(), taggedRef.Tag())
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}

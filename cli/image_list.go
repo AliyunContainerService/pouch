@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/alibaba/pouch/pkg/utils"
@@ -54,9 +55,10 @@ func (i *ImagesCommand) addFlags() {
 
 // runImages is the entry of images container command.
 func (i *ImagesCommand) runImages(args []string) error {
+	ctx := context.Background()
 	apiClient := i.cli.Client()
 
-	imageList, err := apiClient.ImageList()
+	imageList, err := apiClient.ImageList(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get image list: %v", err)
 

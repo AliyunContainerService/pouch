@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -103,8 +104,9 @@ func (v *VolumeCreateCommand) volumeCreate() error {
 		return err
 	}
 
+	ctx := context.Background()
 	apiClient := v.cli.Client()
-	volume, err := apiClient.VolumeCreate(volumeReq)
+	volume, err := apiClient.VolumeCreate(ctx, volumeReq)
 	if err != nil {
 		return err
 	}
@@ -188,9 +190,10 @@ func (v *VolumeRemoveCommand) runVolumeRm(args []string) error {
 
 	logrus.Debugf("remove a volume: %s", name)
 
+	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	err := apiClient.VolumeRemove(name)
+	err := apiClient.VolumeRemove(ctx, name)
 	if err == nil {
 		fmt.Printf("Removed: %s\n", name)
 	}
@@ -238,9 +241,10 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 
 	logrus.Debugf("inspect a volume: %s", name)
 
+	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	resp, err := apiClient.VolumeInspect(name)
+	resp, err := apiClient.VolumeInspect(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -292,9 +296,10 @@ func (v *VolumeListCommand) addFlags() {}
 func (v *VolumeListCommand) runVolumeList(args []string) error {
 	logrus.Debugf("list the volumes")
 
+	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	volumeList, err := apiClient.VolumeList()
+	volumeList, err := apiClient.VolumeList(ctx)
 	if err != nil {
 		return err
 	}

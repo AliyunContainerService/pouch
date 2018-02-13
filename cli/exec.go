@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -50,6 +51,7 @@ func (e *ExecCommand) addFlags() {
 
 // runExec is the entry of ExecCommand command.
 func (e *ExecCommand) runExec(args []string) error {
+	ctx := context.Background()
 	apiClient := e.cli.Client()
 
 	// create exec process.
@@ -67,7 +69,7 @@ func (e *ExecCommand) runExec(args []string) error {
 		User:         "",
 	}
 
-	createResp, err := apiClient.ContainerCreateExec(id, createExecConfig)
+	createResp, err := apiClient.ContainerCreateExec(ctx, id, createExecConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create exec: %v", err)
 	}
@@ -78,7 +80,7 @@ func (e *ExecCommand) runExec(args []string) error {
 		Tty:    e.Terminal && e.Interactive,
 	}
 
-	conn, reader, err := apiClient.ContainerStartExec(createResp.ID, startExecConfig)
+	conn, reader, err := apiClient.ContainerStartExec(ctx, createResp.ID, startExecConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create exec: %v", err)
 	}

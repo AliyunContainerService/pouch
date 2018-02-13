@@ -2,6 +2,7 @@ package client
 
 import (
 	"bufio"
+	"context"
 	"net"
 	"net/url"
 
@@ -10,21 +11,21 @@ import (
 
 // ContainerAPIClient defines methods of Container client.
 type ContainerAPIClient interface {
-	ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error)
-	ContainerStart(name, detachKeys string) error
-	ContainerStop(name, timeout string) error
-	ContainerRemove(name string, force bool) error
-	ContainerList(all bool) ([]*types.Container, error)
-	ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error)
-	ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)
-	ContainerStartExec(execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)
-	ContainerGet(name string) (*types.ContainerJSON, error)
-	ContainerRename(id string, name string) error
-	ContainerPause(name string) error
+	ContainerCreate(ctx context.Context, config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error)
+	ContainerStart(ctx context.Context, name, detachKeys string) error
+	ContainerStop(ctx context.Context, name, timeout string) error
+	ContainerRemove(ctx context.Context, name string, force bool) error
+	ContainerList(ctx context.Context, all bool) ([]*types.Container, error)
+	ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error)
+	ContainerCreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)
+	ContainerStartExec(ctx context.Context, execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)
+	ContainerGet(ctx context.Context, name string) (*types.ContainerJSON, error)
+	ContainerRename(ctx context.Context, id string, name string) error
+	ContainerPause(ctx context.Context, name string) error
 }
 
 // ContainerCreate creates a new container based in the given configuration.
-func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfig *types.HostConfig, networkingConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error) {
+func (client *APIClient) ContainerCreate(ctx context.Context, config types.ContainerConfig, hostConfig *types.HostConfig, networkingConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error) {
 	createConfig := types.ContainerCreateConfig{
 		ContainerConfig:  config,
 		HostConfig:       hostConfig,
@@ -36,7 +37,7 @@ func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfi
 		q.Set("name", containerName)
 	}
 
-	resp, err := client.post("/containers/create", q, createConfig)
+	resp, err := client.post(ctx, "/containers/create", q, createConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -50,37 +51,37 @@ func (client *APIClient) ContainerCreate(config types.ContainerConfig, hostConfi
 }
 
 // ContainerStart starts a created container.
-func (client *APIClient) ContainerStart(name, detachKeys string) error {
+func (client *APIClient) ContainerStart(ctx context.Context, name, detachKeys string) error {
 	q := url.Values{}
 	if detachKeys != "" {
 		q.Set("detachKeys", detachKeys)
 	}
 
-	resp, err := client.post("/containers/"+name+"/start", q, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/start", q, nil)
 	ensureCloseReader(resp)
 
 	return err
 }
 
 // ContainerStop stops a container.
-func (client *APIClient) ContainerStop(name string, timeout string) error {
+func (client *APIClient) ContainerStop(ctx context.Context, name string, timeout string) error {
 	q := url.Values{}
 	q.Add("t", timeout)
 
-	resp, err := client.post("/containers/"+name+"/stop", q, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/stop", q, nil)
 	ensureCloseReader(resp)
 
 	return err
 }
 
 // ContainerRemove removes a container.
-func (client *APIClient) ContainerRemove(name string, force bool) error {
+func (client *APIClient) ContainerRemove(ctx context.Context, name string, force bool) error {
 	q := url.Values{}
 	if force {
 		q.Set("force", "true")
 	}
 
-	resp, err := client.delete("/containers/"+name, q)
+	resp, err := client.delete(ctx, "/containers/"+name, q)
 	if err != nil {
 		return err
 	}
@@ -89,13 +90,13 @@ func (client *APIClient) ContainerRemove(name string, force bool) error {
 }
 
 // ContainerList returns the list of containers.
-func (client *APIClient) ContainerList(all bool) ([]*types.Container, error) {
+func (client *APIClient) ContainerList(ctx context.Context, all bool) ([]*types.Container, error) {
 	q := url.Values{}
 	if all {
 		q.Set("all", "true")
 	}
 
-	resp, err := client.get("/containers/json", q)
+	resp, err := client.get(ctx, "/containers/json", q)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (client *APIClient) ContainerList(all bool) ([]*types.Container, error) {
 }
 
 // ContainerAttach attach a container
-func (client *APIClient) ContainerAttach(name string, stdin bool) (net.Conn, *bufio.Reader, error) {
+func (client *APIClient) ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error) {
 	q := url.Values{}
 	if stdin {
 		q.Set("stdin", "1")
@@ -120,12 +121,12 @@ func (client *APIClient) ContainerAttach(name string, stdin bool) (net.Conn, *bu
 		"Content-Type": {"text/plain"},
 	}
 
-	return client.hijack("/containers/"+name+"/attach", q, nil, header)
+	return client.hijack(ctx, "/containers/"+name+"/attach", q, nil, header)
 }
 
 // ContainerCreateExec creates exec process.
-func (client *APIClient) ContainerCreateExec(name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error) {
-	response, err := client.post("/containers/"+name+"/exec", url.Values{}, config)
+func (client *APIClient) ContainerCreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error) {
+	response, err := client.post(ctx, "/containers/"+name+"/exec", url.Values{}, config)
 	if err != nil {
 		return nil, err
 	}
@@ -138,17 +139,17 @@ func (client *APIClient) ContainerCreateExec(name string, config *types.ExecCrea
 }
 
 // ContainerStartExec starts exec process.
-func (client *APIClient) ContainerStartExec(execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
+func (client *APIClient) ContainerStartExec(ctx context.Context, execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
 	header := map[string][]string{
 		"Content-Type": {"text/plain"},
 	}
 
-	return client.hijack("/exec/"+execid+"/start", url.Values{}, config, header)
+	return client.hijack(ctx, "/exec/"+execid+"/start", url.Values{}, config, header)
 }
 
 // ContainerGet returns the detailed information of container.
-func (client *APIClient) ContainerGet(name string) (*types.ContainerJSON, error) {
-	resp, err := client.get("/containers/"+name+"/json", nil)
+func (client *APIClient) ContainerGet(ctx context.Context, name string) (*types.ContainerJSON, error) {
+	resp, err := client.get(ctx, "/containers/"+name+"/json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -161,27 +162,27 @@ func (client *APIClient) ContainerGet(name string) (*types.ContainerJSON, error)
 }
 
 // ContainerRename renames a container.
-func (client *APIClient) ContainerRename(id string, name string) error {
+func (client *APIClient) ContainerRename(ctx context.Context, id string, name string) error {
 	q := url.Values{}
 	q.Add("name", name)
 
-	resp, err := client.post("/containers/"+id+"/rename", q, nil)
+	resp, err := client.post(ctx, "/containers/"+id+"/rename", q, nil)
 	ensureCloseReader(resp)
 
 	return err
 }
 
 // ContainerPause pauses a container
-func (client *APIClient) ContainerPause(name string) error {
-	resp, err := client.post("/containers/"+name+"/pause", nil, nil)
+func (client *APIClient) ContainerPause(ctx context.Context, name string) error {
+	resp, err := client.post(ctx, "/containers/"+name+"/pause", nil, nil)
 	ensureCloseReader(resp)
 
 	return err
 }
 
 // ContainerUnpause unpauses a container
-func (client *APIClient) ContainerUnpause(name string) error {
-	resp, err := client.post("/containers/"+name+"/unpause", nil, nil)
+func (client *APIClient) ContainerUnpause(ctx context.Context, name string) error {
+	resp, err := client.post(ctx, "/containers/"+name+"/unpause", nil, nil)
 	ensureCloseReader(resp)
 
 	return err

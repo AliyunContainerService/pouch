@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
@@ -32,11 +34,12 @@ func (rc *RenameCommand) Init(c *Cli) {
 
 // runRename is the entry of rename command.
 func (rc *RenameCommand) runRename(args []string) error {
+	ctx := context.Background()
 	apiClient := rc.cli.Client()
 	container := args[0]
 	newName := args[1]
 
-	return apiClient.ContainerRename(container, newName)
+	return apiClient.ContainerRename(ctx, container, newName)
 }
 
 // renameExample shows examples in rename command, and is used in auto-generated cli docs.

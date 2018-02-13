@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"io"
 	"net/url"
 
@@ -9,17 +10,17 @@ import (
 
 // ImageAPIClient defines methods of Image client.
 type ImageAPIClient interface {
-	ImageList() ([]types.ImageInfo, error)
-	ImageInspect(name string) (types.ImageInfo, error)
-	ImagePull(name, tag string) (io.ReadCloser, error)
-	ImageRemove(name string, force bool) error
+	ImageList(ctx context.Context) ([]types.ImageInfo, error)
+	ImageInspect(ctx context.Context, name string) (types.ImageInfo, error)
+	ImagePull(ctx context.Context, name, tag string) (io.ReadCloser, error)
+	ImageRemove(ctx context.Context, name string, force bool) error
 }
 
 // ImageInspect requests daemon to inspect an image.
-func (client *APIClient) ImageInspect(name string) (types.ImageInfo, error) {
+func (client *APIClient) ImageInspect(ctx context.Context, name string) (types.ImageInfo, error) {
 	image := types.ImageInfo{}
 
-	resp, err := client.get("/images/"+name+"/json", nil)
+	resp, err := client.get(ctx, "/images/"+name+"/json", nil)
 	if err != nil {
 		return image, err
 	}
@@ -30,12 +31,12 @@ func (client *APIClient) ImageInspect(name string) (types.ImageInfo, error) {
 }
 
 // ImagePull requests daemon to pull an image from registry.
-func (client *APIClient) ImagePull(name, tag string) (io.ReadCloser, error) {
+func (client *APIClient) ImagePull(ctx context.Context, name, tag string) (io.ReadCloser, error) {
 	q := url.Values{}
 	q.Set("fromImage", name)
 	q.Set("tag", tag)
 
-	resp, err := client.post("/images/create", q, nil)
+	resp, err := client.post(ctx, "/images/create", q, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +44,8 @@ func (client *APIClient) ImagePull(name, tag string) (io.ReadCloser, error) {
 }
 
 // ImageList requests daemon to list all images
-func (client *APIClient) ImageList() ([]types.ImageInfo, error) {
-	resp, err := client.get("/images/json", nil)
+func (client *APIClient) ImageList(ctx context.Context) ([]types.ImageInfo, error) {
+	resp, err := client.get(ctx, "/images/json", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +60,13 @@ func (client *APIClient) ImageList() ([]types.ImageInfo, error) {
 }
 
 // ImageRemove deletes an image.
-func (client *APIClient) ImageRemove(name string, force bool) error {
+func (client *APIClient) ImageRemove(ctx context.Context, name string, force bool) error {
 	q := url.Values{}
 	if force {
 		q.Set("force", "true")
 	}
 
-	resp, err := client.delete("/images/"+name, q)
+	resp, err := client.delete(ctx, "/images/"+name, q)
 	ensureCloseReader(resp)
 
 	return err
