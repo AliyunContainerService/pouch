@@ -31,11 +31,11 @@ function install_pouch ()
 	# install lxcfs
 	echo "Install lxcfs"
 	if grep -qi "ubuntu" /etc/issue ; then
-		apt-get install lxcfs
+		apt-get install -y lxcfs
 		if (( $? != 0 )); then
 			add-apt-repository ppa:ubuntu-lxc/lxcfs-stable -y
 			apt-get update
-			apt-get install lxcfs
+			apt-get install -y lxcfs
 		fi
 
 		# MUST stop lxcfs service, so pouchd could take over it.
