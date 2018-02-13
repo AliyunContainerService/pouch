@@ -19,7 +19,45 @@ func Test_getIpamConfig(t *testing.T) {
 		want1   []*libnetwork.IpamConf
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "getIpamConfigInputNil",
+			args: args{
+				data: []apitypes.IPAMConfig{},
+			},
+			want:    []*libnetwork.IpamConf{},
+			want1:   []*libnetwork.IpamConf{},
+			wantErr: false,
+		},
+		{
+			name: "getIpamConfigInputIpv4Normal",
+			args: args{
+				data: []apitypes.IPAMConfig{
+					{
+						AuxAddress: map[string]string{
+							"abc": "def",
+						},
+						Gateway: "192.168.1.1",
+						IPRange: "192.168.1.1/26",
+						Subnet:  "192.168.1.0/24",
+					},
+				},
+			},
+			want: []*libnetwork.IpamConf{
+				{
+					PreferredPool: "192.168.1.0/24",
+					SubPool:       "192.168.1.1/26",
+					Gateway:       "192.168.1.1",
+					AuxAddresses: map[string]string{
+						"abc": "def",
+					},
+				},
+			},
+			want1:   []*libnetwork.IpamConf{},
+			wantErr: false,
+		},
+		// TODO: add Invalid IPv4 subnet
+		// TODO: add IPv6 test
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
