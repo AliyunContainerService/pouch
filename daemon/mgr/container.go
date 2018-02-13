@@ -253,6 +253,9 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		Cwd:      "/",
 		Env:      c.Config().Env,
 	}
+	if len(execConfig.User) == 0 {
+		setupProcessUser(ctx, c.meta, &SpecWrapper{s: &specs.Spec{Process: process}})
+	}
 
 	return mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,

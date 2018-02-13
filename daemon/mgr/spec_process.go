@@ -2,7 +2,6 @@ package mgr
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -59,27 +58,22 @@ func setupProcessTTY(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) e
 }
 
 func setupProcessUser(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) (err error) {
-	if c.Config.User != "" {
-		fields := strings.SplitN(c.Config.User, ":", 2)
-		var u, g string
-		u = fields[0]
-		if len(fields) == 2 {
-			g = fields[1]
-		}
-		user := &specs.User{}
-		if uid, err := strconv.Atoi(u); err == nil {
-			user.UID = uint32(uid)
-		} else {
-			user.Username = u
-		}
-		gid, err := strconv.Atoi(g)
-		if err != nil || gid <= 0 {
-			return fmt.Errorf("invalid gid: %d", gid)
-		}
-		user.GID = uint32(gid)
+	// The user option is complicated, now we only handle case "uid".
+	// TODO: handle other cases like "user", "uid:gid", etc.
+	if c.Config.User == "" {
+		return nil
 	}
 
-	//TODO security config (including both seccomp and selinux)
+	fields := strings.Split(c.Config.User, ":")
+	var u string
+	u = fields[0]
+	user := specs.User{}
+	if uid, err := strconv.Atoi(u); err == nil {
+		user.UID = uint32(uid)
+	} else {
+		user.Username = u
+	}
+	spec.s.Process.User = user
 
 	return nil
 }

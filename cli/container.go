@@ -22,6 +22,7 @@ type container struct {
 	env                  []string
 	entrypoint           string
 	workdir              string
+	user                 string
 	hostname             string
 	cpushare             int64
 	cpusetcpus           string
@@ -120,6 +121,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Env:        c.env,
 			Entrypoint: strings.Fields(c.entrypoint),
 			WorkingDir: c.workdir,
+			User:       c.user,
 			Hostname:   strfmt.Hostname(c.hostname),
 			Labels:     labels,
 		},

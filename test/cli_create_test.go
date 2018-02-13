@@ -312,3 +312,20 @@ func (suite *PouchCreateSuite) TestCreateWithWorkDir(c *check.C) {
 
 	// TODO: check the work directory has been created.
 }
+
+// TestCreateWithUser tests creating container with user works.
+func (suite *PouchCreateSuite) TestCreateWithUser(c *check.C) {
+	name := "TestCreateWithUser"
+	user := "1001"
+
+	res := command.PouchRun("create", "--name", name, "--user", user, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.Config.User, check.Equals, user)
+}

@@ -54,6 +54,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.StringSliceVarP(&rc.labels, "label", "l", nil, "Set label for a container")
 	flagSet.StringVar(&rc.entrypoint, "entrypoint", "", "Overwrite the default entrypoint")
 	flagSet.StringVarP(&rc.workdir, "workdir", "w", "", "Set the working directory in a container")
+	flagSet.StringVarP(&rc.user, "user", "u", "", "UID")
 	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
 	flagSet.StringVar(&rc.hostname, "hostname", "", "Set container's hostname")
 	flagSet.Int64Var(&rc.cpushare, "cpu-share", 0, "CPU shares")
