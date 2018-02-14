@@ -66,6 +66,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --security-opt strings        Security Options
       --sysctl strings              Sysctl options
   -t, --tty                         Allocate a tty device
+  -u, --user string                 UID
       --uts string                  UTS namespace to use
   -v, --volume strings              Bind mount volumes to container
   -w, --workdir string              Set the working directory in a container
