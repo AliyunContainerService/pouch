@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,11 +41,12 @@ func (p *PauseCommand) addFlags() {
 
 // runPause is the entry of pause command.
 func (p *PauseCommand) runPause(args []string) error {
+	ctx := context.Background()
 	apiClient := p.cli.Client()
 
 	container := args[0]
 
-	if err := apiClient.ContainerPause(container); err != nil {
+	if err := apiClient.ContainerPause(ctx, container); err != nil {
 		return fmt.Errorf("failed to pause container %s: %v", container, err)
 	}
 	return nil

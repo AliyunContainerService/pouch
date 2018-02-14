@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -42,11 +43,12 @@ func (s *StopCommand) addFlags() {
 
 // runStop is the entry of stop command.
 func (s *StopCommand) runStop(args []string) error {
+	ctx := context.Background()
 	apiClient := s.cli.Client()
 
 	container := args[0]
 
-	if err := apiClient.ContainerStop(container, strconv.Itoa(s.timeout)); err != nil {
+	if err := apiClient.ContainerStop(ctx, container, strconv.Itoa(s.timeout)); err != nil {
 		return fmt.Errorf("failed to stop container %s: %v", container, err)
 	}
 	return nil

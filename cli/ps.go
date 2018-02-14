@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -51,10 +52,11 @@ func (p *PsCommand) addFlags() {
 
 // runPs is the entry of PsCommand command.
 func (p *PsCommand) runPs(args []string) error {
+	ctx := context.Background()
 	apiClient := p.cli.Client()
 
 	var containers containerList
-	containers, err := apiClient.ContainerList(p.flagAll)
+	containers, err := apiClient.ContainerList(ctx, p.flagAll)
 	if err != nil {
 		return fmt.Errorf("failed to get container list: %v", err)
 	}

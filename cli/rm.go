@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -43,10 +44,11 @@ func (r *RmCommand) addFlags() {
 
 // runRm is the entry of RmCommand command.
 func (r *RmCommand) runRm(args []string) error {
+	ctx := context.Background()
 	apiClient := r.cli.Client()
 
 	for _, name := range args {
-		if err := apiClient.ContainerRemove(name, r.force); err != nil {
+		if err := apiClient.ContainerRemove(ctx, name, r.force); err != nil {
 			return fmt.Errorf("failed to remove container: %v", err)
 		}
 		fmt.Printf("%s\n", name)

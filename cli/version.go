@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -37,9 +38,10 @@ func (v *VersionCommand) addFlags() {
 
 // runVersion is the entry of version command.
 func (v *VersionCommand) runVersion() error {
+	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	result, err := apiClient.SystemVersion()
+	result, err := apiClient.SystemVersion(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get system version: %v", err)
 	}

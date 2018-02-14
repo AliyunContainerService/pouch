@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -33,8 +34,9 @@ func (i *ImageInspectCommand) Init(c *Cli) {
 
 // runInpsect is used to inspect image.
 func (i *ImageInspectCommand) runInspect(args []string) error {
+	ctx := context.Background()
 	apiClient := i.cli.Client()
-	image, err := apiClient.ImageInspect(args[0])
+	image, err := apiClient.ImageInspect(ctx, args[0])
 	if err != nil {
 		return fmt.Errorf("failed to inspect image: %v", err)
 	}

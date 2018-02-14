@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -105,8 +106,9 @@ func (n *NetworkCreateCommand) runNetworkCreate(args []string) error {
 		return err
 	}
 
+	ctx := context.Background()
 	apiClient := n.cli.Client()
-	resp, err := apiClient.NetworkCreate(networkRequest)
+	resp, err := apiClient.NetworkCreate(ctx, networkRequest)
 	if err != nil {
 		return err
 	}
@@ -228,8 +230,9 @@ func (n *NetworkRemoveCommand) addFlags() {
 func (n *NetworkRemoveCommand) runNetworkRemove(args []string) error {
 	name := args[0]
 
+	ctx := context.Background()
 	apiClient := n.cli.Client()
-	if err := apiClient.NetworkRemove(name); err != nil {
+	if err := apiClient.NetworkRemove(ctx, name); err != nil {
 		return err
 	}
 	fmt.Printf("Removed: %s\n", name)
@@ -278,8 +281,9 @@ func (n *NetworkInspectCommand) addFlags() {
 func (n *NetworkInspectCommand) runNetworkInspect(args []string) error {
 	name := args[0]
 
+	ctx := context.Background()
 	apiClient := n.cli.Client()
-	resp, err := apiClient.NetworkInspect(name)
+	resp, err := apiClient.NetworkInspect(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -336,8 +340,9 @@ func (n *NetworkListCommand) addFlags() {
 func (n *NetworkListCommand) runNetworkList(args []string) error {
 	logrus.Debugf("list the networks")
 
+	ctx := context.Background()
 	apiClient := n.cli.Client()
-	resp, err := apiClient.NetworkList()
+	resp, err := apiClient.NetworkList(ctx)
 	if err != nil {
 		return err
 	}
