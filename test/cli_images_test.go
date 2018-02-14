@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -76,7 +77,8 @@ func imagesListToKV(list string) map[string][]string {
 
 // getImageInfo is used to retrieve the information about image.
 func getImageInfo(apiClient client.ImageAPIClient, name string) (types.ImageInfo, error) {
-	images, err := apiClient.ImageList()
+	ctx := context.Background()
+	images, err := apiClient.ImageList(ctx)
 	if err != nil {
 		return types.ImageInfo{}, errors.Wrap(err, "fail to list images")
 	}
