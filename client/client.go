@@ -29,7 +29,7 @@ type APIClient struct {
 }
 
 // NewAPIClient initializes a new API client for the given host
-func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
+func NewAPIClient(host string, tls utils.TLSConfig) (CommonAPIClient, error) {
 	if host == "" {
 		host = defaultHost
 	}

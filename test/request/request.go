@@ -115,7 +115,12 @@ func Post(endpoint string, opts ...Option) (*http.Response, error) {
 //
 // FIXME: Could we make some functions exported in alibaba/pouch/client?
 func newAPIClient(host string, tls utils.TLSConfig) (*client.APIClient, error) {
-	return client.NewAPIClient(host, tls)
+	commonAPIClient, err := client.NewAPIClient(host, tls)
+	if err != nil {
+		return nil, err
+	}
+	apiClient := commonAPIClient.(*client.APIClient)
+	return apiClient, nil
 }
 
 // newRequest creates request targeting on specific host/path by method.
