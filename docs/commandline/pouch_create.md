@@ -51,6 +51,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --security-opt strings        Security Options
       --sysctl strings              Sysctl options
   -t, --tty                         Allocate a tty device
+  -u, --user string                 UID
       --uts string                  UTS namespace to use
   -v, --volume strings              Bind mount volumes to container
   -w, --workdir string              Set the working directory in a container
