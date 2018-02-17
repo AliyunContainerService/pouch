@@ -100,23 +100,29 @@ func (mgr *ContainerManager) generateName(id string) string {
 	return name
 }
 
-func parseSecurityOpt(meta *ContainerMeta, securityOpts []string) error {
-	for _, opt := range securityOpts {
-		fields := strings.SplitN(opt, "=", 2)
-		if len(fields) != 2 {
-			return fmt.Errorf("invalid --security-opt %q: it should be in format of key=value", opt)
-		}
-
-		switch fields[0] {
-		// TODO: handle other security options.
-		case "apparmor":
-			meta.AppArmorProfile = fields[1]
-		case "seccomp":
-			meta.SeccompProfile = fields[1]
-		default:
-			return fmt.Errorf("invalid --security-opt %q: unknown type", opt)
+func parseSecurityOpts(meta *ContainerMeta, securityOpts []string) error {
+	for _, securityOpt := range securityOpts {
+		if err := parseSecurityOpt(meta, securityOpt); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
+func parseSecurityOpt(meta *ContainerMeta, securityOpt string) error {
+	fields := strings.SplitN(securityOpt, "=", 2)
+	if len(fields) != 2 {
+		return fmt.Errorf("invalid --security-opt %s: must be in format of key=value", securityOpt)
+	}
+	key, value := fields[0], fields[1]
+	switch key {
+	// TODO: handle other security options.
+	case "apparmor":
+		meta.AppArmorProfile = value
+	case "seccomp":
+		meta.SeccompProfile = value
+	default:
+		return fmt.Errorf("invalid type %s in --security-opt %s: unknown type from apparmor and seccomp", key, securityOpt)
+	}
 	return nil
 }
