@@ -61,6 +61,9 @@ var setupFunc = []SetupFunc{
 
 	// IntelRdtL3Cbm
 	setupIntelRdt,
+
+	// alios options
+	setupAliOsOption,
 }
 
 // Register is used to registe spec setup function.

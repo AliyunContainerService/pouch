@@ -14,22 +14,28 @@ import (
 )
 
 type container struct {
-	labels               []string
-	name                 string
-	tty                  bool
-	volume               []string
-	runtime              string
-	env                  []string
-	entrypoint           string
-	workdir              string
-	user                 string
-	hostname             string
-	cpushare             int64
-	cpusetcpus           string
-	cpusetmems           string
-	memory               string
-	memorySwap           string
-	memorySwappiness     int64
+	labels           []string
+	name             string
+	tty              bool
+	volume           []string
+	runtime          string
+	env              []string
+	entrypoint       string
+	workdir          string
+	user             string
+	hostname         string
+	cpushare         int64
+	cpusetcpus       string
+	cpusetmems       string
+	memory           string
+	memorySwap       string
+	memorySwappiness int64
+
+	memoryWmarkRatio    int64
+	memoryExtra         int64
+	memoryForceEmptyCtl int64
+	scheLatSwitch       int64
+
 	devices              []string
 	enableLxcfs          bool
 	privileged           bool
@@ -136,13 +142,20 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Binds:   c.volume,
 			Runtime: c.runtime,
 			Resources: types.Resources{
-				CPUShares:            c.cpushare,
-				CpusetCpus:           c.cpusetcpus,
-				CpusetMems:           c.cpusetmems,
-				Devices:              deviceMappings,
-				Memory:               memory,
-				MemorySwap:           memorySwap,
-				MemorySwappiness:     &c.memorySwappiness,
+				CPUShares:        c.cpushare,
+				CpusetCpus:       c.cpusetcpus,
+				CpusetMems:       c.cpusetmems,
+				Devices:          deviceMappings,
+				Memory:           memory,
+				MemorySwap:       memorySwap,
+				MemorySwappiness: &c.memorySwappiness,
+				// FIXME: validate in client side
+				MemoryWmarkRatio:    &c.memoryWmarkRatio,
+				MemoryExtra:         &c.memoryExtra,
+				MemoryForceEmptyCtl: c.memoryForceEmptyCtl,
+				ScheLatSwitch:       c.scheLatSwitch,
+
+				// blkio
 				BlkioWeight:          c.blkioWeight,
 				BlkioWeightDevice:    c.blkioWeightDevice.value(),
 				BlkioDeviceReadBps:   c.blkioDeviceReadBps.value(),

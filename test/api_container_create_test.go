@@ -276,3 +276,26 @@ func (suite *APIContainerCreateSuite) TestRestartPolicyAlways(c *check.C) {
 
 	DelContainerForceOk(c, cname)
 }
+
+// TestAliOSOptions tests create container with alios related container isolation options.
+func (suite *APIContainerCreateSuite) TestAliOSOptions(c *check.C) {
+	cname := "TestAliOSOptions"
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+
+	obj := map[string]interface{}{
+		"Image": busyboxImage,
+		"HostConfig": map[string]interface{}{
+			"MemoryWmarkRatio":    int64(30),
+			"MemoryExtra":         int64(50),
+			"MemoryForceEmptyCtl": 0,
+			"ScheLatSwitch":       0,
+		},
+	}
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+}
