@@ -329,3 +329,20 @@ func (suite *PouchCreateSuite) TestCreateWithUser(c *check.C) {
 	}
 	c.Assert(result.Config.User, check.Equals, user)
 }
+
+// TestCreateWithIntelRdt tests creating container with Intel Rdt.
+func (suite *PouchCreateSuite) TestCreateWithIntelRdt(c *check.C) {
+	name := "TestCreateWithIntelRdt"
+	intelRdt := "L3:<cache_id0>=<cbm0>"
+
+	res := command.PouchRun("create", "--name", name, "--intel-rdt-l3-cbm", intelRdt, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.IntelRdtL3Cbm, check.Equals, intelRdt)
+}

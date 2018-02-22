@@ -74,6 +74,7 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.Var(&cc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flagSet.Var(&cc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
 	flagSet.Var(&cc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
+	flagSet.StringVar(&cc.IntelRdtL3Cbm, "intel-rdt-l3-cbm", "", "Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel")
 }
 
 // runCreate is the entry of create command.

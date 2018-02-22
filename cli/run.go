@@ -82,6 +82,7 @@ func (rc *RunCommand) addFlags() {
 	flagSet.Var(&rc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flagSet.Var(&rc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
 	flagSet.Var(&rc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
+	flagSet.StringVar(&rc.IntelRdtL3Cbm, "intel-rdt-l3-cbm", "", "Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel")
 }
 
 // runRun is the entry of run command.
