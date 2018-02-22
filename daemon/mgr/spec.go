@@ -58,6 +58,9 @@ var setupFunc = []SetupFunc{
 
 	// blkio spec
 	setupBlkio,
+
+	// IntelRdtL3Cbm
+	setupIntelRdt,
 }
 
 // Register is used to registe spec setup function.

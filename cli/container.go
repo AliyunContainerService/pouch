@@ -48,6 +48,7 @@ type container struct {
 	blkioDeviceWriteBps  ThrottleBpsDevice
 	blkioDeviceReadIOps  ThrottleIOpsDevice
 	blkioDeviceWriteIOps ThrottleIOpsDevice
+	IntelRdtL3Cbm        string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -66,6 +67,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	memorySwap, err := parseMemorySwap(c.memorySwap)
+	if err != nil {
+		return nil, err
+	}
+
+	intelRdtL3Cbm, err := parseIntelRdt(c.IntelRdtL3Cbm)
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +149,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				BlkioDeviceReadIOps:  c.blkioDeviceReadIOps.value(),
 				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.value(),
 				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
+				IntelRdtL3Cbm:        intelRdtL3Cbm,
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,
@@ -258,6 +265,11 @@ func validateMemorySwappiness(memorySwappiness int64) error {
 		return fmt.Errorf("invalid memory swappiness: %d (its range is -1 or 0-100)", memorySwappiness)
 	}
 	return nil
+}
+
+func parseIntelRdt(intelRdtL3Cbm string) (string, error) {
+	// FIXME: add Intel RDT L3 Cbm validation
+	return intelRdtL3Cbm, nil
 }
 
 func parseRestartPolicy(restartPolicy string) (*types.RestartPolicy, error) {
