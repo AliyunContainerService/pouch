@@ -486,14 +486,14 @@ func filterCRIContainers(containers []*runtime.Container, filter *runtime.Contai
 }
 
 // containerNetns returns the network namespace of the given container.
-func containerNetns(container *ContainerMeta) (string, error) {
+func containerNetns(container *ContainerMeta) string {
 	pid := container.State.Pid
-	if pid == 0 {
-		// Pouch reports pid 0 for an exited container.
-		return "", fmt.Errorf("can't find network namespace for the terminated container %q", container.ID)
+	if pid == -1 {
+		// Pouch reports pid -1 for an exited container.
+		return ""
 	}
 
-	return fmt.Sprintf("/proc/%v/ns/net", pid), nil
+	return fmt.Sprintf("/proc/%v/ns/net", pid)
 }
 
 // Image related tool functions.
