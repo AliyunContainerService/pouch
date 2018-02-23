@@ -92,6 +92,7 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 
 // Remove is used to delete an existing volume.
 func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
+	// TODO: check container use.
 	id := types.VolumeID{
 		Name: name,
 	}

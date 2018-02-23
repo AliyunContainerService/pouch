@@ -136,6 +136,11 @@ func (v *Volume) SetOption(name, value string) {
 	v.Spec.Extra[name] = value
 }
 
+// Options returns all the options of volume.
+func (v *Volume) Options() map[string]string {
+	return v.Spec.Extra
+}
+
 // Driver return driver's name of the volume.
 func (v *Volume) Driver() string {
 	return v.Spec.Backend

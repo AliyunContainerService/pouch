@@ -1,8 +1,3 @@
-// Package bytefmt contains helper methods and constants for converting to and from a human-readable byte format.
-//
-//	bytefmt.ByteSize(100.5*bytefmt.MEGABYTE) // "100.5M"
-//	bytefmt.ByteSize(uint64(1024)) // "1K"
-//
 package bytefmt
 
 import (
@@ -14,16 +9,26 @@ import (
 )
 
 const (
-	BYTE     = 1.0
-	KILOBYTE = 1024 * BYTE
+	// BYTE represents one byte.
+	BYTE = 1.0
+
+	// KILOBYTE represents kilo bytes.
+	KILOBYTE = 1024
+
+	// MEGABYTE represents mega bytes.
 	MEGABYTE = 1024 * KILOBYTE
+
+	//GIGABYTE represents giga bytes.
 	GIGABYTE = 1024 * MEGABYTE
+
+	// TERABYTE represents tera bytes.
 	TERABYTE = 1024 * GIGABYTE
 )
 
-var bytesPattern *regexp.Regexp = regexp.MustCompile(`(?i)^(-?\d+(?:\.\d+)?)([KMGT]B?|B)$`)
+var bytesPattern = regexp.MustCompile(`(?i)^(-?\d+(?:\.\d+)?)([KMGT]B?|B)$`)
 
-var invalidByteQuantityError = errors.New("Byte quantity must be a positive integer with a unit of measurement like M, MB, G, or GB")
+// ErrorInvalidByte is the error that presents the format of string is not a valid byte.
+var ErrorInvalidByte = errors.New("Byte quantity must be a positive integer with a unit of measurement like M, MB, G, or GB")
 
 // ByteSize returns a human-readable byte string of the form 10M, 12.5K, and so forth.  The following units are available:
 //	T: Terabyte
@@ -70,16 +75,26 @@ func ToMegabytes(s string) (uint64, error) {
 	return bytes / MEGABYTE, nil
 }
 
+// ToKilobytes parses a string formatted by ByteSize as kilobytes.
+func ToKilobytes(s string) (uint64, error) {
+	bytes, err := ToBytes(s)
+	if err != nil {
+		return 0, err
+	}
+
+	return bytes / KILOBYTE, nil
+}
+
 // ToBytes parses a string formatted by ByteSize as bytes.
 func ToBytes(s string) (uint64, error) {
 	parts := bytesPattern.FindStringSubmatch(strings.TrimSpace(s))
 	if len(parts) < 3 {
-		return 0, invalidByteQuantityError
+		return 0, ErrorInvalidByte
 	}
 
 	value, err := strconv.ParseFloat(parts[1], 64)
 	if err != nil || value <= 0 {
-		return 0, invalidByteQuantityError
+		return 0, ErrorInvalidByte
 	}
 
 	var bytes uint64

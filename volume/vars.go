@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	defaultSize       = "100G"
 	defaultFileSystem = "ext4"
 	defaultMountpoint = "/mnt"
 	optionPath        = "mount"
