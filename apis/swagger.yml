@@ -1405,20 +1405,34 @@ definitions:
         description: "ScheLatSwitch enables scheduler latency count in cpuacct"
         type: "integer"
         format: "int64"
+        x-nullable: false
+        minimum: 0
+        maximum: 1
       MemoryWmarkRatio:
         description: | 
           MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. 
-          The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.
+          The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].
         type: "integer"
         format: "int64"
+        x-nullable: true
+        minimum: 0
+        maximum: 100
       MemoryExtra:
-        description: "MemoryExtra is an integer value representing this container's memory high water mark percentage."
+        description: |
+          MemoryExtra is an integer value representing this container's memory high water mark percentage.
+          The range is in [0, 100].
         type: "integer"
         format: "int64"
+        x-nullable: true
+        minimum: 0
+        maximum: 100
       MemoryForceEmptyCtl:
         description: "MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup."
         type: "integer"
         format: "int64"
+        x-nullable: false
+        minimum: 0
+        maximum: 1
 
   ThrottleDevice:
     type: "object"
