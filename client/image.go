@@ -8,14 +8,6 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-// ImageAPIClient defines methods of Image client.
-type ImageAPIClient interface {
-	ImageList(ctx context.Context) ([]types.ImageInfo, error)
-	ImageInspect(ctx context.Context, name string) (types.ImageInfo, error)
-	ImagePull(ctx context.Context, name, tag string) (io.ReadCloser, error)
-	ImageRemove(ctx context.Context, name string, force bool) error
-}
-
 // ImageInspect requests daemon to inspect an image.
 func (client *APIClient) ImageInspect(ctx context.Context, name string) (types.ImageInfo, error) {
 	image := types.ImageInfo{}

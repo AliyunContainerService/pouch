@@ -30,7 +30,7 @@ type Option struct {
 type Cli struct {
 	Option
 	rootCmd   *cobra.Command
-	APIClient *client.APIClient
+	APIClient client.CommonAPIClient
 	padding   int
 }
 
@@ -70,7 +70,7 @@ func (c *Cli) NewAPIClient() {
 }
 
 // Client returns API client torwards daemon.
-func (c *Cli) Client() *client.APIClient {
+func (c *Cli) Client() client.CommonAPIClient {
 	return c.APIClient
 }
 

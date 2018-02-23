@@ -19,11 +19,12 @@ var (
 func TestMain(m *testing.M) {
 	var err error
 
-	apiClient, err = client.NewAPIClient(environment.PouchdAddress, environment.TLSConfig)
+	commonAPIClient, err := client.NewAPIClient(environment.PouchdAddress, environment.TLSConfig)
 	if err != nil {
 		fmt.Printf("fail to initializes pouch API client: %s", err.Error())
 		os.Exit(1)
 	}
+	apiClient = commonAPIClient.(*client.APIClient)
 
 	os.Exit(m.Run())
 }
