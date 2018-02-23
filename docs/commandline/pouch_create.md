@@ -37,6 +37,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
   -e, --env strings                 Set environment variables for container
   -h, --help                        help for create
       --hostname string             Set container's hostname
+      --intel-rdt-l3-cbm string     Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
       --ipc string                  IPC namespace to use
   -l, --label strings               Set label for a container
   -m, --memory string               Container memory limit
