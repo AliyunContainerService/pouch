@@ -98,10 +98,9 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	var networkMode string
-	// FIXME: Temporarily closed.
-	//if len(c.networks) == 0 {
-	//	networkMode = "bridge"
-	//}
+	if len(c.networks) == 0 {
+		networkMode = "bridge"
+	}
 	networkingConfig := &types.NetworkingConfig{
 		EndpointsConfig: map[string]*types.EndpointSettings{},
 	}
