@@ -51,6 +51,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -e, --env strings                 Set environment variables for container
   -h, --help                        help for run
       --hostname string             Set container's hostname
+      --intel-rdt-l3-cbm string     Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
   -i, --interactive                 Attach container's STDIN
       --ipc string                  IPC namespace to use
   -l, --label strings               Set label for a container
