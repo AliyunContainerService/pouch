@@ -9,10 +9,10 @@ import (
 	cri "github.com/alibaba/pouch/cri/service"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
-	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
+	"github.com/alibaba/pouch/pkg/meta"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -42,6 +42,7 @@ type router struct {
 // NewDaemon constructs a brand new server.
 func NewDaemon(cfg config.Config) *Daemon {
 	containerStore, err := meta.NewStore(meta.Config{
+		Driver:  "local",
 		BaseDir: path.Join(cfg.HomeDir, "containers"),
 		Buckets: []meta.Bucket{
 			{

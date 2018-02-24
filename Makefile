@@ -69,6 +69,7 @@ validate-swagger: ## run swagger validate
 
 .PHONY: modules
 modules:
+	@./hack/module --clean
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/ceph
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/tmpfs
 	@./hack/module --add-volume=github.com/alibaba/pouch/volume/modules/local

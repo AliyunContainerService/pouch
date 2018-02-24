@@ -5,14 +5,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/collect"
+	"github.com/alibaba/pouch/pkg/meta"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestContainerManager_generateID(t *testing.T) {
 	store, err := meta.NewStore(meta.Config{
+		Driver:  "local",
 		BaseDir: path.Join("/tmp", "containers"),
 		Buckets: []meta.Bucket{
 			{

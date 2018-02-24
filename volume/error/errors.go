@@ -1,29 +1,29 @@
 package error
 
 const (
-	volumeNotfound errCode = iota
+	volumeNotFound errCode = iota
 	volumeExisted
-	storageNotfound
-	driverNotfound
-	localMetaNotfound
+	storageNotFound
+	driverNotFound
+	localMetaNotFound
 	disableControl
 )
 
 var (
-	// ErrVolumeNotfound represents error is "volume not found"
-	ErrVolumeNotfound = CoreError{volumeNotfound, "volume not found"}
+	// ErrVolumeNotFound represents error is "volume not found"
+	ErrVolumeNotFound = CoreError{volumeNotFound, "volume not found"}
 
 	// ErrVolumeExisted represents error is "volume exist"
 	ErrVolumeExisted = CoreError{volumeExisted, "volume exist"}
 
-	// ErrStorageNotfound represents error is "storage not found"
-	ErrStorageNotfound = CoreError{storageNotfound, "storage not found"}
+	// ErrStorageNotFound represents error is "storage not found"
+	ErrStorageNotFound = CoreError{storageNotFound, "storage not found"}
 
-	// ErrDriverNotfound represents error is "driver not found"
-	ErrDriverNotfound = CoreError{driverNotfound, "driver not found"}
+	// ErrDriverNotFound represents error is "driver not found"
+	ErrDriverNotFound = CoreError{driverNotFound, "driver not found"}
 
-	// ErrLocalMetaNotfound represents error is "local meta not found"
-	ErrLocalMetaNotfound = CoreError{localMetaNotfound, "local meta not found"}
+	// ErrLocalMetaNotFound represents error is "local meta not found"
+	ErrLocalMetaNotFound = CoreError{localMetaNotFound, "local meta not found"}
 
 	// ErrDisableControl represents error is "disable control server"
 	ErrDisableControl = CoreError{disableControl, "disable control server"}
@@ -42,19 +42,19 @@ func (e CoreError) Error() string {
 	return e.err
 }
 
-// IsVolumeNotfound is used to check error is volumeNotfound or not.
-func (e CoreError) IsVolumeNotfound() bool {
-	return e.ec == volumeNotfound
+// IsVolumeNotFound is used to check error is volumeNotFound or not.
+func (e CoreError) IsVolumeNotFound() bool {
+	return e.ec == volumeNotFound
 }
 
-// IsStorageNotfound is used to check error is storageNotfound or not.
-func (e CoreError) IsStorageNotfound() bool {
-	return e.ec == storageNotfound
+// IsStorageNotFound is used to check error is storageNotFound or not.
+func (e CoreError) IsStorageNotFound() bool {
+	return e.ec == storageNotFound
 }
 
-// IsDriverNotfound is used to check error is driverNotfound or not.
-func (e CoreError) IsDriverNotfound() bool {
-	return e.ec == driverNotfound
+// IsDriverNotFound is used to check error is driverNotFound or not.
+func (e CoreError) IsDriverNotFound() bool {
+	return e.ec == driverNotFound
 }
 
 // IsVolumeExisted is used to check error is volumeExisted or not.
@@ -62,9 +62,9 @@ func (e CoreError) IsVolumeExisted() bool {
 	return e.ec == volumeExisted
 }
 
-// IsLocalMetaNotfound is used to check error is localMetaNotfound or not.
-func (e CoreError) IsLocalMetaNotfound() bool {
-	return e.ec == localMetaNotfound
+// IsLocalMetaNotFound is used to check error is localMetaNotFound or not.
+func (e CoreError) IsLocalMetaNotFound() bool {
+	return e.ec == localMetaNotFound
 }
 
 // IsDisableControl is used to check error is disableControl or not.

@@ -22,7 +22,7 @@ func (e Error) Error() string {
 	return e.err
 }
 
-// IsNotfound will check the error is "StatusNotFound" or not.
-func (e Error) IsNotfound() bool {
+// IsNotFound will check the error is "StatusNotFound" or not.
+func (e Error) IsNotFound() bool {
 	return e.status == http.StatusNotFound
 }
