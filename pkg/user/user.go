@@ -119,6 +119,22 @@ func GetIntegerID(user string) (uint32, uint32) {
 	return uint32(uid), uint32(gid)
 }
 
+// GetAdditionalGids parse supplementary gids from slice groups.
+func GetAdditionalGids(groups []string) []uint32 {
+	var additionalGids []uint32
+
+	// TODO: check whether group is valid and support group name format like "nobody".
+	for _, group := range groups {
+		gid, err := strconv.ParseUint(group, 10, 32)
+		if err != nil {
+			continue
+		}
+		additionalGids = append(additionalGids, uint32(gid))
+	}
+
+	return additionalGids
+}
+
 // parseID parses uid from /etc/passwd.
 func parseID(file, str string, parserFilter filterFunc) (uint32, error) {
 	idInt, idErr := strconv.Atoi(str)

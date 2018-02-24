@@ -71,6 +71,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// user
 	flagSet.StringVarP(&c.user, "user", "u", "", "UID")
 
+	flagSet.StringSliceVar(&c.groupAdd, "group-add", nil, "Add additional groups to join")
+
 	flagSet.StringVar(&c.utsMode, "uts", "", "UTS namespace to use")
 
 	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container")

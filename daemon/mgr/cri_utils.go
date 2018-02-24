@@ -157,10 +157,57 @@ func parseSandboxName(name string) (*runtime.PodSandboxMetadata, error) {
 	}, nil
 }
 
+func modifySandboxNamespaceOptions(nsOpts *runtime.NamespaceOption, hostConfig *apitypes.HostConfig) {
+	if nsOpts == nil {
+		return
+	}
+	if nsOpts.HostPid {
+		hostConfig.PidMode = namespaceModeHost
+	}
+	if nsOpts.HostIpc {
+		hostConfig.IpcMode = namespaceModeHost
+	}
+	if nsOpts.HostNetwork {
+		hostConfig.NetworkMode = namespaceModeHost
+	}
+}
+
+func applySandboxSecurityContext(lc *runtime.LinuxPodSandboxConfig, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
+	if lc == nil {
+		return nil
+	}
+
+	var sc *runtime.LinuxContainerSecurityContext
+	if lc.SecurityContext != nil {
+		sc = &runtime.LinuxContainerSecurityContext{
+			SupplementalGroups: lc.SecurityContext.SupplementalGroups,
+			RunAsUser:          lc.SecurityContext.RunAsUser,
+			ReadonlyRootfs:     lc.SecurityContext.ReadonlyRootfs,
+			SelinuxOptions:     lc.SecurityContext.SelinuxOptions,
+			NamespaceOptions:   lc.SecurityContext.NamespaceOptions,
+		}
+	}
+
+	modifyContainerConfig(sc, config)
+	err := modifyHostConfig(sc, hc)
+	if err != nil {
+		return err
+	}
+	modifySandboxNamespaceOptions(sc.GetNamespaceOptions(), hc)
+
+	return nil
+}
+
 // applySandboxLinuxOptions applies LinuxPodSandboxConfig to pouch's HostConfig and ContainerCreateConfig.
 func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandboxConfig, createConfig *apitypes.ContainerCreateConfig, image string) error {
 	if lc == nil {
 		return nil
+	}
+
+	// Apply security context.
+	err := applySandboxSecurityContext(lc, &createConfig.ContainerConfig, hc)
+	if err != nil {
+		return err
 	}
 
 	// Set sysctls.
@@ -292,10 +339,36 @@ func parseContainerName(name string) (*runtime.ContainerMetadata, error) {
 func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandboxID string, hostConfig *apitypes.HostConfig) {
 	sandboxNSMode := fmt.Sprintf("container:%v", podSandboxID)
 
-	hostConfig.PidMode = sandboxNSMode
-	hostConfig.NetworkMode = sandboxNSMode
-	hostConfig.IpcMode = sandboxNSMode
-	hostConfig.UTSMode = sandboxNSMode
+	if nsOpts == nil {
+		hostConfig.PidMode = sandboxNSMode
+		hostConfig.IpcMode = sandboxNSMode
+		hostConfig.NetworkMode = sandboxNSMode
+		return
+	}
+
+	for _, n := range []struct {
+		hostMode bool
+		nsMode   *string
+	}{
+		{
+			hostMode: nsOpts.HostPid,
+			nsMode:   &hostConfig.PidMode,
+		},
+		{
+			hostMode: nsOpts.HostIpc,
+			nsMode:   &hostConfig.IpcMode,
+		},
+		{
+			hostMode: nsOpts.HostNetwork,
+			nsMode:   &hostConfig.NetworkMode,
+		},
+	} {
+		if n.hostMode {
+			*n.nsMode = namespaceModeHost
+		} else {
+			*n.nsMode = sandboxNSMode
+		}
+	}
 }
 
 // getAppArmorSecurityOpts gets appArmor options from container config.
@@ -344,6 +417,11 @@ func getSeccompSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string
 func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *apitypes.HostConfig) error {
 	if sc == nil {
 		return nil
+	}
+
+	// Apply supplemental groups.
+	for _, group := range sc.SupplementalGroups {
+		hostConfig.GroupAdd = append(hostConfig.GroupAdd, strconv.FormatInt(group, 10))
 	}
 
 	// TODO: apply other security options.
