@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/registry"
 	"github.com/alibaba/pouch/version"
 )
 
@@ -12,17 +13,20 @@ import (
 type SystemMgr interface {
 	Info() (types.SystemInfo, error)
 	Version() (types.SystemVersion, error)
+	Auth(*types.AuthConfig) (string, error)
 }
 
 // SystemManager is an instance of system management.
 type SystemManager struct {
-	name string
+	name     string
+	registry *registry.Client
 }
 
 // NewSystemManager creates a brand new system manager.
 func NewSystemManager(cfg *config.Config) (*SystemManager, error) {
 	return &SystemManager{
-		name: "system_manager",
+		name:     "system_manager",
+		registry: &registry.Client{},
 	}, nil
 }
 
@@ -44,4 +48,9 @@ func (mgr *SystemManager) Version() (types.SystemVersion, error) {
 		Os:      runtime.GOOS,
 		Version: version.Version,
 	}, nil
+}
+
+// Auth to log in to a registry.
+func (mgr *SystemManager) Auth(auth *types.AuthConfig) (string, error) {
+	return mgr.registry.Auth(auth)
 }

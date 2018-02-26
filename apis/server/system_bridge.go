@@ -2,7 +2,11 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+
+	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/httputils"
 )
 
 func (s *Server) ping(context context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
@@ -25,4 +29,23 @@ func (s *Server) version(ctx context.Context, rw http.ResponseWriter, req *http.
 		return err
 	}
 	return EncodeResponse(rw, http.StatusOK, version)
+}
+
+func (s *Server) auth(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	auth := types.AuthConfig{}
+	if err := json.NewDecoder(req.Body).Decode(&auth); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	token, err := s.SystemMgr.Auth(&auth)
+	if err != nil {
+		rw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	authResp := types.AuthResponse{
+		Status:        "Login Succeeded",
+		IdentityToken: token,
+	}
+	return EncodeResponse(rw, http.StatusOK, authResp)
 }

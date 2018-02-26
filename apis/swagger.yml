@@ -56,6 +56,34 @@ paths:
         500:
           $ref: "#/responses/500ErrorResponse"
 
+  /auth:
+    post:
+      summary: "Check auth configuration"
+      description: "Validate credentials for a registry and, if available, get an identity token for accessing the registry without password."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "An identity token was generated successfully."
+          schema:
+            $ref: "#/definitions/AuthResponse"
+        401:
+          description: "Login unauthorized"
+          schema:
+            $ref: "#/responses/401ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "authConfig"
+          in: "body"
+          description: "Authentication to check"
+          schema:
+            $ref: "#/definitions/AuthConfig"
+
   /images/create:
     post:
       summary: "Create an image by pulling from a registry or importing from an existing source file"
@@ -885,6 +913,38 @@ definitions:
         type: "integer"
       ContainersPaused:
         type: "integer"
+
+  AuthConfig:
+    type: "object"
+    properties:
+      Username:
+        type: "string"
+      Password:
+        type: "string"
+      Auth:
+        type: "string"
+      ServerAddress:
+        type: "string"
+      IdentityToken:
+        type: "string"
+        description: "IdentityToken is used to authenticate the user and get an access token for the registry"
+      RegistryToken:
+        type: "string"
+        description: "RegistryToken is a bearer token to be sent to a registry"
+
+  AuthResponse:
+    description: "The response returned by login to a registry"
+    type: "object"
+    required: [Status]
+    properties:
+      Status:
+        description: "The status of the authentication"
+        type: "string"
+        x-nullable: false
+      IdentityToken:
+        description: "An opaque token used to authenticate a user after a successful login"
+        type: "string"
+        x-nullable: false
 
   ContainerCreateConfig:
     description: | 
@@ -2297,6 +2357,10 @@ parameters:
     type: string
 
 responses:
+  401ErrorResponse:
+    description: An unexpected 401 error occured.
+    schema:
+      $ref: "#/definitions/Error"
   404ErrorResponse:
     description: An unexpected 404 error occured.
     schema:
