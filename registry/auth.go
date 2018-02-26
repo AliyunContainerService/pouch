@@ -29,7 +29,7 @@ type registryEndpoint struct {
 
 // token defines a token that registry may return after login successfully.
 type token struct {
-	token string
+	Token string `json:"token"`
 }
 
 // Auth authenticates the v1/v2 registry with the credentials.
@@ -122,7 +122,7 @@ func loginV1(url *url.URL, username, password string) (string, error) {
 		return "", err
 	}
 
-	return token.token, err
+	return token.Token, err
 }
 
 // pingV2 wants to get challenge from http response, since
@@ -219,5 +219,5 @@ func loginV2(url *url.URL, username, password string) (string, error) {
 		return "", err
 	}
 
-	return token.token, err
+	return token.Token, err
 }

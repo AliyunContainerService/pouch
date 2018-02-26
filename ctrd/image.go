@@ -116,8 +116,8 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 }
 
 // PullImage downloads an image from the remote repository.
-func (c *Client) PullImage(ctx context.Context, ref string, stream *jsonstream.JSONStream) (types.ImageInfo, error) {
-	resolver, err := resolver()
+func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (types.ImageInfo, error) {
+	resolver, err := resolver(authConfig)
 	if err != nil {
 		return types.ImageInfo{}, err
 	}

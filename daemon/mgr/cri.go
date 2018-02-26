@@ -669,7 +669,7 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	}
 	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
 
-	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), bytes.NewBuffer([]byte{}))
+	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), nil, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return nil, err
 	}

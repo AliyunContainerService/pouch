@@ -38,7 +38,7 @@ type ContainerAPIClient interface {
 type ImageAPIClient interface {
 	ImageList(ctx context.Context) ([]types.ImageInfo, error)
 	ImageInspect(ctx context.Context, name string) (types.ImageInfo, error)
-	ImagePull(ctx context.Context, name, tag string) (io.ReadCloser, error)
+	ImagePull(ctx context.Context, name, tag, encodedAuth string) (io.ReadCloser, error)
 	ImageRemove(ctx context.Context, name string, force bool) error
 }
 

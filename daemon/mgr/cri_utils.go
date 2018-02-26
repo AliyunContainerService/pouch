@@ -538,7 +538,7 @@ func (c *CriManager) ensureSandboxImageExists(ctx context.Context, image string)
 	}
 	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
 
-	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), bytes.NewBuffer([]byte{}))
+	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), nil, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return fmt.Errorf("pull sandbox image %q failed: %v", image, err)
 	}

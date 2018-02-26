@@ -8,7 +8,7 @@ import (
 
 // VolumeCreate creates a volume.
 func (client *APIClient) VolumeCreate(ctx context.Context, config *types.VolumeCreateConfig) (*types.VolumeInfo, error) {
-	resp, err := client.post(ctx, "/volumes/create", nil, config)
+	resp, err := client.post(ctx, "/volumes/create", nil, config, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (client *APIClient) VolumeCreate(ctx context.Context, config *types.VolumeC
 
 // VolumeRemove removes a volume.
 func (client *APIClient) VolumeRemove(ctx context.Context, name string) error {
-	resp, err := client.delete(ctx, "/volumes/"+name, nil)
+	resp, err := client.delete(ctx, "/volumes/"+name, nil, nil)
 	ensureCloseReader(resp)
 
 	return err
@@ -31,7 +31,7 @@ func (client *APIClient) VolumeRemove(ctx context.Context, name string) error {
 
 // VolumeInspect inspects a volume.
 func (client *APIClient) VolumeInspect(ctx context.Context, name string) (*types.VolumeInfo, error) {
-	resp, err := client.get(ctx, "/volumes/"+name, nil)
+	resp, err := client.get(ctx, "/volumes/"+name, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (client *APIClient) VolumeInspect(ctx context.Context, name string) (*types
 
 // VolumeList returns the list of volumes.
 func (client *APIClient) VolumeList(ctx context.Context) (*types.VolumeListResp, error) {
-	resp, err := client.get(ctx, "/volumes", nil)
+	resp, err := client.get(ctx, "/volumes", nil, nil)
 
 	volumeListResp := &types.VolumeListResp{}
 

@@ -2,11 +2,15 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 
@@ -32,8 +36,17 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 		metrics.ImagePullSummary.WithLabelValues(image + ":" + tag).Observe(metrics.SinceInMicroseconds(start))
 	}(time.Now())
 
+	// get registry auth from Request header
+	authStr := req.Header.Get("X-Registry-Auth")
+	authConfig := types.AuthConfig{}
+	if authStr != "" {
+		data := base64.NewDecoder(base64.URLEncoding, strings.NewReader(authStr))
+		if err := json.NewDecoder(data).Decode(&authConfig); err != nil {
+			return err
+		}
+	}
 	// Error information has be sent to client, so no need call resp.Write
-	if err := s.ImageMgr.PullImage(ctx, image, tag, rw); err != nil {
+	if err := s.ImageMgr.PullImage(ctx, image, tag, &authConfig, rw); err != nil {
 		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
 		return nil
 	}

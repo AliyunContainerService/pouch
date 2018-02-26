@@ -8,7 +8,7 @@ import (
 
 // NetworkCreate creates a network.
 func (client *APIClient) NetworkCreate(ctx context.Context, req *types.NetworkCreateConfig) (*types.NetworkCreateResp, error) {
-	resp, err := client.post(ctx, "/networks/create", nil, req)
+	resp, err := client.post(ctx, "/networks/create", nil, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (client *APIClient) NetworkCreate(ctx context.Context, req *types.NetworkCr
 
 // NetworkRemove removes a network.
 func (client *APIClient) NetworkRemove(ctx context.Context, networkID string) error {
-	resp, err := client.delete(ctx, "/networks/"+networkID, nil)
+	resp, err := client.delete(ctx, "/networks/"+networkID, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (client *APIClient) NetworkRemove(ctx context.Context, networkID string) er
 
 // NetworkInspect inspects a network.
 func (client *APIClient) NetworkInspect(ctx context.Context, networkID string) (*types.NetworkInspectResp, error) {
-	resp, err := client.get(ctx, "/networks/"+networkID, nil)
+	resp, err := client.get(ctx, "/networks/"+networkID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (client *APIClient) NetworkInspect(ctx context.Context, networkID string) (
 
 // NetworkList lists all the networks.
 func (client *APIClient) NetworkList(ctx context.Context) (*types.NetworkListResp, error) {
-	resp, err := client.get(ctx, "/networks", nil)
+	resp, err := client.get(ctx, "/networks", nil, nil)
 	if err != nil {
 		return nil, err
 	}
