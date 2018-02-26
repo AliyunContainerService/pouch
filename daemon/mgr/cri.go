@@ -11,9 +11,8 @@ import (
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
 
-	"github.com/sirupsen/logrus"
-
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
@@ -68,15 +67,10 @@ type CriManager struct {
 
 // NewCriManager creates a brand new cri manager.
 func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
-	cniMgr, err := NewCniManager(&config.CriConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new cni manager: %v", err)
-	}
-
 	return &CriManager{
 		ContainerMgr: ctrMgr,
 		ImageMgr:     imgMgr,
-		CniMgr:       cniMgr,
+		CniMgr:       NewCniManager(&config.CriConfig),
 	}, nil
 }
 
@@ -137,10 +131,15 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to find network namespace path for sandbox %q", id)
 	}
 
-	err = c.CniMgr.SetUpPodNetwork(config, id, netnsPath)
+	err = c.CniMgr.SetUpPodNetwork(&ocicni.PodNetwork{
+		Name:         config.GetMetadata().GetName(),
+		Namespace:    config.GetMetadata().GetNamespace(),
+		ID:           id,
+		NetNS:        netnsPath,
+		PortMappings: toCNIPortMappings(config.GetPortMappings()),
+	})
 	if err != nil {
-		// If setup network failed, don't break now.
-		logrus.Errorf("failed to setup network for sandbox %q: %v", id, err)
+		return nil, err
 	}
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
@@ -169,7 +168,31 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		}
 	}
 
-	// TODO: tear down sandbox's network.
+	// Tear down sandbox's network.
+	container, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	if err != nil {
+		return nil, err
+	}
+	netnsPath := containerNetns(container)
+	if netnsPath == "" {
+		return nil, fmt.Errorf("failed to find network namespace path for sandbox %q", podSandboxID)
+	}
+
+	metadata, err := parseSandboxName(container.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse metadata of sandbox %q from container name: %v", podSandboxID, err)
+	}
+
+	err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
+		Name:      metadata.GetName(),
+		Namespace: metadata.GetNamespace(),
+		ID:        podSandboxID,
+		NetNS:     netnsPath,
+		// TODO: get portmapping configuration.
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	// Stop the sandbox container.
 	err = c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
