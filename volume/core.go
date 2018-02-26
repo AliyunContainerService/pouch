@@ -3,6 +3,7 @@ package volume
 import (
 	"fmt"
 
+	"github.com/alibaba/pouch/extra/libnetwork/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/alibaba/pouch/pkg/client"
 	"github.com/alibaba/pouch/volume/driver"
 	volerr "github.com/alibaba/pouch/volume/error"
@@ -125,11 +126,7 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 	// Create volume's meta.
 	ctx := driver.Contexts()
 
-	if dv.StoreMode(ctx).UseLocalMeta() {
-		if err := store.MetaPut(v); err != nil {
-			return err
-		}
-	} else {
+	if !dv.StoreMode(ctx).UseLocalMeta() {
 		url, err := c.volumeURL()
 		if err != nil {
 			return err
@@ -142,7 +139,6 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 
 	// Create volume's store room on local.
 	var s *types.Storage
-
 	if !dv.StoreMode(ctx).IsLocal() {
 		s, err = c.getStorage(v.StorageID())
 		if err != nil {
@@ -154,11 +150,29 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 		if err := dv.Create(ctx, v, s); err != nil {
 			return err
 		}
+
+		if err := store.MetaPut(v); err != nil {
+			return err
+		}
 	}
 
 	if f, ok := dv.(driver.Formator); ok {
-		return f.Format(ctx, v, s)
+		err := f.Format(ctx, v, s)
+		if err == nil {
+			return nil
+		}
+
+		logrus.Errorf("failed to format new volume: %s, err: %v", v.Name, err)
+		logrus.Warnf("rollback create volume, start to cleanup new volume: %s", v.Name)
+		if err := c.RemoveVolume(id); err != nil {
+			logrus.Errorf("failed to rollback create volume, cleanup new volume: %s, err: %v", v.Name, err)
+			return err
+		}
+
+		// return format error.
+		return err
 	}
+
 	return nil
 }
 
