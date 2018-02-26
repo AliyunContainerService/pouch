@@ -65,6 +65,8 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 
 		c.Assert(kv[name].status[0], check.Equals, "stopped")
 	}
+
+	defer command.PouchRun("rm", "-f", name)
 }
 
 // TestPsAll tests "pouch ps -a" work
@@ -72,6 +74,7 @@ func (suite *PouchPsSuite) TestPsAll(c *check.C) {
 	name := "ps-all"
 
 	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-f", name)
 
 	res := command.PouchRun("ps").Assert(c, icmd.Success)
 	lines := strings.Split(res.Combined(), "\n")
@@ -90,6 +93,7 @@ func (suite *PouchPsSuite) TestPsQuiet(c *check.C) {
 	name := "ps-quiet"
 
 	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-f", name)
 
 	res := command.PouchRun("ps", "-q", "-a").Assert(c, icmd.Success)
 	lines := strings.Split(res.Combined(), "\n")
