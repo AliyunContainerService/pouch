@@ -175,7 +175,7 @@ func (client *APIClient) ContainerUnpause(ctx context.Context, name string) erro
 
 // ContainerUpdate updates the configurations of a container.
 func (client *APIClient) ContainerUpdate(ctx context.Context, name string, config *types.UpdateConfig) error {
-	resp, err := client.post(ctx, "/containers/"+name+"/update", url.Values{}, config)
+	resp, err := client.post(ctx, "/containers/"+name+"/update", url.Values{}, config, nil)
 	ensureCloseReader(resp)
 
 	return err
