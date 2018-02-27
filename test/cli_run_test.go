@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -402,7 +403,7 @@ func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 
 	// test if cgroup has record the real value
 	containerID := result.ID
-	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.limit_in_bytes", containerID)
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
 
 	checkFileContains(c, path, "104857600")
 
@@ -426,7 +427,7 @@ func (suite *PouchRunSuite) TestRunWithMemoryswap(c *check.C) {
 
 	// test if cgroup has record the real value
 	containerID := result.ID
-	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.memsw.limit_in_bytes", containerID)
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes", containerID)
 	checkFileContains(c, path, "209715200")
 
 	// remove the container
@@ -449,7 +450,7 @@ func (suite *PouchRunSuite) TestRunWithMemoryswappiness(c *check.C) {
 
 	// test if cgroup has record the real value
 	containerID := result.ID
-	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.swappiness", containerID)
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.swappiness", containerID)
 	checkFileContains(c, path, "70")
 
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -475,15 +476,15 @@ func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/%s/cpuset.cpus", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/default/%s/cpuset.cpus", containerID)
 		checkFileContains(c, path, "0")
 	}
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/%s/cpuset.mems", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/default/%s/cpuset.mems", containerID)
 		checkFileContains(c, path, "0")
 	}
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/cpu/%s/cpu.shares", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.shares", containerID)
 		checkFileContains(c, path, "1000")
 	}
 
@@ -508,7 +509,7 @@ func (suite *PouchRunSuite) TestRunBlockIOWeight(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.weight", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.weight", containerID)
 		checkFileContains(c, path, "100")
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -538,7 +539,7 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 	// test if cgroup has record the real value
 	//containerID := result.ID
 	//{
-	//	path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.weight_device", containerID)
+	//	path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.weight_device", containerID)
 	//	checkFileContains(c, path, "100")
 	//}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -568,7 +569,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.throttle.read_bps_device", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -598,7 +599,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.throttle.write_bps_device", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -628,7 +629,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.throttle.read_iops_device", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_iops_device", containerID)
 		checkFileContains(c, path, "1000")
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -658,7 +659,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	{
-		path := fmt.Sprintf("/sys/fs/cgroup/blkio/%s/blkio.throttle.write_iops_device", containerID)
+		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_iops_device", containerID)
 		checkFileContains(c, path, "1000")
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
@@ -699,4 +700,48 @@ func (suite *PouchRunSuite) TestRunWithHostFileVolume(c *check.C) {
 	command.PouchRun("run", "-d", "--name", cname, "-v", fmt.Sprintf("%s:%s", filepath, filepath), busyboxImage).Assert(c, icmd.Success)
 
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+}
+
+// TestRunWithCgroupParent tests running container with --cgroup-parent.
+func (suite *PouchRunSuite) TestRunWithCgroupParent(c *check.C) {
+	// cgroup-parent relative path
+	testRunWithCgroupParent(c, "pouch", "TestRunWithRelativePathOfCgroupParent")
+
+	// cgroup-parent absolute path
+	testRunWithCgroupParent(c, "/pouch/test", "TestRunWithAbsolutePathOfCgroupParent")
+}
+
+func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
+	command.PouchRun("run", "-d", "-m", "300M", "--cgroup-parent", cgroupParent, "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	containerID := result.ID
+
+	// this code slice may not robust, but for this test case is enough.
+	if strings.HasPrefix(cgroupParent, "/") {
+		cgroupParent = cgroupParent[1:]
+	}
+
+	if cgroupParent == "" {
+		cgroupParent = "default"
+	}
+
+	file := "/sys/fs/cgroup/memory/" + cgroupParent + "/" + containerID + "/memory.limit_in_bytes"
+	if _, err := os.Stat(file); err != nil {
+		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+	}
+
+	out, err := exec.Command("cat", file).Output()
+	if err != nil {
+		c.Fatalf("execute cat command failed: %v", err)
+	}
+
+	if !strings.Contains(string(out), "314572800") {
+		c.Fatalf("unexpected output %s expected %s\n", string(out), "314572800")
+	}
+
 }

@@ -476,8 +476,16 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		return errors.Wrapf(err, "failed to generate spec: %s", c.ID())
 	}
 
-	// TODO Hardcode for test
-	s.Linux.CgroupsPath = filepath.Join("/", c.ID())
+	var cgroupsParent string
+	if c.meta.HostConfig.CgroupParent != "" {
+		cgroupsParent = c.meta.HostConfig.CgroupParent
+	} else if mgr.Config.CgroupParent != "" {
+		cgroupsParent = mgr.Config.CgroupParent
+	}
+
+	if cgroupsParent != "" {
+		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID())
+	}
 
 	sw := &SpecWrapper{
 		s:      s,

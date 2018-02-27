@@ -63,4 +63,7 @@ type Config struct {
 
 	// Configuration file of pouchd
 	ConfigFile string `json:"config-file,omitempty"`
+
+	// CgroupParent is to set parent cgroup for all containers
+	CgroupParent string `json:"cgroup-parent,omitempty"`
 }

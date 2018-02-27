@@ -52,7 +52,7 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	}
 	containerID := result.ID
 
-	file := "/sys/fs/cgroup/memory/" + containerID + "/memory.limit_in_bytes"
+	file := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
 	if _, err := os.Stat(file); err != nil {
 		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
 	}
@@ -86,7 +86,7 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
-	file := "/sys/fs/cgroup/memory/" + containerID + "/memory.limit_in_bytes"
+	file := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
 	if _, err := os.Stat(file); err != nil {
 		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
 	}
