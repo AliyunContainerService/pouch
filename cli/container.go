@@ -140,7 +140,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			User:       c.user,
 			Hostname:   strfmt.Hostname(c.hostname),
 			Labels:     labels,
-			Rich:	    c.rich,
+			Rich:       c.rich,
 			RichMode:   c.richMode,
 			InitScript: c.initScript,
 		},
