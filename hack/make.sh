@@ -20,7 +20,7 @@ function install_pouch ()
 
 	# install runc
 	echo "Download and install runc."
-	wget --quiet https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin
+	wget --quiet https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P /usr/local/bin
 	chmod +x /usr/local/bin/runc.amd64
 	mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 

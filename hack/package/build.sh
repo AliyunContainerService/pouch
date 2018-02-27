@@ -82,7 +82,7 @@ function build_pouch()
 
     # install runc
     echo "Downloading runc."
-    wget --quiet https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P $BINDIR/
+    wget --quiet https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P $BINDIR/
     chmod +x $BINDIR/runc.amd64
     mv $BINDIR/runc.amd64 $BINDIR/runc
 
