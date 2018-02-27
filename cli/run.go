@@ -47,6 +47,11 @@ func (rc *RunCommand) addFlags() {
 
 	c := addCommonFlags(flagSet)
 	rc.container = c
+
+	flagSet.StringVar(&rc.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
+	flagSet.BoolVarP(&rc.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
+	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
+	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
 }
 
 // runRun is the entry of run command.
