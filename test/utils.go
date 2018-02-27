@@ -16,6 +16,7 @@ import (
 const (
 	busyboxImage                = "registry.hub.docker.com/library/busybox:latest"
 	helloworldImage             = "registry.hub.docker.com/library/hello-world"
+	helloworldImageLatest       = "registry.hub.docker.com/library/hello-world:latest"
 	helloworldImageOnlyRepoName = "hello-world"
 
 	GateWay = "192.168.1.1"
