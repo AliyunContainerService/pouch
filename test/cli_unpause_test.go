@@ -8,7 +8,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchUnpauseSuite is the test suite fo help CLI.
+// PouchUnpauseSuite is the test suite for help CLI.
 type PouchUnpauseSuite struct{}
 
 func init() {

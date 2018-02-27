@@ -5,11 +5,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchStopSuite is the test suite fo help CLI.
+// PouchStopSuite is the test suite for help CLI.
 type PouchStopSuite struct{}
 
 func init() {

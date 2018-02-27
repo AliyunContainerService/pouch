@@ -6,11 +6,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchNetworkSuite is the test suite fo network CLI.
+// PouchNetworkSuite is the test suite for network CLI.
 type PouchNetworkSuite struct{}
 
 func init() {
