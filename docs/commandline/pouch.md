@@ -25,6 +25,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch image](pouch_image.md)	 - Manage image
 * [pouch images](pouch_images.md)	 - List all images
 * [pouch inspect](pouch_inspect.md)	 - Get the detailed information of container
+* [pouch login](pouch_login.md)	 - Login to a registry
 * [pouch network](pouch_network.md)	 - Manage pouch networks
 * [pouch pause](pouch_pause.md)	 - Pause a running container
 * [pouch ps](pouch_ps.md)	 - List containers

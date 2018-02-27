@@ -51,6 +51,43 @@ json :
 ```
 
 
+<a name="auth-post"></a>
+### Check auth configuration
+```
+POST /auth
+```
+
+
+#### Description
+Validate credentials for a registry and, if available, get an identity token for accessing the registry without password.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Body**|**authConfig**  <br>*optional*|Authentication to check|[AuthConfig](#authconfig)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|An identity token was generated successfully.|[AuthResponse](#authresponse)|
+|**401**|Login unauthorized|[1ErrorResponse](#1errorresponse)|
+|**500**|Server error|[0ErrorResponse](#0errorresponse)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/json`
+
+
 <a name="containers-create-post"></a>
 ### Create a container
 ```
@@ -1130,6 +1167,30 @@ DELETE /volumes/{id}
 
 <a name="definitions"></a>
 ## Definitions
+
+<a name="authconfig"></a>
+### AuthConfig
+
+|Name|Description|Schema|
+|---|---|---|
+|**Auth**  <br>*optional*||string|
+|**IdentityToken**  <br>*optional*|IdentityToken is used to authenticate the user and get an access token for the registry|string|
+|**Password**  <br>*optional*||string|
+|**RegistryToken**  <br>*optional*|RegistryToken is a bearer token to be sent to a registry|string|
+|**ServerAddress**  <br>*optional*||string|
+|**Username**  <br>*optional*||string|
+
+
+<a name="authresponse"></a>
+### AuthResponse
+The response returned by login to a registry
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**IdentityToken**  <br>*optional*|An opaque token used to authenticate a user after a successful login|string|
+|**Status**  <br>*required*|The status of the authentication|string|
+
 
 <a name="container"></a>
 ### Container
