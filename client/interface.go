@@ -32,6 +32,7 @@ type ContainerAPIClient interface {
 	ContainerRename(ctx context.Context, id string, name string) error
 	ContainerPause(ctx context.Context, name string) error
 	ContainerUnpause(ctx context.Context, name string) error
+	ContainerUpdate(ctx context.Context, name string, config *types.UpdateConfig) error
 }
 
 // ImageAPIClient defines methods of Image client.

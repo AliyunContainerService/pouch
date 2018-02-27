@@ -128,3 +128,36 @@ func ociImageToPouchImage(ociImage v1.Image) (types.ImageInfo, error) {
 	}
 	return imageInfo, nil
 }
+
+// toLinuxResources transfers Pouch Resources to LinuxResources.
+func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) {
+	r := &specs.LinuxResources{}
+
+	// toLinuxBlockIO
+	r.BlockIO = &specs.LinuxBlockIO{
+		Weight: &resources.BlkioWeight,
+	}
+
+	// toLinuxCPU
+	shares := uint64(resources.CPUShares)
+	r.CPU = &specs.LinuxCPU{
+		Cpus:   resources.CpusetCpus,
+		Mems:   resources.CpusetMems,
+		Shares: &shares,
+	}
+
+	// toLinuxMemory
+	var swappiness uint64
+	if resources.MemorySwappiness != nil {
+		swappiness = uint64(*(resources.MemorySwappiness))
+	}
+	r.Memory = &specs.LinuxMemory{
+		Limit:      &resources.Memory,
+		Swap:       &resources.MemorySwap,
+		Swappiness: &swappiness,
+	}
+
+	// TODO: add more fields.
+
+	return r, nil
+}

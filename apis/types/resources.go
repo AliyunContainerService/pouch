@@ -127,7 +127,7 @@ type Resources struct {
 
 	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
 	// Maximum: 100
-	// Minimum: 0
+	// Minimum: -1
 	MemorySwappiness *int64 `json:"MemorySwappiness,omitempty"`
 
 	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
@@ -535,7 +535,7 @@ func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.MinimumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), 0, false); err != nil {
+	if err := validate.MinimumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), -1, false); err != nil {
 		return err
 	}
 

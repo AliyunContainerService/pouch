@@ -264,6 +264,11 @@ func (c *Container) IsPaused() bool {
 	return c.meta.State.Status == types.StatusPaused
 }
 
+// IsRestarting returns container is restarting or not.
+func (c *Container) IsRestarting() bool {
+	return c.meta.State.Status == types.StatusRestarting
+}
+
 // Write writes container's meta data into meta store.
 func (c *Container) Write(store *meta.Store) error {
 	return store.Put(c.meta)
