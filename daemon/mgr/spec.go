@@ -64,6 +64,7 @@ var setupFunc = []SetupFunc{
 
 	// annotations in spec
 	setupAnnotations,
+
 	//hook
 	setupHook,
 }
