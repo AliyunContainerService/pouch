@@ -13,7 +13,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchNetworkSuite is the test suite fo network CLI.
+// PouchNetworkSuite is the test suite for network CLI.
 type PouchNetworkSuite struct{}
 
 func init() {

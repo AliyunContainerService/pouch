@@ -771,6 +771,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	// update HostConfig of a container.
+	// TODO update restartpolicy when container is running.
 	if config.RestartPolicy.Name != "" {
 		c.meta.HostConfig.RestartPolicy = config.RestartPolicy
 	}
@@ -778,14 +779,17 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// If container is not running, update container metadata struct is enough,
 	// resources will be updated when the container is started again,
 	// If container is running, we need to update configs to the real world.
+	var updateErr error
 	if c.IsRunning() {
-		return mgr.Client.UpdateResources(ctx, c.ID(), c.meta.HostConfig.Resources)
+		updateErr = mgr.Client.UpdateResources(ctx, c.ID(), c.meta.HostConfig.Resources)
 	}
 
 	// store disk.
-	c.Write(mgr.Store)
+	if updateErr == nil {
+		c.Write(mgr.Store)
+	}
 
-	return nil
+	return updateErr
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {

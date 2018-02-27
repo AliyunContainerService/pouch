@@ -3,10 +3,11 @@ package main
 import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 )
 
-// PouchHelpSuite is the test suite fo help CLI.
+// PouchHelpSuite is the test suite for help CLI.
 type PouchHelpSuite struct{}
 
 func init() {
