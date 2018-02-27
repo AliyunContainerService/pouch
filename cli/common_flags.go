@@ -74,6 +74,11 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")
+	
+	//for rich container mode
+	flagSet.BoolVar(&c.rich, "rich", false, "Start container in rich container mode. (default false)")
+	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
+	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
 
 	return c
 }

@@ -47,35 +47,6 @@ func (rc *RunCommand) addFlags() {
 
 	c := addCommonFlags(flagSet)
 	rc.container = c
-
-	flagSet.StringVar(&rc.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
-	flagSet.BoolVarP(&rc.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
-	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
-	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
-	flagSet.StringVar(&rc.hostname, "hostname", "", "Set container's hostname")
-	flagSet.Int64Var(&rc.cpushare, "cpu-share", 0, "CPU shares")
-	flagSet.StringVar(&rc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
-	flagSet.StringVar(&rc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
-	flagSet.Int64Var(&rc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
-	flagSet.StringVarP(&rc.memory, "memory", "m", "", "Container memory limit")
-	flagSet.StringVar(&rc.memorySwap, "memory-swap", "", "Container swap limit")
-	flagSet.StringSliceVarP(&rc.devices, "device", "", nil, "Add a host device to the container")
-	flagSet.BoolVar(&rc.enableLxcfs, "enableLxcfs", false, "Enable lxcfs")
-	flagSet.StringVar(&rc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
-	flagSet.StringVar(&rc.ipcMode, "ipc", "", "IPC namespace to use")
-	flagSet.StringVar(&rc.pidMode, "pid", "", "PID namespace to use")
-	flagSet.StringVar(&rc.utsMode, "uts", "", "UTS namespace to use")
-	flagSet.StringSliceVar(&rc.sysctls, "sysctl", nil, "Sysctl options")
-	flagSet.Uint16Var(&rc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
-	flagSet.Var(&rc.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
-	flagSet.Var(&rc.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
-	flagSet.Var(&rc.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
-	flagSet.Var(&rc.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
-	flagSet.Var(&rc.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
-
-	flagSet.BoolVar(&rc.rich, "rich", false, "Start container in rich container mode. (default false)")
-	flagSet.StringVar(&rc.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
-	flagSet.StringVar(&rc.initScript, "initscript", "", "Initial script executed in container")
 }
 
 // runRun is the entry of run command.
