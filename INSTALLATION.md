@@ -12,11 +12,92 @@ You can install Pouch automatically on your machine with very few steps. Current
 
 ### Ubuntu
 
-To be added.
+To install Pouch, you need a maintained version of Ubuntu 16.04 (Xenial LTS). Archived versions aren’t supported or tested.
+
+Pouch is conflict with Docker, so you must uninstall Docker before installing Pouch. 
+
+**Prerequisites**
+
+Pouch supports lxcfs to provide strong isolation, so you should install lxcfs firstly. By default, lxcfs is enabled.
+ 
+ ```bash
+sudo apt-get install lxcfs
+```
+
+Install packages to allow 'apt' to use a repository over HTTPS:
+                                   
+```bash
+sudo apt-get install \
+	apt-transport-https \
+	ca-certificates \
+	curl \
+	software-properties-common
+``` 
+
+**1. Add Pouch's official GPG key**
+
+```bash
+curl -fsSL https://... | sudo apt-key add -
+```
+
+Verify that you now have the key with the fingerprint `B615 DDD7 90C7 0912 582D  DC2D D7AE A5ED 439A E9EC`, by searching for the last 8 characters of the fingerprint.
+
+```bash
+$ apt-key fingerprint 439AE9EC
+
+pub   2048R/439AE9EC 2018-01-31
+      Key fingerprint = B615 DDD7 90C7 0912 582D  DC2D D7AE A5ED 439A E9EC
+uid                  Pouch Release <pouch-dev@list.alibaba-inc.com>
+sub   2048R/B3D2A915 2018-01-31
+```
+
+**2. Set up the pouch repository**
+
+Before you install Pouch for the first time on a new host machine, you need to set up the Pouch repository. Afterward, you can install and update Pouch from the repository.
+
+```bash
+sudo add-apt-repository \
+	"deb [arch=amd64] https://.../linux/ubuntu \
+	$(lsb_release -cs) \
+	stable"
+```
+
+**3. Install pouch**
+
+Install the latest version of Pouch. 
+
+```bash
+# update the apt package index 
+sudo apt-get update
+
+sudo apt-get install pouch
+```
+
+After installing Pouch, the `pouch` group is created, but no users are added to the group.
+
+**4. Start pouch**
+
+```bash
+sudo service pouch start
+```
+
+Afterwards, you can pull an image and run Pouch containers.
+
+**5. Uninstall pouch**
+
+```bash
+sudo apt-get purge pouch
+```
+
+After uninstalling Pouch, images, containers, volumes, or customized configuration files on your host are not automatically removed. To delete all images, containers and volumes, execute the following command:
+
+```bash
+sudo rm -rf /var/lib/pouch
+```
 
 ### CentOS
 
-To install Pouch, you need a maintained version of CentOS 7 Archived versions aren’t supported or tested.
+To install Pouch, you need a maintained version of CentOS 7. Archived versions aren’t supported or tested.
 
 We have put rpm package to Aliyun mirrors, you can install pouch using Pouch repository. If you install Pouch for the first on a new host machine, you need to set up the Pouch repository. Then, you can install and update Pouch from repository.
 
