@@ -71,7 +71,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.LxcfsBinPath, "lxcfs", "/usr/local/bin/lxcfs", "Specify the path of lxcfs binary")
 	flagSet.StringVar(&cfg.LxcfsHome, "lxcfs-home", "/var/lib/lxc/lxcfs", "Specify the mount dir of lxcfs")
 	flagSet.StringVar(&cfg.DefaultRegistry, "default-registry", "registry.hub.docker.com/library/", "Default Image Registry")
-	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "http://127.0.0.1:5678", "Http proxy to pull image")
+	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "", "Http proxy to pull image")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.

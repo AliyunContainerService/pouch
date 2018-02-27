@@ -22,7 +22,7 @@ func (client *APIClient) ContainerCreate(ctx context.Context, config types.Conta
 		q.Set("name", containerName)
 	}
 
-	resp, err := client.post(ctx, "/containers/create", q, createConfig)
+	resp, err := client.post(ctx, "/containers/create", q, createConfig, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (client *APIClient) ContainerStart(ctx context.Context, name, detachKeys st
 		q.Set("detachKeys", detachKeys)
 	}
 
-	resp, err := client.post(ctx, "/containers/"+name+"/start", q, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/start", q, nil, nil)
 	ensureCloseReader(resp)
 
 	return err
@@ -53,7 +53,7 @@ func (client *APIClient) ContainerStop(ctx context.Context, name string, timeout
 	q := url.Values{}
 	q.Add("t", timeout)
 
-	resp, err := client.post(ctx, "/containers/"+name+"/stop", q, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/stop", q, nil, nil)
 	ensureCloseReader(resp)
 
 	return err
@@ -66,7 +66,7 @@ func (client *APIClient) ContainerRemove(ctx context.Context, name string, force
 		q.Set("force", "true")
 	}
 
-	resp, err := client.delete(ctx, "/containers/"+name, q)
+	resp, err := client.delete(ctx, "/containers/"+name, q, nil)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (client *APIClient) ContainerList(ctx context.Context, all bool) ([]*types.
 		q.Set("all", "true")
 	}
 
-	resp, err := client.get(ctx, "/containers/json", q)
+	resp, err := client.get(ctx, "/containers/json", q, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (client *APIClient) ContainerAttach(ctx context.Context, name string, stdin
 
 // ContainerCreateExec creates exec process.
 func (client *APIClient) ContainerCreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error) {
-	response, err := client.post(ctx, "/containers/"+name+"/exec", url.Values{}, config)
+	response, err := client.post(ctx, "/containers/"+name+"/exec", url.Values{}, config, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (client *APIClient) ContainerStartExec(ctx context.Context, execid string, 
 
 // ContainerGet returns the detailed information of container.
 func (client *APIClient) ContainerGet(ctx context.Context, name string) (*types.ContainerJSON, error) {
-	resp, err := client.get(ctx, "/containers/"+name+"/json", nil)
+	resp, err := client.get(ctx, "/containers/"+name+"/json", nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (client *APIClient) ContainerRename(ctx context.Context, id string, name st
 	q := url.Values{}
 	q.Add("name", name)
 
-	resp, err := client.post(ctx, "/containers/"+id+"/rename", q, nil)
+	resp, err := client.post(ctx, "/containers/"+id+"/rename", q, nil, nil)
 	ensureCloseReader(resp)
 
 	return err
@@ -159,7 +159,7 @@ func (client *APIClient) ContainerRename(ctx context.Context, id string, name st
 
 // ContainerPause pauses a container
 func (client *APIClient) ContainerPause(ctx context.Context, name string) error {
-	resp, err := client.post(ctx, "/containers/"+name+"/pause", nil, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/pause", nil, nil, nil)
 	ensureCloseReader(resp)
 
 	return err
@@ -167,7 +167,7 @@ func (client *APIClient) ContainerPause(ctx context.Context, name string) error 
 
 // ContainerUnpause unpauses a container
 func (client *APIClient) ContainerUnpause(ctx context.Context, name string) error {
-	resp, err := client.post(ctx, "/containers/"+name+"/unpause", nil, nil)
+	resp, err := client.post(ctx, "/containers/"+name+"/unpause", nil, nil, nil)
 	ensureCloseReader(resp)
 
 	return err

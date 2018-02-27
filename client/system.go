@@ -10,7 +10,7 @@ import (
 
 // SystemPing shows whether server is ok.
 func (client *APIClient) SystemPing(ctx context.Context) (string, error) {
-	resp, err := client.get(ctx, "/_ping", nil)
+	resp, err := client.get(ctx, "/_ping", nil, nil)
 	if err != nil {
 		return "", err
 	}
@@ -26,7 +26,7 @@ func (client *APIClient) SystemPing(ctx context.Context) (string, error) {
 
 // SystemVersion requests daemon for system version.
 func (client *APIClient) SystemVersion(ctx context.Context) (*types.SystemVersion, error) {
-	resp, err := client.get(ctx, "/version", nil)
+	resp, err := client.get(ctx, "/version", nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (client *APIClient) SystemVersion(ctx context.Context) (*types.SystemVersio
 
 // SystemInfo requests daemon for system info.
 func (client *APIClient) SystemInfo(ctx context.Context) (*types.SystemInfo, error) {
-	resp, err := client.get(ctx, "/info", nil)
+	resp, err := client.get(ctx, "/info", nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (client *APIClient) SystemInfo(ctx context.Context) (*types.SystemInfo, err
 
 // RegistryLogin requests a registy server to login.
 func (client *APIClient) RegistryLogin(ctx context.Context, auth *types.AuthConfig) (*types.AuthResponse, error) {
-	resp, err := client.post(ctx, "/auth", nil, auth)
+	resp, err := client.post(ctx, "/auth", nil, auth, nil)
 	if err != nil || resp.StatusCode == http.StatusUnauthorized {
 		return nil, err
 	}

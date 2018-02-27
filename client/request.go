@@ -32,16 +32,16 @@ type Response struct {
 	Body       io.ReadCloser
 }
 
-func (client *APIClient) get(ctx context.Context, path string, query url.Values) (*Response, error) {
-	return client.sendRequest(ctx, "GET", path, query, nil)
+func (client *APIClient) get(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "GET", path, query, nil, headers)
 }
 
-func (client *APIClient) post(ctx context.Context, path string, query url.Values, obj interface{}) (*Response, error) {
-	return client.sendRequest(ctx, "POST", path, query, obj)
+func (client *APIClient) post(ctx context.Context, path string, query url.Values, obj interface{}, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "POST", path, query, obj, headers)
 }
 
-func (client *APIClient) delete(ctx context.Context, path string, query url.Values) (*Response, error) {
-	return client.sendRequest(ctx, "DELETE", path, query, nil)
+func (client *APIClient) delete(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "DELETE", path, query, nil, headers)
 }
 
 func (client *APIClient) hijack(ctx context.Context, path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
@@ -104,8 +104,8 @@ func (client *APIClient) newRequest(method, path string, query url.Values, obj i
 	return req, err
 }
 
-func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, obj interface{}) (*Response, error) {
-	req, err := client.newRequest(method, path, query, obj, nil)
+func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, obj interface{}, headers map[string][]string) (*Response, error) {
+	req, err := client.newRequest(method, path, query, obj, headers)
 	if err != nil {
 		return nil, err
 	}

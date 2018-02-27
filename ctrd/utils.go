@@ -27,7 +27,7 @@ func NewDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
 	return oci.GenerateSpec(ctx, nil, &containers.Container{ID: id})
 }
 
-func resolver() (remotes.Resolver, error) {
+func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	var (
 		// TODO
 		username  = ""
@@ -36,6 +36,11 @@ func resolver() (remotes.Resolver, error) {
 		refresh   = ""
 		insecure  = false
 	)
+
+	if authConfig != nil {
+		username = authConfig.Username
+		secret = authConfig.Password
+	}
 
 	// FIXME
 	_ = refresh

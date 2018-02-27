@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,8 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/credential"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/reference"
 
@@ -60,13 +63,27 @@ func (p *PullCommand) runPull(args []string) error {
 
 	ctx := context.Background()
 	apiClient := p.cli.Client()
-	responseBody, err := apiClient.ImagePull(ctx, taggedRef.Name(), taggedRef.Tag())
+	responseBody, err := apiClient.ImagePull(ctx, taggedRef.Name(), taggedRef.Tag(), fetchRegistryAuth(taggedRef.Name()))
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
 	defer responseBody.Close()
 
 	return showProgress(responseBody)
+}
+
+func fetchRegistryAuth(serverAddress string) string {
+	authConfig, err := credential.Get(serverAddress)
+	if err != nil || authConfig == (types.AuthConfig{}) {
+		return ""
+	}
+
+	data, err := json.Marshal(authConfig)
+	if err != nil {
+		return ""
+	}
+
+	return base64.URLEncoding.EncodeToString(data)
 }
 
 // bufwriter defines interface which has Write and Flush behaviors.

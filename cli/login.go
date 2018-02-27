@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/credential"
 	"github.com/alibaba/pouch/pkg/term"
 
 	"github.com/spf13/cobra"
@@ -64,9 +65,10 @@ func (l *LoginCommand) runLogin(args []string) error {
 		fmt.Printf("%s\n", resp.Status)
 	}
 
-	return nil
+	return credential.Save(auth)
 }
 
+// configureAuth ensures that username and password is given.
 func configureAuth(username, password string) *types.AuthConfig {
 	if username == "" {
 		username = readInput("Username", true)
@@ -82,6 +84,7 @@ func configureAuth(username, password string) *types.AuthConfig {
 	}
 }
 
+// readInput reads from stdin.
 func readInput(prompt string, echo bool) (read string) {
 	fmt.Printf("%s: ", prompt)
 	if echo {
@@ -92,6 +95,7 @@ func readInput(prompt string, echo bool) (read string) {
 	return
 }
 
+// disableEcho disables echo when read from input.
 func disableEcho(echo bool, read *string) {
 	term.StdinEcho(false)
 	fmt.Scanf("%s", read)
