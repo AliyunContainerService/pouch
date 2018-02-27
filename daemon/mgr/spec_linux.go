@@ -120,12 +120,11 @@ func setupCapabilities(ctx context.Context, meta *ContainerMeta, spec *SpecWrapp
 
 func setupIntelRdt(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	s := spec.s
-	if s.Linux.IntelRdt == nil {
-		s.Linux.IntelRdt = &specs.LinuxIntelRdt{}
-	}
 
-	s.Linux.IntelRdt = &specs.LinuxIntelRdt{
-		L3CacheSchema: meta.HostConfig.IntelRdtL3Cbm,
+	if meta.HostConfig.IntelRdtL3Cbm != "" {
+		s.Linux.IntelRdt = &specs.LinuxIntelRdt{
+			L3CacheSchema: meta.HostConfig.IntelRdtL3Cbm,
+		}
 	}
 
 	return nil
