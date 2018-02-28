@@ -99,6 +99,21 @@ func (fs *fileStore) Delete(serverAddress string) error {
 	return fs.update()
 }
 
+// Exist implements Store interface.
+func (fs *fileStore) Exist(serverAddress string) bool {
+	if fs.configFile == nil {
+		return false
+	}
+
+	if serverAddress == "" {
+		serverAddress = defaultRegistry
+	} else {
+		serverAddress = addrTrim(serverAddress)
+	}
+	_, exist := fs.configFile.AuthConfigs[serverAddress]
+	return exist
+}
+
 // update updates file store with new contents.
 func (fs *fileStore) update() error {
 	if fs.configFile == nil {

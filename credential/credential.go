@@ -20,6 +20,12 @@ func Delete(serverAddress string) error {
 	return s.Delete(serverAddress)
 }
 
+// Exist determines whether a specified credential is exist in a credential store.
+func Exist(serverAddress string) bool {
+	s := loadCredentialStore()
+	return s.Exist(serverAddress)
+}
+
 func loadCredentialStore() Store {
 	return newFileStore()
 }

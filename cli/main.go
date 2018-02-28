@@ -35,6 +35,7 @@ func main() {
 	cli.AddCommand(base, &RunCommand{})
 	cli.AddCommand(base, &LoginCommand{})
 	cli.AddCommand(base, &UpdateCommand{})
+	cli.AddCommand(base, &LogoutCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

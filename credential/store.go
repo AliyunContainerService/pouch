@@ -12,4 +12,7 @@ type Store interface {
 
 	// Delete deletes a credential in Store.
 	Delete(serverAddress string) error
+
+	// Exist determines whether a specified credential is exist in Store.
+	Exist(serverAddress string) bool
 }
