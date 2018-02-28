@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 var (
@@ -23,4 +24,13 @@ var (
 // IsLinux checks if the OS of test environment is Linux.
 func IsLinux() bool {
 	return runtime.GOOS == "linux"
+}
+
+// IsAliKernel checks if the kernel of test environment is AliKernel.
+func IsAliKernel() bool {
+	cmd := "uname -r | grep -i alios"
+	if icmd.RunCommand("bash", "-c", cmd).ExitCode == 0 {
+		return true
+	}
+	return false
 }
