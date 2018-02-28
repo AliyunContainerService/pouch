@@ -37,6 +37,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
   -e, --env strings                  Set environment variables for container
   -h, --help                         help for create
       --hostname string              Set container's hostname
+      --initscript string            Initial script executed in container
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
       --ipc string                   IPC namespace to use
   -l, --label strings                Set labels for a container
@@ -51,6 +52,8 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --pid string                   PID namespace to use
       --privileged                   Give extended privileges to the container
       --restart string               Restart policy to apply when container exits
+      --rich                         Start container in rich container mode. (default false)
+      --rich-mode string             Choose one rich container mode. dumb-init(default), systemd, sbin-init
       --runtime string               OCI runtime to use for this container
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options

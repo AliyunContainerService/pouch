@@ -37,6 +37,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch start](pouch_start.md)	 - Start a created or stopped container
 * [pouch stop](pouch_stop.md)	 - Stop a running container
 * [pouch unpause](pouch_unpause.md)	 - Unpause a paused container
+* [pouch update](pouch_update.md)	 - Update the configurations of a container
 * [pouch version](pouch_version.md)	 - Print versions about Pouch CLI and Pouchd
 * [pouch volume](pouch_volume.md)	 - Manage pouch volumes
 
