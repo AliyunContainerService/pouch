@@ -13,7 +13,7 @@ import (
 	"github.com/kr/pty"
 )
 
-// PouchStartSuite is the test suite for help CLI.
+// PouchStartSuite is the test suite for start CLI.
 type PouchStartSuite struct{}
 
 func init() {

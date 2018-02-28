@@ -14,7 +14,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchUpdateSuite is the test suite for help CLI.
+// PouchUpdateSuite is the test suite for update CLI.
 type PouchUpdateSuite struct{}
 
 func init() {
@@ -70,6 +70,8 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	}
 
 	c.Assert(metaJSON.HostConfig.CPUShares, check.Equals, int64(40))
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateRunningContainer is to verify the correctness of updating a running container.
@@ -108,6 +110,8 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	}
 
 	c.Assert(metaJSON.HostConfig.Memory, check.Equals, int64(524288000))
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateStoppedContainer is to verify the correctness of updating a stopped container.
@@ -148,6 +152,8 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	}
 
 	c.Assert(metaJSON.HostConfig.Memory, check.Equals, int64(524288000))
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateContainerInvalidValue is to verify the correctness of updating a container with invalid value.
@@ -163,6 +169,8 @@ func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateContainerWithoutFlag is to verify the correctness of updating a container without any flag.
@@ -172,4 +180,6 @@ func (suite *PouchUpdateSuite) TestUpdateContainerWithoutFlag(c *check.C) {
 	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	command.PouchRun("update", name).Assert(c, icmd.Success)
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

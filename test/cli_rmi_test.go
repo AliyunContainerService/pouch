@@ -10,7 +10,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchRmiSuite is the test suite for help CLI.
+// PouchRmiSuite is the test suite for rmi CLI.
 type PouchRmiSuite struct{}
 
 func init() {
