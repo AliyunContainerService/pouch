@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/alibaba/pouch/pkg/utils"
@@ -29,6 +30,23 @@ func IsLinux() bool {
 // IsAliKernel checks if the kernel of test environment is AliKernel.
 func IsAliKernel() bool {
 	cmd := "uname -r | grep -i alios"
+	if icmd.RunCommand("bash", "-c", cmd).ExitCode == 0 {
+		return true
+	}
+	return false
+}
+
+// IsDumbInitExist checks if the dumb-init binary exists on host.
+func IsDumbInitExist() bool {
+	if _, err := os.Stat("/usr/bin/dumb-init"); err != nil && os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// IsRuncVersionSupportRichContianer checks if the version of runc supports rich container.
+func IsRuncVersionSupportRichContianer() bool {
+	cmd := "runc -v|grep 1.0.0-rc4-1"
 	if icmd.RunCommand("bash", "-c", cmd).ExitCode == 0 {
 		return true
 	}
