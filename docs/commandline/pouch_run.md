@@ -51,6 +51,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -e, --env strings                  Set environment variables for container
   -h, --help                         help for run
       --hostname string              Set container's hostname
+      --initscript string            Initial script executed in container
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
   -i, --interactive                  Attach container's STDIN
       --ipc string                   IPC namespace to use
@@ -66,6 +67,8 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --pid string                   PID namespace to use
       --privileged                   Give extended privileges to the container
       --restart string               Restart policy to apply when container exits
+      --rich                         Start container in rich container mode. (default false)
+      --rich-mode string             Choose one rich container mode. dumb-init(default), systemd, sbin-init
       --runtime string               OCI runtime to use for this container
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options
