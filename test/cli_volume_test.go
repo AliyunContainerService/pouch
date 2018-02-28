@@ -41,7 +41,9 @@ func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 		ExitCode: 1,
 		Err:      "No such file or directory",
 	}
-	icmd.RunCommand("stat", "/mnt/local/"+funcname).Compare(expct)
+	err := icmd.RunCommand("stat", "/mnt/local/"+funcname).Compare(expct)
+	c.Assert(err, check.IsNil)
+
 }
 
 // TestVolumeWorks tests "pouch volume" work.
@@ -103,7 +105,9 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithMountPointExitsFile(c *check.
 	}
 
 	icmd.RunCommand("touch", "/tmp/"+funcname)
-	command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp").Compare(expct)
+	err := command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp").Compare(expct)
+	c.Assert(err, check.IsNil)
+
 	command.PouchRun("volume", "remove", funcname)
 }
 
@@ -121,7 +125,9 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWrongDriver(c *check.C) {
 		Err:      "not found",
 	}
 
-	command.PouchRun("volume", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
+	err := command.PouchRun("volume", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
+	c.Assert(err, check.IsNil)
+
 	command.PouchRun("volume", "remove", funcname)
 }
 
