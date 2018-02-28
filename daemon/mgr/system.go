@@ -41,7 +41,7 @@ func (mgr *SystemManager) Version() (types.SystemVersion, error) {
 		APIVersion: version.APIVersion,
 		Arch:       runtime.GOARCH,
 		BuildTime:  version.BuildTime,
-		GitCommit:  "",
+		GitCommit:  version.GitCommit,
 		GoVersion:  version.GOVersion,
 		// TODO:  add a pkg to support getting kernel version
 		// KernelVersion: kernel.Version(),
