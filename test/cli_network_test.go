@@ -49,18 +49,25 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 	{
 		// Assign the none network to a container.
 		expct := icmd.Expected{
-			Out: "",
+			ExitCode: 0,
+			Out:      "",
 		}
-		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "r").Compare(expct)
+		err := command.PouchRun("run", "--name", funcname, "--net", "none", busyboxImage, "ip", "r").Compare(expct)
+		c.Assert(err, check.IsNil)
+
 		command.PouchRun("rm", "-f", funcname)
 	}
 	{
-		routeOnHost := icmd.RunCommand("ip", "r").Stdout()
+		cmd := "ip r |grep default"
+		routeOnHost := icmd.RunCommand("bash", "-c", cmd).Stdout()
 		// Assign the host network to a container.
 		expct := icmd.Expected{
-			Out: routeOnHost,
+			ExitCode: 0,
+			Out:      routeOnHost,
 		}
-		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "r").Compare(expct)
+		err := command.PouchRun("run", "--name", funcname, "--net", "host", busyboxImage, "ip", "r").Compare(expct)
+		c.Assert(err, check.IsNil)
+
 		command.PouchRun("rm", "-f", funcname)
 	}
 }
@@ -86,26 +93,97 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 		"--subnet", subnet).Assert(c, icmd.Success)
 	command.PouchRun("network", "inspect", funcname).Assert(c, icmd.Success)
 
-	// Assign network to a container works
-	expct := icmd.Expected{
-		Out: "eth0",
+	{
+		// Assign network to a container works
+		expct := icmd.Expected{
+			ExitCode: 0,
+			Out:      "eth0",
+		}
+		err := command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "link", "ls", "eth0").Compare(expct)
+		c.Assert(err, check.IsNil)
+
+		command.PouchRun("rm", "-f", funcname)
 	}
-	command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "link", "ls", "eth0").Compare(expct)
-	command.PouchRun("rm", "-f", funcname)
 
-	// remove network should fail
-	expct = icmd.Expected{
-		ExitCode: 1,
-		Err:      "has active endpoints",
+	{
+		// remove network should fail
+		expct := icmd.Expected{
+			ExitCode: 1,
+			Err:      "has active endpoints",
+		}
+		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+
+		err := command.PouchRun("network", "remove", funcname).Compare(expct)
+		c.Assert(err, check.IsNil)
+
 	}
-	command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
-	command.PouchRun("network", "remove", funcname).Compare(expct)
-	command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
+	{
+		// remove container, then the veth device should also been removed
+		command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
 
-	// TODO: check when remove container, the corresponding veth device on host should also be deleted
+		// get the ID of bridge to construct the bridge name.
+		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"
+		id := icmd.RunCommand("bash", "-c", cmd).Stdout()
 
-	// TODO: remove this network when function EndpointRemove in mgr/network.go is implemented.
-	//command.PouchRun("network", "remove", funcname).Assert(c, icmd.Success)
+		// there should be no veth interface on this bridge
+		cmd = "brctl show |grep br-" + id + " |grep veth"
+		expct := icmd.Expected{
+			ExitCode: 1,
+		}
+		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
+		c.Assert(err, check.IsNil)
+	}
+	{
+		// container process exist, then the veth device should also been removed
+		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "echo", "test").Assert(c, icmd.Success)
+
+		// get the ID of bridge to construct the bridge name.
+		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"
+		id := icmd.RunCommand("bash", "-c", cmd).Stdout()
+
+		// there should be no veth interface on this bridge
+		cmd = "brctl show |grep br-" + id + " |grep veth"
+		expct := icmd.Expected{
+			ExitCode: 1,
+		}
+		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
+		c.Assert(err, check.IsNil)
+
+		command.PouchRun("rm", "-f", funcname)
+	}
+	{
+		// running container is stopped, then the veth device should also been removed
+		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+		command.PouchRun("stop", funcname).Assert(c, icmd.Success)
+
+		// get the ID of bridge to construct the bridge name.
+		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"
+		id := icmd.RunCommand("bash", "-c", cmd).Stdout()
+
+		// there should be no veth interface on this bridge
+		cmd = "brctl show |grep br-" + id + "|grep veth"
+		expct := icmd.Expected{
+			ExitCode: 1,
+		}
+		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
+		c.Assert(err, check.IsNil)
+
+		command.PouchRun("rm", "-f", funcname)
+	}
+	{
+		// get the ID of bridge to construct the bridge name.
+		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"
+		id := icmd.RunCommand("bash", "-c", cmd).Stdout()
+
+		// remove network, brctl show should not have this bridge
+		command.PouchRun("network", "remove", funcname).Assert(c, icmd.Success)
+		cmd = "brctl show |grep br-" + id
+		expct := icmd.Expected{
+			ExitCode: 1,
+		}
+		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
+		c.Assert(err, check.IsNil)
+	}
 }
 
 // TestNetworkCreateWrongDriver tests using wrong driver returns error.
@@ -122,7 +200,9 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWrongDriver(c *check.C) {
 		Err:      "not found",
 	}
 
-	command.PouchRun("network", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
+	err := command.PouchRun("network", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
+	c.Assert(err, check.IsNil)
+
 	command.PouchRun("network", "remove", funcname)
 }
 
@@ -193,11 +273,12 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 		"--gateway", gateway1,
 		"--subnet", subnet1).Assert(c, icmd.Success)
 
-	command.PouchRun("network", "create",
+	err := command.PouchRun("network", "create",
 		"--name", funcname,
 		"-d", "bridge",
 		"--gateway", gateway2,
 		"--subnet", subnet2).Compare(expct)
+	c.Assert(err, check.IsNil)
 
 	command.PouchRun("network", "remove", funcname)
 }
