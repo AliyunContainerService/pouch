@@ -10,7 +10,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchStopSuite is the test suite for help CLI.
+// PouchStopSuite is the test suite for stop CLI.
 type PouchStopSuite struct{}
 
 func init() {
