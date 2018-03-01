@@ -1,20 +1,20 @@
 package mgr
 
 import (
-	"net"
 	"fmt"
+	"net"
 
 	"github.com/alibaba/pouch/cri/stream"
 )
 
-func newStreamServer(address string, port string) (stream.Server, error){
+func newStreamServer(address string, port string) (stream.Server, error) {
 	config := stream.DefaultConfig
 	config.Address = net.JoinHostPort(address, port)
 	runtime := newStreamRuntime()
 	return stream.NewServer(config, runtime)
 }
 
-type streamRuntime struct {}
+type streamRuntime struct{}
 
 func newStreamRuntime() stream.Runtime {
 	return &streamRuntime{}

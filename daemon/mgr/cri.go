@@ -6,11 +6,11 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
-	"github.com/alibaba/pouch/cri/stream"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
@@ -47,7 +47,7 @@ const (
 	// Address and port of stream server.
 	// TODO: specify them in the parameters of pouchd.
 	streamServerAddress = ""
-	streamServerPort = "10010"
+	streamServerPort    = "10010"
 )
 
 var (

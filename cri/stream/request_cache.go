@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	// Timeout after which tokens become invalid.
+	// CacheTTL is timeout after which tokens become invalid.
 	CacheTTL = 1 * time.Minute
-	// The maximum number of in-flight requests to allow.
+	// MaxInFlight is the maximum number of in-flight requests to allow.
 	MaxInFlight = 1000
-	// Length of the random base64 encoded token identifying the request.
+	// TokenLen is the length of the random base64 encoded token identifying the request.
 	TokenLen = 8
 )
 

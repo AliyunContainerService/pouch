@@ -9,16 +9,17 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// ErrorStreamingDisabled returns error when the streaming method is disabled.
 func ErrorStreamingDisabled(method string) error {
 	return grpc.Errorf(codes.NotFound, fmt.Sprintf("streaming method %s disabled", method))
 }
 
-// The error returned when the maximum number of in-flight requests is exceeded.
+// ErrorTooManyInFlight returns error when the maximum number of in-flight requests is exceeded.
 func ErrorTooManyInFlight() error {
 	return grpc.Errorf(codes.ResourceExhausted, "maximum number of in-flight requests exceeded")
 }
 
-// Translates a CRI streaming error into an appropriate HTTP response.
+// WriteError translates a CRI streaming error into an appropriate HTTP response.
 func WriteError(err error, w http.ResponseWriter) error {
 	var status int
 	switch grpc.Code(err) {

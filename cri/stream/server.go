@@ -1,108 +1,106 @@
 package stream
 
 import (
-	"time"
 	"net/http"
 	"net/url"
 	"path"
+	"time"
+
+	"github.com/alibaba/pouch/cri/stream/constant"
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/gorilla/mux"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"github.com/sirupsen/logrus"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+// Keep these constants consistent with the peers in official package:
+// k8s.io/kubernetes/pkg/kubelet/server.
 const (
-	// Keep these constants consistent with the peers in official package:
-	// k8s.io/kubernetes/pkg/kubelet/server.
+	// DefaultStreamIdleTimeout is the timeout for idle stream.
 	DefaultStreamIdleTimeout = 4 * time.Hour
 
+	// DefaultStreamCreationTimeout is the timeout for stream creation.
 	DefaultStreamCreationTimeout = 30 * time.Second
-
-	// The SPDY subprotocol "channel.k8s.io" is used for remote command
-	// attachment/execution. This represents the initial unversioned subprotocol,
-	// which has the known bugs http://issues.k8s.io/13394 and
-	// http://issues.k8s.io/13395.
-	StreamProtocolV1Name = "channel.k8s.io"
-
-	// The SPDY subprotocol "v2.channel.k8s.io" is used for remote command
-	// attachment/execution. It is the second version of the subprotocol and
-	// resolves the issues present in the first version.
-	StreamProtocolV2Name = "v2.channel.k8s.io"
-
-	// The SPDY subprotocol "v3.channel.k8s.io" is used for remote command
-	// attachment/execution. It is the third version of the subprotocol and
-	// adds support for resizing container terminals.
-	StreamProtocolV3Name = "v3.channel.k8s.io"
-
-	// The SPDY subprotocol "v4.channel.k8s.io" is used for remote command
-	// attachment/execution. It is the 4th version of the subprotocol and
-	// adds support for exit codes.
-	StreamProtocolV4Name = "v4.channel.k8s.io"
-
-	// The SPDY subprotocol "portforward.k8s.io" is used for port forwarding.
-	PortForwardProtocolV1Name = "portforward.k8s.io"
 )
 
-var SupportedStreamingProtocols = []string{StreamProtocolV4Name, StreamProtocolV3Name, StreamProtocolV2Name, StreamProtocolV1Name}
+// TODO: StreamProtocolV2Name, StreamProtocolV3Name, StreamProtocolV4Name support.
 
-var SupportedPortForwardProtocols = []string{PortForwardProtocolV1Name}
+// SupportedStreamingProtocols is the streaming protocols which server supports.
+var SupportedStreamingProtocols = []string{constant.StreamProtocolV1Name}
 
+// SupportedPortForwardProtocols is the portforward protocols which server supports.
+var SupportedPortForwardProtocols = []string{constant.PortForwardProtocolV1Name}
+
+// Server as an interface defines all operations against stream server.
 type Server interface {
-	// Get the serving URL for the requests.
-	// Requests must not be nil. Responses may be nil if an error is returned.
+	// GetExec get the serving URL for Exec request.
 	GetExec(*runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error)
+
+	// GetAttach get the serving URL for Attach request.
 	GetAttach(*runtimeapi.AttachRequest) (*runtimeapi.AttachResponse, error)
+
+	// GetPortForward get the serving URL for PortForward request.
 	GetPortForward(*runtimeapi.PortForwardRequest) (*runtimeapi.PortForwardResponse, error)
 
+	// Start starts the stream server.
 	Start() error
 }
 
-// The interface to execute the commands and provide the streams.
+// Runtime is the interface to execute the commands and provide the streams.
 type Runtime interface {
+	// Exec executes the command in pod.
 	Exec() error
+
+	// Attach attaches to pod.
 	Attach() error
+
+	// PortForward forward port to pod.
 	PortForward() error
 }
 
 // Config defines the options used for running the stream server.
 type Config struct {
-	// The addr:port address the server will listen on.
+	// Address is the addr:port address the server will listen on.
 	Address string
-	// The optional base URL for constructing streaming URLs. If empty, the baseURL will be
-	// constructed from the serve address.
+
+	// BaseURL is the optional base URL for constructing streaming URLs. If empty, the baseURL will be constructed from the serve address.
 	BaseURL *url.URL
 
-	// How long to leave idle connections open for.
+	// StreamIdleTimeout is how long to leave idle connections open for.
 	StreamIdleTimeout time.Duration
-	// How long to wait for clients to create streams. Only used for SPDY streaming.
+	// StreamCreationTimeout is how long to wait for clients to create streams. Only used for SPDY streaming.
 	StreamCreationTimeout time.Duration
 
-	// All the stream protocols that server supports.
+	// SupportedStreamingProtocols is the streaming protocols which server supports.
 	SupportedRemoteCommandProtocols []string
+	// SupportedPortForwardProtocol is the portforward protocols which server supports.
 	SupportedPortForwardProtocols []string
 }
 
+// DefaultConfig provides default values for server Config.
 var DefaultConfig = Config{
-	StreamIdleTimeout:					4 * time.Hour,
-	StreamCreationTimeout:				DefaultStreamCreationTimeout,
-	SupportedRemoteCommandProtocols:	SupportedStreamingProtocols,
-	SupportedPortForwardProtocols:		SupportedPortForwardProtocols,
+	StreamIdleTimeout:               4 * time.Hour,
+	StreamCreationTimeout:           DefaultStreamCreationTimeout,
+	SupportedRemoteCommandProtocols: SupportedStreamingProtocols,
+	SupportedPortForwardProtocols:   SupportedPortForwardProtocols,
 }
 
 type server struct {
-	config 	Config
+	config  Config
 	runtime Runtime
-	cache	*requestCache
-	server	*http.Server	
+	cache   *requestCache
+	server  *http.Server
 }
 
+// NewServer creates a new stream server.
 func NewServer(config Config, runtime Runtime) (Server, error) {
 	s := &server{
-		config:		config,
-		runtime:	runtime,
-		cache:		newRequestCache(),
+		config:  config,
+		runtime: runtime,
+		cache:   newRequestCache(),
 	}
 
 	if s.config.BaseURL == nil {
@@ -113,8 +111,8 @@ func NewServer(config Config, runtime Runtime) (Server, error) {
 	}
 
 	endpoints := []struct {
-		path	string
-		handler	http.HandlerFunc
+		path    string
+		handler http.HandlerFunc
 	}{
 		{"/exec/{token}", s.serveExec},
 		{"/attach/{token}", s.serveAttach},
@@ -129,13 +127,14 @@ func NewServer(config Config, runtime Runtime) (Server, error) {
 	}
 
 	s.server = &http.Server{
-		Addr:		s.config.Address,
-		Handler:	r,	
+		Addr:    s.config.Address,
+		Handler: r,
 	}
 
 	return s, nil
 }
 
+// Start starts the stream server.
 func (s *server) Start() error {
 	return s.server.ListenAndServe()
 }
@@ -148,7 +147,7 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, ok = cachedRequest.(*runtimeapi.ExecRequest)
+	exec, ok := cachedRequest.(*runtimeapi.ExecRequest)
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -156,7 +155,24 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 
 	logrus.Infof("serverExec Has Not Been Completed Not")
 
-	WriteError(grpc.Errorf(codes.NotFound, "serveExec Has Not Been Completed Yet"), w)
+	streamOpts := &remotecommand.Options{
+		Stdin:  exec.Stdin,
+		Stdout: exec.Stdout,
+		Stderr: exec.Stderr,
+		TTY:    exec.Tty,
+	}
+
+	remotecommand.ServeExec(
+		w,
+		r,
+		s.runtime,
+		exec.ContainerId,
+		exec.Cmd,
+		streamOpts,
+		s.config.SupportedRemoteCommandProtocols,
+		s.config.StreamIdleTimeout,
+		s.config.StreamCreationTimeout,
+	)
 }
 
 func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
@@ -191,11 +207,11 @@ func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) buildURL(method string, token string) string {
 	return s.config.BaseURL.ResolveReference(&url.URL{
-		Path:	path.Join(method, token),
+		Path: path.Join(method, token),
 	}).String()
 }
 
-// Get the serving URL for the Exec requests.
+// GetExec gets the serving URL for the Exec requests.
 func (s *server) GetExec(req *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error) {
 	// TODO: validate the request.
 	token, err := s.cache.Insert(req)
@@ -204,11 +220,11 @@ func (s *server) GetExec(req *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse,
 	}
 
 	return &runtimeapi.ExecResponse{
-		Url:	s.buildURL("exec", token),
+		Url: s.buildURL("exec", token),
 	}, nil
 }
 
-// Get the serving URL for the Attach requests.
+// GetAttach gets the serving URL for the Attach requests.
 func (s *server) GetAttach(req *runtimeapi.AttachRequest) (*runtimeapi.AttachResponse, error) {
 	// TODO: validate the request.
 	token, err := s.cache.Insert(req)
@@ -217,12 +233,12 @@ func (s *server) GetAttach(req *runtimeapi.AttachRequest) (*runtimeapi.AttachRes
 	}
 
 	return &runtimeapi.AttachResponse{
-		Url:	s.buildURL("attach", token),
+		Url: s.buildURL("attach", token),
 	}, nil
 }
 
-// Get the serving URL for the PortForward requests.
-func (s *server) GetPortForward(req *runtimeapi.PortForwardRequest) (*runtimeapi.PortForwardResponse, error){
+// GetPortForward gets the serving URL for the PortForward requests.
+func (s *server) GetPortForward(req *runtimeapi.PortForwardRequest) (*runtimeapi.PortForwardResponse, error) {
 	if req.PodSandboxId == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "missing required pod_sandbox_id")
 	}
@@ -232,6 +248,6 @@ func (s *server) GetPortForward(req *runtimeapi.PortForwardRequest) (*runtimeapi
 	}
 
 	return &runtimeapi.PortForwardResponse{
-		Url:	s.buildURL("portforward", token),
+		Url: s.buildURL("portforward", token),
 	}, nil
 }
