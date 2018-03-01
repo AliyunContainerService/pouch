@@ -187,7 +187,7 @@ $ mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 
 If you wish to experience hypervisor-based virtualization additionally, you will still need to install [runV](https://github.com/hyperhq/runv).
 
-More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guide](docs/pouch_with_runV.md).
+More guide on experiencing Pouch with runV including runv Installation, please refer to [pouch run with runv guide](docs/features/pouch_with_runV.md).
 
 ### Pouch Build and Installation
 
