@@ -9,12 +9,13 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 	"github.com/pkg/errors"
 )
 
-// PouchImagesSuite is the test suite fo help CLI.
+// PouchImagesSuite is the test suite for help CLI.
 type PouchImagesSuite struct{}
 
 func init() {

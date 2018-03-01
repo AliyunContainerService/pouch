@@ -6,11 +6,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchVolumeSuite is the test suite fo volume CLI.
+// PouchVolumeSuite is the test suite for volume CLI.
 type PouchVolumeSuite struct{}
 
 func init() {
