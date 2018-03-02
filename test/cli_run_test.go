@@ -281,6 +281,14 @@ func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
 		c.Fatalf("failed to run a container with user: %s", output)
 	}
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+
+	name = "run-user-admin"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("exec", name, "adduser", "--disabled-password", "admin").Assert(c, icmd.Success)
+	output = command.PouchRun("exec", "-u", "admin", name, "whoami").Stdout()
+	if !strings.Contains(output, "admin") {
+		c.Errorf("failed to start a container with user: %s", output)
+	}
 }
 
 // TestRunWithAppArmor is to verify run container with security option AppArmor.

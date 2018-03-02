@@ -130,11 +130,19 @@ func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithUser(c *check.C) {
 	name := "start-user"
 	user := "1001"
+	group := "1001"
 
 	command.PouchRun("create", "--name", name, "--user", user, busyboxImage, "id", "-u")
 	output := command.PouchRun("start", "-a", name).Stdout()
 	if !strings.Contains(output, user) {
 		c.Errorf("failed to start a container with user: %s", output)
+	}
+
+	name = "start-group"
+	command.PouchRun("create", "--name", name, "--user", user+":"+group, busyboxImage, "id", "-g")
+	output = command.PouchRun("start", "-a", name).Stdout()
+	if !strings.Contains(output, group) {
+		c.Errorf("failed to start a container with user:group : %s", output)
 	}
 }
 

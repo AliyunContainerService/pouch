@@ -20,6 +20,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/containerd/containerd/namespaces"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/opencontainers/image-spec/specs-go/v1"
@@ -261,8 +262,13 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		Cwd:      "/",
 		Env:      c.Config().Env,
 	}
-	if len(execConfig.User) == 0 {
-		setupProcessUser(ctx, c.meta, &SpecWrapper{s: &specs.Spec{Process: process}})
+
+	if execConfig.User != "" {
+		c.meta.Config.User = execConfig.User
+	}
+
+	if err = setupProcessUser(ctx, c.meta, &SpecWrapper{s: &specs.Spec{Process: process}}); err != nil {
+		return err
 	}
 
 	return mgr.Client.ExecContainer(ctx, &ctrd.Process{
@@ -354,6 +360,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
 	}
+
+	// set container basefs
+	mgr.setBaseFS(ctx, meta, id)
 
 	// set network settings
 	networkMode := config.HostConfig.NetworkMode
@@ -1019,6 +1028,18 @@ func (mgr *ContainerManager) buildContainerEndpoint(c *ContainerMeta) *networkty
 		PortBindings:    c.HostConfig.PortBindings,
 		NetworkConfig:   c.NetworkSettings,
 	}
+}
+
+// setBaseFS keeps container basefs in meta
+func (mgr *ContainerManager) setBaseFS(ctx context.Context, meta *ContainerMeta, container string) {
+	info, err := mgr.Client.GetSnapshot(ctx, container)
+	if err != nil {
+		logrus.Infof("failed to get container %s snapshot", container)
+		return
+	}
+
+	// io.containerd.runtime.v1.linux as a const used by runc
+	meta.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", namespaces.Default, info.Name, "rootfs")
 }
 
 func checkBind(b string) ([]string, error) {
