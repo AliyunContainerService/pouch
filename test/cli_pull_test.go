@@ -10,7 +10,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchPullSuite is the test suite for help CLI.
+// PouchPullSuite is the test suite for pull CLI.
 type PouchPullSuite struct{}
 
 func init() {

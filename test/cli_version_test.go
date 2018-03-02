@@ -13,7 +13,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchVersionSuite is the test suite for help CLI.
+// PouchVersionSuite is the test suite for version CLI.
 type PouchVersionSuite struct{}
 
 func init() {
