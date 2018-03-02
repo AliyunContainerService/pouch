@@ -10,7 +10,6 @@ import (
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -153,15 +152,12 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logrus.Infof("serverExec Has Not Been Completed Not")
-
 	streamOpts := &remotecommand.Options{
 		Stdin:  exec.Stdin,
 		Stdout: exec.Stdout,
 		Stderr: exec.Stderr,
 		TTY:    exec.Tty,
 	}
-
 	remotecommand.ServeExec(
 		w,
 		r,
@@ -182,12 +178,28 @@ func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	_, ok = cachedRequest.(*runtimeapi.AttachRequest)
+	attach, ok := cachedRequest.(*runtimeapi.AttachRequest)
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	WriteError(grpc.Errorf(codes.NotFound, "serveAttach Has Not Been Completed Yet"), w)
+
+	streamOpts := &remotecommand.Options{
+		Stdin:  attach.Stdin,
+		Stdout: attach.Stdout,
+		Stderr: attach.Stderr,
+		TTY:    attach.Tty,
+	}
+	remotecommand.ServeAttach(
+		w,
+		r,
+		s.runtime,
+		attach.ContainerId,
+		streamOpts,
+		s.config.StreamIdleTimeout,
+		s.config.StreamCreationTimeout,
+		s.config.SupportedRemoteCommandProtocols,
+	)
 }
 
 func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
