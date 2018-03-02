@@ -37,7 +37,7 @@ sudo apt-get install \
 **1. Add Pouch's official GPG key**
 
 ```bash
-curl -fsSL https://... | sudo apt-key add -
+curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
 ```
 
 Verify that you now have the key with the fingerprint `B615 DDD7 90C7 0912 582D  DC2D D7AE A5ED 439A E9EC`, by searching for the last 8 characters of the fingerprint.
@@ -53,13 +53,11 @@ sub   2048R/B3D2A915 2018-01-31
 
 **2. Set up the pouch repository**
 
-Before you install Pouch for the first time on a new host machine, you need to set up the Pouch repository. Afterward, you can install and update Pouch from the repository.
+Before you install Pouch for the first time on a new host machine, you need to set up the Pouch repository. We enabled `stabel` repository by default, you always need the `stable` repository. To add the `test` repository, add the word `test` after the word `stable` in the command line below. Afterward, you can install and update Pouch from the repository.
 
 ```bash
 sudo add-apt-repository \
-	"deb [arch=amd64] https://.../linux/ubuntu \
-	$(lsb_release -cs) \
-	stable"
+	"deb http://mirrors.cloud.aliyuncs.com/opsx/pouch/linux/debian/ pouch stable"
 ```
 
 **3. Install pouch**
@@ -118,6 +116,17 @@ sudo yum-config-manager \
     --add-repo \
     http://mirrors.aliyun.com/opsx/opsx-centos7.repo
 sudo yum update
+```
+
+Note: The above command set up the `stable` repository, you can enable `test` repository by the following command.
+
+```bash
+sudo yum-config-manager --enable pouch-test
+```
+You can disable the `test` repository by running the `yum-config-manager` command with the `--disable` flag. To re-enable it, use the `--enable` flag. The following command disables the test repository.
+
+```bash
+sudo yum-config-manager --disable pouch-test
 ```
 
 **3. Install pouch**
