@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/exec"
+	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
 
@@ -72,6 +73,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.LxcfsHome, "lxcfs-home", "/var/lib/lxc/lxcfs", "Specify the mount dir of lxcfs")
 	flagSet.StringVar(&cfg.DefaultRegistry, "default-registry", "registry.hub.docker.com/library/", "Default Image Registry")
 	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "", "Http proxy to pull image")
+	flagSet.StringVar(&cfg.QuotaDriver, "quota-driver", "", "Set quota driver(grpquota/prjquota), if not set, it will set by kernel version")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
@@ -122,6 +124,10 @@ func runDaemon() error {
 				"-l", utils.If(cfg.Debug, "debug", "info").(string),
 			},
 		},
+	}
+
+	if cfg.QuotaDriver != "" {
+		quota.SetQuotaDriver(cfg.QuotaDriver)
 	}
 
 	if err := checkLxcfsCfg(); err != nil {
