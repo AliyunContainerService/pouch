@@ -57,7 +57,7 @@ install: build
 
 	# install runc
 	echo "Download and install runc."
-	wget --quiet https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P $(TMP)/bin
+	wget --quiet https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P $(TMP)/bin
 	chmod +x $(TMP)/bin/runc.amd64
 	mv $(TMP)/bin/runc.amd64 debian/pouch/usr/bin/runc
 

@@ -7,6 +7,7 @@ RUN yum update -y \
     git \
     gcc \
     ruby-devel \
+    fuse \
     fuse-devel \
     pam-devel \
     automake \
@@ -35,11 +36,13 @@ RUN wget --quiet https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${A
 RUN mkdir /go
 ENV GOPATH=/go
 
-RUN git clone https://github.com/zzchun/pouch.git /go/src/github.com/alibaba/pouch
-
 # set go binary path to local $PATH
 # go binary path is /usr/local/go/bin
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-WORKDIR /go/src/github.com/alibaba/pouch/hack/package
+COPY . /go/src/github.com/alibaba/pouch
+
+WORKDIR /go/src/github.com/alibaba/pouch/hack/package/rpm
+
+ENTRYPOINT ["/go/src/github.com/alibaba/pouch/hack/package/rpm/build.sh"]
 
