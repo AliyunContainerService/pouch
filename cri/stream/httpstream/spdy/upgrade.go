@@ -76,7 +76,6 @@ func (u responseUpgrader) UpgradeResponse(w http.ResponseWriter, req *http.Reque
 	w.Header().Add(httpstream.HeaderUpgrade, HeaderSpdy31)
 	w.WriteHeader(http.StatusSwitchingProtocols)
 
-	// 获取底层的连接
 	conn, bufrw, err := hijacker.Hijack()
 	if err != nil {
 		logrus.Errorf("unable to upgrade: error hijacking response: %v", err)

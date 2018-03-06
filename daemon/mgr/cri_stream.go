@@ -3,6 +3,8 @@ package mgr
 import (
 	"fmt"
 	"net"
+	"io"
+	"net/http"
 
 	"github.com/alibaba/pouch/cri/stream"
 )
@@ -31,6 +33,13 @@ func (s *streamRuntime) Attach() error {
 }
 
 // PortForward forwards ports from a PodSandbox.
-func (s *streamRuntime) PortForward() error {
-	return fmt.Errorf("streamRuntime's PortForward Not Implemented Yet")
+func (s *streamRuntime) PortForward(name string, port int32, stream io.ReadWriteCloser) error {
+	res, err := http.Get("http://www.baidu.com")
+	if err != nil {
+		return fmt.Errorf("failed to http get baidu: %v", err)
+	}
+
+	res.Write(stream)
+
+	return nil
 }
