@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -364,4 +367,29 @@ func (suite *PouchRunSuite) TestRunWithLocalVolume(c *check.C) {
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
+}
+
+// TestRunWithLimitedMemory is to verify the valid running container with -m
+func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
+	cname := "TestRunWithLimitedMemory"
+	command.PouchRun("run", "-d", "-m", "100m", "--name", cname, busyboxImage).Stdout()
+
+	// test if the value is in inspect result
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.Memory, check.Equals, int64(104857600))
+
+	// test if cgroup has record the real value
+	containerID := result.ID
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.limit_in_bytes", containerID)
+	cmdResult := icmd.RunCommand("cat", path)
+
+	c.Assert(cmdResult.Error, check.IsNil)
+	c.Assert(strings.Contains(string(cmdResult.Stdout()), "104857600"), check.Equals, true)
+
+	// remove the container
+	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
 }
