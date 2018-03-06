@@ -3,10 +3,8 @@ package mgr
 import (
 	"context"
 	"os"
-	"path"
 	"strings"
 
-	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/volume"
 	"github.com/alibaba/pouch/volume/types"
@@ -40,15 +38,13 @@ type VolumeMgr interface {
 
 // VolumeManager is the default implement of interface VolumeMgr.
 type VolumeManager struct {
-	core  *volume.Core
-	store *meta.Store
+	core *volume.Core
 }
 
 // NewVolumeManager creates a brand new volume manager.
-func NewVolumeManager(ms *meta.Store, cfg volume.Config) (*VolumeManager, error) {
+func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
 	// init voluem config
 	cfg.RemoveVolume = true
-	cfg.VolumeMetaPath = path.Join(path.Dir(ms.BaseDir), "volume", "volume.db")
 	cfg.DefaultBackend = "local"
 
 	core, err := volume.NewCore(cfg)
@@ -57,8 +53,7 @@ func NewVolumeManager(ms *meta.Store, cfg volume.Config) (*VolumeManager, error)
 	}
 
 	return &VolumeManager{
-		core:  core,
-		store: ms,
+		core: core,
 	}, nil
 }
 

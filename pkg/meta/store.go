@@ -27,6 +27,7 @@ func (b *Bucket) NewObject() Object {
 
 // Config represents the configurations used for metadata store.
 type Config struct {
+	Driver  string
 	Buckets []Bucket
 	BaseDir string
 }
@@ -47,9 +48,21 @@ type Store struct {
 
 // NewStore creates a backend storage.
 func NewStore(cfg Config) (*Store, error) {
+	if len(cfg.Buckets) < 1 {
+		return nil, fmt.Errorf("config bucket can not be empty")
+	}
+
+	if cfg.Driver == "" {
+		cfg.Driver = DefaultStore
+	}
+
+	if _, ok := backend[cfg.Driver]; !ok {
+		return nil, fmt.Errorf("store driver %s not found", cfg.Driver)
+	}
+
 	s := &Store{
 		Config:   cfg,
-		backend:  backend,
+		backend:  backend[cfg.Driver],
 		trieLock: new(sync.Mutex),
 		trie:     patricia.NewTrie(),
 	}
@@ -58,21 +71,35 @@ func NewStore(cfg Config) (*Store, error) {
 		return nil, err
 	}
 
-	keys, err := s.backend.Keys()
-	if err != nil {
-		return nil, err
+	keys := []string{}
+	for _, bucket := range cfg.Buckets {
+		k, err := s.backend.Keys(bucket.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		keys = append(keys, k...)
 	}
+
 	for _, key := range keys {
 		s.trie.Insert(patricia.Prefix(key), struct{}{})
 	}
 
-	return s.Bucket(MetaJSONFile), nil
+	s = s.Bucket(cfg.Buckets[0].Name)
+	if s == nil {
+		return nil, fmt.Errorf("failed to new bucket store")
+	}
+
+	return s, nil
 }
 
 // Bucket returns a specific store instance.
-// And name is used to specify the file'name that will be write.
+// And name is used to specify the bucket's name that will be write.
 func (s *Store) Bucket(name string) *Store {
 	if name == "" {
+		if s.current == nil {
+			return nil
+		}
 		return s
 	}
 
@@ -144,7 +171,7 @@ func (s *Store) Get(key string) (Object, error) {
 
 // Remove calls it to remove a object.
 func (s *Store) Remove(key string) error {
-	if err := s.backend.Remove(key); err != nil {
+	if err := s.backend.Remove(s.current.Name, key); err != nil {
 		return err
 	}
 
@@ -190,7 +217,7 @@ func (s *Store) List() (map[string]Object, error) {
 
 // Keys returns all keys only.
 func (s *Store) Keys() ([]string, error) {
-	keys, err := s.backend.Keys()
+	keys, err := s.backend.Keys(s.current.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get keys: %v", err)
 	}

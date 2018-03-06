@@ -10,9 +10,6 @@ volume_module() {
 
 package main
 
-// import default package.
-import _ "github.com/alibaba/pouch/volume/store/boltdb"
-
 END
     fi
 

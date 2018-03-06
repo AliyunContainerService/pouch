@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	Register(&localStore{})
+	Register("local", &localStore{})
 }
 
 type localStore struct {
@@ -90,7 +90,7 @@ func (s *localStore) Get(fileName, key string) ([]byte, error) {
 
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
-			return nil, ErrObjectNotfound
+			return nil, ErrObjectNotFound
 		}
 	}
 
@@ -105,7 +105,7 @@ func (s *localStore) Get(fileName, key string) ([]byte, error) {
 	return value, nil
 }
 
-func (s *localStore) Remove(key string) error {
+func (s *localStore) Remove(bucket string, key string) error {
 	dir := path.Join(s.base, key)
 
 	s.Lock()
@@ -140,7 +140,7 @@ func (s *localStore) List(fileName string) ([][]byte, error) {
 	return values, nil
 }
 
-func (s *localStore) Keys() ([]string, error) {
+func (s *localStore) Keys(fileName string) ([]string, error) {
 	s.Lock()
 	defer s.Unlock()
 

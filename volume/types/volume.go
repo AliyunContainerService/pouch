@@ -186,6 +186,11 @@ func (v *Volume) MountOption() []string {
 	return strings.Split(v.Spec.MountOpt, " ")
 }
 
+// Key returns the volume's name
+func (v *Volume) Key() string {
+	return v.Name
+}
+
 // VolumeID use to define the volume's identity.
 type VolumeID struct {
 	Name      string

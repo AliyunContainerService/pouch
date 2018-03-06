@@ -2,12 +2,13 @@ package volume
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/alibaba/pouch/extra/libnetwork/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/alibaba/pouch/pkg/client"
+	metastore "github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/volume/driver"
 	volerr "github.com/alibaba/pouch/volume/error"
-	"github.com/alibaba/pouch/volume/store"
 	"github.com/alibaba/pouch/volume/types"
 	"github.com/alibaba/pouch/volume/types/meta"
 
@@ -20,6 +21,7 @@ type Core struct {
 	Config
 	BaseURL       string
 	EnableControl bool
+	store         *metastore.Store
 }
 
 // NewCore returns Core struct instance with volume config.
@@ -32,9 +34,22 @@ func NewCore(cfg Config) (*Core, error) {
 		c.EnableControl = false
 	}
 
-	if err := store.MetaNewStore(cfg.VolumeMetaPath); err != nil {
+	volumeStore, err := metastore.NewStore(metastore.Config{
+		Driver:  "boltdb",
+		BaseDir: cfg.VolumeMetaPath,
+		Buckets: []metastore.Bucket{
+			{
+				Name: "volume",
+				Type: reflect.TypeOf(types.Volume{}),
+			},
+		},
+	})
+	if err != nil {
+		log.Errorf("failed to create volume meta store: %v", err)
 		return nil, err
 	}
+
+	c.store = volumeStore
 
 	return c, nil
 }
@@ -48,18 +63,15 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 	}
 
 	// first, try to get volume from local store.
-	err := store.MetaGet(v)
+	obj, err := c.store.Get(id.Name)
 	if err == nil {
-		return v, nil
+		return obj.(*types.Volume), nil
 	}
-	cerr, ok := err.(volerr.CoreError)
-	if !ok {
+
+	if err != metastore.ErrObjectNotFound {
 		return nil, err
 	}
-	if !cerr.IsLocalMetaNotfound() {
-		return nil, err
-	}
-	err = volerr.ErrVolumeNotfound
+	err = volerr.ErrVolumeNotFound
 
 	// then, try to get volume from central store.
 	if c.EnableControl {
@@ -71,8 +83,8 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 		if err = client.New().Get(url, v); err == nil {
 			return v, nil
 		}
-		if ce, ok := err.(client.Error); ok && ce.IsNotfound() {
-			return nil, volerr.ErrVolumeNotfound
+		if ce, ok := err.(client.Error); ok && ce.IsNotFound() {
+			return nil, volerr.ErrVolumeNotFound
 		}
 		return nil, err
 	}
@@ -84,7 +96,7 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 func (c *Core) ExistVolume(id types.VolumeID) (bool, error) {
 	_, err := c.GetVolume(id)
 	if err != nil {
-		if ec, ok := err.(volerr.CoreError); ok && ec.IsVolumeNotfound() {
+		if ec, ok := err.(volerr.CoreError); ok && ec.IsVolumeNotFound() {
 			return false, nil
 		}
 		return false, err
@@ -151,7 +163,7 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 			return err
 		}
 
-		if err := store.MetaPut(v); err != nil {
+		if err := c.store.Put(v); err != nil {
 			return err
 		}
 	}
@@ -182,7 +194,7 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 	var names []string
 
 	// first, list local meta store.
-	volumes, err := store.MetaList()
+	list, err := c.store.List()
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +213,8 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 		}
 	}
 
-	for _, v := range volumes {
-		names = append(names, v.GetName())
+	for name := range list {
+		names = append(names, name)
 	}
 
 	return names, nil
@@ -217,7 +229,7 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 
 	// Call interface to remove meta info.
 	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := store.MetaDel(id.Name); err != nil {
+		if err := c.store.Remove(id.Name); err != nil {
 			return err
 		}
 	} else {
@@ -300,7 +312,7 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 
 	// Call interface to update meta info.
 	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := store.MetaPut(v); err != nil {
+		if err := c.store.Put(v); err != nil {
 			return nil, err
 		}
 	} else {
@@ -345,7 +357,7 @@ func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.
 
 	// Call interface to update meta info.
 	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := store.MetaPut(v); err != nil {
+		if err := c.store.Put(v); err != nil {
 			return nil, err
 		}
 	} else {

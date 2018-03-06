@@ -2,11 +2,12 @@ package internal
 
 import (
 	"context"
+	"path"
 
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
-	"github.com/alibaba/pouch/daemon/meta"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/meta"
 )
 
 // DaemonProvider provides resources which are needed by container manager and are from daemon.
@@ -37,7 +38,9 @@ func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
 
 // GenVolumeMgr generates a VolumeMgr instance according to config cfg.
 func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
-	return mgr.NewVolumeManager(d.MetaStore(), cfg.VolumeConfig)
+	cfg.VolumeConfig.VolumeMetaPath = path.Join(cfg.HomeDir, "volume", "volume.db")
+
+	return mgr.NewVolumeManager(cfg.VolumeConfig)
 }
 
 // GenNetworkMgr generates a NetworkMgr instance according to config cfg.
