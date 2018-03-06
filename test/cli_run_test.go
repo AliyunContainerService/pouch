@@ -330,6 +330,17 @@ func (suite *PouchRunSuite) TestRunWithCapability(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestRunWithoutCapability tests running container with --cap-drop
+func (suite *PouchRunSuite) TestRunWithoutCapability(c *check.C) {
+	capability := "chown"
+	name := "run-capability"
+	expt := icmd.Expected{
+		Err: "Operation not permitted",
+	}
+	command.PouchRun("run", "--name", name, "--cap-drop", capability, busyboxImage, "chown", "755", "/tmp").Compare(expt)
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestRunWithPrivilege is to verify run container with privilege.
 func (suite *PouchRunSuite) TestRunWithPrivilege(c *check.C) {
 	name := "run-privilege"
@@ -369,6 +380,13 @@ func (suite *PouchRunSuite) TestRunWithLocalVolume(c *check.C) {
 	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
 }
 
+// checkFileContent checks the content of fname contains expt
+func checkFileContians(c *check.C, fname string, expt string) {
+	cmdResult := icmd.RunCommand("cat", fname)
+	c.Assert(cmdResult.Error, check.IsNil)
+	c.Assert(strings.Contains(string(cmdResult.Stdout()), expt), check.Equals, true)
+}
+
 // TestRunWithLimitedMemory is to verify the valid running container with -m
 func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 	cname := "TestRunWithLimitedMemory"
@@ -385,10 +403,88 @@ func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 	// test if cgroup has record the real value
 	containerID := result.ID
 	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.limit_in_bytes", containerID)
-	cmdResult := icmd.RunCommand("cat", path)
 
-	c.Assert(cmdResult.Error, check.IsNil)
-	c.Assert(strings.Contains(string(cmdResult.Stdout()), "104857600"), check.Equals, true)
+	checkFileContians(c, path, "104857600")
+
+	// remove the container
+	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+}
+
+// TestRunWithMemoryswap is to verify the valid running container with --memory-swap
+func (suite *PouchRunSuite) TestRunWithMemoryswap(c *check.C) {
+	cname := "TestRunWithMemoryswap"
+	command.PouchRun("run", "-d", "-m", "100m", "--memory-swap", "200m", "--name", cname, busyboxImage).Stdout()
+
+	// test if the value is in inspect result
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.MemorySwap, check.Equals, int64(209715200))
+
+	// test if cgroup has record the real value
+	containerID := result.ID
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.memsw.limit_in_bytes", containerID)
+	checkFileContians(c, path, "209715200")
+
+	// remove the container
+	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+}
+
+// TestRunWithMemoryswappiness is to verify the valid running container with memory-swappiness
+func (suite *PouchRunSuite) TestRunWithMemoryswappiness(c *check.C) {
+	cname := "TestRunWithMemoryswappiness"
+	command.PouchRun("run", "-d", "-m", "100m", "--memory-swappiness", "70", "--name", cname, busyboxImage).Stdout()
+
+	// test if the value is in inspect result
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(*result.HostConfig.MemorySwappiness, check.Equals, int64(70))
+
+	// test if cgroup has record the real value
+	containerID := result.ID
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/%s/memory.swappiness", containerID)
+	checkFileContians(c, path, "70")
+
+	// remove the container
+	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+}
+
+// TestRunWithCPULimit tests CPU related flags.
+func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
+	cname := "TestRunWithCPULimit"
+	command.PouchRun("run", "-d", "--cpuset-cpus", "0", "--cpuset-mems", "0",
+		"--cpu-share", "1000", "--name", cname, busyboxImage).Stdout()
+
+	// test if the value is in inspect result
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	c.Assert(result.HostConfig.CpusetMems, check.Equals, "0")
+	c.Assert(result.HostConfig.CPUShares, check.Equals, int64(1000))
+	c.Assert(result.HostConfig.CpusetCpus, check.Equals, "0")
+
+	// test if cgroup has record the real value
+	containerID := result.ID
+	{
+		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/%s/cpuset.cpus", containerID)
+		checkFileContians(c, path, "0")
+	}
+	{
+		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/%s/cpuset.mems", containerID)
+		checkFileContians(c, path, "0")
+	}
+	{
+		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/%s/cpu.shares", containerID)
+		checkFileContians(c, path, "1000")
+	}
 
 	// remove the container
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)

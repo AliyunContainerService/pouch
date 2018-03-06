@@ -52,14 +52,15 @@ function vet()
 function unit-test()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
-    for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra' | grep -v 'github.com/alibaba/pouch/vendor' `
-    do
-        go test -coverprofile=profile.out -covermode=atomic $d
-        if [ -f profile.out ] ; then
-            cat profile.out >> coverage.txt
-            rm profile.out >/dev/null 2>&1
-        fi
-    done
+    go test `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra' | grep -v 'github.com/alibaba/pouch/vendor' `
+    #for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra' | grep -v 'github.com/alibaba/pouch/vendor' `
+    #do
+        #go test -coverprofile=profile.out -covermode=atomic $d
+        #if [ -f profile.out ] ; then
+        #    cat profile.out >> coverage.txt
+        #    rm profile.out >/dev/null 2>&1
+        #fi
+    #done
 }
 
 function clean()

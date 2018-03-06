@@ -67,8 +67,8 @@ function target()
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
 		;;
 	build)
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"
-		install_pouch
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"  >$TMP/build.log 2>&1
+		install_pouch  >$TMP/install.log 2>&1
 		;;
 	unit-test)
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
@@ -130,7 +130,7 @@ function target()
 
 function main ()
 {
-	docker build --quiet -t $IMAGE .
+	docker build --quiet -t $IMAGE . 
 
 	if [[ $# < 1 ]]; then
 		targets="check build unit-test integration-test"

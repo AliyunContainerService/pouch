@@ -43,7 +43,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.StringVarP(&c.memory, "memory", "m", "", "Memory limit")
 	flagSet.StringVar(&c.memorySwap, "memory-swap", "", "Swap limit equal to memory + swap, '-1' to enable unlimited swap")
-	flagSet.Int64Var(&c.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", -1, "Container memory swappiness [0, 100]")
 	// for alikernel isolation options
 	flagSet.Int64Var(&c.memoryWmarkRatio, "memory-wmark-ratio", 0, "Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio")
 	flagSet.Int64Var(&c.memoryExtra, "memory-extra", 0, "Represent container's memory high water mark percentage, range in [0, 100]")
