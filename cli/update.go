@@ -26,7 +26,7 @@ func (uc *UpdateCommand) Init(c *Cli) {
 		Use:   "update [OPTIONS] CONTAINER",
 		Short: "Update the configurations of a container",
 		Long:  updateDescription,
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return uc.updateRun(args)
 		},
