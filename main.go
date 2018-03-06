@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	osexec "os/exec"
 	"os/signal"
@@ -20,6 +23,7 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -43,6 +47,11 @@ func main() {
 	}
 
 	setupFlags(cmdServe)
+	parseFlags(cmdServe, os.Args[1:])
+	if err := loadDaemonFile(&cfg, cmdServe.Flags()); err != nil {
+		logrus.Errorf("failed to load daemon file: %s", err)
+		os.Exit(1)
+	}
 
 	if err := cmdServe.Execute(); err != nil {
 		logrus.Error(err)
@@ -74,6 +83,18 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.DefaultRegistry, "default-registry", "registry.hub.docker.com/library/", "Default Image Registry")
 	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "", "Http proxy to pull image")
 	flagSet.StringVar(&cfg.QuotaDriver, "quota-driver", "", "Set quota driver(grpquota/prjquota), if not set, it will set by kernel version")
+	flagSet.StringVar(&cfg.ConfigFile, "config-file", "/etc/pouch/config.json", "Configuration file of pouchd")
+}
+
+// parse flags
+func parseFlags(cmd *cobra.Command, flags []string) {
+	err := cmd.Flags().Parse(flags)
+	if err == nil || err == pflag.ErrHelp {
+		return
+	}
+
+	cmd.SetOutput(os.Stderr)
+	cmd.Usage()
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
@@ -226,4 +247,87 @@ func checkLxcfsCfg() error {
 		}
 	}
 	return nil
+}
+
+// load daemon config file
+func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
+	configFile := cfg.ConfigFile
+	if configFile == "" {
+		return nil
+	}
+
+	contents, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to read contents from config file %s: %s", configFile, err)
+	}
+
+	var fileFlags map[string]interface{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&fileFlags); err != nil {
+		return fmt.Errorf("failed to decode json: %s", err)
+	}
+
+	if len(fileFlags) == 0 {
+		return nil
+	}
+
+	// check if invalid or unknow flag exist in config file
+	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
+		return err
+	}
+
+	// check conflict in command line flags and config file
+	if err = getConflictConfigurations(flagSet, fileFlags); err != nil {
+		return err
+	}
+
+	fileConfig := &config.Config{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(fileConfig); err != nil {
+		return fmt.Errorf("failed to decode json: %s", err)
+	}
+
+	// merge configurations from command line flags and config file
+	err = mergeConfigurations(fileConfig, cfg)
+	return err
+}
+
+// find unknown flag in config file
+func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
+	var unknownFlags []string
+
+	for k := range fileFlags {
+		f := flagSet.Lookup(k)
+		if f == nil {
+			unknownFlags = append(unknownFlags, k)
+		}
+	}
+
+	if len(unknownFlags) > 0 {
+		return fmt.Errorf("unknow flags: %s", strings.Join(unknownFlags, ", "))
+	}
+
+	return nil
+}
+
+// find conflict in command line flags and config file
+func getConflictConfigurations(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
+	var conflictFlags []string
+	flagSet.Visit(func(f *pflag.Flag) {
+		if v, exist := fileFlags[f.Name]; exist {
+			conflictFlags = append(conflictFlags, fmt.Sprintf("from flag: %s and from config file: %s", f.Value.String(), v.(string)))
+		}
+	})
+
+	if len(conflictFlags) > 0 {
+		return fmt.Errorf("found conflict flags in command line and config file: %v", strings.Join(conflictFlags, ", "))
+	}
+
+	return nil
+}
+
+// merge flagSet and config file into cfg
+func mergeConfigurations(src *config.Config, dest *config.Config) error {
+	return utils.Merge(src, dest)
 }

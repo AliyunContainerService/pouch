@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -120,4 +121,78 @@ func TruncateID(id string) string {
 		return id[:shortLen]
 	}
 	return id
+}
+
+// Merge merge object from src to dest, dest object should be pointer, only accept struct type, notice: src will overwrite dest's data
+func Merge(src, dest interface{}) error {
+	if src == nil || dest == nil {
+		return fmt.Errorf("merged object can not be nil")
+	}
+
+	destType := reflect.TypeOf(dest)
+	if destType.Kind() != reflect.Ptr {
+		return fmt.Errorf("merged object not pointer")
+	}
+	destVal := reflect.ValueOf(dest).Elem()
+
+	if destVal.Kind() != reflect.Struct {
+		return fmt.Errorf("merged object type shoule be struct")
+	}
+
+	srcVal := reflect.ValueOf(src)
+	if srcVal.Kind() == reflect.Ptr {
+		srcVal = srcVal.Elem()
+	}
+	if destVal.Type() != srcVal.Type() {
+		return fmt.Errorf("src and dest object type must same")
+	}
+
+	return doMerge(srcVal, destVal)
+}
+
+// doMerge, begin merge action
+func doMerge(src, dest reflect.Value) error {
+	if !src.IsValid() || !dest.CanSet() || isEmptyValue(src) {
+		return nil
+	}
+
+	switch dest.Kind() {
+	case reflect.Struct:
+		for i := 0; i < dest.NumField(); i++ {
+			if err := doMerge(src.Field(i), dest.Field(i)); err != nil {
+				return err
+			}
+		}
+
+	case reflect.Map:
+		for _, key := range src.MapKeys() {
+			if err := doMerge(src.MapIndex(key), dest.MapIndex(key)); err != nil {
+				return err
+			}
+		}
+
+	default:
+		dest.Set(src)
+	}
+
+	return nil
+}
+
+// From src/pkg/encoding/json
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+	return false
 }

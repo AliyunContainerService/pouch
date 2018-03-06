@@ -117,3 +117,83 @@ func TestFormatTimeInterval(t *testing.T) {
 	}
 
 }
+
+func TestMerge(t *testing.T) {
+	type tMerge struct {
+		src      interface{}
+		dest     interface{}
+		expected interface{}
+		ok       bool
+	}
+
+	type nestS struct {
+		Na int
+	}
+
+	type simple struct {
+		Sa int
+		Sb string
+		Sc bool
+		Sd map[string]string
+		Se nestS
+	}
+
+	getIntAddr := func(i int) *int {
+		return &i
+	}
+
+	assert := assert.New(t)
+	for _, tm := range []tMerge{
+		{
+			expected: "merged object can not be nil",
+			ok:       false,
+		}, {
+			src:      nestS{Na: 1},
+			dest:     nestS{Na: 2},
+			expected: "merged object not pointer",
+			ok:       false,
+		}, {
+			src:      &nestS{Na: 1},
+			dest:     &simple{Sa: 2},
+			expected: "src and dest object type must same",
+			ok:       false,
+		}, {
+			src:      getIntAddr(1),
+			dest:     getIntAddr(2),
+			expected: "merged object type shoule be struct",
+			ok:       false,
+		}, {
+			src:      &nestS{},
+			dest:     &nestS{},
+			expected: &nestS{},
+			ok:       true,
+		}, {
+			src:      nestS{Na: 1},
+			dest:     &nestS{Na: 2},
+			expected: &nestS{Na: 1},
+			ok:       true,
+		}, {
+			src:      &simple{Sa: 1, Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}},
+			dest:     &simple{Sa: 2, Sb: "world", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
+			expected: &simple{Sa: 1, Sb: "world", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}},
+			ok:       true,
+		}, {
+			src:      &simple{},
+			dest:     &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
+			expected: &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
+			ok:       true,
+		},
+	} {
+		err := Merge(tm.src, tm.dest)
+		if tm.ok {
+			assert.NoError(err)
+			assert.Equal(tm.expected, tm.dest)
+		} else {
+			errMsg, ok := tm.expected.(string)
+			if !ok {
+				t.Fatalf("test should fail: %v", tm)
+			}
+			assert.EqualError(err, errMsg)
+		}
+	}
+}
