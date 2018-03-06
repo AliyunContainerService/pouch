@@ -15,6 +15,4 @@ const (
 
 	// PortForwardProtocolV1Name is the SPDY subprotocol "portforward.k8s.io" used for port forwarding.
 	PortForwardProtocolV1Name = "portforward.k8s.io"
-
-	// 
 )

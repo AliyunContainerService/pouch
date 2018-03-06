@@ -1,15 +1,16 @@
 package portforward
 
 import (
-	"net/http"
-	"time"
-	"sync"
-	"strconv"
 	"fmt"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
 
 	"github.com/alibaba/pouch/cri/stream/constant"
 	"github.com/alibaba/pouch/cri/stream/httpstream"
 	"github.com/alibaba/pouch/cri/stream/httpstream/spdy"
+	"github.com/alibaba/pouch/pkg/collect"
 
 	"github.com/sirupsen/logrus"
 )
@@ -47,7 +48,7 @@ func httpStreamReceived(streams chan httpstream.Stream) func(httpstream.Stream, 
 	}
 }
 
-func handleHttpStreams(w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout, streamCreationTimeout time.Duration, supportedPortForwardProtocols []string) error {
+func handleHTTPStreams(w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout, streamCreationTimeout time.Duration, supportedPortForwardProtocols []string) error {
 	_, err := httpstream.Handshake(w, req, supportedPortForwardProtocols)
 	// Negotiated protocol isn't currently used server side, but could be in the future.
 	if err != nil {
@@ -68,12 +69,12 @@ func handleHttpStreams(w http.ResponseWriter, req *http.Request, portForwarder P
 	conn.SetIdleTimeout(idleTimeout)
 
 	h := &httpStreamHandler{
-		conn:					conn,
-		streamChan:				streamChan,
-		streamPairs:			make(map[string]*httpStreamPair),
-		streamCreationTimeout:	streamCreationTimeout,
-		pod:					podName,
-		forwarder:				portForwarder,
+		conn:                  conn,
+		streamChan:            streamChan,
+		streamPairs:           collect.NewSafeMap(),
+		streamCreationTimeout: streamCreationTimeout,
+		pod:       podName,
+		forwarder: portForwarder,
 	}
 	h.run()
 
@@ -83,51 +84,42 @@ func handleHttpStreams(w http.ResponseWriter, req *http.Request, portForwarder P
 // httpStreamHandler is capable of processing multiple port forward
 // requests over a single httpstream.Connection.
 type httpStreamHandler struct {
-	conn 					httpstream.Connection
-	streamChan				chan httpstream.Stream
-	streamPairsLock			sync.RWMutex
-	streamPairs 			map[string]*httpStreamPair
-	streamCreationTimeout	time.Duration
-	pod 					string
-	forwarder 				PortForwarder
+	conn                  httpstream.Connection
+	streamChan            chan httpstream.Stream
+	streamPairs           *collect.SafeMap
+	streamCreationTimeout time.Duration
+	pod                   string
+	forwarder             PortForwarder
 }
 
 // getStreamPair returns a httpStreamPair for requestID. This creates a
 // new pair if one does not yet exist for the requestID. The returned bool is
 // true if the pair was created.
 func (h *httpStreamHandler) getStreamPair(requestID string) (*httpStreamPair, bool) {
-	h.streamPairsLock.Lock()
-	defer h.streamPairsLock.Unlock()
-
-	if p, ok := h.streamPairs[requestID]; ok {
+	p, ok := h.streamPairs.Get(requestID).Result()
+	if ok {
 		logrus.Infof("(conn=%p, request=%s) found existing stream pair", h.conn, requestID)
-		return p, false
+		return p.(*httpStreamPair), false
 	}
 
 	logrus.Infof("(conn=%p, request=%s) creating new stream pair", h.conn, requestID)
 
-	p := newPortForwardPair(requestID)
-	h.streamPairs[requestID] = p
+	pair := newPortForwardPair(requestID)
+	h.streamPairs.Put(requestID, pair)
 
-	return p, true
+	return pair, true
 }
 
 // hasStreamPair returns a bool indicating if a stream pair for requestID exists.
 func (h *httpStreamHandler) hasStreamPair(requestID string) bool {
-	h.streamPairsLock.RLock()
-	defer h.streamPairsLock.RUnlock()
-
-	_, ok := h.streamPairs[requestID]
+	_, ok := h.streamPairs.Get(requestID).Result()
 
 	return ok
 }
 
 // removeStreamPair removes the stream pair identified by requestID from streamPairs.
 func (h *httpStreamHandler) removeStreamPair(requestID string) {
-	h.streamPairsLock.Lock()
-	defer h.streamPairsLock.Unlock()
-
-	delete(h.streamPairs, requestID)
+	h.streamPairs.Remove(requestID)
 }
 
 // monitorStreamPair waits for the pair to receive both its error and data
@@ -160,12 +152,12 @@ func (h *httpStreamHandler) requestID(stream httpstream.Stream) string {
 // when the httpstream.Connection is closed.
 func (h *httpStreamHandler) run() {
 	logrus.Infof("(conn=%p) waiting for port forward streams", h.conn)
-Loop:
+
 	for {
 		select {
 		case <-h.conn.CloseChan():
 			logrus.Infof("(conn=%p) upgraded connection closed", h.conn)
-			break Loop
+			return
 		case stream := <-h.streamChan:
 			requestID := h.requestID(stream)
 			streamType := stream.Headers().Get(constant.StreamType)
@@ -188,37 +180,37 @@ Loop:
 // portForward invokes the httpStreamHandler's forwarder.PortForward
 // function for the given stream pair.
 func (h *httpStreamHandler) portForward(p *httpStreamPair) {
-		defer p.dataStream.Close()
-		defer p.errorStream.Close()
+	defer p.dataStream.Close()
+	defer p.errorStream.Close()
 
-		portString := p.dataStream.Headers().Get(constant.PortHeader)
-		port, _ := strconv.ParseInt(portString, 10, 32)
+	portString := p.dataStream.Headers().Get(constant.PortHeader)
+	port, _ := strconv.ParseInt(portString, 10, 32)
 
-		logrus.Infof("(conn=%p, request=%s) invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
-		err := h.forwarder.PortForward(h.pod, int32(port), p.dataStream)
-		logrus.Infof("(conn=%p, request=%s) done invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
+	logrus.Infof("(conn=%p, request=%s) invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
+	err := h.forwarder.PortForward(h.pod, int32(port), p.dataStream)
+	logrus.Infof("(conn=%p, request=%s) done invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
 
-		if err != nil {
-			msg := fmt.Sprintf("error forwarding port %d to pod %s: %v", port, h.pod, err)
-			p.printError(msg)
-		}
+	if err != nil {
+		msg := fmt.Sprintf("error forwarding port %d to pod %s: %v", port, h.pod, err)
+		p.printError(msg)
+	}
 }
 
 // httpStreamPair represents the error and data streams for a port
 // forwarding request.
 type httpStreamPair struct {
-	lock 		sync.RWMutex
-	requestID	string
-	dataStream	httpstream.Stream
-	errorStream	httpstream.Stream
-	complete	chan struct{}
+	lock        sync.RWMutex
+	requestID   string
+	dataStream  httpstream.Stream
+	errorStream httpstream.Stream
+	complete    chan struct{}
 }
 
 // newPortForwardPair creates a new httpStreamPair.
 func newPortForwardPair(requestID string) *httpStreamPair {
 	return &httpStreamPair{
-		requestID:	requestID,
-		complete:	make(chan struct{}),
+		requestID: requestID,
+		complete:  make(chan struct{}),
 	}
 }
 

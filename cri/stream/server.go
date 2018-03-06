@@ -1,15 +1,15 @@
 package stream
 
 import (
+	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"time"
-	"io"
 
 	"github.com/alibaba/pouch/cri/stream/constant"
-	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/cri/stream/portforward"
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"

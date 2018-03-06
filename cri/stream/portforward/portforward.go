@@ -22,9 +22,9 @@ type PortForwarder interface {
 // handled by a single invocation of ServePortForward.
 func ServePortForward(w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout time.Duration, streamCreationTimeout time.Duration, supportedProtocols []string) {
 	// TODO: support web socket stream.
-	err := handleHttpStreams(w, req, portForwarder, podName, idleTimeout, streamCreationTimeout, supportedProtocols)
+	err := handleHTTPStreams(w, req, portForwarder, podName, idleTimeout, streamCreationTimeout, supportedProtocols)
 	if err != nil {
-		logrus.Errorf("failed to server port forward: %v", err)
+		logrus.Errorf("failed to serve port forward: %v", err)
 		return
 	}
 

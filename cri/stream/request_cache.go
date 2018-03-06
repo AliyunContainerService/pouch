@@ -62,7 +62,6 @@ func (c *requestCache) Insert(req request) (token string, err error) {
 	if err != nil {
 		return "", err
 	}
-	// 将cache entry加入list
 	ele := c.ll.PushFront(&cacheEntry{token, req, time.Now().Add(CacheTTL)})
 
 	c.tokens[token] = ele
