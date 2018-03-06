@@ -45,7 +45,7 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringVar(&uc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
 	flagSet.StringVarP(&uc.memory, "memory", "m", "", "Container memory limit")
 	flagSet.StringVar(&uc.memorySwap, "memory-swap", "", "Container swap limit")
-	flagSet.Int64Var(&uc.memorySwappiness, "memory-wappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.Int64Var(&uc.memorySwappiness, "memory-swappiness", -1, "Container memory swappiness [0, 100]")
 	flagSet.StringSliceVarP(&uc.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
