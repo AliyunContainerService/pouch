@@ -22,17 +22,17 @@ Runtime layer is located on right-top in the architecture picture. This dimensio
 * runV
 * clear containers
 
-With runC, Pouch creates common containers like other container engine does, for example docker. With runlxc, Pouch creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variaty of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. Pouch will support it with runV and clear container. 
+With runC, Pouch creates common containers like other container engine does, for example docker. With runlxc, Pouch creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variety of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. Pouch will support it with runV and clear container. 
 
 All these four runtimes mentioned above are supported under containerd. Containerd takes over all detailed container management, including creation, start, stop, deletion and so on.
 
 ### Orchestration Layer
 
-Pouch is always active on supporting Kubernetes since the first day when it is designed. We illustrate this part on the top half of the archtecture picture. First, Pouch will integrate cri-containerd inside, so Kubernetes can easily dominate Pouch to manage Pod. The workflow will pass cri-containerd, containerd client, containerd, runC/runV and pod. When configuring network of Pod, cri-containerd will take advantanges of network plugins which implement CNI interface.
+Pouch is always active on supporting Kubernetes since the first day when it is designed. We illustrate this part on the top half of the architecture picture. First, Pouch will integrate cri-containerd inside, so Kubernetes can easily dominate Pouch to manage Pod. The workflow will pass cri-containerd, containerd client, containerd, runC/runV and pod. When configuring network of Pod, cri-containerd will take advantage of network plugins which implement CNI interface.
 
 ### Container Layer
 
-We support not only Pod in Kubernetes cluster, but also simple container management for users. This is especially useful for developers. In anonther word, Pouch supports single container API. In this way, workflow passes pouchd, containerd client, containerd, runC/runV and container. On the aspect of network, Pouch uses libnetwork to construct container's network. What's more, lxcfs is also used to guarantee the isolation between containers and between containers and host.
+We support not only Pod in Kubernetes cluster, but also simple container management for users. This is especially useful for developers. In another word, Pouch supports single container API. In this way, workflow passes pouchd, containerd client, containerd, runC/runV and container. On the aspect of network, Pouch uses libnetwork to construct container's network. What's more, lxcfs is also used to guarantee the isolation between containers and between containers and host.
 
 ## Component Architecture
 
@@ -53,10 +53,10 @@ Pouchd is designed decoupled from the very beginning. It makes Pouchd quite easy
 * Manager(System/Network/Volume/Container/Image)
 * ctrd
 
-**HTTP Server** receives API calls directly and replies to client side. Its job is to parse requests and construct correct struct which is supposed to be passed to bridge layber, and to construct response no matter server succeeds in handling request or fails.
+**HTTP Server** receives API calls directly and replies to client side. Its job is to parse requests and construct correct struct which is supposed to be passed to bridge layer, and to construct response no matter server succeeds in handling request or fails.
 
 **bridge layer** is a translation layer which handles objects from client to meet managers or containerd's demand and handles objects from managers and containerd to make response compatible with Moby's API.
 
-**Manager** is main processor of Pouchd. It deals proper object from requests, and does the corresponding work. There are five managers currently in Pouchd: container manager, image manager, newtork manager, volume manager and system manager.
+**Manager** is main processor of Pouchd. It deals proper object from requests, and does the corresponding work. There are five managers currently in Pouchd: container manager, image manager, network manager, volume manager and system manager.
 
-**ctrd** is containerd client in Pouchd. When managers need to communicate with containerd, ctrd is the right thing to do this work. Managers call functions in ctrd and send request torwards containerd. In addition, when state of container changes, containerd is the first component to be awared of this, and ctrd has container watch goroutines to detect this and update inner data stored in cache.
+**ctrd** is containerd client in Pouchd. When managers need to communicate with containerd, ctrd is the right thing to do this work. Managers call functions in ctrd and send request towards containerd. In addition, when state of container changes, containerd is the first component to be aware of this, and ctrd has container watch goroutines to detect this and update inner data stored in cache.
