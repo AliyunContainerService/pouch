@@ -22,6 +22,7 @@ type ExecCommand struct {
 	Interactive bool
 	Terminal    bool
 	Detach      bool
+	User        string
 }
 
 // Init initializes ExecCommand command.
@@ -47,6 +48,7 @@ func (e *ExecCommand) addFlags() {
 	flagSet.BoolVarP(&e.Detach, "detach", "d", false, "Run the process in the background")
 	flagSet.BoolVarP(&e.Terminal, "tty", "t", false, "Allocate a tty device")
 	flagSet.BoolVarP(&e.Interactive, "interactive", "i", false, "Open container's STDIN")
+	flagSet.StringVarP(&e.User, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
 }
 
 // runExec is the entry of ExecCommand command.
@@ -66,7 +68,7 @@ func (e *ExecCommand) runExec(args []string) error {
 		AttachStdout: !e.Detach,
 		AttachStdin:  !e.Detach && e.Interactive,
 		Privileged:   false,
-		User:         "",
+		User:         e.User,
 	}
 
 	createResp, err := apiClient.ContainerCreateExec(ctx, id, createExecConfig)

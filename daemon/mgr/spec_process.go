@@ -2,10 +2,11 @@ package mgr
 
 import (
 	"context"
-	"strconv"
-	"strings"
+	"os"
 
+	"github.com/alibaba/pouch/pkg/user"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/sirupsen/logrus"
 )
 
 func setupCap(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
@@ -63,21 +64,30 @@ func setupProcessTTY(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) e
 
 func setupProcessUser(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) (err error) {
 	// The user option is complicated, now we only handle case "uid".
-	// TODO: handle other cases like "user", "uid:gid", etc.
+	// resolve uid:gid and user:group.
 	if c.Config.User == "" {
 		return nil
 	}
 
-	fields := strings.Split(c.Config.User, ":")
-	var u string
-	u = fields[0]
-	user := specs.User{}
-	if uid, err := strconv.Atoi(u); err == nil {
-		user.UID = uint32(uid)
+	// container rootfs is created by containerd, pouch just creates a snapshot
+	// id and keeps it in memory. If container is in start process, we can not
+	// find if user if exist in container image, so we do some simple check.
+	var uid, gid uint32
+
+	if _, err := os.Stat(c.BaseFS); err != nil {
+		logrus.Infof("snapshot %s is not exist, maybe in start process.", c.BaseFS)
+		uid, gid = user.GetIntegerID(c.Config.User)
 	} else {
-		user.Username = u
+		uid, gid, err = user.Get(c.BaseFS, c.Config.User)
+		if err != nil {
+			return err
+		}
 	}
-	spec.s.Process.User = user
+
+	spec.s.Process.User = specs.User{
+		UID: uid,
+		GID: gid,
+	}
 
 	return nil
 }
