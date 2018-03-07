@@ -58,7 +58,7 @@ vet: # run go vet
 	@test -z "$$(./hack/build vet)"
 
 .PHONY: unit-test
-unit-test: pre ## run go test
+unit-test: pre modules ## run go test
 	@echo $@
 	@./hack/build unit-test
 

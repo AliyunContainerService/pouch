@@ -52,6 +52,7 @@ function vet()
 function unit-test()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
+    go test -i
     for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra' | grep -v 'github.com/alibaba/pouch/vendor' `
     do
         go test -coverprofile=profile.out -covermode=atomic $d
