@@ -1,12 +1,14 @@
 package stream
 
 import (
+	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"time"
 
 	"github.com/alibaba/pouch/cri/stream/constant"
+	"github.com/alibaba/pouch/cri/stream/portforward"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/gorilla/mux"
@@ -57,7 +59,7 @@ type Runtime interface {
 	Attach() error
 
 	// PortForward forward port to pod.
-	PortForward() error
+	PortForward(name string, port int32, stream io.ReadWriteCloser) error
 }
 
 // Config defines the options used for running the stream server.
@@ -115,7 +117,7 @@ func NewServer(config Config, runtime Runtime) (Server, error) {
 	}{
 		{"/exec/{token}", s.serveExec},
 		{"/attach/{token}", s.serveAttach},
-		{"/portforward{token}", s.servePortForward},
+		{"/portforward/{token}", s.servePortForward},
 	}
 
 	r := mux.NewRouter()
@@ -209,12 +211,21 @@ func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	_, ok = cachedRequest.(*runtimeapi.PortForwardRequest)
+	pf, ok := cachedRequest.(*runtimeapi.PortForwardRequest)
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	WriteError(grpc.Errorf(codes.NotFound, "servePortForward Has Not Been Completed Yet"), w)
+
+	portforward.ServePortForward(
+		w,
+		r,
+		s.runtime,
+		pf.PodSandboxId,
+		s.config.StreamIdleTimeout,
+		s.config.StreamCreationTimeout,
+		s.config.SupportedPortForwardProtocols,
+	)
 }
 
 func (s *server) buildURL(method string, token string) string {
