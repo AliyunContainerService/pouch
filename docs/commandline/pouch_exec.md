@@ -17,6 +17,7 @@ pouch exec [OPTIONS] CONTAINER COMMAND [ARG...]
   -h, --help          help for exec
   -i, --interactive   Open container's STDIN
   -t, --tty           Allocate a tty device
+  -u, --user string   Username or UID (format: <name|uid>[:<group|gid>])
 ```
 
 ### Options inherited from parent commands
