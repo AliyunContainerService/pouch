@@ -32,10 +32,10 @@ sed -i "s#^var GitCommit.*#var GitCommit = \"$GITCOMMIT\"#g" version/version.go
 # build rpm packages
 function build_rpm() {
 	# build images
-	docker build -t pouch:rpm -f $DIR/hack/package/rpm/centos-7/Dockerfile.x86_64 .
+	docker build --network host -t pouch:rpm -f $DIR/hack/package/rpm/centos-7/Dockerfile.x86_64 .
 	(( $? != 0 )) && echo "failed to build pouch:rpm image." && exit 1
 
-	docker run -it --rm \
+	docker run --network host -it --rm \
 		-e VERSION="$VERSION" \
 		-e ITERATION="$ITERATION" \
 		-v $KEYDIR:/root/rpm \
@@ -45,10 +45,10 @@ function build_rpm() {
 # build deb packages
 function build_deb() {
 	# build images
-	docker build -t pouch:deb -f $DIR/hack/package/deb/ubuntu-xenial/Dockerfile.x86_64 .
+	docker build --network host -t pouch:deb -f $DIR/hack/package/deb/ubuntu-xenial/Dockerfile.x86_64 .
 	(( $? != 0 )) && echo "failed to build pouch:deb image." && exit 1
 
-	docker run -it --rm \
+	docker run --network host -it --rm \
 		-e VERSION="$VERSION" \
 		-v $KEYDIR/:/root/deb \
 		pouch:deb
