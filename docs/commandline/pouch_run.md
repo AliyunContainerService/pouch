@@ -60,7 +60,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --memory-extra int             Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int   Whether to reclaim page cache when deleting the cgroup of container
       --memory-swap string           Swap limit equal to memory + swap, '-1' to enable unlimited swap
-      --memory-wappiness int         Container memory swappiness [0, 100] (default -1)
+      --memory-swappiness int        Container memory swappiness [0, 100] (default -1)
       --memory-wmark-ratio int       Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                  Specify name of container
       --net strings                  Set networks to container

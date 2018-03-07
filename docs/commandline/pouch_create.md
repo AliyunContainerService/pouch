@@ -45,7 +45,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --memory-extra int             Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int   Whether to reclaim page cache when deleting the cgroup of container
       --memory-swap string           Swap limit equal to memory + swap, '-1' to enable unlimited swap
-      --memory-wappiness int         Container memory swappiness [0, 100] (default -1)
+      --memory-swappiness int        Container memory swappiness [0, 100] (default -1)
       --memory-wmark-ratio int       Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                  Specify name of container
       --net strings                  Set networks to container
