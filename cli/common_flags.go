@@ -52,6 +52,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.name, "name", "", "Specify name of container")
 
 	flagSet.StringSliceVar(&c.networks, "net", nil, "Set networks to container")
+	flagSet.StringSliceVarP(&c.ports, "port", "p", nil, "Set container ports mapping")
+	flagSet.StringSliceVar(&c.expose, "expose", nil, "Set expose container's ports")
 
 	flagSet.StringVar(&c.pidMode, "pid", "", "PID namespace to use")
 	flagSet.BoolVar(&c.privileged, "privileged", false, "Give extended privileges to the container")

@@ -1034,6 +1034,7 @@ func (mgr *ContainerManager) buildContainerEndpoint(c *ContainerMeta) *networkty
 		DNSOptions:      c.HostConfig.DNSOptions,
 		DNSSearch:       c.HostConfig.DNSSearch,
 		MacAddress:      c.Config.MacAddress,
+		PublishAllPorts: c.HostConfig.PublishAllPorts,
 		ExposedPorts:    c.Config.ExposedPorts,
 		PortBindings:    c.HostConfig.PortBindings,
 		NetworkConfig:   c.NetworkSettings,
