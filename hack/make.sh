@@ -60,6 +60,13 @@ function install_pouch ()
 	fi
 }
 
+# Install dumb-init by downloading the binary.
+function install_dumb_init
+{
+    wget -O /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64 || return 1
+    chmod +x /usr/bin/dumb-init
+}
+
 function target()
 {
 	case $1 in
@@ -78,6 +85,8 @@ function target()
 		env PATH=$GOROOT/bin:$PATH $SOURCEDIR/hack/cri-test/test-cri.sh
 		;;
 	integration-test)
+
+	    install_dumb_init || echo "Warning: dumb-init install failed! rich container related tests will be skipped"
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
 
 		if [[ $SOURCEDIR != $DIR ]];then
