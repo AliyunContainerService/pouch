@@ -105,7 +105,7 @@ type HostConfig struct {
 	PidMode string `json:"PidMode,omitempty"`
 
 	// A map of exposed container ports and the host port they should map to.
-	PortBindings map[string]PortBinding `json:"PortBindings,omitempty"`
+	PortBindings PortMap `json:"PortBindings,omitempty"`
 
 	// Gives the container full access to the host.
 	Privileged bool `json:"Privileged,omitempty"`
@@ -208,7 +208,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		PidMode string `json:"PidMode,omitempty"`
 
-		PortBindings map[string]PortBinding `json:"PortBindings,omitempty"`
+		PortBindings PortMap `json:"PortBindings,omitempty"`
 
 		Privileged bool `json:"Privileged,omitempty"`
 
@@ -378,7 +378,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		PidMode string `json:"PidMode,omitempty"`
 
-		PortBindings map[string]PortBinding `json:"PortBindings,omitempty"`
+		PortBindings PortMap `json:"PortBindings,omitempty"`
 
 		Privileged bool `json:"Privileged,omitempty"`
 
@@ -553,10 +553,6 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLogConfig(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validatePortBindings(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -750,19 +746,6 @@ func (m *HostConfig) validateLogConfig(formats strfmt.Registry) error {
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validatePortBindings(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.PortBindings) { // not required
-		return nil
-	}
-
-	if err := validate.Required("PortBindings", "body", m.PortBindings); err != nil {
-		return err
 	}
 
 	return nil
