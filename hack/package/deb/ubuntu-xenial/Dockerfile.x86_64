@@ -52,4 +52,6 @@ ENV SUITE xenial
 
 COPY . /go/src/github.com/alibaba/pouch
 
-WORKDIR /go/src/github.com/alibaba/pouch
+WORKDIR /go/src/github.com/alibaba/pouch/hack/package/deb
+
+ENTRYPOINT ["/go/src/github.com/alibaba/pouch/hack/package/deb/build.sh"]

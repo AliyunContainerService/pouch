@@ -1,71 +1,42 @@
 #!/usr/bin/env sh
 
 set -e
-# This script is to build pouch rpm package as follows,
-# Following the below command to build rpm
-# 1. Build pouch:rpm image
-#	cd hack/package/rpm
-#	docker build -t pouch:rpm .
-# 2. Mount a directory which contains gpg keys, eg
-#    $ tree /root/rpm/
-#		rpm
-#		├── config
-#		├── keys
-#		│   ├── gpg
-#		│   └── secretkey
-#
-# Note:
-# In the config file you should configure the version, iteration, et.al
-#
-# VERSION, the version to give to the package, eg:
-# VERSION='0.1.0'
-#
-# The iteration to give to the package. RPM calls this the 'release'.
-# FreeBSD calls it 'PORTREVISION'. Debian calls this 'debian_revision', eg:
-# ITERATION='1.el7.centos'
-#
-# ARCHITECTURE, The architecture name. Usually matches 'uname -m'.
-# ARCHITECTURE='x86_64'
-#
-# the branch to build pouch
-# POUCH_BRANCH='0.1.x'
-# POUCH_COMMIT='6be2080cd9837e9b8a0039c2d21521bb00a30c84'
-#
-# lxcfs stable branch
-# LXC_TAG='stable-2.0'
-# LXC_DIR=$TMP/lxc
-#
-# 3. Run the following command, and enter your pass phrase to sign rpm package
-# docker run -it -v /root/rpm/:/root/rpm pouch:rpm bash -c hack/package/build.sh
-#
-# 4. In this example rpm package will be output in '/root/rpm/package/' directory
-
-DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 TMP=$(mktemp -d /tmp/pouch.XXXXXX)
 
 MOUNTDIR=/root/rpm
-PACKAGEDIR=/root/rpm/package
+PACKAGEDIR=/root/rpm/package/rpm
+[ -d $PACKAGEDIR ] || mkdir -p $PACKAGEDIR
 
 BASEDIR=/go/src/github.com/alibaba
-SERVICEDIR=$DIR/rpm/service
-SCRIPTSDIR=$DIR/rpm/scripts
+SERVICEDIR=$BASEDIR/pouch/hack/package/rpm/service
+SCRIPTSDIR=$BASEDIR/pouch/hack/package/rpm/scripts
 
 POUCHDIR=$TMP/source
 [ -d $POUCHDIR ] || mkdir -p $POUCHDIR
 BINDIR=$POUCHDIR/bin
 [ -d $BINDIR ] || mkdir -p $BINDIR
+LXC_DIR=$TMP/lxc
+[ -d $LXC_DIR ] || mkdir -p $LXC_DIR
 
+# lxcfs stable branch
+LXC_BRANCH="stable-2.0"
+
+# ARCHITECTURE, The architecture name. Usually matches 'uname -m'.
+ARCHITECTURE=$(uname -m)
+LICENSE='Apache License 2.0'
+# The category of Pouch
+CATEGORY='Tools/Pouch'
+# The maintainer of this package.
+MAINTAINER='Pouch pouch-dev@list.alibaba-inc.com'
+VENDOR='Pouch'
 SUMMARY='The open-source reliable application container engine.'
-
-# load config info
-source $MOUNTDIR/config
 
 # build lxcfs
 function build_lxcfs ()
 {
-    mkdir -p $LXC_DIR && pushd $LXC_DIR
-    git clone -b $LXC_TAG https://github.com/lxc/lxcfs.git && cd lxcfs
+    pushd $LXC_DIR
+    git clone -b $LXC_BRANCH https://github.com/lxc/lxcfs.git && cd lxcfs
     ./bootstrap.sh > /dev/null 2>&1
     ./configure > /dev/null 2>&1
     make install DESTDIR=$LXC_DIR > /dev/null 2>&1
@@ -82,14 +53,13 @@ function build_pouch()
 
     # install runc
     echo "Downloading runc."
-    wget --quiet https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P $BINDIR/
+    wget --quiet https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P $BINDIR/
     chmod +x $BINDIR/runc.amd64
     mv $BINDIR/runc.amd64 $BINDIR/runc
 
     # build pouch
     echo "Building pouch."
     pushd $BASEDIR/pouch
-    git fetch && git checkout $POUCH_BRANCH && git checkout -q $POUCH_COMMIT
     make install DESTDIR=$POUCHDIR
     popd
 }
@@ -104,7 +74,7 @@ function build_rpm ()
     popd
 
     # configure gpg
-    echo "%_gpg_name Pouch Packages RPM Signing Key" >> /root/.rpmmacros
+    echo "%_gpg_name Pouch Release" >> /root/.rpmmacros
 
     fpm -f -s dir \
           -t rpm \
@@ -147,9 +117,6 @@ function main()
 	build_pouch
 	build_lxcfs
 	build_rpm
-
-	# echo "Building deb package."
-	# echo "TODO: build deb"
 }
 
 main "$@"
