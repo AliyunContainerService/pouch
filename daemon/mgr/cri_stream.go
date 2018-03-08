@@ -9,7 +9,9 @@ import (
 	"os/exec"
 	"strings"
 
+	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/sirupsen/logrus"
 )
@@ -30,8 +32,31 @@ func newStreamRuntime(ctrMgr ContainerMgr) stream.Runtime {
 }
 
 // Exec executes a command inside the container.
-func (s *streamRuntime) Exec() error {
-	return fmt.Errorf("streamRuntime's Exec Not Implemented Yet")
+func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error{
+	createConfig := &apitypes.ExecCreateConfig{
+		Cmd:			cmd,
+		AttachStdin:	streamOpts.Stdin,
+		AttachStdout:	streamOpts.Stdout,
+		AttachStderr:	streamOpts.Stderr,
+		Tty:			streamOpts.TTY,
+	}
+
+	execid, err := s.containerMgr.CreateExec(context.Background(), containerID, createConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
+	}
+
+	startConfig := &apitypes.ExecStartConfig{}
+	attachConfig := &AttachConfig{
+		Streams:	streams,
+	}
+
+	err = s.containerMgr.StartExec(context.Background(), execid, startConfig, attachConfig)
+	if err != nil {
+		return fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
+	}
+
+	return nil
 }
 
 // Attach attaches to a running container.

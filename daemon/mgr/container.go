@@ -833,6 +833,12 @@ func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) 
 		} else if attach.MemBuffer != nil {
 			// Attaching using memory buffer.
 			options = append(options, containerio.WithMemBuffer(attach.MemBuffer))
+		} else if attach.Streams != nil {
+			// Attaching using streams.
+			options = append(options, containerio.WithStreams(attach.Streams))
+			if attach.Stdin {
+				options = append(options, containerio.WithStdinStream())
+			}
 		}
 	} else if !exec {
 		options = append(options, containerio.WithRawFile())

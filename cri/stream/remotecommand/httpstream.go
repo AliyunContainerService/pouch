@@ -22,6 +22,14 @@ type Options struct {
 	TTY    bool
 }
 
+// Streams contains all the streams used to stdio for
+// remote command execution.
+type Streams struct {
+	StdinStream		io.ReadCloser
+	StdoutStream	io.WriteCloser
+	StderrStream 	io.WriteCloser
+}
+
 // context contains the connection and streams used when
 // forwarding an attach or execute session into a container.
 type context struct {

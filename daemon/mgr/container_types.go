@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -51,6 +52,9 @@ type AttachConfig struct {
 
 	// Attach using memory buffer.
 	MemBuffer *bytes.Buffer
+
+	// Attach using streams.
+	Streams *remotecommand.Streams
 }
 
 // ContainerRemoveOption wraps the container remove interface params.

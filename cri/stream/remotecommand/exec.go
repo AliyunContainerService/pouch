@@ -1,7 +1,6 @@
 package remotecommand
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -9,7 +8,7 @@ import (
 // Executor knows how to execute a command in a container of the pod.
 type Executor interface {
 	// Exec executes a command in a container of the pod.
-	Exec() error
+	Exec(containerID string, cmd []string, streamOpts *Options, streams *Streams) error
 }
 
 // ServeExec handles requests to execute a command in a container. After
@@ -23,6 +22,9 @@ func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, cont
 	}
 	defer ctx.conn.Close()
 
-	// Hardcode to pass CI, implement it later.
-	fmt.Fprintf(ctx.stdoutStream, "hello\n")
+	executor.Exec(container, cmd, streamOpts, &Streams{
+		StdinStream:	ctx.stdinStream,
+		StdoutStream:	ctx.stdoutStream,
+		StderrStream:	ctx.stderrStream,
+	})
 }
