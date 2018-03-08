@@ -2,8 +2,10 @@ package mgr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -102,10 +104,17 @@ type ContainerManager struct {
 
 	// monitor is used to handle container's event, eg: exit, stop and so on.
 	monitor *ContainerMonitor
+
+	// PreCreateHook is to execute before every container creation if set.
+	PreCreateHook string
 }
 
 // NewContainerManager creates a brand new container manager.
 func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config) (*ContainerManager, error) {
+	if err := checkPreCreateHook(cfg.PreCreateHook); err != nil {
+		return nil, err
+	}
+
 	mgr := &ContainerManager{
 		Store:         store,
 		NameToID:      collect.NewSafeMap(),
@@ -118,6 +127,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Clien
 		cache:         collect.NewSafeMap(),
 		Config:        cfg,
 		monitor:       NewContainerMonitor(),
+		PreCreateHook: cfg.PreCreateHook,
 	}
 
 	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
@@ -296,7 +306,20 @@ func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*C
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+func (mgr *ContainerManager) Create(ctx context.Context, name string, createConfig *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+	var err error
+
+	config := createConfig
+	// execute pre create hook before container creation
+	// after hook, config stil needs validation
+	if mgr.PreCreateHook != "" {
+		config, err = mgr.runPreCreateHook(createConfig)
+		if err != nil {
+			logrus.Errorf("failed to run pre-create hook %s: %v", mgr.PreCreateHook, err)
+			return nil, err
+		}
+	}
+
 	// TODO: check request validate.
 	if config.HostConfig == nil {
 		return nil, fmt.Errorf("HostConfig cannot be nil")
@@ -1074,4 +1097,43 @@ func checkBind(b string) ([]string, error) {
 	}
 
 	return arr, nil
+}
+
+// checkPreCreateHook check the existence of PreCreateHook on the host.
+func checkPreCreateHook(hook string) error {
+	if hook == "" {
+		return nil
+	}
+
+	if _, err := os.Stat(hook); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("failed to find user-defined pre-create hook %s", hook)
+		}
+		return fmt.Errorf("failed to stat pre-create hook %s: %v", hook, err)
+	}
+
+	return nil
+}
+
+// runPreCreateHook runs pre-create hook at the beginning of container creation if hook is set.
+// This function accepts the original raw container creation config and outputs a container create config
+// which may be modified by the hook.
+func (mgr *ContainerManager) runPreCreateHook(createConfig *types.ContainerCreateConfig) (*types.ContainerCreateConfig, error) {
+	//
+	data, err := json.Marshal(createConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal raw container create config: %v", err)
+	}
+
+	cmd := exec.Command("bash", "-c", mgr.PreCreateHook, string(data))
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run pre-create hook: %v", err)
+	}
+
+	var config *types.ContainerCreateConfig
+	if err := json.Unmarshal(out, config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal data from pre-create hook: %v", err)
+	}
+	return config, nil
 }

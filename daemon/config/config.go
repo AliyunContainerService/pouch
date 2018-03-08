@@ -66,4 +66,7 @@ type Config struct {
 
 	// CgroupParent is to set parent cgroup for all containers
 	CgroupParent string `json:"cgroup-parent,omitempty"`
+
+	// Pre-create hook to execute before every container creation
+	PreCreateHook string `json:"pre-create-hook,omitempty"`
 }

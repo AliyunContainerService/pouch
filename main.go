@@ -87,6 +87,8 @@ func setupFlags(cmd *cobra.Command) {
 
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
+
+	flagSet.StringVar(&cfg.PreCreateHook, "pre-create", "", "Pre-create hook configuration in daemon to execute before every container creation")
 }
 
 // parse flags
