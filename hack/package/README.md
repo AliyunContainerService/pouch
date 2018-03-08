@@ -6,6 +6,8 @@ This file shows how to build Pouch packages.
 
 Firstly, you should install Docker, as we use Docker to build images and run containers to build packages.
 
+Then, run `date` command to ensure time is right, which is used to set `BuildTime` field. 
+
 To build Pouch packages, you should prepare gpg keys and put it in a directory.
  
 eg:
