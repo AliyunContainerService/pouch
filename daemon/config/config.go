@@ -54,4 +54,7 @@ type Config struct {
 
 	// ImageProxy is a http proxy to pull image
 	ImageProxy string `json:"image-proxy,omitempty"`
+
+	// QuotaDriver is used to set the driver of Quota
+	QuotaDriver string
 }

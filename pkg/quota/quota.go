@@ -1,7 +1,9 @@
-package local
+package quota
 
 import (
 	"syscall"
+
+	"github.com/alibaba/pouch/pkg/kernel"
 
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +16,8 @@ const (
 var (
 	// UseQuota represents use quota or not.
 	UseQuota = true
-	gquota   = NewQuota("")
+	// Gquota represents global quota.
+	Gquota = NewQuota("")
 )
 
 // BaseQuota defines the quota operation interface.
@@ -33,25 +36,39 @@ type BaseQuota interface {
 func NewQuota(name string) BaseQuota {
 	var quota BaseQuota
 	switch name {
-	case "grp":
+	case "grpquota":
 		quota = &GrpQuota{
 			quotaIDs:    make(map[uint32]uint32),
 			mountPoints: make(map[uint64]string),
 		}
-	case "prj":
+	case "prjquota":
 		quota = &PrjQuota{
 			quotaIDs:    make(map[uint32]uint32),
 			mountPoints: make(map[uint64]string),
 			devLimits:   make(map[uint64]uint64),
 		}
 	default:
-		quota = &GrpQuota{
-			quotaIDs:    make(map[uint32]uint32),
-			mountPoints: make(map[uint64]string),
+		kernelVersion, err := kernel.GetKernelVersion()
+		if err == nil && kernelVersion.Major >= 4 {
+			quota = &PrjQuota{
+				quotaIDs:    make(map[uint32]uint32),
+				mountPoints: make(map[uint64]string),
+				devLimits:   make(map[uint64]uint64),
+			}
+		} else {
+			quota = &GrpQuota{
+				quotaIDs:    make(map[uint32]uint32),
+				mountPoints: make(map[uint64]string),
+			}
 		}
 	}
 
 	return quota
+}
+
+// SetQuotaDriver is used to set global quota driver.
+func SetQuotaDriver(name string) {
+	Gquota = NewQuota(name)
 }
 
 // GetDevID returns device id.
@@ -66,40 +83,40 @@ func GetDevID(dir string) (uint64, error) {
 
 // StartQuotaDriver is used to start quota driver.
 func StartQuotaDriver(dir string) (string, error) {
-	return gquota.StartQuotaDriver(dir)
+	return Gquota.StartQuotaDriver(dir)
 }
 
 // SetSubtree is used to set quota id for directory.
 func SetSubtree(dir string, qid uint32) (uint32, error) {
-	return gquota.SetSubtree(dir, qid)
+	return Gquota.SetSubtree(dir, qid)
 }
 
 // SetDiskQuota is used to set quota for directory.
 func SetDiskQuota(dir string, size string, quotaID int) error {
-	return gquota.SetDiskQuota(dir, size, quotaID)
+	return Gquota.SetDiskQuota(dir, size, quotaID)
 }
 
 // CheckMountpoint is used to check mount point.
 func CheckMountpoint(devID uint64) (string, bool, string) {
-	return gquota.CheckMountpoint(devID)
+	return Gquota.CheckMountpoint(devID)
 }
 
 // GetFileAttr returns the directory attributes.
 func GetFileAttr(dir string) uint32 {
-	return gquota.GetFileAttr(dir)
+	return Gquota.GetFileAttr(dir)
 }
 
 // SetFileAttr is used to set file attributes.
 func SetFileAttr(dir string, id uint32) error {
-	return gquota.SetFileAttr(dir, id)
+	return Gquota.SetFileAttr(dir, id)
 }
 
 // SetFileAttrNoOutput is used to set file attributes without error.
 func SetFileAttrNoOutput(dir string, id uint32) {
-	gquota.SetFileAttrNoOutput(dir, id)
+	Gquota.SetFileAttrNoOutput(dir, id)
 }
 
 //GetNextQuatoID returns the next available quota id.
 func GetNextQuatoID() (uint32, error) {
-	return gquota.GetNextQuatoID()
+	return Gquota.GetNextQuatoID()
 }

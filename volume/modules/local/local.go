@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/volume/driver"
 	"github.com/alibaba/pouch/volume/types"
 )
@@ -113,8 +114,8 @@ func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) er
 	}
 
 	if size != "" && size != "0" {
-		StartQuotaDriver(mountPath)
-		if ex := SetDiskQuota(mountPath, size, 0); ex != nil {
+		quota.StartQuotaDriver(mountPath)
+		if ex := quota.SetDiskQuota(mountPath, size, 0); ex != nil {
 			return ex
 		}
 	}
