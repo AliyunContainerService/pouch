@@ -1,7 +1,7 @@
 package version
 
 // Version represents the version of pouchd.
-const Version = "0.2.0"
+const Version = "0.2.1"
 
 // BuildTime is the time when this binary of daemon is built
 var BuildTime = "2018-03-02T08:00:00.0+08:00"
