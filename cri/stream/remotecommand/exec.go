@@ -23,8 +23,8 @@ func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, cont
 	defer ctx.conn.Close()
 
 	executor.Exec(container, cmd, streamOpts, &Streams{
-		StdinStream:	ctx.stdinStream,
-		StdoutStream:	ctx.stdoutStream,
-		StderrStream:	ctx.stderrStream,
+		StdinStream:  ctx.stdinStream,
+		StdoutStream: ctx.stdoutStream,
+		StderrStream: ctx.stderrStream,
 	})
 }

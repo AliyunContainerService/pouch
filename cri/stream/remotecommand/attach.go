@@ -1,7 +1,6 @@
 package remotecommand
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -9,7 +8,7 @@ import (
 // Attacher knows how to attach a running container in a pod.
 type Attacher interface {
 	// Attach attaches to the running container in the pod.
-	Attach() error
+	Attach(containerID string, streamOpts *Options, streams *Streams) error
 }
 
 // ServeAttach handles requests to attach to a container. After creating/receiving the required
@@ -22,9 +21,10 @@ func ServeAttach(w http.ResponseWriter, req *http.Request, attacher Attacher, co
 	}
 	defer ctx.conn.Close()
 
-	// Hardcode to pass CI, implement it later.
-	fmt.Fprintf(ctx.stdoutStream, "hello\n")
-
-	// Actuall it's a bug of cri-tools v1.0.0-alpha.0, workaround it.
-	time.Sleep(1 * time.Second)
+	attacher.Attach(container, streamOpts, &Streams{
+		StreamCh:     make(chan struct{}, 1),
+		StdinStream:  ctx.stdinStream,
+		StdoutStream: ctx.stdoutStream,
+		StderrStream: ctx.stderrStream,
+	})
 }

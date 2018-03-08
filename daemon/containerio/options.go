@@ -16,7 +16,7 @@ type Option struct {
 	hijackUpgrade bool
 	stdinBackend  string
 	memBuffer     *bytes.Buffer
-	streams		  *remotecommand.Streams
+	streams       *remotecommand.Streams
 }
 
 // NewOption creates the Option instance.

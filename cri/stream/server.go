@@ -30,7 +30,7 @@ const (
 // TODO: StreamProtocolV2Name, StreamProtocolV3Name, StreamProtocolV4Name support.
 
 // SupportedStreamingProtocols is the streaming protocols which server supports.
-var SupportedStreamingProtocols = []string{constant.StreamProtocolV1Name}
+var SupportedStreamingProtocols = []string{constant.StreamProtocolV1Name, constant.StreamProtocolV2Name}
 
 // SupportedPortForwardProtocols is the portforward protocols which server supports.
 var SupportedPortForwardProtocols = []string{constant.PortForwardProtocolV1Name}
@@ -56,7 +56,7 @@ type Runtime interface {
 	Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error
 
 	// Attach attaches to pod.
-	Attach() error
+	Attach(containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error
 
 	// PortForward forward port to pod.
 	PortForward(name string, port int32, stream io.ReadWriteCloser) error

@@ -26,7 +26,7 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 CRI_FOCUS=${CRI_FOCUS:-"PodSandbox|AppArmor|Privileged is true|basic operations on container|Runtime info|mount propagation|volume and device|RunAsUser|container port|Streaming|NamespaceOption|SupplementalGroups"}
 
 # CRI_SKIP skips the test to skip.
-CRI_SKIP=${CRI_SKIP:-"RunAsUserName|attach|HostNetwork"}
+CRI_SKIP=${CRI_SKIP:-"RunAsUserName|HostNetwork"}
 # REPORT_DIR is the the directory to store test logs.
 REPORT_DIR=${REPORT_DIR:-"/tmp/test-cri"}
 

@@ -642,7 +642,8 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 		return err
 	}
 
-	if _, err := mgr.openContainerIO(c.ID(), attach); err != nil {
+	_, err = mgr.openAttachIO(c.ID(), attach)
+	if err != nil {
 		return err
 	}
 
@@ -803,6 +804,43 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {
 	return mgr.openIO(id, attach, false)
+}
+
+func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*containerio.IO, error) {
+	io := mgr.IOs.Get(id)
+	if io == nil {
+		return mgr.openIO(id, attach, false)
+	}
+
+	options := []func(*containerio.Option){
+		containerio.WithID(id),
+	}
+	if attach != nil {
+		if attach.Hijack != nil {
+			// Attaching using http.
+			options = append(options, containerio.WithHijack(attach.Hijack, attach.Upgrade))
+			if attach.Stdin {
+				options = append(options, containerio.WithStdinHijack())
+			}
+		} else if attach.MemBuffer != nil {
+			// Attaching using memory buffer.
+			options = append(options, containerio.WithMemBuffer(attach.MemBuffer))
+		} else if attach.Streams != nil {
+			// Attaching using streams.
+			options = append(options, containerio.WithStreams(attach.Streams))
+			if attach.Stdin {
+				options = append(options, containerio.WithStdinStream())
+			}
+		}
+	} else {
+		options = append(options, containerio.WithDiscard())
+	}
+
+	io.AddBackend(containerio.NewOption(options...))
+
+	mgr.IOs.Put(id, io)
+
+	return io, nil
 }
 
 func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*containerio.IO, error) {

@@ -8,12 +8,13 @@ import (
 
 func init() {
 	Register(func() Backend {
-		return &streamIO{}	
+		return &streamIO{}
 	})
 }
 
 type streamIO struct {
 	streams *remotecommand.Streams
+	closed  bool
 }
 
 func (s *streamIO) Name() string {
@@ -22,7 +23,7 @@ func (s *streamIO) Name() string {
 
 func (s *streamIO) Init(opt *Option) error {
 	s.streams = opt.streams
-	
+
 	return nil
 }
 
@@ -35,23 +36,25 @@ func (s *streamIO) In() io.Reader {
 }
 
 func (s *streamIO) Close() error {
+	if s.closed {
+		return nil
+	}
+
 	for _, closer := range []io.Closer{
 		s.streams.StdinStream,
 		s.streams.StdoutStream,
 		s.streams.StderrStream,
-	}{
+	} {
 		if closer != nil {
 			closer.Close()
 		}
 	}
 
+	if s.streams.StreamCh != nil {
+		s.streams.StreamCh <- struct{}{}
+	}
+
+	s.closed = true
+
 	return nil
-}
-
-func (s *streamIO) Write(data []byte) (int, error) {
-	return s.streams.StdoutStream.Write(data)
-}
-
-func (s *streamIO) Read(p []byte) (int, error) {
-	return s.streams.StdinStream.Read(p)
 }
