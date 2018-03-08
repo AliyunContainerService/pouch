@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"os"
+
+	"github.com/alibaba/pouch/cli/inspect"
 
 	"github.com/spf13/cobra"
 )
@@ -14,13 +15,14 @@ var inspectDescription = "Return detailed information on Pouch container"
 // InspectCommand is used to implement 'inspect' command.
 type InspectCommand struct {
 	baseCommand
+	format string
 }
 
 // Init initializes InspectCommand command.
 func (p *InspectCommand) Init(c *Cli) {
 	p.cli = c
 	p.cmd = &cobra.Command{
-		Use:   "inspect CONTAINER",
+		Use:   "inspect [OPTIONS] CONTAINER",
 		Short: "Get the detailed information of container",
 		Long:  inspectDescription,
 		Args:  cobra.ExactArgs(1),
@@ -29,6 +31,12 @@ func (p *InspectCommand) Init(c *Cli) {
 		},
 		Example: inspectExample(),
 	}
+	p.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (p *InspectCommand) addFlags() {
+	p.cmd.Flags().StringVarP(&p.format, "format", "f", "", "Format the output using the given go template")
 }
 
 // runInspect is the entry of InspectCommand command.
@@ -36,17 +44,12 @@ func (p *InspectCommand) runInspect(args []string) error {
 	ctx := context.Background()
 	apiClient := p.cli.Client()
 	name := args[0]
-	container, err := apiClient.ContainerGet(ctx, name)
-	if err != nil {
-		return err
+
+	getRefFunc := func(ref string) (interface{}, error) {
+		return apiClient.ContainerGet(ctx, ref)
 	}
 
-	containerjson, err := json.MarshalIndent(&container, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Print(string(containerjson) + "\n")
-	return nil
+	return inspect.Inspect(os.Stdout, name, p.format, getRefFunc)
 }
 
 // inspectExample shows examples in inspect command, and is used in auto-generated cli docs.
