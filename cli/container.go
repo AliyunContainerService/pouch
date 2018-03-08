@@ -56,6 +56,8 @@ type container struct {
 	blkioDeviceWriteIOps ThrottleIOpsDevice
 	IntelRdtL3Cbm        string
 
+	cgroupParent string
+
 	//add for rich container mode
 	rich       bool
 	richMode   string
@@ -170,6 +172,8 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.value(),
 				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
 				IntelRdtL3Cbm:        intelRdtL3Cbm,
+
+				CgroupParent: c.cgroupParent,
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,
