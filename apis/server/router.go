@@ -42,6 +42,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path(versionMatcher + "/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/update").Methods(http.MethodPost).Handler(s.filter(s.updateContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/upgrade").Methods(http.MethodPost).Handler(s.filter(s.upgradeContainer))
 
 	// image
 	r.Path(versionMatcher + "/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))

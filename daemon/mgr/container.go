@@ -72,6 +72,9 @@ type ContainerMgr interface {
 
 	// Update updates the configurations of a container.
 	Update(ctx context.Context, name string, config *types.UpdateConfig) error
+
+	// Upgrade upgrades a container with new image and args.
+	Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -785,6 +788,12 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// store disk.
 	c.Write(mgr.Store)
 
+	return nil
+}
+
+// Upgrade upgrades a container with new image and args.
+func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
+	// TODO
 	return nil
 }
 
