@@ -86,6 +86,7 @@ func (e *ExecCommand) runExec(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create exec: %v", err)
 	}
+	defer conn.Close()
 
 	// handle stdio.
 	var wg sync.WaitGroup
