@@ -16,7 +16,7 @@ KEYDIR=${3:?"GPG key is required"}
 PKGTYPE=$4
 
 # The time to build packages
-BUILDTIME="$(date +'%Y-%m-%dT%H:%M:%S+08:00')"
+BUILDTIME="$(date --rfc-2822)"
 
 # The commit ID used to build package
 GITCOMMIT=$( git rev-parse HEAD )
