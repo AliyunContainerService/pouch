@@ -663,3 +663,27 @@ func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 	}
 	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
 }
+
+//
+func (suite *PouchRunSuite) TestRunAlikernelScheLatSwitch(c *check.C) {
+	// TODO: as runc has not implemented it, add test later
+	SkipIfFalse(c, environment.IsAliKernel)
+}
+
+//
+func (suite *PouchRunSuite) TestRunAlikernelMemoryWmarkRatio(c *check.C) {
+	// TODO: as runc has not implemented it, add test later
+	SkipIfFalse(c, environment.IsAliKernel)
+}
+
+//
+func (suite *PouchRunSuite) TestRunAlikernelMemoryExtra(c *check.C) {
+	// TODO: as runc has not implemented it, add test later
+	SkipIfFalse(c, environment.IsAliKernel)
+}
+
+//
+func (suite *PouchRunSuite) TestRunAlikernelMemoryForceEmptyCtl(c *check.C) {
+	// TODO: as runc has not implemented it, add test later
+	SkipIfFalse(c, environment.IsAliKernel)
+}
