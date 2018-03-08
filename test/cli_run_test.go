@@ -687,3 +687,16 @@ func (suite *PouchRunSuite) TestRunAlikernelMemoryForceEmptyCtl(c *check.C) {
 	// TODO: as runc has not implemented it, add test later
 	SkipIfFalse(c, environment.IsAliKernel)
 }
+
+// TestRunWithHostFileVolume tests binding a host file as a volume into container.
+// fixes https://github.com/alibaba/pouch/issues/813
+func (suite *PouchRunSuite) TestRunWithHostFileVolume(c *check.C) {
+	// first create a file on the host
+	filepath := "/tmp/TestRunWithHostFileVolume.md"
+	icmd.RunCommand("touch", filepath).Assert(c, icmd.Success)
+
+	cname := "TestRunWithCPULimit"
+	command.PouchRun("run", "-d", "--name", cname, "-v", fmt.Sprintf("%s:%s", filepath, filepath), busyboxImage).Assert(c, icmd.Success)
+
+	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+}
