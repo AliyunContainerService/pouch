@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	netlog "github.com/Sirupsen/logrus"
+	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
 	"github.com/docker/libnetwork/netlabel"
@@ -508,6 +509,65 @@ func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork
 	// TODO: secondary ip address
 	// TODO: parse extra hosts
 	// TODO: port mapping
+	var bindings = make(nat.PortMap)
+	if endpoint.PortBindings != nil {
+		for p, b := range endpoint.PortBindings {
+			bindings[nat.Port(p)] = []nat.PortBinding{}
+			for _, bb := range b {
+				bindings[nat.Port(p)] = append(bindings[nat.Port(p)], nat.PortBinding{
+					HostIP:   bb.HostIP,
+					HostPort: bb.HostPort,
+				})
+			}
+		}
+	}
+
+	portSpecs := endpoint.ExposedPorts
+	var ports = make([]nat.Port, len(portSpecs))
+	var i int
+	for p := range endpoint.ExposedPorts {
+		ports[i] = nat.Port(p)
+		i++
+	}
+	nat.SortPortMap(ports, bindings)
+
+	var (
+		exposeList []networktypes.TransportPort
+		pbList     []networktypes.PortBinding
+	)
+	for _, port := range ports {
+		expose := networktypes.TransportPort{}
+		expose.Proto = networktypes.ParseProtocol(port.Proto())
+		expose.Port = uint16(port.Int())
+		exposeList = append(exposeList, expose)
+
+		pb := networktypes.PortBinding{Port: expose.Port, Proto: expose.Proto}
+		binding := bindings[port]
+		for i := 0; i < len(binding); i++ {
+			pbCopy := pb.GetCopy()
+			newP, err := nat.NewPort(nat.SplitProtoPort(binding[i].HostPort))
+			var portStart, portEnd int
+			if err == nil {
+				portStart, portEnd, err = newP.Range()
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to parsing HostPort value(%s):%v", binding[i].HostPort, err)
+			}
+			pbCopy.HostPort = uint16(portStart)
+			pbCopy.HostPortEnd = uint16(portEnd)
+			pbCopy.HostIP = net.ParseIP(binding[i].HostIP)
+			pbList = append(pbList, pbCopy)
+		}
+
+		if endpoint.PublishAllPorts && len(binding) == 0 {
+			pbList = append(pbList, pb)
+		}
+	}
+
+	sandboxOptions = append(sandboxOptions,
+		libnetwork.OptionPortMapping(pbList),
+		libnetwork.OptionExposedPorts(exposeList))
+
 	return sandboxOptions, nil
 }
 

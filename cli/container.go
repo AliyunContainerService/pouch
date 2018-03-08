@@ -8,6 +8,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/runconfig"
+	"github.com/docker/go-connections/nat"
 
 	units "github.com/docker/go-units"
 	strfmt "github.com/go-openapi/strfmt"
@@ -45,6 +46,9 @@ type container struct {
 	utsMode              string
 	sysctls              []string
 	networks             []string
+	ports                []string
+	expose               []string
+	publicAll            bool
 	securityOpt          []string
 	capAdd               []string
 	capDrop              []string
@@ -131,18 +135,61 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		}
 	}
 
+	// parse port binding
+	tmpPorts, tmpPortBindings, err := nat.ParsePortSpecs(c.ports)
+	if err != nil {
+		return nil, err
+	}
+	// translate ports and portbingings
+	ports := map[string]interface{}{}
+	for n, p := range tmpPorts {
+		ports[string(n)] = p
+	}
+	portBindings := make(types.PortMap)
+	for n, pbs := range tmpPortBindings {
+		portBindings[string(n)] = []types.PortBinding{}
+		for _, tmpPb := range pbs {
+			pb := types.PortBinding{HostIP: tmpPb.HostIP, HostPort: tmpPb.HostPort}
+			portBindings[string(n)] = append(portBindings[string(n)], pb)
+		}
+	}
+
+	for _, e := range c.expose {
+		if strings.Contains(e, ":") {
+			return nil, fmt.Errorf("invalid port format for --expose: %s", e)
+		}
+
+		//support two formats for expose, original format <portnum>/[<proto>] or <startport-endport>/[<proto>]
+		proto, port := nat.SplitProtoPort(e)
+		//parse the start and end port and create a sequence of ports to expose
+		//if expose a port, the start and end port are the same
+		start, end, err := nat.ParsePortRange(port)
+		if err != nil {
+			return nil, fmt.Errorf("invalid range format for --expose: %s, error: %s", e, err)
+		}
+		for i := start; i <= end; i++ {
+			p, err := nat.NewPort(proto, strconv.FormatUint(i, 10))
+			if err != nil {
+				return nil, err
+			}
+			if _, exists := ports[string(p)]; !exists {
+				ports[string(p)] = struct{}{}
+			}
+		}
+	}
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
-			Tty:        c.tty,
-			Env:        c.env,
-			Entrypoint: strings.Fields(c.entrypoint),
-			WorkingDir: c.workdir,
-			User:       c.user,
-			Hostname:   strfmt.Hostname(c.hostname),
-			Labels:     labels,
-			Rich:       c.rich,
-			RichMode:   c.richMode,
-			InitScript: c.initScript,
+			Tty:          c.tty,
+			Env:          c.env,
+			Entrypoint:   strings.Fields(c.entrypoint),
+			WorkingDir:   c.workdir,
+			User:         c.user,
+			Hostname:     strfmt.Hostname(c.hostname),
+			Labels:       labels,
+			Rich:         c.rich,
+			RichMode:     c.richMode,
+			InitScript:   c.initScript,
+			ExposedPorts: ports,
 		},
 
 		HostConfig: &types.HostConfig{
@@ -182,6 +229,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			NetworkMode:   networkMode,
 			CapAdd:        c.capAdd,
 			CapDrop:       c.capDrop,
+			PortBindings:  portBindings,
 		},
 
 		NetworkingConfig: networkingConfig,
