@@ -27,6 +27,7 @@ type GrpQuota struct {
 
 // StartQuotaDriver is used to start quota driver.
 func (quota *GrpQuota) StartQuotaDriver(dir string) (string, error) {
+	logrus.Debugf("start group quota driver: %s", dir)
 	if !UseQuota {
 		return "", nil
 	}
@@ -105,6 +106,7 @@ func (quota *GrpQuota) StartQuotaDriver(dir string) (string, error) {
 // SetSubtree is used to set quota id for directory,
 // setfattr -n system.subtree -v $QUOTAID
 func (quota *GrpQuota) SetSubtree(dir string, qid uint32) (uint32, error) {
+	logrus.Debugf("set subtree, dir: %s, quotaID: %d", dir, qid)
 	if !UseQuota {
 		return 0, nil
 	}
@@ -129,6 +131,7 @@ func (quota *GrpQuota) SetSubtree(dir string, qid uint32) (uint32, error) {
 
 // SetDiskQuota is used to set quota for directory.
 func (quota *GrpQuota) SetDiskQuota(dir string, size string, quotaID int) error {
+	logrus.Debugf("set disk quota, dir: %s, size: %s, quotaID: %d", dir, size, quotaID)
 	if !UseQuota {
 		return nil
 	}
@@ -167,6 +170,7 @@ func (quota *GrpQuota) SetDiskQuota(dir string, size string, quotaID int) error 
 // cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
 // cgroup /sys/fs/cgroup/blkio cgroup rw,nosuid,nodev,noexec,relatime,blkio 0 0
 func (quota *GrpQuota) CheckMountpoint(devID uint64) (string, bool, string) {
+	logrus.Debugf("check mountpoint, devID: %d", devID)
 	output, err := ioutil.ReadFile("/proc/mounts")
 	if err != nil {
 		logrus.Warnf("ReadFile: %v", err)
@@ -198,6 +202,8 @@ func (quota *GrpQuota) CheckMountpoint(devID uint64) (string, bool, string) {
 }
 
 func (quota *GrpQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint string) error {
+	logrus.Debugf("set user quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, diskQuota, mountPoint)
+
 	uid := strconv.FormatUint(uint64(quotaID), 10)
 	limit := strconv.FormatUint(diskQuota, 10)
 
@@ -208,6 +214,8 @@ func (quota *GrpQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint
 // GetFileAttr returns the directory attributes
 // getfattr -n system.subtree --only-values --absolute-names /
 func (quota *GrpQuota) GetFileAttr(dir string) uint32 {
+	logrus.Debugf("get file attr, dir: %s", dir)
+
 	v := 0
 	_, out, _, err := exec.Run(0, "getfattr", "-n", "system.subtree", "--only-values", "--absolute-names", dir)
 	if err == nil {
@@ -218,6 +226,8 @@ func (quota *GrpQuota) GetFileAttr(dir string) uint32 {
 
 // SetFileAttr is used to set file attributes.
 func (quota *GrpQuota) SetFileAttr(dir string, id uint32) error {
+	logrus.Debugf("set file attr, dir: %s, quotaID: %d", dir, id)
+
 	strid := strconv.FormatUint(uint64(id), 10)
 	_, _, _, err := exec.Run(0, "setfattr", "-n", "system.subtree", "-v", strid, dir)
 	return err
@@ -293,6 +303,8 @@ func (quota *GrpQuota) GetNextQuatoID() (uint32, error) {
 	}
 	quota.quotaIDs[id] = 1
 	quota.quotaLastID = id
+
+	logrus.Debugf("get next project quota id: %d", id)
 	return id, nil
 }
 
