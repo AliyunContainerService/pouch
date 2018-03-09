@@ -29,6 +29,7 @@ type PrjQuota struct {
 
 // StartQuotaDriver is used to start quota driver.
 func (quota *PrjQuota) StartQuotaDriver(dir string) (string, error) {
+	logrus.Debugf("start project quota driver: %s", dir)
 	if !UseQuota {
 		return "", nil
 	}
@@ -58,9 +59,9 @@ func (quota *PrjQuota) StartQuotaDriver(dir string) (string, error) {
 	}
 
 	// on
-	_, out, _, err := exec.Run(0, "quotaon", "-P", mountPoint)
+	_, _, stderr, err := exec.Run(0, "quotaon", "-P", mountPoint)
 	if err != nil {
-		if strings.Contains(out, " File exists") {
+		if strings.Contains(stderr, " File exists") {
 			err = nil
 		} else {
 			mountPoint = ""
@@ -74,6 +75,7 @@ func (quota *PrjQuota) StartQuotaDriver(dir string) (string, error) {
 // SetSubtree is used to set quota id for directory,
 //chattr -p qid +P $QUOTAID
 func (quota *PrjQuota) SetSubtree(dir string, qid uint32) (uint32, error) {
+	logrus.Debugf("set subtree, dir: %s, quotaID: %d", dir, qid)
 	if !UseQuota {
 		return 0, nil
 	}
@@ -98,6 +100,7 @@ func (quota *PrjQuota) SetSubtree(dir string, qid uint32) (uint32, error) {
 
 // SetDiskQuota is used to set quota for directory.
 func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID int) error {
+	logrus.Debugf("set disk quota, dir: %s, size: %s, quotaID: %d", dir, size, quotaID)
 	if !UseQuota {
 		return nil
 	}
@@ -138,6 +141,7 @@ func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID int) error 
 // cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
 // cgroup /sys/fs/cgroup/blkio cgroup rw,nosuid,nodev,noexec,relatime,blkio 0 0
 func (quota *PrjQuota) CheckMountpoint(devID uint64) (string, bool, string) {
+	logrus.Debugf("check mountpoint, devID: %d", devID)
 	output, err := ioutil.ReadFile("/proc/mounts")
 	if err != nil {
 		logrus.Warnf("ReadFile: %v", err)
@@ -153,6 +157,7 @@ func (quota *PrjQuota) CheckMountpoint(devID uint64) (string, bool, string) {
 			continue
 		}
 		devID2, _ := GetDevID(parts[1])
+
 		if devID == devID2 {
 			mountPoint = parts[1]
 			fsType = parts[2]
@@ -169,6 +174,8 @@ func (quota *PrjQuota) CheckMountpoint(devID uint64) (string, bool, string) {
 }
 
 func (quota *PrjQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint string) error {
+	logrus.Debugf("set user quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, diskQuota, mountPoint)
+
 	uid := strconv.FormatUint(uint64(quotaID), 10)
 	limit := strconv.FormatUint(diskQuota, 10)
 	_, _, _, err := exec.Run(0, "setquota", "-P", uid, "0", limit, "0", "0", mountPoint)
@@ -178,6 +185,8 @@ func (quota *PrjQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint
 // GetFileAttr returns the directory attributes
 // lsattr -p $dir
 func (quota *PrjQuota) GetFileAttr(dir string) uint32 {
+	logrus.Debugf("get file attr, dir: %s", dir)
+
 	v := 0
 	_, out, _, err := exec.Run(0, "lsattr", "-p", dir)
 	if err == nil {
@@ -189,6 +198,8 @@ func (quota *PrjQuota) GetFileAttr(dir string) uint32 {
 
 // SetFileAttr is used to set file attributes.
 func (quota *PrjQuota) SetFileAttr(dir string, id uint32) error {
+	logrus.Debugf("set file attr, dir: %s, quotaID: %d", dir, id)
+
 	strid := strconv.FormatUint(uint64(id), 10)
 	_, _, _, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
 	return err
@@ -260,6 +271,8 @@ func (quota *PrjQuota) GetNextQuatoID() (uint32, error) {
 	}
 	quota.quotaIDs[id] = 1
 	quota.quotaLastID = id
+
+	logrus.Debugf("get next project quota id: %d", id)
 	return id, nil
 }
 
