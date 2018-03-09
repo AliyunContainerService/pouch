@@ -1,4 +1,15 @@
-# CHANGELOG
+# CHANGELOG 
+
+## 0.2.1 (2018-03-09)
+
+### Network
+
+* Support port mapping and exposed ports in container
+
+### Bugfix
+
+* Fix project quota can't be set on kernel-4.9
+* Fix rich container mode can't find binary in PATH
 
 ## 0.2.0 (2018-03-02)
 
