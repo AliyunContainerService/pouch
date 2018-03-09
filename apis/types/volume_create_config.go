@@ -26,7 +26,7 @@ type VolumeCreateConfig struct {
 	// User-defined key/value metadata.
 	Labels map[string]string `json:"Labels,omitempty"`
 
-	// The new volume's name. If not specified, Docker generates a name.
+	// The new volume's name. If not specified, Pouch generates a name.
 	Name string `json:"Name,omitempty"`
 }
 
