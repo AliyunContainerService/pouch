@@ -36,6 +36,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --blkio-weight-device value    Block IO weight (relative device weight) (default [])
       --cap-add strings              Add Linux capabilities
       --cap-drop strings             Drop Linux capabilities
+      --cgroup-parent string         Optional parent cgroup for the container (default "default")
       --cpu-share int                CPU shares (relative weight)
       --cpuset-cpus string           CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string           MEMs in which to allow execution (0-3, 0,1)

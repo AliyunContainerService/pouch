@@ -7,7 +7,7 @@ Get the detailed information of container
 Return detailed information on Pouch container
 
 ```
-pouch inspect CONTAINER
+pouch inspect [OPTIONS] CONTAINER
 ```
 
 ### Examples
@@ -47,7 +47,8 @@ $ pouch inspect 08e
 ### Options
 
 ```
-  -h, --help   help for inspect
+  -f, --format string   Format the output using the given go template
+  -h, --help            help for inspect
 ```
 
 ### Options inherited from parent commands
