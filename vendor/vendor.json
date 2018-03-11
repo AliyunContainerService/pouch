@@ -568,6 +568,24 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "mLmwamaqyrVUNOmTAGaSpnO1YJQ=",
+			"path": "github.com/google/gops/agent",
+			"revision": "160b358b10d6123169a895090938b088c8f78dc9",
+			"revisionTime": "2018-03-11T05:24:15Z"
+		},
+		{
+			"checksumSHA1": "4/oP9EPM60f4djEKTtRqMJPaeOo=",
+			"path": "github.com/google/gops/internal",
+			"revision": "160b358b10d6123169a895090938b088c8f78dc9",
+			"revisionTime": "2018-03-11T05:24:15Z"
+		},
+		{
+			"checksumSHA1": "jKzg09NDPfnmGeZhp+YSVaq4cb0=",
+			"path": "github.com/google/gops/signal",
+			"revision": "160b358b10d6123169a895090938b088c8f78dc9",
+			"revisionTime": "2018-03-11T05:24:15Z"
+		},
+		{
 			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
 			"path": "github.com/gorilla/context",
 			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
@@ -584,6 +602,12 @@
 			"path": "github.com/gotestyourself/gotestyourself/icmd",
 			"revision": "b5461758462b97cff258bf388ca42110f529d747",
 			"revisionTime": "2017-11-07T15:27:38Z"
+		},
+		{
+			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
+			"path": "github.com/kardianos/osext",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"revisionTime": "2017-05-10T13:15:34Z"
 		},
 		{
 			"checksumSHA1": "jHOLsfeMPcX84YQB2MXBqXFntBg=",

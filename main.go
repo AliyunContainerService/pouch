@@ -21,6 +21,7 @@ import (
 	"github.com/alibaba/pouch/version"
 
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/google/gops/agent"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -110,6 +111,13 @@ func runDaemon() error {
 
 	// initialize log.
 	initLog()
+
+	// import debugger tools for pouch when in debug mode.
+	if cfg.Debug {
+		if err := agent.Listen(agent.Options{}); err != nil {
+			logrus.Fatal(err)
+		}
+	}
 
 	// initialize home dir.
 	dir := cfg.HomeDir
