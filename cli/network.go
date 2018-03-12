@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/cli/inspect"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -252,6 +254,7 @@ var networkInspectDescription = "Inspect a network in pouchd. " +
 // NetworkInspectCommand is used to implement 'network inspect' command.
 type NetworkInspectCommand struct {
 	baseCommand
+	format string
 }
 
 // Init initializes NetworkInspectCommand command.
@@ -275,6 +278,7 @@ func (n *NetworkInspectCommand) Init(c *Cli) {
 // addFlags adds flags for specific command.
 func (n *NetworkInspectCommand) addFlags() {
 	//TODO add flags
+	n.cmd.Flags().StringVarP(&n.format, "format", "f", "", "Format the output using the given go template")
 }
 
 // runNetworkInspect is the entry of NetworkInspectCommand command.
@@ -283,13 +287,12 @@ func (n *NetworkInspectCommand) runNetworkInspect(args []string) error {
 
 	ctx := context.Background()
 	apiClient := n.cli.Client()
-	resp, err := apiClient.NetworkInspect(ctx, name)
-	if err != nil {
-		return err
+
+	getRefFunc := func(ref string) (interface{}, error) {
+		return apiClient.NetworkInspect(ctx, ref)
 	}
 
-	n.cli.Print(resp)
-	return nil
+	return inspect.Inspect(os.Stdout, name, n.format, getRefFunc)
 }
 
 // networkInspectExample shows examples in network inspect command, and is used in auto-generated cli docs.

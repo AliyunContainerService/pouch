@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
+
+	"github.com/alibaba/pouch/cli/inspect"
 
 	"github.com/spf13/cobra"
 )
@@ -15,6 +15,7 @@ var imageInspectDescription = "Return detailed information on Pouch image"
 // ImageInspectCommand use to implement 'image inspect' command.
 type ImageInspectCommand struct {
 	baseCommand
+	format string
 }
 
 // Init initialize "image inspect" command.
@@ -30,20 +31,25 @@ func (i *ImageInspectCommand) Init(c *Cli) {
 		},
 		Example: i.example(),
 	}
+	i.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (i *ImageInspectCommand) addFlags() {
+	i.cmd.Flags().StringVarP(&i.format, "format", "f", "", "Format the output using the given go template")
 }
 
 // runInpsect is used to inspect image.
 func (i *ImageInspectCommand) runInspect(args []string) error {
 	ctx := context.Background()
 	apiClient := i.cli.Client()
-	image, err := apiClient.ImageInspect(ctx, args[0])
-	if err != nil {
-		return fmt.Errorf("failed to inspect image: %v", err)
+	name := args[0]
+
+	getRefFunc := func(ref string) (interface{}, error) {
+		return apiClient.ImageInspect(ctx, ref)
 	}
 
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	return enc.Encode(image)
+	return inspect.Inspect(os.Stdout, name, i.format, getRefFunc)
 }
 
 // example shows examples in inspect command, and is used in auto-generated cli docs.

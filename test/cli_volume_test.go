@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"runtime"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -155,4 +159,28 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
 
 	command.PouchRun("volume", "create", "--name", funcname, "--selector", "test=foo").Assert(c, icmd.Success)
 	command.PouchRun("volume", "remove", funcname)
+}
+
+// TestVolumeInspectFormat tests the inspect format of volume works.
+func (suite *PouchNetworkSuite) TestVolumeInspectFormat(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	command.PouchRun("volume", "create", "--name", funcname).Assert(c, icmd.Success)
+
+	output := command.PouchRun("volume", "inspect", funcname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// inspect network name
+	output = command.PouchRun("volume", "inspect", "-f", "{{.Name}}", funcname).Stdout()
+	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", funcname))
+
+	defer command.PouchRun("volume", "remove", funcname)
 }
