@@ -117,6 +117,13 @@ func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecW
 	}
 	setNamespace(s, ns)
 
+	if s.Hooks == nil {
+		s.Hooks = &specs.Hooks{}
+	}
+	if s.Hooks.Prestart == nil {
+		s.Hooks.Prestart = []specs.Hook{}
+	}
+
 	for _, ns := range s.Linux.Namespaces {
 		if ns.Type == "network" && ns.Path == "" && !meta.Config.NetworkDisabled {
 			target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
@@ -124,12 +131,11 @@ func setupNetworkNamespace(ctx context.Context, meta *ContainerMeta, spec *SpecW
 				return err
 			}
 
-			s.Hooks = &specs.Hooks{
-				Prestart: []specs.Hook{{
-					Path: target,
-					Args: []string{"libnetwork-setkey", meta.ID, spec.netMgr.Controller().ID()},
-				}},
+			netnsPrestart := specs.Hook{
+				Path: target,
+				Args: []string{"libnetwork-setkey", meta.ID, spec.netMgr.Controller().ID()},
 			}
+			s.Hooks.Prestart = append(s.Hooks.Prestart, netnsPrestart)
 		}
 	}
 	return nil

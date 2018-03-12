@@ -764,3 +764,28 @@ func testRunInvalidCgroupParent(c *check.C, cgroupParent, cleanCgroupParent, nam
 		c.Fatalf("SECURITY: --cgroup-parent with ../../ relative paths cause files to be created in the host (this is bad) !!")
 	}
 }
+
+// TestRunWithDiskQuota tests running container with --disk-quota.
+func (suite *PouchRunSuite) TestRunWithDiskQuota(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+
+	ret := command.PouchRun("run", "--disk-quota", "2000m", "--name", "TestRunWithDiskQuota", busyboxImage, "df")
+	defer func() {
+		command.PouchRun("rm", "-f", "TestRunWithDiskQuota").Assert(c, icmd.Success)
+	}()
+
+	ret.Assert(c, icmd.Success)
+
+	out := ret.Combined()
+
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "/") && strings.Contains(line, "2048000") {
+			found = true
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
+}

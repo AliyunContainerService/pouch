@@ -86,5 +86,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// cgroup
 	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "default", "Optional parent cgroup for the container")
 
+	// disk quota
+	flagSet.StringSliceVar(&c.diskQuota, "disk-quota", nil, "Set disk quota for container")
+
 	return c
 }

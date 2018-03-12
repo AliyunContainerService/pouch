@@ -35,6 +35,9 @@ type ContainerConfig struct {
 	// Command to run specified an array of strings.
 	Cmd []string `json:"Cmd"`
 
+	// Set disk quota for container
+	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
+
 	// The domain name to use for the container.
 	Domainname string `json:"Domainname,omitempty"`
 
@@ -116,6 +119,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig AttachStdout false */
 
 /* polymorph ContainerConfig Cmd false */
+
+/* polymorph ContainerConfig DiskQuota false */
 
 /* polymorph ContainerConfig Domainname false */
 

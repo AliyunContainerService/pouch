@@ -58,3 +58,11 @@ func IsHubConnected() bool {
 	// TODO: found a proper way to test if hub address can be connected.
 	return true
 }
+
+// IsDiskQuota checks if it can use disk quota for container.
+func IsDiskQuota() bool {
+	if icmd.RunCommand("which", "quotaon").ExitCode == 0 {
+		return true
+	}
+	return false
+}

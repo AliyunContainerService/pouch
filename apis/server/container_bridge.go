@@ -295,6 +295,12 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		State:      meta.State,
 		Config:     meta.Config,
 		HostConfig: meta.HostConfig,
+		GraphDriver: &types.GraphDriverData{
+			Name: "overlay2",
+			Data: map[string]string{
+				"BaseFS": meta.BaseFS,
+			},
+		},
 	}
 
 	if meta.NetworkSettings != nil {

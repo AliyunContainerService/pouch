@@ -154,7 +154,7 @@ type ContainerMeta struct {
 	State *types.ContainerState `json:"State,omitempty"`
 
 	// BaseFS
-	BaseFS string
+	BaseFS string `json:"BaseFS, omitempty"`
 }
 
 // Key returns container's id.

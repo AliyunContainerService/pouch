@@ -3,6 +3,7 @@ package quota
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -185,15 +186,26 @@ func (quota *PrjQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint
 // GetFileAttr returns the directory attributes
 // lsattr -p $dir
 func (quota *PrjQuota) GetFileAttr(dir string) uint32 {
-	logrus.Debugf("get file attr, dir: %s", dir)
+	parent := path.Dir(dir)
+	qid := 0
 
-	v := 0
-	_, out, _, err := exec.Run(0, "lsattr", "-p", dir)
-	if err == nil {
-		arr := strings.Split(out, " ")
-		v, _ = strconv.Atoi(arr[0])
+	_, out, _, err := exec.Run(0, "lsattr", "-p", parent)
+	if err != nil {
+		return 0
 	}
-	return uint32(v)
+
+	lines := strings.Split(out, "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, " ")
+		if len(parts) > 2 && parts[2] == dir {
+			qid, _ = strconv.Atoi(parts[0])
+			break
+		}
+	}
+
+	logrus.Debugf("get file attr: [%s], quota id: [%d]", dir, qid)
+
+	return uint32(qid)
 }
 
 // SetFileAttr is used to set file attributes.

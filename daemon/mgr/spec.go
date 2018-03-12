@@ -60,6 +60,7 @@ var setupFunc = []SetupFunc{
 
 	// blkio spec
 	setupBlkio,
+	setupDiskQuota,
 
 	// IntelRdtL3Cbm
 	setupIntelRdt,
