@@ -587,6 +587,29 @@ paths:
           default: "all"
       tags: ["Container"]
 
+  /containers/{id}/resize:
+    post:
+      summary: "changes the size of the tty for a container"
+      operationId: "ContainerResize"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "height"
+          in: "query"
+          description: "height of the tty"
+          type: "string"
+        - name: "width"
+          in: "query"
+          description: "width of the tty"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+      tags: ["Container"]
+
   /exec/{id}/start:
     post:
       summary: "Start an exec instance"
@@ -3009,6 +3032,15 @@ definitions:
         type: "object"
         additionalProperties:
           type: "string"
+
+  ResizeOptions:
+    description: "options of resizing container tty size"
+    type: "object"
+    properties:
+      Height:
+        type: "integer"
+      Width:
+        type: "integer"
 
 parameters:
   id:
