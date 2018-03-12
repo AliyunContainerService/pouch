@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/cli/inspect"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -214,6 +216,7 @@ var volumeInspectDescription = "Inspect a volume in pouchd. " +
 // VolumeInspectCommand is used to implement 'volume inspect' command.
 type VolumeInspectCommand struct {
 	baseCommand
+	format string
 }
 
 // Init initializes VolumeInspectCommand command.
@@ -233,7 +236,9 @@ func (v *VolumeInspectCommand) Init(c *Cli) {
 }
 
 // addFlags adds flags for specific command.
-func (v *VolumeInspectCommand) addFlags() {}
+func (v *VolumeInspectCommand) addFlags() {
+	v.cmd.Flags().StringVarP(&v.format, "format", "f", "", "Format the output using the given go template")
+}
 
 // runVolumeInspect is the entry of VolumeInspectCommand command.
 func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
@@ -244,13 +249,11 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	resp, err := apiClient.VolumeInspect(ctx, name)
-	if err != nil {
-		return err
+	getRefFunc := func(ref string) (interface{}, error) {
+		return apiClient.VolumeInspect(ctx, ref)
 	}
 
-	v.cli.Print(resp)
-	return nil
+	return inspect.Inspect(os.Stdout, name, v.format, getRefFunc)
 }
 
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.

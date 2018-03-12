@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -9,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 	"github.com/pkg/errors"
@@ -91,4 +94,17 @@ func getImageInfo(apiClient client.ImageAPIClient, name string) (types.ImageInfo
 		}
 	}
 	return types.ImageInfo{}, errors.Errorf("image %s not found", name)
+}
+
+// TestInspectImage is to verify the format flag of image inspect command.
+func (suite *PouchImagesSuite) TestInspectImage(c *check.C) {
+	output := command.PouchRun("image", "inspect", busyboxImage).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// inspect image name
+	output = command.PouchRun("image", "inspect", "-f", "{{.Name}}", busyboxImage).Stdout()
+	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", busyboxImage))
 }

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"runtime"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -24,6 +27,19 @@ func (suite *PouchNetworkSuite) SetUpSuite(c *check.C) {
 
 	// Remove all Containers, in case there are legacy containers connecting network.
 	environment.PruneAllContainers(apiClient)
+}
+
+// TestNetworkInspectFormat tests the inspect format of network works.
+func (suite *PouchNetworkSuite) TestNetworkInspectFormat(c *check.C) {
+	output := command.PouchRun("network", "inspect", "bridge").Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// inspect network name
+	output = command.PouchRun("network", "inspect", "-f", "{{.Name}}", "bridge").Stdout()
+	c.Assert(output, check.Equals, "bridge\n")
 }
 
 // TestNetworkDefault tests the creation of default bridge/none/host network.
