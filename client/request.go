@@ -90,7 +90,8 @@ func (client *APIClient) newRequest(method, path string, query url.Values, obj i
 		}
 	}
 
-	req, err := http.NewRequest(method, client.baseURL+getAPIPath(path, query), body)
+	fullPath := client.baseURL + client.GetAPIPath(path, query)
+	req, err := http.NewRequest(method, fullPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -157,16 +158,4 @@ func cancellableDo(ctx context.Context, client *http.Client, req *http.Request) 
 	case resp := <-ctxResp:
 		return resp.response, resp.err
 	}
-}
-
-func getAPIPath(path string, query url.Values) string {
-	u := url.URL{
-		Path: path,
-	}
-
-	if len(query) > 0 {
-		u.RawQuery = query.Encode()
-	}
-
-	return u.String()
 }

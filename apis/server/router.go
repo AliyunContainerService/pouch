@@ -17,50 +17,53 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// versionMatcher defines to parse version url path.
+const versionMatcher = "/v{version:[0-9.]+}"
+
 func initRoute(s *Server) http.Handler {
 	r := mux.NewRouter()
 	// system
-	r.Path("/_ping").Methods(http.MethodGet).Handler(s.filter(s.ping))
-	r.Path("/info").Methods(http.MethodGet).Handler(s.filter(s.info))
-	r.Path("/version").Methods(http.MethodGet).Handler(s.filter(s.version))
-	r.Path("/auth").Methods(http.MethodPost).Handler(s.filter(s.auth))
+	r.Path(versionMatcher + "/_ping").Methods(http.MethodGet).Handler(s.filter(s.ping))
+	r.Path(versionMatcher + "/info").Methods(http.MethodGet).Handler(s.filter(s.info))
+	r.Path(versionMatcher + "/version").Methods(http.MethodGet).Handler(s.filter(s.version))
+	r.Path(versionMatcher + "/auth").Methods(http.MethodPost).Handler(s.filter(s.auth))
 
 	// container
-	r.Path("/containers/create").Methods(http.MethodPost).Handler(s.filter(s.createContainer))
-	r.Path("/containers/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainer))
-	r.Path("/containers/{name:.*}/stop").Methods(http.MethodPost).Handler(s.filter(s.stopContainer))
-	r.Path("/containers/{name:.*}/attach").Methods(http.MethodPost).Handler(s.filter(s.attachContainer))
-	r.Path("/containers/json").Methods(http.MethodGet).Handler(s.filter(s.getContainers))
-	r.Path("/containers/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getContainer))
-	r.Path("/containers/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeContainers))
-	r.Path("/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
-	r.Path("/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
-	r.Path("/containers/{id:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
-	r.Path("/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
-	r.Path("/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
-	r.Path("/containers/{name:.*}/update").Methods(http.MethodPost).Handler(s.filter(s.updateContainer))
+	r.Path(versionMatcher + "/containers/create").Methods(http.MethodPost).Handler(s.filter(s.createContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/stop").Methods(http.MethodPost).Handler(s.filter(s.stopContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/attach").Methods(http.MethodPost).Handler(s.filter(s.attachContainer))
+	r.Path(versionMatcher + "/containers/json").Methods(http.MethodGet).Handler(s.filter(s.getContainers))
+	r.Path(versionMatcher + "/containers/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeContainers))
+	r.Path(versionMatcher + "/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
+	r.Path(versionMatcher + "/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
+	r.Path(versionMatcher + "/containers/{id:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/update").Methods(http.MethodPost).Handler(s.filter(s.updateContainer))
 
 	// image
-	r.Path("/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
-	r.Path("/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
-	r.Path("/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
-	r.Path("/images/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeImage))
-	r.Path("/images/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getImage))
+	r.Path(versionMatcher + "/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
+	r.Path(versionMatcher + "/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
+	r.Path(versionMatcher + "/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
+	r.Path(versionMatcher + "/images/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeImage))
+	r.Path(versionMatcher + "/images/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getImage))
 
 	// volume
-	r.Path("/volumes").Methods(http.MethodGet).Handler(s.filter(s.listVolume))
-	r.Path("/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
-	r.Path("/volumes/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getVolume))
-	r.Path("/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
+	r.Path(versionMatcher + "/volumes").Methods(http.MethodGet).Handler(s.filter(s.listVolume))
+	r.Path(versionMatcher + "/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
+	r.Path(versionMatcher + "/volumes/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getVolume))
+	r.Path(versionMatcher + "/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
 
 	// metrics
-	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
+	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 
 	// network
-	r.Path("/networks").Methods(http.MethodGet).Handler(s.filter(s.listNetwork))
-	r.Path("/networks/create").Methods(http.MethodPost).Handler(s.filter(s.createNetwork))
-	r.Path("/networks/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getNetwork))
-	r.Path("/networks/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
+	r.Path(versionMatcher + "/networks").Methods(http.MethodGet).Handler(s.filter(s.listNetwork))
+	r.Path(versionMatcher + "/networks/create").Methods(http.MethodPost).Handler(s.filter(s.createNetwork))
+	r.Path(versionMatcher + "/networks/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getNetwork))
+	r.Path(versionMatcher + "/networks/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
 
 	if s.Config.Debug {
 		profilerSetup(r)

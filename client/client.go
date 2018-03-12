@@ -17,6 +17,8 @@ import (
 var (
 	defaultHost    = "unix:///var/run/pouchd.sock"
 	defaultTimeout = time.Second * 10
+	// defaultVersion is the version of the current stable API
+	defaultVersion = "v1.24"
 )
 
 // APIClient is a API client that performs all operations
@@ -26,6 +28,8 @@ type APIClient struct {
 	addr    string
 	baseURL string
 	HTTPCli *http.Client
+	// version of the server talks to
+	version string
 }
 
 // NewAPIClient initializes a new API client for the given host
@@ -45,11 +49,17 @@ func NewAPIClient(host string, tls utils.TLSConfig) (CommonAPIClient, error) {
 
 	basePath = generateBaseURL(newURL, tls)
 
+	version := os.Getenv("POUCH_API_VERSION")
+	if version == "" {
+		version = defaultVersion
+	}
+
 	return &APIClient{
 		proto:   newURL.Scheme,
 		addr:    addr,
 		baseURL: basePath,
 		HTTPCli: httpCli,
+		version: version,
 	}, nil
 }
 
@@ -129,4 +139,29 @@ func generateBaseURL(u *url.URL, tls utils.TLSConfig) string {
 // BaseURL returns the base URL of APIClient
 func (client *APIClient) BaseURL() string {
 	return client.baseURL
+}
+
+// GetAPIPath returns the versioned request path to call the api.
+// It appends the query parameters to the path if they are not empty.
+func (client *APIClient) GetAPIPath(path string, query url.Values) string {
+	var apiPath string
+	if client.version != "" {
+		v := strings.TrimPrefix(client.version, "v")
+		apiPath = fmt.Sprintf("/v%s%s", v, path)
+	} else {
+		apiPath = path
+	}
+
+	u := url.URL{
+		Path: apiPath,
+	}
+	if len(query) > 0 {
+		u.RawQuery = query.Encode()
+	}
+	return u.String()
+}
+
+// UpdateClientVersion sets client version new value.
+func (client *APIClient) UpdateClientVersion(v string) {
+	client.version = v
 }
