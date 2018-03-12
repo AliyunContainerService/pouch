@@ -30,8 +30,11 @@ ENV GOPATH=/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 # install golint. currently golint has no released version.
-RUN go get -u github.com/golang/lint/golint \
-    && go get -u github.com/go-swagger/go-swagger/cmd/swagger
+RUN go get -u github.com/golang/lint/golint
+
+# install go-swagger tool
+RUN curl -o /usr/local/bin/swagger -L'#' https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_$(echo `uname`|tr '[:upper:]' '[:lower:]')_amd64 \
+	&& chmod +x /usr/local/bin/swagger
 
 COPY . /go/src/github.com/alibaba/pouch
 
