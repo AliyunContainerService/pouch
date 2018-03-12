@@ -47,7 +47,7 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	}
 	containerID := result.ID
 
-	file := "/sys/fs/cgroup/cpu/" + containerID + "/cpu.shares"
+	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.shares"
 	if _, err := os.Stat(file); err != nil {
 		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
 	}
@@ -162,7 +162,7 @@ func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
 
 	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
-	res := command.PouchRun("update", "--memory-wappiness", "-2", name)
+	res := command.PouchRun("update", "--memory-swappiness", "-2", name)
 	c.Assert(res.Error, check.NotNil)
 
 	expectString := "invalid memory swappiness: -2 (its range is -1 or 0-100)"
