@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// PouchImagesSuite is the test suite fo help CLI.
+// PouchImagesSuite is the test suite for images CLI.
 type PouchImagesSuite struct{}
 
 func init() {

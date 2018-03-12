@@ -5,11 +5,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchExecSuite is the test suite fo exec CLI.
+// PouchExecSuite is the test suite for exec CLI.
 type PouchExecSuite struct{}
 
 func init() {

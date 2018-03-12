@@ -8,11 +8,12 @@ import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/version"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchVersionSuite is the test suite fo help CLI.
+// PouchVersionSuite is the test suite for version CLI.
 type PouchVersionSuite struct{}
 
 func init() {

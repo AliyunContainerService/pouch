@@ -1206,8 +1206,7 @@ definitions:
           PortBindings:
             type: "object"
             description: "A map of exposed container ports and the host port they should map to."
-            additionalProperties:
-              $ref: "#/definitions/PortBinding"
+            $ref: "#/definitions/PortMap"
           AutoRemove:
             type: "boolean"
             description: "Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set."

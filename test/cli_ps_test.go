@@ -6,11 +6,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchPsSuite is the test suite fo help CLI.
+// PouchPsSuite is the test suite for ps CLI.
 type PouchPsSuite struct{}
 
 func init() {

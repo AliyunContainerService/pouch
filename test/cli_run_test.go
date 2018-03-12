@@ -17,7 +17,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchRunSuite is the test suite for help CLI.
+// PouchRunSuite is the test suite for run CLI.
 type PouchRunSuite struct{}
 
 func init() {

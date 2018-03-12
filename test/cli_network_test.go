@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -13,7 +14,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchNetworkSuite is the test suite fo network CLI.
+// PouchNetworkSuite is the test suite for network CLI.
 type PouchNetworkSuite struct{}
 
 func init() {
@@ -297,4 +298,37 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	command.PouchRun("network", "remove", funcname)
+}
+
+func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	ret := icmd.RunCommand("which", "curl")
+	if ret.ExitCode != 0 {
+		c.Skip("Host does not have curl")
+	}
+
+	expct := icmd.Expected{
+		ExitCode: 0,
+		Out:      "It works",
+	}
+
+	image := "registry.hub.docker.com/library/httpd"
+
+	command.PouchRun("pull", image).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d",
+		"--name", funcname,
+		"-p", "9999:80",
+		image).Assert(c, icmd.Success)
+
+	time.Sleep(1 * time.Second)
+	err := icmd.RunCommand("curl", "localhost:9999").Compare(expct)
+	c.Assert(err, check.IsNil)
+
+	command.PouchRun("rm", "-f", funcname)
 }

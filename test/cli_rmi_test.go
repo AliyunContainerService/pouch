@@ -5,11 +5,12 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchRmiSuite is the test suite fo help CLI.
+// PouchRmiSuite is the test suite for rmi CLI.
 type PouchRmiSuite struct{}
 
 func init() {

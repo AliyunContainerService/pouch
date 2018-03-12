@@ -8,11 +8,12 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchCreateSuite is the test suite fo help CLI.
+// PouchCreateSuite is the test suite for create CLI.
 type PouchCreateSuite struct{}
 
 func init() {
@@ -32,7 +33,7 @@ func (suite *PouchCreateSuite) SetUpSuite(c *check.C) {
 func (suite *PouchCreateSuite) TearDownTest(c *check.C) {
 }
 
-// TestCreateName is to verify the correctness of creating contaier with specified name.
+// TestCreateName is to verify the correctness of creating container with specified name.
 func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 	name := "create-normal"
 	res := command.PouchRun("create", "--name", name, busyboxImage)
