@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerPauseSuite is the test suite for container pause/unpause API.
@@ -17,6 +19,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerPauseSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 // TestPauseUnpauseOk tests a running container could be paused and unpaused.

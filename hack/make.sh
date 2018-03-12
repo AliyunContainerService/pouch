@@ -118,7 +118,7 @@ function target()
 		pouch version
 
 		# If test is failed, print pouch daemon log.
-		$DIR/test/integration-test -check.v || { echo "pouch daemon log:"; cat $TMP/log; return 1; } 
+		$DIR/test/integration-test -test.v -check.v || { echo "pouch daemon log:"; cat $TMP/log; return 1; } 
 		;;
 	*)
 		echo "no such target: $target"

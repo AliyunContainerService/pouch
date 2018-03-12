@@ -41,7 +41,7 @@ func (suite *PouchStartSuite) TestStartCommand(c *check.C) {
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestStartInTTY tests "pouch start -i" work.
@@ -49,7 +49,7 @@ func (suite *PouchStartSuite) TestStartInTTY(c *check.C) {
 	// make echo server
 	name := "start-tty"
 	command.PouchRun("create", "--name", name, busyboxImage, "cat").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	// start tty and redirect
 	cmd := exec.Command(environment.PouchBinary, "start", "-a", "-i", name)
@@ -91,7 +91,7 @@ func (suite *PouchStartSuite) TestStartWithEnv(c *check.C) {
 	env := "abc=123"
 
 	command.PouchRun("create", "--name", name, "-e", env, busyboxImage).Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	output := command.PouchRun("exec", name, "/bin/env").Stdout()
@@ -108,7 +108,7 @@ func (suite *PouchStartSuite) TestStartWithEntrypoint(c *check.C) {
 
 	command.PouchRun("create", "--name", name, "--entrypoint", "sh", busyboxImage).Assert(c, icmd.Success)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	//TODO: check entrypoint really works
 }
@@ -118,7 +118,7 @@ func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
 	name := "start-workdir"
 
 	command.PouchRun("create", "--name", name, "--entrypoint", "pwd", "-w", "/tmp", busyboxImage).Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("start", "-a", name).Stdout()
 	if !strings.Contains(output, "/tmp") {
@@ -152,7 +152,7 @@ func (suite *PouchStartSuite) TestStartWithHostname(c *check.C) {
 	hostname := "pouch"
 
 	command.PouchRun("create", "--name", name, "--hostname", hostname, busyboxImage).Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	output := command.PouchRun("exec", name, "hostname").Stdout()
@@ -169,7 +169,7 @@ func (suite *PouchStartSuite) TestStartWithSysctls(c *check.C) {
 	name := "start-sysctl"
 
 	command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	output := command.PouchRun("exec", name, "cat", "/proc/sys/net/ipv4/ip_forward").Stdout()
@@ -186,7 +186,7 @@ func (suite *PouchStartSuite) TestStartWithAppArmor(c *check.C) {
 	name := "start-apparmor"
 
 	command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
@@ -201,7 +201,7 @@ func (suite *PouchStartSuite) TestStartWithSeccomp(c *check.C) {
 	name := "start-seccomp"
 
 	command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
@@ -217,7 +217,7 @@ func (suite *PouchStartSuite) TestStartWithCapability(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
@@ -228,7 +228,7 @@ func (suite *PouchStartSuite) TestStartWithPrivilege(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }

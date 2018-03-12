@@ -4,10 +4,12 @@ import (
 	"net/url"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerCreateSuite is the test suite for container create API.
@@ -20,6 +22,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerCreateSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 // TestCreateOk test create api is ok with default parameters.

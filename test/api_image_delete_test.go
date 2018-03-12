@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/url"
-
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -34,10 +32,6 @@ func (suite *APIImageDeleteSuite) TestDeleteUsingImage(c *check.C) {
 	cname := "TestDeleteUsingImage"
 	CreateBusyboxContainerOk(c, cname)
 	StartContainerOk(c, cname)
-
-	q := url.Values{}
-	q.Add("fromImage", helloworldImage)
-	q.Add("tag", "latest")
 
 	resp, err := request.Delete("/images/" + busyboxImage)
 	c.Assert(err, check.IsNil)

@@ -55,7 +55,7 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 		err := command.PouchRun("run", "--name", funcname, "--net", "none", busyboxImage, "ip", "r").Compare(expct)
 		c.Assert(err, check.IsNil)
 
-		command.PouchRun("rm", "-f", funcname)
+		DelContainerForceMultyTime(c, funcname)
 	}
 	{
 		cmd := "ip r |grep default"
@@ -68,7 +68,7 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 		err := command.PouchRun("run", "--name", funcname, "--net", "host", busyboxImage, "ip", "r").Compare(expct)
 		c.Assert(err, check.IsNil)
 
-		command.PouchRun("rm", "-f", funcname)
+		DelContainerForceMultyTime(c, funcname)
 	}
 }
 
@@ -102,7 +102,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 		err := command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "link", "ls", "eth0").Compare(expct)
 		c.Assert(err, check.IsNil)
 
-		command.PouchRun("rm", "-f", funcname)
+		DelContainerForceMultyTime(c, funcname)
 	}
 
 	{
@@ -119,7 +119,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 	}
 	{
 		// remove container, then the veth device should also been removed
-		command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
+		DelContainerForceMultyTime(c, funcname)
 
 		// get the ID of bridge to construct the bridge name.
 		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"
@@ -149,7 +149,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
 		c.Assert(err, check.IsNil)
 
-		command.PouchRun("rm", "-f", funcname)
+		DelContainerForceMultyTime(c, funcname)
 	}
 	{
 		// running container is stopped, then the veth device should also been removed
@@ -168,7 +168,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 		err := icmd.RunCommand("bash", "-c", cmd).Compare(expct)
 		c.Assert(err, check.IsNil)
 
-		command.PouchRun("rm", "-f", funcname)
+		DelContainerForceMultyTime(c, funcname)
 	}
 	{
 		// get the ID of bridge to construct the bridge name.

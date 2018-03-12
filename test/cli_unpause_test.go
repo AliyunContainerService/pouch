@@ -34,7 +34,7 @@ func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 
 		command.PouchRun("start", name).Assert(c, icmd.Success)
 
-		defer command.PouchRun("rm", "-f", name)
+		defer DelContainerForceMultyTime(c, name)
 	}
 
 	command.PouchRun("pause", containernames[0]).Assert(c, icmd.Success)

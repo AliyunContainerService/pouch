@@ -5,10 +5,12 @@ import (
 	"io"
 	"net"
 
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerExecStartSuite is the test suite for container exec start API.
@@ -21,6 +23,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerExecStartSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 func checkEchoSuccess(c *check.C, conn net.Conn, br *bufio.Reader, exp string) {

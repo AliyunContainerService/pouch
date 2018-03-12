@@ -3,10 +3,12 @@ package main
 import (
 	"net/url"
 
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerAttachSuite is the test suite for container attach API.
@@ -19,6 +21,8 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerAttachSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
 }
 
 // TestContainerAttachStdin tests attaching stdin is OK.

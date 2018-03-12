@@ -47,7 +47,7 @@ func (suite *PouchRunSuite) TestRun(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output %s: should contains container %s\n", out, name)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunPrintHi is to verify run container with executing a command.
@@ -60,7 +60,7 @@ func (suite *PouchRunSuite) TestRunPrintHi(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, "hi") {
 		c.Fatalf("unexpected output %s expected hi\n", out)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunPrintHiByImageID is to verify run container with executing a command by image ID.
@@ -77,7 +77,7 @@ func (suite *PouchRunSuite) TestRunPrintHiByImageID(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, "hi") {
 		c.Fatalf("unexpected output %s expected hi\n", out)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunDeviceMapping is to verify --device param when running a container.
@@ -95,7 +95,7 @@ func (suite *PouchRunSuite) TestRunDeviceMapping(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, testDev) {
 		c.Fatalf("unexpected output %s expected %s\n", out, testDev)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunDevicePermissions is to verify --device permissions mode when running a container.
@@ -114,7 +114,7 @@ func (suite *PouchRunSuite) TestRunDevicePermissions(c *check.C) {
 	if out := res.Combined(); !strings.HasPrefix(out, permissions) {
 		c.Fatalf("Output should begin with %s, got %s\n", permissions, out)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunDeviceInvalidMode is to verify --device wrong mode when running a container.
@@ -148,7 +148,7 @@ func (suite *PouchRunSuite) TestRunDeviceDirectory(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, expected) {
 		c.Fatalf("Output should contain %s, got %s\n", expected, out)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithBadDevice is to verify --device with bad device dir when running a container.
@@ -191,7 +191,7 @@ func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 	if out := res.Combined(); !strings.Contains(out, "524288 kB") {
 		c.Fatalf("upexpected output %s expected %s\n", out, "524288 kB")
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // Comment this flaky test.
@@ -209,7 +209,7 @@ func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 //	if out := res.Combined(); !strings.Contains(out, name) {
 //		c.Fatalf("expect container %s to be up: %s\n", name, out)
 //	}
-//	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+//	DelContainerForceMultyTime(c,name)
 //}
 
 // TestRunRestartPolicyNone is to verify restart policy none works.
@@ -225,7 +225,7 @@ func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
 	if out := res.Combined(); strings.Contains(out, name) {
 		c.Fatalf("expect container %s to be exited: %s\n", name, out)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithIPCMode is to verify --specific IPC mode when running a container.
@@ -235,7 +235,7 @@ func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--ipc", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithPIDMode is to verify --specific PID mode when running a container.
@@ -245,7 +245,7 @@ func (suite *PouchRunSuite) TestRunWithPIDMode(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--pid", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithUTSMode is to verify --specific UTS mode when running a container.
@@ -254,7 +254,7 @@ func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--uts", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithSysctls is to verify run container with sysctls.
@@ -269,7 +269,7 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	if !strings.Contains(output, "1") {
 		c.Fatalf("failed to run a container with sysctls: %s", output)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithUser is to verify run container with user.
@@ -284,7 +284,7 @@ func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
 	if !strings.Contains(output, user) {
 		c.Fatalf("failed to run a container with user: %s", output)
 	}
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 
 	name = "run-user-admin"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
@@ -305,7 +305,7 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 
 	// TODO: do the test more strictly with effective AppArmor profile.
 
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithSeccomp is to verify run container with security option seccomp.
@@ -318,7 +318,7 @@ func (suite *PouchRunSuite) TestRunWithSeccomp(c *check.C) {
 
 	// TODO: do the test more strictly with effective seccomp profile.
 
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithCapability is to verify run container with capability.
@@ -328,7 +328,7 @@ func (suite *PouchRunSuite) TestRunWithCapability(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithoutCapability tests running container with --cap-drop
@@ -339,7 +339,7 @@ func (suite *PouchRunSuite) TestRunWithoutCapability(c *check.C) {
 		Err: "Operation not permitted",
 	}
 	command.PouchRun("run", "--name", name, "--cap-drop", capability, busyboxImage, "chown", "755", "/tmp").Compare(expt)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithPrivilege is to verify run container with privilege.
@@ -348,7 +348,7 @@ func (suite *PouchRunSuite) TestRunWithPrivilege(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithBlkioWeight is to verify --specific Blkio Weight when running a container.
@@ -357,7 +357,7 @@ func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
 
 	res := command.PouchRun("run", "--name", name, "--blkio-weight", "500", busyboxImage)
 	res.Assert(c, icmd.Success)
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestRunWithLocalVolume is to verify run container with -v volume works.
@@ -377,7 +377,7 @@ func (suite *PouchRunSuite) TestRunWithLocalVolume(c *check.C) {
 	// check the existence of /mnt/local/function/test
 	icmd.RunCommand("stat", "/mnt/local/"+funcname+"/test").Assert(c, icmd.Success)
 
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
 }
 
@@ -408,7 +408,7 @@ func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 	checkFileContains(c, path, "104857600")
 
 	// remove the container
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunWithMemoryswap is to verify the valid running container with --memory-swap
@@ -431,7 +431,7 @@ func (suite *PouchRunSuite) TestRunWithMemoryswap(c *check.C) {
 	checkFileContains(c, path, "209715200")
 
 	// remove the container
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunWithMemoryswappiness is to verify the valid running container with memory-swappiness
@@ -453,7 +453,7 @@ func (suite *PouchRunSuite) TestRunWithMemoryswappiness(c *check.C) {
 	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.swappiness", containerID)
 	checkFileContains(c, path, "70")
 
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunWithCPULimit tests CPU related flags.
@@ -488,7 +488,7 @@ func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 		checkFileContains(c, path, "1000")
 	}
 
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunBlockIOWeight tests running container with --blkio-weight flag.
@@ -512,7 +512,7 @@ func (suite *PouchRunSuite) TestRunBlockIOWeight(c *check.C) {
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.weight", containerID)
 		checkFileContains(c, path, "100")
 	}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunBlockIOWeightDevice tests running container with --blkio-weight-device flag.
@@ -542,7 +542,7 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 	//	path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.weight_device", containerID)
 	//	checkFileContains(c, path, "100")
 	//}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunDeviceReadBps tests running container with --device-read-bps flag.
@@ -572,7 +572,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
 	}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunDeviceWriteBps tests running container with --device-write-bps flag.
@@ -602,7 +602,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
 	}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunDeviceReadIops tests running container with --device-read-iops flag.
@@ -632,7 +632,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_iops_device", containerID)
 		checkFileContains(c, path, "1000")
 	}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunDeviceWriteIops tests running container with --device-write-iops flag.
@@ -662,7 +662,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_iops_device", containerID)
 		checkFileContains(c, path, "1000")
 	}
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 //
@@ -699,7 +699,7 @@ func (suite *PouchRunSuite) TestRunWithHostFileVolume(c *check.C) {
 	cname := "TestRunWithCPULimit"
 	command.PouchRun("run", "-d", "--name", cname, "-v", fmt.Sprintf("%s:%s", filepath, filepath), busyboxImage).Assert(c, icmd.Success)
 
-	command.PouchRun("rm", "-f", cname).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRunWithCgroupParent tests running container with --cgroup-parent.
