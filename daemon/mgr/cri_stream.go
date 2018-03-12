@@ -63,10 +63,7 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 		return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
 	}
 
-	// Not return until exec finished.
-	result := <-ei.ExitCh
-
-	return result.ExitCode(), nil
+	return uint32(ei.ExitCode), nil
 }
 
 // Attach attaches to a running container.

@@ -12,12 +12,12 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ExecCreateResp exec create resp
+// ExecCreateResp contains response of Remote API POST "/containers/{name:.*}/exec".
 // swagger:model ExecCreateResp
 
 type ExecCreateResp struct {
 
-	// Id
+	// ID is the exec ID
 	ID string `json:"Id,omitempty"`
 }
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
-	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -25,20 +24,25 @@ const (
 // container in the store.
 type ContainerFilter func(*ContainerMeta) bool
 
-type containerExecConfig struct {
+// ContainerExecConfig is the config a process exec.
+type ContainerExecConfig struct {
+	// ExecID identifies the ID of this exec
+	ExecID string
+
+	// contains the config of this exec
 	types.ExecCreateConfig
 
 	// Save the container's id into exec config.
 	ContainerID string
 
-	// Get exit message from exitCh, we could only get it once.
-	// Do we need to get the result of exec many times?
-	exitCh chan *ctrd.Message
-}
+	// ExitCode records the exit code of a exec process.
+	ExitCode int64
 
-// ContainerExecInspect holds low-level information about exec command.
-type ContainerExecInspect struct {
-	ExitCh chan *ctrd.Message
+	// Running represents whether the exec process is running inside container.
+	Running bool
+
+	// Error represents the exec process response error.
+	Error error
 }
 
 // AttachConfig wraps some infos of attaching.

@@ -64,7 +64,10 @@ type ContainerMgr interface {
 	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
 
 	// InspectExec returns low-level information about exec command.
-	InspectExec(ctx context.Context, execid string) (*ContainerExecInspect, error)
+	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
+
+	// GetExecConfig returns execonfig of a exec process inside container.
+	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
 
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
@@ -244,11 +247,11 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 	}
 
 	execid := randomid.Generate()
-	execConfig := &containerExecConfig{
+	execConfig := &ContainerExecConfig{
+		ExecID:           execid,
 		ExecCreateConfig: *config,
 		ContainerID:      c.ID(),
 	}
-	execConfig.exitCh = make(chan *ctrd.Message, 1)
 
 	mgr.ExecProcesses.Put(execid, execConfig)
 
@@ -261,7 +264,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 	if !ok {
 		return errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+execid)
 	}
-	execConfig, ok := v.(*containerExecConfig)
+	execConfig, ok := v.(*ContainerExecConfig)
 	if !ok {
 		return fmt.Errorf("invalid exec config type")
 	}
@@ -295,28 +298,54 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		return err
 	}
 
-	return mgr.Client.ExecContainer(ctx, &ctrd.Process{
+	execConfig.Running = true
+	defer func() {
+		if err != nil {
+			execConfig.Running = false
+			exitCode := 126
+			execConfig.ExitCode = int64(exitCode)
+		}
+		mgr.ExecProcesses.Put(execid, execConfig)
+	}()
+
+	if err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,
 		ExecID:      execid,
 		IO:          io,
 		P:           process,
-	})
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // InspectExec returns low-level information about exec command.
-func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*ContainerExecInspect, error) {
+func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error) {
+	execConfig, err := mgr.GetExecConfig(ctx, execid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.ContainerExecInspect{
+		ID: execConfig.ExecID,
+		// FIXME: try to use the correct running status of exec
+		Running:     execConfig.Running,
+		ExitCode:    execConfig.ExitCode,
+		ContainerID: execConfig.ContainerID,
+	}, nil
+}
+
+// GetExecConfig returns execonfig of a exec process inside container.
+func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error) {
 	v, ok := mgr.ExecProcesses.Get(execid).Result()
 	if !ok {
-		return nil, errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+execid)
+		return nil, errors.Wrap(errtypes.ErrNotfound, "exec process "+execid)
 	}
-	execConfig, ok := v.(*containerExecConfig)
+	execConfig, ok := v.(*ContainerExecConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid exec config type")
 	}
-
-	return &ContainerExecInspect{
-		ExitCh: execConfig.exitCh,
-	}, nil
+	return execConfig, nil
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
@@ -1300,11 +1329,13 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	if !ok {
 		return errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+id)
 	}
-	execConfig, ok := v.(*containerExecConfig)
+	execConfig, ok := v.(*ContainerExecConfig)
 	if !ok {
 		return fmt.Errorf("invalid exec config type")
 	}
-	execConfig.exitCh <- m
+	execConfig.ExitCode = int64(m.ExitCode())
+	execConfig.Running = false
+	execConfig.Error = m.RawError()
 
 	// TODO: GC invalid mgr.ExecProcess.
 	return nil

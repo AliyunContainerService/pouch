@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// ExecCreateConfig exec create config
+// ExecCreateConfig is a small subset of the Config struct that holds the configuration.
 // swagger:model ExecCreateConfig
 
 type ExecCreateConfig struct {
