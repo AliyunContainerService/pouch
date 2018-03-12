@@ -696,6 +696,28 @@ paths:
         500:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
+  /containers/{id}/upgrade:
+      post:
+        summary: "Upgrade a container with new image and args"
+        operationId: "ContainerUpgrade"
+        parameters:
+          - $ref: "#/parameters/id"
+          - name: "upgradeConfig"
+            in: "body"
+            schema:
+              $ref: "#/definitions/ContainerUpgradeConfig"
+        responses:
+          200:
+            description: "no error"
+          400:
+            description: "bad parameter"
+            schema:
+              $ref: "#/definitions/Error"
+          404:
+            $ref: "#/responses/404ErrorResponse"
+          500:
+            $ref: "#/responses/500ErrorResponse"
+        tags: ["Container"]
 
   /volumes:
     get:
@@ -1364,6 +1386,18 @@ definitions:
             type: "object"
             additionalProperties:
               type: "string"
+
+  ContainerUpgradeConfig:
+    description: |
+      ContainerUpgradeConfig is used for API "POST /containers/upgrade".
+      It wraps all kinds of config used in container upgrade.
+      It can be used to encode client params in client and unmarshal request body in daemon side.
+    allOf:
+      - $ref: "#/definitions/ContainerConfig"
+      - type: "object"
+        properties:
+          HostConfig:
+            $ref: "#/definitions/HostConfig"
 
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"

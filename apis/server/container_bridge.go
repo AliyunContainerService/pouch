@@ -311,3 +311,24 @@ func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, re
 	rw.WriteHeader(http.StatusOK)
 	return nil
 }
+
+func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	config := &types.ContainerUpgradeConfig{}
+	// decode request body
+	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := config.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	name := mux.Vars(req)["name"]
+
+	if err := s.ContainerMgr.Upgrade(ctx, name, config); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	return nil
+}
