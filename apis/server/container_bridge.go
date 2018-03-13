@@ -332,3 +332,7 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 	rw.WriteHeader(http.StatusOK)
 	return nil
 }
+
+func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	return nil
+}

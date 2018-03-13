@@ -5,6 +5,7 @@ import (
 	"context"
 	"net"
 	"net/url"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 )
@@ -185,4 +186,22 @@ func (client *APIClient) ContainerUpdate(ctx context.Context, name string, confi
 // ContainerUpgrade upgrade a container with new image and args.
 func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
 	return nil
+}
+
+// ContainerTop shows process information from within a container.
+func (client *APIClient) ContainerTop(ctx context.Context, name string, arguments []string) (types.ContainerProcessList, error) {
+	response := types.ContainerProcessList{}
+	query := url.Values{}
+	if len(arguments) > 0 {
+		query.Set("ps_args", strings.Join(arguments, " "))
+	}
+
+	resp, err := client.get(ctx, "/containers/"+name+"/top", query, nil)
+	if err != nil {
+		return response, err
+	}
+
+	err = decodeBody(&response, resp.Body)
+	ensureCloseReader(resp)
+	return response, err
 }

@@ -450,6 +450,27 @@ paths:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
+  /containers/{id}/top:
+    post:
+      summary: "Display the running processes of a container"
+      operationId: "ContainerTop"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "ps_args"
+          in: "query"
+          description: "top arguments"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/ContainerProcessList"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /containers/{id}:
     delete:
       summary: "Remove one container"
@@ -2002,6 +2023,22 @@ definitions:
         minItems: 1
         items:
           type: "string"
+  ContainerProcessList:
+    description: OK Response to ContainerTop operation
+    type: "object"
+    properties:
+      Titles:
+        description: "The ps column titles"
+        type: "array"
+        items:
+          type: "string"
+      Processes:
+        description: "Each process running in the container, where each is process is an array of values corresponding to the titles"
+        type: "array"
+        items:
+          type: "array"
+          items:
+            type: "string"
 
   ExecCreateResp:
     type: "object"
