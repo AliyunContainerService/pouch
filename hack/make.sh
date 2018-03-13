@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 # This script is to build pouch binaries and execute pouch tests.
 
@@ -74,8 +74,8 @@ function target()
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
 		;;
 	build)
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"  >$TMP/build.log 2>&1
-		install_pouch  >$TMP/install.log 2>&1
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"  >$TMP/build.log
+		install_pouch  >$TMP/install.log
 		;;
 	unit-test)
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
