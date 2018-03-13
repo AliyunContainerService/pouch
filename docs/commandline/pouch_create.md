@@ -36,6 +36,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env strings                  Set environment variables for container
+      --expose strings               Set expose container's ports
   -h, --help                         help for create
       --hostname string              Set container's hostname
       --initscript string            Initial script executed in container
@@ -51,6 +52,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --name string                  Specify name of container
       --net strings                  Set networks to container
       --pid string                   PID namespace to use
+  -p, --port strings                 Set container ports mapping
       --privileged                   Give extended privileges to the container
       --restart string               Restart policy to apply when container exits
       --rich                         Start container in rich container mode. (default false)

@@ -1,37 +1,18 @@
-## pouch run
+## pouch upgrade
 
-Create a new container and start it
+Upgrade a container with new image and args
 
 ### Synopsis
 
-Create a container object in Pouchd, and start the container. This is useful when you just want to use one command to start a container. 
+Upgrade a container with new image and args
 
 ```
-pouch run [OPTIONS] IMAGE [ARG...]
-```
-
-### Examples
-
-```
-$ pouch run --name test registry.hub.docker.com/library/busybox:latest echo "hi"
-hi
-$ pouch ps
-Name   ID       Status    Image                                            Runtime   Created
-test   23f852   stopped   registry.hub.docker.com/library/busybox:latest   runc      4 seconds ago
-$ pouch run -d --name test registry.hub.docker.com/library/busybox:latest
-90719b5f9a455b3314a49e72e3ecb9962f215e0f90153aa8911882acf2ba2c84
-$ pouch ps
-Name   ID       Status    Image                                            Runtime   Created
-test   90719b   stopped   registry.hub.docker.com/library/busybox:latest   runc      5 seconds ago
-$ pouch run --device /dev/zero:/dev/testDev:rwm --name test registry.hub.docker.com/library/busybox:latest ls -l /dev/testDev
-crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
-	
+pouch upgrade [OPTIONS] IMAGE [COMMAND] [ARG...]
 ```
 
 ### Options
 
 ```
-  -a, --attach                       Attach container's STDOUT and STDERR
       --blkio-weight uint16          Block IO (relative weight), between 10 and 1000, or 0 to disable
       --blkio-weight-device value    Block IO weight (relative device weight) (default [])
       --cap-add strings              Add Linux capabilities
@@ -40,8 +21,6 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --cpu-share int                CPU shares (relative weight)
       --cpuset-cpus string           CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string           MEMs in which to allow execution (0-3, 0,1)
-  -d, --detach                       Run container in background and print container ID
-      --detach-keys string           Override the key sequence for detaching a container
       --device strings               Add a host device to the container
       --device-read-bps value        Limit read rate (bytes per second) from a device (default [])
       --device-read-iops value       Limit read rate (IO per second) from a device (default [])
@@ -51,11 +30,10 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env strings                  Set environment variables for container
       --expose strings               Set expose container's ports
-  -h, --help                         help for run
+  -h, --help                         help for upgrade
       --hostname string              Set container's hostname
       --initscript string            Initial script executed in container
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
-  -i, --interactive                  Attach container's STDIN
       --ipc string                   IPC namespace to use
   -l, --label strings                Set labels for a container
   -m, --memory string                Memory limit

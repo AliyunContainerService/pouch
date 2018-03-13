@@ -590,6 +590,36 @@ POST /containers/{id}/update
 * Container
 
 
+<a name="containerupgrade"></a>
+### Upgrade a container with new image and args
+```
+POST /containers/{id}/upgrade
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Body**|**upgradeConfig**  <br>*optional*||[ContainerUpgradeConfig](#containerupgradeconfig)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**400**|bad parameter|[Error](#error)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="execstart"></a>
 ### Start an exec instance
 ```
@@ -1388,6 +1418,47 @@ GET "/containers/{id}/json"
 |**Status**  <br>*optional*||[Status](#status)|
 
 
+<a name="containerupgradeconfig"></a>
+### ContainerUpgradeConfig
+ContainerUpgradeConfig is used for API "POST /containers/upgrade".
+It wraps all kinds of config used in container upgrade.
+It can be used to encode client params in client and unmarshal request body in daemon side.
+
+*Polymorphism* : Composition
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**ArgsEscaped**  <br>*optional*|Command is already escaped (Windows only)|boolean|
+|**AttachStderr**  <br>*optional*|Whether to attach to `stderr`.  <br>**Default** : `true`|boolean|
+|**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
+|**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
+|**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
+|**Domainname**  <br>*optional*|The domain name to use for the container.|string|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
+|**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
+|**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
+|**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
+|**Image**  <br>*required*|The name of the image to use when creating the container|string|
+|**InitScript**  <br>*optional*|Initial script executed in container. The script will be executed before entrypoint or command|string|
+|**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
+|**MacAddress**  <br>*optional*|MAC address of the container.|string|
+|**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
+|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
+|**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
+|**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
+|**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
+|**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
+|**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
+|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
+|**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.|boolean|
+|**User**  <br>*optional*|The user that commands are run as inside the container.|string|
+|**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
+|**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
+
+
 <a name="devicemapping"></a>
 ### DeviceMapping
 A device mapping between the host and container
@@ -1549,7 +1620,7 @@ Container configuration that depends on the host we are running on
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.  <br>**Example** : `500`|integer|
 |**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
 |**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
-|**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|< string, [PortBinding](#portbinding) > map|
+|**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|[PortMap](#portmap)|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
 |**ReadonlyRootfs**  <br>*optional*|Mount the container's root filesystem as read only.|boolean|
