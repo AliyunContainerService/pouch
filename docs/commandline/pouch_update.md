@@ -4,10 +4,23 @@ Update the configurations of a container
 
 ### Synopsis
 
-Update the configurations of a container
+Update a container's configurations, including memory, cpu and diskquota etc.  You can update a container when it is running.
 
 ```
 pouch update [OPTIONS] CONTAINER
+```
+
+### Examples
+
+```
+$ pouch run -d -m 20m --name test-update registry.hub.docker.com/library/busybox:latest
+8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf79c6bbaef812
+$ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf79c6bbaef812/memory.limit_in_bytes
+20971520
+$ pouch update -m 30m test-update
+$ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf79c6bbaef812/memory.limit_in_bytes
+31457280
+	
 ```
 
 ### Options

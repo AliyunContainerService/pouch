@@ -24,7 +24,8 @@ Driver:       local
 ### Options
 
 ```
-  -h, --help   help for inspect
+  -f, --format string   Format the output using the given go template
+  -h, --help            help for inspect
 ```
 
 ### Options inherited from parent commands
