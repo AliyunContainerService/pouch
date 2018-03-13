@@ -10,6 +10,7 @@ KillMode=process
 Restart=on-failure
 ExecStopPost=-/usr/bin/fusermount -u /var/lib/lxcfs
 Delegate=yes
+ExecStartPost=pouch remount-lxcfs
 
 [Install]
 WantedBy=multi-user.target

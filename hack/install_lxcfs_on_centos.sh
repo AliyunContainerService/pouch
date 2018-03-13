@@ -7,6 +7,7 @@
 yes | yum install autotools-dev m4 autoconf2.13 autobook autoconf-archive gnu-standards autoconf-doc libtool
 yes | yum install fuse-devel.$(uname -p)
 yes | yum install pam-devel.$(uname -p)
+yes | yum install fuse.$(uname -p)
 
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
