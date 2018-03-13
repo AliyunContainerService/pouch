@@ -63,31 +63,29 @@ func setupProcessTTY(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) e
 }
 
 func setupProcessUser(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) (err error) {
-	// The user option is complicated, now we only handle case "uid".
-	// resolve uid:gid and user:group.
-	if c.Config.User == "" {
-		return nil
-	}
-
 	// container rootfs is created by containerd, pouch just creates a snapshot
 	// id and keeps it in memory. If container is in start process, we can not
 	// find if user if exist in container image, so we do some simple check.
 	var uid, gid uint32
 
-	if _, err := os.Stat(c.BaseFS); err != nil {
-		logrus.Infof("snapshot %s is not exist, maybe in start process.", c.BaseFS)
-		uid, gid = user.GetIntegerID(c.Config.User)
-	} else {
-		uid, gid, err = user.Get(c.BaseFS, c.Config.User)
-		if err != nil {
-			return err
+	if c.Config.User != "" {
+		if _, err := os.Stat(c.BaseFS); err != nil {
+			logrus.Infof("snapshot %s is not exist, maybe in start process.", c.BaseFS)
+			uid, gid = user.GetIntegerID(c.Config.User)
+		} else {
+			uid, gid, err = user.Get(c.BaseFS, c.Config.User)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	spec.s.Process.User = specs.User{
-		UID: uid,
-		GID: gid,
-	}
+	additionalGids := user.GetAdditionalGids(c.HostConfig.GroupAdd)
 
+	spec.s.Process.User = specs.User{
+		UID:            uid,
+		GID:            gid,
+		AdditionalGids: additionalGids,
+	}
 	return nil
 }

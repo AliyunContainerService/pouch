@@ -48,6 +48,9 @@ const (
 	// TODO: specify them in the parameters of pouchd.
 	streamServerAddress = ""
 	streamServerPort    = "10010"
+
+	namespaceModeHost = "host"
+	namespaceModeNone = "none"
 )
 
 var (

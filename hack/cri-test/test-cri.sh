@@ -23,10 +23,10 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 
 # CRI_FOCUS focuses the test to run.
 # With the CRI manager completes its function, we may need to expand this field.
-CRI_FOCUS=${CRI_FOCUS:-"PodSandbox|AppArmor|Privileged is true|basic operations on container|Runtime info|mount propagation|volume and device|RunAsUser|container port|Streaming"}
+CRI_FOCUS=${CRI_FOCUS:-"PodSandbox|AppArmor|Privileged is true|basic operations on container|Runtime info|mount propagation|volume and device|RunAsUser|container port|Streaming|NamespaceOption|SupplementalGroups"}
 
 # CRI_SKIP skips the test to skip.
-CRI_SKIP=${CRI_SKIP:-"RunAsUserName|attach"}
+CRI_SKIP=${CRI_SKIP:-"RunAsUserName|attach|HostNetwork"}
 # REPORT_DIR is the the directory to store test logs.
 REPORT_DIR=${REPORT_DIR:-"/tmp/test-cri"}
 

@@ -24,6 +24,7 @@ type container struct {
 	entrypoint       string
 	workdir          string
 	user             string
+	groupAdd         []string
 	hostname         string
 	cpushare         int64
 	cpusetcpus       string
@@ -228,6 +229,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			IpcMode:       c.ipcMode,
 			PidMode:       c.pidMode,
 			UTSMode:       c.utsMode,
+			GroupAdd:      c.groupAdd,
 			Sysctls:       sysctls,
 			SecurityOpt:   c.securityOpt,
 			NetworkMode:   networkMode,
