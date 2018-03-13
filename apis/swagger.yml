@@ -521,6 +521,72 @@ paths:
           required: true
       tags: ["Exec"]
 
+  /containers/{id}/logs:
+    get:
+      summary: "Get container logs"
+      description: |
+        Get `stdout` and `stderr` logs from a container.
+
+        Note: This endpoint works only for containers with the `json-file` or `journald` logging driver.
+      operationId: "ContainerLogs"
+      responses:
+        101:
+          description: "logs returned as a stream"
+          schema:
+            type: "string"
+            format: "binary"
+        200:
+          description: "logs returned as a string in response body"
+          schema:
+            type: "string"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "follow"
+          in: "query"
+          description: |
+            Return the logs as a stream.
+          type: "boolean"
+          default: false
+        - name: "stdout"
+          in: "query"
+          description: "Return logs from `stdout`"
+          type: "boolean"
+          default: false
+        - name: "stderr"
+          in: "query"
+          description: "Return logs from `stderr`"
+          type: "boolean"
+          default: false
+        - name: "since"
+          in: "query"
+          description: "Only return logs since this time, as a UNIX timestamp"
+          type: "integer"
+          default: 0
+        - name: "until"
+          in: "query"
+          description: "Only return logs before this time, as a UNIX timestamp"
+          type: "integer"
+          default: 0
+        - name: "timestamps"
+          in: "query"
+          description: "Add timestamps to every log line"
+          type: "boolean"
+          default: false
+        - name: "tail"
+          in: "query"
+          description: "Only return this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines."
+          type: "string"
+          default: "all"
+      tags: ["Container"]
+
   /exec/{id}/start:
     post:
       summary: "Start an exec instance"
@@ -2177,6 +2243,38 @@ definitions:
       FinishedAt:
         description: "The time when this container last exited."
         type: "string"
+
+  ContainerLogsOptions:
+    type: "object"
+    properties:
+      ShowStdout:
+        description: "Return logs from `stdout`"
+        type: "boolean"
+      ShowStderr:
+        description: "Return logs from `stderr`"
+        type: "boolean"
+      Since:
+        description: "Only return logs after this time, as a UNIX timestamp"
+        type: "string"
+      Until:
+        description: "Only reture logs before this time, as a UNIX timestamp"
+        type: "string"
+      Timestamps:
+        description: "Add timestamps to every log line"
+        type: "boolean"
+      Follow:
+        description: "Return logs as a stream"
+        type: "boolean"
+      Tail:
+        description: "Only reture this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines."
+        type: "string"
+      Details:
+        description: "Show extra details provided to logs"
+        type: "boolean"
+
+
+    description: The parameters to filter the log.
+
 
   Status:
     description: The status of the container. For example, "running" or "exited".
