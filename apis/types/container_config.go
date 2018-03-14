@@ -39,7 +39,7 @@ type ContainerConfig struct {
 	Domainname string `json:"Domainname,omitempty"`
 
 	// The entry point for the container as a string or an array of strings.
-	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.
 	//
 	Entrypoint []string `json:"Entrypoint"`
 
@@ -70,7 +70,7 @@ type ContainerConfig struct {
 	// Disable networking for the container.
 	NetworkDisabled bool `json:"NetworkDisabled,omitempty"`
 
-	// `ONBUILD` metadata that were defined in the image's `Dockerfile`.
+	// `ONBUILD` metadata that were defined.
 	OnBuild []string `json:"OnBuild"`
 
 	// Open `stdin`

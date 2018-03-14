@@ -576,7 +576,7 @@ paths:
 
         After the headers and two new lines, the TCP connection can now be used for raw, bidirectional communication between the client and server.
 
-        To hint potential proxies about connection hijacking, the Docker client can also optionally send connection upgrade headers.
+        To hint potential proxies about connection hijacking, the Pouch client can also optionally send connection upgrade headers.
 
         For example, the client sends this request to upgrade the connection:
 
@@ -586,7 +586,7 @@ paths:
         Connection: Upgrade
         ```
 
-        The Docker daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
+        The Pouch daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
 
         ```
         HTTP/1.1 101 UPGRADED
@@ -968,16 +968,444 @@ definitions:
   SystemInfo:
     type: "object"
     properties:
-      Architecture:
+      ID:
+        description: |
+          Unique identifier of the daemon.
+
+          <p><br /></p>
+
+          > **Note**: The format of the ID itself is not part of the API, and
+          > should not be considered stable.
         type: "string"
+        example: "7TRN:IPZB:QYBB:VPBQ:UMPP:KARE:6ZNR:XE6T:7EWV:PKF4:ZOJD:TPYS"
       Containers:
+        description: "Total number of containers on the host."
         type: "integer"
+        example: 14
       ContainersRunning:
+        description: |
+          Number of containers with status `"running"`.
         type: "integer"
-      ContainersStopped:
-        type: "integer"
+        example: 3
       ContainersPaused:
+        description: |
+          Number of containers with status `"paused"`.
         type: "integer"
+        example: 1
+      ContainersStopped:
+        description: |
+          Number of containers with status `"stopped"`.
+        type: "integer"
+        example: 10
+      Images:
+        description: |
+          Total number of images on the host.
+
+          Both _tagged_ and _untagged_ (dangling) images are counted.
+        type: "integer"
+        example: 508
+      Driver:
+        description: "Name of the storage driver in use."
+        type: "string"
+        example: "overlay2"
+      DriverStatus:
+        description: |
+          Information specific to the storage driver, provided as
+          "label" / "value" pairs.
+
+          This information is provided by the storage driver, and formatted
+          in a way consistent with the output of `pouch info` on the command
+          line.
+
+          <p><br /></p>
+
+          > **Note**: The information returned in this field, including the
+          > formatting of values and labels, should not be considered stable,
+          > and may change without notice.
+        type: "array"
+        items:
+          type: "array"
+          items:
+            type: "string"
+        example:
+          - ["Backing Filesystem", "extfs"]
+          - ["Supports d_type", "true"]
+          - ["Native Overlay Diff", "true"]
+      PouchRootDir:
+        description: |
+          Root directory of persistent Pouch state.
+
+          Defaults to `/var/lib/pouch` on Linux.
+        type: "string"
+        example: "/var/lib/pouch"
+      Debug:
+        description: "Indicates if the daemon is running in debug-mode / with debug-level logging enabled."
+        type: "boolean"
+        example: true
+      LoggingDriver:
+        description: |
+          The logging driver to use as a default for new containers.
+        type: "string"
+      CgroupDriver:
+        description: |
+          The driver to use for managing cgroups.
+        type: "string"
+        x-nullable: false
+        enum: ["cgroupfs", "systemd"]
+        default: "cgroupfs"
+        example: "cgroupfs"
+      KernelVersion:
+        description: |
+          Kernel version of the host.
+          On Linux, this information obtained from `uname`.
+        type: "string"
+      OperatingSystem:
+        description: |
+          Name of the host's operating system, for example: "Ubuntu 16.04.2 LTS".
+        type: "string"
+        example: "Alpine Linux v3.5"
+      OSType:
+        description: |
+          Generic type of the operating system of the host, as returned by the
+          Go runtime (`GOOS`).
+
+          Currently returned value is "linux". A full list of
+          possible values can be found in the [Go documentation](https://golang.org/doc/install/source#environment).
+        type: "string"
+        example: "linux"
+      Architecture:
+        description: |
+          Hardware architecture of the host, as returned by the Go runtime
+          (`GOARCH`).
+
+          A full list of possible values can be found in the [Go documentation](https://golang.org/doc/install/source#environment).
+        type: "string"
+        example: "x86_64"
+      NCPU:
+        description: |
+          The number of logical CPUs usable by the daemon.
+
+          The number of available CPUs is checked by querying the operating
+          system when the daemon starts. Changes to operating system CPU
+          allocation after the daemon is started are not reflected.
+        type: "integer"
+        example: 4
+      MemTotal:
+        description: |
+          Total amount of physical memory available on the host, in kilobytes (kB).
+        type: "integer"
+        format: "int64"
+        example: 2095882240
+
+      IndexServerAddress:
+        description: |
+          Address / URL of the index server that is used for image search,
+          and as a default for user authentication.
+        type: "string"
+      RegistryConfig:
+        $ref: "#/definitions/RegistryServiceConfig"
+      HttpProxy:
+        description: |
+          HTTP-proxy configured for the daemon. This value is obtained from the
+          [`HTTP_PROXY`](https://www.gnu.org/software/wget/manual/html_node/Proxies.html) environment variable.
+
+          Containers do not automatically inherit this configuration.
+        type: "string"
+        example: "http://user:pass@proxy.corp.example.com:8080"
+      HttpsProxy:
+        description: |
+          HTTPS-proxy configured for the daemon. This value is obtained from the
+          [`HTTPS_PROXY`](https://www.gnu.org/software/wget/manual/html_node/Proxies.html) environment variable.
+
+          Containers do not automatically inherit this configuration.
+        type: "string"
+        example: "https://user:pass@proxy.corp.example.com:4443"
+      Name:
+        description: "Hostname of the host."
+        type: "string"
+        example: "node5.corp.example.com"
+      Labels:
+        description: |
+          User-defined labels (key/value metadata) as set on the daemon.
+        type: "array"
+        items:
+          type: "string"
+        example: ["storage=ssd", "production"]
+      ExperimentalBuild:
+        description: |
+          Indicates if experimental features are enabled on the daemon.
+        type: "boolean"
+        example: true
+      ServerVersion:
+        description: |
+          Version string of the daemon.
+        type: "string"
+        example: "17.06.0-ce"
+      Runtimes:
+        description: |
+          List of [OCI compliant](https://github.com/opencontainers/runtime-spec)
+          runtimes configured on the daemon. Keys hold the "name" used to
+          reference the runtime.
+
+          The Pouch daemon relies on an OCI compliant runtime (invoked via the
+          `containerd` daemon) as its interface to the Linux kernel namespaces,
+          cgroups, and SELinux.
+
+          The default runtime is `runc`, and automatically configured. Additional
+          runtimes can be configured by the user and will be listed here.
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/Runtime"
+        default:
+          runc:
+            path: "pouch-runc"
+        example:
+          runc:
+            path: "pouch-runc"
+          runc-master:
+            path: "/go/bin/runc"
+          custom:
+            path: "/usr/local/bin/my-oci-runtime"
+            runtimeArgs: ["--debug", "--systemd-cgroup=false"]
+      DefaultRuntime:
+        description: |
+          Name of the default OCI runtime that is used when starting containers.
+          The default can be overridden per-container at create time.
+        type: "string"
+        x-nullable: false
+        default: "runc"
+        example: "runc"
+      LiveRestoreEnabled:
+        description: |
+          Indicates if live restore is enabled.
+          If enabled, containers are kept running when the daemon is shutdown
+          or upon daemon start if running containers are detected.
+        type: "boolean"
+        x-nullable: false
+        default: false
+        example: false
+      ContainerdCommit:
+        $ref: "#/definitions/Commit"
+      RuncCommit:
+        $ref: "#/definitions/Commit"
+      SecurityOptions:
+        description: |
+          List of security features that are enabled on the daemon, such as
+          apparmor, seccomp, SELinux, and user-namespaces (userns).
+
+          Additional configuration options for each security feature may
+          be present, and are included as a comma-separated list of key/value
+          pairs.
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "name=apparmor"
+          - "name=seccomp,profile=default"
+          - "name=selinux"
+          - "name=userns"
+
+  RegistryServiceConfig:
+    description: |
+      RegistryServiceConfig stores daemon registry services configuration.
+    type: "object"
+    x-nullable: true
+    properties:
+      AllowNondistributableArtifactsCIDRs:
+        description: |
+          List of IP ranges to which nondistributable artifacts can be pushed,
+          using the CIDR syntax [RFC 4632](https://tools.ietf.org/html/4632).
+
+          Some images contain artifacts whose distribution is restricted by license.
+          When these images are pushed to a registry, restricted artifacts are not
+          included.
+
+          This configuration override this behavior, and enables the daemon to
+          push nondistributable artifacts to all registries whose resolved IP
+          address is within the subnet described by the CIDR syntax.
+
+          This option is useful when pushing images containing
+          nondistributable artifacts to a registry on an air-gapped network so
+          hosts on that network can pull the images without connecting to
+          another server.
+
+          > **Warning**: Nondistributable artifacts typically have restrictions
+          > on how and where they can be distributed and shared. Only use this
+          > feature to push artifacts to private registries and ensure that you
+          > are in compliance with any terms that cover redistributing
+          > nondistributable artifacts.
+
+        type: "array"
+        items:
+          type: "string"
+        example: ["::1/128", "127.0.0.0/8"]
+      AllowNondistributableArtifactsHostnames:
+        description: |
+          List of registry hostnames to which nondistributable artifacts can be
+          pushed, using the format `<hostname>[:<port>]` or `<IP address>[:<port>]`.
+
+          Some images (for example, Windows base images) contain artifacts
+          whose distribution is restricted by license. When these images are
+          pushed to a registry, restricted artifacts are not included.
+
+          This configuration override this behavior for the specified
+          registries.
+
+          This option is useful when pushing images containing
+          nondistributable artifacts to a registry on an air-gapped network so
+          hosts on that network can pull the images without connecting to
+          another server.
+
+          > **Warning**: Nondistributable artifacts typically have restrictions
+          > on how and where they can be distributed and shared. Only use this
+          > feature to push artifacts to private registries and ensure that you
+          > are in compliance with any terms that cover redistributing
+          > nondistributable artifacts.
+        type: "array"
+        items:
+          type: "string"
+        example: ["registry.internal.corp.example.com:3000", "[2001:db8:a0b:12f0::1]:443"]
+      InsecureRegistryCIDRs:
+        description: |
+          List of IP ranges of insecure registries, using the CIDR syntax
+          ([RFC 4632](https://tools.ietf.org/html/4632)). Insecure registries
+          accept un-encrypted (HTTP) and/or untrusted (HTTPS with certificates
+          from unknown CAs) communication.
+
+          By default, local registries (`127.0.0.0/8`) are configured as
+          insecure. All other registries are secure. Communicating with an
+          insecure registry is not possible if the daemon assumes that registry
+          is secure.
+
+          This configuration override this behavior, insecure communication with
+          registries whose resolved IP address is within the subnet described by
+          the CIDR syntax.
+
+          Registries can also be marked insecure by hostname. Those registries
+          are listed under `IndexConfigs` and have their `Secure` field set to
+          `false`.
+
+          > **Warning**: Using this option can be useful when running a local
+          > registry, but introduces security vulnerabilities. This option
+          > should therefore ONLY be used for testing purposes. For increased
+          > security, users should add their CA to their system's list of trusted
+          > CAs instead of enabling this option.
+        type: "array"
+        items:
+          type: "string"
+        example: ["::1/128", "127.0.0.0/8"]
+      IndexConfigs:
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/IndexInfo"
+        example:
+          "127.0.0.1:5000":
+            "Name": "127.0.0.1:5000"
+            "Mirrors": []
+            "Secure": false
+            "Official": false
+          "[2001:db8:a0b:12f0::1]:80":
+            "Name": "[2001:db8:a0b:12f0::1]:80"
+            "Mirrors": []
+            "Secure": false
+            "Official": false
+          "registry.internal.corp.example.com:3000":
+            Name: "registry.internal.corp.example.com:3000"
+            Mirrors: []
+            Secure: false
+            Official: false
+      Mirrors:
+        description: "List of registry URLs that act as a mirror for the official registry."
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "https://hub-mirror.corp.example.com:5000/"
+          - "https://[2001:db8:a0b:12f0::1]/"
+
+  IndexInfo:
+    description:
+      IndexInfo contains information about a registry.
+    type: "object"
+    x-nullable: true
+    properties:
+      Name:
+        description: |
+          Name of the registry.
+        type: "string"
+      Mirrors:
+        description: |
+          List of mirrors, expressed as URIs.
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - "https://hub-mirror.corp.example.com:5000/"
+      Secure:
+        description: |
+          Indicates if the the registry is part of the list of insecure
+          registries.
+
+          If `false`, the registry is insecure. Insecure registries accept
+          un-encrypted (HTTP) and/or untrusted (HTTPS with certificates from
+          unknown CAs) communication.
+
+          > **Warning**: Insecure registries can be useful when running a local
+          > registry. However, because its use creates security vulnerabilities
+          > it should ONLY be enabled for testing purposes. For increased
+          > security, users should add their CA to their system's list of
+          > trusted CAs instead of enabling this option.
+        type: "boolean"
+        example: true
+      Official:
+        description: |
+          Indicates whether this is an official registry.
+        type: "boolean"
+        example: true
+
+  Runtime:
+    description: |
+      Runtime describes an [OCI compliant](https://github.com/opencontainers/runtime-spec)
+      runtime.
+
+      The runtime is invoked by the daemon via the `containerd` daemon. OCI
+      runtimes act as an interface to the Linux kernel namespaces, cgroups,
+      and SELinux.
+    type: "object"
+    properties:
+      path:
+        description: |
+          Name and, optional, path, of the OCI executable binary.
+
+          If the path is omitted, the daemon searches the host's `$PATH` for the
+          binary and uses the first result.
+        type: "string"
+        example: "/usr/local/bin/my-oci-runtime"
+      runtimeArgs:
+        description: |
+          List of command-line arguments to pass to the runtime when invoked.
+        type: "array"
+        x-nullable: true
+        items:
+          type: "string"
+        example: ["--debug", "--systemd-cgroup=false"]
+
+  Commit:
+    description: |
+      Commit holds the Git-commit (SHA1) that a binary was built from, as
+      reported in the version-string of external tools, such as `containerd`,
+      or `runC`.
+    type: "object"
+    properties:
+      ID:
+        description: "Actual commit ID of external tool."
+        type: "string"
+        example: "cfb82a876ecc11b5ca0977d1733adbe58599088a"
+      Expected:
+        description: |
+          Commit ID of external tool expected by pouchd as set at build time.
+        type: "string"
+        example: "2d41c047c83e09a6d61d464906feb2a2f3c52aa4"
 
   AuthConfig:
     type: "object"
@@ -1109,7 +1537,7 @@ definitions:
       Entrypoint:
         description: |
           The entry point for the container as a string or an array of strings.
-          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.
         type: "array"
         items:
           type: "string"
@@ -1120,7 +1548,7 @@ definitions:
         description: "MAC address of the container."
         type: "string"
       OnBuild:
-        description: "`ONBUILD` metadata that were defined in the image's `Dockerfile`."
+        description: "`ONBUILD` metadata that were defined."
         type: "array"
         items:
           type: "string"
@@ -1947,7 +2375,7 @@ definitions:
     type: "object"
     properties:
       Name:
-        description: "The new volume's name. If not specified, Docker generates a name."
+        description: "The new volume's name. If not specified, Pouch generates a name."
         type: "string"
         x-nullable: false
       Driver:

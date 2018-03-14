@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 	"github.com/alibaba/pouch/version"
@@ -37,7 +38,18 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 	got := types.SystemInfo{}
 	err = json.NewDecoder(resp.Body).Decode(&got)
 	c.Assert(err, check.IsNil)
-	c.Assert(got, check.Equals, types.SystemInfo{})
+
+	kernelInfo := "<unknown>"
+	if Info, err := kernel.GetKernelVersion(); err == nil {
+		kernelInfo = Info.String()
+
+	}
+	// TODO more variables are to be checked.
+	c.Assert(got.IndexServerAddress, check.Equals, "https://index.docker.io/v1/")
+	c.Assert(got.KernelVersion, check.Equals, kernelInfo)
+	c.Assert(got.OSType, check.Equals, runtime.GOOS)
+	c.Assert(got.ServerVersion, check.Equals, version.Version)
+
 }
 
 // TestVersion tests /version API.

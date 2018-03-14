@@ -5,8 +5,11 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/registry"
 	"github.com/alibaba/pouch/version"
+
+	"github.com/sirupsen/logrus"
 )
 
 //SystemMgr as an interface defines all operations against host.
@@ -20,6 +23,7 @@ type SystemMgr interface {
 type SystemManager struct {
 	name     string
 	registry *registry.Client
+	config   *config.Config
 }
 
 // NewSystemManager creates a brand new system manager.
@@ -27,12 +31,54 @@ func NewSystemManager(cfg *config.Config) (*SystemManager, error) {
 	return &SystemManager{
 		name:     "system_manager",
 		registry: &registry.Client{},
+		config:   cfg,
 	}, nil
 }
 
 // Info shows system information of daemon.
 func (mgr *SystemManager) Info() (types.SystemInfo, error) {
-	return types.SystemInfo{}, nil
+	kernelVersion := "<unknown>"
+	if kv, err := kernel.GetKernelVersion(); err != nil {
+		logrus.Warnf("Could not get kernel version: %v", err)
+	} else {
+		kernelVersion = kv.String()
+	}
+
+	inf := types.SystemInfo{
+		// architecture: ,
+		// CgroupDriver: ,
+		// ContainerdCommit: ,
+		// Containers: ,
+		// ContainersPaused:,
+		// ContainersRunning:,
+		// ContainersStopped:,
+		Debug:          mgr.config.Debug,
+		DefaultRuntime: mgr.config.DefaultRuntime,
+		// Driver: ,
+		// DriverStatus: ,
+		// ExperimentalBuild: ,
+		// HTTPProxy: ,
+		// HTTPSProxy: ,
+		// ID: ,
+		// Images: ,
+		IndexServerAddress: "https://index.docker.io/v1/",
+		KernelVersion:      kernelVersion,
+		// Labels: ,
+		// LiveRestoreEnabled: ,
+		// LoggingDriver: ,
+		// MemTotal: ,
+		// Name: ,
+		// NCPU: ,
+		// OperatingSystem: ,
+		OSType:       runtime.GOOS,
+		PouchRootDir: mgr.config.HomeDir,
+		// RegistryConfig: ,
+		// RuncCommit: ,
+		// Runtimes: ,
+		// SecurityOptions: ,
+		ServerVersion: version.Version,
+	}
+	return inf, nil
 }
 
 // Version shows version of daemon.
