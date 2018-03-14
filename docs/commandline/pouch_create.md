@@ -37,6 +37,7 @@ container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, 
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env strings                  Set environment variables for container
       --expose strings               Set expose container's ports
+      --group-add strings            Add additional groups to join
   -h, --help                         help for create
       --hostname string              Set container's hostname
       --initscript string            Initial script executed in container

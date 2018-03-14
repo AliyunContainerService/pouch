@@ -30,6 +30,7 @@ pouch upgrade [OPTIONS] IMAGE [COMMAND] [ARG...]
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env strings                  Set environment variables for container
       --expose strings               Set expose container's ports
+      --group-add strings            Add additional groups to join
   -h, --help                         help for upgrade
       --hostname string              Set container's hostname
       --initscript string            Initial script executed in container

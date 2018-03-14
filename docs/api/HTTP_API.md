@@ -532,6 +532,35 @@ POST /containers/{id}/stop
 * Container
 
 
+<a name="containertop"></a>
+### Display the running processes of a container
+```
+POST /containers/{id}/top
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**ps_args**  <br>*optional*|top arguments|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|[ContainerProcessList](#containerprocesslist)|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="containerunpause"></a>
 ### Unpause a container
 ```
@@ -1398,6 +1427,17 @@ GET "/containers/{id}/json"
 |**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
 |**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
 |**State**  <br>*optional*|The state of the container.|[ContainerState](#containerstate)|
+
+
+<a name="containerprocesslist"></a>
+### ContainerProcessList
+OK Response to ContainerTop operation
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Processes**  <br>*optional*|Each process running in the container, where each is process is an array of values corresponding to the titles|< < string > array > array|
+|**Titles**  <br>*optional*|The ps column titles|< string > array|
 
 
 <a name="containerstate"></a>
