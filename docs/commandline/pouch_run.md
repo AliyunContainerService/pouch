@@ -51,6 +51,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env strings                  Set environment variables for container
       --expose strings               Set expose container's ports
+      --group-add strings            Add additional groups to join
   -h, --help                         help for run
       --hostname string              Set container's hostname
       --initscript string            Initial script executed in container
