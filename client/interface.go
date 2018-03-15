@@ -35,6 +35,7 @@ type ContainerAPIClient interface {
 	ContainerUpdate(ctx context.Context, name string, config *types.UpdateConfig) error
 	ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error
 	ContainerTop(ctx context.Context, name string, arguments []string) (types.ContainerProcessList, error)
+	ContainerLogs(ctx context.Context, name string, options types.ContainerLogsOptions) (io.ReadCloser, error)
 }
 
 // ImageAPIClient defines methods of Image client.

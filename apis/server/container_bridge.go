@@ -336,3 +336,11 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	return nil
 }
+
+func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	//opts := &types.ContainerLogsOptions{}
+
+	// TODO
+	return nil
+
+}
