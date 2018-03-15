@@ -81,18 +81,20 @@ type CriManager struct {
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (*CriManager, error) {
+func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (CriMgr, error) {
 	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
 	}
 
-	return &CriManager{
+	c := &CriManager{
 		ContainerMgr: ctrMgr,
 		ImageMgr:     imgMgr,
 		CniMgr:       NewCniManager(&config.CriConfig),
 		StreamServer: streamServer,
-	}, nil
+	}
+
+	return NewCriWrapper(c), nil
 }
 
 // StreamServerStart starts the stream server of CRI.
