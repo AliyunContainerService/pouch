@@ -334,7 +334,14 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 }
 
 func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	return nil
+	name := mux.Vars(req)["name"]
+
+	procList, err := s.ContainerMgr.Top(ctx, name, req.Form.Get("ps_args"))
+	if err != nil {
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, procList)
 }
 
 func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {

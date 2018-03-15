@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/meta"
 
@@ -132,6 +133,56 @@ func Test_parseSecurityOpt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := parseSecurityOpt(tt.args.meta, tt.args.securityOpt); (err != nil) != tt.wantErr {
 				t.Errorf("parseSecurityOpt() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_parsePSOutput(t *testing.T) {
+	type args struct {
+		output []byte
+		pids   []int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *types.ContainerProcessList
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "testParsePSOutputOk",
+			args: args{
+				output: []byte("UID        PID  PPID  C STIME TTY          TIME CMD\nroot         1     0  0 3月12 ?       00:00:14 /usr/lib/systemd/systemd --switched-root --system --deserialize 21"),
+				pids:   []int{1},
+			},
+			want: &types.ContainerProcessList{
+				Processes: [][]string{
+					{"root", "1", "0", "0", "3月12", "?", "00:00:14", "/usr/lib/systemd/systemd --switched-root --system --deserialize 21"},
+				},
+				Titles: []string{"UID", "PID", "PPID", "C", "STIME", "TTY", "TIME", "CMD"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testParsePSOutputWithNoPID",
+			args: args{
+				output: []byte("UID        PPID  C STIME TTY          TIME CMD\nroot         0  0 3月12 ?       00:00:14 /usr/lib/systemd/systemd --switched-root --system --deserialize 21"),
+				pids:   []int{1},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parsePSOutput(tt.args.output, tt.args.pids)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parsePSOutput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parsePSOutput() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -444,3 +444,28 @@ func (c *Client) UpdateResources(ctx context.Context, id string, resources types
 
 	return pack.task.Update(ctx, containerd.WithResources(r))
 }
+
+// GetPidsForContainer returns s list of process IDs running in a container.
+func (c *Client) GetPidsForContainer(ctx context.Context, id string) ([]int, error) {
+	if !c.lock.Trylock(id) {
+		return nil, errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	var pids []int
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	processes, err := pack.task.Pids(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ps := range processes {
+		pids = append(pids, int(ps.Pid))
+	}
+	return pids, nil
+}
