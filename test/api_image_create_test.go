@@ -7,6 +7,7 @@ import (
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
+	"github.com/alibaba/pouch/test/util"
 	"github.com/go-check/check"
 )
 
@@ -77,9 +78,14 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutRegistry(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	time.Sleep(5000 * time.Millisecond)
+	ret := util.WaitTimeout(10*time.Second, DelHelloworldImage)
+	c.Assert(ret, check.Equals, true)
+}
 
-	resp, err = request.Delete("/images/" + helloworldImageOnlyRepoName + ":latest")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+func DelHelloworldImage() bool {
+	resp, err := request.Delete("/images/" + helloworldImageOnlyRepoName + ":latest")
+	if err == nil && resp.StatusCode == 204 {
+		return true
+	}
+	return false
 }

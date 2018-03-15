@@ -54,7 +54,7 @@ func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 	output = command.PouchRun("inspect", "-f", "{{.HostConfig.Memory}}", name).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%d\n", result.HostConfig.Memory))
 
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestInspectWrongFormat is to verify using wrong format flag of inspect command.
@@ -71,6 +71,6 @@ func (suite *PouchInspectSuite) TestInspectWrongFormat(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
 
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+	DelContainerForceMultyTime(c, name)
 
 }

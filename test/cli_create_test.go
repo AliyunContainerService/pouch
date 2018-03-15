@@ -43,7 +43,7 @@ func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", out, name)
 	}
 
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestCreateNameByImageID is to verify the correctness of creating contaier with specified name by image id.
@@ -61,7 +61,7 @@ func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", out, name)
 	}
 
-	defer command.PouchRun("rm", "-f", name)
+	DelContainerForceMultyTime(c, name)
 }
 
 // TestCreateDuplicateContainerName is to verify duplicate container names.
@@ -71,7 +71,7 @@ func (suite *PouchCreateSuite) TestCreateDuplicateContainerName(c *check.C) {
 	res := command.PouchRun("create", "--name", name, busyboxImage)
 	res.Assert(c, icmd.Success)
 
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	res = command.PouchRun("create", "--name", name, busyboxImage)
 	c.Assert(res.Error, check.NotNil)
@@ -89,7 +89,7 @@ func (suite *PouchCreateSuite) TestCreateWithArgs(c *check.C) {
 	res := command.PouchRun("create", "--name", name, busyboxImage, "/bin/ls")
 	res.Assert(c, icmd.Success)
 
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestCreateWithTTY is to verify tty flag.
@@ -100,7 +100,7 @@ func (suite *PouchCreateSuite) TestCreateWithTTY(c *check.C) {
 	res := command.PouchRun("create", "-t", "--name", name, busyboxImage)
 	res.Assert(c, icmd.Success)
 
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestPouchCreateVolume is to verify volume flag.
@@ -117,7 +117,7 @@ func (suite *PouchCreateSuite) TestPouchCreateVolume(c *check.C) {
 	res := command.PouchRun("create", "-v /tmp:/tmp", "--name", funcname, busyboxImage)
 	res.Assert(c, icmd.Success)
 
-	defer command.PouchRun("rm", "-f", funcname)
+	defer DelContainerForceMultyTime(c, funcname)
 }
 
 // TestCreateInWrongWay tries to run create in wrong way.
@@ -143,7 +143,7 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "-l", label, busyboxImage)
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -165,7 +165,7 @@ func (suite *PouchCreateSuite) TestCreateWithSysctls(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -187,7 +187,7 @@ func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -215,7 +215,7 @@ func (suite *PouchCreateSuite) TestCreateWithSeccomp(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -243,7 +243,7 @@ func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -270,7 +270,7 @@ func (suite *PouchCreateSuite) TestCreateWithPrivilege(c *check.C) {
 
 	res := command.PouchRun("create", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
 	res.Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("inspect", name).Stdout()
 

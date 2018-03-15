@@ -34,7 +34,7 @@ func (suite *PouchExecSuite) TearDownTest(c *check.C) {
 func (suite *PouchExecSuite) TestExecCommand(c *check.C) {
 	name := "exec-normal"
 	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000")
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
 
@@ -55,7 +55,7 @@ func (suite *PouchExecSuite) TestExecCommand(c *check.C) {
 func (suite *PouchExecSuite) TestExecMultiCommands(c *check.C) {
 	name := "exec-normal2"
 	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000")
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
 
@@ -75,7 +75,7 @@ func (suite *PouchExecSuite) TestExecMultiCommands(c *check.C) {
 func (suite *PouchExecSuite) TestExecEcho(c *check.C) {
 	name := "TestExecEcho"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	out := command.PouchRun("exec", name, "echo", "test").Stdout()
 	if !strings.Contains(out, "test") {
@@ -87,7 +87,7 @@ func (suite *PouchExecSuite) TestExecEcho(c *check.C) {
 func (suite *PouchExecSuite) TestExecStoppedContainer(c *check.C) {
 	name := "TestExecStoppedContainer"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
@@ -106,7 +106,7 @@ func (suite *PouchExecSuite) TestExecInteractive(c *check.C) {
 func (suite *PouchExecSuite) TestExecAfterContainerRestart(c *check.C) {
 	name := "TestExecAfterContainerRestart"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", name)
+	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 

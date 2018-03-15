@@ -45,7 +45,7 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaWorks(c *check.C) {
 	defer command.PouchRun("volume", "rm", funcname)
 
 	command.PouchRun("run", "-d", "-v", funcname+":/mnt", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", funcname)
+	defer DelContainerForceMultyTime(c, funcname)
 
 	expct := icmd.Expected{
 		ExitCode: 0,
@@ -83,7 +83,7 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaMultiWorks(c *check.C) {
 	defer command.PouchRun("volume", "rm", name2)
 
 	command.PouchRun("run", "-d", "-v", name1+":/mnt/test1", "-v", name2+":/mnt/test2", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
-	defer command.PouchRun("rm", "-f", funcname)
+	defer DelContainerForceMultyTime(c, funcname)
 
 	{
 		expct := icmd.Expected{
