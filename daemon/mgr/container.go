@@ -486,7 +486,12 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		cgroupsParent = mgr.Config.CgroupParent
 	}
 
+	// cgroupsPath must be absolute path
 	if cgroupsParent != "" {
+		if !filepath.IsAbs(cgroupsParent) {
+			cgroupsParent = filepath.Clean("/" + cgroupsParent)
+		}
+
 		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID())
 	}
 

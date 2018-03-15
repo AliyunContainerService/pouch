@@ -732,7 +732,7 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 
 	file := "/sys/fs/cgroup/memory/" + cgroupParent + "/" + containerID + "/memory.limit_in_bytes"
 	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+		c.Fatalf("container %s cgroup mountpoint not exists", name)
 	}
 
 	out, err := exec.Command("cat", file).Output()
@@ -744,4 +744,20 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "314572800")
 	}
 
+}
+
+// TestRunInvalidCgroupParent checks that a specially-crafted cgroup parent doesn't cause Docker to crash or start modifying /.
+func (suite *PouchRunSuite) TestRunInvalidCgroupParent(c *check.C) {
+	testRunInvalidCgroupParent(c, "../../../../../../../../SHOULD_NOT_EXIST", "SHOULD_NOT_EXIST", "cgroup-invalid-test")
+
+	testRunInvalidCgroupParent(c, "/../../../../../../../../SHOULD_NOT_EXIST", "/SHOULD_NOT_EXIST", "cgroup-absolute-invalid-test")
+}
+
+func testRunInvalidCgroupParent(c *check.C, cgroupParent, cleanCgroupParent, name string) {
+	command.PouchRun("run", "-m", "300M", "--cgroup-parent", cgroupParent, "--name", name, busyboxImage, "cat", "/proc/self/cgroup").Assert(c, icmd.Success)
+
+	// We expect "/SHOULD_NOT_EXIST" to not exist. If not, we have a security issue.
+	if _, err := os.Stat("/SHOULD_NOT_EXIST"); err == nil || !os.IsNotExist(err) {
+		c.Fatalf("SECURITY: --cgroup-parent with ../../ relative paths cause files to be created in the host (this is bad) !!")
+	}
 }
