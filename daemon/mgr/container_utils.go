@@ -2,8 +2,10 @@ package mgr
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -125,4 +127,56 @@ func parseSecurityOpt(meta *ContainerMeta, securityOpt string) error {
 		return fmt.Errorf("invalid type %s in --security-opt %s: unknown type from apparmor and seccomp", key, securityOpt)
 	}
 	return nil
+}
+
+// fieldsASCII is similar to strings.Fields but only allows ASCII whitespaces
+func fieldsASCII(s string) []string {
+	fn := func(r rune) bool {
+		switch r {
+		case '\t', '\n', '\f', '\r', ' ':
+			return true
+		}
+		return false
+	}
+	return strings.FieldsFunc(s, fn)
+}
+
+func parsePSOutput(output []byte, pids []int) (*types.ContainerProcessList, error) {
+	procList := &types.ContainerProcessList{}
+
+	lines := strings.Split(string(output), "\n")
+	procList.Titles = fieldsASCII(lines[0])
+
+	pidIndex := -1
+	for i, name := range procList.Titles {
+		if name == "PID" {
+			pidIndex = i
+		}
+	}
+	if pidIndex == -1 {
+		return nil, fmt.Errorf("Couldn't find PID field in ps output")
+	}
+
+	// loop through the output and extract the PID from each line
+	for _, line := range lines[1:] {
+		if len(line) == 0 {
+			continue
+		}
+		fields := fieldsASCII(line)
+		p, err := strconv.Atoi(fields[pidIndex])
+		if err != nil {
+			return nil, fmt.Errorf("Unexpected pid '%s': %s", fields[pidIndex], err)
+		}
+
+		for _, pid := range pids {
+			if pid == p {
+				// Make sure number of fields equals number of header titles
+				// merging "overhanging" fields
+				process := fields[:len(procList.Titles)-1]
+				process = append(process, strings.Join(fields[len(procList.Titles)-1:], " "))
+				procList.Processes = append(procList.Processes, process)
+			}
+		}
+	}
+	return procList, nil
 }

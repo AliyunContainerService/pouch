@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -75,6 +76,9 @@ type ContainerMgr interface {
 
 	// Upgrade upgrades a container with new image and args.
 	Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error
+
+	// Top lists the processes running inside of the given container
+	Top(ctx context.Context, name string, psArgs string) (*types.ContainerProcessList, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -804,6 +808,38 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
 	// TODO
 	return nil
+}
+
+// Top lists the processes running inside of the given container
+func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string) (*types.ContainerProcessList, error) {
+	if psArgs == "" {
+		psArgs = "-ef"
+	}
+	c, err := mgr.container(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if !c.IsRunning() {
+		return nil, fmt.Errorf("container is not running, can not execute top command")
+	}
+
+	pids, err := mgr.Client.GetPidsForContainer(ctx, c.ID())
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get pids of container")
+	}
+
+	output, err := exec.Command("ps", strings.Split(psArgs, " ")...).Output()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error running ps")
+	}
+
+	procList, err := parsePSOutput(output, pids)
+	if err != nil {
+		return nil, errors.Wrapf(err, "parsePSOutput failed")
+	}
+
+	return procList, nil
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {
