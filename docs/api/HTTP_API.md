@@ -233,7 +233,7 @@ Content-Type: application/vnd.raw-stream
 
 After the headers and two new lines, the TCP connection can now be used for raw, bidirectional communication between the client and server.
 
-To hint potential proxies about connection hijacking, the Docker client can also optionally send connection upgrade headers.
+To hint potential proxies about connection hijacking, the Pouch client can also optionally send connection upgrade headers.
 
 For example, the client sends this request to upgrade the connection:
 
@@ -243,7 +243,7 @@ Upgrade: tcp
 Connection: Upgrade
 ```
 
-The Docker daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
+The Pouch daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
 
 ```
 HTTP/1.1 101 UPGRADED
@@ -1281,6 +1281,19 @@ The response returned by login to a registry
 |**Status**  <br>*required*|The status of the authentication|string|
 
 
+<a name="commit"></a>
+### Commit
+Commit holds the Git-commit (SHA1) that a binary was built from, as
+reported in the version-string of external tools, such as `containerd`,
+or `runC`.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Expected**  <br>*optional*|Commit ID of external tool expected by pouchd as set at build time.  <br>**Example** : `"2d41c047c83e09a6d61d464906feb2a2f3c52aa4"`|string|
+|**ID**  <br>*optional*|Actual commit ID of external tool.  <br>**Example** : `"cfb82a876ecc11b5ca0977d1733adbe58599088a"`|string|
+
+
 <a name="container"></a>
 ### Container
 an array of Container contains response of Engine API:
@@ -1318,7 +1331,7 @@ Configuration for a container that is portable between hosts
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
@@ -1327,7 +1340,7 @@ Configuration for a container that is portable between hosts
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
-|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
+|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined.|< string > array|
 |**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
@@ -1358,7 +1371,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
@@ -1369,7 +1382,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
 |**NetworkingConfig**  <br>*optional*||[NetworkingConfig](#networkingconfig)|
-|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
+|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined.|< string > array|
 |**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
@@ -1475,7 +1488,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
-|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by pouch when there is no `ENTRYPOINT` instruction in the `Dockerfile`).|< string > array|
+|**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
@@ -1485,7 +1498,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
 |**MacAddress**  <br>*optional*|MAC address of the container.|string|
 |**NetworkDisabled**  <br>*optional*|Disable networking for the container.|boolean|
-|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined in the image's `Dockerfile`.|< string > array|
+|**OnBuild**  <br>*optional*|`ONBUILD` metadata that were defined.|< string > array|
 |**OpenStdin**  <br>*optional*|Open `stdin`|boolean|
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
@@ -1762,6 +1775,19 @@ An object containing all details of an image at API side
 |**Type**  <br>*required*|type of the rootfs|string|
 
 
+<a name="indexinfo"></a>
+### IndexInfo
+IndexInfo contains information about a registry.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Mirrors**  <br>*optional*|List of mirrors, expressed as URIs.  <br>**Example** : `[ "https://hub-mirror.corp.example.com:5000/" ]`|< string > array|
+|**Name**  <br>*optional*|Name of the registry.|string|
+|**Official**  <br>*optional*|Indicates whether this is an official registry.  <br>**Example** : `true`|boolean|
+|**Secure**  <br>*optional*|Indicates if the the registry is part of the list of insecure<br>registries.<br><br>If `false`, the registry is insecure. Insecure registries accept<br>un-encrypted (HTTP) and/or untrusted (HTTPS with certificates from<br>unknown CAs) communication.<br><br>> **Warning**: Insecure registries can be useful when running a local<br>> registry. However, because its use creates security vulnerabilities<br>> it should ONLY be enabled for testing purposes. For increased<br>> security, users should add their CA to their system's list of<br>> trusted CAs instead of enabling this option.  <br>**Example** : `true`|boolean|
+
+
 <a name="mountpoint"></a>
 ### MountPoint
 A mount point inside a container
@@ -1914,6 +1940,20 @@ entries are added to the mapping table.
 *Type* : < string, < [PortBinding](#portbinding) > array > map
 
 
+<a name="registryserviceconfig"></a>
+### RegistryServiceConfig
+RegistryServiceConfig stores daemon registry services configuration.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**AllowNondistributableArtifactsCIDRs**  <br>*optional*|List of IP ranges to which nondistributable artifacts can be pushed,<br>using the CIDR syntax [RFC 4632](https://tools.ietf.org/html/4632).<br><br>Some images contain artifacts whose distribution is restricted by license.<br>When these images are pushed to a registry, restricted artifacts are not<br>included.<br><br>This configuration override this behavior, and enables the daemon to<br>push nondistributable artifacts to all registries whose resolved IP<br>address is within the subnet described by the CIDR syntax.<br><br>This option is useful when pushing images containing<br>nondistributable artifacts to a registry on an air-gapped network so<br>hosts on that network can pull the images without connecting to<br>another server.<br><br>> **Warning**: Nondistributable artifacts typically have restrictions<br>> on how and where they can be distributed and shared. Only use this<br>> feature to push artifacts to private registries and ensure that you<br>> are in compliance with any terms that cover redistributing<br>> nondistributable artifacts.  <br>**Example** : `[ "::1/128", "127.0.0.0/8" ]`|< string > array|
+|**AllowNondistributableArtifactsHostnames**  <br>*optional*|List of registry hostnames to which nondistributable artifacts can be<br>pushed, using the format `<hostname>[:<port>]` or `<IP address>[:<port>]`.<br><br>Some images (for example, Windows base images) contain artifacts<br>whose distribution is restricted by license. When these images are<br>pushed to a registry, restricted artifacts are not included.<br><br>This configuration override this behavior for the specified<br>registries.<br><br>This option is useful when pushing images containing<br>nondistributable artifacts to a registry on an air-gapped network so<br>hosts on that network can pull the images without connecting to<br>another server.<br><br>> **Warning**: Nondistributable artifacts typically have restrictions<br>> on how and where they can be distributed and shared. Only use this<br>> feature to push artifacts to private registries and ensure that you<br>> are in compliance with any terms that cover redistributing<br>> nondistributable artifacts.  <br>**Example** : `[ "registry.internal.corp.example.com:3000", "[2001:db8:a0b:12f0::1]:443" ]`|< string > array|
+|**IndexConfigs**  <br>*optional*|**Example** : `{<br>  "127.0.0.1:5000" : {<br>    "Name" : "127.0.0.1:5000",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  },<br>  "[2001:db8:a0b:12f0::1]:80" : {<br>    "Name" : "[2001:db8:a0b:12f0::1]:80",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  },<br>  "registry.internal.corp.example.com:3000" : {<br>    "Name" : "registry.internal.corp.example.com:3000",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  }<br>}`|< string, [IndexInfo](#indexinfo) > map|
+|**InsecureRegistryCIDRs**  <br>*optional*|List of IP ranges of insecure registries, using the CIDR syntax<br>([RFC 4632](https://tools.ietf.org/html/4632)). Insecure registries<br>accept un-encrypted (HTTP) and/or untrusted (HTTPS with certificates<br>from unknown CAs) communication.<br><br>By default, local registries (`127.0.0.0/8`) are configured as<br>insecure. All other registries are secure. Communicating with an<br>insecure registry is not possible if the daemon assumes that registry<br>is secure.<br><br>This configuration override this behavior, insecure communication with<br>registries whose resolved IP address is within the subnet described by<br>the CIDR syntax.<br><br>Registries can also be marked insecure by hostname. Those registries<br>are listed under `IndexConfigs` and have their `Secure` field set to<br>`false`.<br><br>> **Warning**: Using this option can be useful when running a local<br>> registry, but introduces security vulnerabilities. This option<br>> should therefore ONLY be used for testing purposes. For increased<br>> security, users should add their CA to their system's list of trusted<br>> CAs instead of enabling this option.  <br>**Example** : `[ "::1/128", "127.0.0.0/8" ]`|< string > array|
+|**Mirrors**  <br>*optional*|List of registry URLs that act as a mirror for the official registry.  <br>**Example** : `[ "https://hub-mirror.corp.example.com:5000/", "https://[2001:db8:a0b:12f0::1]/" ]`|< string > array|
+
+
 <a name="resources"></a>
 ### Resources
 A container's resources (cgroups config, ulimits, etc)
@@ -1978,6 +2018,22 @@ Define container's restart policy
 |**Name**  <br>*optional*|string|
 
 
+<a name="runtime"></a>
+### Runtime
+Runtime describes an [OCI compliant](https://github.com/opencontainers/runtime-spec)
+runtime.
+
+The runtime is invoked by the daemon via the `containerd` daemon. OCI
+runtimes act as an interface to the Linux kernel namespaces, cgroups,
+and SELinux.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**path**  <br>*optional*|Name and, optional, path, of the OCI executable binary.<br><br>If the path is omitted, the daemon searches the host's `$PATH` for the<br>binary and uses the first result.  <br>**Example** : `"/usr/local/bin/my-oci-runtime"`|string|
+|**runtimeArgs**  <br>*optional*|List of command-line arguments to pass to the runtime when invoked.  <br>**Example** : `[ "--debug", "--systemd-cgroup=false" ]`|< string > array|
+
+
 <a name="searchresultitem"></a>
 ### SearchResultItem
 search result item in search results.
@@ -2002,13 +2058,40 @@ The status of the container. For example, "running" or "exited".
 <a name="systeminfo"></a>
 ### SystemInfo
 
-|Name|Schema|
-|---|---|
-|**Architecture**  <br>*optional*|string|
-|**Containers**  <br>*optional*|integer|
-|**ContainersPaused**  <br>*optional*|integer|
-|**ContainersRunning**  <br>*optional*|integer|
-|**ContainersStopped**  <br>*optional*|integer|
+|Name|Description|Schema|
+|---|---|---|
+|**Architecture**  <br>*optional*|Hardware architecture of the host, as returned by the Go runtime<br>(`GOARCH`).<br><br>A full list of possible values can be found in the [Go documentation](https://golang.org/doc/install/source#environment).  <br>**Example** : `"x86_64"`|string|
+|**CgroupDriver**  <br>*optional*|The driver to use for managing cgroups.  <br>**Default** : `"cgroupfs"`  <br>**Example** : `"cgroupfs"`|enum (cgroupfs, systemd)|
+|**ContainerdCommit**  <br>*optional*||[Commit](#commit)|
+|**Containers**  <br>*optional*|Total number of containers on the host.  <br>**Example** : `14`|integer|
+|**ContainersPaused**  <br>*optional*|Number of containers with status `"paused"`.  <br>**Example** : `1`|integer|
+|**ContainersRunning**  <br>*optional*|Number of containers with status `"running"`.  <br>**Example** : `3`|integer|
+|**ContainersStopped**  <br>*optional*|Number of containers with status `"stopped"`.  <br>**Example** : `10`|integer|
+|**Debug**  <br>*optional*|Indicates if the daemon is running in debug-mode / with debug-level logging enabled.  <br>**Example** : `true`|boolean|
+|**DefaultRuntime**  <br>*optional*|Name of the default OCI runtime that is used when starting containers.<br>The default can be overridden per-container at create time.  <br>**Default** : `"runc"`  <br>**Example** : `"runc"`|string|
+|**Driver**  <br>*optional*|Name of the storage driver in use.  <br>**Example** : `"overlay2"`|string|
+|**DriverStatus**  <br>*optional*|Information specific to the storage driver, provided as<br>"label" / "value" pairs.<br><br>This information is provided by the storage driver, and formatted<br>in a way consistent with the output of `pouch info` on the command<br>line.<br><br><p><br /></p><br><br>> **Note**: The information returned in this field, including the<br>> formatting of values and labels, should not be considered stable,<br>> and may change without notice.  <br>**Example** : `[ [ "Backing Filesystem", "extfs" ], [ "Supports d_type", "true" ], [ "Native Overlay Diff", "true" ] ]`|< < string > array > array|
+|**ExperimentalBuild**  <br>*optional*|Indicates if experimental features are enabled on the daemon.  <br>**Example** : `true`|boolean|
+|**HttpProxy**  <br>*optional*|HTTP-proxy configured for the daemon. This value is obtained from the<br>[`HTTP_PROXY`](https://www.gnu.org/software/wget/manual/html_node/Proxies.html) environment variable.<br><br>Containers do not automatically inherit this configuration.  <br>**Example** : `"http://user:pass@proxy.corp.example.com:8080"`|string|
+|**HttpsProxy**  <br>*optional*|HTTPS-proxy configured for the daemon. This value is obtained from the<br>[`HTTPS_PROXY`](https://www.gnu.org/software/wget/manual/html_node/Proxies.html) environment variable.<br><br>Containers do not automatically inherit this configuration.  <br>**Example** : `"https://user:pass@proxy.corp.example.com:4443"`|string|
+|**ID**  <br>*optional*|Unique identifier of the daemon.<br><br><p><br /></p><br><br>> **Note**: The format of the ID itself is not part of the API, and<br>> should not be considered stable.  <br>**Example** : `"7TRN:IPZB:QYBB:VPBQ:UMPP:KARE:6ZNR:XE6T:7EWV:PKF4:ZOJD:TPYS"`|string|
+|**Images**  <br>*optional*|Total number of images on the host.<br><br>Both _tagged_ and _untagged_ (dangling) images are counted.  <br>**Example** : `508`|integer|
+|**IndexServerAddress**  <br>*optional*|Address / URL of the index server that is used for image search,<br>and as a default for user authentication.|string|
+|**KernelVersion**  <br>*optional*|Kernel version of the host.<br>On Linux, this information obtained from `uname`.|string|
+|**Labels**  <br>*optional*|User-defined labels (key/value metadata) as set on the daemon.  <br>**Example** : `[ "storage=ssd", "production" ]`|< string > array|
+|**LiveRestoreEnabled**  <br>*optional*|Indicates if live restore is enabled.<br>If enabled, containers are kept running when the daemon is shutdown<br>or upon daemon start if running containers are detected.  <br>**Default** : `false`  <br>**Example** : `false`|boolean|
+|**LoggingDriver**  <br>*optional*|The logging driver to use as a default for new containers.|string|
+|**MemTotal**  <br>*optional*|Total amount of physical memory available on the host, in kilobytes (kB).  <br>**Example** : `2095882240`|integer (int64)|
+|**NCPU**  <br>*optional*|The number of logical CPUs usable by the daemon.<br><br>The number of available CPUs is checked by querying the operating<br>system when the daemon starts. Changes to operating system CPU<br>allocation after the daemon is started are not reflected.  <br>**Example** : `4`|integer|
+|**Name**  <br>*optional*|Hostname of the host.  <br>**Example** : `"node5.corp.example.com"`|string|
+|**OSType**  <br>*optional*|Generic type of the operating system of the host, as returned by the<br>Go runtime (`GOOS`).<br><br>Currently returned value is "linux". A full list of<br>possible values can be found in the [Go documentation](https://golang.org/doc/install/source#environment).  <br>**Example** : `"linux"`|string|
+|**OperatingSystem**  <br>*optional*|Name of the host's operating system, for example: "Ubuntu 16.04.2 LTS".  <br>**Example** : `"Alpine Linux v3.5"`|string|
+|**PouchRootDir**  <br>*optional*|Root directory of persistent Pouch state.<br><br>Defaults to `/var/lib/pouch` on Linux.  <br>**Example** : `"/var/lib/pouch"`|string|
+|**RegistryConfig**  <br>*optional*||[RegistryServiceConfig](#registryserviceconfig)|
+|**RuncCommit**  <br>*optional*||[Commit](#commit)|
+|**Runtimes**  <br>*optional*|List of [OCI compliant](https://github.com/opencontainers/runtime-spec)<br>runtimes configured on the daemon. Keys hold the "name" used to<br>reference the runtime.<br><br>The Pouch daemon relies on an OCI compliant runtime (invoked via the<br>`containerd` daemon) as its interface to the Linux kernel namespaces,<br>cgroups, and SELinux.<br><br>The default runtime is `runc`, and automatically configured. Additional<br>runtimes can be configured by the user and will be listed here.  <br>**Example** : `{<br>  "runc" : {<br>    "path" : "pouch-runc"<br>  },<br>  "runc-master" : {<br>    "path" : "/go/bin/runc"<br>  },<br>  "custom" : {<br>    "path" : "/usr/local/bin/my-oci-runtime",<br>    "runtimeArgs" : [ "--debug", "--systemd-cgroup=false" ]<br>  }<br>}`|< string, [Runtime](#runtime) > map|
+|**SecurityOptions**  <br>*optional*|List of security features that are enabled on the daemon, such as<br>apparmor, seccomp, SELinux, and user-namespaces (userns).<br><br>Additional configuration options for each security feature may<br>be present, and are included as a comma-separated list of key/value<br>pairs.  <br>**Example** : `[ "name=apparmor", "name=seccomp,profile=default", "name=selinux", "name=userns" ]`|< string > array|
+|**ServerVersion**  <br>*optional*|Version string of the daemon.  <br>**Example** : `"17.06.0-ce"`|string|
 
 
 <a name="systemversion"></a>
@@ -2104,7 +2187,7 @@ config used to create a volume
 |**Driver**  <br>*optional*|Name of the volume driver to use.  <br>**Default** : `"local"`|string|
 |**DriverOpts**  <br>*optional*|A mapping of driver options and values. These options are passed directly to the driver and are driver specific.|< string, string > map|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
-|**Name**  <br>*optional*|The new volume's name. If not specified, Docker generates a name.|string|
+|**Name**  <br>*optional*|The new volume's name. If not specified, Pouch generates a name.|string|
 
 
 <a name="volumeinfo"></a>
