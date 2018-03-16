@@ -416,6 +416,48 @@ Return low-level information about a container.
 * Container
 
 
+<a name="containerlogs"></a>
+### Get container logs
+```
+GET /containers/{id}/logs
+```
+
+
+#### Description
+Get `stdout` and `stderr` logs from a container.
+
+Note: This endpoint works only for containers with the `json-file` or `journald` logging driver.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string||
+|**Query**|**follow**  <br>*optional*|Return the logs as a stream.|boolean|`"false"`|
+|**Query**|**since**  <br>*optional*|Only return logs since this time, as a UNIX timestamp|integer|`0`|
+|**Query**|**stderr**  <br>*optional*|Return logs from `stderr`|boolean|`"false"`|
+|**Query**|**stdout**  <br>*optional*|Return logs from `stdout`|boolean|`"false"`|
+|**Query**|**tail**  <br>*optional*|Only return this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines.|string|`"all"`|
+|**Query**|**timestamps**  <br>*optional*|Add timestamps to every log line|boolean|`"false"`|
+|**Query**|**until**  <br>*optional*|Only return logs before this time, as a UNIX timestamp|integer|`0`|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**101**|logs returned as a stream|string (binary)|
+|**200**|logs returned as a string in response body|string|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="containerpause"></a>
 ### Pause a container
 ```
@@ -1440,6 +1482,23 @@ GET "/containers/{id}/json"
 |**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
 |**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
 |**State**  <br>*optional*|The state of the container.|[ContainerState](#containerstate)|
+
+
+<a name="containerlogsoptions"></a>
+### ContainerLogsOptions
+The parameters to filter the log.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Details**  <br>*optional*|Show extra details provided to logs|boolean|
+|**Follow**  <br>*optional*|Return logs as a stream|boolean|
+|**ShowStderr**  <br>*optional*|Return logs from `stderr`|boolean|
+|**ShowStdout**  <br>*optional*|Return logs from `stdout`|boolean|
+|**Since**  <br>*optional*|Only return logs after this time, as a UNIX timestamp|string|
+|**Tail**  <br>*optional*|Only reture this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines.|string|
+|**Timestamps**  <br>*optional*|Add timestamps to every log line|boolean|
+|**Until**  <br>*optional*|Only reture logs before this time, as a UNIX timestamp|string|
 
 
 <a name="containerprocesslist"></a>
