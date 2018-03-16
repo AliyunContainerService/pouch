@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"regexp"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -105,6 +107,29 @@ func (suite *PouchPsSuite) TestPsQuiet(c *check.C) {
 			c.Assert(match, check.Equals, true)
 		}
 	}
+}
+
+// TestPsNoTrunc tests "pouch ps trunc" work
+func (suite *PouchPsSuite) TestPsNoTrunc(c *check.C) {
+	name := "ps-noTrunc"
+
+	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	res := command.PouchRun("ps", "--no-trunc").Assert(c, icmd.Success)
+	kv := psToKV(res.Combined())
+
+	// Use inspect command to get container id
+	output := command.PouchRun("inspect", name).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	c.Assert(kv[name].id, check.HasLen, 64)
+	c.Assert(kv[name].id, check.Equals, result.ID)
 }
 
 // psTable represents the table of "pouch ps" result.
