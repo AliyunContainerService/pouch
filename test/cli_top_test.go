@@ -17,8 +17,8 @@ func init() {
 	check.Suite(&PouchTopSuite{})
 }
 
-// SetupSuite does common setup in the beginning of each test suite.
-func (suite *PouchTopSuite) SetupSuite(c *check.C) {
+// SetUpSuite does common setup in the beginning of each test suite.
+func (suite *PouchTopSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
 	environment.PruneAllContainers(apiClient)
