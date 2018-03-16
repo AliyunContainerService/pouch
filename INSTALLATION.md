@@ -57,7 +57,7 @@ Before you install Pouch for the first time on a new host machine, you need to s
 
 ```bash
 sudo add-apt-repository \
-	"deb http://mirrors.cloud.aliyuncs.com/opsx/pouch/linux/debian/ pouch stable"
+	"deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
 ```
 
 **3. Install pouch**
