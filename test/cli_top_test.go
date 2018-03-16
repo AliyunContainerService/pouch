@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -56,8 +57,8 @@ func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
 	res := command.PouchRun("top", name)
 	c.Assert(res.Error, check.IsNil)
 
-	expectString := "UID     PID      PPID     C    STIME    TTY    TIME        CMD"
-	if out := res.Combined(); !strings.Contains(out, expectString) {
+	expectString := "UIDPIDPPID"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.Contains(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
 
