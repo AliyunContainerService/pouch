@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -19,7 +20,7 @@ func (mgr *ImageManager) addRegistry(input string) string {
 	if _, ok := reference.Domain(input); ok {
 		return input
 	}
-	return mgr.DefaultRegistry + input
+	return filepath.Join(mgr.DefaultRegistry, mgr.DefaultNamespace, input)
 }
 
 // isNumericID checks whether input is numeric ID

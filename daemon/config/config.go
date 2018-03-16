@@ -33,6 +33,9 @@ type Config struct {
 	// DefaultRegistry is daemon's default registry which is to pull/push/search images.
 	DefaultRegistry string
 
+	// DefaultRegistryNS is daemon's default registry namespace used in pull/push/search images.
+	DefaultRegistryNS string
+
 	// Home directory.
 	HomeDir string `json:"home-dir,omitempty"`
 
