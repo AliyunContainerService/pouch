@@ -79,6 +79,9 @@ type ContainerMgr interface {
 
 	// Top lists the processes running inside of the given container
 	Top(ctx context.Context, name string, psArgs string) (*types.ContainerProcessList, error)
+
+	// Resize resizes the size of container tty.
+	Resize(ctx context.Context, name string, opts types.ResizeOptions) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -840,6 +843,12 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 	}
 
 	return procList, nil
+}
+
+// Resize resizes the size of a container tty.
+func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types.ResizeOptions) error {
+	// TODO
+	return nil
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {

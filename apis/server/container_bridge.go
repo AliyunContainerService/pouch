@@ -354,5 +354,25 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 
 	// TODO
 	return nil
+}
 
+func (s *Server) resizeContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	opts := types.ResizeOptions{}
+	// decode request body
+	if err := json.NewDecoder(req.Body).Decode(opts); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := opts.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	name := mux.Vars(req)["name"]
+
+	if err := s.ContainerMgr.Resize(ctx, name, opts); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	return nil
 }

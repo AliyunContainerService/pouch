@@ -46,6 +46,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path(versionMatcher + "/containers/{name:.*}/upgrade").Methods(http.MethodPost).Handler(s.filter(s.upgradeContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/top").Methods(http.MethodGet).Handler(s.filter(s.topContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/logs").Methods(http.MethodGet).Handler(s.filter(s.logsContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/resize").Methods(http.MethodPost).Handler(s.filter(s.resizeContainer))
 
 	// image
 	r.Path(versionMatcher + "/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))

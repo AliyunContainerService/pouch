@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -192,6 +193,7 @@ func (client *APIClient) ContainerUpdate(ctx context.Context, name string, confi
 
 // ContainerUpgrade upgrade a container with new image and args.
 func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
+	// TODO
 	return nil
 }
 
@@ -251,4 +253,16 @@ func (client *APIClient) ContainerLogs(ctx context.Context, name string, options
 	}
 	ensureCloseReader(resp)
 	return resp.Body, nil
+}
+
+// ContainerResize resizes the size of container tty.
+func (client *APIClient) ContainerResize(ctx context.Context, name string, opts types.ResizeOptions) error {
+	query := url.Values{}
+	query.Set("h", strconv.Itoa(int(opts.Height)))
+	query.Set("w", strconv.Itoa(int(opts.Width)))
+
+	resp, err := client.post(ctx, "/containers/"+name+"/resize", query, nil, nil)
+	ensureCloseReader(resp)
+
+	return err
 }
