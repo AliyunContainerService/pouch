@@ -48,6 +48,11 @@ func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, re
 	return nil
 }
 
+func (s *Server) restartContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	// TODO
+	return nil
+}
+
 func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	config := &types.ExecCreateConfig{}
 	// decode request body

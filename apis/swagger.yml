@@ -382,6 +382,30 @@ paths:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
+  /containers/{id}/restart:
+    post:
+      summary: "Restart a container"
+      operationId: "ContainerRestart"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "name"
+          in: "query"
+          required: true
+          description: "New name for the container"
+          type: "string"
+        - name: "t"
+          in: "query"
+          description: "Number of seconds to wait before killing the container"
+          type: "integer"
+      responses:
+        204:
+          description: "no error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /containers/{id}/start:
     post:
       summary: "Start a container"
