@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -32,4 +33,14 @@ func WaitTimeout(timeout time.Duration, condition func() bool) bool {
 			}
 		}
 	}
+}
+
+// PartialEqual is used for check if string 'obtain' has substring 'expect',
+// return can be used in check.Assert() or somewhere else.
+func PartialEqual(obtain, expect string) error {
+	if strings.Contains(obtain, expect) {
+		return nil
+	}
+
+	return fmt.Errorf("obtained string: %s not include expected string: %s", obtain, expect)
 }
