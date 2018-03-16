@@ -13,6 +13,10 @@ const (
 
 	GateWay = "192.168.1.1"
 	Subnet  = "192.168.1.0/24"
+
+	testHubAddress = "registry.hub.docker.com"
+	testHubUser    = "pouchcontainertest"
+	testHubPasswd  = "pouchcontainertest"
 )
 
 // VerifyCondition is used to check the condition value.

@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
+	"github.com/alibaba/pouch/test/util"
 	"github.com/alibaba/pouch/version"
 	"github.com/go-check/check"
 )
@@ -79,4 +80,23 @@ func (suite *APISystemSuite) TestVersion(c *check.C) {
 		Os:         runtime.GOOS,
 		Version:    version.Version,
 	})
+}
+
+// If the /auth is ready, we can login to the registry.
+func (suite *APISystemSuite) TestRegistryLogin(c *check.C) {
+	SkipIfFalse(c, environment.IsHubConnected)
+
+	body := request.WithJSONBody(map[string]interface{}{
+		"Username": testHubUser,
+		"Password": testHubPasswd,
+	})
+
+	resp, err := request.Post("/auth", body)
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	CheckRespStatus(c, resp, 200)
+	authResp := &types.AuthResponse{}
+	request.DecodeBody(authResp, resp.Body)
+	c.Assert(util.PartialEqual(authResp.Status, "Login Succeeded"), check.IsNil)
 }

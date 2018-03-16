@@ -52,3 +52,9 @@ func IsRuncVersionSupportRichContianer() bool {
 	}
 	return false
 }
+
+// IsHubConnected checks if hub address can be connected.
+func IsHubConnected() bool {
+	// TODO: found a proper way to test if hub address can be connected.
+	return true
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -107,4 +108,17 @@ func (suite *PouchImagesSuite) TestInspectImage(c *check.C) {
 	// inspect image name
 	output = command.PouchRun("image", "inspect", "-f", "{{.Name}}", busyboxImage).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", busyboxImage))
+}
+
+// TestLoginAndLogout is to test login and logout command
+func (suite *PouchImagesSuite) TestLoginAndLogout(c *check.C) {
+	SkipIfFalse(c, environment.IsHubConnected)
+
+	// test login a defined registry
+	output := command.PouchRun("login", "-u", testHubUser, "-p", testHubPasswd, testHubAddress).Stdout()
+	c.Assert(util.PartialEqual(output, "Login Succeeded"), check.IsNil)
+
+	// test logout a defined registry
+	output = command.PouchRun("logout", testHubAddress).Stdout()
+	c.Assert(util.PartialEqual(output, "Remove login credential for registry"), check.IsNil)
 }
