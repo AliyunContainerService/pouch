@@ -30,6 +30,7 @@ type ContainerAPIClient interface {
 	ContainerStartExec(ctx context.Context, execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)
 	ContainerGet(ctx context.Context, name string) (*types.ContainerJSON, error)
 	ContainerRename(ctx context.Context, id string, name string) error
+	ContainerRestart(ctx context.Context, name string, time int) error
 	ContainerPause(ctx context.Context, name string) error
 	ContainerUnpause(ctx context.Context, name string) error
 	ContainerUpdate(ctx context.Context, name string, config *types.UpdateConfig) error
