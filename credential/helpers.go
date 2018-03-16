@@ -54,7 +54,7 @@ func homedir() string {
 	return os.Getenv(env)
 }
 
-func addrTrim(addr string) string {
+func convertHost(addr string) string {
 	if strings.HasPrefix(addr, "http://") {
 		addr = strings.TrimPrefix(addr, "http://")
 	}

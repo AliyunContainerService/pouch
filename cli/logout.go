@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -35,28 +36,32 @@ func (l *LogoutCommand) Init(c *Cli) {
 
 // runLogout is the entry of logout command.
 func (l *LogoutCommand) runLogout(args []string) error {
-	var serverAddress string
+	var registry string
 	if len(args) > 0 {
-		serverAddress = args[0]
+		registry = args[0]
 	}
 
-	// TODO: better way to get registry server address, or get it from a default variable
-	registry := serverAddress
 	if registry == "" {
-		registry = "https://index.docker.io"
+		ctx := context.Background()
+		info, err := l.cli.Client().SystemInfo(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Fail to get default registry: %s\n", err)
+			return err
+		}
+		registry = info.DefaultRegistry
 	}
 
-	if !credential.Exist(serverAddress) {
+	if !credential.Exist(registry) {
 		fmt.Fprintf(os.Stdout, "Has not logged in registry: %s\n", registry)
 		return nil
 	}
 
-	if err := credential.Delete(serverAddress); err != nil {
+	if err := credential.Delete(registry); err != nil {
 		fmt.Fprintf(os.Stderr, "Fail to remove login credential: %s\n", err)
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "Remove login credential for registry:%s\n", registry)
+	fmt.Fprintf(os.Stdout, "Remove login credential for registry: %s\n", registry)
 	return nil
 }
 

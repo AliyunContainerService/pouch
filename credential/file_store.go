@@ -50,7 +50,7 @@ func (fs *fileStore) Save(authConfig *types.AuthConfig) error {
 	if serverAddress == "" {
 		serverAddress = defaultRegistry
 	} else {
-		serverAddress = addrTrim(serverAddress)
+		serverAddress = convertHost(serverAddress)
 	}
 
 	fs.configFile.AuthConfigs[serverAddress] = types.AuthConfig{
@@ -70,7 +70,7 @@ func (fs *fileStore) Get(serverAddress string) (types.AuthConfig, error) {
 	if serverAddress == "" {
 		serverAddress = defaultRegistry
 	} else {
-		serverAddress = addrTrim(serverAddress)
+		serverAddress = convertHost(serverAddress)
 	}
 	authConfig, exist := authConfigs[serverAddress]
 	if !exist {
@@ -94,7 +94,7 @@ func (fs *fileStore) Delete(serverAddress string) error {
 		return nil
 	}
 
-	serverAddress = addrTrim(serverAddress)
+	serverAddress = convertHost(serverAddress)
 	delete(fs.configFile.AuthConfigs, serverAddress)
 	return fs.update()
 }
@@ -108,7 +108,7 @@ func (fs *fileStore) Exist(serverAddress string) bool {
 	if serverAddress == "" {
 		serverAddress = defaultRegistry
 	} else {
-		serverAddress = addrTrim(serverAddress)
+		serverAddress = convertHost(serverAddress)
 	}
 	_, exist := fs.configFile.AuthConfigs[serverAddress]
 	return exist
