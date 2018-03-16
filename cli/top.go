@@ -11,8 +11,8 @@ import (
 )
 
 // topDescription
-var topDescription = "top comand is to display the running processes of a container." +
-	"Your can add options just like using Linux ps command."
+var topDescription = "top command is to display the running processes of a container." +
+	"You can add options just like using Linux ps command."
 
 // TopCommand use to implement 'top' command, it displays all processes in a container.
 type TopCommand struct {
