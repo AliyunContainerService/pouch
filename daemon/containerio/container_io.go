@@ -50,6 +50,19 @@ func NewIO(opt *Option) *IO {
 	}
 }
 
+// AddBackend adds more backends to container's stdio.
+func (io *IO) AddBackend(opt *Option) {
+	backends := createBackend(opt)
+
+	for t, s := range map[stdioType]*ContainerIO{
+		stdin:  io.Stdin,
+		stdout: io.Stdout,
+		stderr: io.Stderr,
+	} {
+		s.add(opt, t, backends)
+	}
+}
+
 // Close closes the container's io.
 func (io *IO) Close() error {
 	io.Stderr.Close()
@@ -61,29 +74,58 @@ func (io *IO) Close() error {
 // ContainerIO used to control the container's stdio.
 type ContainerIO struct {
 	Option
-	backends map[string]containerBackend
+	backends []containerBackend
 	total    int64
 	typ      stdioType
 	closed   bool
+	// The stdin of all backends should put into ring first.
+	ring *ringbuff.RingBuff
+}
+
+func (cio *ContainerIO) add(opt *Option, typ stdioType, backends map[string]containerBackend) {
+	if typ == stdin {
+		for _, b := range backends {
+			if b.backend.Name() == opt.stdinBackend {
+				cio.backends = append(cio.backends, b)
+				go func(b containerBackend) {
+					cio.converge(b.backend.Name(), opt.id, b.backend.In())
+					b.backend.Close()
+				}(b)
+				break
+			}
+		}
+	} else {
+		for _, b := range backends {
+			cio.backends = append(cio.backends, b)
+		}
+	}
 }
 
 func create(opt *Option, typ stdioType, backends map[string]containerBackend) *ContainerIO {
 	io := &ContainerIO{
-		backends: backends,
-		total:    0,
-		typ:      typ,
-		closed:   false,
-		Option:   *opt,
+		total:  0,
+		typ:    typ,
+		closed: false,
+		Option: *opt,
 	}
 
 	if typ == stdin {
-		io.backends = make(map[string]containerBackend)
-
+		io.ring = ringbuff.New(10)
 		for _, b := range backends {
 			if b.backend.Name() == opt.stdinBackend {
-				io.backends[opt.stdinBackend] = b
+				io.backends = append(io.backends, b)
+				go func(b containerBackend) {
+					// For backend with stdin, close it if stdin finished.
+					io.converge(b.backend.Name(), opt.id, b.backend.In())
+					b.backend.Close()
+					b.ring.Close()
+				}(b)
 				break
 			}
+		}
+	} else {
+		for _, b := range backends {
+			io.backends = append(io.backends, b)
 		}
 	}
 
@@ -124,51 +166,51 @@ func createBackend(opt *Option) map[string]containerBackend {
 }
 
 // OpenStdin returns open container's stdin or not.
-func (io *ContainerIO) OpenStdin() bool {
-	if io.typ != stdin {
+func (cio *ContainerIO) OpenStdin() bool {
+	if cio.typ != stdin {
 		return false
 	}
-	if io.closed {
+	if cio.closed {
 		return false
 	}
-	return len(io.backends) != 0
+	return len(cio.backends) != 0
 }
 
 // Read implements the standard Read interface.
-func (io *ContainerIO) Read(p []byte) (int, error) {
-	if io.typ != stdin {
-		return 0, fmt.Errorf("invalid container io type: %s, id: %s", io.typ, io.id)
+func (cio *ContainerIO) Read(p []byte) (int, error) {
+	if cio.typ != stdin {
+		return 0, fmt.Errorf("invalid container io type: %s, id: %s", cio.typ, cio.id)
 	}
-	if io.closed {
+	if cio.closed {
 		return 0, fmt.Errorf("container io is closed")
 	}
 
-	if len(io.backends) == 0 {
-		block := make(chan struct{})
-		<-block
+	value, _ := cio.ring.Pop()
+	data, ok := value.([]byte)
+	if !ok {
+		return 0, nil
 	}
+	n := copy(p, data)
 
-	backend := io.backends[io.stdinBackend]
-
-	return backend.backend.In().Read(p)
+	return n, nil
 }
 
 // Write implements the standard Write interface.
-func (io *ContainerIO) Write(data []byte) (int, error) {
-	if io.typ == stdin {
-		return 0, fmt.Errorf("invalid container io type: %s, id: %s", io.typ, io.id)
+func (cio *ContainerIO) Write(data []byte) (int, error) {
+	if cio.typ == stdin {
+		return 0, fmt.Errorf("invalid container io type: %s, id: %s", cio.typ, cio.id)
 	}
-	if io.closed {
+	if cio.closed {
 		return 0, fmt.Errorf("container io is closed")
 	}
 
-	if io.typ == discard {
+	if cio.typ == discard {
 		return len(data), nil
 	}
 
-	for _, b := range io.backends {
+	for _, b := range cio.backends {
 		if cover := b.ring.Push(data); cover {
-			logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), io.id)
+			logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
 		}
 	}
 
@@ -176,17 +218,18 @@ func (io *ContainerIO) Write(data []byte) (int, error) {
 }
 
 // Close implements the standard Close interface.
-func (io *ContainerIO) Close() error {
-	for name, b := range io.backends {
+func (cio *ContainerIO) Close() error {
+	for _, b := range cio.backends {
 		// we need to close ringbuf before close backend, because close ring will flush
 		// the remain data into backend.
+		name := b.backend.Name()
 		b.ring.Close()
 		b.backend.Close()
 
-		logrus.Infof("close containerio backend: %s, id: %s", name, io.id)
+		logrus.Infof("close containerio backend: %s, id: %s", name, cio.id)
 	}
 
-	io.closed = true
+	cio.closed = true
 	return nil
 }
 
@@ -214,4 +257,25 @@ func subscribe(name, id string, ring *ringbuff.RingBuff, out io.Writer) {
 	}
 
 	logrus.Infof("finished to subscribe io, backend: %s, id: %s", name, id)
+}
+
+// converge be called in a goroutine.
+func (cio *ContainerIO) converge(name, id string, in io.Reader) {
+	// TODO: we should implement this function more elegant and robust.
+	logrus.Infof("start to converge io, backend: %s, id: %s", name, id)
+
+	data := make([]byte, 128)
+	for {
+		n, err := in.Read(data)
+		if err != nil {
+			logrus.Errorf("failed to read from backend: %s, id: %s, %v", name, id, err)
+			break
+		}
+		cover := cio.ring.Push(data[:n])
+		if cover {
+			logrus.Warnf("cover data, backend: %s, id: %s", name, id)
+		}
+	}
+
+	logrus.Infof("finished to converge io, backend: %s, id: %s", name, id)
 }

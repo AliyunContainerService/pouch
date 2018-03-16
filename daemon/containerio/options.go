@@ -3,6 +3,8 @@ package containerio
 import (
 	"bytes"
 	"net/http"
+
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 )
 
 // Option is used to pass some data into ContainerIO.
@@ -14,6 +16,7 @@ type Option struct {
 	hijackUpgrade bool
 	stdinBackend  string
 	memBuffer     *bytes.Buffer
+	streams       *remotecommand.Streams
 }
 
 // NewOption creates the Option instance.
@@ -88,5 +91,23 @@ func WithMemBuffer(memBuffer *bytes.Buffer) func(*Option) {
 		}
 		opt.backends["memBuffer"] = struct{}{}
 		opt.memBuffer = memBuffer
+	}
+}
+
+// WithStreams specified the stream backend.
+func WithStreams(streams *remotecommand.Streams) func(*Option) {
+	return func(opt *Option) {
+		if opt.backends == nil {
+			opt.backends = make(map[string]struct{})
+		}
+		opt.backends["streams"] = struct{}{}
+		opt.streams = streams
+	}
+}
+
+// WithStdinStream specified the stdin with stream.
+func WithStdinStream() func(*Option) {
+	return func(opt *Option) {
+		opt.stdinBackend = "streams"
 	}
 }

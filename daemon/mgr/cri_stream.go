@@ -9,7 +9,9 @@ import (
 	"os/exec"
 	"strings"
 
+	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
+	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
 	"github.com/sirupsen/logrus"
 )
@@ -30,13 +32,60 @@ func newStreamRuntime(ctrMgr ContainerMgr) stream.Runtime {
 }
 
 // Exec executes a command inside the container.
-func (s *streamRuntime) Exec() error {
-	return fmt.Errorf("streamRuntime's Exec Not Implemented Yet")
+func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error {
+	createConfig := &apitypes.ExecCreateConfig{
+		Cmd:          cmd,
+		AttachStdin:  streamOpts.Stdin,
+		AttachStdout: streamOpts.Stdout,
+		AttachStderr: streamOpts.Stderr,
+		Tty:          streamOpts.TTY,
+	}
+
+	ctx := context.Background()
+
+	execid, err := s.containerMgr.CreateExec(ctx, containerID, createConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
+	}
+
+	startConfig := &apitypes.ExecStartConfig{}
+	attachConfig := &AttachConfig{
+		Streams: streams,
+	}
+
+	err = s.containerMgr.StartExec(ctx, execid, startConfig, attachConfig)
+	if err != nil {
+		return fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
+	}
+
+	ei, err := s.containerMgr.InspectExec(ctx, execid)
+	if err != nil {
+		return fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
+	}
+
+	// Not return until exec finished.
+	<-ei.ExitCh
+
+	return nil
 }
 
 // Attach attaches to a running container.
-func (s *streamRuntime) Attach() error {
-	return fmt.Errorf("streamRuntime's Attach Not Implemented Yet")
+func (s *streamRuntime) Attach(containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error {
+	attachConfig := &AttachConfig{
+		Stdin:   streamOpts.Stdin,
+		Stdout:  streamOpts.Stdout,
+		Stderr:  streamOpts.Stderr,
+		Streams: streams,
+	}
+
+	err := s.containerMgr.Attach(context.Background(), containerID, attachConfig)
+	if err != nil {
+		return fmt.Errorf("failed to attach to container %q: %v", containerID, err)
+	}
+
+	<-streams.StreamCh
+
+	return nil
 }
 
 // PortForward forwards ports from a PodSandbox.
