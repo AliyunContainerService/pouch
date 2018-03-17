@@ -34,6 +34,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
+* [pouch restart](pouch_restart.md)	 - restart one or more containers
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it

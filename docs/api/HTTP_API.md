@@ -516,6 +516,65 @@ POST /containers/{id}/rename
 * Container
 
 
+<a name="containerresize"></a>
+### changes the size of the tty for a container
+```
+POST /containers/{id}/resize
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**height**  <br>*optional*|height of the tty|string|
+|**Query**|**width**  <br>*optional*|width of the tty|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**400**|bad parameter|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+<a name="containerrestart"></a>
+### Restart a container
+```
+POST /containers/{id}/restart
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**name**  <br>*required*|New name for the container|string|
+|**Query**|**t**  <br>*optional*|Number of seconds to wait before killing the container|integer|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**204**|no error|No Content|
+|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="containerstart"></a>
 ### Start a container
 ```
@@ -2011,6 +2070,17 @@ RegistryServiceConfig stores daemon registry services configuration.
 |**IndexConfigs**  <br>*optional*|**Example** : `{<br>  "127.0.0.1:5000" : {<br>    "Name" : "127.0.0.1:5000",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  },<br>  "[2001:db8:a0b:12f0::1]:80" : {<br>    "Name" : "[2001:db8:a0b:12f0::1]:80",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  },<br>  "registry.internal.corp.example.com:3000" : {<br>    "Name" : "registry.internal.corp.example.com:3000",<br>    "Mirrors" : [ ],<br>    "Secure" : false,<br>    "Official" : false<br>  }<br>}`|< string, [IndexInfo](#indexinfo) > map|
 |**InsecureRegistryCIDRs**  <br>*optional*|List of IP ranges of insecure registries, using the CIDR syntax<br>([RFC 4632](https://tools.ietf.org/html/4632)). Insecure registries<br>accept un-encrypted (HTTP) and/or untrusted (HTTPS with certificates<br>from unknown CAs) communication.<br><br>By default, local registries (`127.0.0.0/8`) are configured as<br>insecure. All other registries are secure. Communicating with an<br>insecure registry is not possible if the daemon assumes that registry<br>is secure.<br><br>This configuration override this behavior, insecure communication with<br>registries whose resolved IP address is within the subnet described by<br>the CIDR syntax.<br><br>Registries can also be marked insecure by hostname. Those registries<br>are listed under `IndexConfigs` and have their `Secure` field set to<br>`false`.<br><br>> **Warning**: Using this option can be useful when running a local<br>> registry, but introduces security vulnerabilities. This option<br>> should therefore ONLY be used for testing purposes. For increased<br>> security, users should add their CA to their system's list of trusted<br>> CAs instead of enabling this option.  <br>**Example** : `[ "::1/128", "127.0.0.0/8" ]`|< string > array|
 |**Mirrors**  <br>*optional*|List of registry URLs that act as a mirror for the official registry.  <br>**Example** : `[ "https://hub-mirror.corp.example.com:5000/", "https://[2001:db8:a0b:12f0::1]/" ]`|< string > array|
+
+
+<a name="resizeoptions"></a>
+### ResizeOptions
+options of resizing container tty size
+
+
+|Name|Schema|
+|---|---|
+|**Height**  <br>*optional*|integer|
+|**Width**  <br>*optional*|integer|
 
 
 <a name="resources"></a>
