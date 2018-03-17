@@ -74,8 +74,10 @@ function target()
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
 		;;
 	build)
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"  >$TMP/build.log
-		install_pouch  >$TMP/install.log
+		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make build"  >$TMP/build.log ||
+		    { echo "make build log:"; cat $TMP/build.log; return 1; }
+		install_pouch  >$TMP/install.log ||
+		    { echo "install pouch log:"; cat $TMP/install.log; return 1; }
 		;;
 	unit-test)
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make unit-test"
