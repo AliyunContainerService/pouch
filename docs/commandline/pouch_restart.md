@@ -1,28 +1,26 @@
-## pouch top
+## pouch restart
 
-Display the running processes of a container
+restart one or more containers
 
 ### Synopsis
 
-top command is to display the running processes of a container.You can add options just like using Linux ps command.
+restart one or more containers
 
 ```
-pouch top CONTAINER [ps OPTIONS]
+pouch restart [OPTION] CONTAINER [CONTAINERS]
 ```
 
 ### Examples
 
 ```
-$ pouch top 44f675
-	UID     PID      PPID     C    STIME    TTY    TIME        CMD
-	root    28725    28714    0    3月14     ?      00:00:00    sh
-	
+//TODO
 ```
 
 ### Options
 
 ```
-  -h, --help   help for top
+  -h, --help       help for restart
+  -t, --time int   Seconds to wait for stop before killing the container (default 10) (default 10)
 ```
 
 ### Options inherited from parent commands
