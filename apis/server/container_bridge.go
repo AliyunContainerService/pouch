@@ -16,6 +16,8 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) removeContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -114,8 +116,16 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	config := &types.ContainerCreateConfig{}
+	reader := req.Body
+	var ex error
+	if s.ContainerPlugin != nil {
+		logrus.Infof("invoke container pre-create hook in plugin")
+		if reader, ex = s.ContainerPlugin.PreCreate(req.Body); ex != nil {
+			return errors.Wrapf(ex, "pre-create plugin piont execute failed")
+		}
+	}
 	// decode request body
-	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+	if err := json.NewDecoder(reader).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 	// validate request body
