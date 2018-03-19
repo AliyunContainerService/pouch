@@ -44,3 +44,13 @@ func PartialEqual(obtain, expect string) error {
 
 	return fmt.Errorf("obtained string: %s not include expected string: %s", obtain, expect)
 }
+
+// TrimAllSpaceAndNewline is used to strip all empty space and newline from a string.
+func TrimAllSpaceAndNewline(input string) string {
+	output := input
+	for _, f := range []string{"\n", "\t", " "} {
+		output = strings.Replace(output, f, "", -1)
+	}
+
+	return output
+}
