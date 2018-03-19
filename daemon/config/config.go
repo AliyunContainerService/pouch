@@ -66,4 +66,10 @@ type Config struct {
 
 	// CgroupParent is to set parent cgroup for all containers
 	CgroupParent string `json:"cgroup-parent,omitempty"`
+
+	// ContainerPluginPath is set the path where container plugin so file put
+	ContainerPluginPath string `json:"container-plugin-path"`
+
+	// DaemonPluginPath is set the path where daemon plugin so file put
+	DaemonPluginPath string `json:"daemon-plugin-path"`
 }
