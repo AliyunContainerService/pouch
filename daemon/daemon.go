@@ -2,9 +2,12 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"path"
+	"plugin"
 	"reflect"
 
+	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
 	cri "github.com/alibaba/pouch/cri/service"
 	"github.com/alibaba/pouch/ctrd"
@@ -13,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/pkg/errors"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -20,17 +24,19 @@ import (
 
 // Daemon refers to a daemon.
 type Daemon struct {
-	config         config.Config
-	containerStore *meta.Store
-	containerd     *ctrd.Client
-	containerMgr   mgr.ContainerMgr
-	systemMgr      mgr.SystemMgr
-	imageMgr       mgr.ImageMgr
-	volumeMgr      mgr.VolumeMgr
-	networkMgr     mgr.NetworkMgr
-	criMgr         mgr.CriMgr
-	server         server.Server
-	criService     *cri.Service
+	config          config.Config
+	containerStore  *meta.Store
+	containerd      *ctrd.Client
+	containerMgr    mgr.ContainerMgr
+	systemMgr       mgr.SystemMgr
+	imageMgr        mgr.ImageMgr
+	volumeMgr       mgr.VolumeMgr
+	networkMgr      mgr.NetworkMgr
+	criMgr          mgr.CriMgr
+	server          server.Server
+	criService      *cri.Service
+	containerPlugin plugins.ContainerPlugin
+	daemonPlugin    plugins.DaemonPlugin
 }
 
 // router represents the router of daemon.
@@ -71,10 +77,52 @@ func NewDaemon(cfg config.Config) *Daemon {
 	}
 }
 
+func loadSymbolByPath(place string) (plugin.Symbol, error) {
+	if place == "" {
+		return nil, nil
+	}
+	p, err := plugin.Open(place)
+	if err != nil {
+		return nil, errors.Wrapf(err, "load plugin at %s error", place)
+	}
+	s, err := p.Lookup("plugin")
+	if err != nil {
+		return nil, errors.Wrapf(err, "lookup plugin with name plugin at %s error", place)
+	}
+	return s, nil
+}
+
 // Run starts daemon.
 func (d *Daemon) Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	var s plugin.Symbol
+	var err error
+	//load container plugin if exist
+	if s, err = loadSymbolByPath(d.config.ContainerPluginPath); err != nil {
+		return err
+	}
+	if containerPlugin, ok := s.(plugins.ContainerPlugin); ok {
+		d.containerPlugin= containerPlugin
+	} else if s != nil {
+		return fmt.Errorf("not a container plugin at %s", d.config.ContainerPluginPath)
+	}
+	//load container plugin if exist
+	if s, err = loadSymbolByPath(d.config.DaemonPluginPath); err != nil {
+		return err
+	}
+	if daemonPlugin, ok := s.(plugins.DaemonPlugin); ok {
+		d.daemonPlugin = daemonPlugin
+	} else if s != nil {
+		fmt.Errorf("not a container plugin at %s", d.config.DaemonPluginPath)
+	}
+
+	if d.daemonPlugin != nil {
+		if err = d.daemonPlugin.PreStartHook(); err != nil {
+			return err
+		}
+	}
 
 	imageMgr, err := internal.GenImageMgr(&d.config, d)
 	if err != nil {
@@ -166,6 +214,11 @@ func (d *Daemon) Run() error {
 	logrus.Infof("GRPC server stopped")
 	<-streamServerCloseCh
 	logrus.Infof("Stream server stopped")
+	if d.daemonPlugin != nil {
+		if err = d.daemonPlugin.PreStopHook(); err != nil {
+			logrus.Errorf("stop prehook execute error %v", err)
+		}
+	}
 	return nil
 }
 

@@ -88,6 +88,8 @@ func setupFlags(cmd *cobra.Command) {
 
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
+	flagSet.StringVar(&cfg.DaemonPluginPath, "daemon-plugin", "", "Set the path where daemon plugin so file put")
+	flagSet.StringVar(&cfg.ContainerPluginPath, "container-plugin", "", "Set the path where container plugin so file put")
 }
 
 // parse flags
