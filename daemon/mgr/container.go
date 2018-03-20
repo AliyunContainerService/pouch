@@ -23,8 +23,10 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/go-openapi/strfmt"
+	"github.com/imdario/mergo"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
@@ -503,6 +505,10 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		}
 	}
 
+	return mgr.createContainerdContainer(ctx, c)
+}
+
+func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container) error {
 	// new a default spec.
 	s, err := ctrd.NewDefaultSpec(ctx, c.ID())
 	if err != nil {
@@ -517,6 +523,8 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 	}
 
 	// cgroupsPath must be absolute path
+	// call filepath.Clean is to avoid bad
+	// path just like../../../.../../BadPath
 	if cgroupsParent != "" {
 		if !filepath.IsAbs(cgroupsParent) {
 			cgroupsParent = filepath.Clean("/" + cgroupsParent)
@@ -855,7 +863,130 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 
 // Upgrade upgrades a container with new image and args.
 func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
-	// TODO
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	// check the image existed or not, and convert image id to image ref
+	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
+	if err != nil {
+		return errors.Wrap(err, "failed to get image")
+	}
+
+	// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
+	ref := ""
+	if len(image.RepoTags) > 0 {
+		ref = image.RepoTags[0]
+	} else {
+		ref = image.RepoDigests[0]
+	}
+	config.Image = ref
+
+	// Nothing changed, no need upgrade.
+	if config.Image == c.Image() {
+		return fmt.Errorf("failed to upgrade container: image not changed")
+	}
+
+	var (
+		needRollback        = false
+		backupContainerMeta = *c.meta
+	)
+
+	defer func() {
+		if needRollback {
+			c.meta = &backupContainerMeta
+			if err := mgr.Client.CreateSnapshot(ctx, c.ID(), c.meta.Image); err != nil {
+				logrus.Errorf("failed to create snapshot when rollback upgrade action: %v", err)
+				return
+			}
+			// FIXME: create new containerd container may failed
+			_ = mgr.createContainerdContainer(ctx, c)
+		}
+	}()
+
+	// FIXME(ziren): mergo.Merge() use AppendSlice to merge slice.
+	// that is to say, t1 = ["a", "b"], t2 = ["a", "c"], the merge
+	// result will be ["a", "b", "a", "c"]
+	// This may occur errors, just take notes to record this.
+	if err := mergo.MergeWithOverwrite(c.meta.Config, config.ContainerConfig); err != nil {
+		return errors.Wrapf(err, "failed to merge ContainerConfig")
+	}
+	if err := mergo.MergeWithOverwrite(c.meta.HostConfig, config.HostConfig); err != nil {
+		return errors.Wrapf(err, "failed to merge HostConfig")
+	}
+	c.meta.Image = config.Image
+
+	// If container is running,  we need change
+	// configuration and recreate it. Else we just store new meta
+	// into disk, next time when starts container, the new configurations
+	// will take effect.
+	if c.IsRunning() {
+		// Inherit volume configurations from old container,
+		// New volume configurations may cover the old one.
+		// c.meta.VolumesFrom = []string{c.ID()}
+
+		// FIXME(ziren): here will forcely stop container afer 3s.
+		// If DestroyContainer failed, we think the old container
+		// not changed, so just return error, no need recover it.
+		_, err := mgr.Client.DestroyContainer(ctx, c.ID(), 3)
+		if err != nil {
+			return errors.Wrapf(err, "failed to destroy container")
+		}
+
+		// remove snapshot of old container
+		if err := mgr.Client.RemoveSnapshot(ctx, c.ID()); err != nil {
+			return errors.Wrap(err, "failed to remove snapshot")
+		}
+
+		// wait util old snapshot to be deleted
+		wait := make(chan struct{})
+		go func() {
+			for {
+				// FIXME(ziren) Ensure the removed snapshot be removed
+				// by garbage collection.
+				time.Sleep(100 * time.Millisecond)
+
+				_, err := mgr.Client.GetSnapshot(ctx, c.ID())
+				if err != nil && errdefs.IsNotFound(err) {
+					close(wait)
+					return
+				}
+			}
+		}()
+
+		select {
+		case <-wait:
+			// TODO delete snapshot succeeded
+		case <-time.After(30 * time.Second):
+			needRollback = true
+			return fmt.Errorf("failed to deleted old snapshot: wait old snapshot %s to be deleted timeout(30s)", c.ID())
+		}
+
+		// create a snapshot with image for new container.
+		if err := mgr.Client.CreateSnapshot(ctx, c.ID(), config.Image); err != nil {
+			needRollback = true
+			return errors.Wrap(err, "failed to create snapshot")
+		}
+
+		if err := mgr.createContainerdContainer(ctx, c); err != nil {
+			needRollback = true
+			return errors.Wrap(err, "failed to create new container")
+		}
+
+		// Upgrade succeeded, refresh the cache
+		// remove old container from cache
+		mgr.cache.Remove(c.ID())
+		// add new container to cache
+		mgr.cache.Put(c.ID(), c)
+	}
+
+	// Works fine, store new container info to disk.
+	c.Write(mgr.Store)
+
 	return nil
 }
 
@@ -868,6 +999,9 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 	if err != nil {
 		return nil, err
 	}
+
+	c.Lock()
+	defer c.Unlock()
 
 	if !c.IsRunning() {
 		return nil, fmt.Errorf("container is not running, can not execute top command")

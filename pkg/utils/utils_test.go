@@ -160,7 +160,7 @@ func TestMerge(t *testing.T) {
 		}, {
 			src:      getIntAddr(1),
 			dest:     getIntAddr(2),
-			expected: "merged object type shoule be struct",
+			expected: "merged object type should be struct",
 			ok:       false,
 		}, {
 			src:      &nestS{},
