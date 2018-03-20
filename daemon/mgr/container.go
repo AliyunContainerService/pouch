@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
@@ -112,22 +113,25 @@ type ContainerManager struct {
 
 	// monitor is used to handle container's event, eg: exit, stop and so on.
 	monitor *ContainerMonitor
+
+	containerPlugin plugins.ContainerPlugin
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
 	mgr := &ContainerManager{
-		Store:         store,
-		NameToID:      collect.NewSafeMap(),
-		Client:        cli,
-		ImageMgr:      imgMgr,
-		VolumeMgr:     volMgr,
-		NetworkMgr:    netMgr,
-		IOs:           containerio.NewCache(),
-		ExecProcesses: collect.NewSafeMap(),
-		cache:         collect.NewSafeMap(),
-		Config:        cfg,
-		monitor:       NewContainerMonitor(),
+		Store:           store,
+		NameToID:        collect.NewSafeMap(),
+		Client:          cli,
+		ImageMgr:        imgMgr,
+		VolumeMgr:       volMgr,
+		NetworkMgr:      netMgr,
+		IOs:             containerio.NewCache(),
+		ExecProcesses:   collect.NewSafeMap(),
+		cache:           collect.NewSafeMap(),
+		Config:          cfg,
+		monitor:         NewContainerMonitor(),
+		containerPlugin: contPlugin,
 	}
 
 	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
@@ -506,11 +510,22 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID())
 	}
 
+	var prioArr []int
+	var argsArr [][]string
+	if mgr.containerPlugin != nil {
+		prioArr, argsArr, err = mgr.containerPlugin.PreStart(c)
+		if err != nil {
+			return errors.Wrapf(err, "get pre-start hook error from container plugin")
+		}
+	}
+
 	sw := &SpecWrapper{
-		s:      s,
-		ctrMgr: mgr,
-		volMgr: mgr.VolumeMgr,
-		netMgr: mgr.NetworkMgr,
+		s:       s,
+		ctrMgr:  mgr,
+		volMgr:  mgr.VolumeMgr,
+		netMgr:  mgr.NetworkMgr,
+		prioArr: prioArr,
+		argsArr: argsArr,
 	}
 
 	for _, setup := range SetupFuncs() {

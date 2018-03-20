@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 
@@ -18,13 +19,14 @@ import (
 
 // Server is a http server which serves restful api to client.
 type Server struct {
-	Config       config.Config
-	ContainerMgr mgr.ContainerMgr
-	SystemMgr    mgr.SystemMgr
-	ImageMgr     mgr.ImageMgr
-	VolumeMgr    mgr.VolumeMgr
-	NetworkMgr   mgr.NetworkMgr
-	listeners    []net.Listener
+	Config          config.Config
+	ContainerMgr    mgr.ContainerMgr
+	SystemMgr       mgr.SystemMgr
+	ImageMgr        mgr.ImageMgr
+	VolumeMgr       mgr.VolumeMgr
+	NetworkMgr      mgr.NetworkMgr
+	listeners       []net.Listener
+	ContainerPlugin plugins.ContainerPlugin
 }
 
 // Start setup route table and listen to specified address which currently only supports unix socket and tcp address.

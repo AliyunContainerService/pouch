@@ -4,6 +4,7 @@ import (
 	"context"
 	"path"
 
+	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -19,11 +20,12 @@ type DaemonProvider interface {
 	VolMgr() mgr.VolumeMgr
 	NetMgr() mgr.NetworkMgr
 	MetaStore() *meta.Store
+	ContainerPlugin() plugins.ContainerPlugin
 }
 
 // GenContainerMgr generates a ContainerMgr instance according to config cfg.
 func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
-	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.NetMgr(), d.Config())
+	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.NetMgr(), d.Config(), d.ContainerPlugin())
 }
 
 // GenSystemMgr generates a SystemMgr instance according to config cfg.

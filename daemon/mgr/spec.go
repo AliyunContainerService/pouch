@@ -10,9 +10,11 @@ import (
 type SpecWrapper struct {
 	s *specs.Spec
 
-	ctrMgr ContainerMgr
-	volMgr VolumeMgr
-	netMgr NetworkMgr
+	ctrMgr  ContainerMgr
+	volMgr  VolumeMgr
+	netMgr  NetworkMgr
+	prioArr []int
+	argsArr [][]string
 }
 
 // SetupFunc defines spec setup function type.
