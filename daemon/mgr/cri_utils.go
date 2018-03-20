@@ -3,6 +3,10 @@ package mgr
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -89,6 +93,18 @@ func extractLabels(input map[string]string) (map[string]string, map[string]strin
 	}
 
 	return labels, annotations
+}
+
+// generateContainerMounts sets up necessary container mounts including /dev/shm, /etc/hosts
+// and /etc/resolv.conf.
+func generateContainerMounts(sandboxRootDir string) []string {
+	// TODO: more attr and check whether these bindings is included in cri mounts.
+	result := []string{}
+	hostPath := path.Join(sandboxRootDir, "resolv.conf")
+	containerPath := resolvConfPath
+	result = append(result, fmt.Sprintf("%s:%s", hostPath, containerPath))
+
+	return result
 }
 
 func generateMountBindings(mounts []*runtime.Mount) []string {
@@ -298,6 +314,75 @@ func filterCRISandboxes(sandboxes []*runtime.PodSandbox, filter *runtime.PodSand
 	}
 
 	return filtered
+}
+
+// parseDNSOptions parse DNS options into resolv.conf format content,
+// if none option is specified, will return empty with no error.
+func parseDNSOptions(servers, searches, options []string) (string, error) {
+	resolvContent := ""
+
+	if len(searches) > 0 {
+		resolvContent += fmt.Sprintf("search %s\n", strings.Join(searches, " "))
+	}
+
+	if len(servers) > 0 {
+		resolvContent += fmt.Sprintf("nameserver %s\n", strings.Join(servers, "\nnameserver "))
+	}
+
+	if len(options) > 0 {
+		resolvContent += fmt.Sprintf("options %s\n", strings.Join(options, " "))
+	}
+
+	return resolvContent, nil
+}
+
+// copyFile copys src file to dest file
+func copyFile(src, dest string, perm os.FileMode) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
+}
+
+// setupSandboxFiles sets up necessary sandbox files.
+func setupSandboxFiles(sandboxRootDir string, config *runtime.PodSandboxConfig) error {
+	// Set DNS options. Maintain a resolv.conf for the sandbox.
+	var resolvContent string
+	resolvPath := path.Join(sandboxRootDir, "resolv.conf")
+
+	var err error
+	dnsConfig := config.GetDnsConfig()
+	if dnsConfig != nil {
+		resolvContent, err = parseDNSOptions(dnsConfig.Servers, dnsConfig.Searches, dnsConfig.Options)
+		if err != nil {
+			return fmt.Errorf("failed to parse sandbox DNSConfig %+v: %v", dnsConfig, err)
+		}
+	}
+
+	if resolvContent == "" {
+		// Copy host's resolv.conf to resolvPath.
+		err = copyFile(resolvConfPath, resolvPath, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to copy host's resolv.conf to %q: %v", resolvPath, err)
+		}
+	} else {
+		err = ioutil.WriteFile(resolvPath, []byte(resolvContent), 0644)
+		if err != nil {
+			return fmt.Errorf("failed to write resolv content to %q: %v", resolvPath, err)
+		}
+	}
+
+	return nil
 }
 
 // Container related tool functions.

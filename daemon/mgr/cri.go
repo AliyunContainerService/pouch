@@ -3,6 +3,8 @@ package mgr
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -51,6 +53,9 @@ const (
 
 	namespaceModeHost = "host"
 	namespaceModeNone = "none"
+
+	// resolvConfPath is the abs path of resolv.conf on host or container.
+	resolvConfPath = "/etc/resolv.conf"
 )
 
 var (
@@ -78,6 +83,9 @@ type CriManager struct {
 
 	// StreamServer is the stream server of CRI serves container streaming request.
 	StreamServer stream.Server
+
+	// SandboxBaseDir is the directory used to store sandbox files like /etc/hosts, /etc/resolv.conf, etc.
+	SandboxBaseDir string
 }
 
 // NewCriManager creates a brand new cri manager.
@@ -88,10 +96,11 @@ func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) 
 	}
 
 	c := &CriManager{
-		ContainerMgr: ctrMgr,
-		ImageMgr:     imgMgr,
-		CniMgr:       NewCniManager(&config.CriConfig),
-		StreamServer: streamServer,
+		ContainerMgr:   ctrMgr,
+		ImageMgr:       imgMgr,
+		CniMgr:         NewCniManager(&config.CriConfig),
+		StreamServer:   streamServer,
+		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 	}
 
 	return NewCriWrapper(c), nil
@@ -147,6 +156,18 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	err = c.ContainerMgr.Start(ctx, id, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
+	}
+
+	sandboxRootDir := path.Join(c.SandboxBaseDir, id)
+	err = os.MkdirAll(sandboxRootDir, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sandbox root directory: %v", err)
+	}
+
+	// Setup sandbox file /etc/resolv.conf.
+	err = setupSandboxFiles(sandboxRootDir, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup sandbox files: %v", err)
 	}
 
 	// Step 4: Setup networking for the sandbox.
@@ -258,6 +279,13 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	err = c.ContainerMgr.Remove(ctx, podSandboxID, &ContainerRemoveOption{Volume: true, Force: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+	}
+
+	// Cleanup the sandbox root directory.
+	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
+	err = os.RemoveAll(sandboxRootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove root directory %q: %v", sandboxRootDir, err)
 	}
 
 	return &runtime.RemovePodSandboxResponse{}, nil
@@ -379,6 +407,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	if err != nil {
 		return nil, err
 	}
+
+	// Bindings to overwrite the container's /etc/resolv.conf, /etc/hosts etc.
+	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
+	createConfig.HostConfig.Binds = append(createConfig.HostConfig.Binds, generateContainerMounts(sandboxRootDir)...)
 
 	// TODO: devices and security option configurations.
 
