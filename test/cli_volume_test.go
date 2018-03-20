@@ -162,7 +162,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
 }
 
 // TestVolumeInspectFormat tests the inspect format of volume works.
-func (suite *PouchNetworkSuite) TestVolumeInspectFormat(c *check.C) {
+func (suite *PouchVolumeSuite) TestVolumeInspectFormat(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	var funcname string
@@ -171,6 +171,7 @@ func (suite *PouchNetworkSuite) TestVolumeInspectFormat(c *check.C) {
 	}
 
 	command.PouchRun("volume", "create", "--name", funcname).Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "remove", funcname)
 
 	output := command.PouchRun("volume", "inspect", funcname).Stdout()
 	result := &types.ContainerJSON{}
@@ -178,9 +179,27 @@ func (suite *PouchNetworkSuite) TestVolumeInspectFormat(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	// inspect network name
 	output = command.PouchRun("volume", "inspect", "-f", "{{.Name}}", funcname).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", funcname))
 
-	defer command.PouchRun("volume", "remove", funcname)
+}
+
+// TestVolumeUsingByContainer tests the inspect format of volume works.
+func (suite *PouchVolumeSuite) TestVolumeUsingByContainer(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	volumeName := "volume_" + funcname
+	command.PouchRun("volume", "create", "--name", volumeName).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-v", volumeName+":/mnt", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+
+	ret := command.PouchRun("volume", "rm", volumeName)
+	c.Assert(ret.Error, check.NotNil)
+
+	command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
+	command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
 }

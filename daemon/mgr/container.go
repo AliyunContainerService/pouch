@@ -199,6 +199,10 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 		}
 	}
 
+	if err := mgr.detachVolumes(ctx, c.meta); err != nil {
+		logrus.Errorf("failed to detach volume: %v", err)
+	}
+
 	// remove name
 	mgr.NameToID.Remove(c.Name())
 
@@ -327,7 +331,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// parse volume config
-	if err := mgr.parseVolumes(ctx, config); err != nil {
+	if err := mgr.parseVolumes(ctx, id, config); err != nil {
 		return nil, errors.Wrap(err, "failed to parse volume argument")
 	}
 
@@ -1051,8 +1055,13 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	return nil
 }
 
-func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.ContainerCreateConfig) error {
+func (mgr *ContainerManager) parseVolumes(ctx context.Context, id string, c *types.ContainerCreateConfig) error {
 	logrus.Debugf("bind volumes: %v", c.HostConfig.Binds)
+
+	if c.Volumes == nil {
+		c.Volumes = make(map[string]interface{})
+	}
+
 	// TODO: parse c.HostConfig.VolumesFrom
 
 	for i, b := range c.HostConfig.Binds {
@@ -1062,11 +1071,14 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 			return err
 		}
 		source := ""
+		destination := ""
 		switch len(arr) {
 		case 1:
 			source = ""
+			destination = arr[0]
 		case 2, 3:
 			source = arr[0]
+			destination = arr[1]
 		default:
 			return errors.Errorf("unknown bind: %s", b)
 		}
@@ -1075,8 +1087,9 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 			source = randomid.Generate()
 		}
 		if !path.IsAbs(source) {
-			_, err := mgr.VolumeMgr.Get(ctx, source)
-			if err != nil {
+			ref := ""
+			v, err := mgr.VolumeMgr.Get(ctx, source)
+			if err != nil || v == nil {
 				opts := map[string]string{
 					"backend": "local",
 				}
@@ -1084,9 +1097,17 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 					logrus.Errorf("failed to create volume: %s, err: %v", source, err)
 					return errors.Wrap(err, "failed to create volume")
 				}
+			} else {
+				ref = v.Option("ref")
 			}
 
-			if _, err := mgr.VolumeMgr.Attach(ctx, source, nil); err != nil {
+			option := map[string]string{}
+			if ref == "" {
+				option["ref"] = id
+			} else {
+				option["ref"] = ref + "," + id
+			}
+			if _, err := mgr.VolumeMgr.Attach(ctx, source, option); err != nil {
 				logrus.Errorf("failed to attach volume: %s, err: %v", source, err)
 				return errors.Wrap(err, "failed to attach volume")
 			}
@@ -1097,6 +1118,7 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 				return errors.Wrap(err, "failed to get volume mount path")
 			}
 
+			c.Volumes[source] = destination
 			source = mountPath
 		} else if _, err := os.Stat(source); err != nil {
 			if !os.IsNotExist(err) {
@@ -1119,6 +1141,42 @@ func (mgr *ContainerManager) parseVolumes(ctx context.Context, c *types.Containe
 
 		c.HostConfig.Binds[i] = b
 	}
+	return nil
+}
+
+func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *ContainerMeta) error {
+	for name := range c.Config.Volumes {
+		v, err := mgr.VolumeMgr.Get(ctx, name)
+		if err != nil {
+			logrus.Errorf("failed to get volume: %s", name)
+			return err
+		}
+
+		option := map[string]string{}
+		ref := v.Option("ref")
+		if ref == "" {
+			continue
+		}
+		if !strings.Contains(ref, c.ID) {
+			continue
+		}
+
+		ids := strings.Split(ref, ",")
+		for i, id := range ids {
+			if id == c.ID {
+				ids = append(ids[:i], ids[i+1:]...)
+				break
+			}
+		}
+		if len(ids) > 0 {
+			option["ref"] = strings.Join(ids, ",")
+		} else {
+			option["ref"] = ""
+		}
+
+		mgr.VolumeMgr.Detach(ctx, name, option)
+	}
+
 	return nil
 }
 

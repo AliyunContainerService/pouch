@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -98,6 +99,16 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 
 func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+
+	v, err := s.VolumeMgr.Get(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	ref := v.Option("ref")
+	if ref != "" {
+		return fmt.Errorf("failed to remove volume: %s, using by: %s", name, ref)
+	}
 
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
 		return err
