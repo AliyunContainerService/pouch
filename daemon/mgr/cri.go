@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -421,7 +422,28 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		return nil, fmt.Errorf("failed to create container for sandbox %q: %v", podSandboxID, err)
 	}
 
-	return &runtime.CreateContainerResponse{ContainerId: createResp.ID}, nil
+	containerID := createResp.ID
+
+	// Get container log.
+	if config.GetLogPath() != "" {
+		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
+		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create container for opening log file failed: %v", err)
+		}
+		// Attach to the container to get log.
+		attachConfig := &AttachConfig{
+			Stdout:     true,
+			Stderr:     true,
+			CriLogFile: f,
+		}
+		err = c.ContainerMgr.Attach(context.Background(), containerID, attachConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
+		}
+	}
+
+	return &runtime.CreateContainerResponse{ContainerId: containerID}, nil
 }
 
 // StartContainer starts the container.
