@@ -2,9 +2,9 @@ package plugins
 
 import "io"
 
-// ContainerPlugin defines in which place a plugin will be triggered in container lifecycle
+// ContainerPlugin defines places where a plugin will be triggered in container lifecycle
 type ContainerPlugin interface {
-	// PreCreate defines plugin point where recevives an container create request, in this plugin point user
+	// PreCreate defines plugin point where receives an container create request, in this plugin point user
 	// could change the container create body passed-in by http request body
 	PreCreate(io.ReadCloser) (io.ReadCloser, error)
 

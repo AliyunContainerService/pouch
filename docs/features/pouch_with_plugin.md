@@ -1,11 +1,11 @@
 # Pouch with plugin
-In order to run custom code at some point, we support a plugin frame work which introduced from golang 1.8. At this time in this plugin frame work we enable user to add custom code at four point:
+In order to run custom code provided by users which will be triggered at some point, we support a plugin framework which introduced from golang 1.8. At this time in this plugin framework we enable users to add custom code at four point:
 * pre-start daemon point
 * pre-stop daemon point
 * pre-create container point
 * pre-start container point
 
-Above four point orgnized by two Plugin, which are DaemonPlugin and ContainerPlugin:
+Above four points are organized by two Plugin interfaces, which are DaemonPlugin and ContainerPlugin, defined as follow:
 ```
 // DaemonPlugin defines in which place does pouch daemon support plugin
 type DaemonPlugin interface {
@@ -20,7 +20,7 @@ type DaemonPlugin interface {
 
 // ContainerPlugin defines in which place a plugin will be triggered in container lifecycle
 type ContainerPlugin interface {
-	// PreCreate defines plugin point where recevives an container create request, in this plugin point user
+	// PreCreate defines plugin point where receives an container create request, in this plugin point user
 	// could change the container create body passed-in by http request body
 	PreCreate(io.ReadCloser) (io.ReadCloser, error)
 
@@ -30,14 +30,15 @@ type ContainerPlugin interface {
 }
 
 ```
-These two Plugin symbol will be fetch by name `DaemonPlugin` and `ContainerPlugin` like this:
+These two Plugin symbols will be fetch by name `DaemonPlugin` and `ContainerPlugin` from shared object file like this:
 ```
+p, _ := plugin.Open("path_to_shared_object_file")
 daemonPlugin, _ := p.Lookup("DaemonPlugin")
 containerPlugin, _ := p.Lookup("ContainerPlugin")
 ```
 
 ## example
-define two plugin only print some log at correspond point
+define two plugin symbols which only print some logs at correspond point:
 ```
 package main
 
@@ -71,6 +72,7 @@ func (c ContPlugin) PreCreate(in io.ReadCloser) (io.ReadCloser, error) {
 
 func (c ContPlugin) PreStart(interface{}) ([]int, [][]string, error) {
 	fmt.Println("pre start method called")
+	// make this pre-start hook run after network in container setup
 	return []int{-4}, [][]string{{"/usr/bin/touch", "touch", "/tmp/pre_start_hook"}}, nil
 }
 
@@ -82,13 +84,13 @@ then build it with command line like:
 ```
 go build -buildmode=plugin -ldflags "-pluginpath=plugins_$(date +%s)" -o hook_plugin.so
 ```
-to use the shared object file generated, start pouchd which falg `--plugin=path_to_hook_plugin.so`, then when you start, stop daemon and create container in the log there will be some logs like:
+to use the shared object file generated, start pouchd which flag `--plugin=path_to_hook_plugin.so`, then when you start stop daemon and create container, in the log there will be some logs like:
 ```
 pre-start hook in daemon is called
 pre create method called
 pre-stop hook in daemon is called
 ```
-when you start a container, the config.json file (whose place is $home_dir/containerd/state/io.containerd.runtime.v1.linux/default/$container_id/config.json) will contains the pre-start hook you specified in your code, eg:
+when you start a container, the config.json file (whose place is $home_dir/containerd/state/io.containerd.runtime.v1.linux/default/$container_id/config.json) will contains the pre-start hook specified in above code, eg:
 ```
     "hooks": {
         "prestart": [
@@ -111,11 +113,11 @@ when you start a container, the config.json file (whose place is $home_dir/conta
     }
 ```
 
-and if you use the exact code above, after starting a container the file at /tmp/pre_start_hook will be touched.
+and if you use the exact code above, every time you start a container the file at /tmp/pre_start_hook will be touched.
 
 ## usage
 
-at pre-start daemon point you can start assit processes like network plugins and dfget proxy which need by pouchd and life cycle is the same as pouchd.
-at pre-stop daemon point you can stop the assist processes gracefully, but this is point is not a promise, because pouchd may be killed by SIGKILL.
-at pre-create container point you can change the input stream by some rule, in some company they have some stale orchestration system who use env to pass-in some limit which is an attribute in pouch, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig.
-at pre-start container point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
+at pre-start daemon point you can start assist processes like network plugins and dfget proxy which need by pouchd and whose life cycle is the same as pouchd.
+at pre-stop daemon point you can stop the assist processes gracefully, but the trigger of this point is not a promise, because pouchd may be killed by SIGKILL.
+at pre-create container point you can change the input stream by some rules, in some company they have some stale orchestration system who use env to pass-in some limit which is an attribute in pouch, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig of pouch create api.
+at pre-start container point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing of the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
