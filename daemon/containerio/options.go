@@ -3,6 +3,7 @@ package containerio
 import (
 	"bytes"
 	"net/http"
+	"os"
 
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 )
@@ -17,6 +18,7 @@ type Option struct {
 	stdinBackend  string
 	memBuffer     *bytes.Buffer
 	streams       *remotecommand.Streams
+	criLogFile    *os.File
 }
 
 // NewOption creates the Option instance.
@@ -109,5 +111,16 @@ func WithStreams(streams *remotecommand.Streams) func(*Option) {
 func WithStdinStream() func(*Option) {
 	return func(opt *Option) {
 		opt.stdinBackend = "streams"
+	}
+}
+
+// WithCriLogFile specified the cri log file backend.
+func WithCriLogFile(criLogFile *os.File) func(*Option) {
+	return func(opt *Option) {
+		if opt.backends == nil {
+			opt.backends = make(map[string]struct{})
+		}
+		opt.backends["cri-log-file"] = struct{}{}
+		opt.criLogFile = criLogFile
 	}
 }

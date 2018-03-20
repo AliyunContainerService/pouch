@@ -3,6 +3,7 @@ package mgr
 import (
 	"bytes"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -55,6 +56,9 @@ type AttachConfig struct {
 
 	// Attach using streams.
 	Streams *remotecommand.Streams
+
+	// Attach to the container to get its log.
+	CriLogFile *os.File
 }
 
 // ContainerRemoveOption wraps the container remove interface params.

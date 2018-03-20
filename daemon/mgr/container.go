@@ -886,6 +886,10 @@ func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*con
 				options = append(options, containerio.WithStdinStream())
 			}
 		}
+
+		if attach.CriLogFile != nil {
+			options = append(options, containerio.WithCriLogFile(attach.CriLogFile))
+		}
 	} else {
 		options = append(options, containerio.WithDiscard())
 	}
@@ -931,6 +935,10 @@ func (mgr *ContainerManager) openIO(id string, attach *AttachConfig, exec bool) 
 			if attach.Stdin {
 				options = append(options, containerio.WithStdinStream())
 			}
+		}
+
+		if attach.CriLogFile != nil {
+			options = append(options, containerio.WithCriLogFile(attach.CriLogFile))
 		}
 	} else if !exec {
 		options = append(options, containerio.WithRawFile())
