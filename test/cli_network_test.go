@@ -301,6 +301,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 }
 
 func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
+	c.Skip("Skip this test due to httpd image can't be pulled")
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	var funcname string
