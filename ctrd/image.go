@@ -78,25 +78,33 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 		digest := descriptor.Digest
 
 		size, err := image.Size(ctx, c.client.ContentStore(), platforms.Default())
+		// occur error, skip it
 		if err != nil {
-			return nil, err
+			logrus.Errorf("failed to get image size %s: %v", image.Name, err)
+			continue
 		}
 
 		refNamed, err := reference.ParseNamedReference(image.Name)
+		// occur error, skip it
 		if err != nil {
-			return nil, err
+			logrus.Errorf("failed to parse image %s: %v", image.Name, err)
+			continue
 		}
 		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
 
 		ociImage, err := c.GetOciImage(ctx, image.Name)
+		// occur error, skip it
 		if err != nil {
-			return nil, err
+			logrus.Errorf("failed to get ociImage %s: %v", image.Name, err)
+			continue
 		}
 
 		// fill struct ImageInfo
 		imageInfo, err := ociImageToPouchImage(ociImage)
+		// occur error, skip it
 		if err != nil {
-			return nil, err
+			logrus.Errorf("failed to convert ociImage to pouch image %s: %v", image.Name, err)
+			continue
 		}
 		imageInfo.Tag = refTagged.Tag()
 		imageInfo.Name = image.Name
