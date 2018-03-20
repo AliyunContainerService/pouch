@@ -1,6 +1,6 @@
 package plugins
 
-// DaemonPlugin defines in which place does pouch daemon support plugin
+// DaemonPlugin defines places where a plugin will be triggered in pouchd lifecycle
 type DaemonPlugin interface {
 	// PreStartHook is invoked by pouch daemon before real start, in this hook user could start dfget proxy or other
 	// standalone process plugins

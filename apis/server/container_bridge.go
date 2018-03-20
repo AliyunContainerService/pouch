@@ -121,7 +121,7 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 	if s.ContainerPlugin != nil {
 		logrus.Infof("invoke container pre-create hook in plugin")
 		if reader, ex = s.ContainerPlugin.PreCreate(req.Body); ex != nil {
-			return errors.Wrapf(ex, "pre-create plugin piont execute failed")
+			return errors.Wrapf(ex, "pre-create plugin point execute failed")
 		}
 	}
 	// decode request body
