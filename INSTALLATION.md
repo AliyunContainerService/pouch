@@ -27,11 +27,7 @@ sudo apt-get install lxcfs
 Install packages to allow 'apt' to use a repository over HTTPS:
                                    
 ```bash
-sudo apt-get install \
-	apt-transport-https \
-	ca-certificates \
-	curl \
-	software-properties-common
+sudo apt-get install curl apt-transport-https ca-certificates software-properties-common
 ``` 
 
 **1. Add Pouch's official GPG key**
@@ -56,8 +52,7 @@ sub   2048R/B3D2A915 2018-01-31
 Before you install Pouch for the first time on a new host machine, you need to set up the Pouch repository. We enabled `stabel` repository by default, you always need the `stable` repository. To add the `test` repository, add the word `test` after the word `stable` in the command line below. Afterward, you can install and update Pouch from the repository.
 
 ```bash
-sudo add-apt-repository \
-	"deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
+sudo add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
 ```
 
 **3. Install pouch**
@@ -112,9 +107,7 @@ sudo yum install -y yum-utils
 Use the following command to add Pouch repository.
 
 ```bash
-sudo yum-config-manager \
-    --add-repo \
-    http://mirrors.aliyun.com/opsx/opsx-centos7.repo
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/opsx/opsx-centos7.repo
 sudo yum update
 ```
 
