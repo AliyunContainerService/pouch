@@ -8,7 +8,7 @@ import (
 	"github.com/alibaba/pouch/pkg/reference"
 )
 
-// addRegistry add default registry if needed.
+// addRegistry add default registry and namespace if needed.
 func (mgr *ImageManager) addRegistry(input string) string {
 	// Trim the prefix if the input is image ID with "sha256:".
 	// NOTE: we should make it more elegant and comprehensive.
@@ -17,10 +17,16 @@ func (mgr *ImageManager) addRegistry(input string) string {
 		return input
 	}
 
+	// check if input repo name get library and namespace
 	if _, ok := reference.Domain(input); ok {
 		return input
 	}
-	return filepath.Join(mgr.DefaultRegistry, mgr.DefaultNamespace, input)
+
+	if reference.IsNameOnly(input) {
+		return filepath.Join(mgr.DefaultRegistry, mgr.DefaultNamespace, input)
+	}
+
+	return filepath.Join(mgr.DefaultRegistry, input)
 }
 
 // isNumericID checks whether input is numeric ID

@@ -59,8 +59,8 @@ func WithDefaultTagIfMissing(named Named) Named {
 	return named
 }
 
-// Domain retrieves domain information. Domain include registry address and
-// repository namespace, like registry.hub.docker.com/library/ubuntu.
+// Domain retrieves domain information. Domain include registry address or
+// repository namespace can be included, like registry.hub.docker.com/library.
 func Domain(named string) (string, bool) {
 	i := strings.LastIndexByte(named, '/')
 
@@ -70,4 +70,28 @@ func Domain(named string) (string, bool) {
 		return "", false
 	}
 	return named[:i], true
+}
+
+// splitHostname splits HostName and RemoteName for the given reference.
+// Since we use user defined default registry, if HostName is null, we will return null.
+func splitHostname(ref string) (string, string) {
+	i := strings.IndexRune(ref, '/')
+	if i == -1 || !strings.ContainsAny(ref[:i], ".:") {
+		return "", ref
+	}
+	return ref[:i], ref[i+1:]
+}
+
+// IsNameOnly checks if only image repo name only, like busybox.
+func IsNameOnly(ref string) bool {
+	h, r := splitHostname(ref)
+	if h != "" {
+		return false
+	}
+
+	if strings.Contains(r, "/") {
+		return false
+	}
+
+	return true
 }
