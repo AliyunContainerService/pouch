@@ -96,6 +96,10 @@ type HostConfig struct {
 	NetworkMode string `json:"NetworkMode,omitempty"`
 
 	// An integer value containing the score given to the container in order to tune OOM killer preferences.
+	// The range is in [-1000, 1000].
+	//
+	// Maximum: 1000
+	// Minimum: -1000
 	OomScoreAdj int64 `json:"OomScoreAdj,omitempty"`
 
 	// Set the PID (Process) Namespace mode for the container. It can be either:
@@ -556,6 +560,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateOomScoreAdj(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateRestartPolicy(formats); err != nil {
 		res = append(res, err)
 	}
@@ -746,6 +754,23 @@ func (m *HostConfig) validateLogConfig(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *HostConfig) validateOomScoreAdj(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.OomScoreAdj) { // not required
+		return nil
+	}
+
+	if err := validate.MinimumInt("OomScoreAdj", "body", int64(m.OomScoreAdj), -1000, false); err != nil {
+		return err
+	}
+
+	if err := validate.MaximumInt("OomScoreAdj", "body", int64(m.OomScoreAdj), 1000, false); err != nil {
+		return err
 	}
 
 	return nil

@@ -29,6 +29,7 @@ var setupFunc = []SetupFunc{
 	setupProcessUser,
 	setupCap,
 	setupNoNewPrivileges,
+	setupOOMScoreAdj,
 
 	// cgroup
 	setupCgroupCPUShare,
@@ -36,6 +37,7 @@ var setupFunc = []SetupFunc{
 	setupCgroupMemory,
 	setupCgroupMemorySwap,
 	setupCgroupMemorySwappiness,
+	setupDisableOOMKill,
 
 	// namespaces
 	setupUserNamespace,

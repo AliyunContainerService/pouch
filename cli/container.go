@@ -37,6 +37,7 @@ type container struct {
 	memoryExtra         int64
 	memoryForceEmptyCtl int64
 	scheLatSwitch       int64
+	oomKillDisable      bool
 
 	devices              []string
 	enableLxcfs          bool
@@ -61,6 +62,7 @@ type container struct {
 	blkioDeviceWriteIOps ThrottleIOpsDevice
 	IntelRdtL3Cbm        string
 	diskQuota            []string
+	oomScoreAdj          int64
 
 	cgroupParent string
 
@@ -112,6 +114,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	diskQuota, err := parseDiskQuota(c.diskQuota)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := validateOOMScore(c.oomScoreAdj); err != nil {
 		return nil, err
 	}
 
@@ -218,6 +224,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				MemoryExtra:         &c.memoryExtra,
 				MemoryForceEmptyCtl: c.memoryForceEmptyCtl,
 				ScheLatSwitch:       c.scheLatSwitch,
+				OomKillDisable:      &c.oomKillDisable,
 
 				// blkio
 				BlkioWeight:          c.blkioWeight,
@@ -243,6 +250,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			CapAdd:        c.capAdd,
 			CapDrop:       c.capDrop,
 			PortBindings:  portBindings,
+			OomScoreAdj:   c.oomScoreAdj,
 		},
 
 		NetworkingConfig: networkingConfig,
@@ -443,4 +451,13 @@ func parseDiskQuota(quotas []string) (map[string]string, error) {
 	}
 
 	return quotaMaps, nil
+}
+
+// validateOOMScore validates oom score
+func validateOOMScore(score int64) error {
+	if score < -1000 || score > 1000 {
+		return fmt.Errorf("oom-score-adj should be in range [-1000, 1000]")
+	}
+
+	return nil
 }
