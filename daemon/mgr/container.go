@@ -26,7 +26,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/opencontainers/image-spec/specs-go/v1"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -344,7 +344,15 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err != nil {
 		return nil, err
 	}
-	config.Image = image.Name
+
+	// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
+	ref := ""
+	if len(image.RepoTags) > 0 {
+		ref = image.RepoTags[0]
+	} else {
+		ref = image.RepoDigests[0]
+	}
+	config.Image = ref
 
 	// set container runtime
 	if config.HostConfig.Runtime == "" {
@@ -372,7 +380,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			Status: types.StatusCreated,
 		},
 		ID:         id,
-		Image:      image.Name,
+		Image:      image.ID,
 		Name:       name,
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
@@ -767,8 +775,15 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 			return err
 		}
 		// TODO Image param is duplicate in ContainerMeta
-		c.meta.Config.Image = image.Name
-		c.meta.Image = image.Name
+		// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
+		ref := ""
+		if len(image.RepoTags) > 0 {
+			ref = image.RepoTags[0]
+		} else {
+			ref = image.RepoDigests[0]
+		}
+		c.meta.Config.Image = ref
+		c.meta.Image = ref
 	}
 
 	if len(config.Env) != 0 {

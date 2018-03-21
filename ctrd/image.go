@@ -19,7 +19,7 @@ import (
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/remotes"
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -74,9 +74,6 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 
 	images := make([]types.ImageInfo, 0, 32)
 	for _, image := range imageList {
-		descriptor := image.Target
-		digest := descriptor.Digest
-
 		size, err := image.Size(ctx, c.client.ContentStore(), platforms.Default())
 		// occur error, skip it
 		if err != nil {
@@ -90,7 +87,6 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			logrus.Errorf("failed to parse image %s: %v", image.Name, err)
 			continue
 		}
-		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
 
 		ociImage, err := c.GetOciImage(ctx, image.Name)
 		// occur error, skip it
@@ -106,9 +102,6 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			logrus.Errorf("failed to convert ociImage to pouch image %s: %v", image.Name, err)
 			continue
 		}
-		imageInfo.Tag = refTagged.Tag()
-		imageInfo.Name = image.Name
-		imageInfo.Digest = digest.String()
 		imageInfo.Size = size
 
 		// generate image ID by imageInfo JSON.
@@ -118,6 +111,13 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 		}
 		imageInfo.ID = imageID.String()
 
+		if refDigest, ok := refNamed.(reference.Digested); ok {
+			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refDigest.String())
+		} else {
+			refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+			imageInfo.RepoTags = append(imageInfo.RepoTags, refTagged.String())
+			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refTagged.Name()+"@"+image.Target.Digest.String())
+		}
 		images = append(images, imageInfo)
 	}
 	return images, nil
@@ -194,24 +194,29 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 	}
 
 	imageInfo, err := ociImageToPouchImage(ociImage)
-
 	// fill struct ImageInfo
-	refNamed, err := reference.ParseNamedReference(img.Name())
-	if err != nil {
-		return types.ImageInfo{}, err
-	}
-	refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
-	imageInfo.Tag = refTagged.Tag()
-	imageInfo.Name = img.Name()
-	imageInfo.Digest = img.Target().Digest.String()
-	imageInfo.Size = size
+	{
+		imageInfo.Size = size
+		// generate image ID by imageInfo JSON.
+		imageID, err := generateID(&imageInfo)
+		if err != nil {
+			return types.ImageInfo{}, err
+		}
+		imageInfo.ID = imageID.String()
 
-	// generate image ID by imageInfo JSON.
-	imageID, err := generateID(&imageInfo)
-	if err != nil {
-		return types.ImageInfo{}, err
+		refNamed, err := reference.ParseNamedReference(img.Name())
+		if err != nil {
+			return types.ImageInfo{}, err
+		}
+
+		if refDigest, ok := refNamed.(reference.Digested); ok {
+			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refDigest.String())
+		} else {
+			refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+			imageInfo.RepoTags = append(imageInfo.RepoTags, refTagged.String())
+			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refTagged.Name()+"@"+img.Target().Digest.String())
+		}
 	}
-	imageInfo.ID = imageID.String()
 
 	return imageInfo, nil
 }

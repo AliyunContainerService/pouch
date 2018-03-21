@@ -18,8 +18,8 @@ func PruneAllImages(apiClient client.ImageAPIClient) error {
 
 	for _, img := range images {
 		// force to remove the image
-		if err := apiClient.ImageRemove(ctx, img.Name, true); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("fail to remove image (%s)", img.Name))
+		if err := apiClient.ImageRemove(ctx, img.ID, true); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("fail to remove image (%s)", img.ID))
 		}
 	}
 	return nil

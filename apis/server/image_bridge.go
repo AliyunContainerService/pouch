@@ -99,7 +99,7 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 	}
 
 	containers, err := s.ContainerMgr.List(ctx, func(meta *mgr.ContainerMeta) bool {
-		return meta.Image == image.Name
+		return meta.Image == image.ID
 	}, &mgr.ContainerListOption{All: true})
 	if err != nil {
 		return err
@@ -107,14 +107,14 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 
 	isForce := httputils.BoolValue(req, "force")
 	if !isForce && len(containers) > 0 {
-		return fmt.Errorf("Unable to remove the image %q (must force) - container %s is using this image", image.Name, containers[0].ID)
+		return fmt.Errorf("Unable to remove the image %q (must force) - container %s is using this image", image.ID, containers[0].ID)
 	}
 
 	option := &mgr.ImageRemoveOption{
 		Force: isForce,
 	}
 
-	if err := s.ImageMgr.RemoveImage(ctx, image, option); err != nil {
+	if err := s.ImageMgr.RemoveImage(ctx, image, name, option); err != nil {
 		return err
 	}
 

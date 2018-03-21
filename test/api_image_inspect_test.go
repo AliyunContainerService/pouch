@@ -34,13 +34,14 @@ func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	// TODO: More specific check is needed
+	repoTag := got.RepoTags[0]
+	repoDigest := got.RepoDigests[0]
 	c.Assert(got.Config, check.NotNil)
-	c.Assert(got.Name, check.Equals, busyboxImage)
 	c.Assert(got.ID, check.NotNil)
 	c.Assert(got.CreatedAt, check.NotNil)
-	c.Assert(got.Digest, check.Matches, "sha256.*")
+	c.Assert(repoTag, check.Equals, busyboxImage)
 	c.Assert(got.Size, check.NotNil)
-	c.Assert(got.Tag, check.Equals, "latest")
+	c.Assert(repoDigest, check.Matches, ".*sha256.*")
 }
 
 // TestImageInspectNotFound tests inspecting non-existing images.

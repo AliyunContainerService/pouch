@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -748,7 +749,7 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 		return nil, err
 	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
+	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(ref.String(), "sha256:"))
 	if err != nil {
 		// TODO: seperate ErrImageNotFound with others.
 		// Now we just return empty if the error occured.
@@ -795,14 +796,14 @@ func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequ
 		return nil, err
 	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
+	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(ref.String(), "sha256:"))
 	if err != nil {
 		// TODO: seperate ErrImageNotFound with others.
 		// Now we just return empty if the error occured.
 		return &runtime.RemoveImageResponse{}, nil
 	}
 
-	err = c.ImageMgr.RemoveImage(ctx, imageInfo, &ImageRemoveOption{})
+	err = c.ImageMgr.RemoveImage(ctx, imageInfo, strings.TrimPrefix(ref.String(), "sha256:"), &ImageRemoveOption{})
 	if err != nil {
 		return nil, err
 	}

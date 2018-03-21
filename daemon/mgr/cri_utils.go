@@ -663,12 +663,6 @@ func containerNetns(container *ContainerMeta) string {
 
 // imageToCriImage converts pouch image API to CRI image API.
 func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
-	namedRef, err := reference.ParseNamedReference(image.Name)
-	if err != nil {
-		return nil, err
-	}
-	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
-
 	uid := &runtime.Int64Value{}
 	imageUID, username := getUserFromImageUser(image.Config.User)
 	if imageUID != nil {
@@ -678,9 +672,9 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 	size := uint64(image.Size)
 	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
 	return &runtime.Image{
-		Id:          image.Digest,
-		RepoTags:    []string{taggedRef.String()},
-		RepoDigests: []string{fmt.Sprintf("%s@%s", taggedRef.Name(), image.Digest)},
+		Id:          image.ID,
+		RepoTags:    image.RepoTags,
+		RepoDigests: image.RepoDigests,
 		Size_:       size,
 		Uid:         uid,
 		Username:    username,

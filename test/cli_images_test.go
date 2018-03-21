@@ -60,7 +60,7 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	{
 		res := command.PouchRun("images", "--digest").Assert(c, icmd.Success)
 		items := imagesListToKV(res.Combined())[busyboxImage]
-		c.Assert(items[2], check.Equals, image.Digest)
+		c.Assert(items[2], check.Equals, strings.TrimPrefix(image.RepoDigests[0], "registry.hub.docker.com/library/busybox@"))
 	}
 }
 
@@ -90,7 +90,7 @@ func getImageInfo(apiClient client.ImageAPIClient, name string) (types.ImageInfo
 	}
 
 	for _, img := range images {
-		if img.Name == name {
+		if img.RepoTags[0] == name {
 			return img, nil
 		}
 	}
@@ -106,8 +106,8 @@ func (suite *PouchImagesSuite) TestInspectImage(c *check.C) {
 	}
 
 	// inspect image name
-	output = command.PouchRun("image", "inspect", "-f", "{{.Name}}", busyboxImage).Stdout()
-	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", busyboxImage))
+	output = command.PouchRun("image", "inspect", "-f", "{{.RepoTags}}", busyboxImage).Stdout()
+	c.Assert(output, check.Equals, fmt.Sprintf("[%s]\n", busyboxImage))
 }
 
 // TestLoginAndLogout is to test login and logout command
