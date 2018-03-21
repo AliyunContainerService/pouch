@@ -55,9 +55,10 @@ func WithDefaultTagIfMissing(named Named) Named {
 	return named
 }
 
-// Domain retrieves domain information.
+// Domain retrieves domain information. Domain include registry address and
+// repository namespace, like registry.hub.docker.com/library/ubuntu.
 func Domain(named string) (string, bool) {
-	i := strings.IndexRune(named, '/')
+	i := strings.LastIndexByte(named, '/')
 
 	// FIXME: The domain should contain the . or :, how to handle the case
 	// which image name contains . or :?

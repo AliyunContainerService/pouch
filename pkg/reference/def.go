@@ -1,6 +1,7 @@
 package reference
 
-// Reference represents image name which may include domain/name:tag or only digest.
+// Reference represents image name which may include hub/namespace/name:tag
+// like registry.hub.docker.com/library/ubuntu or only digest.
 type Reference interface {
 	String() string
 }

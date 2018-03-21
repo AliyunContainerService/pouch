@@ -44,8 +44,10 @@ type ImageMgr interface {
 type ImageManager struct {
 	// DefaultRegistry is the default registry of daemon.
 	// When users do not specify image repo in image name,
-	// daemon will automatically pull images from DefaultRegistry.
+	// daemon will automatically pull images with DefaultRegistry and DefaultNamespace.
 	DefaultRegistry string
+	// DefaultNamespace is the default namespace used in DefaultRegistry.
+	DefaultNamespace string
 
 	// client is a pointer to the containerd client.
 	// It is used to interact with containerd.
@@ -57,13 +59,11 @@ type ImageManager struct {
 
 // NewImageManager initializes a brand new image manager.
 func NewImageManager(cfg *config.Config, client *ctrd.Client) (*ImageManager, error) {
-	if !strings.HasSuffix(cfg.DefaultRegistry, "/") {
-		cfg.DefaultRegistry += "/"
-	}
 	mgr := &ImageManager{
-		DefaultRegistry: cfg.DefaultRegistry,
-		client:          client,
-		cache:           newImageCache(),
+		DefaultRegistry:  cfg.DefaultRegistry,
+		DefaultNamespace: cfg.DefaultRegistryNS,
+		client:           client,
+		cache:            newImageCache(),
 	}
 
 	if err := mgr.loadImages(); err != nil {

@@ -36,7 +36,7 @@ func TestDomain(t *testing.T) {
 		{
 			name:   "Normal",
 			input:  "docker.io/library/nginx:alpine",
-			domain: "docker.io",
+			domain: "docker.io/library",
 			ok:     true,
 		}, {
 			name:   "IP Registry",
