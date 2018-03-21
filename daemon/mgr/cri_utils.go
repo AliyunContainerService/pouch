@@ -491,7 +491,7 @@ func getSeccompSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string
 	}
 
 	if !strings.HasPrefix(profile, ProfileNamePrefix) {
-		return nil, fmt.Errorf("undefault profile should prefix with %q", ProfileNamePrefix)
+		return nil, fmt.Errorf("undefault profile %q should prefix with %q", profile, ProfileNamePrefix)
 	}
 	profile = strings.TrimPrefix(profile, ProfileNamePrefix)
 
@@ -513,6 +513,7 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 
 	// Apply capability options.
 	hostConfig.Privileged = sc.Privileged
+	hostConfig.ReadonlyRootfs = sc.ReadonlyRootfs
 	if sc.GetCapabilities() != nil {
 		hostConfig.CapAdd = sc.GetCapabilities().GetAddCapabilities()
 		hostConfig.CapDrop = sc.GetCapabilities().GetDropCapabilities()
@@ -532,6 +533,9 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 	}
 	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, appArmorSecurityOpts...)
 
+	if sc.NoNewPrivs {
+		hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, "no-new-privileges")
+	}
 	return nil
 }
 

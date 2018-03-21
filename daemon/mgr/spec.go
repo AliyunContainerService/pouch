@@ -28,6 +28,7 @@ var setupFunc = []SetupFunc{
 	setupProcessTTY,
 	setupProcessUser,
 	setupCap,
+	setupNoNewPrivileges,
 
 	// cgroup
 	setupCgroupCPUShare,
@@ -66,6 +67,9 @@ var setupFunc = []SetupFunc{
 
 	// annotations in spec
 	setupAnnotations,
+
+	// rootfs spec
+	setupRoot,
 
 	//hook
 	setupHook,

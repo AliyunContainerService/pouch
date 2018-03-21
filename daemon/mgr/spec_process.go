@@ -89,3 +89,13 @@ func setupProcessUser(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) 
 	}
 	return nil
 }
+
+func setupNoNewPrivileges(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	if meta.HostConfig.Privileged {
+		return nil
+	}
+
+	spec.s.Process.NoNewPrivileges = meta.NoNewPrivileges
+
+	return nil
+}
