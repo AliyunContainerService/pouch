@@ -12,7 +12,7 @@ func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *Client
+		want    APIClient
 		wantErr bool
 	}{
 	// TODO: Add test cases.

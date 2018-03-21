@@ -26,11 +26,14 @@ var (
 )
 
 type containerPack struct {
-	id            string
-	ch            chan *Message
-	sch           <-chan containerd.ExitStatus
-	container     containerd.Container
-	task          containerd.Task
+	id        string
+	ch        chan *Message
+	sch       <-chan containerd.ExitStatus
+	container containerd.Container
+	task      containerd.Task
+
+	// client is to record which stream client the container connect with
+	client        *WrapperClient
 	skipStopHooks bool
 }
 
@@ -150,12 +153,17 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 
 // RecoverContainer reload the container from metadata and watch it, if program be restarted.
 func (c *Client) RecoverContainer(ctx context.Context, id string, io *containerio.IO) error {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
 
-	lc, err := c.client.LoadContainer(ctx, id)
+	lc, err := wrapperCli.client.LoadContainer(ctx, id)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
 			return errors.Wrap(errtypes.ErrNotfound, "container")
@@ -177,11 +185,13 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 	if err != nil {
 		return errors.Wrap(err, "failed to wait task")
 	}
+
 	c.watch.add(&containerPack{
 		id:        id,
 		container: lc,
 		task:      task,
 		ch:        make(chan *Message, 1),
+		client:    wrapperCli,
 		sch:       statusCh,
 	})
 
@@ -194,7 +204,12 @@ func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64)
 	// TODO(ziren): if we just want to stop a container,
 	// we may need lease to lock the snapshot of container,
 	// in case, it be deleted by gc.
-	ctx = leases.WithLease(ctx, c.lease.ID())
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
 
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
@@ -316,8 +331,13 @@ func (c *Client) CreateContainer(ctx context.Context, container *Container) erro
 }
 
 func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (err0 error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
 	// get image
-	img, err := c.client.GetImage(ctx, ref)
+	img, err := wrapperCli.client.GetImage(ctx, ref)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
 			return errors.Wrap(errtypes.ErrNotfound, "image")
@@ -350,7 +370,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	}
 	options = append(options, containerd.WithSnapshot(id))
 
-	nc, err := c.client.NewContainer(ctx, id, options...)
+	nc, err := wrapperCli.client.NewContainer(ctx, id, options...)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container, id: %s", id)
 	}
@@ -368,6 +388,9 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	if err != nil {
 		return err
 	}
+
+	// add grpc client to pack struct
+	pack.client = wrapperCli
 
 	c.watch.add(pack)
 
@@ -422,7 +445,12 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 }
 
 func (c *Client) listContainerStore(ctx context.Context) ([]string, error) {
-	containers, err := c.client.ContainerService().List(ctx)
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	containers, err := wrapperCli.client.ContainerService().List(ctx)
 	if err != nil {
 		return nil, err
 	}
