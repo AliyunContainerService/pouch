@@ -339,11 +339,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+name)
 	}
 
-	// parse volume config
-	if err := mgr.parseVolumes(ctx, id, config); err != nil {
-		return nil, errors.Wrap(err, "failed to parse volume argument")
-	}
-
 	// check the image existed or not, and convert image id to image ref
 	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
 	if err != nil {
@@ -390,6 +385,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
+	}
+
+	// parse volume config
+	if err := mgr.parseBinds(ctx, meta); err != nil {
+		return nil, errors.Wrap(err, "failed to parse volume argument")
 	}
 
 	// set container basefs
@@ -1277,92 +1277,150 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	return nil
 }
 
-func (mgr *ContainerManager) parseVolumes(ctx context.Context, id string, c *types.ContainerCreateConfig) error {
-	logrus.Debugf("bind volumes: %v", c.HostConfig.Binds)
+func (mgr *ContainerManager) bindVolume(ctx context.Context, name string, meta *ContainerMeta) (string, string, error) {
+	id := meta.ID
 
-	if c.Volumes == nil {
-		c.Volumes = make(map[string]interface{})
+	ref := ""
+	driver := "local"
+	v, err := mgr.VolumeMgr.Get(ctx, name)
+	if err != nil || v == nil {
+		opts := map[string]string{
+			"backend": "local",
+		}
+		if err := mgr.VolumeMgr.Create(ctx, name, meta.HostConfig.VolumeDriver, opts, nil); err != nil {
+			logrus.Errorf("failed to create volume: %s, err: %v", name, err)
+			return "", "", errors.Wrap(err, "failed to create volume")
+		}
+	} else {
+		ref = v.Option("ref")
+		driver = v.Driver()
 	}
+
+	option := map[string]string{}
+	if ref == "" {
+		option["ref"] = id
+	} else {
+		option["ref"] = ref + "," + id
+	}
+	if _, err := mgr.VolumeMgr.Attach(ctx, name, option); err != nil {
+		logrus.Errorf("failed to attach volume: %s, err: %v", name, err)
+		return "", "", errors.Wrap(err, "failed to attach volume")
+	}
+
+	mountPath, err := mgr.VolumeMgr.Path(ctx, name)
+	if err != nil {
+		logrus.Errorf("failed to get the mount path of volume: %s, err: %v", name, err)
+		return "", "", errors.Wrap(err, "failed to get volume mount path")
+	}
+
+	return mountPath, driver, nil
+}
+
+func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta) error {
+	logrus.Debugf("bind volumes: %v", meta.HostConfig.Binds)
+
+	var err error
+
+	if meta.Config.Volumes == nil {
+		meta.Config.Volumes = make(map[string]interface{})
+	}
+
+	if meta.Mounts == nil {
+		meta.Mounts = make([]*types.MountPoint, 0)
+	}
+
+	defer func() {
+		if err != nil {
+			if err := mgr.detachVolumes(ctx, meta); err != nil {
+				logrus.Errorf("failed to detach volume, err: %v", err)
+			}
+		}
+	}()
 
 	// TODO: parse c.HostConfig.VolumesFrom
 
-	for i, b := range c.HostConfig.Binds {
+	for _, b := range meta.HostConfig.Binds {
+		var parts []string
 		// TODO: when caused error, how to rollback.
-		arr, err := checkBind(b)
+		parts, err = checkBind(b)
 		if err != nil {
 			return err
 		}
-		source := ""
-		destination := ""
-		switch len(arr) {
+
+		mode := ""
+		mp := new(types.MountPoint)
+
+		switch len(parts) {
 		case 1:
-			source = ""
-			destination = arr[0]
-		case 2, 3:
-			source = arr[0]
-			destination = arr[1]
+			mp.Source = ""
+			mp.Destination = parts[0]
+		case 2:
+			mp.Source = parts[0]
+			mp.Destination = parts[1]
+		case 3:
+			mp.Source = parts[0]
+			mp.Destination = parts[1]
+			mode = parts[2]
 		default:
 			return errors.Errorf("unknown bind: %s", b)
 		}
 
-		if source == "" {
-			source = randomid.Generate()
+		if mp.Source == "" {
+			mp.Source = randomid.Generate()
 		}
-		if !path.IsAbs(source) {
-			ref := ""
-			v, err := mgr.VolumeMgr.Get(ctx, source)
-			if err != nil || v == nil {
-				opts := map[string]string{
-					"backend": "local",
+
+		err = parseBindMode(mp, mode)
+		if err != nil {
+			logrus.Errorf("failed to parse bind mode: %s, err: %v", mode, err)
+			return err
+		}
+
+		if !path.IsAbs(mp.Source) {
+			// volume bind.
+			name := mp.Source
+			if _, exist := meta.Config.Volumes[name]; !exist {
+				mp.Name = name
+				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, name, meta)
+				if err != nil {
+					logrus.Errorf("failed to bind volume: %s, err: %v", name, err)
+					return errors.Wrap(err, "failed to bind volume")
 				}
-				if err := mgr.VolumeMgr.Create(ctx, source, c.HostConfig.VolumeDriver, opts, nil); err != nil {
-					logrus.Errorf("failed to create volume: %s, err: %v", source, err)
-					return errors.Wrap(err, "failed to create volume")
+				meta.Config.Volumes[mp.Name] = mp.Destination
+			}
+
+			if mp.Replace != "" {
+				mp.Source, err = mgr.VolumeMgr.Path(ctx, name)
+				if err != nil {
+					return err
 				}
-			} else {
-				ref = v.Option("ref")
-			}
 
-			option := map[string]string{}
-			if ref == "" {
-				option["ref"] = id
-			} else {
-				option["ref"] = ref + "," + id
-			}
-			if _, err := mgr.VolumeMgr.Attach(ctx, source, option); err != nil {
-				logrus.Errorf("failed to attach volume: %s, err: %v", source, err)
-				return errors.Wrap(err, "failed to attach volume")
-			}
+				switch mp.Replace {
+				case "dr":
+					mp.Source = path.Join(mp.Source, mp.Destination)
+				case "rr":
+					mp.Source = path.Join(mp.Source, randomid.Generate())
+				}
 
-			mountPath, err := mgr.VolumeMgr.Path(ctx, source)
-			if err != nil {
-				logrus.Errorf("failed to get the mount path of volume: %s, err: %v", source, err)
-				return errors.Wrap(err, "failed to get volume mount path")
+				mp.Name = ""
+				mp.Named = false
+				mp.Driver = ""
 			}
+		}
 
-			c.Volumes[source] = destination
-			source = mountPath
-		} else if _, err := os.Stat(source); err != nil {
+		if _, err = os.Stat(mp.Source); err != nil {
+			// host directory bind into container.
 			if !os.IsNotExist(err) {
-				return errors.Errorf("failed to stat %q: %v", source, err)
+				return errors.Errorf("failed to stat %q: %v", mp.Source, err)
 			}
 			// Create the host path if it doesn't exist.
-			if err := os.MkdirAll(source, 0755); err != nil {
-				return errors.Errorf("failed to mkdir %q: %v", source, err)
+			if err = os.MkdirAll(mp.Source, 0755); err != nil {
+				return errors.Errorf("failed to mkdir %q: %v", mp.Source, err)
 			}
 		}
 
-		switch len(arr) {
-		case 1:
-			b = fmt.Sprintf("%s:%s", source, arr[0])
-		case 2, 3:
-			arr[0] = source
-			b = strings.Join(arr, ":")
-		default:
-		}
-
-		c.HostConfig.Binds[i] = b
+		meta.Mounts = append(meta.Mounts, mp)
 	}
+
 	return nil
 }
 
@@ -1462,4 +1520,50 @@ func checkBind(b string) ([]string, error) {
 	}
 
 	return arr, nil
+}
+
+func parseBindMode(mp *types.MountPoint, mode string) error {
+	mp.RW = true
+	mp.CopyData = true
+
+	defaultMode := 0
+	rwMode := 0
+	labelMode := 0
+	replaceMode := 0
+	copyMode := 0
+	propagationMode := 0
+
+	for _, m := range strings.Split(mode, ",") {
+		switch m {
+		case "":
+			defaultMode++
+		case "ro":
+			mp.RW = false
+			rwMode++
+		case "rw":
+			mp.RW = true
+			rwMode++
+		case "dr", "rr":
+			// direct replace mode, random replace mode
+			mp.Replace = m
+			replaceMode++
+		case "z", "Z":
+			labelMode++
+		case "nocopy":
+			mp.CopyData = false
+			copyMode++
+		case "private", "rprivate", "slave", "rslave", "shared", "rshared":
+			mp.Propagation = m
+			propagationMode++
+		default:
+			return fmt.Errorf("unknown bind mode: %s", mode)
+		}
+	}
+
+	if defaultMode > 1 || rwMode > 1 || replaceMode > 1 || copyMode > 1 || propagationMode > 1 {
+		return fmt.Errorf("invalid bind mode: %s", mode)
+	}
+
+	mp.Mode = mode
+	return nil
 }

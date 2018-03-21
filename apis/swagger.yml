@@ -2838,6 +2838,8 @@ definitions:
     properties:
       Type:
         type: "string"
+      ID:
+        type: "string"
       Name:
         type: "string"
       Source:
@@ -2850,6 +2852,12 @@ definitions:
         type: "string"
       RW:
         type: "boolean"
+      CopyData:
+        type: "boolean"
+      Named:
+        type: "boolean"
+      Replace:
+        type: "string"
       Propagation:
         type: "string"
 
