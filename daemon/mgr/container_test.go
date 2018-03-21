@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,6 +38,39 @@ func TestCheckBind(t *testing.T) {
 		} else {
 			assert.NoError(err, p.expectErr)
 			assert.Equal(len(arr), p.len)
+		}
+	}
+}
+
+func TestParseBindMode(t *testing.T) {
+	assert := assert.New(t)
+
+	type parsed struct {
+		mode             string
+		expectMountPoint *types.MountPoint
+		err              bool
+		expectErr        error
+	}
+
+	parseds := []parsed{
+		{mode: "dr", expectMountPoint: &types.MountPoint{Mode: "dr", RW: true, CopyData: true}, err: false, expectErr: nil},
+		{mode: "nocopy", expectMountPoint: &types.MountPoint{Mode: "nocopy", RW: true, CopyData: false}, err: false, expectErr: nil},
+		{mode: "ro", expectMountPoint: &types.MountPoint{Mode: "ro", RW: false, CopyData: true}, err: false, expectErr: nil},
+		{mode: "", expectMountPoint: &types.MountPoint{Mode: "", RW: true, CopyData: true}, err: false, expectErr: nil},
+		{mode: "dr,rr", err: true, expectErr: fmt.Errorf("invalid bind mode: dr,rr")},
+		{mode: "unknown", err: true, expectErr: fmt.Errorf("unknown bind mode: unknown")},
+	}
+
+	for _, p := range parseds {
+		mp := &types.MountPoint{}
+		err := parseBindMode(mp, p.mode)
+		if p.err {
+			assert.Equal(err, p.expectErr)
+		} else {
+			assert.NoError(err, p.expectErr)
+			assert.Equal(p.expectMountPoint.Mode, mp.Mode)
+			assert.Equal(p.expectMountPoint.RW, mp.RW)
+			assert.Equal(p.expectMountPoint.CopyData, mp.CopyData)
 		}
 	}
 }
