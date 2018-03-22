@@ -1697,7 +1697,13 @@ definitions:
           - "systemd"
       InitScript:
         type: "string"
-        description: "Initial script executed in container. The script will be executed before entrypoint or command"        
+        description: "Initial script executed in container. The script will be executed before entrypoint or command"
+      DiskQuota:
+        type: "object"
+        description: "Set disk quota for container"
+        x-nullable: true
+        additionalProperties:
+          type: "string"
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"

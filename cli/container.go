@@ -60,6 +60,7 @@ type container struct {
 	blkioDeviceReadIOps  ThrottleIOpsDevice
 	blkioDeviceWriteIOps ThrottleIOpsDevice
 	IntelRdtL3Cbm        string
+	diskQuota            []string
 
 	cgroupParent string
 
@@ -105,6 +106,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	sysctls, err := parseSysctls(c.sysctls)
+	if err != nil {
+		return nil, err
+	}
+
+	diskQuota, err := parseDiskQuota(c.diskQuota)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +199,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			RichMode:     c.richMode,
 			InitScript:   c.initScript,
 			ExposedPorts: ports,
+			DiskQuota:    diskQuota,
 		},
 
 		HostConfig: &types.HostConfig{
@@ -414,4 +421,26 @@ func parseNetwork(network string) (string, string, string, error) {
 	}
 
 	return name, parameter, mode, nil
+}
+
+func parseDiskQuota(quotas []string) (map[string]string, error) {
+	var quotaMaps = make(map[string]string)
+
+	for _, quota := range quotas {
+		if quota == "" {
+			return nil, fmt.Errorf("invalid format for disk quota: %s", quota)
+		}
+
+		parts := strings.Split(quota, "=")
+		switch len(parts) {
+		case 1:
+			quotaMaps["/"] = parts[0]
+		case 2:
+			quotaMaps[parts[0]] = parts[1]
+		default:
+			return nil, fmt.Errorf("invalid format for disk quota: %s", quota)
+		}
+	}
+
+	return quotaMaps, nil
 }

@@ -2,6 +2,9 @@ package mgr
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -87,4 +90,33 @@ func getThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevic
 	}
 
 	return ThrottleDevice, nil
+}
+
+func setupDiskQuota(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
+
+	rootFSQuota, ok := meta.Config.DiskQuota["/"]
+	if !ok || rootFSQuota == "" {
+		return nil
+	}
+
+	if s.Hooks == nil {
+		s.Hooks = &specs.Hooks{}
+	}
+	if s.Hooks.Prestart == nil {
+		s.Hooks.Prestart = []specs.Hook{}
+	}
+
+	target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
+	if err != nil {
+		return err
+	}
+
+	quotaPrestart := specs.Hook{
+		Path: target,
+		Args: []string{"set-diskquota", meta.BaseFS, rootFSQuota},
+	}
+	s.Hooks.Prestart = append(s.Hooks.Prestart, quotaPrestart)
+
+	return nil
 }
