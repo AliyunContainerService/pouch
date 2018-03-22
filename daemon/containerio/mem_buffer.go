@@ -32,6 +32,10 @@ func (b *memBuffer) In() io.Reader {
 	return b.buffer
 }
 
+func (b *memBuffer) Err() io.Writer {
+	return b.buffer
+}
+
 func (b *memBuffer) Close() error {
 	// Don't need to close bytes.Buffer.
 	return nil

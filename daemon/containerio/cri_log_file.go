@@ -43,9 +43,11 @@ func init() {
 }
 
 type criLogFile struct {
-	file       *os.File
-	pipeWriter *io.PipeWriter
-	pipeReader *io.PipeReader
+	file       		*os.File
+	outPipeWriter 	*io.PipeWriter
+	outPipeReader	*io.PipeReader
+	errPipeWriter	*io.PipeWriter
+	errPipeReader 	*io.PipeReader
 	closed     bool
 }
 
@@ -55,9 +57,10 @@ func (c *criLogFile) Name() string {
 
 func (c *criLogFile) Init(opt *Option) error {
 	c.file = opt.criLogFile
-	c.pipeReader, c.pipeWriter = io.Pipe()
-	// TODO: redirect stderr.
-	go redirectLogs(c.file, c.pipeReader, Stdout)
+	c.outPipeReader, c.outPipeWriter = io.Pipe()
+	c.errPipeReader, c.errPipeWriter = io.Pipe()
+	go redirectLogs(c.file, c.outPipeReader, Stdout)
+	go redirectLogs(c.file, c.errPipeReader, Stderr)
 	return nil
 }
 
@@ -86,6 +89,7 @@ func redirectLogs(w io.WriteCloser, r io.ReadCloser, stream StreamType) {
 		timestampBytes := time.Now().AppendFormat(nil, time.RFC3339Nano)
 		data := bytes.Join([][]byte{timestampBytes, streamBytes, tagBytes, lineBytes}, delimiterBytes)
 		data = append(data, eol)
+		// TODO: maybe lock here?
 		_, err = w.Write(data)
 		if err != nil {
 			logrus.Errorf("failed to write %q log to log file: %v", stream, err)
@@ -94,7 +98,11 @@ func redirectLogs(w io.WriteCloser, r io.ReadCloser, stream StreamType) {
 }
 
 func (c *criLogFile) Out() io.Writer {
-	return c.pipeWriter
+	return c.outPipeWriter
+}
+
+func (c *criLogFile) Err() io.Writer {
+	return c.errPipeWriter
 }
 
 func (c *criLogFile) In() io.Reader {
@@ -107,5 +115,7 @@ func (c *criLogFile) Close() error {
 		return nil
 	}
 	c.closed = true
-	return c.pipeWriter.Close()
+	c.outPipeWriter.Close()
+	c.errPipeWriter.Close()
+	return nil
 }

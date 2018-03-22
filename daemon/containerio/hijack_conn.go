@@ -56,6 +56,10 @@ func (h *hijackConn) In() io.Reader {
 	return h
 }
 
+func (h *hijackConn) Err() io.Writer {
+	return h
+}
+
 func (h *hijackConn) Close() error {
 	if h.closed {
 		return nil

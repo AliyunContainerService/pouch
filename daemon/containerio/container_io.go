@@ -118,7 +118,6 @@ func create(opt *Option, typ stdioType, backends map[string]containerBackend) *C
 					// For backend with stdin, close it if stdin finished.
 					io.converge(b.backend.Name(), opt.id, b.backend.In())
 					b.backend.Close()
-					b.ring.Close()
 				}(b)
 				break
 			}
@@ -149,16 +148,20 @@ func createBackend(opt *Option) map[string]containerBackend {
 
 		backends[backend.Name()] = containerBackend{
 			backend: backend,
-			ring:    ringbuff.New(10),
+			outRing: ringbuff.New(10),
+			errRing: ringbuff.New(10),	
 		}
 	}
 
-	// start to subscribe ring buffer.
+	// start to subscribe stdout and stderr ring buffer.
 	for _, b := range backends {
 
 		// the goroutine don't exit forever.
 		go func(b containerBackend) {
-			subscribe(b.backend.Name(), opt.id, b.ring, b.backend.Out())
+			subscribe(b.backend.Name(), opt.id, b.outRing, b.backend.Out())
+		}(b)
+		go func(b containerBackend) {
+			subscribe(b.backend.Name(), opt.id, b.errRing, b.backend.Err())
 		}(b)
 	}
 
@@ -208,11 +211,21 @@ func (cio *ContainerIO) Write(data []byte) (int, error) {
 		return len(data), nil
 	}
 
-	for _, b := range cio.backends {
-		if cover := b.ring.Push(data); cover {
-			logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
+	switch cio.typ {
+	case stdout:
+		for _, b := range cio.backends {
+			if cover := b.outRing.Push(data); cover {
+				logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
+			}
+		}
+	case stderr:
+		for _, b := range cio.backends {
+			if cover := b.errRing.Push(data); cover {
+				logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
+			}
 		}
 	}
+
 
 	return len(data), nil
 }
@@ -223,7 +236,8 @@ func (cio *ContainerIO) Close() error {
 		// we need to close ringbuf before close backend, because close ring will flush
 		// the remain data into backend.
 		name := b.backend.Name()
-		b.ring.Close()
+		b.outRing.Close()
+		b.errRing.Close()
 		b.backend.Close()
 
 		logrus.Infof("close containerio backend: %s, id: %s", name, cio.id)
@@ -234,8 +248,9 @@ func (cio *ContainerIO) Close() error {
 }
 
 type containerBackend struct {
-	backend Backend
-	ring    *ringbuff.RingBuff
+	backend 	Backend
+	outRing    *ringbuff.RingBuff
+	errRing	   *ringbuff.RingBuff
 }
 
 // subscribe be called in a groutine.
