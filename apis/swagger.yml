@@ -1317,6 +1317,13 @@ definitions:
           - "name=seccomp,profile=default"
           - "name=selinux"
           - "name=userns"
+      ListenAddresses:
+        description: "List of addresses the pouchd listens on"
+        type: "array"
+        items:
+          type: "string"
+        example:
+          - ["unix:///var/run/pouchd.sock", "tcp://0.0.0.0:4243"]
 
   RegistryServiceConfig:
     description: |

@@ -2,10 +2,12 @@ package mgr
 
 import (
 	"runtime"
+	"sync/atomic"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/kernel"
+	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/registry"
 	"github.com/alibaba/pouch/version"
 
@@ -24,14 +26,17 @@ type SystemManager struct {
 	name     string
 	registry *registry.Client
 	config   *config.Config
+
+	store *meta.Store
 }
 
 // NewSystemManager creates a brand new system manager.
-func NewSystemManager(cfg *config.Config) (*SystemManager, error) {
+func NewSystemManager(cfg *config.Config, store *meta.Store) (*SystemManager, error) {
 	return &SystemManager{
 		name:     "system_manager",
 		registry: &registry.Client{},
 		config:   cfg,
+		store:    store,
 	}, nil
 }
 
@@ -44,16 +49,35 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		kernelVersion = kv.String()
 	}
 
+	var cRunning, cPaused, cStopped int64
+	_ = mgr.store.ForEach(func(obj meta.Object) error {
+		containerMeta, ok := obj.(*ContainerMeta)
+		if !ok {
+			return nil
+		}
+		status := containerMeta.State.Status
+		switch status {
+		case types.StatusRunning:
+			atomic.AddInt64(&cRunning, 1)
+		case types.StatusPaused:
+			atomic.AddInt64(&cPaused, 1)
+		case types.StatusStopped:
+			atomic.AddInt64(&cStopped, 1)
+		}
+
+		return nil
+	})
+
 	inf := types.SystemInfo{
 		// architecture: ,
 		// CgroupDriver: ,
 		// ContainerdCommit: ,
-		// Containers: ,
-		// ContainersPaused:,
-		// ContainersRunning:,
-		// ContainersStopped:,
-		Debug:          mgr.config.Debug,
-		DefaultRuntime: mgr.config.DefaultRuntime,
+		Containers:        cRunning + cPaused + cStopped,
+		ContainersPaused:  cPaused,
+		ContainersRunning: cRunning,
+		ContainersStopped: cStopped,
+		Debug:             mgr.config.Debug,
+		DefaultRuntime:    mgr.config.DefaultRuntime,
 		// Driver: ,
 		// DriverStatus: ,
 		// ExperimentalBuild: ,
@@ -76,7 +100,8 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		// RuncCommit: ,
 		// Runtimes: ,
 		// SecurityOptions: ,
-		ServerVersion: version.Version,
+		ServerVersion:   version.Version,
+		ListenAddresses: mgr.config.Listen,
 	}
 	return inf, nil
 }

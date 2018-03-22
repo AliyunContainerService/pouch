@@ -29,8 +29,8 @@ func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, e
 }
 
 // GenSystemMgr generates a SystemMgr instance according to config cfg.
-func GenSystemMgr(cfg *config.Config) (mgr.SystemMgr, error) {
-	return mgr.NewSystemManager(cfg)
+func GenSystemMgr(cfg *config.Config, d DaemonProvider) (mgr.SystemMgr, error) {
+	return mgr.NewSystemManager(cfg, d.MetaStore())
 }
 
 // GenImageMgr generates a ImageMgr instance according to config cfg.

@@ -122,6 +122,9 @@ type SystemInfo struct {
 	//
 	Labels []string `json:"Labels"`
 
+	// List of addresses the pouchd listens on
+	ListenAddresses []string `json:"ListenAddresses"`
+
 	// Indicates if live restore is enabled.
 	// If enabled, containers are kept running when the daemon is shutdown
 	// or upon daemon start if running containers are detected.
@@ -236,6 +239,8 @@ type SystemInfo struct {
 
 /* polymorph SystemInfo Labels false */
 
+/* polymorph SystemInfo ListenAddresses false */
+
 /* polymorph SystemInfo LiveRestoreEnabled false */
 
 /* polymorph SystemInfo LoggingDriver false */
@@ -282,6 +287,11 @@ func (m *SystemInfo) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLabels(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateListenAddresses(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -384,6 +394,15 @@ func (m *SystemInfo) validateDriverStatus(formats strfmt.Registry) error {
 func (m *SystemInfo) validateLabels(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Labels) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *SystemInfo) validateListenAddresses(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ListenAddresses) { // not required
 		return nil
 	}
 
