@@ -135,7 +135,7 @@ func (d *Daemon) Run() error {
 	}
 	d.imageMgr = imageMgr
 
-	systemMgr, err := internal.GenSystemMgr(&d.config)
+	systemMgr, err := internal.GenSystemMgr(&d.config, d)
 	if err != nil {
 		return err
 	}
