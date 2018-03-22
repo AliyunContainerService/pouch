@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -256,10 +255,10 @@ func (client *APIClient) ContainerLogs(ctx context.Context, name string, options
 }
 
 // ContainerResize resizes the size of container tty.
-func (client *APIClient) ContainerResize(ctx context.Context, name string, opts types.ResizeOptions) error {
+func (client *APIClient) ContainerResize(ctx context.Context, name, height, width string) error {
 	query := url.Values{}
-	query.Set("h", strconv.Itoa(int(opts.Height)))
-	query.Set("w", strconv.Itoa(int(opts.Width)))
+	query.Set("h", height)
+	query.Set("w", width)
 
 	resp, err := client.post(ctx, "/containers/"+name+"/resize", query, nil, nil)
 	ensureCloseReader(resp)

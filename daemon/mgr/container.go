@@ -882,8 +882,19 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 
 // Resize resizes the size of a container tty.
 func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types.ResizeOptions) error {
-	// TODO
-	return nil
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if !c.IsRunning() && !c.IsPaused() {
+		return fmt.Errorf("failed to resize container %s: container is not running", c.ID())
+	}
+
+	return mgr.Client.ResizeContainer(ctx, c.ID(), opts)
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {

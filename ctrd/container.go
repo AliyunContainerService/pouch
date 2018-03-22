@@ -469,3 +469,19 @@ func (c *Client) GetPidsForContainer(ctx context.Context, id string) ([]int, err
 	}
 	return pids, nil
 }
+
+// ResizeContainer changes the size of the TTY of the init process running
+// in the container to the given height and width.
+func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
+	if !c.lock.Trylock(id) {
+		return errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	return pack.task.Resize(ctx, uint32(opts.Height), uint32(opts.Width))
+}

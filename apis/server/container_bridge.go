@@ -373,14 +373,19 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 }
 
 func (s *Server) resizeContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	opts := types.ResizeOptions{}
-	// decode request body
-	if err := json.NewDecoder(req.Body).Decode(opts); err != nil {
+	height, err := strconv.Atoi(req.FormValue("h"))
+	if err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-	// validate request body
-	if err := opts.Validate(strfmt.NewFormats()); err != nil {
+
+	width, err := strconv.Atoi(req.FormValue("w"))
+	if err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	opts := types.ResizeOptions{
+		Height: int64(height),
+		Width:  int64(width),
 	}
 
 	name := mux.Vars(req)["name"]
