@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
 	"github.com/pkg/errors"
@@ -185,6 +186,11 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 
 // DestroyContainer kill container and delete it.
 func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
+	// TODO(ziren): if we just want to stop a container,
+	// we may need lease to lock the snapshot of container,
+	// in case, it be deleted by gc.
+	ctx = leases.WithLease(ctx, c.lease.ID())
+
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}

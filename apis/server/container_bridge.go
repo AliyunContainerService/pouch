@@ -51,7 +51,24 @@ func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) restartContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	// TODO
+	var (
+		t   int
+		err error
+	)
+
+	if v := req.FormValue("t"); v != "" {
+		if t, err = strconv.Atoi(v); err != nil {
+			return httputils.NewHTTPError(err, http.StatusBadRequest)
+		}
+	}
+
+	name := mux.Vars(req)["name"]
+
+	if err = s.ContainerMgr.Restart(ctx, name, int64(t)); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
 

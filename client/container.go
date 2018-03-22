@@ -159,10 +159,15 @@ func (client *APIClient) ContainerRename(ctx context.Context, id string, name st
 	return err
 }
 
-// ContainerRestart restarts a contianer.
-func (client *APIClient) ContainerRestart(ctx context.Context, name string, time int) error {
-	// TODO
-	return nil
+// ContainerRestart restarts a running contianer.
+func (client *APIClient) ContainerRestart(ctx context.Context, id string, timeout string) error {
+	q := url.Values{}
+	q.Add("t", timeout)
+
+	resp, err := client.post(ctx, "/containers/"+id+"/restart", q, nil, nil)
+	ensureCloseReader(resp)
+
+	return err
 }
 
 // ContainerPause pauses a container.
