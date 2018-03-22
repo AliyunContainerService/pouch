@@ -83,16 +83,22 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 
 // Version shows version of daemon.
 func (mgr *SystemManager) Version() (types.SystemVersion, error) {
+	kernelVersion := "<unknown>"
+	if kv, err := kernel.GetKernelVersion(); err != nil {
+		logrus.Warnf("Could not get kernel version: %v", err)
+	} else {
+		kernelVersion = kv.String()
+	}
+
 	return types.SystemVersion{
-		APIVersion: version.APIVersion,
-		Arch:       runtime.GOARCH,
-		BuildTime:  version.BuildTime,
-		GitCommit:  version.GitCommit,
-		GoVersion:  version.GOVersion,
-		// TODO:  add a pkg to support getting kernel version
-		// KernelVersion: kernel.Version(),
-		Os:      runtime.GOOS,
-		Version: version.Version,
+		APIVersion:    version.APIVersion,
+		Arch:          runtime.GOARCH,
+		BuildTime:     version.BuildTime,
+		GitCommit:     version.GitCommit,
+		GoVersion:     version.GOVersion,
+		KernelVersion: kernelVersion,
+		Os:            runtime.GOOS,
+		Version:       version.Version,
 	}, nil
 }
 
