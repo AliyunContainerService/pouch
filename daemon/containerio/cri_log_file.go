@@ -43,12 +43,12 @@ func init() {
 }
 
 type criLogFile struct {
-	file       		*os.File
-	outPipeWriter 	*io.PipeWriter
-	outPipeReader	*io.PipeReader
-	errPipeWriter	*io.PipeWriter
-	errPipeReader 	*io.PipeReader
-	closed     bool
+	file          *os.File
+	outPipeWriter *io.PipeWriter
+	outPipeReader *io.PipeReader
+	errPipeWriter *io.PipeWriter
+	errPipeReader *io.PipeReader
+	closed        bool
 }
 
 func (c *criLogFile) Name() string {

@@ -149,7 +149,7 @@ func createBackend(opt *Option) map[string]containerBackend {
 		backends[backend.Name()] = containerBackend{
 			backend: backend,
 			outRing: ringbuff.New(10),
-			errRing: ringbuff.New(10),	
+			errRing: ringbuff.New(10),
 		}
 	}
 
@@ -226,7 +226,6 @@ func (cio *ContainerIO) Write(data []byte) (int, error) {
 		}
 	}
 
-
 	return len(data), nil
 }
 
@@ -248,9 +247,9 @@ func (cio *ContainerIO) Close() error {
 }
 
 type containerBackend struct {
-	backend 	Backend
-	outRing    *ringbuff.RingBuff
-	errRing	   *ringbuff.RingBuff
+	backend Backend
+	outRing *ringbuff.RingBuff
+	errRing *ringbuff.RingBuff
 }
 
 // subscribe be called in a groutine.

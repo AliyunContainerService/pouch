@@ -172,6 +172,13 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to setup sandbox files: %v", err)
 	}
 
+	securityContext := config.GetLinux().GetSecurityContext()
+	hostNet := securityContext.GetNamespaceOptions().GetHostNetwork()
+	// If it is in host network, no need to configure the network of sandbox.
+	if hostNet {
+		return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
+	}
+
 	// Step 4: Setup networking for the sandbox.
 	container, err := c.ContainerMgr.Get(ctx, id)
 	if err != nil {
@@ -234,6 +241,8 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		return nil, fmt.Errorf("failed to parse metadata of sandbox %q from container name: %v", podSandboxID, err)
 	}
 
+	// TODO: how to figure out if the network is in host mode?
+	// Maybe we need to store some configuration of sandbox.
 	err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
 		Name:      metadata.GetName(),
 		Namespace: metadata.GetNamespace(),
