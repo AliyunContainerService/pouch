@@ -82,6 +82,9 @@ type ContainerMeta struct {
 	// seccomp profile
 	SeccompProfile string `json:"SeccompProfile,omitempty"`
 
+	// no new privileges
+	NoNewPrivileges bool `json:"NoNewPrivileges,omitempty"`
+
 	// The arguments to the command being run
 	Args []string `json:"Args"`
 
