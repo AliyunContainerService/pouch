@@ -1875,13 +1875,12 @@ An object containing all details of an image at API side
 |**Architecture**  <br>*optional*|the CPU architecture.|string|
 |**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
 |**CreatedAt**  <br>*optional*|time of image creation.|string|
-|**Digest**  <br>*optional*|digest of image.|string|
 |**ID**  <br>*optional*|ID of an image.|string|
-|**Name**  <br>*optional*|name of an image.|string|
 |**Os**  <br>*optional*|the name of the operating system.|string|
+|**RepoDigests**  <br>*optional*|repository with digest.|< string > array|
+|**RepoTags**  <br>*optional*|repository with tag.|< string > array|
 |**RootFS**  <br>*optional*|the rootfs key references the layer content addresses used by the image.|[RootFS](#imageinfo-rootfs)|
 |**Size**  <br>*optional*|size of image's taking disk space.|integer|
-|**Tag**  <br>*optional*|tag of an image.|string|
 
 <a name="imageinfo-rootfs"></a>
 **RootFS**
