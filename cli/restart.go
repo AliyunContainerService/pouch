@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"strconv"
 
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -36,8 +38,7 @@ func (rc *RestartCommand) Init(c *Cli) {
 // addFlags adds flags for specific command.
 func (rc *RestartCommand) addFlags() {
 	flagSet := rc.cmd.Flags()
-	flagSet.IntVarP(&rc.timeout, "time", "t", 10,
-		"Seconds to wait for stop before killing the container")
+	flagSet.IntVarP(&rc.timeout, "time", "t", 10, "Seconds to wait for stop before killing the container")
 }
 
 // runRestart is the entry of restart command.
@@ -46,7 +47,7 @@ func (rc *RestartCommand) runRestart(args []string) error {
 	apiClient := rc.cli.Client()
 
 	for _, name := range args {
-		if err := apiClient.ContainerRestart(ctx, name, rc.timeout); err != nil {
+		if err := apiClient.ContainerRestart(ctx, name, strconv.Itoa(rc.timeout)); err != nil {
 			return fmt.Errorf("failed to restart container: %v", err)
 		}
 		fmt.Printf("%s\n", name)

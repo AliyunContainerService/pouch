@@ -22,8 +22,8 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/containerd/containerd/namespaces"
 
+	"github.com/containerd/containerd/namespaces"
 	"github.com/go-openapi/strfmt"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -83,6 +83,9 @@ type ContainerMgr interface {
 
 	// Resize resizes the size of container tty.
 	Resize(ctx context.Context, name string, opts types.ResizeOptions) error
+
+	// Restart restart a running container.
+	Restart(ctx context.Context, name string, timeout int64) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -454,6 +457,10 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 	c.Lock()
 	defer c.Unlock()
 
+	return mgr.start(ctx, c, detachKeys)
+}
+
+func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys string) error {
 	if c.meta.Config == nil || c.meta.State == nil {
 		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID())
 	}
@@ -604,6 +611,10 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 		timeout = c.StopTimeout()
 	}
 
+	return mgr.stop(ctx, c, timeout)
+}
+
+func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int64) error {
 	msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), timeout)
 	if err != nil {
 		return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
@@ -895,6 +906,34 @@ func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types
 	}
 
 	return mgr.Client.ResizeContainer(ctx, c.ID(), opts)
+}
+
+// Restart restarts a running container.
+func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout int64) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if !c.IsRunning() {
+		return fmt.Errorf("cannot restart a non running container")
+	}
+
+	if timeout == 0 {
+		timeout = c.StopTimeout()
+	}
+
+	// stop container
+	if err := mgr.stop(ctx, c, timeout); err != nil {
+		return errors.Wrapf(err, "failed to stop container")
+	}
+	logrus.Debug("Restart: container " + c.ID() + "  stopped succeeded")
+
+	// start container
+	return mgr.start(ctx, c, "")
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {
