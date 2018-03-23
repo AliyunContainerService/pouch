@@ -37,7 +37,7 @@ func (rc *RestartCommand) Init(c *Cli) {
 func (rc *RestartCommand) addFlags() {
 	flagSet := rc.cmd.Flags()
 	flagSet.IntVarP(&rc.timeout, "time", "t", 10,
-		"Seconds to wait for stop before killing the container")
+		"Seconds to wait for stop before killing the container (default 10)")
 }
 
 // runRestart is the entry of restart command.
