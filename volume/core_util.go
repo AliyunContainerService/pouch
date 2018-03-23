@@ -74,6 +74,24 @@ func (c *Core) volumeURL(id ...types.VolumeID) (string, error) {
 	return client.JoinURL(c.BaseURL, types.APIVersion, client.VolumePath, id[0].Name)
 }
 
+func (c *Core) listVolumeURL(labels map[string]string) (string, error) {
+	if c.BaseURL == "" {
+		return "", volerr.ErrDisableControl
+	}
+	url, err := client.JoinURL(c.BaseURL, types.APIVersion, client.VolumePath)
+	if err != nil {
+		return "", err
+	}
+
+	querys := make([]string, 0, len(labels))
+	for k, v := range labels {
+		querys = append(querys, fmt.Sprintf("labels=%s=%s", k, v))
+	}
+
+	url = url + "?" + strings.Join(querys, "&")
+	return url, nil
+}
+
 func (c *Core) listVolumeNameURL(labels map[string]string) (string, error) {
 	if c.BaseURL == "" {
 		return "", volerr.ErrDisableControl

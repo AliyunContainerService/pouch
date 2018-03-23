@@ -21,7 +21,7 @@ type VolumeMgr interface {
 	Remove(ctx context.Context, name string) error
 
 	// List returns all volumes on this host.
-	List(ctx context.Context, labels map[string]string) ([]string, error)
+	List(ctx context.Context, labels map[string]string) ([]*types.Volume, error)
 
 	// Get returns the information of volume that specified name/id.
 	Get(ctx context.Context, name string) (*types.Volume, error)
@@ -100,7 +100,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 }
 
 // List returns all volumes on this host.
-func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]string, error) {
+func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]*types.Volume, error) {
 	if _, ok := labels["hostname"]; !ok {
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -110,7 +110,7 @@ func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]
 		labels["hostname"] = hostname
 	}
 
-	return vm.core.ListVolumeName(labels)
+	return vm.core.ListVolumes(labels)
 }
 
 // Get returns the information of volume that specified name/id.
