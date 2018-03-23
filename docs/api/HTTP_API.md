@@ -1431,6 +1431,7 @@ Configuration for a container that is portable between hosts
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
+|**DiskQuota**  <br>*optional*|Set disk quota for container|< string, string > map|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
@@ -1471,6 +1472,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
+|**DiskQuota**  <br>*optional*|Set disk quota for container|< string, string > map|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
@@ -1605,6 +1607,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**AttachStdin**  <br>*optional*|Whether to attach to `stdin`.|boolean|
 |**AttachStdout**  <br>*optional*|Whether to attach to `stdout`.  <br>**Default** : `true`|boolean|
 |**Cmd**  <br>*optional*|Command to run specified an array of strings.|< string > array|
+|**DiskQuota**  <br>*optional*|Set disk quota for container|< string, string > map|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
@@ -2207,6 +2210,7 @@ The status of the container. For example, "running" or "exited".
 |**IndexServerAddress**  <br>*optional*|Address / URL of the index server that is used for image search,<br>and as a default for user authentication.|string|
 |**KernelVersion**  <br>*optional*|Kernel version of the host.<br>On Linux, this information obtained from `uname`.|string|
 |**Labels**  <br>*optional*|User-defined labels (key/value metadata) as set on the daemon.  <br>**Example** : `[ "storage=ssd", "production" ]`|< string > array|
+|**ListenAddresses**  <br>*optional*|List of addresses the pouchd listens on  <br>**Example** : `[ [ "unix:///var/run/pouchd.sock", "tcp://0.0.0.0:4243" ] ]`|< string > array|
 |**LiveRestoreEnabled**  <br>*optional*|Indicates if live restore is enabled.<br>If enabled, containers are kept running when the daemon is shutdown<br>or upon daemon start if running containers are detected.  <br>**Default** : `false`  <br>**Example** : `false`|boolean|
 |**LoggingDriver**  <br>*optional*|The logging driver to use as a default for new containers.|string|
 |**MemTotal**  <br>*optional*|Total amount of physical memory available on the host, in kilobytes (kB).  <br>**Example** : `2095882240`|integer (int64)|
