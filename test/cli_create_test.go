@@ -396,3 +396,21 @@ func (suite *PouchCreateSuite) TestCreateWithAliOSMemoryOptions(c *check.C) {
 	c.Assert(result.HostConfig.MemoryForceEmptyCtl, check.Equals, int64(1))
 	c.Assert(result.HostConfig.ScheLatSwitch, check.Equals, int64(1))
 }
+
+// TestCreateWithOOMOption tests creating container with oom options.
+func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
+	name := "TestCreateWithOOMOption"
+	oomScore := "100"
+
+	res := command.PouchRun("create", "--name", name, "--oom-score-adj", oomScore, "--oom-kill-disable", busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result.HostConfig.OomScoreAdj, check.Equals, int64(100))
+	c.Assert(*result.HostConfig.OomKillDisable, check.Equals, true)
+}

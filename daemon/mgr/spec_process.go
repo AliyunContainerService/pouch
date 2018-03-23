@@ -96,6 +96,11 @@ func setupNoNewPrivileges(ctx context.Context, meta *ContainerMeta, spec *SpecWr
 	}
 
 	spec.s.Process.NoNewPrivileges = meta.NoNewPrivileges
+	return nil
+}
 
+func setupOOMScoreAdj(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) (err error) {
+	v := int(c.HostConfig.OomScoreAdj)
+	spec.s.Process.OOMScoreAdj = &v
 	return nil
 }

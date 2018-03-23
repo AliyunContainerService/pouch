@@ -1850,8 +1850,14 @@ definitions:
               type: "string"
           OomScoreAdj:
             type: "integer"
-            description: "An integer value containing the score given to the container in order to tune OOM killer preferences."
-            example: 500
+            description: |
+                An integer value containing the score given to the container in order to tune OOM killer preferences.
+                The range is in [-1000, 1000].
+            type: "integer"
+            format: "int"
+            x-nullable: false
+            minimum: -1000
+            maximum: 1000
           PidMode:
             type: "string"
             description: |

@@ -42,3 +42,15 @@ func setupCgroupMemorySwappiness(ctx context.Context, meta *ContainerMeta, spec 
 	mem.Swappiness = &v
 	return nil
 }
+
+func setupDisableOOMKill(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	s := spec.s
+	mem := getCgroupMemory(s)
+
+	var v bool
+	if meta.HostConfig.OomKillDisable != nil {
+		v = bool(*meta.HostConfig.OomKillDisable)
+	}
+	mem.DisableOOMKiller = &v
+	return nil
+}
