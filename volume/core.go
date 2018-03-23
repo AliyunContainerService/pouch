@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/alibaba/pouch/extra/libnetwork/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/alibaba/pouch/pkg/client"
 	metastore "github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/volume/driver"
@@ -13,7 +12,7 @@ import (
 	"github.com/alibaba/pouch/volume/types/meta"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Core represents volume core struct.
@@ -45,7 +44,7 @@ func NewCore(cfg Config) (*Core, error) {
 		},
 	})
 	if err != nil {
-		log.Errorf("failed to create volume meta store: %v", err)
+		logrus.Errorf("failed to create volume meta store: %v", err)
 		return nil, err
 	}
 
@@ -206,7 +205,7 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 			return nil, errors.Wrap(err, "List volume's name")
 		}
 
-		log.Debugf("List volume URL: %s, labels: %s", url, labels)
+		logrus.Debugf("List volume URL: %s, labels: %s", url, labels)
 
 		if err := client.New().ListKeys(url, &names); err != nil {
 			return nil, errors.Wrap(err, "List volume's name")
