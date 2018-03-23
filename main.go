@@ -62,7 +62,13 @@ func main() {
 
 // setupFlags setups flags for command line.
 func setupFlags(cmd *cobra.Command) {
-	flagSet := cmd.Flags()
+	// Cobra supports Persistent Flags, which, if defined here,
+	// will be global for your application.
+	flagSet := cmd.PersistentFlags()
+
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
+	// flagSet := cmd.Flags()
 
 	flagSet.StringVar(&cfg.HomeDir, "home-dir", "/var/lib/pouch", "Specify root dir of pouchd")
 	flagSet.StringArrayVarP(&cfg.Listen, "listen", "l", []string{"unix:///var/run/pouchd.sock"}, "Specify listening addresses of Pouchd")
