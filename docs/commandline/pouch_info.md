@@ -14,38 +14,36 @@ pouch info [OPTIONS]
 
 ```
 $ pouch info
+Containers: 1
+Running: 1
+Paused: 0
+Stopped: 0
+Images:  0
 ID:
 Name:
-OperatingSystem:
-PouchRootDir:         /var/lib/pouch
-ServerVersion:        0.3-dev
-ContainersRunning:    0
-Debug:                false
-DriverStatus:         []
-Labels:               []
-Containers:           0
-DefaultRuntime:       runc
-Driver:
-ExperimentalBuild:    false
-KernelVersion:        3.10.0-693.11.6.el7.x86_64
-OSType:               linux
-CgroupDriver:
-ContainerdCommit:     <nil>
-ContainersPaused:     0
-LoggingDriver:
-SecurityOptions:      []
-NCPU:                 0
-RegistryConfig:       <nil>
-RuncCommit:           <nil>
-ContainersStopped:    0
-HTTPSProxy:
-IndexServerAddress:   https://index.docker.io/v1/
-LiveRestoreEnabled:   false
-Runtimes:             map[]
+Server Version: 0.3-dev
+Storage Driver:
+Driver Status: []
+Logging Driver:
+Cgroup Driver:
+runc: <nil>
+containerd: <nil>
+Security Options: []
+Kernel Version: 3.10.0-693.17.1.el7.x86_64
+Operating System:
+OSType: linux
 Architecture:
-HTTPProxy:
-Images:               0
-MemTotal:             0
+HTTP Proxy:
+HTTPS Proxy:
+Registry: https://index.docker.io/v1/
+Experimental: false
+Debug: true
+Labels: []
+CPUs: 0
+Total Memory: 0
+Pouch Root Dir: /var/lib/pouch
+LiveRestoreEnabled: false
+Daemon Listen Addresses: [unix:///var/run/pouchd.sock]
 
 ```
 

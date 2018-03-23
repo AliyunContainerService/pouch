@@ -15,7 +15,7 @@ pouch version
 ```
 $ pouch version
 GoVersion:       go1.9.1
-KernelVersion:
+KernelVersion:   3.10.0-693.11.6.el7.x86_64
 Os:              linux
 Version:         0.1.0-dev
 APIVersion:      1.24
