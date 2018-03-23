@@ -35,6 +35,10 @@ func (s *streamIO) In() io.Reader {
 	return s.streams.StdinStream
 }
 
+func (s *streamIO) Err() io.Writer {
+	return s.streams.StderrStream
+}
+
 func (s *streamIO) Close() error {
 	if s.closed {
 		return nil

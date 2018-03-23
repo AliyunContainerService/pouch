@@ -41,6 +41,10 @@ func (r *rawFile) In() io.Reader {
 	return r.file
 }
 
+func (r *rawFile) Err() io.Writer {
+	return r.file
+}
+
 func (r *rawFile) Close() error {
 	if r.closed {
 		return nil

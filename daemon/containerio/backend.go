@@ -14,11 +14,14 @@ type Backend interface {
 	// Init initializes the backend io.
 	Init(opt *Option) error
 
-	// Out returns the stdout/stderr.
+	// Out returns the stdout.
 	Out() io.Writer
 
 	// In returns the stdin.
 	In() io.Reader
+
+	// Err returns the stderr.
+	Err() io.Writer
 
 	// Close closes the io.
 	Close() error

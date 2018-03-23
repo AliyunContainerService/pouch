@@ -24,6 +24,10 @@ func (d *discardIO) Out() io.Writer {
 	return d
 }
 
+func (d *discardIO) Err() io.Writer {
+	return d
+}
+
 func (d *discardIO) In() io.Reader {
 	return d
 }
