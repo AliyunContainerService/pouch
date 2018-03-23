@@ -49,7 +49,7 @@ func NewQuota(name string) BaseQuota {
 		}
 	default:
 		kernelVersion, err := kernel.GetKernelVersion()
-		if err == nil && kernelVersion.Major >= 4 {
+		if err == nil && kernelVersion.Kernel >= 4 {
 			quota = &PrjQuota{
 				quotaIDs:    make(map[uint32]uint32),
 				mountPoints: make(map[uint64]string),
