@@ -10,7 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // challengeClient defines a client to manage challenge–response authentication.

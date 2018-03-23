@@ -9,13 +9,13 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
-	"github.com/alibaba/pouch/extra/libnetwork/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/docker/libnetwork/drivers/bridge"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 

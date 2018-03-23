@@ -14,7 +14,6 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
-	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
@@ -411,15 +410,15 @@ func (nm *NetworkManager) getNetworkSandbox(id string) libnetwork.Sandbox {
 
 func initNetworkLog(cfg *config.Config) {
 	if cfg.Debug {
-		netlog.SetLevel(netlog.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	formatter := &netlog.TextFormatter{
+	formatter := &logrus.TextFormatter{
 		ForceColors:     true,
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05.000000000",
 	}
-	netlog.SetFormatter(formatter)
+	logrus.SetFormatter(formatter)
 }
 
 func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
