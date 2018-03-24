@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
+	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
@@ -408,17 +409,19 @@ func (nm *NetworkManager) getNetworkSandbox(id string) libnetwork.Sandbox {
 	return sb
 }
 
+// libnetwork's logrus version is different from pouchd,
+// so we need to set libnetwork's logrus addintionly.
 func initNetworkLog(cfg *config.Config) {
 	if cfg.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
+		netlog.SetLevel(netlog.DebugLevel)
 	}
 
-	formatter := &logrus.TextFormatter{
+	formatter := &netlog.TextFormatter{
 		ForceColors:     true,
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05.000000000",
 	}
-	logrus.SetFormatter(formatter)
+	netlog.SetFormatter(formatter)
 }
 
 func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
