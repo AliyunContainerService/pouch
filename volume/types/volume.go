@@ -62,8 +62,8 @@ var (
 	// VolumePhaseReady represents volume ready status.
 	VolumePhaseReady VolumePhase = "Ready"
 
-	// VolumePhaseUnknown represents volume unknow status.
-	VolumePhaseUnknown VolumePhase = "Unknow"
+	// VolumePhaseUnknown represents volume unknown status.
+	VolumePhaseUnknown VolumePhase = "Unknown"
 
 	// VolumePhaseFailed represents volume failed status.
 	VolumePhaseFailed VolumePhase = "Failed"

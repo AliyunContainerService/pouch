@@ -292,7 +292,7 @@ func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
 		return nil
 	}
 
-	// check if invalid or unknow flag exist in config file
+	// check if invalid or unknown flag exist in config file
 	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
 		return err
 	}
@@ -324,7 +324,7 @@ func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) e
 	}
 
 	if len(unknownFlags) > 0 {
-		return fmt.Errorf("unknow flags: %s", strings.Join(unknownFlags, ", "))
+		return fmt.Errorf("unknown flags: %s", strings.Join(unknownFlags, ", "))
 	}
 
 	return nil
