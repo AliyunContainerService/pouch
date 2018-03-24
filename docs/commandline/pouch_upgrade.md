@@ -46,6 +46,8 @@ pouch upgrade [OPTIONS] IMAGE [COMMAND] [ARG...]
       --memory-wmark-ratio int       Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                  Specify name of container
       --net strings                  Set networks to container
+      --oom-kill-disable             Disable OOM Killer
+      --oom-score-adj int            Tune host's OOM preferences (-1000 to 1000) (default -500)
       --pid string                   PID namespace to use
   -p, --port strings                 Set container ports mapping
       --privileged                   Give extended privileges to the container

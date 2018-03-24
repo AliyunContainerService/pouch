@@ -20,7 +20,7 @@ pouch restart [OPTION] CONTAINER [CONTAINERS]
 
 ```
   -h, --help       help for restart
-  -t, --time int   Seconds to wait for stop before killing the container (default 10) (default 10)
+  -t, --time int   Seconds to wait for stop before killing the container (default 10)
 ```
 
 ### Options inherited from parent commands
