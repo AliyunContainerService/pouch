@@ -28,7 +28,7 @@ func Run(timeout time.Duration, bin string, args ...string) (int, string, string
 		if err != nil {
 			return -1, "", "", err
 		}
-		return -1, "", "", fmt.Errorf("unknow error")
+		return -1, "", "", fmt.Errorf("unknown error")
 	}
 	return ret.ExitStatus, ret.Stdout, ret.Stderr, err
 }
