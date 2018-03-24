@@ -49,7 +49,7 @@ func main() {
 
 	setupFlags(cmdServe)
 	parseFlags(cmdServe, os.Args[1:])
-	if err := loadDaemonFile(&cfg, cmdServe.Flags()); err != nil {
+	if err := loadDaemonFile(&cfg, cmdServe.PersistentFlags()); err != nil {
 		logrus.Errorf("failed to load daemon file: %s", err)
 		os.Exit(1)
 	}
