@@ -7,6 +7,7 @@ import (
 // const defines common image name
 const (
 	busyboxImage                = "registry.hub.docker.com/library/busybox:latest"
+	busyboxImage125             = "registry.hub.docker.com/library/busybox:1.25"
 	helloworldImage             = "registry.hub.docker.com/library/hello-world"
 	helloworldImageLatest       = "registry.hub.docker.com/library/hello-world:latest"
 	helloworldImageOnlyRepoName = "hello-world"

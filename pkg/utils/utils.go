@@ -136,7 +136,7 @@ func Merge(src, dest interface{}) error {
 	destVal := reflect.ValueOf(dest).Elem()
 
 	if destVal.Kind() != reflect.Struct {
-		return fmt.Errorf("merged object type shoule be struct")
+		return fmt.Errorf("merged object type should be struct")
 	}
 
 	srcVal := reflect.ValueOf(src)

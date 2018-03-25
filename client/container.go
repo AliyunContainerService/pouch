@@ -198,7 +198,14 @@ func (client *APIClient) ContainerUpdate(ctx context.Context, name string, confi
 // ContainerUpgrade upgrade a container with new image and args.
 func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
 	// TODO
-	return nil
+	upgradeConfig := types.ContainerUpgradeConfig{
+		ContainerConfig: config,
+		HostConfig:      hostConfig,
+	}
+	resp, err := client.post(ctx, "/containers/"+name+"/upgrade", url.Values{}, upgradeConfig, nil)
+	ensureCloseReader(resp)
+
+	return err
 }
 
 // ContainerTop shows process information from within a container.
