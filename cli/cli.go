@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/alibaba/pouch/client"
-	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/fatih/structs"
 	"github.com/sirupsen/logrus"
@@ -22,7 +21,7 @@ var pouchDescription = "pouch is a client side tool pouch to interact with daemo
 // Option uses to define the global options.
 type Option struct {
 	host string
-	TLS  utils.TLSConfig
+	TLS  client.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request

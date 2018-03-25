@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/client"
-	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/environment"
 )
 
@@ -117,7 +116,7 @@ func Post(endpoint string, opts ...Option) (*http.Response, error) {
 // newAPIClient return new HTTP client with tls.
 //
 // FIXME: Could we make some functions exported in alibaba/pouch/client?
-func newAPIClient(host string, tls utils.TLSConfig) (*client.APIClient, error) {
+func newAPIClient(host string, tls client.TLSConfig) (*client.APIClient, error) {
 	commonAPIClient, err := client.NewAPIClient(host, tls)
 	if err != nil {
 		return nil, err
