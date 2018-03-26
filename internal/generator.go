@@ -14,7 +14,7 @@ import (
 // DaemonProvider provides resources which are needed by container manager and are from daemon.
 type DaemonProvider interface {
 	Config() *config.Config
-	Containerd() *ctrd.Client
+	Containerd() ctrd.APIClient
 	CtrMgr() mgr.ContainerMgr
 	ImgMgr() mgr.ImageMgr
 	VolMgr() mgr.VolumeMgr

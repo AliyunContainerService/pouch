@@ -49,16 +49,16 @@ type ImageManager struct {
 	// DefaultNamespace is the default namespace used in DefaultRegistry.
 	DefaultNamespace string
 
-	// client is a pointer to the containerd client.
+	// client is a interface to the containerd client.
 	// It is used to interact with containerd.
-	client   *ctrd.Client
+	client   ctrd.APIClient
 	registry *registry.Client
 
 	cache *imageCache
 }
 
 // NewImageManager initializes a brand new image manager.
-func NewImageManager(cfg *config.Config, client *ctrd.Client) (*ImageManager, error) {
+func NewImageManager(cfg *config.Config, client ctrd.APIClient) (*ImageManager, error) {
 	mgr := &ImageManager{
 		DefaultRegistry:  cfg.DefaultRegistry,
 		DefaultNamespace: cfg.DefaultRegistryNS,

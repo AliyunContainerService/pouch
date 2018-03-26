@@ -26,7 +26,7 @@ import (
 type Daemon struct {
 	config          config.Config
 	containerStore  *meta.Store
-	containerd      *ctrd.Client
+	containerd      ctrd.APIClient
 	containerMgr    mgr.ContainerMgr
 	systemMgr       mgr.SystemMgr
 	imageMgr        mgr.ImageMgr
@@ -255,7 +255,7 @@ func (d *Daemon) NetMgr() mgr.NetworkMgr {
 }
 
 // Containerd gets containerd client.
-func (d *Daemon) Containerd() *ctrd.Client {
+func (d *Daemon) Containerd() ctrd.APIClient {
 	return d.containerd
 }
 
