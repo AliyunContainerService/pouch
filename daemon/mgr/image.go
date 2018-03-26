@@ -234,8 +234,8 @@ func (c *imageCache) put(image *types.ImageInfo) {
 			c.idToDigests[id][repoDigests[0]] = true
 		}
 
-		c.refToID[repoDigests[0]] = id
 	}
+	c.refToID[repoDigests[0]] = id
 
 	// get repoTags and repoDigest from idToTags and idToDigests
 	if item := c.ids.Get(patricia.Prefix(id)); item != nil {
@@ -270,7 +270,11 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 
 	var id string
 	if refDigest, ok := refNamed.(reference.Digested); ok {
-		id = c.refToID[refDigest.String()]
+		var exists bool
+		id, exists = c.refToID[refDigest.String()]
+		if !exists {
+			return nil, errors.Wrap(errtypes.ErrNotfound, "image: "+idOrRef)
+		}
 	} else {
 		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
 		if len(c.refToID[refTagged.String()]) == 0 {
@@ -289,7 +293,6 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 		}
 		return nil
 	}
-
 	if err := c.ids.VisitSubtree(patricia.Prefix(id), fn); err != nil {
 		// the error does not occur.
 		return nil, err
