@@ -132,13 +132,8 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, image *types.ImageInfo
 	// name is image ID
 	if strings.HasPrefix(strings.TrimPrefix(image.ID, "sha256:"), name) {
 		refs := mgr.cache.getIDToRefs(image.ID)
-		for _, ref := range refs {
-			if err := mgr.client.RemoveImage(ctx, ref); err != nil {
-				return err
-			}
-		}
 		mgr.cache.remove(image)
-		return nil
+		return mgr.client.RemoveImage(ctx, refs[0])
 	}
 
 	// name is tagged or digest
@@ -151,14 +146,15 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, image *types.ImageInfo
 	var ref string
 	if refDigest, ok := refNamed.(reference.Digested); ok {
 		ref = refDigest.String()
-	} else if refTagged, ok := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged); ok {
+	}
+	if refTagged, ok := refNamed.(reference.Tagged); ok {
 		ref = refTagged.String()
 	}
 
 	if err := mgr.client.RemoveImage(ctx, ref); err != nil {
 		return err
 	}
-	mgr.cache.untagged(ref)
+	mgr.cache.untagged(refNamed)
 	return nil
 }
 
@@ -183,6 +179,7 @@ type imageCache struct {
 	idToDigests map[string]map[string]bool // store repoDigests by id, the repoDigest is ref if bool is true.
 	refToID     map[string]string          // store refs by id.
 	tagToDigest map[string]string          // store the mapping repoTag to repoDigest.
+	digestToTag map[string]string          // store the mapping repoDigest to repoTag,
 }
 
 func newImageCache() *imageCache {
@@ -192,6 +189,7 @@ func newImageCache() *imageCache {
 		idToDigests: make(map[string]map[string]bool),
 		refToID:     make(map[string]string),
 		tagToDigest: make(map[string]string),
+		digestToTag: make(map[string]string),
 	}
 }
 
@@ -204,40 +202,26 @@ func (c *imageCache) put(image *types.ImageInfo) {
 	repoDigests := image.RepoDigests
 	repoTags := image.RepoTags
 
+	// NOTE: actually we simplify something, we assume that
+	// tag and digest are one-to-one mapping and we can only
+	// atmost one tag and one digest at a time.
 	if len(repoTags) > 0 {
-		for _, repoTag := range repoTags {
-			if len(c.idToTags[id]) == 0 {
-				tag := make(map[string]bool)
-				tag[repoTag] = true
-				c.idToTags[id] = tag
-			} else {
-				c.idToTags[id][repoTag] = true
-			}
-
-			if len(c.idToDigests[id]) == 0 {
-				digest := make(map[string]bool)
-				digest[repoDigests[0]] = false
-				c.idToDigests[id] = digest
-			} else {
-				c.idToDigests[id][repoDigests[0]] = false
-			}
-
-			c.tagToDigest[repoTag] = repoDigests[0]
-			c.refToID[repoTag] = id
+		// Pull with TagRef.
+		if c.idToTags[id] == nil {
+			c.idToTags[id] = make(map[string]bool)
 		}
-	} else {
-		if len(c.idToDigests[id]) == 0 {
-			digest := make(map[string]bool)
-			digest[repoDigests[0]] = true
-			c.idToDigests[id] = digest
-		} else {
-			c.idToDigests[id][repoDigests[0]] = true
-		}
-
-		c.refToID[repoDigests[0]] = id
+		c.idToTags[id][repoTags[0]] = true
+		c.tagToDigest[repoTags[0]] = repoDigests[0]
+		c.digestToTag[repoDigests[0]] = repoTags[0]
+		c.refToID[repoTags[0]] = id
 	}
 
-	// get repoTags and repoDigest from idToTags and idToDigests
+	if c.idToDigests[id] == nil {
+		c.idToDigests[id] = make(map[string]bool)
+	}
+	c.idToDigests[id][repoDigests[0]] = true
+	c.refToID[repoDigests[0]] = id
+
 	if item := c.ids.Get(patricia.Prefix(id)); item != nil {
 		repoTags := []string{}
 		repoDigests := []string{}
@@ -248,6 +232,7 @@ func (c *imageCache) put(image *types.ImageInfo) {
 			repoDigests = append(repoDigests, digest)
 		}
 
+		// Reset the image's RepoTags and RepoDigests.
 		if img, ok := item.(*types.ImageInfo); ok {
 			img.RepoTags = repoTags
 			img.RepoDigests = repoDigests
@@ -271,9 +256,13 @@ func (c *imageCache) get(idOrRef string) (*types.ImageInfo, error) {
 	var id string
 	if refDigest, ok := refNamed.(reference.Digested); ok {
 		id = c.refToID[refDigest.String()]
+		if id == "" {
+			return nil, errors.Wrap(errtypes.ErrNotfound, "image digest: "+refDigest.String())
+		}
 	} else {
 		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
-		if len(c.refToID[refTagged.String()]) == 0 {
+		if c.refToID[refTagged.String()] == "" {
+			// Maybe idOrRef is image ID.
 			id = idOrRef
 		} else {
 			id = c.refToID[refTagged.String()]
@@ -316,6 +305,7 @@ func (c *imageCache) remove(image *types.ImageInfo) {
 	}
 	for _, v := range image.RepoDigests {
 		delete(c.refToID, v)
+		delete(c.digestToTag, v)
 	}
 	delete(c.idToTags, id)
 	delete(c.idToDigests, id)
@@ -324,31 +314,49 @@ func (c *imageCache) remove(image *types.ImageInfo) {
 }
 
 // untagged is used to remove the deleted repoTag or repoDigest from image.
-func (c *imageCache) untagged(ref string) {
+func (c *imageCache) untagged(refNamed reference.Named) {
 	c.Lock()
 	defer c.Unlock()
 
+	var ref, tag, digest string
+	if refDigest, ok := refNamed.(reference.Digested); ok {
+		ref = refDigest.String()
+		digest = ref
+		tag = c.digestToTag[digest]
+	} else if refTagged, ok := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged); ok {
+		ref = refTagged.String()
+		tag = ref
+		digest = c.tagToDigest[tag]
+	}
+
 	id := c.refToID[ref]
-	delete(c.idToTags[id], ref)
-	delete(c.idToDigests[id], c.tagToDigest[ref])
-	delete(c.refToID, ref)
-	delete(c.refToID, c.tagToDigest[ref])
-	delete(c.tagToDigest, ref)
+	delete(c.idToTags[id], tag)
+	delete(c.idToDigests[id], digest)
+	delete(c.refToID, tag)
+	delete(c.refToID, digest)
+	delete(c.tagToDigest, tag)
+	delete(c.digestToTag, digest)
 
 	if len(c.idToTags[id]) == 0 && len(c.idToDigests[id]) == 0 {
 		c.ids.Delete(patricia.Prefix(id))
 		return
 	}
 
-	// get repoTags and repoDigest from idToTags and idToDigests
+	// Delete the corresponding tag and digest from idToTags and idToDigests
 	if item := c.ids.Get(patricia.Prefix(id)); item != nil {
 		repoTags := []string{}
 		repoDigests := []string{}
-		for tag := range c.idToTags[id] {
-			repoTags = append(repoTags, tag)
+		for t := range c.idToTags[id] {
+			if t == tag {
+				continue
+			}
+			repoTags = append(repoTags, t)
 		}
-		for digest := range c.idToDigests[id] {
-			repoDigests = append(repoDigests, digest)
+		for d := range c.idToDigests[id] {
+			if d == digest {
+				continue
+			}
+			repoDigests = append(repoDigests, d)
 		}
 
 		if img, ok := item.(*types.ImageInfo); ok {

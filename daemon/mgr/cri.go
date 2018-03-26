@@ -765,7 +765,12 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 
 	images := make([]*runtime.Image, 0, len(imageList))
 	for _, i := range imageList {
-		image, err := imageToCriImage(&i)
+		// NOTE: we should query image cache to get the correct image info.
+		imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(i.ID, "sha256:"))
+		if err != nil {
+			continue
+		}
+		image, err := imageToCriImage(imageInfo)
 		if err != nil {
 			// TODO: log an error message?
 			continue
@@ -826,19 +831,15 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 // RemoveImage removes the image.
 func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
 	imageRef := r.GetImage().GetImage()
-	ref, err := reference.Parse(imageRef)
-	if err != nil {
-		return nil, err
-	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(ref.String(), "sha256:"))
+	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(imageRef, "sha256:"))
 	if err != nil {
 		// TODO: seperate ErrImageNotFound with others.
 		// Now we just return empty if the error occured.
 		return &runtime.RemoveImageResponse{}, nil
 	}
 
-	err = c.ImageMgr.RemoveImage(ctx, imageInfo, strings.TrimPrefix(ref.String(), "sha256:"), &ImageRemoveOption{})
+	err = c.ImageMgr.RemoveImage(ctx, imageInfo, strings.TrimPrefix(imageRef, "sha256:"), &ImageRemoveOption{})
 	if err != nil {
 		return nil, err
 	}
