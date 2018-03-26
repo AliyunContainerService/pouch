@@ -1007,7 +1007,7 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 		return nil, fmt.Errorf("container is not running, can not execute top command")
 	}
 
-	pids, err := mgr.Client.GetPidsForContainer(ctx, c.ID())
+	pids, err := mgr.Client.ContainerPIDs(ctx, c.ID())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get pids of container")
 	}
