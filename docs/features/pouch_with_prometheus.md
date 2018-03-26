@@ -11,8 +11,8 @@ We tend to use prometheus's [METRIC AND LABEL NAMING](https://prometheus.io/docs
 
 We use prometheus [go-sdk](https://github.com/prometheus/client_golang) to monitor pouchd. It supports counter, gauge and summary metric types. For more info, please refer to [METRIC TYPES](https://prometheus.io/docs/concepts/metric_types/).
 
-## How to use 
-  
+## How to use
+
 Users can start pouchd listening on `0.0.0.0:4243` via `pouchd -l tcp://0.0.0.0:4243`, then issue `GET http://127.0.0.1:4243/metrics`  request to get a full list of prometheus-formatted metrics as below:
 
 ```

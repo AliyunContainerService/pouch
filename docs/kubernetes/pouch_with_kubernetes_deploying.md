@@ -1,15 +1,15 @@
 # Pouch with Kubernetes deploying
 
 - [Pouch deploying](#pouch-with-kubernetes-deploying)
-    - [Overview](#overview)
-    - [Restriction](#restriction)
-    - [Install and Configure](#install-and-configure)
-        - [Install Pouch](#install-pouch)
-        - [Install Kubelet](#install-kubelet)
-        - [Setting up the master node](#setting-up-the-master-node)
-        - [Setting up the worker nodes](#setting-up-the-worker-nodes)
-    - [Start and run](#start-and-run)
-        - [Run sandbox](#run-sandbox)
+  - [Overview](#overview)
+  - [Restriction](#restriction)
+  - [Install and Configure](#install-and-configure)
+    - [Install Pouch](#install-pouch)
+    - [Install Kubelet](#install-kubelet)
+    - [Setting up the master node](#setting-up-the-master-node)
+    - [Setting up the worker nodes](#setting-up-the-worker-nodes)
+  - [Start and run](#start-and-run)
+    - [Run sandbox](#run-sandbox)
 
 ## Overview
 
@@ -17,7 +17,7 @@ This document shows how to easily install a Kubernetes cluster with pouch runtim
 
 ![pouch_with_kubernetes](../static_files/pouch_with_kubernetes.png)
 
-## Restriction 
+## Restriction
 
 Kubernetes: Kubernetes 1.6+
 
@@ -30,7 +30,6 @@ Note: The rest of the restrictions are based on Pouch and Kubernetes.
 ### Install Pouch
 
 You can easily setup a basic Pouch environment, see [INSTALLATION.md](../../INSTALLATION.md).
-
 
 ### Install Kubelet
 
@@ -75,10 +74,13 @@ For other plugins, please check [Installing a pod network](https://kubernetes.io
 ### Setting up the worker nodes
 
 get token on master node:
+
 ```
 # token=$(kubeadm token list | grep authentication,signing | awk '{print $1}')
 ```
+
 join master on worker nodes:
+
 ```
 # kubeadm join --token $token ${master_ip:port}
 ```
@@ -126,6 +128,7 @@ e7d0384ef3cc7       48 years ago        SANDBOX_NOTREADY    pouch-75cdc5c4cb-bgz
 ```
 
 ## Use `Pouch CRI` in production environment
+
 In a production environment, we recommend user to have their own CNI plugin (Flannel, Calico, Neutron etc), and persistent volume provider (GlusterFS, Cephfs, NFS etc). Please follow Kubernetes admin doc for  details about integration, and it makes no difference if you are using `pouch CRI`.
 
 

@@ -1,4 +1,4 @@
-# CHANGELOG 
+# CHANGELOG
 
 ## 0.2.1 (2018-03-09)
 
@@ -74,4 +74,4 @@ Initial experiemental release for public
 * Be consistent with Moby's 1.12.6 API
 * Support basic network management and volume management
 * Make Pouch run as a system service
-* Make Pouch installed on distribution CentOS 7.2 and Ubuntu 16.04 
+* Make Pouch installed on distribution CentOS 7.2 and Ubuntu 16.04

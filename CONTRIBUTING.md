@@ -38,7 +38,7 @@ Also we must remind that when filing a new issue, please remember to remove the 
 
 ## Code and doc contribution
 
-Every action to make project Pouch better is encouraged. On GitHub, every improvement for Pouch could be via a PR (short for pull request). 
+Every action to make project Pouch better is encouraged. On GitHub, every improvement for Pouch could be via a PR (short for pull request).
 
 * If you find a typo, try to fix it!
 * If you find a bug, try to fix it!
@@ -51,7 +51,7 @@ Every action to make project Pouch better is encouraged. On GitHub, every improv
 * If you find document incorrect, just do it and fix that!
 * ...
 
-Actually it is impossible to list them completely. Just remember one princinple: 
+Actually it is impossible to list them completely. Just remember one princinple:
 
 > WE ARE LOOKING FORWARD TO ANY PR FROM YOU.
 
@@ -68,15 +68,17 @@ To put forward a PR, we assume you have registered a GitHub ID. Then you could f
 
 1. **FORK** Pouch to your repository. To make this work, you just need to click the button Fork in right-left of [alibaba/pouch](https://github.com/alibaba/pouch) main page. Then you will end up with your repository in `https://github.com/<your-username>/pouch`, in which `your-username` is your GitHub username.
 
-2. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make.
+1. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make.
 
-3. **Set Remote** upstream to be https://github.com/alibaba/pouch.git using the following two commands:
+1. **Set Remote** upstream to be `https://github.com/alibaba/pouch.git` using the following two commands:
+
 ```
 git remote add upstream https://github.com/alibaba/pouch.git
 git remote set-url --push upstream no-pushing
 ```
 
 With this remote setting, you can check you git remote configuration like this:
+
 ```
 $ git remote -v
 origin     https://github.com/<your-username>/pouch.git (fetch)
@@ -108,7 +110,7 @@ Actually in Pouch, we take two rules serious when committing:
 
 #### Commit Message
 
-Commit message could help reviewers better understand what is the purpose of submitted PR. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than ambiguous message. In general, we advocate the following commit message type: 
+Commit message could help reviewers better understand what is the purpose of submitted PR. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than ambiguous message. In general, we advocate the following commit message type:
 
 * docs: xxxx. For example, "docs: add docs about storage installation".
 * feature: xxxx.For example, "feature: make result show in sorted order".
@@ -132,7 +134,7 @@ Commit content represents all content changes included in one commit. We had bet
 
 In addition, in the code change part, we suggest that all contributors should read the [code style of Pouch](docs/contributions/code_styles.md).
 
-No matter commit message, or commit content, we do take more emphasis on code review. 
+No matter commit message, or commit content, we do take more emphasis on code review.
 
 ### PR Description
 

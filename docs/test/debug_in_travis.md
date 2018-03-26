@@ -3,19 +3,20 @@
 Pouch uses [Travis](https://travis-ci.com/) as the Continuous Integration tool. Sometimes, tests may pass on local machine while fail on Travis environment. Debug in Travis is provided.
 This document will give a simple instruction about debugging in Travis.
 
-# Turn on debug feature
+## Turn on debug feature
 
 For public repository, debug feature is off by default. An email to `support@travis-ci.com
 ` is needed to ask the Travis staff to turn on debug feature for your public repository.
 
-# A real example
+## A real example
 
 There is a [guide]( https://docs.travis-ci.com/user/running-build-in-debug-mode/) about how to use debug mode, you should read it before starting. After that, let's give a real example.
 
 Take a Travis build from my repository as example:
 `https://travis-ci.org/Letty5411/pouch/builds/308762622?utm_source=github_status&utm_medium=notification`
 
-## Command to start debug mode
+### Command to start debug mode
+
 From the guide provied by Travis, we know that a `curl` request is needed to be constructed to start the debug mode, the command template is as following:
 
 ```shell
@@ -25,15 +26,16 @@ From the guide provied by Travis, we know that a `curl` request is needed to be 
    -H "Travis-API-Version: 3" \
    -H "Authorization: token <TOKEN>" \
    -d '{ "quiet": true }' \
-   https://api.travis-ci.org/job/{ID}/debug 
-```  
+   https://api.travis-ci.org/job/{ID}/debug
+```
+
 For the command, the `TOKEN` and `job ID` is needed. How to get them?
 
-### Get token
+#### Get token
 
 Here is the [guide](https://docs.travis-ci.com/user/triggering-builds/) of how to generate token. It only needs three steps:
 
-1. Install Travis CI command line client according the this [guide](https://github.com/travis-ci/travis.rb).
+1.Install Travis CI command line client according the this [guide](https://github.com/travis-ci/travis.rb).
 
 ```
 # gem install travis -v 1.8.8 --no-rdoc --no-ri
@@ -44,8 +46,9 @@ ruby 2.0.0p598 (2014-11-13) [x86_64-linux]
 # travis  -v
 1.8.8
 
-```	
-2. Log into Travis, need your GitHub username and password and will get you authenticated.
+```
+
+2.Log into Travis, need your GitHub username and password and will get you authenticated.
 
 ```
 #travis login --org
@@ -59,7 +62,8 @@ Username: xxxx
 Password for xxxx: ****
 Successfully logged in as xxxx!
 ```
-3. Get an API token using the Travis CI command line client, if everything goes well you will get your token.
+
+3.Get an API token using the Travis CI command line client, if everything goes well you will get your token.
 
 ```
 #travis token --org
@@ -67,8 +71,9 @@ Successfully logged in as xxxx!
 Your access token is yourtoken
 ```
 
-### Get job ID
-In my case, the job ID for this build is: 308880940, which you can find in the build system information section of the log. 
+#### Get job ID
+
+In my case, the job ID for this build is: 308880940, which you can find in the build system information section of the log.
 
 ```
 Build system information
@@ -79,7 +84,8 @@ Build id: 308880939
 Job id: 308880940
 ```
 
-## Start debug mode
+### Start debug mode
+
 Now both token and job ID is ready, a curl command could be run to start debug mode:
 
 ```
@@ -119,7 +125,8 @@ Use the following SSH command to access the interactive debugging environment:
 ssh ukjiuCEkxBBnRAe32Y8xCH0zj@ny2.tmate.io
 ```
 
-## SSH the VM and enjoy debugging
+### SSH the VM and enjoy debugging
+
 Now you could debug on the Travis VM through SSH command from your computer. Once you're done, just type exit and your build will terminate.
 
 ```
@@ -142,7 +149,8 @@ travis@travis-job-885b6c7c-5885-469e-90bb-d3014cc72000:~/gopath/src/github.com/a
 
 Finally, once in the SSH session, these [bash functions](https://docs.travis-ci.com/user/running-build-in-debug-mode/#Things-to-do-once-you-are-inside-the-debug-VM) will come in handy to run the different phases in your build.
 
-# Acknowledgements
+## Acknowledgements
+
 A lot thanks should give to Carla Iriberri, staff from Travis, who gives me this specific instruction. This doc is extracted from the email between Carla Iriberri and me.
-By the way, if you have any question about Travis, please do not hesitate to write email to 
+By the way, if you have any question about Travis, please do not hesitate to write email to
 `support@travis-ci.com`, they have really quick response and good support. Thanks again for Carla Iriberri's help.
