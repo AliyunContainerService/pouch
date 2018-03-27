@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/version"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -33,7 +32,7 @@ type Client struct {
 }
 
 // NewClient connect to containerd.
-func NewClient(cfg Config) (*Client, error) {
+func NewClient(cfg Config) (APIClient, error) {
 	if cfg.Address == "" {
 		cfg.Address = unixSocketPath
 	}
@@ -97,6 +96,6 @@ func (c *Client) Close() error {
 }
 
 // Version returns the version of containerd.
-func (c *Client) Version() (string, error) {
-	return version.Version, nil
+func (c *Client) Version(ctx context.Context) (containerd.Version, error) {
+	return c.client.Version(ctx)
 }

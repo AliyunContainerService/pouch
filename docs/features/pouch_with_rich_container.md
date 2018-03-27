@@ -30,7 +30,7 @@ If a container is running with `--rich` flag, then every start or restart of thi
 
 Here is a simple example for rich container mode using dumb-init to init contaienr:
 
-1. Insatll dumb-init as following:
+1. Install dumb-init as following:
 
     ```shell
     # wget -O /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64

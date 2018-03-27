@@ -98,7 +98,7 @@ type ContainerManager struct {
 	Store *meta.Store
 
 	// Client is used to interact with containerd.
-	Client *ctrd.Client
+	Client ctrd.APIClient
 
 	// NameToID stores relations between container's name and ID.
 	// It is used to get container ID via container name.
@@ -123,7 +123,7 @@ type ContainerManager struct {
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli *ctrd.Client, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
 	mgr := &ContainerManager{
 		Store:           store,
 		NameToID:        collect.NewSafeMap(),
