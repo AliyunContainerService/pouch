@@ -41,6 +41,7 @@ func main() {
 	cli.AddCommand(base, &UpgradeCommand{})
 	cli.AddCommand(base, &TopCommand{})
 	cli.AddCommand(base, &LogsCommand{})
+	cli.AddCommand(base, &RemountLxcfsCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

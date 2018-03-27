@@ -37,9 +37,6 @@ function install_pouch ()
 			apt-get update
 			apt-get install -y lxcfs
 		fi
-
-		# MUST stop lxcfs service, so pouchd could take over it.
-		service lxcfs stop
 	else
 		sh -x $DIR/hack/install_lxcfs_on_centos.sh
 	fi

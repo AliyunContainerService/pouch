@@ -103,6 +103,7 @@ function build_rpm ()
           -d pam-devel \
           -d fuse-devel \
           -d fuse-libs \
+          -d fuse \
           $BINDIR/=/usr/local/bin/ \
           $SERVICEDIR/=/usr/lib/systemd/system/ \
           $LXC_DIR/usr/local/bin/lxcfs=/usr/bin/lxcfs \
