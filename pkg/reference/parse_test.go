@@ -58,6 +58,16 @@ func TestDomain(t *testing.T) {
 			input:  "nginx",
 			domain: "",
 			ok:     false,
+		}, {
+			name:   "Repo and Name",
+			input:  "fooo/foo/bar",
+			domain: "",
+			ok:     false,
+		}, {
+			name:   "IP Registry",
+			input:  "0.0.0.0/foo/bar",
+			domain: "0.0.0.0/foo",
+			ok:     true,
 		},
 	} {
 		d, ok := Domain(tc.input)
@@ -132,5 +142,60 @@ func TestParse(t *testing.T) {
 		ref, err := Parse(tc.input)
 		assert.Equal(t, tc.err, err, tc.name)
 		assert.Equal(t, tc.expected, ref, tc.name)
+	}
+}
+
+func TestSplitName(t *testing.T) {
+	assert := assert.New(t)
+
+	type ref struct {
+		name       string
+		hostname   string
+		remotename string
+		ok         bool
+	}
+
+	for _, r := range []ref{
+		{
+			name:       "docker.io/library/busybox",
+			hostname:   "docker.io",
+			remotename: "library/busybox",
+			ok:         false,
+		},
+		{
+			name:       "g.com/library/busybox",
+			hostname:   "g.com",
+			remotename: "library/busybox",
+			ok:         false,
+		},
+		{
+			name:       "127.0.0.1:5000/library/busybox",
+			hostname:   "127.0.0.1:5000",
+			remotename: "library/busybox",
+			ok:         false,
+		},
+		{
+			name:       "library/busybox",
+			hostname:   "",
+			remotename: "library/busybox",
+			ok:         false,
+		},
+		{
+			name:       "foo/busybox",
+			hostname:   "",
+			remotename: "foo/busybox",
+			ok:         false,
+		},
+		{
+			name:       "busybox",
+			hostname:   "",
+			remotename: "busybox",
+			ok:         true,
+		},
+	} {
+		hostname, remotename := splitHostname(r.name)
+		assert.Equal(r.hostname, hostname)
+		assert.Equal(r.remotename, remotename)
+		assert.Equal(IsNameOnly(r.name), r.ok)
 	}
 }
