@@ -7,7 +7,7 @@ jobs:
     docker:
       # specify the version
       - image: allencloud/mdl:v0.4
-      
+    
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -22,6 +22,6 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: 
+      - run:
           name: use markdownlint v0.4.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
-          command: find  ./ -name  "*.md" | grep -v vendor | grep -v extra | grep -v commandline | grep -v .github | grep -v swagger | grep -v api | xargs mdl
+          command: find  ./ -name  "*.md" | grep -v vendor | grep -v extra | grep -v commandline | grep -v .github | grep -v swagger | grep -v api | xargs mdl -r ~MD013,~MD024,~MD029,~MD036

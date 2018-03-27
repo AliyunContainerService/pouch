@@ -18,7 +18,6 @@ After applying above commands, in current directory there are two files named ca
 
 Create a certificate for pouchd, which only can be used as a server certificate, variable name is HOSTNAME of the machine to run pouchd on.
 
-
 ```shell
 name=$HOSTNAME
 mkdir -p ${name}

@@ -22,7 +22,7 @@ Runtime layer is located on right-top in the architecture picture. This dimensio
 * runV
 * clear containers
 
-With runC, Pouch creates common containers like other container engine does, for example docker. With runlxc, Pouch creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variety of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. Pouch will support it with runV and clear container. 
+With runC, Pouch creates common containers like other container engine does, for example docker. With runlxc, Pouch creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variety of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. Pouch will support it with runV and clear container.
 
 All these four runtimes mentioned above are supported under containerd. Containerd takes over all detailed container management, including creation, start, stop, deletion and so on.
 

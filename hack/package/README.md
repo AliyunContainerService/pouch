@@ -1,4 +1,4 @@
-# Building pouch deb and rpm packages 
+# Building pouch deb and rpm packages
 
 This file shows how to build Pouch packages.
 
@@ -6,18 +6,18 @@ This file shows how to build Pouch packages.
 
 Firstly, you should install Docker, as we use Docker to build images and run containers to build packages.
 
-Then, run `date` command to ensure time is right, which is used to set `BuildTime` field. 
+Then, run `date` command to ensure time is right, which is used to set `BuildTime` field.
 
 To build Pouch packages, you should prepare gpg keys and put it in a directory.
- 
+
 eg:
 
 ```bash
 $ tree /root/packages/
-	packages
-	├── keys
-	│   ├── gpg
-	│   └── secretkey
+    packages
+    ├── keys
+    │   ├── gpg
+    │   └── secretkey
 ```
 
 ## Building packages
@@ -39,7 +39,7 @@ What's more, you should pass four parameters as follows:
 ```bash
 cd pouch/
 ./hack/package/package.sh 1.0.0 1.el7.centos /root/test rpm
-                            |        |            |      | 
+                            |        |            |      |
                         VSERSION  ITERATION    KEYDIR  PKGTYPE
 ```
 

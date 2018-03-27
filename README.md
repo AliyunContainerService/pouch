@@ -1,6 +1,5 @@
 
-Pouch - An Efficient Enterprise-class Rich Container Engine
-================
+# Pouch - An Efficient Enterprise-class Rich Container Engine
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![GoDoc](https://godoc.org/github.com/alibaba/pouch?status.svg)](https://godoc.org/github.com/alibaba/pouch)
@@ -8,7 +7,7 @@ Pouch - An Efficient Enterprise-class Rich Container Engine
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alibaba/pouch)](https://goreportcard.com/report/github.com/alibaba/pouch)
 
-<img src="docs/static_files/logo/pouch_10x4_orange.png" width="480">
+[Pouch project logo](<img src="docs/static_files/logo/pouch_10x4_orange.png" width="480">)
 
 ## Main Links
 
@@ -17,8 +16,8 @@ Pouch - An Efficient Enterprise-class Rich Container Engine
 - [Architecture](#architecture)
 - [Getting Started](#getting-started)
 - User Manual
-    - [CLI Manual](docs/commandline)
-    - [API Manual](docs/api)
+  - [CLI Manual](docs/commandline)
+  - [API Manual](docs/api)
 - [Contributing](#contributing)
 
 ## Introduction
@@ -51,17 +50,17 @@ Pouch has lots of advantages over VM technologies. Two of the most impressive on
 
 Pouch significantly improves resource utilization:
 
-* Pouch is compatible with OCI image spec. Applications can minimize their storage usage with layered image structure.
-* Incremental image distribution, saves datacenter bandwidth consumption.
-* Significantly less runtime overhead than VM-based technologies.
+- Pouch is compatible with OCI image spec. Applications can minimize their storage usage with layered image structure.
+- Incremental image distribution, saves datacenter bandwidth consumption.
+- Significantly less runtime overhead than VM-based technologies.
 
 ### Application Centric
 
 Pouch offers a more "application centric" approach for application development:
 
-* Pouch provides strong runtime isolation between applications, with cutting-edge technology both within kernel support and beyond kernel mode.
-* Pouch enables cross-platform and cross-OS application delivery.
-* Pouch supports standardized application image spec, so application sharing and reusing becomes trivial for developers and operators.
+- Pouch provides strong runtime isolation between applications, with cutting-edge technology both within kernel support and beyond kernel mode.
+- Pouch enables cross-platform and cross-OS application delivery.
+- Pouch supports standardized application image spec, so application sharing and reusing becomes trivial for developers and operators.
 
 ## Getting Started
 

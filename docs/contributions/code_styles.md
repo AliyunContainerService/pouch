@@ -18,7 +18,7 @@ When collaborating in Pouch project, we follow the style from [Go Code Review Co
 
 ## Additional Style Rules
 
-For a project, existing tools and rules may not be sufficient. To align more in styles, we recommend contributors taking a thorough look at the following additional style rules: 
+For a project, existing tools and rules may not be sufficient. To align more in styles, we recommend contributors taking a thorough look at the following additional style rules:
 
 * When constructing a struct, if comments needed for fields in struct, keep a blank line between fields;
 * When defining interface functions, we should always explicitly add formal parameter, and this helps a lot to code readability;
@@ -28,5 +28,5 @@ For a project, existing tools and rules may not be sufficient. To align more in 
 * When generating error in an action failure, we should generally use the way of `fmt.Errorf("failed to do something: %v", err)`;
 * No matter log or error, first letter of the message must be lower-case;
 * When occuring nesting errors, we recommend first considering using package `github.com/pkg/errors`;
-* Every comment should begin with `// `, and please don't forget the whitespace, and end with a `.`;
+* Every comment should begin with `//` plus a space, and please don't forget the whitespace, and end with a `.`;
 * We should take `DRY(Don't Repeat Yourself)` into more consideration.

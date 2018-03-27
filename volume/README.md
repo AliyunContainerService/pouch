@@ -1,43 +1,55 @@
-## What is Volume?
+# Introduction for volume
+
+## What is Volume
+
 Volume is a universal module that used to provide container storage in pouch. It provides storage service for containers through the interface of file storage.
-## What is the architecture of Volume?
+
+## What is the architecture of Volume
+
 Volume includes these modules is as following:
+
 * VolumeManager: volume manager provides the basic volume interface functions for pouchd.
 * Core: volume's core module, it is used to associate with several modules, and it achieves a common process that volume operate functions.
 * Driver: it is used to abstract the basic functions of volume driver.
 * Modules: Different types of storage provides different modules, it achieves different storage unified access to the pouch volume.
+
 The relationship between each module is as following:
 
 ![pouch_volume_architecture | center | 710x515 ](../docs/static_files/pouch_volume_architecture.png)
 
 ### VolumeManager
+
 It provides interface is as following:
+
 ```go
 type VolumeMgr interface {
-	// Create is used to create volume.
-	Create(ctx context.Context, name, driver string, options, labels map[string]string) error
+    // Create is used to create volume.
+    Create(ctx context.Context, name, driver string, options, labels map[string]string) error
 
-	// Remove is used to remove an existing volume.
-	Remove(ctx context.Context, name string) error
+    // Remove is used to remove an existing volume.
+    Remove(ctx context.Context, name string) error
 
-	// List returns all volumes on this host.
-	List(ctx context.Context, labels map[string]string) ([]string, error)
+    // List returns all volumes on this host.
+    List(ctx context.Context, labels map[string]string) ([]string, error)
 
-	// Get returns the information of volume that specified name/id.
-	Get(ctx context.Context, name string) (*types.Volume, error)
+    // Get returns the information of volume that specified name/id.
+    Get(ctx context.Context, name string) (*types.Volume, error)
 
-	// Path returns the mount path of volume.
-	Path(ctx context.Context, name string) (string, error)
+    // Path returns the mount path of volume.
+    Path(ctx context.Context, name string) (string, error)
 
-	// Attach is used to bind a volume to container.
-	Attach(ctx context.Context, name string, options map[string]string) (*types.Volume, error)
+    // Attach is used to bind a volume to container.
+    Attach(ctx context.Context, name string, options map[string]string) (*types.Volume, error)
 
-	// Detach is used to unbind a volume from container.
-	Detach(ctx context.Context, name string, options map[string]string) (*types.Volume, error)
+    // Detach is used to unbind a volume from container.
+    Detach(ctx context.Context, name string, options map[string]string) (*types.Volume, error)
 }
 ```
+
 ### Core
+
 Core provides these functions is as following:
+
 ```go
 // GetVolume return a volume's info with specified name, If not errors.
 func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error)
@@ -67,9 +79,13 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 // DetachVolume to disable a volume on local host.
 func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error)
 ```
+
 ### Driver
+
 Driver layer provides two types of interfaces, one is the basic interfaces that all modules must implement, the others are optional interfaces for accessing differences provided by different types of storage.
+
 * Basic interfaces
+
 ```go
 type Driver interface {
     // Name returns backend driver's name.
@@ -88,7 +104,9 @@ type Driver interface {
     Path(Context, *types.Volume) (string, error)
 }
 ```
+
 * Optional interfaces
+
 ```go
 // Opt represents volume driver option interface.
 type Opt interface {
@@ -110,10 +128,17 @@ type Formator interface {
     // Format a volume.
     Format(Context, *types.Volume, *types.Storage) error
 }
+
 ```
+
 ### Modules
+
 As of now, pouch volume supports the following types of storage: local, tmpfs, ceph. If you want to add a new driver, you can refer to the sample code: [demo](volume/examples/demo/demo.go)
-## How to use volume?
+
+## How to use volume
+
 As of now, volume supports the following operations: create/remove/list/inspect, for more details, please refer: [Volume Cli](docs/commandline/pouch_volume.md)
+
 ## Volume roadmap
+
 Pouch volume will implement the interface of [CSI(contianer storage interface)](https://github.com/container-storage-interface/spec), as a node-server integrating with control-server to achieve volume scheduling ability.

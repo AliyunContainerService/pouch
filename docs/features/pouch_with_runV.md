@@ -118,7 +118,7 @@ $
 $ pouch start hypervisor -i
 / # uname -a
 Linux 4.12.4-hyper #18 SMP Mon Sep 4 15:10:13 CST 2017 x86_64 GNU/Linux
-``` 
+```
 
 It turns out that in experiment above kernel in host physical machine is 4.4.0-101-generic, and that in hypervisor-based container is 4.12.4-hyper. Obviously, they are isolated from each other in term of kernel.
 

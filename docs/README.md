@@ -8,10 +8,10 @@ Organization of document is as following:
 * [Get Started](#get-started)
 * [Commandline](#commandline)
 * [API](#api)
-    * [HTTP API](#http-api)
-    * [HTTP API changelog](#http-api-changelog)
-    * [CRI gRPC API](#grpc-api)
-    * [CRI gRPC changelog](#grpc-api-changelog)
+  * [HTTP API](#http-api)
+  * [HTTP API changelog](#http-api-changelog)
+  * [CRI gRPC API](#grpc-api)
+  * [CRI gRPC changelog](#grpc-api-changelog)
 * [Kubernetes](#kubernetes)
 * [Contributions](#contributions)
 * [Test Guide](#test-guide)
@@ -20,7 +20,7 @@ Organization of document is as following:
 
 ## Features
 
-[Features](features) contains all features of Pouch. To enable a satisfying environment for user's applications, Pouch provides plenty of features, such as strong-isolation technology including hyper-based containers and lxcfs-base resource view isolation, rich container, P2P image distribution and so on. For more aspects, TLS-based security, prometheus supporting and more features also help Pouch be adoptive for enterprises. In addition, in all the document we illustrate what is the best scenario of the corresponding feature. 
+[Features](features) contains all features of Pouch. To enable a satisfying environment for user's applications, Pouch provides plenty of features, such as strong-isolation technology including hyper-based containers and lxcfs-base resource view isolation, rich container, P2P image distribution and so on. For more aspects, TLS-based security, prometheus supporting and more features also help Pouch be adoptive for enterprises. In addition, in all the document we illustrate what is the best scenario of the corresponding feature.
 
 ## Get Started
 
@@ -32,7 +32,7 @@ For almost all of users, [commandline](./commandline) is the first reference you
 
 ## API
 
-Commandline is the easiest way to extend Pouch's ability. And API extension will bring more powerful experience for users. 
+Commandline is the easiest way to extend Pouch's ability. And API extension will bring more powerful experience for users.
 
 ### HTTP API
 

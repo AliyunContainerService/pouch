@@ -27,7 +27,6 @@ Resource view isolation will influence system-level applications in container.
 
 > Containers can also be used to package system-level applications, and system-level applications would usually need to get system information via Virtual File System `/proc`. If uptime is not the correct one of container but the host, system-level applications would be out of control or running in an unexpected way. `cpuinfo` and `meminfo` and some further system resource views are other aspects these applications need to consider.
 
-
 ## What is LXCFS
 
 [LXCFS](https://github.com/lxc/lxcfs) is a small [FUSE filesystem](https://en.wikipedia.org/wiki/Filesystem_in_Userspace) written with the intention of making Linux containers feel more like a virtual machine. It started as a side-project of LXC but is useable by any runtime. LXCFS is compatible on Linux kernel 2.6+. And LXCFS will take care that the information provided by crucial files in `procfs` such as:
@@ -47,13 +46,13 @@ Here is the architeture of LXCFS and container:
 
 ## Get Started
 
-It is quite transparent and easy for users to enjoy resource view isolation by enabling LXCFS. Actually, software LXCFS would be automatically installed on host along with pouch software if it does not exist in $PATH. 
+It is quite transparent and easy for users to enjoy resource view isolation by enabling LXCFS. Actually, software LXCFS would be automatically installed on host along with pouch software if it does not exist in $PATH.
 
 Before experiencing LXCFS guranteed resouce view isolation, user needs to make sure that LXCFS mode is enabled in pouchd. If LXCFS mode has not been set, user needs to stop pouchd and start pouchd via command `pouchd --enable-lxcfs`. Only by enabling LXCFS mode in pouchd can users make use of LXCFS functionality in containers.
 
 With LXCFS mode enabled in pouchd, pouchd has extra ability to create containers which has isolated resource view. Besides this, pouchd is still capable to create general ones without resource view isolation.
 
-At last, `--enableLxcfs` flag in command `pouch run` is the only way to make LXCFS work for created containers under pouch daemon which is already enabled LXCFS mode. Here we create a container with 200 MB memory limit on the host of 2 GB memory. 
+At last, `--enableLxcfs` flag in command `pouch run` is the only way to make LXCFS work for created containers under pouch daemon which is already enabled LXCFS mode. Here we create a container with 200 MB memory limit on the host of 2 GB memory.
 
 ``` shell
 $ pouch run -m 200m --enableLxcfs registry.hub.docker.com/library/ubuntu:16.04 free -h
