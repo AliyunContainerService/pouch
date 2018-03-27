@@ -686,22 +686,28 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 }
 
 // ensureSandboxImageExists pulls the image when it's not present.
-func (c *CriManager) ensureSandboxImageExists(ctx context.Context, image string) error {
-	_, err := c.ImageMgr.GetImage(ctx, image)
+func (c *CriManager) ensureSandboxImageExists(ctx context.Context, imageRef string) error {
+	_, err := c.ImageMgr.GetImage(ctx, imageRef)
 	// TODO: maybe we should distinguish NotFound error with others.
 	if err == nil {
 		return nil
 	}
 
-	namedRef, err := reference.ParseNamedReference(image)
+	refNamed, err := reference.ParseNamedReference(imageRef)
 	if err != nil {
-		return fmt.Errorf("parse image name failed: %v", err)
+		return err
 	}
-	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
 
-	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), nil, bytes.NewBuffer([]byte{}))
+	_, ok := refNamed.(reference.Digested)
+	if !ok {
+		// If the imageRef is not a digest.
+		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+		imageRef = refTagged.String()
+	}
+
+	err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))
 	if err != nil {
-		return fmt.Errorf("pull sandbox image %q failed: %v", image, err)
+		return fmt.Errorf("pull sandbox image %q failed: %v", imageRef, err)
 	}
 
 	return nil

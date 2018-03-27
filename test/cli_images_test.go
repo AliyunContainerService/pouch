@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -107,7 +106,9 @@ func (suite *PouchImagesSuite) TestInspectImage(c *check.C) {
 
 	// inspect image name
 	output = command.PouchRun("image", "inspect", "-f", "{{.RepoTags}}", busyboxImage).Stdout()
-	c.Assert(output, check.Equals, fmt.Sprintf("[%s]\n", busyboxImage))
+	if !strings.Contains(output, busyboxImage) {
+		c.Fatalf("output %s should contains %s", output, busyboxImage)
+	}
 }
 
 // TestLoginAndLogout is to test login and logout command
