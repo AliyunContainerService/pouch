@@ -24,4 +24,4 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run:
           name: use markdownlint v0.4.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
-          command: find  ./ -name  "*.md" | grep -v vendor | grep -v extra | grep -v commandline | grep -v .github | grep -v swagger | grep -v api | xargs mdl -r ~MD013,~MD024,~MD029,~MD036
+          command: find  ./ -name  "*.md" | grep -v vendor | grep -v extra | grep -v commandline | grep -v .github | grep -v swagger | grep -v api | xargs mdl -r ~MD013,~MD024,~MD029,~MD033,~MD036
