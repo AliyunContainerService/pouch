@@ -809,18 +809,24 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	// TODO: authentication.
 	imageRef := r.GetImage().GetImage()
 
-	namedRef, err := reference.ParseNamedReference(imageRef)
-	if err != nil {
-		return nil, err
-	}
-	taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
-
-	err = c.ImageMgr.PullImage(ctx, taggedRef.Name(), taggedRef.Tag(), nil, bytes.NewBuffer([]byte{}))
+	refNamed, err := reference.ParseNamedReference(imageRef)
 	if err != nil {
 		return nil, err
 	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, taggedRef.String())
+	_, ok := refNamed.(reference.Digested)
+	if !ok {
+		// If the imageRef is not a digest.
+		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+		imageRef = refTagged.String()
+	}
+
+	err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return nil, err
+	}
+
+	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
 	if err != nil {
 		return nil, err
 	}

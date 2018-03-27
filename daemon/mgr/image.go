@@ -22,7 +22,7 @@ import (
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
 	// PullImage pulls images from specified registry.
-	PullImage(ctx context.Context, image, tag string, authConfig *types.AuthConfig, out io.Writer) error
+	PullImage(ctx context.Context, imageRef string, authConfig *types.AuthConfig, out io.Writer) error
 
 	// ListImages lists images stored by containerd.
 	ListImages(ctx context.Context, filters string) ([]types.ImageInfo, error)
@@ -73,7 +73,7 @@ func NewImageManager(cfg *config.Config, client *ctrd.Client) (*ImageManager, er
 }
 
 // PullImage pulls images from specified registry.
-func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, authConfig *types.AuthConfig, out io.Writer) error {
+func (mgr *ImageManager) PullImage(pctx context.Context, imageRef string, authConfig *types.AuthConfig, out io.Writer) error {
 	ctx, cancel := context.WithCancel(pctx)
 
 	stream := jsonstream.New(out)
@@ -86,8 +86,8 @@ func (mgr *ImageManager) PullImage(pctx context.Context, image, tag string, auth
 		close(wait)
 	}()
 
-	image = mgr.addRegistry(image)
-	img, err := mgr.client.PullImage(ctx, image+":"+tag, authConfig, stream)
+	imageRef = mgr.addRegistry(imageRef)
+	img, err := mgr.client.PullImage(ctx, imageRef, authConfig, stream)
 
 	// wait goroutine to exit.
 	<-wait
