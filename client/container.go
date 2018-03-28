@@ -37,19 +37,6 @@ func (client *APIClient) ContainerCreate(ctx context.Context, config types.Conta
 	return container, err
 }
 
-// ContainerStart starts a created container.
-func (client *APIClient) ContainerStart(ctx context.Context, name, detachKeys string) error {
-	q := url.Values{}
-	if detachKeys != "" {
-		q.Set("detachKeys", detachKeys)
-	}
-
-	resp, err := client.post(ctx, "/containers/"+name+"/start", q, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
 // ContainerStop stops a container.
 func (client *APIClient) ContainerStop(ctx context.Context, name string, timeout string) error {
 	q := url.Values{}
