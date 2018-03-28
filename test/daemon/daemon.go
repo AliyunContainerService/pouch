@@ -48,6 +48,11 @@ type Config struct {
 // DConfig is the global variable used to pouch daemon test.
 var DConfig Config
 
+func init() {
+	DConfig.Args = make([]string, 0, 1)
+	DConfig.Listen = make([]string, 0, 1)
+}
+
 // NewConfig initialize the DConfig with default value.
 func NewConfig() Config {
 	result := Config{}
@@ -55,13 +60,11 @@ func NewConfig() Config {
 	result.Bin = PouchdBin
 	result.LogPath = DaemonLog
 
-	result.Args = make([]string, 0, 1)
 	result.Args = append(result.Args, "--listen="+Listen)
 	result.Args = append(result.Args, "--home-dir="+HomeDir)
 	result.Args = append(result.Args, "--containerd="+ContainerdAdd)
 	result.Args = append(result.Args, "--listen-cri="+ListenCRI)
 
-	result.Listen = make([]string, 0, 1)
 	result.Listen = append(result.Listen, Listen)
 
 	result.HomeDir = HomeDir
@@ -156,14 +159,14 @@ func (d *Config) KillDaemon() {
 			return
 		}
 
-		if _, err := os.Stat(d.HomeDir); err == nil {
-			err = os.RemoveAll(d.HomeDir)
-			if err != nil {
-				fmt.Printf("remove path %s failed, this may effect start pouchd in the same path",
-					d.HomeDir)
-				return
-			}
-		}
+		//if _, err := os.Stat(d.HomeDir); err == nil {
+		//	err = os.RemoveAll(d.HomeDir)
+		//	if err != nil {
+		//		fmt.Printf("remove path %s failed, this may effect start pouchd in the same path",
+		//			d.HomeDir)
+		//		return
+		//	}
+		//}
 
 		d.LogFile.Close()
 	}

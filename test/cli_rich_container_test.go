@@ -29,7 +29,7 @@ func (suite *PouchRichContainerSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 	SkipIfFalse(c, environment.IsRuncVersionSupportRichContianer)
 
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 
 	// Use image from AliYun on AliOS.
 	if environment.IsAliKernel() {

@@ -28,7 +28,7 @@ func (suite *PouchUpgradeSuite) SetUpSuite(c *check.C) {
 
 	environment.PruneAllContainers(apiClient)
 
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 	command.PouchRun("pull", busyboxImage125).Assert(c, icmd.Success)
 }
 
@@ -82,7 +82,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	c.Assert(res.Error, check.IsNil)
 
 	if out := res.Combined(); !strings.Contains(out, name) {
-		c.Fatalf("unexpected output: %s, expected %s", out, name)
+		c.Fatal("unexpected output: %s, expected %s", out, name)
 	}
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)

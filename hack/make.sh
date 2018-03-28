@@ -120,7 +120,7 @@ function target()
 			fi
 		done
 
-		pouch pull registry.hub.docker.com/library/busybox:latest >/dev/null
+		pouch pull registry.hub.docker.com/library/busybox:1.28 >/dev/null
 
 		echo "verify pouch version"
 		pouch version

@@ -19,7 +19,7 @@ func init() {
 func (suite *PouchUnpauseSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 }
 
 // TearDownTest does cleanup work in the end of each test.
