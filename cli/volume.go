@@ -226,9 +226,9 @@ func (v *VolumeInspectCommand) Init(c *Cli) {
 		Use:   "inspect [OPTIONS] NAME",
 		Short: "Inspect a pouch volume",
 		Long:  volumeInspectDescription,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return v.runVolumeInspect(args)
+			return inspect.MultiInspect(args, v.runVolumeInspect)
 		},
 		Example: volumeInspectExample(),
 	}

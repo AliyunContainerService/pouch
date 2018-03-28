@@ -265,9 +265,9 @@ func (n *NetworkInspectCommand) Init(c *Cli) {
 		Use:   "inspect [OPTIONS] NAME",
 		Short: "Inspect a pouch network",
 		Long:  networkInspectDescription,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return n.runNetworkInspect(args)
+			return inspect.MultiInspect(args, n.runNetworkInspect)
 		},
 		Example: networkInspectExample(),
 	}

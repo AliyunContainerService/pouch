@@ -74,3 +74,26 @@ func (suite *PouchInspectSuite) TestInspectWrongFormat(c *check.C) {
 	DelContainerForceMultyTime(c, name)
 
 }
+
+// TestMultiInspect is to verify inspect command with multiple args.
+func (suite *PouchInspectSuite) TestMultiInspect(c *check.C) {
+	names := []string{
+		"inspect-multi-inspect-1",
+		"inspect-multi-inspect-2",
+	}
+	setUp := func() {
+		for _, name := range names {
+			command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+		}
+	}
+	cleanUp := func() {
+		for _, name := range names {
+			DelContainerForceMultyTime(c, name)
+		}
+	}
+	setUp()
+	defer cleanUp()
+
+	output := command.PouchRun("inspect", "-f", "{{.Name}}", names[0], names[1]).Stdout()
+	c.Assert(output, check.Equals, fmt.Sprintf("%s\n%s\n", names[0], names[1]))
+}
