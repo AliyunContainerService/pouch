@@ -255,3 +255,17 @@ func DelNetworkOk(c *check.C, cname string) {
 func DelNetwork(c *check.C, cname string) (*http.Response, error) {
 	return request.Delete("/networks/" + cname)
 }
+
+// PullImage pull image if it doesn't exist, image format should be repo:tag.
+func PullImage(c *check.C, image string) {
+	resp, err := request.Get("/images/" + image + "/json")
+	c.Assert(err, check.IsNil)
+
+	if resp.StatusCode == 404 {
+		q := url.Values{}
+		q.Add("fromImage", image)
+		query := request.WithQuery(q)
+		resp, err = request.Post("/images/create", query)
+		c.Assert(resp.StatusCode, check.Equals, 200)
+	}
+}

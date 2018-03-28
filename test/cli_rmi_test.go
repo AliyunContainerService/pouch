@@ -25,42 +25,42 @@ func (suite *PouchRmiSuite) SetUpSuite(c *check.C) {
 
 // TestRmiWorks tests "pouch rmi" work.
 func (suite *PouchRmiSuite) TestRmiWorks(c *check.C) {
-	command.PouchRun("pull", helloworldImageLatest).Assert(c, icmd.Success)
+	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
 
-	command.PouchRun("rmi", helloworldImageLatest).Assert(c, icmd.Success)
+	command.PouchRun("rmi", helloworldImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("images").Assert(c, icmd.Success)
-	if out := res.Combined(); strings.Contains(out, helloworldImageLatest) {
-		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImageLatest)
+	if out := res.Combined(); strings.Contains(out, helloworldImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImage)
 	}
 }
 
 // TestRmiForce tests "pouch rmi -f" work
 func (suite *PouchRmiSuite) TestRmiForce(c *check.C) {
-	command.PouchRun("pull", helloworldImageLatest).Assert(c, icmd.Success)
+	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
 
 	// TODO: rmi -f after create/start containers.
-	command.PouchRun("rmi", "-f", helloworldImageLatest).Assert(c, icmd.Success)
+	command.PouchRun("rmi", "-f", helloworldImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("images").Assert(c, icmd.Success)
-	if out := res.Combined(); strings.Contains(out, helloworldImageLatest) {
-		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImageLatest)
+	if out := res.Combined(); strings.Contains(out, helloworldImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImage)
 	}
 }
 
 // TestRmiByImageID tests "pouch rmi {ID}" work.
 func (suite *PouchRmiSuite) TestRmiByImageID(c *check.C) {
-	command.PouchRun("pull", helloworldImageLatest).Assert(c, icmd.Success)
+	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("images")
 	res.Assert(c, icmd.Success)
-	imageID := imagesListToKV(res.Combined())[helloworldImageLatest][0]
+	imageID := imagesListToKV(res.Combined())[helloworldImage][0]
 
 	command.PouchRun("rmi", imageID).Assert(c, icmd.Success)
 
 	res = command.PouchRun("images").Assert(c, icmd.Success)
-	if out := res.Combined(); strings.Contains(out, helloworldImageLatest) {
-		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImageLatest)
+	if out := res.Combined(); strings.Contains(out, helloworldImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImage)
 	}
 }
 

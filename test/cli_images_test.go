@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -30,7 +31,7 @@ func (suite *PouchImagesSuite) SetUpSuite(c *check.C) {
 
 	environment.PruneAllContainers(apiClient)
 
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 }
 
 // TestImagesWorks tests "pouch image" work.
@@ -52,7 +53,8 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 		resQuiet := command.PouchRun("images", "--quiet").Assert(c, icmd.Success)
 
 		c.Assert(resQ.Combined(), check.Equals, resQuiet.Combined())
-		c.Assert(strings.TrimSpace(resQ.Combined()), check.Equals, utils.TruncateID(image.ID))
+		err := util.PartialEqual(strings.TrimSpace(resQ.Combined()), utils.TruncateID(image.ID))
+		c.Assert(err, check.IsNil)
 	}
 
 	// with --digest
@@ -106,9 +108,7 @@ func (suite *PouchImagesSuite) TestInspectImage(c *check.C) {
 
 	// inspect image name
 	output = command.PouchRun("image", "inspect", "-f", "{{.RepoTags}}", busyboxImage).Stdout()
-	if !strings.Contains(output, busyboxImage) {
-		c.Fatalf("output %s should contains %s", output, busyboxImage)
-	}
+	c.Assert(output, check.Equals, fmt.Sprintf("[%s]\n", busyboxImage))
 }
 
 // TestLoginAndLogout is to test login and logout command

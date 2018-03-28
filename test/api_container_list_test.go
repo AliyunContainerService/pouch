@@ -1,12 +1,10 @@
 package main
 
 import (
-	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
-	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerListSuite is the test suite for container list API.
@@ -19,7 +17,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerListSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 }
 
 // TestListOk test api is ok with default parameters.

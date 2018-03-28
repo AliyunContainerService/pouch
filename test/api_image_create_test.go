@@ -26,8 +26,8 @@ func (suite *APIImageCreateSuite) SetUpTest(c *check.C) {
 // TestImageCreateOk tests creating an image is OK.
 func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
-	q.Add("fromImage", helloworldImage)
-	q.Add("tag", "latest")
+	q.Add("fromImage", environment.HelloworldRepo)
+	q.Add("tag", "linux")
 	query := request.WithQuery(q)
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
@@ -36,7 +36,7 @@ func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	// TODO: add a waituntil func to check the exsitence of image
 	time.Sleep(5000 * time.Millisecond)
 
-	resp, err = request.Delete("/images/" + helloworldImage + ":latest")
+	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":linux")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 }
@@ -56,7 +56,7 @@ func (suite *APIImageCreateSuite) TestImageCreateNil(c *check.C) {
 // TestImageCreateWithoutTag tests creating an image without tag, will use "latest" by default.
 func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 	q := url.Values{}
-	q.Add("fromImage", helloworldImage)
+	q.Add("fromImage", environment.HelloworldRepo)
 	query := request.WithQuery(q)
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
@@ -64,7 +64,7 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 
 	time.Sleep(5000 * time.Millisecond)
 
-	resp, err = request.Delete("/images/" + helloworldImage + ":latest")
+	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":latest")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 }

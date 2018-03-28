@@ -25,7 +25,7 @@ func init() {
 func (suite *PouchVolumeSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 }
 
 // TestVolumeWorks tests "pouch volume" work.

@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/alibaba/pouch/client"
+
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
@@ -20,7 +21,55 @@ var (
 
 	// TLSConfig is default tls config
 	TLSConfig = client.TLSConfig{}
+
+	// BusyboxRepo the repository of busybox image
+	BusyboxRepo = "registry.hub.docker.com/library/busybox"
+
+	// BusyboxTag the tag used for busybox image
+	BusyboxTag = "1.28"
+
+	// HelloworldRepo the repository of hello-world image
+	HelloworldRepo = "registry.hub.docker.com/library/hello-world"
+
+	// HelloworldTag the tag used for hello-world image
+	HelloworldTag = "linux"
+
+	// GateWay default gateway for test
+	GateWay = "192.168.1.1"
+
+	// Subnet default subnet for test
+	Subnet = "192.168.1.0/24"
 )
+
+// GetBusybox get image info from test envrionment variable.
+func GetBusybox() {
+	if len(os.Getenv("POUCH_BUSYBOXREPO")) != 0 {
+		BusyboxRepo = os.Getenv("POUCH_BUSYBOXREPO")
+	}
+	if len(os.Getenv("POUCH_BUSYBOXTAG")) != 0 {
+		BusyboxTag = os.Getenv("POUCH_BUSYBOXTAG")
+	}
+}
+
+// GetHelloWorld get image info from test envrionment variable.
+func GetHelloWorld() {
+	if len(os.Getenv("POUCH_HELLOWORLDREPO")) != 0 {
+		HelloworldRepo = os.Getenv("POUCH_HELLOWORLDREPO")
+	}
+	if len(os.Getenv("POUCH_HELLOWORLDTAG")) != 0 {
+		HelloworldTag = os.Getenv("POUCH_HELLOWORLDTAG")
+	}
+}
+
+// GetTestNetwork get gateway and subnet from test environment variable.
+func GetTestNetwork() {
+	if len(os.Getenv("POUCH_TEST_GATEWAY")) != 0 {
+		GateWay = os.Getenv("POUCH_TEST_GATEWAY")
+	}
+	if len(os.Getenv("POUCH_TEST_SUBNET")) != 0 {
+		Subnet = os.Getenv("POUCH_TEST_SUBNET")
+	}
+}
 
 // IsLinux checks if the OS of test environment is Linux.
 func IsLinux() bool {
@@ -65,4 +114,16 @@ func IsDiskQuota() bool {
 		return true
 	}
 	return false
+}
+
+// IsPrjquota checks if there is prjquota set on test machine
+func IsPrjquota() bool {
+	return IsDiskQuota() &&
+		(icmd.RunCommand("mount", "|grep prjquota").ExitCode == 0)
+}
+
+// IsGrpquota checks if there is grpquota set on test machine
+func IsGrpquota() bool {
+	return IsDiskQuota() &&
+		(icmd.RunCommand("mount", "|grep grpquota").ExitCode == 0)
 }

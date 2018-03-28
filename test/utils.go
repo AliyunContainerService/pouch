@@ -1,24 +1,43 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 )
 
 // const defines common image name
-const (
-	busyboxImage                = "registry.hub.docker.com/library/busybox:latest"
-	busyboxImage125             = "registry.hub.docker.com/library/busybox:1.25"
-	helloworldImage             = "registry.hub.docker.com/library/hello-world"
-	helloworldImageLatest       = "registry.hub.docker.com/library/hello-world:latest"
+var (
+	busyboxImage                string
+	helloworldImage             string
 	helloworldImageOnlyRepoName = "hello-world"
 
-	GateWay = "192.168.1.1"
-	Subnet  = "192.168.1.0/24"
+	// GateWay test gateway
+	GateWay string
 
-	testHubAddress = "registry.hub.docker.com"
-	testHubUser    = "pouchcontainertest"
-	testHubPasswd  = "pouchcontainertest"
+	// Subnet test subnet
+	Subnet string
 )
+
+const (
+	busyboxImage125 = "registry.hub.docker.com/library/busybox:1.25"
+	testHubAddress  = "registry.hub.docker.com"
+	testHubUser     = "pouchcontainertest"
+	testHubPasswd   = "pouchcontainertest"
+)
+
+func init() {
+	// Get test images config from test environment.
+	environment.GetBusybox()
+	environment.GetHelloWorld()
+
+	busyboxImage = environment.BusyboxRepo + ":" + environment.BusyboxTag
+	helloworldImage = environment.HelloworldRepo + ":" + environment.HelloworldTag
+
+	GateWay = environment.GateWay
+	Subnet = environment.Subnet
+
+}
 
 // VerifyCondition is used to check the condition value.
 type VerifyCondition func() bool

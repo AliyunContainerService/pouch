@@ -20,6 +20,7 @@ func init() {
 func (suite *APIContainerResizeSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
+	PullImage(c, busyboxImage)
 }
 
 // TestContainerResizeOk is to verify resize container.

@@ -24,7 +24,7 @@ func init() {
 // SetUpSuite does common setup in the beginning of each test suite.
 func (suite *PouchNetworkSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage)
 
 	// Remove all Containers, in case there are legacy containers connecting network.
 	environment.PruneAllContainers(apiClient)
@@ -301,7 +301,6 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 }
 
 func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
-	c.Skip("Skip this test due to httpd image can't be pulled")
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	var funcname string
@@ -319,7 +318,7 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 		Out:      "It works",
 	}
 
-	image := "registry.hub.docker.com/library/httpd"
+	image := "registry.hub.docker.com/library/httpd:2"
 
 	command.PouchRun("pull", image).Assert(c, icmd.Success)
 	command.PouchRun("run", "-d",
