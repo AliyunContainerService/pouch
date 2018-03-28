@@ -146,7 +146,7 @@ func (client *APIClient) ContainerRename(ctx context.Context, id string, name st
 	return err
 }
 
-// ContainerRestart restarts a running contianer.
+// ContainerRestart restarts a running container.
 func (client *APIClient) ContainerRestart(ctx context.Context, id string, timeout string) error {
 	q := url.Values{}
 	q.Add("t", timeout)

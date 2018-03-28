@@ -52,7 +52,7 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	// After pouchd is launched, default netowrk bridge is created
+	// After pouchd is launched, default network bridge is created
 	// check the existence of default network: bridge
 	command.PouchRun("network", "inspect", "bridge").Assert(c, icmd.Success)
 
