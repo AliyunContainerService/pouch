@@ -7,7 +7,7 @@ import (
 )
 
 // WaitTimeout wait at most timeout nanoseconds,
-// until the conditon become true or timeout reached.
+// until the condition become true or timeout reached.
 func WaitTimeout(timeout time.Duration, condition func() bool) bool {
 	ch := make(chan bool, 1)
 

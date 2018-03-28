@@ -201,7 +201,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 	if c.IsRunning() && option.Force {
 		msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout())
 		if err != nil && !errtypes.IsNotfound(err) {
-			return errors.Wrapf(err, "failed to destory container: %s", c.ID())
+			return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
 		}
 		if err := mgr.markStoppedAndRelease(c, msg); err != nil {
 			return errors.Wrapf(err, "failed to mark container: %s stop status", c.ID())
