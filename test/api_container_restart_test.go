@@ -44,7 +44,7 @@ func (suite *APIContainerRestartSuite) TestAPIContainerRestart(c *check.C) {
 
 // TestAPIRestartStoppedContainer it to verify restarting a stopped container.
 func (suite *APIContainerRestartSuite) TestAPIRestartStoppedContainer(c *check.C) {
-	cname := "TestAPIContainerRestart"
+	cname := "TestAPIRestartStoppedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
 

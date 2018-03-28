@@ -39,7 +39,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path(versionMatcher + "/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
 	r.Path(versionMatcher + "/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
 	r.Path(versionMatcher + "/containers/{id:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
-	r.Path(versionMatcher + "/containers/{id:.*}/restart").Methods(http.MethodPost).Handler(s.filter(s.restartContainer))
+	r.Path(versionMatcher + "/containers/{name:.*}/restart").Methods(http.MethodPost).Handler(s.filter(s.restartContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/update").Methods(http.MethodPost).Handler(s.filter(s.updateContainer))
