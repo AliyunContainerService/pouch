@@ -1,9 +1,9 @@
 package config
 
 import (
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/network"
-	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/volume"
 )
 
@@ -44,7 +44,7 @@ type Config struct {
 	ContainerdPath string `json:"containerd-path"`
 
 	// TLS configuration
-	TLS utils.TLSConfig
+	TLS client.TLSConfig
 
 	// Default OCI Runtime
 	DefaultRuntime string `json:"default-runtime,omitempty"`

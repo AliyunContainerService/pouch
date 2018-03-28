@@ -10,10 +10,10 @@ import (
 	"syscall"
 
 	"github.com/alibaba/pouch/apis/plugins"
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 
-	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,7 +44,7 @@ func (s *Server) Start() (err error) {
 
 	var tlsConfig *tls.Config
 	if s.Config.TLS.Key != "" && s.Config.TLS.Cert != "" {
-		tlsConfig, err = utils.GenTLSConfig(s.Config.TLS.Key, s.Config.TLS.Cert, s.Config.TLS.CA)
+		tlsConfig, err = client.GenTLSConfig(s.Config.TLS.Key, s.Config.TLS.Cert, s.Config.TLS.CA)
 		if err != nil {
 			return err
 		}

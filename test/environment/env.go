@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/client"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
@@ -19,7 +19,7 @@ var (
 	PouchdUnixDomainSock = "/var/run/pouchd.sock"
 
 	// TLSConfig is default tls config
-	TLSConfig = utils.TLSConfig{}
+	TLSConfig = client.TLSConfig{}
 )
 
 // IsLinux checks if the OS of test environment is Linux.

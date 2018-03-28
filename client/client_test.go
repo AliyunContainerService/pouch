@@ -1,11 +1,12 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
+	"reflect"
 	"testing"
 
-	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,7 @@ func TestNewAPIClient(t *testing.T) {
 	}
 
 	for host, expectError := range kvs {
-		cli, err := NewAPIClient(host, utils.TLSConfig{})
+		cli, err := NewAPIClient(host, TLSConfig{})
 		if expectError {
 			assert.Error(err, fmt.Sprintf("test data: %v", host))
 		} else {
@@ -67,7 +68,7 @@ func TestParseHost(t *testing.T) {
 func Test_generateBaseURL(t *testing.T) {
 	type args struct {
 		u   *url.URL
-		tls utils.TLSConfig
+		tls TLSConfig
 	}
 	tests := []struct {
 		name string
@@ -80,6 +81,34 @@ func Test_generateBaseURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := generateBaseURL(tt.args.u, tt.args.tls); got != tt.want {
 				t.Errorf("generateBaseURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenTLSConfig(t *testing.T) {
+	type args struct {
+		key  string
+		cert string
+		ca   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *tls.Config
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GenTLSConfig(tt.args.key, tt.args.cert, tt.args.ca)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GenTLSConfig() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GenTLSConfig() = %v, want %v", got, tt.want)
 			}
 		})
 	}

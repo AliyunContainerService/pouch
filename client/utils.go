@@ -2,15 +2,14 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
-
-	"github.com/pkg/errors"
 )
 
 func decodeBody(obj interface{}, body io.Reader) error {
 	if err := json.NewDecoder(body).Decode(obj); err != nil {
-		return errors.Wrap(err, "failed to decode body")
+		return fmt.Errorf("failed to decode body: %v", err)
 	}
 
 	return nil

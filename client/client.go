@@ -3,15 +3,15 @@ package client
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/alibaba/pouch/pkg/utils"
 )
 
 var (
@@ -32,8 +32,16 @@ type APIClient struct {
 	version string
 }
 
+// TLSConfig contains information of tls which users can specify
+type TLSConfig struct {
+	CA           string `json:"tlscacert,omitempty"`
+	Cert         string `json:"tlscert,omitempty"`
+	Key          string `json:"tlskey,omitempty"`
+	VerifyRemote bool
+}
+
 // NewAPIClient initializes a new API client for the given host
-func NewAPIClient(host string, tls utils.TLSConfig) (CommonAPIClient, error) {
+func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 	if host == "" {
 		host = defaultHost
 	}
@@ -110,10 +118,10 @@ func newHTTPClient(u *url.URL, tlsConfig *tls.Config) *http.Client {
 }
 
 // generateTLSConfig configures TLS for API Client.
-func generateTLSConfig(host string, tls utils.TLSConfig) *tls.Config {
+func generateTLSConfig(host string, tls TLSConfig) *tls.Config {
 	// init tls config
 	if tls.Key != "" && tls.Cert != "" && !strings.HasPrefix(host, "unix://") {
-		tlsCfg, err := utils.GenTLSConfig(tls.Key, tls.Cert, tls.CA)
+		tlsCfg, err := GenTLSConfig(tls.Key, tls.Cert, tls.CA)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
 			os.Exit(1)
@@ -125,7 +133,7 @@ func generateTLSConfig(host string, tls utils.TLSConfig) *tls.Config {
 	return nil
 }
 
-func generateBaseURL(u *url.URL, tls utils.TLSConfig) string {
+func generateBaseURL(u *url.URL, tls TLSConfig) string {
 	if tls.Key != "" && tls.Cert != "" && u.Scheme != "unix" {
 		return "https://" + u.Host
 	}
@@ -164,4 +172,30 @@ func (client *APIClient) GetAPIPath(path string, query url.Values) string {
 // UpdateClientVersion sets client version new value.
 func (client *APIClient) UpdateClientVersion(v string) {
 	client.version = v
+}
+
+// GenTLSConfig returns a tls config object according to inputting parameters.
+func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+	tlsCert, err := tls.LoadX509KeyPair(cert, key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read X509 key pair (cert: %q, key: %q): %v", cert, key, err)
+	}
+	tlsConfig.Certificates = []tls.Certificate{tlsCert}
+	if ca == "" {
+		return tlsConfig, nil
+	}
+	cp, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read system certificates: %v", err)
+	}
+	pem, err := ioutil.ReadFile(ca)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA certificate %q: %v", ca, err)
+	}
+	if !cp.AppendCertsFromPEM(pem) {
+		return nil, fmt.Errorf("failed to append certificates from PEM file: %q", ca)
+	}
+	tlsConfig.ClientCAs = cp
+	return tlsConfig, nil
 }
