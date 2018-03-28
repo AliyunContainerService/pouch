@@ -68,6 +68,11 @@ func TestDomain(t *testing.T) {
 			input:  "0.0.0.0/foo/bar",
 			domain: "0.0.0.0/foo",
 			ok:     true,
+		}, {
+			name:   "Namespace and Name",
+			input:  "google/cadvisor:latest",
+			domain: "",
+			ok:     false,
 		},
 	} {
 		d, ok := Domain(tc.input)

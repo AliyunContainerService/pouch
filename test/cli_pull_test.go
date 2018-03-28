@@ -56,6 +56,11 @@ func (suite *PouchPullSuite) TestPullWorks(c *check.C) {
 	// without registry
 	withoutRegistry := "busybox:latest"
 	checkPull(withoutRegistry, latest)
+
+	// image with namespace but without registry
+	cadvisor := "registry.hub.docker.com/google/cadvisor:latest"
+	cadvisorWithoutRegistry := "google/cadvisor:latest"
+	checkPull(cadvisorWithoutRegistry, cadvisor)
 }
 
 // TestPullInWrongWay pulls in wrong way.
