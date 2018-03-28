@@ -33,6 +33,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch pause](pouch_pause.md)	 - Pause a running container
 * [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
+* [pouch remount-lxcfs](pouch_remount-lxcfs.md)	 - remount lxcfs bind in containers
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
 * [pouch restart](pouch_restart.md)	 - restart one or more containers
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
