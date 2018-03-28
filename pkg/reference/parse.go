@@ -59,17 +59,18 @@ func WithDefaultTagIfMissing(named Named) Named {
 	return named
 }
 
-// Domain retrieves domain information. Domain include registry address or
-// repository namespace can be included, like registry.hub.docker.com/library.
-func Domain(named string) (string, bool) {
-	i := strings.LastIndexByte(named, '/')
+// Domain retrieves domain information. Domain include registry address and
+// repository namespace, like registry.hub.docker.com/library/ubuntu.
+func Domain(imageRef string) (string, bool) {
+	i := strings.LastIndexByte(imageRef, '/')
 
-	// FIXME: The domain should contain the . or :, how to handle the case
-	// which image name contains . or :?
-	if i == -1 || !strings.ContainsAny(named, ".:") {
+	// NOTE: in the following two conditions, imageRef doesn't contain domain:
+	// 1. No '/' in imageRef.
+	// 2. Apart from the name, the rest of imageRef should contain '.' or ':'.
+	if i == -1 || !strings.ContainsAny(imageRef[:i], ".:") {
 		return "", false
 	}
-	return named[:i], true
+	return imageRef[:i], true
 }
 
 // splitHostname splits HostName and RemoteName for the given reference.
