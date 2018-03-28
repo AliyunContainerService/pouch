@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/cri"
@@ -13,6 +14,8 @@ import (
 
 // Config refers to daemon's whole configurations.
 type Config struct {
+	sync.Mutex
+
 	//Volume config
 	VolumeConfig volume.Config
 

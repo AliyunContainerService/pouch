@@ -28,6 +28,9 @@ func initRoute(s *Server) http.Handler {
 	r.Path(versionMatcher + "/version").Methods(http.MethodGet).Handler(s.filter(s.version))
 	r.Path(versionMatcher + "/auth").Methods(http.MethodPost).Handler(s.filter(s.auth))
 
+	// daemon, we still list this API into system manager.
+	r.Path(versionMatcher + "/daemon/update").Methods(http.MethodPost).Handler(s.filter(s.updateDaemon))
+
 	// container
 	r.Path(versionMatcher + "/containers/create").Methods(http.MethodPost).Handler(s.filter(s.createContainer))
 	r.Path(versionMatcher + "/containers/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainer))
