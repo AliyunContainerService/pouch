@@ -196,3 +196,19 @@ func isEmptyValue(v reflect.Value) bool {
 	}
 	return false
 }
+
+// DeDuplicate make a slice with no duplicated elements.
+func DeDuplicate(input []string) []string {
+	if input == nil {
+		return nil
+	}
+	result := []string{}
+	internal := map[string]struct{}{}
+	for _, value := range input {
+		if _, exist := internal[value]; !exist {
+			internal[value] = struct{}{}
+			result = append(result, value)
+		}
+	}
+	return result
+}

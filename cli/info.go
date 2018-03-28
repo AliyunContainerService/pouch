@@ -89,7 +89,12 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	fmt.Fprintln(os.Stdout, "Registry:", info.IndexServerAddress)
 	fmt.Fprintln(os.Stdout, "Experimental:", info.ExperimentalBuild)
 	fmt.Fprintln(os.Stdout, "Debug:", info.Debug)
-	fmt.Fprintln(os.Stdout, "Labels:", info.Labels)
+	if len(info.Labels) != 0 {
+		fmt.Fprintln(os.Stdout, "Labels:")
+		for _, label := range info.Labels {
+			fmt.Fprintf(os.Stdout, "  %s\n", label)
+		}
+	}
 
 	fmt.Fprintln(os.Stdout, "CPUs:", info.NCPU)
 	fmt.Fprintln(os.Stdout, "Total Memory:", info.MemTotal)

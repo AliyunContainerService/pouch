@@ -14,13 +14,13 @@ import (
 
 // Service serves the kubelet runtime grpc api which will be consumed by kubelet.
 type Service struct {
-	config config.Config
+	config *config.Config
 	server *grpc.Server
 	criMgr mgr.CriMgr
 }
 
 // NewService creates a brand new cri service.
-func NewService(cfg config.Config, criMgr mgr.CriMgr) (*Service, error) {
+func NewService(cfg *config.Config, criMgr mgr.CriMgr) (*Service, error) {
 	s := &Service{
 		config: cfg,
 		server: grpc.NewServer(),
