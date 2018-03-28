@@ -28,10 +28,11 @@ import (
 )
 
 var (
-	cfg          config.Config
 	sigHandles   []func() error
 	printVersion bool
 )
+
+var cfg = &config.Config{}
 
 func main() {
 	if reexec.Init() {
@@ -49,7 +50,7 @@ func main() {
 
 	setupFlags(cmdServe)
 	parseFlags(cmdServe, os.Args[1:])
-	if err := loadDaemonFile(&cfg, cmdServe.Flags()); err != nil {
+	if err := loadDaemonFile(cfg, cmdServe.Flags()); err != nil {
 		logrus.Errorf("failed to load daemon file: %s", err)
 		os.Exit(1)
 	}
@@ -96,6 +97,7 @@ func setupFlags(cmd *cobra.Command) {
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
+	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
 }
 
 // parse flags
@@ -119,6 +121,10 @@ func runDaemon() error {
 
 	// initialize log.
 	initLog()
+
+	if err := cfg.Validate(); err != nil {
+		logrus.Fatal(err)
+	}
 
 	// import debugger tools for pouch when in debug mode.
 	if cfg.Debug {

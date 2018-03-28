@@ -82,7 +82,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	c.Assert(res.Error, check.IsNil)
 
 	if out := res.Combined(); !strings.Contains(out, name) {
-		c.Fatal("unexpected output: %s, expected %s", out, name)
+		c.Fatalf("unexpected output: %s, expected %s", out, name)
 	}
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)

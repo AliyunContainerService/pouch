@@ -24,7 +24,7 @@ import (
 
 // Daemon refers to a daemon.
 type Daemon struct {
-	config          config.Config
+	config          *config.Config
 	containerStore  *meta.Store
 	containerd      ctrd.APIClient
 	containerMgr    mgr.ContainerMgr
@@ -46,7 +46,7 @@ type router struct {
 }
 
 // NewDaemon constructs a brand new server.
-func NewDaemon(cfg config.Config) *Daemon {
+func NewDaemon(cfg *config.Config) *Daemon {
 	containerStore, err := meta.NewStore(meta.Config{
 		Driver:  "local",
 		BaseDir: path.Join(cfg.HomeDir, "containers"),
@@ -129,25 +129,25 @@ func (d *Daemon) Run() error {
 		}
 	}
 
-	imageMgr, err := internal.GenImageMgr(&d.config, d)
+	imageMgr, err := internal.GenImageMgr(d.config, d)
 	if err != nil {
 		return err
 	}
 	d.imageMgr = imageMgr
 
-	systemMgr, err := internal.GenSystemMgr(&d.config, d)
+	systemMgr, err := internal.GenSystemMgr(d.config, d)
 	if err != nil {
 		return err
 	}
 	d.systemMgr = systemMgr
 
-	volumeMgr, err := internal.GenVolumeMgr(&d.config, d)
+	volumeMgr, err := internal.GenVolumeMgr(d.config, d)
 	if err != nil {
 		return err
 	}
 	d.volumeMgr = volumeMgr
 
-	networkMgr, err := internal.GenNetworkMgr(&d.config, d)
+	networkMgr, err := internal.GenNetworkMgr(d.config, d)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (d *Daemon) Shutdown() error {
 
 // Config gets config of daemon.
 func (d *Daemon) Config() *config.Config {
-	return &d.config
+	return d.config
 }
 
 // CtrMgr gets manager of container.

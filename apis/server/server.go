@@ -19,7 +19,7 @@ import (
 
 // Server is a http server which serves restful api to client.
 type Server struct {
-	Config          config.Config
+	Config          *config.Config
 	ContainerMgr    mgr.ContainerMgr
 	SystemMgr       mgr.SystemMgr
 	ImageMgr        mgr.ImageMgr

@@ -68,7 +68,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		return nil
 	})
 
-	inf := types.SystemInfo{
+	info := types.SystemInfo{
 		// architecture: ,
 		// CgroupDriver: ,
 		// ContainerdCommit: ,
@@ -87,7 +87,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		// Images: ,
 		IndexServerAddress: "https://index.docker.io/v1/",
 		KernelVersion:      kernelVersion,
-		// Labels: ,
+		Labels:             mgr.config.Labels,
 		// LiveRestoreEnabled: ,
 		// LoggingDriver: ,
 		// MemTotal: ,
@@ -103,7 +103,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		ServerVersion:   version.Version,
 		ListenAddresses: mgr.config.Listen,
 	}
-	return inf, nil
+	return info, nil
 }
 
 // Version shows version of daemon.

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -195,5 +196,59 @@ func TestMerge(t *testing.T) {
 			}
 			assert.EqualError(err, errMsg)
 		}
+	}
+}
+
+func TestDeDuplicate(t *testing.T) {
+	type args struct {
+		input []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "nil test case",
+			args: args{
+				input: nil,
+			},
+			want: nil,
+		},
+		{
+			name: "two duplicated case",
+			args: args{
+				input: []string{"asdfgh", "asdfgh"},
+			},
+			want: []string{"asdfgh"},
+		},
+		{
+			name: "case with no duplicated",
+			args: args{
+				input: []string{"asdfgh01", "asdfgh02", "asdfgh03", "asdfgh04"},
+			},
+			want: []string{"asdfgh01", "asdfgh02", "asdfgh03", "asdfgh04"},
+		},
+		{
+			name: "case with no duplicated",
+			args: args{
+				input: []string{"asdfgh01", "asdfgh02", "asdfgh01"},
+			},
+			want: []string{"asdfgh01", "asdfgh02"},
+		},
+		{
+			name: "case with 3 duplicated",
+			args: args{
+				input: []string{"asdfgh01", "asdfgh01", "asdfgh01"},
+			},
+			want: []string{"asdfgh01"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := DeDuplicate(tt.args.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DeDuplicate() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
