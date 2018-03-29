@@ -62,7 +62,7 @@ type Config struct {
 	// LxcfsHome is the absolute path of lxcfs
 	LxcfsHome string
 
-	// ImageProxy is a http proxy to pull image
+	// ImagxeProxy is a http proxy to pull image
 	ImageProxy string `json:"image-proxy,omitempty"`
 
 	// QuotaDriver is used to set the driver of Quota
