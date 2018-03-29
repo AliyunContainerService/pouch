@@ -1,6 +1,7 @@
 package remotecommand
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -21,10 +22,18 @@ func ServeAttach(w http.ResponseWriter, req *http.Request, attacher Attacher, co
 	}
 	defer ctx.conn.Close()
 
-	attacher.Attach(container, streamOpts, &Streams{
+	err := attacher.Attach(container, streamOpts, &Streams{
 		StreamCh:     make(chan struct{}, 1),
 		StdinStream:  ctx.stdinStream,
 		StdoutStream: ctx.stdoutStream,
 		StderrStream: ctx.stderrStream,
 	})
+	if err != nil {
+		err = fmt.Errorf("error attaching to container: %v", err)
+		ctx.writeStatus(NewInternalError(err))
+	} else {
+		ctx.writeStatus(&StatusError{ErrStatus: Status{
+			Status: StatusSuccess,
+		}})
+	}
 }

@@ -1,6 +1,7 @@
 package remotecommand
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,6 +42,7 @@ type context struct {
 	stdoutStream io.WriteCloser
 	stderrStream io.WriteCloser
 	resizeStream io.ReadCloser
+	writeStatus  func(status *StatusError) error
 	tty          bool
 }
 
@@ -165,6 +167,7 @@ WaitForStreams:
 			streamType := stream.Headers().Get(constant.StreamType)
 			switch streamType {
 			case constant.StreamTypeError:
+				ctx.writeStatus = v1WriteStatusFunc(stream)
 				go waitStreamReply(stream.replySent, replyChan, stop)
 			case constant.StreamTypeStdin:
 				ctx.stdinStream = stream
@@ -209,7 +212,7 @@ WaitForStreams:
 			streamType := stream.Headers().Get(constant.StreamType)
 			switch streamType {
 			case constant.StreamTypeError:
-				// ctx.writeStatus = v1WriteStatusFunc(stream)
+				ctx.writeStatus = v1WriteStatusFunc(stream)
 				go waitStreamReply(stream.replySent, replyChan, stop)
 			case constant.StreamTypeStdin:
 				ctx.stdinStream = stream
@@ -240,4 +243,27 @@ WaitForStreams:
 	}
 
 	return ctx, nil
+}
+
+func v1WriteStatusFunc(stream io.Writer) func(status *StatusError) error {
+	return func(status *StatusError) error {
+		if status.Status().Status == StatusSuccess {
+			return nil
+		}
+
+		_, err := stream.Write([]byte(status.Error()))
+		return err
+	}
+}
+
+func v4WriteStatusFunc(stream io.Writer) func(status *StatusError) error {
+	return func(status *StatusError) error {
+		bs, err := json.Marshal(status.Status())
+		if err != nil {
+			return err
+		}
+
+		_, err = stream.Write(bs)
+		return err
+	}
 }

@@ -78,7 +78,7 @@ func createWebSocketStreams(w http.ResponseWriter, req *http.Request, opts *Opti
 		},
 	})
 	conn.SetIdleTimeout(idleTimeout)
-	_, streams, err := conn.Open(w, req)
+	negotiatedProtocol, streams, err := conn.Open(w, req)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("Unable to upgrade websocket connection: %v", err))
 		return nil, false
@@ -104,7 +104,12 @@ func createWebSocketStreams(w http.ResponseWriter, req *http.Request, opts *Opti
 		tty:          opts.TTY,
 	}
 
-	// TODO: handle write status function.
+	switch negotiatedProtocol {
+	case v4BinaryWebsocketProtocol, v4Base64WebsocketProtocol:
+		ctx.writeStatus = v4WriteStatusFunc(streams[errorChannel])
+	default:
+		ctx.writeStatus = v1WriteStatusFunc(streams[errorChannel])
+	}
 
 	return ctx, true
 }
