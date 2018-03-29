@@ -53,7 +53,7 @@ type Server interface {
 // Runtime is the interface to execute the commands and provide the streams.
 type Runtime interface {
 	// Exec executes the command in pod.
-	Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error
+	Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) (uint32, error)
 
 	// Attach attaches to pod.
 	Attach(containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error

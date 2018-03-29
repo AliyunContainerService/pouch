@@ -1,6 +1,7 @@
 package remotecommand
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -8,7 +9,7 @@ import (
 // Executor knows how to execute a command in a container of the pod.
 type Executor interface {
 	// Exec executes a command in a container of the pod.
-	Exec(containerID string, cmd []string, streamOpts *Options, streams *Streams) error
+	Exec(containerID string, cmd []string, streamOpts *Options, streams *Streams) (uint32, error)
 }
 
 // ServeExec handles requests to execute a command in a container. After
@@ -22,9 +23,31 @@ func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, cont
 	}
 	defer ctx.conn.Close()
 
-	executor.Exec(container, cmd, streamOpts, &Streams{
+	exitCode, err := executor.Exec(container, cmd, streamOpts, &Streams{
 		StdinStream:  ctx.stdinStream,
 		StdoutStream: ctx.stdoutStream,
 		StderrStream: ctx.stderrStream,
 	})
+	if err != nil {
+		err = fmt.Errorf("error executing command in container: %v", err)
+		ctx.writeStatus(NewInternalError(err))
+	} else if exitCode != 0 {
+		ctx.writeStatus(&StatusError{ErrStatus: Status{
+			Status: StatusFailure,
+			Reason: NonZeroExitCodeReason,
+			Details: &StatusDetails{
+				Causes: []StatusCause{
+					{
+						Type:    ExitCodeCauseType,
+						Message: fmt.Sprintf("%d", exitCode),
+					},
+				},
+			},
+			Message: fmt.Sprintf("command terminated with non-zero exit code"),
+		}})
+	} else {
+		ctx.writeStatus(&StatusError{ErrStatus: Status{
+			Status: StatusSuccess,
+		}})
+	}
 }

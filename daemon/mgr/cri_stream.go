@@ -32,7 +32,7 @@ func newStreamRuntime(ctrMgr ContainerMgr) stream.Runtime {
 }
 
 // Exec executes a command inside the container.
-func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error {
+func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) (uint32, error) {
 	createConfig := &apitypes.ExecCreateConfig{
 		Cmd:          cmd,
 		AttachStdin:  streamOpts.Stdin,
@@ -45,7 +45,7 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 
 	execid, err := s.containerMgr.CreateExec(ctx, containerID, createConfig)
 	if err != nil {
-		return fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
+		return 0, fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
 	}
 
 	startConfig := &apitypes.ExecStartConfig{}
@@ -55,18 +55,18 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 
 	err = s.containerMgr.StartExec(ctx, execid, startConfig, attachConfig)
 	if err != nil {
-		return fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
+		return 0, fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
 	}
 
 	ei, err := s.containerMgr.InspectExec(ctx, execid)
 	if err != nil {
-		return fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
+		return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
 	}
 
 	// Not return until exec finished.
-	<-ei.ExitCh
+	result := <-ei.ExitCh
 
-	return nil
+	return result.ExitCode(), nil
 }
 
 // Attach attaches to a running container.
