@@ -1238,6 +1238,10 @@ definitions:
           Address / URL of the index server that is used for image search,
           and as a default for user authentication.
         type: "string"
+      DefaultRegistry:
+        description: |
+          default registry can be defined by user.
+        type: "string"
       RegistryConfig:
         $ref: "#/definitions/RegistryServiceConfig"
       HttpProxy:

@@ -52,6 +52,10 @@ type SystemInfo struct {
 	// Indicates if the daemon is running in debug-mode / with debug-level logging enabled.
 	Debug bool `json:"Debug,omitempty"`
 
+	// default registry can be defined by user.
+	//
+	DefaultRegistry string `json:"DefaultRegistry,omitempty"`
+
 	// Name of the default OCI runtime that is used when starting containers.
 	// The default can be overridden per-container at create time.
 	//
@@ -216,6 +220,8 @@ type SystemInfo struct {
 /* polymorph SystemInfo ContainersStopped false */
 
 /* polymorph SystemInfo Debug false */
+
+/* polymorph SystemInfo DefaultRegistry false */
 
 /* polymorph SystemInfo DefaultRuntime false */
 

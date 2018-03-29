@@ -56,6 +56,14 @@ func (l *LoginCommand) runLogin(args []string) error {
 
 	ctx := context.Background()
 	apiClient := l.cli.Client()
+
+	// error will be ignored here, cause registry address can be null.
+	if auth.ServerAddress == "" {
+		if info, err := apiClient.SystemInfo(ctx); err == nil {
+			auth.ServerAddress = info.DefaultRegistry
+		}
+	}
+
 	resp, err := apiClient.RegistryLogin(ctx, auth)
 	if err != nil {
 		return err

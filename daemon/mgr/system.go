@@ -91,6 +91,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		// ID: ,
 		// Images: ,
 		IndexServerAddress: "https://index.docker.io/v1/",
+		DefaultRegistry:    mgr.config.DefaultRegistry,
 		KernelVersion:      kernelVersion,
 		Labels:             mgr.config.Labels,
 		// LiveRestoreEnabled: ,
