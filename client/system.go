@@ -24,20 +24,6 @@ func (client *APIClient) SystemPing(ctx context.Context) (string, error) {
 	return string(data), nil
 }
 
-// SystemVersion requests daemon for system version.
-func (client *APIClient) SystemVersion(ctx context.Context) (*types.SystemVersion, error) {
-	resp, err := client.get(ctx, "/version", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	version := &types.SystemVersion{}
-	err = decodeBody(version, resp.Body)
-	ensureCloseReader(resp)
-
-	return version, err
-}
-
 // SystemInfo requests daemon for system info.
 func (client *APIClient) SystemInfo(ctx context.Context) (*types.SystemInfo, error) {
 	resp, err := client.get(ctx, "/info", nil, nil)
