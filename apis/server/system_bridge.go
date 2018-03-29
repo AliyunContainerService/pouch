@@ -31,6 +31,17 @@ func (s *Server) version(ctx context.Context, rw http.ResponseWriter, req *http.
 	return EncodeResponse(rw, http.StatusOK, version)
 }
 
+func (s *Server) updateDaemon(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	cfg := &types.DaemonUpdateConfig{}
+	if err := json.NewDecoder(req.Body).Decode(cfg); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	// TODO: validate cfg in details
+
+	return s.SystemMgr.UpdateDaemon(cfg)
+}
+
 func (s *Server) auth(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	auth := types.AuthConfig{}
 	if err := json.NewDecoder(req.Body).Decode(&auth); err != nil {

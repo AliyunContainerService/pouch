@@ -83,6 +83,29 @@ paths:
           description: "Authentication to check"
           schema:
             $ref: "#/definitions/AuthConfig"
+  
+  /daemon/update:
+    post:
+      summary: "Update daemon's labels and image proxy"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "DaemonUpdateConfig"
+          in: body
+          description: "Config used to update daemon, only labels and image proxy are allowed."
+          schema:
+            $ref: "#/definitions/DaemonUpdateConfig"
 
   /images/create:
     post:
@@ -1324,6 +1347,19 @@ definitions:
           type: "string"
         example:
           - ["unix:///var/run/pouchd.sock", "tcp://0.0.0.0:4243"]
+
+  DaemonUpdateConfig:
+    type: "object"
+    properties:
+      Labels:
+        description: "Labels indentified the attributes of daemon"
+        type: "array"
+        items:
+          type: "string"
+        example: ["storage=ssd", "zone=hangzhou"]
+      ImageProxy:
+        description: "Image proxy used to pull image."
+        type: "string"
 
   RegistryServiceConfig:
     description: |
