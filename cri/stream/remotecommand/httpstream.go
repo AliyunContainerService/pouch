@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/cri/stream/httpstream/spdy"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apiserver/pkg/util/wsstream"
 )
 
 // Options contains details about which streams are required for
@@ -39,6 +40,8 @@ type context struct {
 	stdinStream  io.ReadCloser
 	stdoutStream io.WriteCloser
 	stderrStream io.WriteCloser
+	resizeStream io.ReadCloser
+	tty          bool
 }
 
 // streamAndReply holds both a Stream and a channel that is closed when the stream's reply frame is
@@ -51,8 +54,13 @@ type streamAndReply struct {
 }
 
 func createStreams(w http.ResponseWriter, req *http.Request, opts *Options, supportedStreamProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) (*context, bool) {
-	// TODO: WebSocketStream support.
-	ctx, ok := createHTTPStreamStreams(w, req, opts, supportedStreamProtocols, idleTimeout, streamCreationTimeout)
+	var ctx *context
+	var ok bool
+	if wsstream.IsWebSocketRequest(req) {
+		ctx, ok = createWebSocketStreams(w, req, opts, idleTimeout)
+	} else {
+		ctx, ok = createHTTPStreamStreams(w, req, opts, supportedStreamProtocols, idleTimeout, streamCreationTimeout)
+	}
 	if !ok {
 		return nil, false
 	}
