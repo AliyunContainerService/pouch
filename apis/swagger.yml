@@ -2230,7 +2230,8 @@ definitions:
       GET "/containers/json"
     type: "object"
     properties:
-      ID:
+      Id:
+        description: "Container ID"
         type: "string"
       Names:
         type: "array"
