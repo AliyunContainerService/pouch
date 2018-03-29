@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strings"
 	"text/template"
 
 	"github.com/alibaba/pouch/pkg/utils/templates"
@@ -73,6 +74,25 @@ func Inspect(out io.Writer, ref string, tmplStr string, getRef GetRefFunc) error
 	}
 
 	return nil
+}
+
+// RunInspectFunc is a function which used by MultiInspect
+type RunInspectFunc func(args []string) error
+
+// MultiInspect Apply function to every item of ref.
+func MultiInspect(refs []string, inspect RunInspectFunc) error {
+	var inspectErrors []string
+	for _, ref := range refs {
+		err := inspect([]string{ref})
+		if err != nil {
+			inspectErrors = append(inspectErrors, err.Error())
+		}
+	}
+	if len(inspectErrors) == 0 {
+		return nil
+	}
+
+	return errors.New(strings.Join(inspectErrors, "Error: "))
 }
 
 // Inspect executes the inspect template.

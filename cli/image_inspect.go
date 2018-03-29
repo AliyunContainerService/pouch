@@ -25,9 +25,9 @@ func (i *ImageInspectCommand) Init(c *Cli) {
 		Use:   "inspect [OPTIONS] IMAGE",
 		Short: "Display detailed information on one image",
 		Long:  imageInspectDescription,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return i.runInspect(args)
+			return inspect.MultiInspect(args, i.runInspect)
 		},
 		Example: i.example(),
 	}

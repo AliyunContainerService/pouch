@@ -25,9 +25,9 @@ func (p *InspectCommand) Init(c *Cli) {
 		Use:   "inspect [OPTIONS] CONTAINER",
 		Short: "Get the detailed information of container",
 		Long:  inspectDescription,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.runInspect(args)
+			return inspect.MultiInspect(args, p.runInspect)
 		},
 		Example: inspectExample(),
 	}
