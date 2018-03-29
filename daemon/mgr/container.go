@@ -21,6 +21,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd/errdefs"
@@ -346,9 +347,25 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
+	// return the first item of list will not equal input image name.
+	// issue: https://github.com/alibaba/pouch/issues/1001
+	// if specify a tag image, we should use the specified name
+	var refTagged string
+	imageNamed, err := reference.ParseNamedReference(config.Image)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := imageNamed.(reference.Tagged); ok {
+		refTagged = reference.WithDefaultTagIfMissing(imageNamed).String()
+	}
+
 	ref := ""
 	if len(image.RepoTags) > 0 {
-		ref = image.RepoTags[0]
+		if utils.StringInSlice(image.RepoTags, refTagged) {
+			ref = refTagged
+		} else {
+			ref = image.RepoTags[0]
+		}
 	} else {
 		ref = image.RepoDigests[0]
 	}
@@ -795,9 +812,25 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 		// TODO Image param is duplicate in ContainerMeta
 		// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
+		// return the first item of list will not equal input image name.
+		// issue: https://github.com/alibaba/pouch/issues/1001
+		// if specify a tag image, we should use the specified name
+		var refTagged string
+		imageNamed, err := reference.ParseNamedReference(config.Image)
+		if err != nil {
+			return err
+		}
+		if _, ok := imageNamed.(reference.Tagged); ok {
+			refTagged = reference.WithDefaultTagIfMissing(imageNamed).String()
+		}
+
 		ref := ""
 		if len(image.RepoTags) > 0 {
-			ref = image.RepoTags[0]
+			if utils.StringInSlice(image.RepoTags, refTagged) {
+				ref = refTagged
+			} else {
+				ref = image.RepoTags[0]
+			}
 		} else {
 			ref = image.RepoDigests[0]
 		}
