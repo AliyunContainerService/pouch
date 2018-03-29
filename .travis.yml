@@ -17,6 +17,7 @@ notifications:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y -qq autoconf automake
+  - bash -x ./hack/exclude_file_from_travis_CI.sh
 
 script:
   - sudo make -e test
