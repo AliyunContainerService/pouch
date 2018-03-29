@@ -30,7 +30,7 @@ func initRoute(s *Server) http.Handler {
 	addRoute(r, http.MethodPost, "/auth", s.auth)
 
 	// daemon, we still list this API into system manager.
-	r.Path(versionMatcher + "/daemon/update").Methods(http.MethodPost).Handler(s.filter(s.updateDaemon))
+	addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)
 
 	// container
 	addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
