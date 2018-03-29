@@ -22,6 +22,9 @@ import (
 
 func (s *Server) removeContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	option := &mgr.ContainerRemoveOption{
 		Force: httputils.BoolValue(req, "force"),
@@ -39,8 +42,14 @@ func (s *Server) removeContainers(ctx context.Context, rw http.ResponseWriter, r
 }
 
 func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	oldName := mux.Vars(req)["id"]
+	oldName := mux.Vars(req)["name"]
+	if err := validationName(oldName); err != nil {
+		return httputils.NewHTTPError(fmt.Errorf("failed to validate old name: %v", err), http.StatusBadRequest)
+	}
 	newName := req.FormValue("name")
+	if err := validationName(newName); err != nil {
+		return httputils.NewHTTPError(fmt.Errorf("failed to validate new name: %v", err), http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Rename(ctx, oldName, newName); err != nil {
 		return err
@@ -63,6 +72,9 @@ func (s *Server) restartContainer(ctx context.Context, rw http.ResponseWriter, r
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err = s.ContainerMgr.Restart(ctx, name, int64(t)); err != nil {
 		return err
@@ -84,6 +96,9 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
 	if err != nil {
@@ -109,6 +124,9 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 	_, upgrade := req.Header["Upgrade"]
 
 	var attach *mgr.AttachConfig
@@ -169,11 +187,14 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) startContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	id := mux.Vars(req)["name"]
+	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	detachKeys := req.FormValue("detachKeys")
 
-	if err := s.ContainerMgr.Start(ctx, id, detachKeys); err != nil {
+	if err := s.ContainerMgr.Start(ctx, name, detachKeys); err != nil {
 		return err
 	}
 
@@ -194,6 +215,9 @@ func (s *Server) stopContainer(ctx context.Context, rw http.ResponseWriter, req 
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err = s.ContainerMgr.Stop(ctx, name, int64(t)); err != nil {
 		return err
@@ -205,6 +229,9 @@ func (s *Server) stopContainer(ctx context.Context, rw http.ResponseWriter, req 
 
 func (s *Server) pauseContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Pause(ctx, name); err != nil {
 		return err
@@ -216,6 +243,9 @@ func (s *Server) pauseContainer(ctx context.Context, rw http.ResponseWriter, req
 
 func (s *Server) unpauseContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Unpause(ctx, name); err != nil {
 		return err
@@ -227,6 +257,9 @@ func (s *Server) unpauseContainer(ctx context.Context, rw http.ResponseWriter, r
 
 func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	_, upgrade := req.Header["Upgrade"]
 
@@ -299,6 +332,10 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 
 func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
 	meta, err := s.ContainerMgr.Get(ctx, name)
 	if err != nil {
 		return err
@@ -341,6 +378,9 @@ func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, re
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Update(ctx, name, config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusInternalServerError)
@@ -362,6 +402,9 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Upgrade(ctx, name, config); err != nil {
 		return err
@@ -373,6 +416,9 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 
 func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	procList, err := s.ContainerMgr.Top(ctx, name, req.Form.Get("ps_args"))
 	if err != nil {
@@ -406,6 +452,9 @@ func (s *Server) resizeContainer(ctx context.Context, rw http.ResponseWriter, re
 	}
 
 	name := mux.Vars(req)["name"]
+	if err := validationName(name); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	if err := s.ContainerMgr.Resize(ctx, name, opts); err != nil {
 		return err
