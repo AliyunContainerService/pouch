@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -42,6 +43,8 @@ func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 
 	expectString := "container is not running, can not execute top command"
 	if out := res.Combined(); !strings.Contains(out, expectString) {
+		// FIXME(ziren): for debug top error info is empty
+		fmt.Printf("%+v", res)
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
 
@@ -52,7 +55,7 @@ func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
 	name := "TestTopContainer"
 
-	command.PouchRun("run", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("top", name)
 	c.Assert(res.Error, check.IsNil)
