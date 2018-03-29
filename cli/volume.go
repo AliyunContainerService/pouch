@@ -228,7 +228,7 @@ func (v *VolumeInspectCommand) Init(c *Cli) {
 		Long:  volumeInspectDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return inspect.MultiInspect(args, v.runVolumeInspect)
+			return v.runVolumeInspect(args)
 		},
 		Example: volumeInspectExample(),
 	}
@@ -242,10 +242,6 @@ func (v *VolumeInspectCommand) addFlags() {
 
 // runVolumeInspect is the entry of VolumeInspectCommand command.
 func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
-	name := args[0]
-
-	logrus.Debugf("inspect a volume: %s", name)
-
 	ctx := context.Background()
 	apiClient := v.cli.Client()
 
@@ -253,7 +249,7 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 		return apiClient.VolumeInspect(ctx, ref)
 	}
 
-	return inspect.Inspect(os.Stdout, name, v.format, getRefFunc)
+	return inspect.MultiInspect(os.Stdout, args, v.format, getRefFunc)
 }
 
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.
