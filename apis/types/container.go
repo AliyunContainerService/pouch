@@ -34,8 +34,8 @@ type Container struct {
 	//
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
-	// ID
-	ID string `json:"ID,omitempty"`
+	// Container ID
+	ID string `json:"Id,omitempty"`
 
 	// image
 	Image string `json:"Image,omitempty"`
@@ -74,7 +74,7 @@ type Container struct {
 
 /* polymorph Container HostConfig false */
 
-/* polymorph Container ID false */
+/* polymorph Container Id false */
 
 /* polymorph Container Image false */
 
