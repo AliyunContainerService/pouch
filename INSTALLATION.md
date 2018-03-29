@@ -74,18 +74,6 @@ sudo service pouch start
 
 Afterwards, you can pull an image and run Pouch containers.
 
-**5. Uninstall pouch**
-
-``` bash
-sudo apt-get purge pouch
-```
-
-After uninstalling Pouch, images, containers, volumes, or customized configuration files on your host are not automatically removed. To delete all images, containers and volumes, execute the following command:
-
-``` bash
-sudo rm -rf /var/lib/pouch
-```
-
 ### CentOS
 
 To install Pouch, you need a maintained version of CentOS 7. Archived versions aren’t supported or tested.
@@ -139,7 +127,15 @@ sudo systemctl start pouch
 
 Afterwards, you can pull an image and run Pouch containers.
 
-**5. Uninstall pouch**
+## Uninstall pouch
+
+On Ubuntu
+
+``` bash
+sudo apt-get purge pouch
+```
+
+On CentOS
 
 ``` bash
 sudo yum remove pouch
