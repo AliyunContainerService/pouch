@@ -2,7 +2,7 @@
 Description=pouch
 
 [Service]
-ExecStart=/usr/bin/pouchd --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs
+ExecStart=/usr/bin/pouchd
 ExecReload=/bin/kill -HUP $MAINPID
 
 # Having non-zero Limit*s causes performance problems due to accounting overhead
