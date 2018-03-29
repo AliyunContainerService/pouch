@@ -22,62 +22,67 @@ const versionMatcher = "/v{version:[0-9.]+}"
 
 func initRoute(s *Server) http.Handler {
 	r := mux.NewRouter()
+
 	// system
-	r.Path(versionMatcher + "/_ping").Methods(http.MethodGet).Handler(s.filter(s.ping))
-	r.Path(versionMatcher + "/info").Methods(http.MethodGet).Handler(s.filter(s.info))
-	r.Path(versionMatcher + "/version").Methods(http.MethodGet).Handler(s.filter(s.version))
-	r.Path(versionMatcher + "/auth").Methods(http.MethodPost).Handler(s.filter(s.auth))
+	addRoute(r, http.MethodGet, "/_ping", s.ping)
+	addRoute(r, http.MethodGet, "/info", s.info)
+	addRoute(r, http.MethodGet, "/version", s.version)
+	addRoute(r, http.MethodPost, "/auth", s.auth)
 
 	// daemon, we still list this API into system manager.
 	r.Path(versionMatcher + "/daemon/update").Methods(http.MethodPost).Handler(s.filter(s.updateDaemon))
 
 	// container
-	r.Path(versionMatcher + "/containers/create").Methods(http.MethodPost).Handler(s.filter(s.createContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/stop").Methods(http.MethodPost).Handler(s.filter(s.stopContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/attach").Methods(http.MethodPost).Handler(s.filter(s.attachContainer))
-	r.Path(versionMatcher + "/containers/json").Methods(http.MethodGet).Handler(s.filter(s.getContainers))
-	r.Path(versionMatcher + "/containers/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeContainers))
-	r.Path(versionMatcher + "/containers/{name:.*}/exec").Methods(http.MethodPost).Handler(s.filter(s.createContainerExec))
-	r.Path(versionMatcher + "/exec/{name:.*}/start").Methods(http.MethodPost).Handler(s.filter(s.startContainerExec))
-	r.Path(versionMatcher + "/containers/{name:.*}/rename").Methods(http.MethodPost).Handler(s.filter(s.renameContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/restart").Methods(http.MethodPost).Handler(s.filter(s.restartContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/pause").Methods(http.MethodPost).Handler(s.filter(s.pauseContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/unpause").Methods(http.MethodPost).Handler(s.filter(s.unpauseContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/update").Methods(http.MethodPost).Handler(s.filter(s.updateContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/upgrade").Methods(http.MethodPost).Handler(s.filter(s.upgradeContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/top").Methods(http.MethodGet).Handler(s.filter(s.topContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/logs").Methods(http.MethodGet).Handler(s.filter(s.logsContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/resize").Methods(http.MethodPost).Handler(s.filter(s.resizeContainer))
-	r.Path(versionMatcher + "/containers/{name:.*}/restart").Methods(http.MethodPost).Handler(s.filter(s.restartContainer))
+	addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/start", s.startContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/stop", s.stopContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/attach", s.attachContainer)
+	addRoute(r, http.MethodGet, "/containers/json", s.getContainers)
+	addRoute(r, http.MethodGet, "/containers/{name:.*}/json", s.getContainer)
+	addRoute(r, http.MethodDelete, "/containers/{name:.*}", s.removeContainers)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/exec", s.createContainerExec)
+	addRoute(r, http.MethodPost, "/exec/{name:.*}/start", s.startContainerExec)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/rename", s.renameContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/pause", s.pauseContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/unpause", s.unpauseContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/update", s.updateContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
+	addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
+	addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", s.logsContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
+	addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
 
 	// image
-	r.Path(versionMatcher + "/images/create").Methods(http.MethodPost).Handler(s.filter(s.pullImage))
-	r.Path(versionMatcher + "/images/search").Methods(http.MethodGet).Handler(s.filter(s.searchImages))
-	r.Path(versionMatcher + "/images/json").Methods(http.MethodGet).Handler(s.filter(s.listImages))
-	r.Path(versionMatcher + "/images/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeImage))
-	r.Path(versionMatcher + "/images/{name:.*}/json").Methods(http.MethodGet).Handler(s.filter(s.getImage))
+	addRoute(r, http.MethodPost, "/images/create", s.pullImage)
+	addRoute(r, http.MethodPost, "/images/search", s.searchImages)
+	addRoute(r, http.MethodGet, "/images/json", s.listImages)
+	addRoute(r, http.MethodDelete, "/images/{name:.*}", s.removeImage)
+	addRoute(r, http.MethodGet, "/images/{name:.*}/json", s.getImage)
 
 	// volume
-	r.Path(versionMatcher + "/volumes").Methods(http.MethodGet).Handler(s.filter(s.listVolume))
-	r.Path(versionMatcher + "/volumes/create").Methods(http.MethodPost).Handler(s.filter(s.createVolume))
-	r.Path(versionMatcher + "/volumes/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getVolume))
-	r.Path(versionMatcher + "/volumes/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.removeVolume))
+	addRoute(r, http.MethodGet, "/volumes", s.listVolume)
+	addRoute(r, http.MethodPost, "/volumes/create", s.createVolume)
+	addRoute(r, http.MethodGet, "/volumes/{name:.*}", s.getVolume)
+	addRoute(r, http.MethodDelete, "/volumes/{name:.*}", s.removeVolume)
+
+	// network
+	addRoute(r, http.MethodGet, "/networks", s.listNetwork)
+	addRoute(r, http.MethodPost, "/networks/create", s.createNetwork)
+	addRoute(r, http.MethodGet, "/networks/{name:.*}", s.getNetwork)
+	addRoute(r, http.MethodDelete, "/networks/{name:.*}", s.deleteNetwork)
 
 	// metrics
 	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
-
-	// network
-	r.Path(versionMatcher + "/networks").Methods(http.MethodGet).Handler(s.filter(s.listNetwork))
-	r.Path(versionMatcher + "/networks/create").Methods(http.MethodPost).Handler(s.filter(s.createNetwork))
-	r.Path(versionMatcher + "/networks/{name:.*}").Methods(http.MethodGet).Handler(s.filter(s.getNetwork))
-	r.Path(versionMatcher + "/networks/{name:.*}").Methods(http.MethodDelete).Handler(s.filter(s.deleteNetwork))
 
 	if s.Config.Debug {
 		profilerSetup(r)
 	}
 	return r
+}
+
+func addRoute(r *mux.Router, mothod string, path string, f func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error) {
+	r.Path(versionMatcher + path).Methods(mothod).Handler(filter(f))
 }
 
 func profilerSetup(mainRouter *mux.Router) {
@@ -95,7 +100,7 @@ func profilerSetup(mainRouter *mux.Router) {
 
 type handler func(context.Context, http.ResponseWriter, *http.Request) error
 
-func (s *Server) filter(handler handler) http.HandlerFunc {
+func filter(handler handler) http.HandlerFunc {
 	pctx := context.Background()
 
 	return func(w http.ResponseWriter, req *http.Request) {
