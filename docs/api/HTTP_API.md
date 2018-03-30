@@ -750,6 +750,39 @@ POST /containers/{id}/upgrade
 * Container
 
 
+<a name="daemon-update-post"></a>
+### Update daemon's labels and image proxy
+```
+POST /daemon/update
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Body**|**DaemonUpdateConfig**  <br>*optional*|Config used to update daemon, only labels and image proxy are allowed.|[DaemonUpdateConfig](#daemonupdateconfig)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**400**|bad parameter|[Error](#error)|
+|**500**|An unexpected server error occured.|[Error](#error)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/json`
+
+
 <a name="execstart"></a>
 ### Start an exec instance
 ```
@@ -1406,7 +1439,7 @@ GET "/containers/json"
 |**Command**  <br>*optional*||string|
 |**Created**  <br>*optional*|Created time of container in daemon.|integer (int64)|
 |**HostConfig**  <br>*optional*|In Moby's API, HostConfig field in Container struct has following type <br>struct { NetworkMode string `json:",omitempty"` }<br>In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,<br>So Pouch changes this type to be the complete HostConfig.<br>Incompatibility exists, ATTENTION.|[HostConfig](#hostconfig)|
-|**ID**  <br>*optional*||string|
+|**Id**  <br>*optional*|Container ID|string|
 |**Image**  <br>*optional*||string|
 |**ImageID**  <br>*optional*||string|
 |**Labels**  <br>*optional*||< string, string > map|
@@ -1631,6 +1664,15 @@ It can be used to encode client params in client and unmarshal request body in d
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
 |**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
 |**WorkingDir**  <br>*optional*|The working directory for commands to run in.|string|
+
+
+<a name="daemonupdateconfig"></a>
+### DaemonUpdateConfig
+
+|Name|Description|Schema|
+|---|---|---|
+|**ImageProxy**  <br>*optional*|Image proxy used to pull image.|string|
+|**Labels**  <br>*optional*|Labels indentified the attributes of daemon  <br>**Example** : `[ "storage=ssd", "zone=hangzhou" ]`|< string > array|
 
 
 <a name="devicemapping"></a>
@@ -2199,6 +2241,7 @@ The status of the container. For example, "running" or "exited".
 |**ContainersRunning**  <br>*optional*|Number of containers with status `"running"`.  <br>**Example** : `3`|integer|
 |**ContainersStopped**  <br>*optional*|Number of containers with status `"stopped"`.  <br>**Example** : `10`|integer|
 |**Debug**  <br>*optional*|Indicates if the daemon is running in debug-mode / with debug-level logging enabled.  <br>**Example** : `true`|boolean|
+|**DefaultRegistry**  <br>*optional*|default registry can be defined by user.|string|
 |**DefaultRuntime**  <br>*optional*|Name of the default OCI runtime that is used when starting containers.<br>The default can be overridden per-container at create time.  <br>**Default** : `"runc"`  <br>**Example** : `"runc"`|string|
 |**Driver**  <br>*optional*|Name of the storage driver in use.  <br>**Example** : `"overlay2"`|string|
 |**DriverStatus**  <br>*optional*|Information specific to the storage driver, provided as<br>"label" / "value" pairs.<br><br>This information is provided by the storage driver, and formatted<br>in a way consistent with the output of `pouch info` on the command<br>line.<br><br><p><br /></p><br><br>> **Note**: The information returned in this field, including the<br>> formatting of values and labels, should not be considered stable,<br>> and may change without notice.  <br>**Example** : `[ [ "Backing Filesystem", "extfs" ], [ "Supports d_type", "true" ], [ "Native Overlay Diff", "true" ] ]`|< < string > array > array|
