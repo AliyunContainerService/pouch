@@ -17,11 +17,17 @@ import (
 
 type MountPoint struct {
 
+	// copy data
+	CopyData bool `json:"CopyData,omitempty"`
+
 	// destination
 	Destination string `json:"Destination,omitempty"`
 
 	// driver
 	Driver string `json:"Driver,omitempty"`
+
+	// ID
+	ID string `json:"ID,omitempty"`
 
 	// mode
 	Mode string `json:"Mode,omitempty"`
@@ -29,11 +35,17 @@ type MountPoint struct {
 	// name
 	Name string `json:"Name,omitempty"`
 
+	// named
+	Named bool `json:"Named,omitempty"`
+
 	// propagation
 	Propagation string `json:"Propagation,omitempty"`
 
 	// r w
 	RW bool `json:"RW,omitempty"`
+
+	// replace
+	Replace string `json:"Replace,omitempty"`
 
 	// source
 	Source string `json:"Source,omitempty"`
@@ -42,17 +54,25 @@ type MountPoint struct {
 	Type string `json:"Type,omitempty"`
 }
 
+/* polymorph MountPoint CopyData false */
+
 /* polymorph MountPoint Destination false */
 
 /* polymorph MountPoint Driver false */
+
+/* polymorph MountPoint ID false */
 
 /* polymorph MountPoint Mode false */
 
 /* polymorph MountPoint Name false */
 
+/* polymorph MountPoint Named false */
+
 /* polymorph MountPoint Propagation false */
 
 /* polymorph MountPoint RW false */
+
+/* polymorph MountPoint Replace false */
 
 /* polymorph MountPoint Source false */
 
