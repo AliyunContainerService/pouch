@@ -327,6 +327,11 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		}
 	}
 
+	container.Mounts = []types.MountPoint{}
+	for _, mp := range meta.Mounts {
+		container.Mounts = append(container.Mounts, *mp)
+	}
+
 	return EncodeResponse(rw, http.StatusOK, container)
 }
 

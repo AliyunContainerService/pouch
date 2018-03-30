@@ -77,7 +77,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.StringVar(&c.utsMode, "uts", "", "UTS namespace to use")
 
-	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container")
+	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")
 
