@@ -135,17 +135,6 @@ func (client *APIClient) ContainerGet(ctx context.Context, name string) (*types.
 	return &container, err
 }
 
-// ContainerRename renames a container.
-func (client *APIClient) ContainerRename(ctx context.Context, id string, name string) error {
-	q := url.Values{}
-	q.Add("name", name)
-
-	resp, err := client.post(ctx, "/containers/"+id+"/rename", q, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
 // ContainerRestart restarts a running container.
 func (client *APIClient) ContainerRestart(ctx context.Context, name string, timeout string) error {
 	q := url.Values{}
