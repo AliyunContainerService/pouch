@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## 0.3.0 (2018-03-30)
+
+### Runtime
+
+* Add plugin framework which supports executing custom code at plugin points
+* Add daemon update API to update pouch daemon's labels, image-proxy and so on
+* Add support set OOM options for container
+
+### Client
+
+* Add info command to print detailed informations of pouch daemon
+* Add restart command for restarting an running container
+* Add resize command for resizing the size of TTY of a container
+* Add upgrade command for upgrading image and resources of a container
+* Add top command to print processes information inner a container
+* Add logs command to print logs of a container
+* Support formatted inspect image, network and volume informations
+
+### Storage
+
+* Add disk quota for rootfs of a container
+
+### Kubernetes
+
+* Sandbox/Container lifecycle management
+* Image management
+* Network management with CNI
+* Container streaming: exec/attach/portforward
+* Container logging
+* Security Context: RunAsUser, Apparmor,Seccomp,Sysctl
+
+### Bugfix
+
+* Fix volume can be removed when is being used by container
+
+### Test
+
+* add mock test for client package
+* add daemon test skeleton
+
 ## 0.2.1 (2018-03-09)
 
 ### Network
