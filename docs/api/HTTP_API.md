@@ -1957,12 +1957,16 @@ A mount point inside a container
 
 |Name|Schema|
 |---|---|
+|**CopyData**  <br>*optional*|boolean|
 |**Destination**  <br>*optional*|string|
 |**Driver**  <br>*optional*|string|
+|**ID**  <br>*optional*|string|
 |**Mode**  <br>*optional*|string|
 |**Name**  <br>*optional*|string|
+|**Named**  <br>*optional*|boolean|
 |**Propagation**  <br>*optional*|string|
 |**RW**  <br>*optional*|boolean|
+|**Replace**  <br>*optional*|string|
 |**Source**  <br>*optional*|string|
 |**Type**  <br>*optional*|string|
 

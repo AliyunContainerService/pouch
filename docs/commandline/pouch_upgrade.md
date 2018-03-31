@@ -70,7 +70,7 @@ test1
   -t, --tty                          Allocate a pseudo-TTY
   -u, --user string                  UID
       --uts string                   UTS namespace to use
-  -v, --volume strings               Bind mount volumes to container
+  -v, --volume strings               Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared"
   -w, --workdir string               Set the working directory in a container
 ```
 
