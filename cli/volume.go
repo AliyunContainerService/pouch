@@ -210,7 +210,7 @@ Removed: pouch-volume`
 }
 
 // volumeInspectDescription is used to describe volume inspect command in detail and auto generate command doc.
-var volumeInspectDescription = "Inspect a volume in pouchd. " +
+var volumeInspectDescription = "Inspect one or more volumes in pouchd. " +
 	"It must specify volume's name."
 
 // VolumeInspectCommand is used to implement 'volume inspect' command.
@@ -223,8 +223,8 @@ type VolumeInspectCommand struct {
 func (v *VolumeInspectCommand) Init(c *Cli) {
 	v.cli = c
 	v.cmd = &cobra.Command{
-		Use:   "inspect [OPTIONS] NAME",
-		Short: "Inspect a pouch volume",
+		Use:   "inspect [OPTIONS] Volume [Volume...]",
+		Short: "Inspect one or more pouch volumes",
 		Long:  volumeInspectDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -255,11 +255,20 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.
 func volumeInspectExample() string {
 	return `$ pouch volume inspect pouch-volume
-Mountpoint:   /mnt/local/pouch-volume
-Name:         pouch-volume
-Scope:
-CreatedAt:    2018-1-17 14:09:30
-Driver:       local`
+{
+    "CreatedAt": "2018-4-2 14:33:45",
+    "Driver": "local",
+    "Labels": {
+        "backend": "local",
+        "hostname": "ubuntu"
+    },
+    "Mountpoint": "/mnt/local/pouch-volume",
+    "Name": "pouch-volume",
+    "Status": {
+        "sifter": "Default",
+        "size": "10g"
+    }
+}`
 }
 
 // volumeListDescription is used to describe volume list command in detail and auto generate command doc.
