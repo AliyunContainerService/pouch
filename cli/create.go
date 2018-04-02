@@ -68,12 +68,12 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	if len(result.Warnings) != 0 {
 		fmt.Printf("WARNING: %s \n", strings.Join(result.Warnings, "\n"))
 	}
-	fmt.Printf("container ID: %s, name: %s \n", result.ID, result.Name)
+	fmt.Printf(result.ID)
 	return nil
 }
 
 // createExample shows examples in create command, and is used in auto-generated cli docs.
 func createExample() string {
 	return `$ pouch create --name foo busybox:latest
-container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, name: foo`
+e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9`
 }
