@@ -25,6 +25,7 @@ func (suite *APIVersionSuite) SetUpTest(c *check.C) {
 }
 
 // TestNoVersionParamsInURL test api url not contains version info.
+// Pouch api url support with or without version info.
 func (suite *APIVersionSuite) TestNoVersionParamsInURL(c *check.C) {
 	cname := "TestCreateURLNoVersionInfo"
 
@@ -55,5 +56,5 @@ func (suite *APIVersionSuite) TestNoVersionParamsInURL(c *check.C) {
 	resp, err := apiClient.HTTPCli.Do(req)
 	c.Assert(err, check.IsNil)
 
-	CheckRespStatus(c, resp, 404)
+	CheckRespStatus(c, resp, 201)
 }
