@@ -3,45 +3,34 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
-
-	"github.com/alibaba/pouch/apis/types"
 )
 
-func TestSystemVersionError(t *testing.T) {
+func TestSystemPingError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.SystemVersion(context.Background())
+	_, err := client.SystemPing(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
-func TestSystemVersion(t *testing.T) {
-	expectedURL := "/version"
+func TestSystemPing(t *testing.T) {
+	expectedURL := "/_ping"
 
 	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
 			return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
-		version := types.SystemVersion{
-			GoVersion:  "go_version",
-			APIVersion: "API_version",
-		}
-		b, err := json.Marshal(version)
-		if err != nil {
-			return nil, err
-		}
 
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(b))),
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
 		}, nil
 	})
 
@@ -49,7 +38,7 @@ func TestSystemVersion(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	if _, err := client.SystemVersion(context.Background()); err != nil {
+	if _, err := client.SystemPing(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 }
