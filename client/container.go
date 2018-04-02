@@ -121,20 +121,6 @@ func (client *APIClient) ContainerStartExec(ctx context.Context, execid string, 
 	return client.hijack(ctx, "/exec/"+execid+"/start", url.Values{}, config, header)
 }
 
-// ContainerGet returns the detailed information of container.
-func (client *APIClient) ContainerGet(ctx context.Context, name string) (*types.ContainerJSON, error) {
-	resp, err := client.get(ctx, "/containers/"+name+"/json", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	container := types.ContainerJSON{}
-	err = decodeBody(&container, resp.Body)
-	ensureCloseReader(resp)
-
-	return &container, err
-}
-
 // ContainerRestart restarts a running container.
 func (client *APIClient) ContainerRestart(ctx context.Context, name string, timeout string) error {
 	q := url.Values{}
