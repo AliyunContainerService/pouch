@@ -67,9 +67,11 @@ func TestVolumeCreate(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	if volume, err := client.VolumeCreate(context.Background(), &types.VolumeCreateConfig{}); err != nil {
+	volume, err := client.VolumeCreate(context.Background(), &types.VolumeCreateConfig{})
+	if err != nil {
 		t.Fatal(err)
-		assert.Equal(t, volume.Name, "volume-1")
-		assert.Equal(t, volume.Driver, "local")
 	}
+	assert.Equal(t, volume.Name, "volume-1")
+	assert.Equal(t, volume.Driver, "local")
+
 }
