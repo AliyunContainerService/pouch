@@ -424,8 +424,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
-			// TODO: maybe we should ditinguish cmd and entrypoint more clearly.
-			Cmd:        config.Command,
+			Cmd:        append(config.Command, config.Args...),
 			Env:        generateEnvList(config.GetEnvs()),
 			Image:      image,
 			WorkingDir: config.WorkingDir,
