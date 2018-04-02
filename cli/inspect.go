@@ -27,7 +27,7 @@ func (p *InspectCommand) Init(c *Cli) {
 		Long:  inspectDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return inspect.MultiInspect(args, p.runInspect)
+			return p.runInspect(args)
 		},
 		Example: inspectExample(),
 	}
@@ -43,13 +43,12 @@ func (p *InspectCommand) addFlags() {
 func (p *InspectCommand) runInspect(args []string) error {
 	ctx := context.Background()
 	apiClient := p.cli.Client()
-	name := args[0]
 
 	getRefFunc := func(ref string) (interface{}, error) {
 		return apiClient.ContainerGet(ctx, ref)
 	}
 
-	return inspect.Inspect(os.Stdout, name, p.format, getRefFunc)
+	return inspect.MultiInspect(os.Stdout, args, p.format, getRefFunc)
 }
 
 // inspectExample shows examples in inspect command, and is used in auto-generated cli docs.

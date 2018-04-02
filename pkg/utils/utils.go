@@ -212,3 +212,22 @@ func DeDuplicate(input []string) []string {
 	}
 	return result
 }
+
+// FormatErrMsgFunc is a function which used by CombineErrors to
+// format error message
+type FormatErrMsgFunc func(idx int, err error) (string, error)
+
+// CombineErrors is a function which used by MultiInspect to merge multiple errors
+// into one error.
+func CombineErrors(errs []error, formatErrMsg FormatErrMsgFunc) error {
+	var errMsgs []string
+	for idx, err := range errs {
+		formattedErrMsg, formatError := formatErrMsg(idx, err)
+		if formatError != nil {
+			return fmt.Errorf("Combine errors error: %s", formatError.Error())
+		}
+		errMsgs = append(errMsgs, formattedErrMsg)
+	}
+	combinedErrMsg := strings.Join(errMsgs, "\n")
+	return errors.New(combinedErrMsg)
+}

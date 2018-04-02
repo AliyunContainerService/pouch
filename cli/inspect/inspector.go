@@ -3,10 +3,12 @@ package inspect
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 	"text/template"
 
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/templates"
 
 	"github.com/pkg/errors"
@@ -62,7 +64,7 @@ func Inspect(out io.Writer, ref string, tmplStr string, getRef GetRefFunc) error
 
 	element, err := getRef(ref)
 	if err != nil {
-		return errors.Errorf("Template parsing error: %v", err)
+		return errors.Errorf("Fetch object error: %v", err)
 	}
 
 	if err := inspector.Inspect(element); err != nil {
@@ -76,23 +78,28 @@ func Inspect(out io.Writer, ref string, tmplStr string, getRef GetRefFunc) error
 	return nil
 }
 
-// RunInspectFunc is a function which used by MultiInspect
-type RunInspectFunc func(args []string) error
-
-// MultiInspect Apply function to every item of ref.
-func MultiInspect(refs []string, inspect RunInspectFunc) error {
-	var inspectErrors []string
+// MultiInspect fetches objects with multiple references.
+func MultiInspect(out io.Writer, refs []string, tmplStr string, getRef GetRefFunc) error {
+	var errs []error
 	for _, ref := range refs {
-		err := inspect([]string{ref})
+		err := Inspect(out, ref, tmplStr, getRef)
 		if err != nil {
-			inspectErrors = append(inspectErrors, err.Error())
+			errs = append(errs, err)
 		}
 	}
-	if len(inspectErrors) == 0 {
+	if len(errs) == 0 {
 		return nil
 	}
 
-	return errors.New(strings.Join(inspectErrors, "Error: "))
+	formatErrMsg := func(idx int, err error) (string, error) {
+		errMsg := err.Error()
+		errMsg = strings.TrimRight(errMsg, "\n")
+		if idx != 0 {
+			errMsg = fmt.Sprintf("Error: %s", errMsg)
+		}
+		return errMsg, nil
+	}
+	return utils.CombineErrors(errs, formatErrMsg)
 }
 
 // Inspect executes the inspect template.

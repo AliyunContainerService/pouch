@@ -1,6 +1,7 @@
 package utils
 
 import (
+	goerrors "errors"
 	"reflect"
 	"testing"
 	"time"
@@ -251,4 +252,30 @@ func TestDeDuplicate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCombineErrors(t *testing.T) {
+	formatErrMsg := func(idx int, err error) (string, error) {
+		return "Error: " + err.Error(), nil
+	}
+	errs := []error{
+		goerrors.New("Fetch object error: No such object: alpine"),
+		goerrors.New("Template parsing error: Can't evaluate field Name"),
+	}
+	combinedErr := CombineErrors(errs, formatErrMsg)
+	expectedErrMsg := "Error: Fetch object error: No such object: alpine\n" +
+		"Error: Template parsing error: Can't evaluate field Name"
+	if combinedErr.Error() != expectedErrMsg {
+		t.Errorf("get error: expected: \n%s, but was: \n%s", expectedErrMsg, combinedErr)
+	}
+
+	formatErrMsg = func(idx int, err error) (string, error) {
+		return "", goerrors.New("Error: failed to format error message")
+	}
+	combinedErr = CombineErrors(errs, formatErrMsg)
+	expectedErrMsg = "Combine errors error: Error: failed to format error message"
+	if combinedErr.Error() != expectedErrMsg {
+		t.Errorf("get error: expected: %s, but was: %s", expectedErrMsg, combinedErr)
+	}
+
 }
