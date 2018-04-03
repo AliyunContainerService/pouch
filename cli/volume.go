@@ -269,6 +269,9 @@ var volumeListDescription = "List volumes in pouchd. " +
 // VolumeListCommand is used to implement 'volume rm' command.
 type VolumeListCommand struct {
 	baseCommand
+
+	size       bool
+	mountPoint bool
 }
 
 // Init initializes VolumeListCommand command.
@@ -289,7 +292,11 @@ func (v *VolumeListCommand) Init(c *Cli) {
 }
 
 // addFlags adds flags for specific command.
-func (v *VolumeListCommand) addFlags() {}
+func (v *VolumeListCommand) addFlags() {
+	flagSet := v.cmd.Flags()
+	flagSet.BoolVar(&v.size, "size", false, "Display volume size")
+	flagSet.BoolVar(&v.mountPoint, "mountpoint", false, "Display volume mountpoint")
+}
 
 // runVolumeList is the entry of VolumeListCommand command.
 func (v *VolumeListCommand) runVolumeList(args []string) error {
@@ -304,10 +311,28 @@ func (v *VolumeListCommand) runVolumeList(args []string) error {
 	}
 
 	display := v.cli.NewTableDisplay()
-	display.AddRow([]string{"Name:"})
+	displayHead := []string{"DRIVER", "VOLUME NAME"}
+	if v.size {
+		displayHead = append(displayHead, "SIZE")
+	}
+	if v.mountPoint {
+		displayHead = append(displayHead, "MOUNT POINT")
+	}
+	display.AddRow(displayHead)
 
-	for _, v := range volumeList.Volumes {
-		display.AddRow([]string{v.Name})
+	for _, volume := range volumeList.Volumes {
+		displayLine := []string{volume.Driver, volume.Name}
+		if v.size {
+			if s, ok := volume.Status["size"]; ok {
+				displayLine = append(displayLine, s.(string))
+			} else {
+				displayLine = append(displayLine, "ulimit")
+			}
+		}
+		if v.mountPoint {
+			displayLine = append(displayLine, volume.Mountpoint)
+		}
+		display.AddRow(displayLine)
 	}
 
 	display.Flush()
@@ -318,8 +343,8 @@ func (v *VolumeListCommand) runVolumeList(args []string) error {
 // volumeListExample shows examples in volume list command, and is used in auto-generated cli docs.
 func volumeListExample() string {
 	return `$ pouch volume list
-Name:
-pouch-volume-1
-pouch-volume-2
-pouch-volume-3`
+DRIVER   VOLUME NAME
+local    pouch-volume-1
+local    pouch-volume-2
+local    pouch-volume-3`
 }

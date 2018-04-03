@@ -79,7 +79,7 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 		Name:       volume.Name,
 		Driver:     volume.Driver(),
 		Mountpoint: volume.Path(),
-		CreatedAt:  volume.CreationTimestamp.Format("2006-1-2 15:04:05"),
+		CreatedAt:  volume.CreateTime(),
 		Labels:     volume.Labels,
 	}
 
@@ -100,12 +100,12 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
-	v, err := s.VolumeMgr.Get(ctx, name)
+	volume, err := s.VolumeMgr.Get(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	ref := v.Option("ref")
+	ref := volume.Option("ref")
 	if ref != "" {
 		return fmt.Errorf("failed to remove volume: %s, using by: %s", name, ref)
 	}
@@ -124,8 +124,27 @@ func (s *Server) listVolume(ctx context.Context, rw http.ResponseWriter, req *ht
 	}
 
 	respVolumes := types.VolumeListResp{Volumes: []*types.VolumeInfo{}, Warnings: nil}
-	for _, name := range volumes {
-		respVolumes.Volumes = append(respVolumes.Volumes, &types.VolumeInfo{Name: name})
+	for _, volume := range volumes {
+		respVolume := &types.VolumeInfo{
+			Name:       volume.Name,
+			Driver:     volume.Driver(),
+			Mountpoint: volume.Path(),
+			CreatedAt:  volume.CreateTime(),
+			Labels:     volume.Labels,
+		}
+
+		var status map[string]interface{}
+		for k, v := range volume.Options() {
+			if k != "" && v != "" {
+				if status == nil {
+					status = make(map[string]interface{})
+				}
+				status[k] = v
+			}
+		}
+		respVolume.Status = status
+
+		respVolumes.Volumes = append(respVolumes.Volumes, respVolume)
 	}
 	return EncodeResponse(rw, http.StatusOK, respVolumes)
 }

@@ -191,6 +191,15 @@ func (v *Volume) Key() string {
 	return v.Name
 }
 
+//CreateTime returns the volume's create time.
+func (v *Volume) CreateTime() string {
+	if v.CreationTimestamp == nil {
+		return ""
+	}
+
+	return v.CreationTimestamp.Format("2006-1-2 15:04:05")
+}
+
 // VolumeID use to define the volume's identity.
 type VolumeID struct {
 	Name      string

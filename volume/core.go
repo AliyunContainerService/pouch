@@ -187,6 +187,42 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 	return nil
 }
 
+// ListVolumes return all volumes.
+// Param 'labels' use to filter the volumes, only return those you want.
+func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
+	var ls = make([]*types.Volume, 0)
+
+	// first, list local meta store.
+	list, err := c.store.List()
+	if err != nil {
+		return nil, err
+	}
+
+	// then, list central store.
+	if c.EnableControl {
+		url, err := c.listVolumeURL(labels)
+		if err != nil {
+			return nil, errors.Wrap(err, "List volume's name")
+		}
+
+		logrus.Debugf("List volume URL: %s, labels: %s", url, labels)
+
+		if err := client.New().ListKeys(url, &ls); err != nil {
+			return nil, errors.Wrap(err, "List volume's name")
+		}
+	}
+
+	for _, obj := range list {
+		v, ok := obj.(*types.Volume)
+		if !ok {
+			return nil, fmt.Errorf("failed to get volumes in store")
+		}
+		ls = append(ls, v)
+	}
+
+	return ls, nil
+}
+
 // ListVolumeName return the name of all volumes only.
 // Param 'labels' use to filter the volume's names, only return those you want.
 func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
@@ -205,7 +241,7 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 			return nil, errors.Wrap(err, "List volume's name")
 		}
 
-		logrus.Debugf("List volume URL: %s, labels: %s", url, labels)
+		logrus.Debugf("List volume name URL: %s, labels: %s", url, labels)
 
 		if err := client.New().ListKeys(url, &names); err != nil {
 			return nil, errors.Wrap(err, "List volume's name")
