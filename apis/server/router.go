@@ -74,6 +74,7 @@ func initRoute(s *Server) http.Handler {
 
 	// metrics
 	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
+	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 
 	if s.Config.Debug {
 		profilerSetup(r)
@@ -83,6 +84,7 @@ func initRoute(s *Server) http.Handler {
 
 func addRoute(r *mux.Router, mothod string, path string, f func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error) {
 	r.Path(versionMatcher + path).Methods(mothod).Handler(filter(f))
+	r.Path(path).Methods(mothod).Handler(filter(f))
 }
 
 func profilerSetup(mainRouter *mux.Router) {
