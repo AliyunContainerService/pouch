@@ -200,7 +200,6 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	endpointName := containerID[:8]
 	ep, err := n.CreateEndpoint(endpointName, epOptions...)
 	if err != nil {
-		logrus.Errorf("failed to create endpoint, err: %v", err)
 		return "", err
 	}
 
@@ -209,14 +208,12 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	if sb == nil {
 		sandboxOptions, err := nm.sandboxOptions(endpoint)
 		if err != nil {
-			logrus.Errorf("failed to build sandbox options, err: %v", err)
-			return "", err
+			return "", fmt.Errorf("failed to build sandbox options: %v", err)
 		}
 
 		sb, err = nm.controller.NewSandbox(containerID, sandboxOptions...)
 		if err != nil {
-			logrus.Errorf("failed to create sandbox, err: %v", err)
-			return "", err
+			return "", fmt.Errorf("failed to create sandbox: %v", err)
 		}
 	}
 	networkConfig.SandboxID = sb.ID()
@@ -228,8 +225,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		return "", err
 	}
 	if err := ep.Join(sb, joinOptions...); err != nil {
-		logrus.Errorf("failed to join sandbox, err: %v", err)
-		return "", err
+		return "", fmt.Errorf("failed to join sandbox: %v", err)
 	}
 
 	// update endpoint settings
