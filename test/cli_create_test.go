@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"runtime"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -409,4 +411,26 @@ func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 	}
 	c.Assert(result.HostConfig.OomScoreAdj, check.Equals, int64(100))
 	c.Assert(*result.HostConfig.OomKillDisable, check.Equals, true)
+}
+
+// TestCreateWithAnnotation tests creating container with annotation.
+func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
+	cname := "TestCreateWithAnnotation"
+	command.PouchRun("create", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// kv in map not in order.
+	var annotationSlice []string
+	for k, v := range result.Config.SpecAnnotation {
+		annotationSlice = append(annotationSlice, fmt.Sprintf("%s=%s", k, v))
+	}
+	annotationStr := strings.Join(annotationSlice, " ")
+
+	c.Assert(util.PartialEqual(annotationStr, "a=b"), check.IsNil)
+	c.Assert(util.PartialEqual(annotationStr, "foo=bar"), check.IsNil)
 }

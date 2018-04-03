@@ -1751,6 +1751,11 @@ definitions:
         x-nullable: true
         additionalProperties:
           type: "string"
+      SpecAnnotation:
+        description: "annotations send to runtime spec."
+        type: "object"
+        additionalProperties:
+          type: "string"
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"

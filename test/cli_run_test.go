@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -788,4 +789,26 @@ func (suite *PouchRunSuite) TestRunWithDiskQuota(c *check.C) {
 	}
 
 	c.Assert(found, check.Equals, true)
+}
+
+// TestRunWithAnnotation is to verify the valid running container with annotation, and verify SpecAnnotation filed has been in inspect output.
+func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
+	cname := "TestRunWithAnnotation"
+	command.PouchRun("run", "-d", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := &types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// kv in map not in order.
+	var annotationSlice []string
+	for k, v := range result.Config.SpecAnnotation {
+		annotationSlice = append(annotationSlice, fmt.Sprintf("%s=%s", k, v))
+	}
+	annotationStr := strings.Join(annotationSlice, " ")
+
+	c.Assert(util.PartialEqual(annotationStr, "a=b"), check.IsNil)
+	c.Assert(util.PartialEqual(annotationStr, "foo=bar"), check.IsNil)
 }
