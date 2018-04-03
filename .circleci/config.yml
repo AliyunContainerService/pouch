@@ -54,6 +54,9 @@ jobs:
       - run:
           name: unit test
           command: make unit-test
+      - run:
+          name: upload code coverage report
+          command: bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
