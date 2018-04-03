@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alibaba/pouch/pkg/runconfig"
+	"github.com/alibaba/pouch/pkg/opts"
 
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
@@ -109,7 +109,7 @@ func setupDevices(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) e
 		}
 	} else {
 		for _, deviceMapping := range meta.HostConfig.Devices {
-			if !runconfig.ValidDeviceMode(deviceMapping.CgroupPermissions) {
+			if !opts.ValidateDeviceMode(deviceMapping.CgroupPermissions) {
 				return fmt.Errorf("%s invalid device mode: %s", deviceMapping.PathOnHost, deviceMapping.CgroupPermissions)
 			}
 			d, dPermissions, err := devicesFromPath(deviceMapping.PathOnHost, deviceMapping.PathInContainer, deviceMapping.CgroupPermissions)
