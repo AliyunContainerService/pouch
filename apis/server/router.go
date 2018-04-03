@@ -24,54 +24,54 @@ func initRoute(s *Server) http.Handler {
 	r := mux.NewRouter()
 
 	// system
-	addRoute(r, http.MethodGet, "/_ping", s.ping)
-	addRoute(r, http.MethodGet, "/info", s.info)
-	addRoute(r, http.MethodGet, "/version", s.version)
-	addRoute(r, http.MethodPost, "/auth", s.auth)
+	s.addRoute(r, http.MethodGet, "/_ping", s.ping)
+	s.addRoute(r, http.MethodGet, "/info", s.info)
+	s.addRoute(r, http.MethodGet, "/version", s.version)
+	s.addRoute(r, http.MethodPost, "/auth", s.auth)
 
 	// daemon, we still list this API into system manager.
-	addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)
+	s.addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)
 
 	// container
-	addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/start", s.startContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/stop", s.stopContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/attach", s.attachContainer)
-	addRoute(r, http.MethodGet, "/containers/json", s.getContainers)
-	addRoute(r, http.MethodGet, "/containers/{name:.*}/json", s.getContainer)
-	addRoute(r, http.MethodDelete, "/containers/{name:.*}", s.removeContainers)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/exec", s.createContainerExec)
-	addRoute(r, http.MethodPost, "/exec/{name:.*}/start", s.startContainerExec)
-	addRoute(r, http.MethodGet, "/exec/{name:.*}/json", s.getExecInfo)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/rename", s.renameContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/pause", s.pauseContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/unpause", s.unpauseContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/update", s.updateContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
-	addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
-	addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", s.logsContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
-	addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
+	s.addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/start", s.startContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/stop", s.stopContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/attach", s.attachContainer)
+	s.addRoute(r, http.MethodGet, "/containers/json", s.getContainers)
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/json", s.getContainer)
+	s.addRoute(r, http.MethodDelete, "/containers/{name:.*}", s.removeContainers)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/exec", s.createContainerExec)
+	s.addRoute(r, http.MethodGet, "/exec/{name:.*}/json", s.getExecInfo)
+	s.addRoute(r, http.MethodPost, "/exec/{name:.*}/start", s.startContainerExec)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/rename", s.renameContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/pause", s.pauseContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/unpause", s.unpauseContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/update", s.updateContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", s.logsContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
 
 	// image
-	addRoute(r, http.MethodPost, "/images/create", s.pullImage)
-	addRoute(r, http.MethodPost, "/images/search", s.searchImages)
-	addRoute(r, http.MethodGet, "/images/json", s.listImages)
-	addRoute(r, http.MethodDelete, "/images/{name:.*}", s.removeImage)
-	addRoute(r, http.MethodGet, "/images/{name:.*}/json", s.getImage)
+	s.addRoute(r, http.MethodPost, "/images/create", s.pullImage)
+	s.addRoute(r, http.MethodPost, "/images/search", s.searchImages)
+	s.addRoute(r, http.MethodGet, "/images/json", s.listImages)
+	s.addRoute(r, http.MethodDelete, "/images/{name:.*}", s.removeImage)
+	s.addRoute(r, http.MethodGet, "/images/{name:.*}/json", s.getImage)
 
 	// volume
-	addRoute(r, http.MethodGet, "/volumes", s.listVolume)
-	addRoute(r, http.MethodPost, "/volumes/create", s.createVolume)
-	addRoute(r, http.MethodGet, "/volumes/{name:.*}", s.getVolume)
-	addRoute(r, http.MethodDelete, "/volumes/{name:.*}", s.removeVolume)
+	s.addRoute(r, http.MethodGet, "/volumes", s.listVolume)
+	s.addRoute(r, http.MethodPost, "/volumes/create", s.createVolume)
+	s.addRoute(r, http.MethodGet, "/volumes/{name:.*}", s.getVolume)
+	s.addRoute(r, http.MethodDelete, "/volumes/{name:.*}", s.removeVolume)
 
 	// network
-	addRoute(r, http.MethodGet, "/networks", s.listNetwork)
-	addRoute(r, http.MethodPost, "/networks/create", s.createNetwork)
-	addRoute(r, http.MethodGet, "/networks/{name:.*}", s.getNetwork)
-	addRoute(r, http.MethodDelete, "/networks/{name:.*}", s.deleteNetwork)
+	s.addRoute(r, http.MethodGet, "/networks", s.listNetwork)
+	s.addRoute(r, http.MethodPost, "/networks/create", s.createNetwork)
+	s.addRoute(r, http.MethodGet, "/networks/{name:.*}", s.getNetwork)
+	s.addRoute(r, http.MethodDelete, "/networks/{name:.*}", s.deleteNetwork)
 
 	// metrics
 	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
@@ -83,9 +83,9 @@ func initRoute(s *Server) http.Handler {
 	return r
 }
 
-func addRoute(r *mux.Router, mothod string, path string, f func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error) {
-	r.Path(versionMatcher + path).Methods(mothod).Handler(filter(f))
-	r.Path(path).Methods(mothod).Handler(filter(f))
+func (s *Server) addRoute(r *mux.Router, mothod string, path string, f func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error) {
+	r.Path(versionMatcher + path).Methods(mothod).Handler(filter(f, s))
+	r.Path(path).Methods(mothod).Handler(filter(f, s))
 }
 
 func profilerSetup(mainRouter *mux.Router) {
@@ -103,12 +103,23 @@ func profilerSetup(mainRouter *mux.Router) {
 
 type handler func(context.Context, http.ResponseWriter, *http.Request) error
 
-func filter(handler handler) http.HandlerFunc {
+func filter(handler handler, s *Server) http.HandlerFunc {
 	pctx := context.Background()
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(pctx)
 		defer cancel()
+
+		s.lock.RLock()
+		if len(s.ManagerWhiteList) > 0 && req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
+			if _, isManager := s.ManagerWhiteList[req.TLS.PeerCertificates[0].Subject.CommonName]; !isManager {
+				s.lock.RUnlock()
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte("tls verified error."))
+				return
+			}
+		}
+		s.lock.RUnlock()
 
 		t := time.Now()
 		clientInfo := req.RemoteAddr
