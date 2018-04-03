@@ -63,25 +63,6 @@ func (client *APIClient) ContainerRemove(ctx context.Context, name string, force
 	return nil
 }
 
-// ContainerList returns the list of containers.
-func (client *APIClient) ContainerList(ctx context.Context, all bool) ([]*types.Container, error) {
-	q := url.Values{}
-	if all {
-		q.Set("all", "true")
-	}
-
-	resp, err := client.get(ctx, "/containers/json", q, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	containers := []*types.Container{}
-	err = decodeBody(&containers, resp.Body)
-	ensureCloseReader(resp)
-
-	return containers, err
-}
-
 // ContainerAttach attach a container
 func (client *APIClient) ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error) {
 	q := url.Values{}
