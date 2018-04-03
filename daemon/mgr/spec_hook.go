@@ -10,6 +10,19 @@ import (
 
 //setup hooks specified by user via plugins, if set rich mode and init-script exists set init-script
 func setupHook(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	// if no init script specified and no hook plugin setup, skip it
+	if (!c.Config.Rich || c.Config.InitScript == "") && len(spec.argsArr) == 0 {
+		return nil
+	}
+
+	if spec.s.Hooks == nil {
+		spec.s.Hooks = &specs.Hooks{}
+	}
+
+	if spec.s.Hooks.Prestart == nil {
+		spec.s.Hooks.Prestart = []specs.Hook{}
+	}
+
 	if len(spec.argsArr) > 0 {
 		var hookArr []*wrapperEmbedPrestart
 		for i, hook := range spec.s.Hooks.Prestart {
@@ -25,21 +38,9 @@ func setupHook(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
 		spec.s.Hooks.Prestart = sortedArr.toOciPrestartHook()
 	}
 
-	if !c.Config.Rich || c.Config.InitScript == "" {
-		return nil
-	}
-
 	args := strings.Fields(c.Config.InitScript)
 	if len(args) == 0 {
 		return nil
-	}
-
-	if spec.s.Hooks == nil {
-		spec.s.Hooks = &specs.Hooks{}
-	}
-
-	if spec.s.Hooks.Prestart == nil {
-		spec.s.Hooks.Prestart = []specs.Hook{}
 	}
 
 	preStartHook := specs.Hook{
