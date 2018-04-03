@@ -95,12 +95,12 @@ uninstall:
 # Ref https://unix.stackexchange.com/questions/83191/how-to-make-sudo-preserve-path
 .PHONY: integration-test
 integration-test:
-	@bash -c "env PATH=$(PATH) hack/make.sh check build integration-test"
+	@bash -c "env PATH=$(PATH) hack/make.sh pre build integration-test"
 
 .PHONY: cri-test
 cri-test:
-	@bash -c "env PATH=$(PATH) hack/make.sh check build cri-test"
+	@bash -c "env PATH=$(PATH) hack/make.sh pre build cri-test"
 
 .PHONY: test
 test:
-	@bash -c "env PATH=$(PATH) hack/make.sh check build unit-test integration-test cri-test"
+	@bash -c "env PATH=$(PATH) hack/make.sh build integration-test cri-test"
