@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
+	"github.com/stretchr/testify/assert"
 )
 
 // PouchCreateSuite is the test suite for create CLI.
@@ -39,9 +40,6 @@ func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 	res := command.PouchRun("create", "--name", name, busyboxImage)
 
 	res.Assert(c, icmd.Success)
-	if out := res.Combined(); !strings.Contains(out, name) {
-		c.Fatalf("unexpected output %s expected %s\n", out, name)
-	}
 
 	defer DelContainerForceMultyTime(c, name)
 }
@@ -57,9 +55,7 @@ func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
 	res = command.PouchRun("create", "--name", name, imageID)
 
 	res.Assert(c, icmd.Success)
-	if out := res.Combined(); !strings.Contains(out, name) {
-		c.Fatalf("unexpected output %s expected %s\n", out, name)
-	}
+	assert.Equal(c, len(res.Combined()), 64)
 
 	DelContainerForceMultyTime(c, name)
 }
