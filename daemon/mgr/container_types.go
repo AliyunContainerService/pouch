@@ -171,11 +171,13 @@ func (meta *ContainerMeta) merge(getconfig func() (v1.ImageConfig, error)) error
 		return err
 	}
 
+	// If user specify the Entrypoint, no need to merge image's configuration.
+	// Otherwise use the image's configuration to fill it.
 	if len(meta.Config.Entrypoint) == 0 {
+		if len(meta.Config.Cmd) == 0 {
+			meta.Config.Cmd = config.Cmd
+		}
 		meta.Config.Entrypoint = config.Entrypoint
-	}
-	if len(meta.Config.Cmd) == 0 {
-		meta.Config.Cmd = config.Cmd
 	}
 	if meta.Config.Env == nil {
 		meta.Config.Env = config.Env
