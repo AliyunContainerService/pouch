@@ -1,24 +1,33 @@
 ## pouch volume inspect
 
-Inspect a pouch volume
+Inspect one or more pouch volumes
 
 ### Synopsis
 
-Inspect a volume in pouchd. It must specify volume's name.
+Inspect one or more volumes in pouchd. It must specify volume's name.
 
 ```
-pouch volume inspect [OPTIONS] NAME
+pouch volume inspect [OPTIONS] Volume [Volume...]
 ```
 
 ### Examples
 
 ```
 $ pouch volume inspect pouch-volume
-Mountpoint:   /mnt/local/pouch-volume
-Name:         pouch-volume
-Scope:
-CreatedAt:    2018-1-17 14:09:30
-Driver:       local
+{
+    "CreatedAt": "2018-4-2 14:33:45",
+    "Driver": "local",
+    "Labels": {
+        "backend": "local",
+        "hostname": "ubuntu"
+    },
+    "Mountpoint": "/mnt/local/pouch-volume",
+    "Name": "pouch-volume",
+    "Status": {
+        "sifter": "Default",
+        "size": "10g"
+    }
+}
 ```
 
 ### Options
