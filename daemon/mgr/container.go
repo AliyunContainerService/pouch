@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -435,6 +438,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// parse volume config
 	if err := mgr.parseBinds(ctx, meta); err != nil {
 		return nil, errors.Wrap(err, "failed to parse volume argument")
+	}
+
+	// set mount point disk quota
+	if err := mgr.setMountPointDiskQuota(ctx, meta); err != nil {
+		return nil, errors.Wrap(err, "failed to set mount point disk quota")
 	}
 
 	// set container basefs
@@ -1484,6 +1492,60 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 
 		meta.Mounts = append(meta.Mounts, mp)
 	}
+
+	return nil
+}
+
+func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *ContainerMeta) error {
+	qid := 0
+	if c.Config.QuotaID != "" {
+		var err error
+		qid, err = strconv.Atoi(c.Config.QuotaID)
+		if err != nil {
+			return errors.Wrapf(err, "invalid argument, QuotaID: %s", c.Config.QuotaID)
+		}
+	}
+
+	// parse diskquota regexe
+	quotas := c.Config.DiskQuota
+	res := make([]*quota.RegExp, 0)
+	for path, size := range quotas {
+		re := regexp.MustCompile(path)
+		res = append(res, &quota.RegExp{re, path, size})
+	}
+
+	for _, mp := range c.Mounts {
+		// skip volume mount or replace mode mount
+		if mp.Name != "" || mp.Replace != "" || mp.Source == "" || mp.Destination == "" {
+			continue
+		}
+
+		// skip non-directory path.
+		if fd, err := os.Stat(mp.Source); err != nil || !fd.IsDir() {
+			continue
+		}
+
+		matched := false
+		for _, re := range res {
+			findStr := re.Pattern.FindString(mp.Destination)
+			if findStr == mp.Destination {
+				quotas[mp.Destination] = re.Size
+				matched = true
+				if re.Path != ".*" {
+					break
+				}
+			}
+		}
+
+		if matched {
+			err := quota.SetDiskQuota(mp.Source, quotas[mp.Destination], uint32(qid))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	c.Config.DiskQuota = quotas
 
 	return nil
 }

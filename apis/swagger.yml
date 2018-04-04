@@ -1784,6 +1784,9 @@ definitions:
         type: "object"
         additionalProperties:
           type: "string"
+      QuotaID:
+        type: "string"
+        description: "set disk quota by specified quota id"
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"

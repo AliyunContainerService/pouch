@@ -337,7 +337,7 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 		"-p", "9999:80",
 		image).Assert(c, icmd.Success)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(10 * time.Second)
 	err := icmd.RunCommand("curl", "localhost:9999").Compare(expct)
 	c.Assert(err, check.IsNil)
 
