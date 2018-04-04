@@ -14,7 +14,7 @@ pouch create [OPTIONS] IMAGE [ARG...]
 
 ```
 $ pouch create --name foo busybox:latest
-container ID: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9, name: foo
+e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
 ```
 
 ### Options

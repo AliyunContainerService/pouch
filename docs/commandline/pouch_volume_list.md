@@ -14,16 +14,18 @@ pouch volume list
 
 ```
 $ pouch volume list
-Name:
-pouch-volume-1
-pouch-volume-2
-pouch-volume-3
+DRIVER   VOLUME NAME
+local    pouch-volume-1
+local    pouch-volume-2
+local    pouch-volume-3
 ```
 
 ### Options
 
 ```
-  -h, --help   help for list
+  -h, --help         help for list
+      --mountpoint   Display volume mountpoint
+      --size         Display volume size
 ```
 
 ### Options inherited from parent commands
