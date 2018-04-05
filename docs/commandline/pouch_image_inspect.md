@@ -1,13 +1,13 @@
 ## pouch image inspect
 
-Display detailed information on one image
+Display detailed information on one or more images
 
 ### Synopsis
 
 Return detailed information on Pouch image
 
 ```
-pouch image inspect [OPTIONS] IMAGE
+pouch image inspect [OPTIONS] IMAGE [IMAGE...]
 ```
 
 ### Examples
