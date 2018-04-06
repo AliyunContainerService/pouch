@@ -25,5 +25,5 @@ Manage Pouch image
 ### SEE ALSO
 
 * [pouch](pouch.md)	 - An efficient container engine
-* [pouch image inspect](pouch_image_inspect.md)	 - Display detailed information on one image
+* [pouch image inspect](pouch_image_inspect.md)	 - Display detailed information on one or more images
 

@@ -1,13 +1,13 @@
 ## pouch network inspect
 
-Inspect a pouch network
+Inspect one or more pouch networks
 
 ### Synopsis
 
 Inspect a network in pouchd. It must specify network's name.
 
 ```
-pouch network inspect [OPTIONS] NAME
+pouch network inspect [OPTIONS] Network [Network...]
 ```
 
 ### Examples
