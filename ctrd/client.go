@@ -2,33 +2,43 @@ package ctrd
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/alibaba/pouch/pkg/scheduler"
 
 	"github.com/containerd/containerd"
-
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-const unixSocketPath = "/run/containerd/containerd.sock"
+const (
+	unixSocketPath                = "/run/containerd/containerd.sock"
+	defaultGrpcClientPoolCapacity = 5
+	defaultMaxStreamsClient       = 100
+)
 
 // Config represents the config used to communicated with containerd.
 type Config struct {
 	Address string
+	// GrpcClientPoolCapacity is the capacity of grpc client pool.
+	GrpcClientPoolCapacity int
+	// MaxStreamsClient records the max number of concurrent streams
+	MaxStreamsClient int
 }
 
 // Client is the client side the daemon holds to communicate with containerd.
 type Client struct {
+	mu sync.RWMutex
 	Config
-	client *containerd.Client
-	watch  *watch
-	lock   *containerLock
+	watch *watch
+	lock  *containerLock
+
+	// containerd grpc pool
+	pool      []scheduler.Factory
+	scheduler scheduler.Scheduler
 
 	hooks []func(string, *Message) error
-
-	// Lease is a new feature of containerd, We use it to avoid that the images
-	// are removed by garbage collection. If no lease is defined, the downloaded images will
-	// be removed automatically when the container is removed.
-	lease *containerd.Lease
 }
 
 // NewClient connect to containerd.
@@ -37,47 +47,69 @@ func NewClient(cfg Config) (APIClient, error) {
 		cfg.Address = unixSocketPath
 	}
 
-	options := []containerd.ClientOpt{
-		containerd.WithDefaultNamespace("default"),
-		// containerd.WithDialOpts([]grpc.DialOption{
-		// 	grpc.WithTimeout(time.Second * 5),
-		// 	grpc.WithInsecure(),
-		// }),
-	}
-	cli, err := containerd.New(cfg.Address, options...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect containerd")
+	if cfg.GrpcClientPoolCapacity <= 0 {
+		cfg.GrpcClientPoolCapacity = defaultGrpcClientPoolCapacity
 	}
 
-	// create a new lease or reuse the existed.
-	var lease containerd.Lease
-
-	leases, err := cli.ListLeases(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	if len(leases) != 0 {
-		lease = leases[0]
-	} else {
-		if lease, err = cli.CreateLease(context.TODO()); err != nil {
-			return nil, err
-		}
+	if cfg.MaxStreamsClient <= 0 {
+		cfg.MaxStreamsClient = defaultMaxStreamsClient
 	}
 
-	logrus.Infof("success to create containerd's client, connect to: %s", cfg.Address)
-
-	return &Client{
+	client := &Client{
 		Config: cfg,
-		client: cli,
-		lease:  &lease,
 		lock: &containerLock{
 			ids: make(map[string]struct{}),
 		},
 		watch: &watch{
 			containers: make(map[string]*containerPack),
-			client:     cli,
 		},
-	}, nil
+	}
+
+	for i := 0; i < cfg.GrpcClientPoolCapacity; i++ {
+		cli, err := newWrapperClient(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create containerd client: %v", err)
+		}
+		client.pool = append(client.pool, cli)
+	}
+
+	logrus.Infof("success to create %d containerd clients, connect to: %s", cfg.GrpcClientPoolCapacity, cfg.Address)
+
+	scheduler, err := scheduler.NewLRUScheduler(client.pool)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create clients pool scheduler")
+	}
+	client.scheduler = scheduler
+
+	return client, nil
+}
+
+// Get will reture an available containerd grpc client,
+// Or occured an error
+func (c *Client) Get(ctx context.Context) (*WrapperClient, error) {
+	start := time.Now()
+
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Scheduler returns Factory interface
+	factory, err := c.scheduler.Schedule(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	wrapperCli, ok := factory.(*WrapperClient)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert Factory interface to *WrapperClient")
+	}
+
+	end := time.Now()
+	elapsed := end.Sub(start)
+	logrus.WithFields(logrus.Fields{
+		"elasped": elapsed,
+	}).Debug("Get a grpc client")
+
+	return wrapperCli, nil
 }
 
 // SetExitHooks specified the handlers of container exit.
@@ -92,10 +124,45 @@ func (c *Client) SetExecExitHooks(hooks ...func(string, *Message) error) {
 
 // Close closes the client.
 func (c *Client) Close() error {
-	return c.client.Close()
+	c.mu.Lock()
+	factories := c.pool
+	c.pool = nil
+	c.mu.Unlock()
+
+	if factories == nil {
+		return nil
+	}
+
+	var (
+		errInfo []string
+		err     error
+	)
+
+	for _, c := range factories {
+		wrapperCli, ok := c.(*WrapperClient)
+		if !ok {
+			errInfo = append(errInfo, "failed to convert Factory interface to *WrapperClient")
+			continue
+		}
+
+		if err := wrapperCli.client.Close(); err != nil {
+			errInfo = append(errInfo, err.Error())
+			continue
+		}
+	}
+
+	if len(errInfo) > 0 {
+		err = fmt.Errorf("failed to close client pool: %s", errInfo)
+	}
+	return err
 }
 
 // Version returns the version of containerd.
 func (c *Client) Version(ctx context.Context) (containerd.Version, error) {
-	return c.client.Version(ctx)
+	cli, err := c.Get(ctx)
+	if err != nil {
+		return containerd.Version{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	return cli.client.Version(ctx)
 }
