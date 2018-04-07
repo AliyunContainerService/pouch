@@ -63,6 +63,7 @@ type container struct {
 	IntelRdtL3Cbm        string
 	diskQuota            []string
 	oomScoreAdj          int64
+	specAnnotation       []string
 
 	cgroupParent string
 
@@ -118,6 +119,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	if err := validateOOMScore(c.oomScoreAdj); err != nil {
+		return nil, err
+	}
+
+	specAnnotation, err := validateAnnotation(c.specAnnotation)
+	if err != nil {
 		return nil, err
 	}
 
@@ -194,18 +200,19 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
-			Tty:          c.tty,
-			Env:          c.env,
-			Entrypoint:   strings.Fields(c.entrypoint),
-			WorkingDir:   c.workdir,
-			User:         c.user,
-			Hostname:     strfmt.Hostname(c.hostname),
-			Labels:       labels,
-			Rich:         c.rich,
-			RichMode:     c.richMode,
-			InitScript:   c.initScript,
-			ExposedPorts: ports,
-			DiskQuota:    diskQuota,
+			Tty:            c.tty,
+			Env:            c.env,
+			Entrypoint:     strings.Fields(c.entrypoint),
+			WorkingDir:     c.workdir,
+			User:           c.user,
+			Hostname:       strfmt.Hostname(c.hostname),
+			Labels:         labels,
+			Rich:           c.rich,
+			RichMode:       c.richMode,
+			InitScript:     c.initScript,
+			ExposedPorts:   ports,
+			DiskQuota:      diskQuota,
+			SpecAnnotation: specAnnotation,
 		},
 
 		HostConfig: &types.HostConfig{
@@ -460,4 +467,20 @@ func validateOOMScore(score int64) error {
 	}
 
 	return nil
+}
+
+// validateAnnotation validates runtime annotations format.
+func validateAnnotation(annotations []string) (map[string]string, error) {
+	specAnnotation := make(map[string]string)
+
+	for _, annotation := range annotations {
+		splits := strings.Split(annotation, "=")
+		if len(splits) != 2 || splits[0] == "" || splits[1] == "" {
+			return nil, fmt.Errorf("invalid format for spec annotation: %s, correct format should be key=value, neither should be nil", annotation)
+		}
+
+		specAnnotation[splits[0]] = splits[1]
+	}
+
+	return specAnnotation, nil
 }

@@ -233,3 +233,14 @@ func (suite *PouchStartSuite) TestStartWithPrivilege(c *check.C) {
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithAnnotation starts a container with annotation.
+func (suite *PouchStartSuite) TestStartWithAnnotation(c *check.C) {
+	name := "start-annotation"
+
+	res := command.PouchRun("create", "--name", name, "--annotation", "a=b", busyboxImage)
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}

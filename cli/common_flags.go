@@ -91,5 +91,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// disk quota
 	flagSet.StringSliceVar(&c.diskQuota, "disk-quota", nil, "Set disk quota for container")
 
+	// additional runtime spec annotations
+	flagSet.StringSliceVar(&c.specAnnotation, "annotation", nil, "Additional annotation for runtime")
+
 	return c
 }

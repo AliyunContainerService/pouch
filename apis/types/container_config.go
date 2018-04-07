@@ -88,6 +88,9 @@ type ContainerConfig struct {
 	// Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.
 	Shell []string `json:"Shell"`
 
+	// annotations send to runtime spec.
+	SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
+
 	// Close `stdin` after one attached client disconnects
 	StdinOnce bool `json:"StdinOnce,omitempty"`
 
@@ -151,6 +154,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig RichMode false */
 
 /* polymorph ContainerConfig Shell false */
+
+/* polymorph ContainerConfig SpecAnnotation false */
 
 /* polymorph ContainerConfig StdinOnce false */
 
