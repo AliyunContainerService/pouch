@@ -37,32 +37,6 @@ func (client *APIClient) ContainerCreate(ctx context.Context, config types.Conta
 	return container, err
 }
 
-// ContainerStop stops a container.
-func (client *APIClient) ContainerStop(ctx context.Context, name string, timeout string) error {
-	q := url.Values{}
-	q.Add("t", timeout)
-
-	resp, err := client.post(ctx, "/containers/"+name+"/stop", q, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
-// ContainerRemove removes a container.
-func (client *APIClient) ContainerRemove(ctx context.Context, name string, force bool) error {
-	q := url.Values{}
-	if force {
-		q.Set("force", "true")
-	}
-
-	resp, err := client.delete(ctx, "/containers/"+name, q, nil)
-	if err != nil {
-		return err
-	}
-	ensureCloseReader(resp)
-	return nil
-}
-
 // ContainerAttach attach a container
 func (client *APIClient) ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error) {
 	q := url.Values{}
