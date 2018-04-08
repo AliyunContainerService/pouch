@@ -10,20 +10,31 @@ import (
 )
 
 type container struct {
-	labels           []string
-	name             string
-	tty              bool
-	volume           []string
-	runtime          string
-	env              []string
-	entrypoint       string
-	workdir          string
-	user             string
-	groupAdd         []string
-	hostname         string
-	cpushare         int64
-	cpusetcpus       string
-	cpusetmems       string
+	labels     []string
+	name       string
+	tty        bool
+	volume     []string
+	runtime    string
+	env        []string
+	entrypoint string
+	workdir    string
+	user       string
+	groupAdd   []string
+	hostname   string
+
+	blkioWeight          uint16
+	blkioWeightDevice    WeightDevice
+	blkioDeviceReadBps   ThrottleBpsDevice
+	blkioDeviceWriteBps  ThrottleBpsDevice
+	blkioDeviceReadIOps  ThrottleIOpsDevice
+	blkioDeviceWriteIOps ThrottleIOpsDevice
+
+	cpushare   int64
+	cpusetcpus string
+	cpusetmems string
+	cpuperiod  int64
+	cpuquota   int64
+
 	memory           string
 	memorySwap       string
 	memorySwappiness int64
@@ -34,33 +45,26 @@ type container struct {
 	scheLatSwitch       int64
 	oomKillDisable      bool
 
-	devices              []string
-	enableLxcfs          bool
-	privileged           bool
-	restartPolicy        string
-	ipcMode              string
-	pidMode              string
-	utsMode              string
-	sysctls              []string
-	networks             []string
-	ports                []string
-	expose               []string
-	publicAll            bool
-	securityOpt          []string
-	capAdd               []string
-	capDrop              []string
-	blkioWeight          uint16
-	blkioWeightDevice    WeightDevice
-	blkioDeviceReadBps   ThrottleBpsDevice
-	blkioDeviceWriteBps  ThrottleBpsDevice
-	blkioDeviceReadIOps  ThrottleIOpsDevice
-	blkioDeviceWriteIOps ThrottleIOpsDevice
-	IntelRdtL3Cbm        string
-	diskQuota            []string
-	oomScoreAdj          int64
-	specAnnotation       []string
-
-	cgroupParent string
+	devices        []string
+	enableLxcfs    bool
+	privileged     bool
+	restartPolicy  string
+	ipcMode        string
+	pidMode        string
+	utsMode        string
+	sysctls        []string
+	networks       []string
+	ports          []string
+	expose         []string
+	publicAll      bool
+	securityOpt    []string
+	capAdd         []string
+	capDrop        []string
+	IntelRdtL3Cbm  string
+	diskQuota      []string
+	oomScoreAdj    int64
+	specAnnotation []string
+	cgroupParent   string
 
 	//add for rich container mode
 	rich       bool
@@ -130,6 +134,14 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	if err := opts.ValidateCPUPeriod(c.cpuperiod); err != nil {
+		return nil, err
+	}
+
+	if err := opts.ValidateCPUQuota(c.cpuquota); err != nil {
+		return nil, err
+	}
+
 	networkingConfig, networkMode, err := opts.ParseNetworks(c.networks)
 	if err != nil {
 		return nil, err
@@ -175,10 +187,14 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Binds:   c.volume,
 			Runtime: c.runtime,
 			Resources: types.Resources{
-				CPUShares:        c.cpushare,
-				CpusetCpus:       c.cpusetcpus,
-				CpusetMems:       c.cpusetmems,
-				Devices:          deviceMappings,
+				// cpu
+				CPUShares:  c.cpushare,
+				CpusetCpus: c.cpusetcpus,
+				CpusetMems: c.cpusetmems,
+				CPUPeriod:  c.cpuperiod,
+				CPUQuota:   c.cpuquota,
+
+				// memory
 				Memory:           memory,
 				MemorySwap:       memorySwap,
 				MemorySwappiness: &c.memorySwappiness,
@@ -196,9 +212,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				BlkioDeviceReadIOps:  c.blkioDeviceReadIOps.value(),
 				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.value(),
 				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
-				IntelRdtL3Cbm:        intelRdtL3Cbm,
 
-				CgroupParent: c.cgroupParent,
+				Devices:       deviceMappings,
+				IntelRdtL3Cbm: intelRdtL3Cbm,
+				CgroupParent:  c.cgroupParent,
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,
