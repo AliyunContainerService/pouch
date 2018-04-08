@@ -7,6 +7,16 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+func clearReadonly(m *specs.Mount) {
+	var opts []string
+	for _, o := range m.Options {
+		if o != "ro" {
+			opts = append(opts, o)
+		}
+	}
+	m.Options = opts
+}
+
 func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
 	s := spec.s
 	mounts := s.Mounts
@@ -53,5 +63,18 @@ func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error
 		})
 	}
 	s.Mounts = mounts
+
+	if c.HostConfig.Privileged {
+		if !s.Root.Readonly {
+			// Clear readonly for /sys.
+			for i := range s.Mounts {
+				if s.Mounts[i].Destination == "/sys" {
+					clearReadonly(&s.Mounts[i])
+				}
+			}
+		}
+		s.Linux.ReadonlyPaths = nil
+		s.Linux.MaskedPaths = nil
+	}
 	return nil
 }
