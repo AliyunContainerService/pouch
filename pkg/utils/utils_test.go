@@ -277,5 +277,61 @@ func TestCombineErrors(t *testing.T) {
 	if combinedErr.Error() != expectedErrMsg {
 		t.Errorf("get error: expected: %s, but was: %s", expectedErrMsg, combinedErr)
 	}
+}
 
+func TestContains(t *testing.T) {
+	type args struct {
+		input []interface{}
+		value interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{name: "test1", args: args{input: []interface{}{1, 2}, value: "1"}, want: false, wantErr: true},
+		{name: "test2", args: args{input: []interface{}{"1", "2"}, value: "1"}, want: true, wantErr: false},
+		{name: "test3", args: args{input: []interface{}{"1", "2"}, value: "3"}, want: false, wantErr: false},
+		{name: "test4", args: args{input: []interface{}{1, 2}, value: 1}, want: true, wantErr: false},
+		{name: "test5", args: args{input: []interface{}{1, 2}, value: 3}, want: false, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Contains(tt.args.input, tt.args.value)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Contains() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Contains() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStringInSlice(t *testing.T) {
+	type args struct {
+		str   string
+		input []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{name: "TestInSlice", args: args{input: []string{"foo", "bar"}, str: "foo"}, want: true},
+		{name: "TestNotInSlice", args: args{input: []string{"goods", "bar"}, str: "foo"}, want: false},
+		{name: "TestEmptyStr", args: args{input: []string{"foo", "bar"}, str: ""}, want: false},
+		{name: "TestEmptySlice", args: args{input: []string{}, str: "bar"}, want: false},
+		{name: "TestAllEmpty", args: args{input: []string{}, str: ""}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StringInSlice(tt.args.input, tt.args.str); got != tt.want {
+				t.Errorf("StringInSlice() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
