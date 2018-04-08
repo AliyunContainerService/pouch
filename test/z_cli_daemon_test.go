@@ -177,7 +177,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 	output := command.PouchRun("inspect", "--host", daemon.Listen, cname).Stdout()
 	result := &types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), result); err != nil {
-		c.Fatal("failed to decode inspect output: %v", err)
+		c.Fatalf("failed to decode inspect output: %v", err)
 	}
 	c.Assert(string(result.State.Status), check.Equals, "running")
 }

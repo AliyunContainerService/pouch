@@ -463,8 +463,15 @@ func (suite *PouchRunSuite) TestRunWithMemoryswappiness(c *check.C) {
 // TestRunWithCPULimit tests CPU related flags.
 func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 	cname := "TestRunWithCPULimit"
-	command.PouchRun("run", "-d", "--cpuset-cpus", "0", "--cpuset-mems", "0",
-		"--cpu-share", "1000", "--name", cname, busyboxImage, "sleep", "10000").Stdout()
+	command.PouchRun("run", "-d",
+		"--cpuset-cpus", "0",
+		"--cpuset-mems", "0",
+		"--cpu-share", "1000",
+		"--cpu-period", "1000",
+		"--cpu-quota", "1000",
+		"--name", cname,
+		busyboxImage,
+		"sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
@@ -473,9 +480,12 @@ func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
+	// check whether the user setting options are in containers' metadata
 	c.Assert(result.HostConfig.CpusetMems, check.Equals, "0")
 	c.Assert(result.HostConfig.CPUShares, check.Equals, int64(1000))
 	c.Assert(result.HostConfig.CpusetCpus, check.Equals, "0")
+	c.Assert(result.HostConfig.CPUPeriod, check.Equals, int64(1000))
+	c.Assert(result.HostConfig.CPUQuota, check.Equals, int64(1000))
 
 	// test if cgroup has record the real value
 	containerID := result.ID
@@ -489,6 +499,14 @@ func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 	}
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.shares", containerID)
+		checkFileContains(c, path, "1000")
+	}
+	{
+		path := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.cfs_period_us", containerID)
+		checkFileContains(c, path, "1000")
+	}
+	{
+		path := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.cfs_quota_us", containerID)
 		checkFileContains(c, path, "1000")
 	}
 
@@ -705,7 +723,7 @@ func (suite *PouchRunSuite) TestRunWithHostFileVolume(c *check.C) {
 	filepath := "/tmp/TestRunWithHostFileVolume.md"
 	icmd.RunCommand("touch", filepath).Assert(c, icmd.Success)
 
-	cname := "TestRunWithCPULimit"
+	cname := "TestRunWithHostFileVolume"
 	command.PouchRun("run", "-d", "--name", cname, "-v", fmt.Sprintf("%s:%s", filepath, filepath), busyboxImage).Assert(c, icmd.Success)
 
 	DelContainerForceMultyTime(c, cname)

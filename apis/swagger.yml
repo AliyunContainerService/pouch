@@ -2083,12 +2083,15 @@ definitions:
           The length of a CPU period in microseconds.
         type: "integer"
         format: "int64"
+        minimum: 1000
+        maximum: 1000000
       CpuQuota:
         description: |
           CPU CFS (Completely Fair Scheduler) quota.
           Microseconds of CPU time that the container can get in a CPU period."
         type: "integer"
         format: "int64"
+        minimum: 1000
       CpuRealtimePeriod:
         description: "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
         type: "integer"
