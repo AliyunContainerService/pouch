@@ -23,11 +23,11 @@ type NetworkInspectResp struct {
 	// EnableIPv6 represents whether to enable IPv6.
 	EnableIPV6 bool `json:"EnableIPv6,omitempty"`
 
-	// ID uniquely identifies a network on a single machine
-	ID string `json:"ID,omitempty"`
-
 	// IPAM is the network's IP Address Management.
 	IPAM *IPAM `json:"IPAM,omitempty"`
+
+	// ID uniquely identifies a network on a single machine
+	ID string `json:"Id,omitempty"`
 
 	// Internal checks the network is internal network or not.
 	Internal bool `json:"Internal,omitempty"`
@@ -49,9 +49,9 @@ type NetworkInspectResp struct {
 
 /* polymorph NetworkInspectResp EnableIPv6 false */
 
-/* polymorph NetworkInspectResp ID false */
-
 /* polymorph NetworkInspectResp IPAM false */
+
+/* polymorph NetworkInspectResp Id false */
 
 /* polymorph NetworkInspectResp Internal false */
 

@@ -21,7 +21,7 @@ type NetworkInfo struct {
 	Driver string `json:"Driver,omitempty"`
 
 	// ID uniquely identifies a network on a single machine
-	ID string `json:"ID,omitempty"`
+	ID string `json:"Id,omitempty"`
 
 	// Name is the name of the network.
 	Name string `json:"Name,omitempty"`
@@ -32,7 +32,7 @@ type NetworkInfo struct {
 
 /* polymorph NetworkInfo Driver false */
 
-/* polymorph NetworkInfo ID false */
+/* polymorph NetworkInfo Id false */
 
 /* polymorph NetworkInfo Name false */
 
