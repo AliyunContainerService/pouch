@@ -266,6 +266,7 @@ func PullImage(c *check.C, image string) {
 		q.Add("fromImage", image)
 		query := request.WithQuery(q)
 		resp, err = request.Post("/images/create", query)
+		c.Assert(err, check.IsNil)
 		c.Assert(resp.StatusCode, check.Equals, 200)
 	}
 }
