@@ -20,6 +20,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
 ### Options
 
 ```
+      --annotation strings           Additional annotation for runtime
       --blkio-weight uint16          Block IO (relative weight), between 10 and 1000, or 0 to disable
       --blkio-weight-device value    Block IO weight (relative device weight) (default [])
       --cap-add strings              Add Linux capabilities
