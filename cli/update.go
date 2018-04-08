@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/opts"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/spf13/cobra"
@@ -58,21 +59,21 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 	container := args[0]
 	ctx := context.Background()
 
-	labels, err := parseLabels(uc.labels)
+	labels, err := opts.ParseLabels(uc.labels)
 	if err != nil {
 		return err
 	}
 
-	if err := validateMemorySwappiness(uc.memorySwappiness); err != nil {
+	if err := opts.ValidateMemorySwappiness(uc.memorySwappiness); err != nil {
 		return err
 	}
 
-	memory, err := parseMemory(uc.memory)
+	memory, err := opts.ParseMemory(uc.memory)
 	if err != nil {
 		return err
 	}
 
-	memorySwap, err := parseMemorySwap(uc.memorySwap)
+	memorySwap, err := opts.ParseMemorySwap(uc.memorySwap)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 		BlkioWeight:      uc.blkioWeight,
 	}
 
-	restartPolicy, err := parseRestartPolicy(uc.restartPolicy)
+	restartPolicy, err := opts.ParseRestartPolicy(uc.restartPolicy)
 	if err != nil {
 		return err
 	}

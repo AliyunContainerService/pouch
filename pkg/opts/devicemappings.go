@@ -1,4 +1,4 @@
-package runconfig
+package opts
 
 import (
 	"fmt"
@@ -7,8 +7,27 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-// ParseDevice parses a device mapping string to a container.DeviceMapping struct
-func ParseDevice(device string) (*types.DeviceMapping, error) {
+// ParseDeviceMappings parse devicemappings
+func ParseDeviceMappings(devices []string) ([]*types.DeviceMapping, error) {
+	results := []*types.DeviceMapping{}
+	for _, device := range devices {
+		deviceMapping, err := parseDevice(device)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse devices: %v", err)
+		}
+
+		if !ValidateDeviceMode(deviceMapping.CgroupPermissions) {
+			return nil, fmt.Errorf("%s invalid device mode: %s", device, deviceMapping.CgroupPermissions)
+		}
+
+		results = append(results, deviceMapping)
+	}
+	return results, nil
+
+}
+
+// parseDevice parses a device mapping string to a container.DeviceMapping struct
+func parseDevice(device string) (*types.DeviceMapping, error) {
 	src := ""
 	dst := ""
 	permissions := "rwm"
@@ -38,9 +57,9 @@ func ParseDevice(device string) (*types.DeviceMapping, error) {
 	return deviceMapping, nil
 }
 
-// ValidDeviceMode checks if the mode for device is valid or not.
+// ValidateDeviceMode checks if the mode for device is valid or not.
 // valid mode is a composition of r (read), w (write), and m (mknod).
-func ValidDeviceMode(mode string) bool {
+func ValidateDeviceMode(mode string) bool {
 	var legalDeviceMode = map[rune]bool{
 		'r': true,
 		'w': true,
