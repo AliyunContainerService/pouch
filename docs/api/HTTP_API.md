@@ -1480,6 +1480,7 @@ Configuration for a container that is portable between hosts
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**SpecAnnotation**  <br>*optional*|annotations send to runtime spec.|< string, string > map|
 |**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
@@ -1523,6 +1524,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**SpecAnnotation**  <br>*optional*|annotations send to runtime spec.|< string, string > map|
 |**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
@@ -1657,6 +1659,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**SpecAnnotation**  <br>*optional*|annotations send to runtime spec.|< string, string > map|
 |**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
 |**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
