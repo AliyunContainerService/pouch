@@ -2443,7 +2443,7 @@ definitions:
     description: "An object containing all details of an image at API side"
     type: "object"
     properties:
-      ID:
+      Id:
         description: "ID of an image."
         type: "string"
         x-nullable: false
@@ -2650,7 +2650,7 @@ definitions:
   ExecCreateResp:
     type: "object"
     properties:
-      ID:
+      Id:
         type: "string"
 
   ExecStartConfig:
@@ -2994,7 +2994,7 @@ definitions:
     type: "object"
     description: "contains the response for the remote API: POST /networks/create"
     properties:
-      ID:
+      Id:
         description: "ID is the id of the network."
         type: "string"
       Warning:
@@ -3035,7 +3035,7 @@ definitions:
       Name:
         type: "string"
         description: "Name is the requested name of the network"
-      ID:
+      Id:
         type: "string"
         description: "ID uniquely identifies a network on a single machine"
       Scope:
@@ -3072,7 +3072,7 @@ definitions:
         Name:
           description: "Name is the name of the network."
           type: "string"
-        ID:
+        Id:
           type: "string"
           description: "ID uniquely identifies a network on a single machine"
         Driver:

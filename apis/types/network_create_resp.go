@@ -18,13 +18,13 @@ import (
 type NetworkCreateResp struct {
 
 	// ID is the id of the network.
-	ID string `json:"ID,omitempty"`
+	ID string `json:"Id,omitempty"`
 
 	// Warning means the message of create network result.
 	Warning string `json:"Warning,omitempty"`
 }
 
-/* polymorph NetworkCreateResp ID false */
+/* polymorph NetworkCreateResp Id false */
 
 /* polymorph NetworkCreateResp Warning false */
 

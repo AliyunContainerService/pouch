@@ -28,7 +28,7 @@ type ImageInfo struct {
 	CreatedAt string `json:"CreatedAt,omitempty"`
 
 	// ID of an image.
-	ID string `json:"ID,omitempty"`
+	ID string `json:"Id,omitempty"`
 
 	// the name of the operating system.
 	Os string `json:"Os,omitempty"`
@@ -52,7 +52,7 @@ type ImageInfo struct {
 
 /* polymorph ImageInfo CreatedAt false */
 
-/* polymorph ImageInfo ID false */
+/* polymorph ImageInfo Id false */
 
 /* polymorph ImageInfo Os false */
 
