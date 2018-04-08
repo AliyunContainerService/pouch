@@ -3,6 +3,7 @@ package environment
 import (
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/alibaba/pouch/client"
 
@@ -69,6 +70,16 @@ func GetTestNetwork() {
 	if len(os.Getenv("POUCH_TEST_SUBNET")) != 0 {
 		Subnet = os.Getenv("POUCH_TEST_SUBNET")
 	}
+}
+
+// FindDisk finds a available disk, not partion
+func FindDisk() (string, bool) {
+	cmd := "lsblk -o NAME,TYPE -n | grep -w disk | head -1 | awk '{print $1}'"
+	device := icmd.RunCommand("bash", "-c", cmd).Stdout()
+	if device != "" {
+		return strings.TrimSpace("/dev/" + device), true
+	}
+	return "", false
 }
 
 // IsLinux checks if the OS of test environment is Linux.

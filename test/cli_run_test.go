@@ -522,11 +522,12 @@ func (suite *PouchRunSuite) TestRunBlockIOWeight(c *check.C) {
 // TestRunBlockIOWeightDevice tests running container with --blkio-weight-device flag.
 func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 	cname := "TestRunBlockIOWeightDevice"
-	if _, err := os.Stat("/dev/sda"); err != nil {
-		c.Skip("Host does not have direcory /dev/sda")
+	testDisk, found := environment.FindDisk()
+	if !found {
+		c.Skip("fail to find available disk for blkio test")
 	}
 
-	command.PouchRun("run", "-d", "--blkio-weight-device", "/dev/sda:100",
+	command.PouchRun("run", "-d", "--blkio-weight-device", testDisk+":100",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
@@ -537,7 +538,7 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 	}
 
 	c.Assert(len(result.HostConfig.BlkioWeightDevice), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioWeightDevice[0].Path, check.Equals, "/dev/sda")
+	c.Assert(result.HostConfig.BlkioWeightDevice[0].Path, check.Equals, testDisk)
 	c.Assert(result.HostConfig.BlkioWeightDevice[0].Weight, check.Equals, uint16(100))
 
 	// test if cgroup has record the real value
@@ -552,11 +553,12 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 // TestRunDeviceReadBps tests running container with --device-read-bps flag.
 func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 	cname := "TestRunDeviceReadBps"
-	if _, err := os.Stat("/dev/sda"); err != nil {
-		c.Skip("Host does not have direcory /dev/sda")
+	testDisk, found := environment.FindDisk()
+	if !found {
+		c.Skip("fail to find available disk for blkio test")
 	}
 
-	command.PouchRun("run", "-d", "--device-read-bps", "/dev/sda:1mb",
+	command.PouchRun("run", "-d", "--device-read-bps", testDisk+":1mb",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
@@ -567,7 +569,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 	}
 
 	c.Assert(len(result.HostConfig.BlkioDeviceReadBps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceReadBps[0].Path, check.Equals, "/dev/sda")
+	c.Assert(result.HostConfig.BlkioDeviceReadBps[0].Path, check.Equals, testDisk)
 	c.Assert(result.HostConfig.BlkioDeviceReadBps[0].Rate, check.Equals, uint64(1048576))
 
 	// test if cgroup has record the real value
@@ -582,11 +584,12 @@ func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 // TestRunDeviceWriteBps tests running container with --device-write-bps flag.
 func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 	cname := "TestRunDeviceWriteBps"
-	if _, err := os.Stat("/dev/sda"); err != nil {
-		c.Skip("Host does not have direcory /dev/sda")
+	testDisk, found := environment.FindDisk()
+	if !found {
+		c.Skip("fail to find available disk for blkio test")
 	}
 
-	command.PouchRun("run", "-d", "--device-write-bps", "/dev/sda:1mb",
+	command.PouchRun("run", "-d", "--device-write-bps", testDisk+":1mb",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
@@ -597,7 +600,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 	}
 
 	c.Assert(len(result.HostConfig.BlkioDeviceWriteBps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceWriteBps[0].Path, check.Equals, "/dev/sda")
+	c.Assert(result.HostConfig.BlkioDeviceWriteBps[0].Path, check.Equals, testDisk)
 	c.Assert(result.HostConfig.BlkioDeviceWriteBps[0].Rate, check.Equals, uint64(1048576))
 
 	// test if cgroup has record the real value
@@ -612,11 +615,12 @@ func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 // TestRunDeviceReadIops tests running container with --device-read-iops flag.
 func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 	cname := "TestRunDeviceReadIops"
-	if _, err := os.Stat("/dev/sda"); err != nil {
-		c.Skip("Host does not have direcory /dev/sda")
+	testDisk, found := environment.FindDisk()
+	if !found {
+		c.Skip("fail to find available disk for blkio test")
 	}
 
-	command.PouchRun("run", "-d", "--device-read-iops", "/dev/sda:1000",
+	command.PouchRun("run", "-d", "--device-read-iops", testDisk+":1000",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
@@ -627,7 +631,7 @@ func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 	}
 
 	c.Assert(len(result.HostConfig.BlkioDeviceReadIOps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceReadIOps[0].Path, check.Equals, "/dev/sda")
+	c.Assert(result.HostConfig.BlkioDeviceReadIOps[0].Path, check.Equals, testDisk)
 	c.Assert(result.HostConfig.BlkioDeviceReadIOps[0].Rate, check.Equals, uint64(1000))
 
 	// test if cgroup has record the real value
@@ -642,11 +646,12 @@ func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 // TestRunDeviceWriteIops tests running container with --device-write-iops flag.
 func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 	cname := "TestRunDeviceWriteIops"
-	if _, err := os.Stat("/dev/sda"); err != nil {
-		c.Skip("Host does not have direcory /dev/sda")
+	testDisk, found := environment.FindDisk()
+	if !found {
+		c.Skip("fail to find available disk for blkio test")
 	}
 
-	command.PouchRun("run", "-d", "--device-write-iops", "/dev/sda:1000",
+	command.PouchRun("run", "-d", "--device-write-iops", testDisk+":1000",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
 
 	// test if the value is in inspect result
@@ -657,7 +662,7 @@ func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 	}
 
 	c.Assert(len(result.HostConfig.BlkioDeviceWriteIOps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceWriteIOps[0].Path, check.Equals, "/dev/sda")
+	c.Assert(result.HostConfig.BlkioDeviceWriteIOps[0].Path, check.Equals, testDisk)
 	c.Assert(result.HostConfig.BlkioDeviceWriteIOps[0].Rate, check.Equals, uint64(1000))
 
 	// test if cgroup has record the real value
