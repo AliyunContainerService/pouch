@@ -33,13 +33,24 @@ func (suite *PouchNetworkSuite) SetUpSuite(c *check.C) {
 // TestNetworkInspectFormat tests the inspect format of network works.
 func (suite *PouchNetworkSuite) TestNetworkInspectFormat(c *check.C) {
 	output := command.PouchRun("network", "inspect", "bridge").Stdout()
-	result := &types.ContainerJSON{}
+	result := &types.NetworkInspectResp{}
 	if err := json.Unmarshal([]byte(output), result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
 	// inspect network name
 	output = command.PouchRun("network", "inspect", "-f", "{{.Name}}", "bridge").Stdout()
+	c.Assert(output, check.Equals, "bridge\n")
+
+	output = command.PouchRun("network", "inspect", "bridge").Stdout()
+	network := &types.NetworkInspectResp{}
+	if err := json.Unmarshal([]byte(output), network); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	networkID := network.ID
+
+	// inspect network name by ID
+	output = command.PouchRun("network", "inspect", "-f", "{{.Name}}", networkID).Stdout()
 	c.Assert(output, check.Equals, "bridge\n")
 }
 

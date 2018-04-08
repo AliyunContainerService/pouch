@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"path"
+	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
@@ -149,26 +150,90 @@ func (nm *NetworkManager) List(ctx context.Context, labels map[string]string) ([
 	return net, nil
 }
 
-// Get returns the information of network that specified name/id.
-func (nm *NetworkManager) Get(ctx context.Context, name string) (*types.Network, error) {
+// GetNetworkByName returns the information of network that specified name.
+func (nm *NetworkManager) GetNetworkByName(name string) (*types.Network, error) {
 	n, err := nm.controller.NetworkByName(name)
 	if err != nil {
-		if err == libnetwork.ErrNoSuchNetwork(name) {
-			return nil, errors.Wrap(errtypes.ErrNotfound, err.Error())
+		return nil, err
+	}
+	return &types.Network{
+		Name:    n.Name(),
+		ID:      n.ID(),
+		Type:    n.Type(),
+		Network: n,
+	}, nil
+}
+
+// GetNetworksByPartialID returns a list of networks that ID starts with the given prefix.
+func (nm *NetworkManager) GetNetworksByPartialID(partialID string) []*types.Network {
+	var matchedNetworks []*types.Network
+
+	walker := func(nw libnetwork.Network) bool {
+		if strings.HasPrefix(nw.ID(), partialID) {
+			matchedNetwork := &types.Network{
+				Name:    nw.Name(),
+				ID:      nw.ID(),
+				Type:    nw.Type(),
+				Network: nw,
+			}
+			matchedNetworks = append(matchedNetworks, matchedNetwork)
 		}
+		return false
+	}
+	nm.controller.WalkNetworks(walker)
+	return matchedNetworks
+}
+
+// GetNetworkByPartialID returns the information of network that ID starts with the given prefix.
+// If there are not matching networks, it fails with ErrNotfound.
+// If there are multiple matching networks, it fails with ErrTooMany.
+func (nm *NetworkManager) GetNetworkByPartialID(partialID string) (*types.Network, error) {
+	network, err := nm.controller.NetworkByID(partialID)
+	if err == nil {
+		return &types.Network{
+			Name:    network.Name(),
+			ID:      network.ID(),
+			Type:    network.Type(),
+			Network: network,
+		}, nil
+	}
+	if !isNoSuchNetworkError(err) {
+		return nil, err
+	}
+	matchedNetworks := nm.GetNetworksByPartialID(partialID)
+	if len(matchedNetworks) == 0 {
+		return nil, errors.Wrap(errtypes.ErrNotfound, "network: "+partialID)
+	}
+	if len(matchedNetworks) > 1 {
+		return nil, errors.Wrap(errtypes.ErrTooMany, "network: "+partialID)
+	}
+	return matchedNetworks[0], nil
+}
+
+// isNoSuchNetworkError looks up the error type and returns a bool if it is ErrNoSuchNetwork or not.
+func isNoSuchNetworkError(err error) bool {
+	_, ok := err.(libnetwork.ErrNoSuchNetwork)
+	return ok
+}
+
+// Get returns the information of network for specified string that represent network name or ID.
+// If network name is given, the network with same name is returned.
+// If prefix of network ID is given, the network with same prefix is returned.
+func (nm *NetworkManager) Get(ctx context.Context, idName string) (*types.Network, error) {
+	n, err := nm.GetNetworkByName(idName)
+	if err != nil && !isNoSuchNetworkError(err) {
 		return nil, err
 	}
 
 	if n != nil {
-		return &types.Network{
-			Name:    name,
-			ID:      n.ID(),
-			Type:    n.Type(),
-			Network: n,
-		}, nil
+		return n, nil
 	}
 
-	return nil, nil
+	n, err = nm.GetNetworkByPartialID(idName)
+	if err != nil {
+		return nil, err
+	}
+	return n, err
 }
 
 // EndpointCreate is used to create network endpoint.
