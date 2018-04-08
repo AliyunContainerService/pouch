@@ -268,6 +268,14 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		return "", err
 	}
 
+	defer func() {
+		if err != nil {
+			if err := ep.Delete(true); err != nil {
+				logrus.Errorf("could not delete endpoint %s after failing to create endpoint: %v", ep.Name(), err)
+			}
+		}
+	}()
+
 	// create sandbox
 	sb := nm.getNetworkSandbox(containerID)
 	if sb == nil {
