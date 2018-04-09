@@ -28,6 +28,8 @@ test1
       --cap-add strings              Add Linux capabilities
       --cap-drop strings             Drop Linux capabilities
       --cgroup-parent string         Optional parent cgroup for the container (default "default")
+      --cpu-period int               Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
+      --cpu-quota int                Limit CPU CFS (Completely Fair Scheduler) quota, range is in [1000,∞)
       --cpu-share int                CPU shares (relative weight)
       --cpuset-cpus string           CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string           MEMs in which to allow execution (0-3, 0,1)
