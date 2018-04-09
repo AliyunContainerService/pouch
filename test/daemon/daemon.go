@@ -35,12 +35,12 @@ type Config struct {
 	// pouchd binary location
 	Bin string
 
-	Listen  []string
-	HomeDir string
-
+	// The following args are all MUST required,
+	// in case the new daemon conflicts with existing ones.
+	Listen         string
+	HomeDir        string
 	ContainerdAddr string
-
-	ListenCri string
+	ListenCri      string
 
 	// pid of pouchd
 	Pid int
@@ -52,16 +52,6 @@ type Config struct {
 	Debug bool
 }
 
-// DConfig is the global variable used to pouch daemon test.
-var DConfig Config
-
-func init() {
-	DConfig.Args = make([]string, 0, 1)
-	DConfig.Listen = make([]string, 0, 1)
-	DConfig.timeout = 15
-	DConfig.Debug = true
-}
-
 // NewConfig initialize the DConfig with default value.
 func NewConfig() Config {
 	result := Config{}
@@ -70,22 +60,38 @@ func NewConfig() Config {
 	result.LogPath = DaemonLog
 
 	result.Args = make([]string, 0, 1)
-	result.Listen = make([]string, 0, 1)
 
-	result.Args = append(result.Args, "--listen="+Listen)
-	result.Args = append(result.Args, "--home-dir="+HomeDir)
-	result.Args = append(result.Args, "--containerd="+ContainerdAdd)
-	result.Args = append(result.Args, "--listen-cri="+ListenCRI)
-
-	result.Listen = append(result.Listen, Listen)
-
+	result.Listen = Listen
 	result.HomeDir = HomeDir
 	result.ContainerdAddr = ContainerdAdd
 	result.ListenCri = ListenCRI
 
 	result.timeout = 15
+	result.Debug = true
 
 	return result
+}
+
+// NewArgs is used to construct args according to the struct Config and input.
+func (d *Config) NewArgs(args ...string) {
+	// Append all default configuration to d.Args if they exists
+	// For the rest args in parameter, they must follow the pouchd args usage.
+	if len(d.Listen) != 0 {
+		d.Args = append(d.Args, "--listen="+d.Listen)
+	}
+	if len(d.HomeDir) != 0 {
+		d.Args = append(d.Args, "--home-dir="+d.HomeDir)
+	}
+	if len(d.ContainerdAddr) != 0 {
+		d.Args = append(d.Args, "--containerd="+d.ContainerdAddr)
+	}
+	if len(d.ListenCri) != 0 {
+		d.Args = append(d.Args, "--listen-cri="+d.ListenCri)
+	}
+
+	if len(args) != 0 {
+		d.Args = append(d.Args, args...)
+	}
 }
 
 // IsDaemonUp checks if the pouchd is launched.

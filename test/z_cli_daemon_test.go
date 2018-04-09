@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
 	"github.com/alibaba/pouch/test/environment"
@@ -29,29 +27,26 @@ func (suite *PouchDaemonSuite) SetUpTest(c *check.C) {
 
 // TestDaemonCgroupParent tests daemon with cgroup parent
 func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
-	// Start a test daemon with test args.
-	daemon.DConfig = daemon.NewConfig()
-	daemon.DConfig.Args = append(daemon.DConfig.Args, "--cgroup-parent=tmp")
-
-	err := daemon.DConfig.StartDaemon()
+	dcfg, err := StartDefaultDaemonDebug("--cgroup-parent=tmp")
 	if err != nil {
 		c.Skip("deamon start failed")
 	}
+
 	// Must kill it, as we may loose the pid in next call.
-	defer daemon.DConfig.KillDaemon()
+	defer dcfg.KillDaemon()
 
 	cname := "TestDaemonCgroupParent"
 	{
 		result := command.PouchRun("--host", daemon.Listen, "pull", busyboxImage)
 		if result.ExitCode != 0 {
-			daemon.DConfig.DumpLog()
+			dcfg.DumpLog()
 			c.Fatalf("pull image failed, err:%v", result)
 		}
 	}
 	{
 		result := command.PouchRun("--host", daemon.Listen, "run", "--name", cname, busyboxImage)
 		if result.ExitCode != 0 {
-			daemon.DConfig.DumpLog()
+			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
@@ -83,102 +78,64 @@ func (suite *PouchDaemonSuite) TestDaemonListenTCP(c *check.C) {
 	}
 
 	for _, hostDirective := range listeningPorts {
-		daemon.DConfig = daemon.NewConfig()
-
 		addr := fmt.Sprintf("tcp://%s:%s", hostDirective[0], hostDirective[2])
-		daemon.DConfig.Listen = append(daemon.DConfig.Listen, addr)
-		daemon.DConfig.Listen = append(daemon.DConfig.Listen, addr)
-		daemon.DConfig.Args = append(daemon.DConfig.Args, "--listen="+addr)
-
-		err := daemon.DConfig.StartDaemon()
+		dcfg, err := StartDefaultDaemonDebug("--listen=" + addr)
 		c.Assert(err, check.IsNil)
 
 		// verify listen to tcp works
 		command.PouchRun("--host", addr, "version").Assert(c, icmd.Success)
 
-		daemon.DConfig.KillDaemon()
+		dcfg.KillDaemon()
 	}
 }
 
 // TestDaemonConfigFile tests start daemon with configfile works.
 func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
-	configFile := "/tmp/pouch.json"
-	file, err := os.Create(configFile)
-	c.Assert(err, check.IsNil)
-	defer file.Close()
-	defer os.Remove(configFile)
-
-	dcfg := config.Config{
-		Debug: true,
-	}
-	s, _ := json.Marshal(dcfg)
-	fmt.Fprintf(file, "%s", s)
-	file.Sync()
-
-	daemon.DConfig = daemon.NewConfig()
-	daemon.DConfig.Args = append(daemon.DConfig.Args, "--config-file="+configFile)
-
-	//{
-	//	err := daemon.DConfig.StartDaemon()
-	//	c.Assert(err, check.IsNil)
-	//}
-
-	// TODO: verify more
-
-	// Must kill it, as we may loose the pid in next call.
-	defer daemon.DConfig.KillDaemon()
+	// TODO
 }
 
 // TestDaemonInvalideArgs tests invalid args in deamon return error
 func (suite *PouchDaemonSuite) TestDaemonInvalideArgs(c *check.C) {
-	daemon.DConfig = daemon.NewConfig()
-	daemon.DConfig.Args = append(daemon.DConfig.Args, "--config=xxx")
-
-	// depress debug log
-	daemon.DConfig.Debug = false
-
-	err := daemon.DConfig.StartDaemon()
+	_, err := StartDefaultDaemon("--config=xxx")
 	c.Assert(err, check.NotNil)
 }
 
 // TestDaemonRestart tests daemon restart with running container.
 func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
+	dcfg, err := StartDefaultDaemonDebug()
 	// Start a test daemon with test args.
-	daemon.DConfig = daemon.NewConfig()
-	err := daemon.DConfig.StartDaemon()
 	if err != nil {
 		c.Skip("deamon start failed.")
 	}
 	// Must kill it, as we may loose the pid in next call.
-	defer daemon.DConfig.KillDaemon()
+	defer dcfg.KillDaemon()
 
 	{
-		result := command.PouchRun("--host", daemon.Listen, "pull", busyboxImage)
+		result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
 		if result.ExitCode != 0 {
-			daemon.DConfig.DumpLog()
+			dcfg.DumpLog()
 			c.Fatalf("pull image failed, err:%v", result)
 		}
 	}
 
 	cname := "TestDaemonRestart"
 	{
-		result := command.PouchRun("--host", daemon.Listen, "run", "--name", cname,
+		result := RunWithSpecifiedDaemon(dcfg, "run", "--name", cname,
 			"-p", "1234:80",
 			busyboxImage)
 		if result.ExitCode != 0 {
-			daemon.DConfig.DumpLog()
+			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
 	defer DelContainerForceMultyTime(c, cname)
 
 	// restart daemon
-	daemon.DConfig.KillDaemon()
-	err = daemon.DConfig.StartDaemon()
+	err = RestartDaemon(dcfg)
 	c.Assert(err, check.IsNil)
 
 	// test if the container is running.
-	output := command.PouchRun("inspect", "--host", daemon.Listen, cname).Stdout()
+	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
 	result := &types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), result); err != nil {
 		c.Fatalf("failed to decode inspect output: %v", err)
