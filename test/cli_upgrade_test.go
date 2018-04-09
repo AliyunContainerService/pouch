@@ -29,7 +29,7 @@ func (suite *PouchUpgradeSuite) SetUpSuite(c *check.C) {
 	environment.PruneAllContainers(apiClient)
 
 	PullImage(c, busyboxImage)
-	command.PouchRun("pull", busyboxImage125).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage125)
 }
 
 // TearDownTest does cleanup work in the end of each test.
@@ -163,4 +163,21 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 	if !reflect.DeepEqual(result[0].Config.Labels, labels) {
 		c.Errorf("unexpected output: %s, expected: %s", result[0].Config.Labels, labels)
 	}
+}
+
+// TestPouchUpgradeWithDifferentImage is to verify pouch upgrade command.
+func (suite *PouchUpgradeSuite) TestPouchUpgradeWithDifferentImage(c *check.C) {
+	name := "TestPouchUpgradeWithDifferentImage"
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("upgrade", "--name", name, helloworldImage)
+	c.Assert(res.Error, check.IsNil)
+
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("unexpected output: %s, expected: %s", out, name)
+	}
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+
 }

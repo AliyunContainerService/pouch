@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/user"
 
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/docker/docker/daemon/caps"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
@@ -16,21 +17,69 @@ import (
 
 // setupProcess setups spec process.
 func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
-	if s.Process == nil {
-		s.Process = &specs.Process{}
+	var (
+		entrypoint = c.Config.Entrypoint
+		cmd        = c.Config.Cmd
+		workingDir = c.Config.WorkingDir
+	)
+
+	ociImage, err := containerdImageToOciImage(context.Background(), c.OCIImage)
+	if err != nil {
+		return err
 	}
-	config := c.Config
 
-	cwd := config.WorkingDir
-	if cwd == "" {
-		cwd = "/"
+	imageConfig := ociImage.Config
+
+	// handle entrypoint
+	if len(entrypoint) == 0 {
+		if len(cmd) == 0 {
+			cmd = imageConfig.Cmd
+		}
+		entrypoint = imageConfig.Entrypoint
 	}
 
-	s.Process.Args = append(config.Entrypoint, config.Cmd...)
-	s.Process.Env = append(s.Process.Env, createEnvironment(c)...)
-	s.Process.Cwd = cwd
-	s.Process.Terminal = config.Tty
+	args := entrypoint
+	if args == nil {
+		args = []string{}
+	}
+	if len(cmd) > 0 {
+		args = append(args, cmd...)
+	}
+	s.Process.Args = args
 
+	// handle Env
+	// Merge ContainerConfig Env to Process Env
+	// only append new env to Env slice.
+	for _, v := range c.Config.Env {
+		if !utils.StringInSlice(s.Process.Env, v) {
+			s.Process.Env = append(s.Process.Env, v)
+		}
+	}
+
+	// Merge ImageConfig Env to Process Env
+	// only append new env to Env slice.
+	for _, v := range imageConfig.Env {
+		if !utils.StringInSlice(s.Process.Env, v) {
+			s.Process.Env = append(s.Process.Env, v)
+		}
+	}
+
+	//set env for rich container mode
+	s.Process.Env = append(s.Process.Env, richContainerModeEnv(c)...)
+
+	// handle WorkingDir
+	// Merge ContainerConfig WorkingDir with Image WorkingDir
+	if workingDir == "" {
+		workingDir = imageConfig.WorkingDir
+	}
+
+	if workingDir == "" {
+		s.Process.Cwd = "/"
+	} else {
+		s.Process.Cwd = workingDir
+	}
+
+	s.Process.Terminal = c.Config.Tty
 	if s.Process.Terminal {
 		s.Process.Env = append(s.Process.Env, "TERM=xterm")
 	}
@@ -38,7 +87,6 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 	if !c.HostConfig.Privileged {
 		s.Process.SelinuxLabel = c.ProcessLabel
 		s.Process.NoNewPrivileges = c.NoNewPrivileges
-
 	}
 
 	if err := setupUser(ctx, c, s); err != nil {
@@ -53,23 +101,7 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 	if err := setupCapabilities(ctx, c.HostConfig, s); err != nil {
 		return err
 	}
-
-	if err := setupRlimits(ctx, c.HostConfig, s); err != nil {
-		return err
-	}
-
-	if err := setupAppArmor(ctx, c, s); err != nil {
-		return err
-	}
-
 	return nil
-}
-
-func createEnvironment(c *Container) []string {
-	env := c.Config.Env
-	env = append(env, richContainerModeEnv(c)...)
-
-	return env
 }
 
 func setupUser(ctx context.Context, c *Container, s *specs.Spec) (err error) {

@@ -13,7 +13,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
-	"github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/containerd/containerd"
 )
 
 var (
@@ -25,6 +25,9 @@ var (
 const (
 	// DefaultStopTimeout is the timeout (in seconds) for the syscall signal used to stop a container.
 	DefaultStopTimeout = 10
+
+	// snapshotKeySuffix use to add a suffix for snapshotKey when recreates the snapshot of container.
+	snapshotKeySuffix = ".bk"
 )
 
 // ContainerFilter defines a function to filter
@@ -114,6 +117,9 @@ type Container struct {
 	// exec ids
 	ExecIds string `json:"ExecIDs,omitempty"`
 
+	// SnapshotKey specify id of the snapshot that container used.
+	SnapshotKey string
+
 	// Snapshotter, GraphDriver is same, keep both
 	// just for compatibility
 	// snapshotter informations of container
@@ -136,6 +142,9 @@ type Container struct {
 
 	// The container's image
 	Image string `json:"Image,omitempty"`
+
+	// OCI Image information
+	OCIImage containerd.Image `json:"OCIImage,omitempty"`
 
 	// log path
 	LogPath string `json:"LogPath,omitempty"`
@@ -235,30 +244,14 @@ func (c *Container) StopTimeout() int64 {
 	return DefaultStopTimeout
 }
 
-func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
-	config, err := getconfig()
-	if err != nil {
-		return err
+// SnapshotID returns id of container's snapshot.
+func (c *Container) SnapshotID() string {
+	// for old container, SnapshotKey equals ContainerID
+	if c.SnapshotKey == "" {
+		return c.ID
 	}
 
-	// If user specify the Entrypoint, no need to merge image's configuration.
-	// Otherwise use the image's configuration to fill it.
-	if len(c.Config.Entrypoint) == 0 {
-		if len(c.Config.Cmd) == 0 {
-			c.Config.Cmd = config.Cmd
-		}
-		c.Config.Entrypoint = config.Entrypoint
-	}
-	if c.Config.Env == nil {
-		c.Config.Env = config.Env
-	} else {
-		c.Config.Env = append(c.Config.Env, config.Env...)
-	}
-	if c.Config.WorkingDir == "" {
-		c.Config.WorkingDir = config.WorkingDir
-	}
-
-	return nil
+	return c.SnapshotKey
 }
 
 // FormatStatus format container status
