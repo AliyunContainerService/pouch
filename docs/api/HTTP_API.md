@@ -1753,7 +1753,7 @@ Configuration for a network endpoint.
 
 |Name|Schema|
 |---|---|
-|**ID**  <br>*optional*|string|
+|**Id**  <br>*optional*|string|
 
 
 <a name="execstartconfig"></a>
@@ -1801,8 +1801,8 @@ Container configuration that depends on the host we are running on
 |**ContainerIDFile**  <br>*optional*|Path to a file where the container ID is written|string|
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
@@ -1923,7 +1923,7 @@ An object containing all details of an image at API side
 |**Architecture**  <br>*optional*|the CPU architecture.|string|
 |**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
 |**CreatedAt**  <br>*optional*|time of image creation.|string|
-|**ID**  <br>*optional*|ID of an image.|string|
+|**Id**  <br>*optional*|ID of an image.|string|
 |**Os**  <br>*optional*|the name of the operating system.|string|
 |**RepoDigests**  <br>*optional*|repository with digest.|< string > array|
 |**RepoTags**  <br>*optional*|repository with tag.|< string > array|
@@ -2016,7 +2016,7 @@ contains the response for the remote API: POST /networks/create
 
 |Name|Description|Schema|
 |---|---|---|
-|**ID**  <br>*optional*|ID is the id of the network.|string|
+|**Id**  <br>*optional*|ID is the id of the network.|string|
 |**Warning**  <br>*optional*|Warning means the message of create network result.|string|
 
 
@@ -2028,7 +2028,7 @@ NetworkInfo represents the configuration of a network
 |Name|Description|Schema|
 |---|---|---|
 |**Driver**  <br>*optional*|Driver is the Driver name used to create the network|string|
-|**ID**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
+|**Id**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
 |**Name**  <br>*optional*|Name is the name of the network.|string|
 |**Scope**  <br>*optional*|Scope describes the level at which the network exists|string|
 
@@ -2042,8 +2042,8 @@ is the expected body of the 'GET networks/{id}'' http request message
 |---|---|---|
 |**Driver**  <br>*optional*|Driver means the network's driver.|string|
 |**EnableIPv6**  <br>*optional*|EnableIPv6 represents whether to enable IPv6.|boolean|
-|**ID**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
 |**IPAM**  <br>*optional*|IPAM is the network's IP Address Management.|[IPAM](#ipam)|
+|**Id**  <br>*optional*|ID uniquely identifies a network on a single machine|string|
 |**Internal**  <br>*optional*|Internal checks the network is internal network or not.|boolean|
 |**Labels**  <br>*optional*|Labels holds metadata specific to the network being created.|< string, string > map|
 |**Name**  <br>*optional*|Name is the requested name of the network|string|
@@ -2150,8 +2150,8 @@ A container's resources (cgroups config, ulimits, etc)
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
@@ -2318,8 +2318,8 @@ UpdateConfig holds the mutable attributes of a Container. Those attributes can b
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
