@@ -87,22 +87,6 @@ func (client *APIClient) ContainerRestart(ctx context.Context, name string, time
 	return err
 }
 
-// ContainerPause pauses a container.
-func (client *APIClient) ContainerPause(ctx context.Context, name string) error {
-	resp, err := client.post(ctx, "/containers/"+name+"/pause", nil, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
-// ContainerUnpause unpauses a container.
-func (client *APIClient) ContainerUnpause(ctx context.Context, name string) error {
-	resp, err := client.post(ctx, "/containers/"+name+"/unpause", nil, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
 // ContainerUpgrade upgrade a container with new image and args.
 func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
 	// TODO
