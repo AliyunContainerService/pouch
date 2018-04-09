@@ -133,6 +133,10 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
 func (suite *PouchDaemonSuite) TestDaemonInvalideArgs(c *check.C) {
 	daemon.DConfig = daemon.NewConfig()
 	daemon.DConfig.Args = append(daemon.DConfig.Args, "--config=xxx")
+
+	// depress debug log
+	daemon.DConfig.Debug = false
+
 	err := daemon.DConfig.StartDaemon()
 	c.Assert(err, check.NotNil)
 }

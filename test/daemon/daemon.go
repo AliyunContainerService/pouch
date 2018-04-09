@@ -47,6 +47,9 @@ type Config struct {
 
 	// timeout for starting daemon
 	timeout int64
+
+	// if Debug=true, dump daemon log when deamon failed to start
+	Debug bool
 }
 
 // DConfig is the global variable used to pouch daemon test.
@@ -56,6 +59,7 @@ func init() {
 	DConfig.Args = make([]string, 0, 1)
 	DConfig.Listen = make([]string, 0, 1)
 	DConfig.timeout = 15
+	DConfig.Debug = true
 }
 
 // NewConfig initialize the DConfig with default value.
@@ -136,9 +140,12 @@ func (d *Config) StartDaemon() error {
 	}()
 
 	if util.WaitTimeout(time.Duration(d.timeout)*time.Second, d.IsDaemonUp) == false {
-		d.DumpLog()
+		if d.Debug == true {
+			d.DumpLog()
+			fmt.Printf("Failed to launch pouchd:%v\n", d.Args)
+		}
+
 		d.KillDaemon()
-		fmt.Printf("Failed to launch pouchd:%v\n", d.Args)
 		return fmt.Errorf("failed to launch pouchd:%v", d.Args)
 	}
 
