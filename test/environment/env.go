@@ -42,7 +42,7 @@ var (
 	Subnet = "192.168.1.0/24"
 )
 
-// GetBusybox get image info from test envrionment variable.
+// GetBusybox get image info from test environment variable.
 func GetBusybox() {
 	if len(os.Getenv("POUCH_BUSYBOXREPO")) != 0 {
 		BusyboxRepo = os.Getenv("POUCH_BUSYBOXREPO")
@@ -52,7 +52,7 @@ func GetBusybox() {
 	}
 }
 
-// GetHelloWorld get image info from test envrionment variable.
+// GetHelloWorld get image info from test environment variable.
 func GetHelloWorld() {
 	if len(os.Getenv("POUCH_HELLOWORLDREPO")) != 0 {
 		HelloworldRepo = os.Getenv("POUCH_HELLOWORLDREPO")

@@ -25,6 +25,9 @@ var (
 
 	// ErrLockfailed represents that failed to lock.
 	ErrLockfailed = errorType{codeLockfailed, "lock failed"}
+
+	// ErrNotImplemented represents that the function is not implemented.
+	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 )
 
 const (
@@ -35,6 +38,7 @@ const (
 	codeInvalidType
 	codeTimeout
 	codeLockfailed
+	codeNotImplemented
 )
 
 type errorType struct {
