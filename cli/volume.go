@@ -32,6 +32,9 @@ func (v *VolumeCommand) Init(c *Cli) {
 		Short: "Manage pouch volumes",
 		Long:  volumeDescription,
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fmt.Errorf("command 'pouch volume %s' does not exist.\nPlease execute `pouch volume --help` for more help", args[0])
+		},
 	}
 
 	c.AddCommand(v, &VolumeCreateCommand{})
