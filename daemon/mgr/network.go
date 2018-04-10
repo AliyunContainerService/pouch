@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/stringid"
 
 	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/go-connections/nat"
@@ -39,6 +40,9 @@ type NetworkMgr interface {
 
 	// Get returns the information of network that specified name/id.
 	Get(ctx context.Context, name string) (*types.Network, error)
+
+	// Connect is used to connect a container to a network.
+	Connect(ctx context.Context, container *ContainerMeta, networkIdOrName string, epConfig *apitypes.EndpointSettings) error
 
 	// EndpointCreate is used to create network endpoint.
 	EndpointCreate(ctx context.Context, endpoint *types.Endpoint) (string, error)
@@ -148,6 +152,33 @@ func (nm *NetworkManager) List(ctx context.Context, labels map[string]string) ([
 		net = append(net, nm)
 	}
 	return net, nil
+}
+
+// Connect is used to connect a container to a network.
+func (nm *NetworkManager) Connect(ctx context.Context, container *ContainerMeta, networkIdOrName string, epConfig *apitypes.EndpointSettings) error {
+	if epConfig == nil {
+		epConfig = &apitypes.EndpointSettings{}
+	}
+	container.Lock()
+	defer container.Unlock()
+
+	if !container.State.Running {
+		if container.State.Dead {
+			return fmt.Errorf("Container %s is marked for removal and cannot be connected or disconnected to the network", container.ID)
+		}
+
+		n, err := nm.Get(context.Background(), networkIdOrName)
+		if err == nil && n != nil {
+			if _, err := nm.updateNetworkConfig(container, n.Name, epConfig, true); err != nil {
+				return err
+			}
+		} else {
+			container.NetworkSettings.Networks[networkIdOrName] = epConfig
+		}
+	} else if err := nm.connectToNetwork(container, networkIdOrName, epConfig, true); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetNetworkByName returns the information of network that specified name.
@@ -650,4 +681,256 @@ func joinOptions(epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOpti
 	// TODO: parse endpoint's links
 
 	return joinOptions, nil
+}
+
+func (nm *NetworkManager) updateNetworkSettings(container *ContainerMeta, n libnetwork.Network) error {
+	if container.NetworkSettings == nil {
+		container.NetworkSettings = &apitypes.NetworkSettings{Networks: make(map[string]*apitypes.EndpointSettings)}
+	}
+
+	if !IsHost(container.HostConfig.NetworkMode) && IsHost(n.Type()) {
+		return fmt.Errorf("container cannot be connected to host network")
+	}
+
+	for s := range container.NetworkSettings.Networks {
+		sn, err := nm.Get(context.Background(), s)
+		if err != nil {
+			continue
+		}
+
+		if sn.Name == n.Name() {
+			// Avoid duplicate config
+			return nil
+		}
+		if !IsPrivate(sn.Type) || !IsPrivate(n.Type()) {
+			return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+		}
+		if IsNone(sn.Name) || IsNone(n.Name()) {
+			return fmt.Errorf("container cannot be connected to multiple networks with one of the networks in none mode")
+		}
+	}
+
+	if _, ok := container.NetworkSettings.Networks[n.Name()]; !ok {
+		container.NetworkSettings.Networks[n.Name()] = new(apitypes.EndpointSettings)
+	}
+
+	return nil
+}
+
+func (nm *NetworkManager) updateEndpointNetworkSettings(container *ContainerMeta, n libnetwork.Network, ep libnetwork.Endpoint) error {
+	// TODO
+	return nil
+}
+
+// UpdateNetwork is used to update the container's network (e.g. when linked containers
+// get removed/unlinked).
+func (nm *NetworkManager) updateNetwork(container *ContainerMeta) error {
+	ctrl := nm.controller
+	sid := container.NetworkSettings.SandboxID
+
+	sb, err := ctrl.SandboxByID(sid)
+	if err != nil {
+		return fmt.Errorf("error locating sandbox id %s: %v", sid, err)
+	}
+
+	// Find if container is connected to the default bridge network
+	var n *types.Network
+	for name := range container.NetworkSettings.Networks {
+		sn, err := nm.Get(context.Background(), name)
+		if err != nil {
+			continue
+		}
+		if sn.Name == "bridge" {
+			n = sn
+			break
+		}
+	}
+
+	if n == nil {
+		// Not connected to the default bridge network; Nothing to do
+		return nil
+	}
+
+	endpoint := &types.Endpoint{
+		Hostname:       container.Config.Hostname,
+		NetworkMode:    container.HostConfig.NetworkMode,
+		ExtraHosts:     container.HostConfig.ExtraHosts,
+		DNS:            container.HostConfig.DNS,
+		DNSOptions:     container.HostConfig.DNSOptions,
+		DNSSearch:      container.HostConfig.DNSSearch,
+		HostsPath:      container.HostsPath,
+		ResolvConfPath: container.ResolvConfPath,
+		PortBindings:   container.HostConfig.PortBindings,
+	}
+
+	options, err := nm.sandboxOptions(endpoint)
+	if err != nil {
+		return fmt.Errorf("Update network failed: %v", err)
+	}
+
+	if err := sb.Refresh(options...); err != nil {
+		return fmt.Errorf("Update network failed: Failure in refresh sandbox %s: %v", sid, err)
+	}
+
+	return nil
+
+}
+
+// hasUserDefinedIPAddress returns whether the passed endpoint configuration contains IP address configuration
+func hasUserDefinedIPAddress(epConfig *apitypes.EndpointSettings) bool {
+	return epConfig != nil && epConfig.IPAMConfig != nil && (len(epConfig.IPAMConfig.IPV4Address) > 0 || len(epConfig.IPAMConfig.IPV6Address) > 0)
+}
+
+// User specified ip address is acceptable only for networks with user specified subnets.
+func validateNetworkingConfig(network libnetwork.Network, epConfig *apitypes.EndpointSettings) error {
+	if network == nil || epConfig == nil {
+		return nil
+	}
+	if !hasUserDefinedIPAddress(epConfig) {
+		return nil
+	}
+
+	_, _, nwIPv4Configs, nwIPv6Configs := network.Info().IpamConfig()
+	for _, s := range []struct {
+		ipConfigured  bool
+		subnetConfigs []*libnetwork.IpamConf
+	}{
+		{
+			ipConfigured:  len(epConfig.IPAMConfig.IPV4Address) > 0,
+			subnetConfigs: nwIPv4Configs,
+		},
+		{
+			ipConfigured:  len(epConfig.IPAMConfig.IPV6Address) > 0,
+			subnetConfigs: nwIPv6Configs,
+		},
+	} {
+		if s.ipConfigured {
+			foundSubnet := false
+			for _, cfg := range s.subnetConfigs {
+				if len(cfg.PreferredPool) > 0 {
+					foundSubnet = true
+					break
+				}
+			}
+			if !foundSubnet {
+				return fmt.Errorf("user specified IP address is supported only when connecting to networks with user configured subnets")
+			}
+		}
+	}
+
+	return nil
+}
+
+func (nm *NetworkManager) updateNetworkConfig(container *ContainerMeta, networkIdOrName string, endpointConfig *apitypes.EndpointSettings, updateSettings bool) (libnetwork.Network, error) {
+	if IsContainer(container.HostConfig.NetworkMode) {
+		return nil, fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+	}
+
+	// TODO check bridge-mode conflict
+
+	if IsUserDefined(container.HostConfig.NetworkMode) {
+		if hasUserDefinedIPAddress(endpointConfig) {
+			return nil, fmt.Errorf("user specified IP address is supported on user defined networks only")
+		}
+		if endpointConfig != nil && len(endpointConfig.Aliases) > 0 {
+			return nil, fmt.Errorf("network-scoped alias is supported only for containers in user defined networks")
+		}
+	} else {
+		addShortID := true
+		shortID := stringid.TruncateID(container.ID)
+		for _, alias := range endpointConfig.Aliases {
+			if alias == shortID {
+				addShortID = false
+				break
+			}
+		}
+		if addShortID {
+			endpointConfig.Aliases = append(endpointConfig.Aliases, shortID)
+		}
+	}
+
+	network, err := nm.Get(context.Background(), networkIdOrName)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateNetworkingConfig(network.Network, endpointConfig); err != nil {
+		return nil, err
+	}
+
+	if updateSettings {
+		if err := nm.updateNetworkSettings(container, network.Network); err != nil {
+			return nil, err
+		}
+	}
+	return network.Network, nil
+}
+
+func (nm *NetworkManager) connectToNetwork(container *ContainerMeta, networkIdOrName string, epConfig *apitypes.EndpointSettings, updateSettings bool) (err error) {
+	if IsContainer(container.HostConfig.NetworkMode) {
+		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+	}
+	// TODO check bridge mode conflict
+
+	if epConfig == nil {
+		epConfig = &apitypes.EndpointSettings{}
+	}
+	network, err := nm.updateNetworkConfig(container, networkIdOrName, epConfig, updateSettings)
+	if err != nil {
+		return err
+	}
+	if network == nil {
+		return nil
+	}
+
+	sb := nm.getNetworkSandbox(container.ID)
+
+	// TODO build create endpoint option
+	var createOptions libnetwork.EndpointOption
+	endpointName := strings.TrimPrefix(container.Name, "/")
+	ep, err := network.CreateEndpoint(endpointName, createOptions)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if e := ep.Delete(false); e != nil {
+				logrus.Warnf("Could not rollback container connection to network %s", networkIdOrName)
+			}
+		}
+	}()
+	container.NetworkSettings.Networks[network.Name()] = epConfig
+
+	if err := nm.updateEndpointNetworkSettings(container, network, ep); err != nil {
+		return err
+	}
+
+	if sb == nil {
+		endpoint := &types.Endpoint{
+			Hostname:       container.Config.Hostname,
+			NetworkMode:    container.HostConfig.NetworkMode,
+			ExtraHosts:     container.HostConfig.ExtraHosts,
+			DNS:            container.HostConfig.DNS,
+			DNSOptions:     container.HostConfig.DNSOptions,
+			DNSSearch:      container.HostConfig.DNSSearch,
+			HostsPath:      container.HostsPath,
+			ResolvConfPath: container.ResolvConfPath,
+			PortBindings:   container.HostConfig.PortBindings,
+		}
+		options, err := nm.sandboxOptions(endpoint)
+		if err != nil {
+			return err
+		}
+		sb, err = nm.controller.NewSandbox(container.ID, options...)
+		if err != nil {
+			return err
+		}
+
+		// TODO update sandbox networkSettings of container
+	}
+	// TODO join option
+
+	// TODO update container.NetworkSettings.Ports
+
+	return nil
 }

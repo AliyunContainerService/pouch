@@ -75,6 +75,7 @@ type ContainerListOption struct {
 
 // ContainerMeta represents the container's meta data.
 type ContainerMeta struct {
+	sync.Mutex
 
 	// app armor profile
 	AppArmorProfile string `json:"AppArmorProfile,omitempty"`
