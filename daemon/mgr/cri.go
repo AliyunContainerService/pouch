@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
@@ -686,9 +687,17 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
-	execConfig, err := c.ContainerMgr.GetExecConfig(ctx, execid)
-	if err != nil {
-		return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
+	var execConfig *ContainerExecConfig
+	for {
+		execConfig, err = c.ContainerMgr.GetExecConfig(ctx, execid)
+		if err != nil {
+			return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
+		}
+		// Loop until exec finished.
+		if !execConfig.Running {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	var stderr []byte
