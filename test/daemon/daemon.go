@@ -12,6 +12,7 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/util"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // For pouch deamon test, we launched another pouch daemon.
@@ -99,6 +100,9 @@ func (d *Config) IsDaemonUp() bool {
 	// if pouchd is started with -l option, use the first listen address
 	for _, v := range d.Args {
 		if strings.Contains(v, "-l") || strings.Contains(v, "--listen") {
+			if strings.Contains(v, "--listen-cri") {
+				continue
+			}
 			var sock string
 			if strings.Contains(v, "=") {
 				sock = strings.Split(v, "=")[1]
@@ -148,7 +152,14 @@ func (d *Config) StartDaemon() error {
 	if util.WaitTimeout(time.Duration(d.timeout)*time.Second, d.IsDaemonUp) == false {
 		if d.Debug == true {
 			d.DumpLog()
-			fmt.Printf("Failed to launch pouchd:%v\n", d.Args)
+
+			fmt.Printf("\nFailed to launch pouchd:%v\n", d.Args)
+
+			cmd := "ps aux |grep pouchd"
+			fmt.Printf("\nList pouchd process:\n%s\n", icmd.RunCommand("sh", "-c", cmd).Combined())
+
+			cmd = "ps aux |grep containerd"
+			fmt.Printf("\nList containerd process:\n%s\n", icmd.RunCommand("sh", "-c", cmd).Combined())
 		}
 
 		d.KillDaemon()
@@ -164,9 +175,9 @@ func (d *Config) DumpLog() {
 
 	content, err := ioutil.ReadFile(d.LogPath)
 	if err != nil {
-		fmt.Printf("failed to read log, err:%s", err)
+		fmt.Printf("failed to read log, err: %s\n", err)
 	}
-	fmt.Printf("pouch daemon log contents: %s", content)
+	fmt.Printf("pouch daemon log contents:\n %s\n", content)
 }
 
 // KillDaemon kill pouchd.
