@@ -114,11 +114,7 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filters string) ([]type
 // SearchImages searches imaged from specified registry.
 func (mgr *ImageManager) SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error) {
 	// Directly send API calls towards specified registry
-	if registry == "" {
-		registry = mgr.DefaultRegistry
-	}
-
-	return nil, nil
+	return nil, errtypes.ErrNotImplemented
 }
 
 // GetImage gets image by image id or ref.
