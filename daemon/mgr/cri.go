@@ -7,11 +7,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
-	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/reference"
@@ -688,29 +686,20 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
-	execInspect, err := c.ContainerMgr.InspectExec(ctx, execid)
+	execConfig, err := c.ContainerMgr.GetExecConfig(ctx, execid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
 	}
 
-	var result *ctrd.Message
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-	select {
-	case <-ticker.C:
-		return nil, fmt.Errorf("timeout to get exec result for container %q", id)
-	case result = <-execInspect.ExitCh:
-	}
-
 	var stderr []byte
-	if result.RawError() != nil {
-		stderr = []byte(result.RawError().Error())
+	if execConfig.Error != nil {
+		stderr = []byte(execConfig.Error.Error())
 	}
 
 	return &runtime.ExecSyncResponse{
 		Stdout:   output.Bytes(),
 		Stderr:   stderr,
-		ExitCode: int32(result.ExitCode()),
+		ExitCode: int32(execConfig.ExitCode),
 	}, nil
 }
 

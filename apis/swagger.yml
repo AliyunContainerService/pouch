@@ -689,6 +689,34 @@ paths:
           type: "string"
       tags: ["Exec"]
 
+  /exec/{id}/json:
+    get:
+      summary: "Inspect an exec instance"
+      description: "Return low-level information about an exec instance."
+      operationId: "ExecInspect"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            $ref: "#/definitions/ContainerExecInspect"
+        404:
+          description: "No such exec instance"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Exec instance ID"
+          required: true
+          type: "string"
+      tags: ["Exec"]
+
   /containers/{id}/attach:
     post:
       summary: "Attach to a container"
@@ -2601,6 +2629,7 @@ definitions:
 
   ExecCreateConfig:
     type: "object"
+    description: is a small subset of the Config struct that holds the configuration.
     properties:
       User:
         type: "string"
@@ -2652,12 +2681,15 @@ definitions:
 
   ExecCreateResp:
     type: "object"
+    description: contains response of Remote API POST "/containers/{name:.*}/exec".
     properties:
       Id:
         type: "string"
+        description: ID is the exec ID
 
   ExecStartConfig:
     type: "object"
+    description: ExecStartConfig is a temp struct used by execStart.
     properties:
       Detach:
         description: ExecStart will first check if it's detached
@@ -2669,6 +2701,51 @@ definitions:
       Detach: false
       Tty: false
   
+  ContainerExecInspect:
+    type: "object"
+    description: holds information about a running process started.
+    properties:
+      ID:
+        type: "string"
+        description: "The ID of this exec"
+      Running:
+        type: "boolean"
+      ExitCode:
+        type: "integer"
+        description: "The last exit code of this container"
+      ProcessConfig:
+        $ref: "#/definitions/ProcessConfig"
+      OpenStdin:
+        type: "boolean"
+      OpenStderr:
+        type: "boolean"
+      OpenStdout:
+        type: "boolean"
+      CanRemove:
+        type: "boolean"
+      ContainerID:
+        type: "string"
+        description: "The ID of this container"
+      DetachKeys:
+        type: "string"
+
+  ProcessConfig:
+    type: "object"
+    description: ExecProcessConfig holds information about the exec process.
+    properties:
+      privileged:
+        type: "boolean"
+      user:
+        type: "string"
+      tty:
+        type: "boolean"
+      entrypoint:
+        type: "string"
+      arguments:
+        type: "array"
+        items:
+          type: "string"
+
   ContainerJSON:
     description: | 
       ContainerJSON contains response of Engine API:
