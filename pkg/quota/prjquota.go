@@ -120,9 +120,6 @@ func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID int) error 
 	}
 
 	limit, err := bytefmt.ToKilobytes(size)
-	if err != nil {
-		return err
-	}
 
 	// transfer limit from kbyte to byte
 	if err := quota.checkDevLimit(dir, limit*1024); err != nil {
