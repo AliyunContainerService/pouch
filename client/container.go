@@ -76,17 +76,6 @@ func (client *APIClient) ContainerStartExec(ctx context.Context, execid string, 
 	return client.hijack(ctx, "/exec/"+execid+"/start", url.Values{}, config, header)
 }
 
-// ContainerRestart restarts a running container.
-func (client *APIClient) ContainerRestart(ctx context.Context, name string, timeout string) error {
-	q := url.Values{}
-	q.Add("t", timeout)
-
-	resp, err := client.post(ctx, "/containers/"+name+"/restart", q, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
-}
-
 // ContainerUpgrade upgrade a container with new image and args.
 func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
 	// TODO
@@ -156,16 +145,4 @@ func (client *APIClient) ContainerLogs(ctx context.Context, name string, options
 	}
 	ensureCloseReader(resp)
 	return resp.Body, nil
-}
-
-// ContainerResize resizes the size of container tty.
-func (client *APIClient) ContainerResize(ctx context.Context, name, height, width string) error {
-	query := url.Values{}
-	query.Set("h", height)
-	query.Set("w", width)
-
-	resp, err := client.post(ctx, "/containers/"+name+"/resize", query, nil, nil)
-	ensureCloseReader(resp)
-
-	return err
 }
