@@ -66,7 +66,7 @@ func canonicalAddr(url *url.URL) string {
 // change no_proxy to noProxy for avoid fail in go lint check
 var (
 	noProxyEnv = &envOnce{
-		names: []string{"NO_PROXY", "noProxy"},
+		names: []string{"NO_PROXY", "no_proxy"},
 	}
 )
 
