@@ -783,6 +783,43 @@ POST /daemon/update
 * `application/json`
 
 
+<a name="execinspect"></a>
+### Inspect an exec instance
+```
+GET /exec/{id}/json
+```
+
+
+#### Description
+Return low-level information about an exec instance.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|Exec instance ID|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|No error|[ContainerExecInspect](#containerexecinspect)|
+|**404**|No such exec instance|[4ErrorResponse](#4errorresponse)|
+|**500**|Server error|[0ErrorResponse](#0errorresponse)|
+
+
+#### Produces
+
+* `application/json`
+
+
+#### Tags
+
+* Exec
+
+
 <a name="execstart"></a>
 ### Start an exec instance
 ```
@@ -1546,6 +1583,25 @@ response returned by daemon when container create successfully
 |**Warnings**  <br>*required*|Warnings encountered when creating the container|< string > array|
 
 
+<a name="containerexecinspect"></a>
+### ContainerExecInspect
+holds information about a running process started.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**CanRemove**  <br>*optional*||boolean|
+|**ContainerID**  <br>*optional*|The ID of this container|string|
+|**DetachKeys**  <br>*optional*||string|
+|**ExitCode**  <br>*optional*|The last exit code of this container|integer|
+|**ID**  <br>*optional*|The ID of this exec|string|
+|**OpenStderr**  <br>*optional*||boolean|
+|**OpenStdin**  <br>*optional*||boolean|
+|**OpenStdout**  <br>*optional*||boolean|
+|**ProcessConfig**  <br>*optional*||[ProcessConfig](#processconfig)|
+|**Running**  <br>*optional*||boolean|
+
+
 <a name="containerjson"></a>
 ### ContainerJSON
 ContainerJSON contains response of Engine API:
@@ -1734,6 +1790,8 @@ Configuration for a network endpoint.
 
 <a name="execcreateconfig"></a>
 ### ExecCreateConfig
+is a small subset of the Config struct that holds the configuration.
+
 
 |Name|Description|Schema|
 |---|---|---|
@@ -1750,14 +1808,18 @@ Configuration for a network endpoint.
 
 <a name="execcreateresp"></a>
 ### ExecCreateResp
+contains response of Remote API POST "/containers/{name:.*}/exec".
 
-|Name|Schema|
-|---|---|
-|**Id**  <br>*optional*|string|
+
+|Name|Description|Schema|
+|---|---|---|
+|**Id**  <br>*optional*|ID is the exec ID|string|
 
 
 <a name="execstartconfig"></a>
 ### ExecStartConfig
+ExecStartConfig is a temp struct used by execStart.
+
 
 |Name|Description|Schema|
 |---|---|---|
@@ -2107,6 +2169,20 @@ If a container's port is mapped for both `tcp` and `udp`, two separate
 entries are added to the mapping table.
 
 *Type* : < string, < [PortBinding](#portbinding) > array > map
+
+
+<a name="processconfig"></a>
+### ProcessConfig
+ExecProcessConfig holds information about the exec process.
+
+
+|Name|Schema|
+|---|---|
+|**arguments**  <br>*optional*|< string > array|
+|**entrypoint**  <br>*optional*|string|
+|**privileged**  <br>*optional*|boolean|
+|**tty**  <br>*optional*|boolean|
+|**user**  <br>*optional*|string|
 
 
 <a name="registryserviceconfig"></a>
