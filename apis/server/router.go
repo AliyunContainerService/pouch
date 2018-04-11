@@ -77,7 +77,7 @@ func initRoute(s *Server) http.Handler {
 	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
 
-	if s.Config.Debug {
+	if s.Config.Debug || s.Config.EnableProfiler {
 		profilerSetup(r)
 	}
 	return r
