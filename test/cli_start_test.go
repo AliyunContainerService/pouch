@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"os/exec"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -243,4 +245,25 @@ func (suite *PouchStartSuite) TestStartWithAnnotation(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
+}
+
+// TestStartWithExitCode starts a container with annotation.
+func (suite *PouchStartSuite) TestStartWithExitCode(c *check.C) {
+	name := "start-exitcode"
+
+	res := command.PouchRun("create", "--name", name, busyboxImage, "sh", "-c", "exit 101")
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// test process exit code $? == 101
+	ret := command.PouchRun("start", "-a", name)
+	ret.Assert(c, icmd.Expected{ExitCode: 101})
+
+	// test container ExitCode == 101
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
 }

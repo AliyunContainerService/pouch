@@ -48,7 +48,7 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 		}
 	}
 	{
-		result := command.PouchRun("--host", daemon.Listen, "run", "--name", cname, busyboxImage)
+		result := command.PouchRun("--host", daemon.Listen, "run", "-d", "--name", cname, busyboxImage)
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)

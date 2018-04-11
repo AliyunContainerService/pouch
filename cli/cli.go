@@ -140,3 +140,14 @@ func (c *Cli) Print(obj interface{}) {
 
 	display.Flush()
 }
+
+// ExitError defines exit error produce by cli commands.
+type ExitError struct {
+	Code   int
+	Status string
+}
+
+// Error inplements error interface.
+func (e ExitError) Error() string {
+	return fmt.Sprintf("Exit Code: %d, Status: %s", e.Code, e.Status)
+}

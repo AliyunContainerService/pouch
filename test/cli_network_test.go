@@ -139,7 +139,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 			ExitCode: 1,
 			Err:      "has active endpoints",
 		}
-		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+		command.PouchRun("run", "-d", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
 
 		err := command.PouchRun("network", "remove", funcname).Compare(expct)
 		c.Assert(err, check.IsNil)
@@ -181,7 +181,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 	}
 	{
 		// running container is stopped, then the veth device should also been removed
-		command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+		command.PouchRun("run", "-d", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
 		command.PouchRun("stop", funcname).Assert(c, icmd.Success)
 
 		// get the ID of bridge to construct the bridge name.

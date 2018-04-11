@@ -626,6 +626,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID())
 		}
 		c.meta.State.Pid = int64(pid)
+		c.meta.State.ExitCode = 0
 	} else {
 		c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 		c.meta.State.Error = err.Error()
