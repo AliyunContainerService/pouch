@@ -819,7 +819,17 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 		imageRef = refTagged.String()
 	}
 
-	err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))
+	authConfig := &apitypes.AuthConfig{}
+	if r.Auth != nil {
+		authConfig.Auth = r.Auth.Auth
+		authConfig.Username = r.Auth.Username
+		authConfig.Password = r.Auth.Password
+		authConfig.ServerAddress = r.Auth.ServerAddress
+		authConfig.IdentityToken = r.Auth.IdentityToken
+		authConfig.RegistryToken = r.Auth.RegistryToken
+	}
+
+	err = c.ImageMgr.PullImage(ctx, imageRef, authConfig, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return nil, err
 	}
