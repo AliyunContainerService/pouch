@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/alibaba/pouch/apis/plugins"
@@ -19,14 +20,16 @@ import (
 
 // Server is a http server which serves restful api to client.
 type Server struct {
-	Config          *config.Config
-	ContainerMgr    mgr.ContainerMgr
-	SystemMgr       mgr.SystemMgr
-	ImageMgr        mgr.ImageMgr
-	VolumeMgr       mgr.VolumeMgr
-	NetworkMgr      mgr.NetworkMgr
-	listeners       []net.Listener
-	ContainerPlugin plugins.ContainerPlugin
+	Config           *config.Config
+	ContainerMgr     mgr.ContainerMgr
+	SystemMgr        mgr.SystemMgr
+	ImageMgr         mgr.ImageMgr
+	VolumeMgr        mgr.VolumeMgr
+	NetworkMgr       mgr.NetworkMgr
+	listeners        []net.Listener
+	ContainerPlugin  plugins.ContainerPlugin
+	ManagerWhiteList map[string]struct{}
+	lock             sync.RWMutex
 }
 
 // Start setup route table and listen to specified address which currently only supports unix socket and tcp address.
@@ -51,6 +54,7 @@ func (s *Server) Start() (err error) {
 		if s.Config.TLS.VerifyRemote {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
+		SetupManagerWhitelist(s)
 	}
 
 	for _, one := range s.Config.Listen {
@@ -68,6 +72,19 @@ func (s *Server) Start() (err error) {
 
 	// not error, will block and run forever.
 	return <-errCh
+}
+
+// SetupManagerWhitelist enables users to setup which common name can access this server
+func SetupManagerWhitelist(server *Server) {
+	if server.Config.TLS.ManagerWhiteList != "" {
+		server.lock.Lock()
+		defer server.lock.Unlock()
+		arr := strings.Split(server.Config.TLS.ManagerWhiteList, ",")
+		server.ManagerWhiteList = make(map[string]struct{}, len(arr))
+		for _, cn := range arr {
+			server.ManagerWhiteList[cn] = struct{}{}
+		}
+	}
 }
 
 // Stop will shutdown http server by closing all listeners.
