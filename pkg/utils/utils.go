@@ -63,49 +63,21 @@ func FormatTimeInterval(input int64) (formattedTime string, err error) {
 		return "", errInvalid
 	}
 
-	if diff >= Year {
-		year := int(diff / Year)
-		formattedTime += strconv.Itoa(year) + " year"
-		if year > 1 {
-			formattedTime += "s"
+	timeThresholds := []time.Duration{Year, Month, Week, Day, Hour, Minute, Second}
+	timeNames := []string{"year", "month", "week", "day", "hour", "minute", "second"}
+
+	for i, threshold := range timeThresholds {
+		if diff >= threshold {
+			count := int(diff / threshold)
+			formattedTime += strconv.Itoa(count) + " " + timeNames[i]
+			if count > 1 {
+				formattedTime += "s"
+			}
+			break
 		}
-	} else if diff >= Month {
-		month := int(diff / Month)
-		formattedTime += strconv.Itoa(month) + " month"
-		if month > 1 {
-			formattedTime += "s"
-		}
-	} else if diff >= Week {
-		week := int(diff / Week)
-		formattedTime += strconv.Itoa(week) + " week"
-		if week > 1 {
-			formattedTime += "s"
-		}
-	} else if diff >= Day {
-		day := int(diff / Day)
-		formattedTime += strconv.Itoa(day) + " day"
-		if day > 1 {
-			formattedTime += "s"
-		}
-	} else if diff >= Hour {
-		hour := int(diff / Hour)
-		formattedTime += strconv.Itoa(hour) + " hour"
-		if hour > 1 {
-			formattedTime += "s"
-		}
-	} else if diff >= Minute {
-		minute := int(diff / Minute)
-		formattedTime += strconv.Itoa(minute) + " minute"
-		if minute > 1 {
-			formattedTime += "s"
-		}
-	} else if diff >= Second {
-		second := int(diff / Second)
-		formattedTime += strconv.Itoa(second) + " second"
-		if second > 1 {
-			formattedTime += "s"
-		}
-	} else {
+	}
+
+	if diff < Second {
 		formattedTime += "0 second"
 	}
 
