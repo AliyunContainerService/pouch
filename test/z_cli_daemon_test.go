@@ -290,3 +290,46 @@ func (suite *PouchDaemonSuite) TestDaemonDefaultRegistry(c *check.C) {
 
 	defer dcfg.KillDaemon()
 }
+
+// TestDaemonTlsVerify tests start daemon with TLS verification enabled.
+func (suite *PouchDaemonSuite) TestDaemonTlsVerify(c *check.C) {
+	SkipIfFalse(c, IsTLSExist)
+	dcfg := daemon.NewConfig()
+	dcfg.Listen = ""
+	dcfg.NewArgs("--listen=" + testDaemonHTTPSAddr)
+	dcfg.Args = append(dcfg.Args,
+		"--tlsverify",
+		"--tlscacert="+serverCa,
+		"--tlscert="+serverCert,
+		"--tlskey="+serverKey)
+	dcfg.Debug = false
+	// Skip error check, because the function to check daemon up using CLI without TLS info.
+	dcfg.StartDaemon()
+
+	// Must kill it, as we may loose the pid in next call.
+	defer dcfg.KillDaemon()
+
+	// Use TLS could success
+	result := RunWithSpecifiedDaemon(&dcfg,
+		"--tlscacert="+clientCa,
+		"--tlscert="+clientCert,
+		"--tlskey="+clientKey, "version")
+	result.Assert(c, icmd.Success)
+
+	// Do not use TLS should fail
+	result = RunWithSpecifiedDaemon(&dcfg, "version")
+	c.Assert(result.ExitCode, check.Equals, 1)
+	err := util.PartialEqual(result.Stderr(), "malformed HTTP response")
+	c.Assert(err, check.IsNil)
+
+	{
+		// Use wrong CA should fail
+		result := RunWithSpecifiedDaemon(&dcfg,
+			"--tlscacert="+clientWrongCa,
+			"--tlscert="+clientCert,
+			"--tlskey="+clientKey, "version")
+		c.Assert(result.ExitCode, check.Equals, 1)
+		err := util.PartialEqual(result.Stderr(), "failed to append certificates")
+		c.Assert(err, check.IsNil)
+	}
+}
