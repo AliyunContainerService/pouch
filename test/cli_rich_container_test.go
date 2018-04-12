@@ -193,6 +193,9 @@ func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
 
 // TestRichContainerSystemdWorks check the systemd works.
 func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) {
+	// TODO: uncomment it
+	c.Skip("skip this flaky test")
+
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	var funcname string
