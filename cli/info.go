@@ -55,9 +55,9 @@ func (v *InfoCommand) runInfo() error {
 
 func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	fmt.Fprintln(os.Stdout, "Containers:", info.Containers)
-	fmt.Fprintln(os.Stdout, "Running:", info.ContainersRunning)
-	fmt.Fprintln(os.Stdout, "Paused:", info.ContainersPaused)
-	fmt.Fprintln(os.Stdout, "Stopped:", info.ContainersStopped)
+	fmt.Fprintln(os.Stdout, " Running:", info.ContainersRunning)
+	fmt.Fprintln(os.Stdout, " Paused:", info.ContainersPaused)
+	fmt.Fprintln(os.Stdout, " Stopped:", info.ContainersStopped)
 	fmt.Fprintln(os.Stdout, "Images: ", info.Images)
 	fmt.Fprintln(os.Stdout, "ID:", info.ID)
 	fmt.Fprintln(os.Stdout, "Name:", info.Name)
@@ -129,9 +129,9 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 func infoExample() string {
 	return `$ pouch info
 Containers: 1
-Running: 1
-Paused: 0
-Stopped: 0
+ Running: 1
+ Paused: 0
+ Stopped: 0
 Images:  0
 ID:
 Name:
@@ -147,7 +147,7 @@ Kernel Version: 3.10.0-693.17.1.el7.x86_64
 Operating System:
 OSType: linux
 Architecture:
-HTTP Proxy:
+HTTP Proxy: http://127.0.0.1:5678
 HTTPS Proxy:
 Registry: https://index.docker.io/v1/
 Experimental: false
