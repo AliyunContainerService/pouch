@@ -131,8 +131,8 @@ func Test_parseSecurityOpt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := parseSecurityOpt(tt.args.meta, tt.args.securityOpt); (err != nil) != tt.wantErr {
-				t.Errorf("parseSecurityOpt() error = %v, wantErr %v", err, tt.wantErr)
+			if err := parseSecurityOpts(tt.args.meta, []string{tt.args.securityOpt}); (err != nil) != tt.wantErr {
+				t.Errorf("parseSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
