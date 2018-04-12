@@ -310,7 +310,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		if iface.Address() != nil {
 			mask, _ := iface.Address().Mask.Size()
 			endpointConfig.IPPrefixLen = int64(mask)
-			endpointConfig.IPAddress = iface.Address().String()
+			endpointConfig.IPAddress = iface.Address().IP.String()
 		}
 
 		if iface.MacAddress() != nil {
