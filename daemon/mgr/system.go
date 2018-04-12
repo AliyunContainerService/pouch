@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -11,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/registry"
 	"github.com/alibaba/pouch/version"
 
@@ -73,6 +75,27 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		return nil
 	})
 
+	hostname := "<unknown>"
+	if name, err := os.Hostname(); err != nil {
+		logrus.Warnf("failed to get hostname: %v", err)
+	} else {
+		hostname = name
+	}
+
+	totalMem := int64(0)
+	if mem, err := system.GetTotalMem(); err != nil {
+		logrus.Warnf("failed to get system mem: %v", err)
+	} else {
+		totalMem = int64(mem)
+	}
+
+	OSName := "<unknown>"
+	if osName, err := system.GetOSName(); err != nil {
+		logrus.Warnf("failed to get operating system: %v", err)
+	} else {
+		OSName = osName
+	}
+
 	info := types.SystemInfo{
 		// architecture: ,
 		// CgroupDriver: ,
@@ -83,7 +106,8 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		ContainersStopped: cStopped,
 		Debug:             mgr.config.Debug,
 		DefaultRuntime:    mgr.config.DefaultRuntime,
-		// Driver: ,
+		// FIXME: avoid hard code
+		Driver: "overlayfs",
 		// DriverStatus: ,
 		// ExperimentalBuild: ,
 		HTTPProxy: mgr.config.ImageProxy,
@@ -96,12 +120,12 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		Labels:             mgr.config.Labels,
 		// LiveRestoreEnabled: ,
 		// LoggingDriver: ,
-		// MemTotal: ,
-		// Name: ,
-		// NCPU: ,
-		// OperatingSystem: ,
-		OSType:       runtime.GOOS,
-		PouchRootDir: mgr.config.HomeDir,
+		MemTotal:        totalMem,
+		Name:            hostname,
+		NCPU:            int64(runtime.NumCPU()),
+		OperatingSystem: OSName,
+		OSType:          runtime.GOOS,
+		PouchRootDir:    mgr.config.HomeDir,
 		// RegistryConfig: ,
 		// RuncCommit: ,
 		// Runtimes: ,
