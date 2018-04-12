@@ -308,15 +308,14 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		mgr.ExecProcesses.Put(execid, execConfig)
 	}()
 
-	if err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
+	err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,
 		ExecID:      execid,
 		IO:          io,
 		P:           process,
-	}); err != nil {
-		return err
-	}
-	return nil
+	})
+
+	return err
 }
 
 // InspectExec returns low-level information about exec command.
