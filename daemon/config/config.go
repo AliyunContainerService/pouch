@@ -22,6 +22,9 @@ type Config struct {
 	// Network config
 	NetworkConfg network.Config
 
+	// Whether enable cri manager.
+	IsCriEnabled bool `json:"enable-cri,omitempty"`
+
 	// CRI config.
 	CriConfig cri.Config
 

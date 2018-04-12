@@ -49,7 +49,7 @@ test_setup() {
   pouch_pid_command=`pgrep pouchd`
   pouch_pid=${pouch_pid_command}
   if [ ! -n "${pouch_pid}" ]; then
-    keepalive "pouchd ${POUCH_FLAGS}" \
+    keepalive "pouchd --enable-cri ${POUCH_FLAGS}" \
 	  ${RESTART_WAIT_PERIOD} &> ${report_dir}/pouch.log &
     pouch_pid=$!
   fi
