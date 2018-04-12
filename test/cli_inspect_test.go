@@ -40,11 +40,11 @@ func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 	command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	// inspect Container ID
 	output = command.PouchRun("inspect", "-f", "{{.ID}}", name).Stdout()
@@ -52,7 +52,7 @@ func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 
 	// inspect Memory
 	output = command.PouchRun("inspect", "-f", "{{.HostConfig.Memory}}", name).Stdout()
-	c.Assert(output, check.Equals, fmt.Sprintf("%d\n", result.HostConfig.Memory))
+	c.Assert(output, check.Equals, fmt.Sprintf("%d\n", result[0].HostConfig.Memory))
 
 	DelContainerForceMultyTime(c, name)
 }
@@ -110,7 +110,7 @@ func (suite *PouchInspectSuite) TestMultiInspectErrors(c *check.C) {
 		{
 			containers: []string{},
 			args:       []string{"multi-inspect-print-1", "multi-inspect-print-2"},
-			expectedOutput: "Error: Fetch object error: {\"message\":\"container: multi-inspect-print-1: not found\"}\n" +
+			expectedOutput: "\nError: Fetch object error: {\"message\":\"container: multi-inspect-print-1: not found\"}\n" +
 				"Error: Fetch object error: {\"message\":\"container: multi-inspect-print-2: not found\"}\n",
 		},
 		{

@@ -189,7 +189,7 @@ func DeDuplicate(input []string) []string {
 // format error message
 type FormatErrMsgFunc func(idx int, err error) (string, error)
 
-// CombineErrors is a function which used by MultiInspect to merge multiple errors
+// CombineErrors is a function which used by Inspect to merge multiple errors
 // into one error.
 func CombineErrors(errs []error, formatErrMsg FormatErrMsgFunc) error {
 	var errMsgs []string
