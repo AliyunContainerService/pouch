@@ -58,8 +58,8 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", "--host", daemon.Listen, cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
@@ -228,11 +228,11 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 
 	// test if the container is running.
 	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Fatalf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(string(result.State.Status), check.Equals, "running")
+	c.Assert(string(result[0].State.Status), check.Equals, "running")
 }
 
 // TestDaemonLabel tests start daemon with label works.

@@ -252,7 +252,7 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 		return apiClient.VolumeInspect(ctx, ref)
 	}
 
-	return inspect.MultiInspect(os.Stdout, args, v.format, getRefFunc)
+	return inspect.Inspect(os.Stdout, args, v.format, getRefFunc)
 }
 
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.

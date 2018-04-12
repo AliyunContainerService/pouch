@@ -293,7 +293,7 @@ func (n *NetworkInspectCommand) runNetworkInspect(args []string) error {
 		return apiClient.NetworkInspect(ctx, ref)
 	}
 
-	return inspect.MultiInspect(os.Stdout, args, n.format, getRefFunc)
+	return inspect.Inspect(os.Stdout, args, n.format, getRefFunc)
 }
 
 // networkInspectExample shows examples in network inspect command, and is used in auto-generated cli docs.
