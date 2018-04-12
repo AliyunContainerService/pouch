@@ -34,10 +34,11 @@ type APIClient struct {
 
 // TLSConfig contains information of tls which users can specify
 type TLSConfig struct {
-	CA           string `json:"tlscacert,omitempty"`
-	Cert         string `json:"tlscert,omitempty"`
-	Key          string `json:"tlskey,omitempty"`
-	VerifyRemote bool
+	CA               string `json:"tlscacert,omitempty"`
+	Cert             string `json:"tlscert,omitempty"`
+	Key              string `json:"tlskey,omitempty"`
+	VerifyRemote     bool   `json:"tlsverify"`
+	ManagerWhiteList string `json:"manager-whitelist"`
 }
 
 // NewAPIClient initializes a new API client for the given host
@@ -185,10 +186,8 @@ func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
 	if ca == "" {
 		return tlsConfig, nil
 	}
-	cp, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read system certificates: %v", err)
-	}
+
+	cp := x509.NewCertPool()
 	pem, err := ioutil.ReadFile(ca)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read CA certificate %q: %v", ca, err)

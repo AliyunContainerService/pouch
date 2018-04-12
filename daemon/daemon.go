@@ -85,11 +85,7 @@ func loadSymbolByName(p *plugin.Plugin, name string) (plugin.Symbol, error) {
 	return s, nil
 }
 
-// Run starts daemon.
-func (d *Daemon) Run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func (d *Daemon) loadPlugin() error {
 	var s plugin.Symbol
 	var err error
 
@@ -127,6 +123,18 @@ func (d *Daemon) Run() error {
 		if err = d.daemonPlugin.PreStartHook(); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Run starts daemon.
+func (d *Daemon) Run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := d.loadPlugin(); err != nil {
+		return err
 	}
 
 	imageMgr, err := internal.GenImageMgr(d.config, d)

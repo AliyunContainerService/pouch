@@ -25,7 +25,7 @@ func TestContainerStop(t *testing.T) {
 
 	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
-			return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
 		timeout := req.URL.Query().Get("t")
 		if timeout != "10" {

@@ -100,6 +100,15 @@ func setupSeccomp(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) e
 	return nil
 }
 
+func setupSELinux(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
+	if !meta.HostConfig.Privileged {
+		spec.s.Process.SelinuxLabel = meta.ProcessLabel
+		spec.s.Linux.MountLabel = meta.MountLabel
+	}
+
+	return nil
+}
+
 func setupCapabilities(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	var caplist []string
 	var err error

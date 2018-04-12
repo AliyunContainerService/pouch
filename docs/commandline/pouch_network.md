@@ -6,6 +6,10 @@ Manage pouch networks
 
 Manager the networks in pouchd. It contains the functions of create/remove/list/inspect network, 'driver' is used to list drivers that pouch support. Now bridge network is supported in pouchd defaulted, it will be initialized when pouchd starting.
 
+```
+pouch network [command]
+```
+
 ### Options
 
 ```

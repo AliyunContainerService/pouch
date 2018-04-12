@@ -86,7 +86,7 @@ func (s *Server) connectToNetwork(ctx context.Context, rw http.ResponseWriter, r
 		return err
 	}
 
-	var connectConfig types.NetworkConnectConfig
+	connectConfig := &types.NetworkConnectConfig{}
 	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(connectConfig); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
@@ -101,7 +101,7 @@ func (s *Server) connectToNetwork(ctx context.Context, rw http.ResponseWriter, r
 		return errors.Wrap(err, "the container to be connected doesn't exist")
 	}
 
-	if err := s.NetworkMgr.Connect(ctx, container, networkIdOrName, connectConfig.EndpointConfig, true); err != nil {
+	if err := s.NetworkMgr.Connect(ctx, container, networkIdOrName, connectConfig.EndpointConfig); err != nil {
 		return err
 	}
 	rw.WriteHeader(http.StatusOK)

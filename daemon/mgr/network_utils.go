@@ -37,3 +37,19 @@ func IsDefault(mode string) bool {
 func IsPrivate(mode string) bool {
 	return !(IsHost(mode) || IsContainer(mode))
 }
+
+func NetworkName(mode string) string {
+	if IsDefault(mode) {
+		return "default"
+	} else if IsBridge(mode) {
+		return "nat"
+	} else if IsNone(mode) {
+		return "none"
+	} else if IsContainer(mode) {
+		return "container"
+	} else if IsUserDefined(mode) {
+		return string(mode)
+	}
+
+	return ""
+}

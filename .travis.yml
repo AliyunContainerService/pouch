@@ -18,5 +18,9 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y -qq autoconf automake
 
+env:
+  - TEST_SUITE=integration-test
+  - TEST_SUITE=cri-test
+
 script:
-  - sudo make -e test
+  - sudo make -e ${TEST_SUITE}

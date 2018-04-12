@@ -131,6 +131,15 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	return s.ContainerMgr.StartExec(ctx, name, config, attach)
 }
 
+func (s *Server) getExecInfo(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	execInfo, err := s.ContainerMgr.InspectExec(ctx, name)
+	if err != nil {
+		return err
+	}
+	return EncodeResponse(rw, http.StatusOK, execInfo)
+}
+
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	config := &types.ContainerCreateConfig{}
 	reader := req.Body

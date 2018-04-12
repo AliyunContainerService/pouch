@@ -62,6 +62,7 @@ var setupFunc = []SetupFunc{
 	setupAppArmor,
 	setupCapabilities,
 	setupSeccomp,
+	setupSELinux,
 
 	// blkio spec
 	setupBlkio,

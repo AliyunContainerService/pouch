@@ -299,6 +299,14 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		return "", err
 	}
 
+	defer func() {
+		if err != nil {
+			if err := ep.Delete(true); err != nil {
+				logrus.Errorf("could not delete endpoint %s after failing to create endpoint: %v", ep.Name(), err)
+			}
+		}
+	}()
+
 	// create sandbox
 	sb := nm.getNetworkSandbox(containerID)
 	if sb == nil {
@@ -341,7 +349,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		if iface.Address() != nil {
 			mask, _ := iface.Address().Mask.Size()
 			endpointConfig.IPPrefixLen = int64(mask)
-			endpointConfig.IPAddress = iface.Address().String()
+			endpointConfig.IPAddress = iface.Address().IP.String()
 		}
 
 		if iface.MacAddress() != nil {
@@ -700,7 +708,7 @@ func (nm *NetworkManager) updateNetworkSettings(container *ContainerMeta, n libn
 
 		if sn.Name == n.Name() {
 			// Avoid duplicate config
-			return nil
+			return fmt.Errorf("duplicate container connection")
 		}
 		if !IsPrivate(sn.Type) || !IsPrivate(n.Type()) {
 			return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
@@ -718,7 +726,12 @@ func (nm *NetworkManager) updateNetworkSettings(container *ContainerMeta, n libn
 }
 
 func (nm *NetworkManager) updateEndpointNetworkSettings(container *ContainerMeta, n libnetwork.Network, ep libnetwork.Endpoint) error {
-	// TODO
+	if err := container.BuildEndpointInfo(n, ep); err != nil {
+		return err
+	}
+
+	//TODO check if container.HostConfig.NetworkMode == "bridge"
+
 	return nil
 }
 
@@ -867,6 +880,7 @@ func (nm *NetworkManager) updateNetworkConfig(container *ContainerMeta, networkI
 }
 
 func (nm *NetworkManager) connectToNetwork(container *ContainerMeta, networkIdOrName string, epConfig *apitypes.EndpointSettings, updateSettings bool) (err error) {
+	fmt.Print("print epconfig info, %s, %s, %s, %s", epConfig.Aliases[0], epConfig.EndpointID, epConfig.IPAddress, epConfig.NetworkID)
 	if IsContainer(container.HostConfig.NetworkMode) {
 		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
 	}
@@ -884,11 +898,11 @@ func (nm *NetworkManager) connectToNetwork(container *ContainerMeta, networkIdOr
 	}
 
 	sb := nm.getNetworkSandbox(container.ID)
+	createOptions, err := container.BuildCreateEndpointOptions(network, epConfig, sb)
 
-	// TODO build create endpoint option
-	var createOptions libnetwork.EndpointOption
 	endpointName := strings.TrimPrefix(container.Name, "/")
-	ep, err := network.CreateEndpoint(endpointName, createOptions)
+	ep, err := network.CreateEndpoint(endpointName, createOptions...)
+	fmt.Print("%s, %s, %s", ep.ID(), ep.Name(), ep.Network())
 	if err != nil {
 		return err
 	}
@@ -926,11 +940,35 @@ func (nm *NetworkManager) connectToNetwork(container *ContainerMeta, networkIdOr
 			return err
 		}
 
-		// TODO update sandbox networkSettings of container
+		container.UpdateSandboxNetworkSettings(sb)
 	}
-	// TODO join option
 
-	// TODO update container.NetworkSettings.Ports
+	joinOptions, err := container.BuildJoinOptions(network)
+	if err != nil {
+		return err
+	}
+
+	//var joinOptions []libnetwork.EndpointOption
+	if err := ep.Join(sb, joinOptions...); err != nil {
+		return err
+	}
+	fmt.Print("check if join option work, %s", ep)
+
+	if err := container.UpdateJoinInfo(network.Name(), ep); err != nil {
+		return fmt.Errorf("Updating join info failed: %v", err)
+	}
+
+	var portMap apitypes.PortMap
+	for key, value := range GetSandboxPortMapInfo(sb) {
+		for _, element := range value {
+			portBinding := apitypes.PortBinding{
+				HostIP:   element.HostIP,
+				HostPort: element.HostPort,
+			}
+			portMap[string(key)] = append(portMap[string(key)], portBinding)
+		}
+	}
+	container.NetworkSettings.Ports = portMap
 
 	return nil
 }

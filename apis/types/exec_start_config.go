@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ExecStartConfig exec start config
+// ExecStartConfig ExecStartConfig is a temp struct used by execStart.
 // swagger:model ExecStartConfig
 
 type ExecStartConfig struct {

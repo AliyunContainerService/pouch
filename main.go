@@ -329,7 +329,7 @@ func getConflictConfigurations(flagSet *pflag.FlagSet, fileFlags map[string]inte
 	var conflictFlags []string
 	flagSet.Visit(func(f *pflag.Flag) {
 		if v, exist := fileFlags[f.Name]; exist {
-			conflictFlags = append(conflictFlags, fmt.Sprintf("from flag: %s and from config file: %s", f.Value.String(), v.(string)))
+			conflictFlags = append(conflictFlags, fmt.Sprintf("from flag: %s and from config file: %s", f.Value.String(), v))
 		}
 	})
 
