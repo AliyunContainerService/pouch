@@ -32,6 +32,9 @@ func (v *VolumeCommand) Init(c *Cli) {
 		Short: "Manage pouch volumes",
 		Long:  volumeDescription,
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fmt.Errorf("command 'pouch volume %s' does not exist.\nPlease execute `pouch volume --help` for more help", args[0])
+		},
 	}
 
 	c.AddCommand(v, &VolumeCreateCommand{})
@@ -249,7 +252,7 @@ func (v *VolumeInspectCommand) runVolumeInspect(args []string) error {
 		return apiClient.VolumeInspect(ctx, ref)
 	}
 
-	return inspect.MultiInspect(os.Stdout, args, v.format, getRefFunc)
+	return inspect.Inspect(os.Stdout, args, v.format, getRefFunc)
 }
 
 // volumeInspectExample shows examples in volume inspect command, and is used in auto-generated cli docs.

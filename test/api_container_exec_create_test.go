@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -38,9 +39,9 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 201)
 
-	var got string
-	request.DecodeBody(&got, resp.Body)
-	c.Logf("ExecID is %s", got)
+	var execCreateResp types.ExecCreateResp
+	request.DecodeBody(&execCreateResp, resp.Body)
+	c.Logf("ExecID is %s", execCreateResp.ID)
 
 	DelContainerForceOk(c, cname)
 }

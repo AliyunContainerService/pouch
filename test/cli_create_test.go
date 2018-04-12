@@ -145,13 +145,13 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.Config.Labels, check.NotNil)
+	c.Assert(result[0].Config.Labels, check.NotNil)
 
-	if result.Config.Labels["abc"] != "123" {
+	if result[0].Config.Labels["abc"] != "123" {
 		c.Errorf("failed to set label: %s", label)
 	}
 }
@@ -167,13 +167,13 @@ func (suite *PouchCreateSuite) TestCreateWithSysctls(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.Sysctls, check.NotNil)
+	c.Assert(result[0].HostConfig.Sysctls, check.NotNil)
 
-	if result.HostConfig.Sysctls["net.ipv4.ip_forward"] != "1" {
+	if result[0].HostConfig.Sysctls["net.ipv4.ip_forward"] != "1" {
 		c.Errorf("failed to set sysctl: %s", sysctl)
 	}
 }
@@ -189,14 +189,14 @@ func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.SecurityOpt, check.NotNil)
+	c.Assert(result[0].HostConfig.SecurityOpt, check.NotNil)
 
 	exist := false
-	for _, opt := range result.HostConfig.SecurityOpt {
+	for _, opt := range result[0].HostConfig.SecurityOpt {
 		if opt == appArmor {
 			exist = true
 		}
@@ -217,14 +217,14 @@ func (suite *PouchCreateSuite) TestCreateWithSeccomp(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.SecurityOpt, check.NotNil)
+	c.Assert(result[0].HostConfig.SecurityOpt, check.NotNil)
 
 	exist := false
-	for _, opt := range result.HostConfig.SecurityOpt {
+	for _, opt := range result[0].HostConfig.SecurityOpt {
 		if opt == seccomp {
 			exist = true
 		}
@@ -245,14 +245,14 @@ func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.CapAdd, check.NotNil)
+	c.Assert(result[0].HostConfig.CapAdd, check.NotNil)
 
 	exist := false
-	for _, cap := range result.HostConfig.CapAdd {
+	for _, cap := range result[0].HostConfig.CapAdd {
 		if cap == capability {
 			exist = true
 		}
@@ -272,11 +272,11 @@ func (suite *PouchCreateSuite) TestCreateWithPrivilege(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.Privileged, check.Equals, true)
+	c.Assert(result[0].HostConfig.Privileged, check.Equals, true)
 }
 
 // TestCreateEnableLxcfs tries to test create a container with lxcfs.
@@ -288,13 +288,13 @@ func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.EnableLxcfs, check.NotNil)
+	c.Assert(result[0].HostConfig.EnableLxcfs, check.NotNil)
 
-	if result.HostConfig.EnableLxcfs != true {
+	if result[0].HostConfig.EnableLxcfs != true {
 		c.Errorf("failed to set EnableLxcfs")
 	}
 }
@@ -308,13 +308,13 @@ func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
 	ok := false
-	for _, v := range result.Config.Env {
+	for _, v := range result[0].Config.Env {
 		if strings.Contains(v, "TEST=true") {
 			ok = true
 		}
@@ -331,11 +331,11 @@ func (suite *PouchCreateSuite) TestCreateWithWorkDir(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(strings.TrimSpace(result.Config.WorkingDir), check.Equals, "/tmp/test")
+	c.Assert(strings.TrimSpace(result[0].Config.WorkingDir), check.Equals, "/tmp/test")
 
 	// TODO: check the work directory has been created.
 }
@@ -350,11 +350,11 @@ func (suite *PouchCreateSuite) TestCreateWithUser(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.Config.User, check.Equals, user)
+	c.Assert(result[0].Config.User, check.Equals, user)
 }
 
 // TestCreateWithIntelRdt tests creating container with Intel Rdt.
@@ -367,11 +367,11 @@ func (suite *PouchCreateSuite) TestCreateWithIntelRdt(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.IntelRdtL3Cbm, check.Equals, intelRdt)
+	c.Assert(result[0].HostConfig.IntelRdtL3Cbm, check.Equals, intelRdt)
 }
 
 // TestCreateWithAliOSMemoryOptions tests creating container with AliOS container isolation options.
@@ -385,14 +385,14 @@ func (suite *PouchCreateSuite) TestCreateWithAliOSMemoryOptions(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(*result.HostConfig.MemoryWmarkRatio, check.Equals, int64(30))
-	c.Assert(*result.HostConfig.MemoryExtra, check.Equals, int64(50))
-	c.Assert(result.HostConfig.MemoryForceEmptyCtl, check.Equals, int64(1))
-	c.Assert(result.HostConfig.ScheLatSwitch, check.Equals, int64(1))
+	c.Assert(*result[0].HostConfig.MemoryWmarkRatio, check.Equals, int64(30))
+	c.Assert(*result[0].HostConfig.MemoryExtra, check.Equals, int64(50))
+	c.Assert(result[0].HostConfig.MemoryForceEmptyCtl, check.Equals, int64(1))
+	c.Assert(result[0].HostConfig.ScheLatSwitch, check.Equals, int64(1))
 }
 
 // TestCreateWithOOMOption tests creating container with oom options.
@@ -405,12 +405,12 @@ func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 
 	output := command.PouchRun("inspect", name).Stdout()
 
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.OomScoreAdj, check.Equals, int64(100))
-	c.Assert(*result.HostConfig.OomKillDisable, check.Equals, true)
+	c.Assert(result[0].HostConfig.OomScoreAdj, check.Equals, int64(100))
+	c.Assert(*result[0].HostConfig.OomKillDisable, check.Equals, true)
 }
 
 // TestCreateWithAnnotation tests creating container with annotation.
@@ -419,14 +419,14 @@ func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 	command.PouchRun("create", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
 
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
 	// kv in map not in order.
 	var annotationSlice []string
-	for k, v := range result.Config.SpecAnnotation {
+	for k, v := range result[0].Config.SpecAnnotation {
 		annotationSlice = append(annotationSlice, fmt.Sprintf("%s=%s", k, v))
 	}
 	annotationStr := strings.Join(annotationSlice, " ")

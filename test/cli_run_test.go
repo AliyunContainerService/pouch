@@ -399,14 +399,14 @@ func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.Memory, check.Equals, int64(104857600))
+	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(104857600))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
 
 	checkFileContains(c, path, "104857600")
@@ -423,14 +423,14 @@ func (suite *PouchRunSuite) TestRunWithMemoryswap(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result.HostConfig.MemorySwap, check.Equals, int64(209715200))
+	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(209715200))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes", containerID)
 	checkFileContains(c, path, "209715200")
 
@@ -446,14 +446,14 @@ func (suite *PouchRunSuite) TestRunWithMemoryswappiness(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(int64(*result.HostConfig.MemorySwappiness), check.Equals, int64(70))
+	c.Assert(int64(*result[0].HostConfig.MemorySwappiness), check.Equals, int64(70))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.swappiness", containerID)
 	checkFileContains(c, path, "70")
 
@@ -475,20 +475,20 @@ func (suite *PouchRunSuite) TestRunWithCPULimit(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
 	// check whether the user setting options are in containers' metadata
-	c.Assert(result.HostConfig.CpusetMems, check.Equals, "0")
-	c.Assert(result.HostConfig.CPUShares, check.Equals, int64(1000))
-	c.Assert(result.HostConfig.CpusetCpus, check.Equals, "0")
-	c.Assert(result.HostConfig.CPUPeriod, check.Equals, int64(1000))
-	c.Assert(result.HostConfig.CPUQuota, check.Equals, int64(1000))
+	c.Assert(result[0].HostConfig.CpusetMems, check.Equals, "0")
+	c.Assert(result[0].HostConfig.CPUShares, check.Equals, int64(1000))
+	c.Assert(result[0].HostConfig.CpusetCpus, check.Equals, "0")
+	c.Assert(result[0].HostConfig.CPUPeriod, check.Equals, int64(1000))
+	c.Assert(result[0].HostConfig.CPUQuota, check.Equals, int64(1000))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/cpuset/default/%s/cpuset.cpus", containerID)
 		checkFileContains(c, path, "0")
@@ -521,15 +521,15 @@ func (suite *PouchRunSuite) TestRunBlockIOWeight(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(result.HostConfig.BlkioWeight, check.Equals, uint16(100))
+	c.Assert(result[0].HostConfig.BlkioWeight, check.Equals, uint16(100))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.weight", containerID)
 		checkFileContains(c, path, "100")
@@ -550,14 +550,14 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(len(result.HostConfig.BlkioWeightDevice), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioWeightDevice[0].Path, check.Equals, testDisk)
-	c.Assert(result.HostConfig.BlkioWeightDevice[0].Weight, check.Equals, uint16(100))
+	c.Assert(len(result[0].HostConfig.BlkioWeightDevice), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioWeightDevice[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioWeightDevice[0].Weight, check.Equals, uint16(100))
 
 	// test if cgroup has record the real value
 	//containerID := result.ID
@@ -581,17 +581,17 @@ func (suite *PouchRunSuite) TestRunDeviceReadBps(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(len(result.HostConfig.BlkioDeviceReadBps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceReadBps[0].Path, check.Equals, testDisk)
-	c.Assert(result.HostConfig.BlkioDeviceReadBps[0].Rate, check.Equals, uint64(1048576))
+	c.Assert(len(result[0].HostConfig.BlkioDeviceReadBps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Rate, check.Equals, uint64(1048576))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
@@ -612,17 +612,17 @@ func (suite *PouchRunSuite) TestRunDeviceWriteBps(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(len(result.HostConfig.BlkioDeviceWriteBps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceWriteBps[0].Path, check.Equals, testDisk)
-	c.Assert(result.HostConfig.BlkioDeviceWriteBps[0].Rate, check.Equals, uint64(1048576))
+	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteBps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Rate, check.Equals, uint64(1048576))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_bps_device", containerID)
 		checkFileContains(c, path, "1048576")
@@ -643,17 +643,17 @@ func (suite *PouchRunSuite) TestRunDeviceReadIops(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(len(result.HostConfig.BlkioDeviceReadIOps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceReadIOps[0].Path, check.Equals, testDisk)
-	c.Assert(result.HostConfig.BlkioDeviceReadIOps[0].Rate, check.Equals, uint64(1000))
+	c.Assert(len(result[0].HostConfig.BlkioDeviceReadIOps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Rate, check.Equals, uint64(1000))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_iops_device", containerID)
 		checkFileContains(c, path, "1000")
@@ -674,17 +674,17 @@ func (suite *PouchRunSuite) TestRunDeviceWriteIops(c *check.C) {
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(len(result.HostConfig.BlkioDeviceWriteIOps), check.Equals, 1)
-	c.Assert(result.HostConfig.BlkioDeviceWriteIOps[0].Path, check.Equals, testDisk)
-	c.Assert(result.HostConfig.BlkioDeviceWriteIOps[0].Rate, check.Equals, uint64(1000))
+	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteIOps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Rate, check.Equals, uint64(1000))
 
 	// test if cgroup has record the real value
-	containerID := result.ID
+	containerID := result[0].ID
 	{
 		path := fmt.Sprintf("/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_iops_device", containerID)
 		checkFileContains(c, path, "1000")
@@ -742,11 +742,11 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 	command.PouchRun("run", "-d", "-m", "300M", "--cgroup-parent", cgroupParent, "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	// this code slice may not robust, but for this test case is enough.
 	if strings.HasPrefix(cgroupParent, "/") {
@@ -820,14 +820,14 @@ func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
 	command.PouchRun("run", "-d", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
 
 	output := command.PouchRun("inspect", cname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
 	// kv in map not in order.
 	var annotationSlice []string
-	for k, v := range result.Config.SpecAnnotation {
+	for k, v := range result[0].Config.SpecAnnotation {
 		annotationSlice = append(annotationSlice, fmt.Sprintf("%s=%s", k, v))
 	}
 	annotationStr := strings.Join(annotationSlice, " ")

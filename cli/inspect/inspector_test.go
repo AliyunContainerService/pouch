@@ -121,7 +121,7 @@ func TestInspect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
-			if err := Inspect(out, tt.args.references, tt.args.tmplStr, tt.args.getRef); (err != nil) != tt.wantErr {
+			if err := Inspect(out, []string{tt.args.references}, tt.args.tmplStr, tt.args.getRef); (err != nil) != tt.wantErr {
 				t.Errorf("Inspect() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}

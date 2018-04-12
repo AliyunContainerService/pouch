@@ -8,6 +8,7 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
@@ -58,15 +59,20 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 		return 0, fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
 	}
 
-	ei, err := s.containerMgr.InspectExec(ctx, execid)
-	if err != nil {
-		return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
+	var ei *apitypes.ContainerExecInspect
+	for {
+		ei, err = s.containerMgr.InspectExec(ctx, execid)
+		if err != nil {
+			return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
+		}
+		// Loop until exec finished.
+		if !ei.Running {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Not return until exec finished.
-	result := <-ei.ExitCh
-
-	return result.ExitCode(), nil
+	return uint32(ei.ExitCode), nil
 }
 
 // Attach attaches to a running container.

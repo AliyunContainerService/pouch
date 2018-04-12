@@ -7,8 +7,8 @@ import (
 )
 
 // NetworkConnect connects a container to a network.
-func (client *APIClient) NetworkConnect(ctx context.Context, req *types.NetworkConnectConfig) error {
-	resp, err := client.post(ctx, "/networks/{id:.*}/connect", nil, req, nil)
+func (client *APIClient) NetworkConnect(ctx context.Context, network string, req *types.NetworkConnectConfig) error {
+	resp, err := client.post(ctx, "/networks/"+network+"/connect", nil, req, nil)
 	if err != nil {
 		return err
 	}

@@ -41,11 +41,11 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.shares"
 	if _, err := os.Stat(file); err != nil {
@@ -64,12 +64,12 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	}
 
 	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), metaJSON); err != nil {
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(metaJSON.HostConfig.CPUShares, check.Equals, int64(40))
+	c.Assert(metaJSON[0].HostConfig.CPUShares, check.Equals, int64(40))
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
@@ -81,11 +81,11 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	file := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
 	if _, err := os.Stat(file); err != nil {
@@ -104,12 +104,12 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	}
 
 	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), metaJSON); err != nil {
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(metaJSON.HostConfig.Memory, check.Equals, int64(524288000))
+	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
@@ -121,11 +121,11 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	command.PouchRun("update", "-m", "500M", name).Assert(c, icmd.Success)
 
@@ -146,12 +146,12 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	}
 
 	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), metaJSON); err != nil {
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(metaJSON.HostConfig.Memory, check.Equals, int64(524288000))
+	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

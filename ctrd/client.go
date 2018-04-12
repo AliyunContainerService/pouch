@@ -85,7 +85,7 @@ func NewClient(cfg Config) (APIClient, error) {
 }
 
 // Get will reture an available containerd grpc client,
-// Or occured an error
+// Or occurred an error
 func (c *Client) Get(ctx context.Context) (*WrapperClient, error) {
 	start := time.Now()
 
@@ -106,7 +106,7 @@ func (c *Client) Get(ctx context.Context) (*WrapperClient, error) {
 	end := time.Now()
 	elapsed := end.Sub(start)
 	logrus.WithFields(logrus.Fields{
-		"elasped": elapsed,
+		"elapsed": elapsed,
 	}).Debug("Get a grpc client")
 
 	return wrapperCli, nil

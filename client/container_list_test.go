@@ -28,12 +28,12 @@ func TestContainerList(t *testing.T) {
 
 	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
-			return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
 		query := req.URL.Query()
 		all := query.Get("all")
 		if all != "true" {
-			return nil, fmt.Errorf("all not set in URL query properly. Expected '1', got %s", all)
+			return nil, fmt.Errorf("all not set in URL query properly. Expected 'true', got %s", all)
 		}
 		containersJSON := []types.ContainerJSON{
 			{
@@ -41,8 +41,8 @@ func TestContainerList(t *testing.T) {
 				Image: "Image1",
 			},
 			{
-				Name:  "container1",
-				Image: "Image1",
+				Name:  "container2",
+				Image: "Image2",
 			},
 		}
 		b, err := json.Marshal(containersJSON)

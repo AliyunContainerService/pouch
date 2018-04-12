@@ -48,7 +48,7 @@ func (i *ImageInspectCommand) runInspect(args []string) error {
 		return apiClient.ImageInspect(ctx, ref)
 	}
 
-	return inspect.MultiInspect(os.Stdout, args, i.format, getRefFunc)
+	return inspect.Inspect(os.Stdout, args, i.format, getRefFunc)
 }
 
 // example shows examples in inspect command, and is used in auto-generated cli docs.

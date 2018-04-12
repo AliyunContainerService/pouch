@@ -32,6 +32,9 @@ func (n *NetworkCommand) Init(c *Cli) {
 		Short: "Manage pouch networks",
 		Long:  networkDescription,
 		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fmt.Errorf("command 'pouch network %s' does not exist.\nPlease execute `pouch network --help` for more help", args[0])
+		},
 	}
 
 	c.AddCommand(n, &NetworkCreateCommand{})
@@ -291,7 +294,7 @@ func (n *NetworkInspectCommand) runNetworkInspect(args []string) error {
 		return apiClient.NetworkInspect(ctx, ref)
 	}
 
-	return inspect.MultiInspect(os.Stdout, args, n.format, getRefFunc)
+	return inspect.Inspect(os.Stdout, args, n.format, getRefFunc)
 }
 
 // networkInspectExample shows examples in network inspect command, and is used in auto-generated cli docs.
@@ -408,27 +411,25 @@ func (n *NetworkConnectCommand) addFlags() {
 
 // runNetworkConnect is the entry of NetworkConnectCommand command.
 func (n *NetworkConnectCommand) runNetworkConnect(args []string) error {
-	name := args[0]
+	netName := args[0]
 	container := args[1]
-	if name == "" {
+	if netName == "" {
 		return fmt.Errorf("network name cannot be empty")
 	}
 	if container == "" {
 		return fmt.Errorf("container name cannot be empty")
 	}
 
-	networkReq := &types.NetworkConnectConfig{
-		Container:      container,
-		EndpointConfig: &types.EndpointSettings{},
+	connectConfig := &types.NetworkConnectConfig{
+		Container: container,
 	}
-
 	ctx := context.Background()
 	apiClient := n.cli.Client()
-	err := apiClient.NetworkConnect(ctx, networkReq)
+	err := apiClient.NetworkConnect(ctx, netName, connectConfig)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("container %s is connected to network %s", container, name)
+	fmt.Printf("container %s is connected to network %s", container, netName)
 
 	return nil
 }

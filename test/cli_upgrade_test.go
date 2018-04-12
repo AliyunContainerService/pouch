@@ -99,15 +99,15 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
 	command.PouchRun("upgrade", "-m", "500m", "--cpu-share", "40", "--name", name, busyboxImage125).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	containerID := result.ID
+	containerID := result[0].ID
 
 	// Check if metajson has changed
-	c.Assert(result.HostConfig.Memory, check.Equals, int64(524288000))
-	c.Assert(result.HostConfig.CPUShares, check.Equals, int64(40))
+	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(524288000))
+	c.Assert(result[0].HostConfig.CPUShares, check.Equals, int64(40))
 
 	// Check if cgroup file has changed
 	memFile := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
@@ -150,8 +150,8 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 	command.PouchRun("upgrade", "--label", "test1=bar", "--name", name, busyboxImage125).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
@@ -160,8 +160,8 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 		"test1": "bar",
 	}
 
-	if !reflect.DeepEqual(result.Config.Labels, labels) {
-		c.Errorf("unexpected output: %s, expected: %s", result.Config.Labels, labels)
+	if !reflect.DeepEqual(result[0].Config.Labels, labels) {
+		c.Errorf("unexpected output: %s, expected: %s", result[0].Config.Labels, labels)
 	}
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)

@@ -38,10 +38,10 @@ type Config struct {
 	ContainerdAddr string `json:"containerd,omitempty"`
 
 	// DefaultRegistry is daemon's default registry which is to pull/push/search images.
-	DefaultRegistry string
+	DefaultRegistry string `json:"default-registry,omitempty"`
 
 	// DefaultRegistryNS is daemon's default registry namespace used in pull/push/search images.
-	DefaultRegistryNS string
+	DefaultRegistryNS string `json:"default-registry-namespace,omitempty"`
 
 	// Home directory.
 	HomeDir string `json:"home-dir,omitempty"`
@@ -63,13 +63,13 @@ type Config struct {
 	LxcfsBinPath string `json:"lxcfs,omitempty"`
 
 	// LxcfsHome is the absolute path of lxcfs
-	LxcfsHome string
+	LxcfsHome string `json:"lxcfs-home,omitempty"`
 
 	// ImagxeProxy is a http proxy to pull image
 	ImageProxy string `json:"image-proxy,omitempty"`
 
 	// QuotaDriver is used to set the driver of Quota
-	QuotaDriver string
+	QuotaDriver string `json:"quota-driver,omitempty"`
 
 	// Configuration file of pouchd
 	ConfigFile string `json:"config-file,omitempty"`

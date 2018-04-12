@@ -32,7 +32,7 @@ function server()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
     echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
-    GOOS=linux $GOBUILD -o $BINARY_NAME
+    GOOS=linux $GOBUILD -o $BINARY_NAME -tags 'selinux'
 }
 
 function client()

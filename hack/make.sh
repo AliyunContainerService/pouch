@@ -9,6 +9,12 @@ DIR="$( cd "$( dirname "$0" )/.." && pwd )"
 cd $DIR/
 SOURCEDIR=/go/src/github.com/alibaba/pouch
 IMAGE=pouch:test
+if [[ $SOURCEDIR != $DIR ]];then
+	[ -d $SOURCEDIR ] && rm -rf $SOURCEDIR
+	POUCHTOPDIR=$(dirname $SOURCEDIR)
+	[ ! -d $POUCHTOPDIR ] && mkdir -p $POUCHTOPDIR
+	ln -sf $DIR/ $SOURCEDIR
+fi
 
 # install pouch and essential binaries: containerd, runc and so on
 function install_pouch ()
@@ -87,13 +93,6 @@ function target()
 
 	    install_dumb_init || echo "Warning: dumb-init install failed! rich container related tests will be skipped"
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
-
-		if [[ $SOURCEDIR != $DIR ]];then
-			[ -d $SOURCEDIR ] && rm -rf $SOURCEDIR
-			POUCHTOPDIR=$(dirname $SOURCEDIR)
-			[ ! -d $POUCHTOPDIR ] && mkdir -p $POUCHTOPDIR
-			ln -sf $DIR/ $SOURCEDIR
-		fi
 
 		#start pouch daemon
 		echo "start pouch daemon"

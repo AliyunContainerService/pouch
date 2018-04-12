@@ -175,8 +175,8 @@ func (suite *PouchVolumeSuite) TestVolumeInspectFormat(c *check.C) {
 	defer command.PouchRun("volume", "remove", funcname)
 
 	output := command.PouchRun("volume", "inspect", funcname).Stdout()
-	result := &types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), result); err != nil {
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 

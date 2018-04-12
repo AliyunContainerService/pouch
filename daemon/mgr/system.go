@@ -86,7 +86,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		// Driver: ,
 		// DriverStatus: ,
 		// ExperimentalBuild: ,
-		// HTTPProxy: ,
+		HTTPProxy: mgr.config.ImageProxy,
 		// HTTPSProxy: ,
 		// ID: ,
 		// Images: ,

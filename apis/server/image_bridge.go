@@ -30,6 +30,10 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 
 	if tag == "" {
 		tag = "latest"
+		if index := strings.LastIndex(image, ":"); index > 0 {
+			tag = image[index+1:]
+			image = image[:index]
+		}
 	}
 	// record the time spent during image pull procedure.
 	defer func(start time.Time) {
