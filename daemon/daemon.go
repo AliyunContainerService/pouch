@@ -167,17 +167,6 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
-	criMgr, err := internal.GenCriMgr(d)
-	if err != nil {
-		return err
-	}
-	d.criMgr = criMgr
-
-	d.criService, err = cri.NewService(d.config, criMgr)
-	if err != nil {
-		return err
-	}
-
 	d.server = server.Server{
 		Config:          d.config,
 		ContainerMgr:    containerMgr,
@@ -205,29 +194,17 @@ func (d *Daemon) Run() error {
 		close(httpServerCloseCh)
 	}()
 
-	grpcServerCloseCh := make(chan struct{})
-	go func() {
-		if err := d.criService.Serve(); err != nil {
-			logrus.Errorf("failed to start grpc server: %v", err)
-		}
-		close(grpcServerCloseCh)
-	}()
+	criStopCh := make(chan error)
+	go d.RunCriService(criStopCh)
 
-	streamServerCloseCh := make(chan struct{})
-	go func() {
-		if d.criMgr.StreamServerStart(); err != nil {
-			logrus.Errorf("failed to start stream server: %v", err)
-		}
-		close(streamServerCloseCh)
-	}()
+	err = <-criStopCh
+	if err != nil {
+		return err
+	}
 
-	// Stop pouchd if both server stopped.
+	// Stop pouchd if the server stopped
 	<-httpServerCloseCh
 	logrus.Infof("HTTP server stopped")
-	<-grpcServerCloseCh
-	logrus.Infof("GRPC server stopped")
-	<-streamServerCloseCh
-	logrus.Infof("Stream server stopped")
 
 	return nil
 }
@@ -290,4 +267,53 @@ func (d *Daemon) ShutdownPlugin() error {
 		}
 	}
 	return nil
+}
+
+// RunCriService start cri service if pouchd is specified with --enable-cri.
+func (d *Daemon) RunCriService(stopCh chan error) {
+	var err error
+
+	defer func() {
+		stopCh <- err
+		close(stopCh)
+	}()
+
+	if !d.config.IsCriEnabled {
+		return
+	}
+
+	criMgr, err := internal.GenCriMgr(d)
+	if err != nil {
+		return
+	}
+	d.criMgr = criMgr
+
+	d.criService, err = cri.NewService(d.config, criMgr)
+	if err != nil {
+		return
+	}
+
+	grpcServerCloseCh := make(chan struct{})
+	go func() {
+		if err := d.criService.Serve(); err != nil {
+			logrus.Errorf("failed to start grpc server: %v", err)
+		}
+		close(grpcServerCloseCh)
+	}()
+
+	streamServerCloseCh := make(chan struct{})
+	go func() {
+		if err := d.criMgr.StreamServerStart(); err != nil {
+			logrus.Errorf("failed to start stream server: %v", err)
+		}
+		close(streamServerCloseCh)
+	}()
+
+	<-streamServerCloseCh
+	logrus.Infof("CRI Stream server stopped")
+	<-grpcServerCloseCh
+	logrus.Infof("CRI GRPC server stopped")
+
+	logrus.Infof("CRI service stopped")
+	return
 }
