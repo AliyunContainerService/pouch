@@ -31,4 +31,8 @@ type Endpoint struct {
 
 	NetworkConfig  *types.NetworkSettings
 	EndpointConfig *types.EndpointSettings
+
+	GenericParams   map[string]interface{}
+	Priority        int
+	DisableResolver bool
 }

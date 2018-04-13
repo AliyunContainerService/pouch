@@ -1,11 +1,12 @@
 # Pouch with plugin
 
-In order to run custom code provided by users which will be triggered at some point, we support a plugin framework which introduced from golang 1.8. At this time in this plugin framework we enable users to add custom code at four point:
+In order to run custom code provided by users which will be triggered at some point, we support a plugin framework which introduced from golang 1.8. At this time in this plugin framework we enable users to add custom code at file points:
 
 * pre-start daemon point
 * pre-stop daemon point
 * pre-create container point
 * pre-start container point
+* pre-create-endapoint container point
 
 Above four points are organized by two Plugin interfaces, which are DaemonPlugin and ContainerPlugin, defined as follow:
 
@@ -21,15 +22,20 @@ type DaemonPlugin interface {
     PreStopHook() error
 }
 
-// ContainerPlugin defines in which place a plugin will be triggered in container lifecycle
+// ContainerPlugin defines places where a plugin will be triggered in container lifecycle
 type ContainerPlugin interface {
-    // PreCreate defines plugin point where receives an container create request, in this plugin point user
-    // could change the container create body passed-in by http request body
-    PreCreate(io.ReadCloser) (io.ReadCloser, error)
+  // PreCreate defines plugin point where receives an container create request, in this plugin point user
+  // could change the container create body passed-in by http request body
+  PreCreate(io.ReadCloser) (io.ReadCloser, error)
 
-    // PreStart returns an array of priority and args which will pass to runc, the every priority
-    // used to sort the pre start array that pass to runc, network plugin hook always has priority value 0.
-    PreStart(interface{}) ([]int, [][]string, error)
+  // PreStart returns an array of priority and args which will pass to runc, the every priority
+  // used to sort the pre start array that pass to runc, network plugin hook always has priority value 0.
+  PreStart(interface{}) ([]int, [][]string, error)
+
+  //NetworkGenericParams accepts the container id and env of this container and returns the priority of this endpoint
+  // and if this endpoint should enable resolver and a map which will be used as generic params to create endpoints of
+  // this container
+  PreCreateEndpoint(string, []string) (priority int, disableResolver bool, genericParam map[string]interface{})
 }
 
 ```
@@ -83,6 +89,11 @@ func (c ContPlugin) PreStart(interface{}) ([]int, [][]string, error) {
     return []int{-4}, [][]string{{"/usr/bin/touch", "touch", "/tmp/pre_start_hook"}}, nil
 }
 
+func (c ContPlugin) PreCreateEndpoint(string, []string) (priority int, disableResolver bool, genericParam map[string]interface{}) {
+    fmt.Println("pre create endpoint")
+    return
+}
+
 func main() {
     fmt.Println(ContainerPlugin, DaemonPlugin)
 }
@@ -130,7 +141,8 @@ and if you use the exact code above, every time you start a container the file a
 
 ## usage
 
-at pre-start daemon point you can start assist processes like network plugins and dfget proxy which need by pouchd and whose life cycle is the same as pouchd.
-at pre-stop daemon point you can stop the assist processes gracefully, but the trigger of this point is not a promise, because pouchd may be killed by SIGKILL.
-at pre-create container point you can change the input stream by some rules, in some company they have some stale orchestration system who use env to pass-in some limit which is an attribute in pouch, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig of pouch create api.
-at pre-start container point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing of the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
+* at pre-start daemon point you can start assist processes like network plugins and dfget proxy which need by pouchd and whose life cycle is the same as pouchd.
+* at pre-stop daemon point you can stop the assist processes gracefully, but the trigger of this point is not a promise, because pouchd may be killed by SIGKILL.
+* at pre-create container point you can change the input stream by some rules, in some company they have some stale orchestration system who use env to pass-in some limit which is an attribute in pouch, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig of pouch create api.
+* at pre-start container point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing of the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
+* at pre-create-endpoint container point you can return the priority of this endpoint and if this endpoint need enable resolver and the generic params of this endpoint.
