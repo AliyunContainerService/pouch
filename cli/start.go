@@ -72,6 +72,7 @@ func (s *StartCommand) runStart(args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
+		defer conn.Close()
 
 		wait = make(chan struct{})
 		go func() {
@@ -80,7 +81,6 @@ func (s *StartCommand) runStart(args []string) error {
 		}()
 		go func() {
 			io.Copy(conn, os.Stdin)
-			close(wait)
 		}()
 	}
 
@@ -93,6 +93,17 @@ func (s *StartCommand) runStart(args []string) error {
 	if s.attach || s.stdin {
 		<-wait
 	}
+
+	info, err := apiClient.ContainerGet(ctx, container)
+	if err != nil {
+
+	}
+
+	code := info.State.ExitCode
+	if code != 0 {
+		return ExitError{Code: int(code)}
+	}
+
 	return nil
 }
 

@@ -185,7 +185,7 @@ func (suite *PouchRunSuite) TestRunInWrongWay(c *check.C) {
 func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
 	name := "test-run-lxcfs"
 
-	command.PouchRun("run", "--name", name, "-m", "512M", "--enableLxcfs=true",
+	command.PouchRun("run", "-d", "--name", name, "-m", "512M", "--enableLxcfs=true",
 		busyboxImage, "sleep", "10000").Assert(c, icmd.Success)
 
 	res := command.PouchRun("exec", name, "head", "-n", "5", "/proc/meminfo")
@@ -237,7 +237,7 @@ func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
 func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
 	name := "test-run-with-ipc-mode"
 
-	res := command.PouchRun("run", "--name", name, "--ipc", "host", busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--ipc", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
 	DelContainerForceMultyTime(c, name)
 }
@@ -247,7 +247,7 @@ func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
 func (suite *PouchRunSuite) TestRunWithPIDMode(c *check.C) {
 	name := "test-run-with-pid-mode"
 
-	res := command.PouchRun("run", "--name", name, "--pid", "host", busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--pid", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
 	DelContainerForceMultyTime(c, name)
 }
@@ -256,7 +256,7 @@ func (suite *PouchRunSuite) TestRunWithPIDMode(c *check.C) {
 func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
 	name := "test-run-with-uts-mode"
 
-	res := command.PouchRun("run", "--name", name, "--uts", "host", busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--uts", "host", busyboxImage)
 	res.Assert(c, icmd.Success)
 	DelContainerForceMultyTime(c, name)
 }
@@ -266,7 +266,7 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	sysctl := "net.ipv4.ip_forward=1"
 	name := "run-sysctl"
 
-	res := command.PouchRun("run", "--name", name, "--sysctl", sysctl, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--sysctl", sysctl, busyboxImage)
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("exec", name, "cat", "/proc/sys/net/ipv4/ip_forward").Stdout()
@@ -281,7 +281,7 @@ func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
 	user := "1001"
 	name := "run-user"
 
-	res := command.PouchRun("run", "--name", name, "--user", user, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--user", user, busyboxImage)
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("exec", name, "id", "-u").Stdout()
@@ -304,7 +304,7 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	appArmor := "apparmor=unconfined"
 	name := "run-apparmor"
 
-	res := command.PouchRun("run", "--name", name, "--security-opt", appArmor, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--security-opt", appArmor, busyboxImage)
 	res.Assert(c, icmd.Success)
 
 	// TODO: do the test more strictly with effective AppArmor profile.
@@ -317,7 +317,7 @@ func (suite *PouchRunSuite) TestRunWithSeccomp(c *check.C) {
 	seccomp := "seccomp=unconfined"
 	name := "run-seccomp"
 
-	res := command.PouchRun("run", "--name", name, "--security-opt", seccomp, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--security-opt", seccomp, busyboxImage)
 	res.Assert(c, icmd.Success)
 
 	// TODO: do the test more strictly with effective seccomp profile.
@@ -359,7 +359,7 @@ func (suite *PouchRunSuite) TestRunWithPrivilege(c *check.C) {
 func (suite *PouchRunSuite) TestRunWithBlkioWeight(c *check.C) {
 	name := "test-run-with-blkio-weight"
 
-	res := command.PouchRun("run", "--name", name, "--blkio-weight", "500", busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--blkio-weight", "500", busyboxImage)
 	res.Assert(c, icmd.Success)
 	DelContainerForceMultyTime(c, name)
 }
@@ -817,7 +817,7 @@ func (suite *PouchRunSuite) TestRunWithDiskQuota(c *check.C) {
 // TestRunWithAnnotation is to verify the valid running container with annotation, and verify SpecAnnotation filed has been in inspect output.
 func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
 	cname := "TestRunWithAnnotation"
-	command.PouchRun("run", "-d", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
+	command.PouchRun("run", "-d", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
@@ -834,4 +834,20 @@ func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
 
 	c.Assert(util.PartialEqual(annotationStr, "a=b"), check.IsNil)
 	c.Assert(util.PartialEqual(annotationStr, "foo=bar"), check.IsNil)
+}
+
+// TestRunWithExitCode is to verify the valid running container with exit code != 0.
+func (suite *PouchRunSuite) TestRunWithExitCode(c *check.C) {
+	cname := "TestRunWithExitCode"
+	ret := command.PouchRun("run", "--name", cname, busyboxImage, "sh", "-c", "exit 101")
+	// test process exit code $? == 101
+	ret.Assert(c, icmd.Expected{ExitCode: 101})
+
+	// test container ExitCode == 101
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
 }

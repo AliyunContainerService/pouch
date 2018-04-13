@@ -108,6 +108,7 @@ func (rc *RunCommand) runRun(args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
+		defer conn.Close()
 
 		go func() {
 			io.Copy(os.Stdout, br)
@@ -115,7 +116,6 @@ func (rc *RunCommand) runRun(args []string) error {
 		}()
 		go func() {
 			io.Copy(conn, os.Stdin)
-			wait <- struct{}{}
 		}()
 	}
 
@@ -130,6 +130,17 @@ func (rc *RunCommand) runRun(args []string) error {
 	} else {
 		fmt.Fprintf(os.Stdout, "%s\n", result.ID)
 	}
+
+	info, err := apiClient.ContainerGet(ctx, containerName)
+	if err != nil {
+
+	}
+
+	code := info.State.ExitCode
+	if code != 0 {
+		return ExitError{Code: int(code)}
+	}
+
 	return nil
 }
 
