@@ -52,6 +52,8 @@ func (rc *RunCommand) addFlags() {
 	flagSet.BoolVarP(&rc.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
 	flagSet.BoolVarP(&rc.stdin, "interactive", "i", false, "Attach container's STDIN")
 	flagSet.BoolVarP(&rc.detach, "detach", "d", false, "Run container in background and print container ID")
+	flagSet.BoolVar(&rc.rm, "rm", false, "Automatically remove the container after it exits")
+
 }
 
 // runRun is the entry of run command.
@@ -84,6 +86,9 @@ func (rc *RunCommand) runRun(args []string) error {
 
 	if (rc.attach || rc.stdin) && rc.detach {
 		return fmt.Errorf("Conflicting options: -a (or -i) and -d")
+	}
+	if rc.rm && rc.detach {
+		return fmt.Errorf("Conflicting options: --rm and -d")
 	}
 
 	// default attach container's stdout and stderr
@@ -133,7 +138,13 @@ func (rc *RunCommand) runRun(args []string) error {
 
 	info, err := apiClient.ContainerGet(ctx, containerName)
 	if err != nil {
+		return err
+	}
 
+	if rc.rm {
+		if err := apiClient.ContainerRemove(ctx, containerName, true); err != nil {
+			return fmt.Errorf("failed to remove container %s: %v", containerName, err)
+		}
 	}
 
 	code := info.State.ExitCode

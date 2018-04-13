@@ -916,3 +916,12 @@ func (suite *PouchRunSuite) TestRunWithDiskQuotaRegular(c *check.C) {
 	c.Assert(mount2Found, check.Equals, true)
 	c.Assert(mount3Found, check.Equals, true)
 }
+
+// TestRunWithRM is to verify the valid running container with rm flag
+func (suite *PouchRunSuite) TestRunWithRM(c *check.C) {
+	cname := "TestRunWithRM"
+	command.PouchRun("run", "--rm", "--name", cname, busyboxImage, "echo", "hello").Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", cname).Stderr()
+	c.Assert(util.PartialEqual(output, cname+": not found"), check.IsNil)
+}
