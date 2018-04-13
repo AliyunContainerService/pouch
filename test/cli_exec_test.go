@@ -127,3 +127,13 @@ func (suite *PouchExecSuite) TestExecUlimit(c *check.C) {
 	out := command.PouchRun("exec", name, "sh", "-c", "ulimit -p").Stdout()
 	c.Assert(out, check.Equals, "256\n")
 }
+
+// TestExecExitCode test exit code after exec process exit.
+func (suite *PouchExecSuite) TestExecExitCode(c *check.C) {
+	name := "TestExecExitCode"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("exec", name, "sh", "-c", "exit 101").Assert(c, icmd.Expected{ExitCode: 101})
+	command.PouchRun("exec", name, "sh", "-c", "exit 0").Assert(c, icmd.Success)
+}
