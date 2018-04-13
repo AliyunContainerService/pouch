@@ -1524,7 +1524,7 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *ContainerMeta
 }
 
 func (mgr *ContainerManager) buildContainerEndpoint(c *ContainerMeta) *networktypes.Endpoint {
-	return &networktypes.Endpoint{
+	ep := &networktypes.Endpoint{
 		Owner:           c.ID,
 		Hostname:        c.Config.Hostname,
 		Domainname:      c.Config.Domainname,
@@ -1543,6 +1543,12 @@ func (mgr *ContainerManager) buildContainerEndpoint(c *ContainerMeta) *networkty
 		PortBindings:    c.HostConfig.PortBindings,
 		NetworkConfig:   c.NetworkSettings,
 	}
+
+	if mgr.containerPlugin != nil {
+		ep.Priority, ep.DisableResolver, ep.GenericParams = mgr.containerPlugin.PreCreateEndpoint(c.ID, c.Config.Env)
+	}
+
+	return ep
 }
 
 // setBaseFS keeps container basefs in meta

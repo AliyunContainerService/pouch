@@ -257,7 +257,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	}
 
 	// create endpoint
-	epOptions, err := endpointOptions(n, networkConfig, endpointConfig)
+	epOptions, err := endpointOptions(n, endpoint)
 	if err != nil {
 		return "", err
 	}
@@ -293,7 +293,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	networkConfig.SandboxKey = sb.Key()
 
 	// endpoint joins into sandbox
-	joinOptions, err := joinOptions(endpointConfig)
+	joinOptions, err := joinOptions(endpoint)
 	if err != nil {
 		return "", err
 	}
@@ -493,9 +493,9 @@ func initNetworkLog(cfg *config.Config) {
 	netlog.SetFormatter(formatter)
 }
 
-func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
+func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwork.EndpointOption, error) {
 	var createOptions []libnetwork.EndpointOption
-
+	epConfig := endpoint.EndpointConfig
 	if epConfig != nil {
 		ipam := epConfig.IPAMConfig
 		if ipam != nil && (ipam.IPV4Address != "" || ipam.IPV6Address != "" || len(ipam.LinkLocalIps) > 0) {
@@ -516,6 +516,13 @@ func endpointOptions(n libnetwork.Network, nwconfig *apitypes.NetworkSettings, e
 
 	genericOption := options.Generic{}
 	createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(genericOption))
+
+	if len(endpoint.GenericParams) > 0 {
+		createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(endpoint.GenericParams))
+	}
+	if endpoint.DisableResolver {
+		createOptions = append(createOptions, libnetwork.CreateOptionDisableResolution())
+	}
 
 	return createOptions, nil
 }
@@ -653,9 +660,11 @@ func (nm *NetworkManager) cleanEndpointConfig(epConfig *apitypes.EndpointSetting
 	epConfig.MacAddress = ""
 }
 
-func joinOptions(epConfig *apitypes.EndpointSettings) ([]libnetwork.EndpointOption, error) {
+func joinOptions(endpoint *types.Endpoint) ([]libnetwork.EndpointOption, error) {
 	var joinOptions []libnetwork.EndpointOption
 	// TODO: parse endpoint's links
 
+	// set priority option
+	joinOptions = append(joinOptions, libnetwork.JoinOptionPriority(nil, endpoint.Priority))
 	return joinOptions, nil
 }
