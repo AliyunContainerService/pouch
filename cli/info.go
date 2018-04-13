@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
+	units "github.com/docker/go-units"
 	"github.com/spf13/cobra"
 )
 
@@ -97,7 +98,7 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	}
 
 	fmt.Fprintln(os.Stdout, "CPUs:", info.NCPU)
-	fmt.Fprintln(os.Stdout, "Total Memory:", info.MemTotal)
+	fmt.Fprintln(os.Stdout, "Total Memory: "+units.BytesSize(float64(info.MemTotal)))
 	fmt.Fprintln(os.Stdout, "Pouch Root Dir:", info.PouchRootDir)
 	fmt.Fprintln(os.Stdout, "LiveRestoreEnabled:", info.LiveRestoreEnabled)
 	if info.RegistryConfig != nil && (len(info.RegistryConfig.InsecureRegistryCIDRs) > 0 || len(info.RegistryConfig.IndexConfigs) > 0) {
