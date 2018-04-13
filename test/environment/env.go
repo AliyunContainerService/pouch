@@ -138,3 +138,18 @@ func IsGrpquota() bool {
 	return IsDiskQuota() &&
 		(icmd.RunCommand("mount", "|grep grpquota").ExitCode == 0)
 }
+
+// IsLxcfsEnabled checks if the lxcfs is installed and service is enabled.
+func IsLxcfsEnabled() bool {
+	if icmd.RunCommand("which", "lxcfs").ExitCode != 0 {
+		return false
+	}
+	if icmd.RunCommand("pgrep", "lxcfs").ExitCode != 0 {
+		return false
+	}
+	cmd := "ps -ef |grep pouchd |grep \"enable\\-lxcfs\""
+	if icmd.RunCommand("sh", "-c", cmd).ExitCode != 0 {
+		return false
+	}
+	return true
+}

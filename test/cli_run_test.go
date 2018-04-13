@@ -183,6 +183,8 @@ func (suite *PouchRunSuite) TestRunInWrongWay(c *check.C) {
 
 // TestRunEnableLxcfs is to verify run container with lxcfs.
 func (suite *PouchRunSuite) TestRunEnableLxcfs(c *check.C) {
+	// TODO: also check if the pouchd started with lxcfs option
+	SkipIfFalse(c, environment.IsLxcfsEnabled)
 	name := "test-run-lxcfs"
 
 	command.PouchRun("run", "-d", "--name", name, "-m", "512M", "--enableLxcfs=true",
