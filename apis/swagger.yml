@@ -2808,6 +2808,8 @@ definitions:
         x-nullable: true
       Config:
         $ref: "#/definitions/ContainerConfig"
+      Snapshotter:
+        $ref: "#/definitions/SnapshotterData"
       GraphDriver:
         $ref: "#/definitions/GraphDriverData"
       Mounts:
@@ -2901,6 +2903,20 @@ definitions:
     description: The status of the container. For example, "running" or "exited".
     type: "string"
     enum: ["created", "running", "stopped", "paused", "restarting", "removing", "exited", "dead"]
+
+  SnapshotterData:
+    description: "Information about a container's snapshotter."
+    type: "object"
+    required: [Name, Data]
+    properties:
+      Name:
+        type: "string"
+        x-nullable: false
+      Data:
+        type: "object"
+        x-nullable: false
+        additionalProperties:
+          type: "string"
 
   GraphDriverData:
     description: "Information about a container's graph driver."

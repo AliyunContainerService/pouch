@@ -315,18 +315,17 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 	}
 
 	container := types.ContainerJSON{
-		ID:         meta.ID,
-		Name:       meta.Name,
-		Image:      meta.Config.Image,
-		Created:    meta.Created,
-		State:      meta.State,
-		Config:     meta.Config,
-		HostConfig: meta.HostConfig,
+		ID:          meta.ID,
+		Name:        meta.Name,
+		Image:       meta.Config.Image,
+		Created:     meta.Created,
+		State:       meta.State,
+		Config:      meta.Config,
+		HostConfig:  meta.HostConfig,
+		Snapshotter: meta.Snapshotter,
 		GraphDriver: &types.GraphDriverData{
-			Name: "overlay2",
-			Data: map[string]string{
-				"BaseFS": meta.BaseFS,
-			},
+			Name: meta.Snapshotter.Name,
+			Data: meta.Snapshotter.Data,
 		},
 	}
 
