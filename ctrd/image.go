@@ -96,6 +96,13 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			continue
 		}
 
+		desc, err := image.Config(ctx, wrapperCli.client.ContentStore(), platforms.Default())
+		if err != nil {
+			logrus.Errorf("failed to get image id %s: %v", image.Name, err)
+			continue
+		}
+		id := desc.Digest.String()
+
 		refNamed, err := reference.ParseNamedReference(image.Name)
 		// occur error, skip it
 		if err != nil {
@@ -118,13 +125,7 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]types.Imag
 			continue
 		}
 		imageInfo.Size = size
-
-		// generate image ID by imageInfo JSON.
-		imageID, err := generateID(&imageInfo)
-		if err != nil {
-			return nil, err
-		}
-		imageInfo.ID = imageID.String()
+		imageInfo.ID = id
 
 		if refDigest, ok := refNamed.(reference.Digested); ok {
 			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refDigest.String())
@@ -206,6 +207,12 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 		return types.ImageInfo{}, err
 	}
 
+	desc, err := img.Config(ctx)
+	if err != nil {
+		return types.ImageInfo{}, err
+	}
+	id := desc.Digest.String()
+
 	logrus.Infof("success to pull image: %s", img.Name())
 
 	ociImage, err := c.GetOciImage(ctx, ref)
@@ -217,24 +224,21 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 	// fill struct ImageInfo
 	{
 		imageInfo.Size = size
-		// generate image ID by imageInfo JSON.
-		imageID, err := generateID(&imageInfo)
+		imageInfo.ID = id
+
+		refNamed, err := reference.ParseNamedReference(ref)
 		if err != nil {
 			return types.ImageInfo{}, err
 		}
-		imageInfo.ID = imageID.String()
 
-		refNamed, err := reference.ParseNamedReference(img.Name())
-		if err != nil {
-			return types.ImageInfo{}, err
+		if refTag, ok := refNamed.(reference.Tagged); ok {
+			imageInfo.RepoTags = append(imageInfo.RepoTags, refTag.String())
 		}
 
 		if refDigest, ok := refNamed.(reference.Digested); ok {
 			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refDigest.String())
 		} else {
-			refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
-			imageInfo.RepoTags = append(imageInfo.RepoTags, refTagged.String())
-			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refTagged.Name()+"@"+img.Target().Digest.String())
+			imageInfo.RepoDigests = append(imageInfo.RepoDigests, refNamed.Name()+"@"+img.Target().Digest.String())
 		}
 	}
 

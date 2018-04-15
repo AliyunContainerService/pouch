@@ -761,8 +761,15 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 		return nil, err
 	}
 
+	// We may get images with same id and different repoTag or repoDigest,
+	// so we need idExist to de-dup.
+	idExist := make(map[string]bool)
+
 	images := make([]*runtime.Image, 0, len(imageList))
 	for _, i := range imageList {
+		if _, ok := idExist[i.ID]; ok {
+			continue
+		}
 		// NOTE: we should query image cache to get the correct image info.
 		imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(i.ID, "sha256:"))
 		if err != nil {
@@ -774,6 +781,7 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 			continue
 		}
 		images = append(images, image)
+		idExist[i.ID] = true
 	}
 
 	return &runtime.ListImagesResponse{Images: images}, nil

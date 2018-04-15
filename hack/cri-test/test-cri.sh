@@ -26,7 +26,7 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 CRI_FOCUS=${CRI_FOCUS:-}
 
 # CRI_SKIP skips the test to skip.
-CRI_SKIP=${CRI_SKIP:-"RunAsUserName|seccomp localhost|should error on create with wrong options|listImage should get exactly 2 repoTags"}
+CRI_SKIP=${CRI_SKIP:-"RunAsUserName|seccomp localhost|should error on create with wrong options"}
 # REPORT_DIR is the the directory to store test logs.
 REPORT_DIR=${REPORT_DIR:-"/tmp/test-cri"}
 
