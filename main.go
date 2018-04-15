@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
+	"github.com/alibaba/pouch/pkg/debug"
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -99,6 +100,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
 	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
+	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 }
 
 // parse flags
@@ -128,10 +130,11 @@ func runDaemon() error {
 	}
 
 	// import debugger tools for pouch when in debug mode.
-	if cfg.Debug {
+	if cfg.Debug || cfg.EnableProfiler {
 		if err := agent.Listen(agent.Options{}); err != nil {
 			logrus.Fatal(err)
 		}
+		debug.SetupDumpStackTrap()
 	}
 
 	// initialize home dir.
