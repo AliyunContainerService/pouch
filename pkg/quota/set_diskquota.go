@@ -45,7 +45,10 @@ func processSetQuotaReexec() {
 
 	basefs := os.Args[1]
 	size := os.Args[2]
-	id, _ := strconv.Atoi(os.Args[3])
+	id, err := strconv.Atoi(os.Args[3])
+	if err != nil {
+		return
+	}
 	qid = uint32(id)
 
 	logrus.Infof("set diskquota: %v", os.Args)

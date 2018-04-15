@@ -79,7 +79,7 @@ type ContainerConfig struct {
 	// Open `stdin`
 	OpenStdin bool `json:"OpenStdin,omitempty"`
 
-	// set disk quota by specified quota id
+	// set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id
 	QuotaID string `json:"QuotaID,omitempty"`
 
 	// Whether to start container in rich container mode. (default false)

@@ -120,3 +120,22 @@ func SetFileAttrNoOutput(dir string, id uint32) {
 func GetNextQuatoID() (uint32, error) {
 	return Gquota.GetNextQuatoID()
 }
+
+//GetDefaultQuota returns the default quota size.
+func GetDefaultQuota(quotas map[string]string) string {
+	if quotas == nil {
+		return ""
+	}
+
+	quota, ok := quotas["/"]
+	if ok && quota != "" {
+		return quota
+	}
+
+	quota, ok = quotas[".*"]
+	if ok && quota != "" {
+		return quota
+	}
+
+	return ""
+}

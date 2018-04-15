@@ -1497,17 +1497,47 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 }
 
 func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *ContainerMeta) error {
-	qid := 0
+	if c.Config.DiskQuota == nil {
+		return nil
+	}
+
+	var (
+		qid        uint32
+		setQuotaID bool
+	)
+
 	if c.Config.QuotaID != "" {
-		var err error
-		qid, err = strconv.Atoi(c.Config.QuotaID)
+		id, err := strconv.Atoi(c.Config.QuotaID)
 		if err != nil {
 			return errors.Wrapf(err, "invalid argument, QuotaID: %s", c.Config.QuotaID)
 		}
+
+		// if QuotaID is < 0, it means pouchd alloc a unique quota id.
+		if id < 0 {
+			qid, err = quota.GetNextQuatoID()
+			if err != nil {
+				return errors.Wrap(err, "failed to get next quota id")
+			}
+
+			// update QuotaID
+			c.Config.QuotaID = strconv.Itoa(int(qid))
+		} else {
+			qid = uint32(id)
+		}
+	}
+
+	if qid > 0 {
+		setQuotaID = true
+	}
+
+	// get rootfs quota
+	quotas := c.Config.DiskQuota
+	defaultQuota := quota.GetDefaultQuota(quotas)
+	if setQuotaID && defaultQuota == "" {
+		return fmt.Errorf("set quota id but have no set default quota size")
 	}
 
 	// parse diskquota regexe
-	quotas := c.Config.DiskQuota
 	res := make([]*quota.RegExp, 0)
 	for path, size := range quotas {
 		re := regexp.MustCompile(path)
@@ -1537,11 +1567,15 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 			}
 		}
 
-		if matched {
-			err := quota.SetDiskQuota(mp.Source, quotas[mp.Destination], uint32(qid))
-			if err != nil {
-				return err
-			}
+		size := ""
+		if matched && !setQuotaID {
+			size = quotas[mp.Destination]
+		} else {
+			size = defaultQuota
+		}
+		err := quota.SetDiskQuota(mp.Source, size, qid)
+		if err != nil {
+			return err
 		}
 	}
 
