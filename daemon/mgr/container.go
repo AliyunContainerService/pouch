@@ -22,6 +22,7 @@ import (
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/opts"
 	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/reference"
@@ -1449,12 +1450,54 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 		}
 	}()
 
-	// TODO: parse c.HostConfig.VolumesFrom
+	for _, v := range meta.HostConfig.VolumesFrom {
+		var containerID, mode string
+		containerID, mode, err = opts.ParseVolumesFrom(v)
+		if err != nil {
+			return err
+		}
+
+		var oldMeta *ContainerMeta
+		oldMeta, err = mgr.Get(ctx, containerID)
+		if err != nil {
+			return err
+		}
+
+		for _, oldMountPoint := range oldMeta.Mounts {
+			mp := &types.MountPoint{
+				Name:        oldMountPoint.Name,
+				Source:      oldMountPoint.Source,
+				Destination: oldMountPoint.Destination,
+				Driver:      oldMountPoint.Driver,
+				Named:       oldMountPoint.Named,
+				RW:          oldMountPoint.RW,
+				Propagation: oldMountPoint.Propagation,
+			}
+
+			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; !exist {
+				mp.Name = oldMountPoint.Name
+				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
+				if err != nil {
+					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
+					return errors.Wrap(err, "failed to bind volume")
+				}
+				meta.Config.Volumes[mp.Name] = oldMountPoint.Destination
+			}
+
+			err = opts.ParseBindMode(mp, mode)
+			if err != nil {
+				logrus.Errorf("failed to parse volumes-from mode: %s, err: %v", mode, err)
+				return err
+			}
+
+			meta.Mounts = append(meta.Mounts, mp)
+		}
+
+	}
 
 	for _, b := range meta.HostConfig.Binds {
 		var parts []string
-		// TODO: when caused error, how to rollback.
-		parts, err = checkBind(b)
+		parts, err = opts.CheckBind(b)
 		if err != nil {
 			return err
 		}
@@ -1481,7 +1524,7 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 			mp.Source = randomid.Generate()
 		}
 
-		err = parseBindMode(mp, mode)
+		err = opts.ParseBindMode(mp, mode)
 		if err != nil {
 			logrus.Errorf("failed to parse bind mode: %s, err: %v", mode, err)
 			return err
@@ -1698,78 +1741,4 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, meta *ContainerMeta,
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	meta.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", namespaces.Default, info.Name, "rootfs")
-}
-
-func checkBind(b string) ([]string, error) {
-	if strings.Count(b, ":") > 2 {
-		return nil, fmt.Errorf("unknown volume bind: %s", b)
-	}
-
-	arr := strings.SplitN(b, ":", 3)
-	switch len(arr) {
-	case 1:
-		if arr[0] == "" {
-			return nil, fmt.Errorf("unknown volume bind: %s", b)
-		}
-		if arr[0][:1] != "/" {
-			return nil, fmt.Errorf("invalid bind path: %s", arr[0])
-		}
-	case 2, 3:
-		if arr[1] == "" {
-			return nil, fmt.Errorf("unknown volume bind: %s", b)
-		}
-		if arr[1][:1] != "/" {
-			return nil, fmt.Errorf("invalid bind path: %s", arr[1])
-		}
-	default:
-		return nil, fmt.Errorf("unknown volume bind: %s", b)
-	}
-
-	return arr, nil
-}
-
-func parseBindMode(mp *types.MountPoint, mode string) error {
-	mp.RW = true
-	mp.CopyData = true
-
-	defaultMode := 0
-	rwMode := 0
-	labelMode := 0
-	replaceMode := 0
-	copyMode := 0
-	propagationMode := 0
-
-	for _, m := range strings.Split(mode, ",") {
-		switch m {
-		case "":
-			defaultMode++
-		case "ro":
-			mp.RW = false
-			rwMode++
-		case "rw":
-			mp.RW = true
-			rwMode++
-		case "dr", "rr":
-			// direct replace mode, random replace mode
-			mp.Replace = m
-			replaceMode++
-		case "z", "Z":
-			labelMode++
-		case "nocopy":
-			mp.CopyData = false
-			copyMode++
-		case "private", "rprivate", "slave", "rslave", "shared", "rshared":
-			mp.Propagation = m
-			propagationMode++
-		default:
-			return fmt.Errorf("unknown bind mode: %s", mode)
-		}
-	}
-
-	if defaultMode > 1 || rwMode > 1 || replaceMode > 1 || copyMode > 1 || propagationMode > 1 {
-		return fmt.Errorf("invalid bind mode: %s", mode)
-	}
-
-	mp.Mode = mode
-	return nil
 }

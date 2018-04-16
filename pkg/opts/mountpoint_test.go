@@ -1,4 +1,4 @@
-package mgr
+package opts
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ func TestCheckBind(t *testing.T) {
 	}
 
 	for _, p := range parseds {
-		arr, err := checkBind(p.bind)
+		arr, err := CheckBind(p.bind)
 		if p.err {
 			assert.Equal(err, p.expectErr)
 		} else {
@@ -63,7 +63,7 @@ func TestParseBindMode(t *testing.T) {
 
 	for _, p := range parseds {
 		mp := &types.MountPoint{}
-		err := parseBindMode(mp, p.mode)
+		err := ParseBindMode(mp, p.mode)
 		if p.err {
 			assert.Equal(err, p.expectErr)
 		} else {
@@ -71,6 +71,37 @@ func TestParseBindMode(t *testing.T) {
 			assert.Equal(p.expectMountPoint.Mode, mp.Mode)
 			assert.Equal(p.expectMountPoint.RW, mp.RW)
 			assert.Equal(p.expectMountPoint.CopyData, mp.CopyData)
+		}
+	}
+}
+
+func TestParseVolumesFrom(t *testing.T) {
+	assert := assert.New(t)
+
+	type parsed struct {
+		volumesFrom string
+		expectID    string
+		expectMode  string
+		err         bool
+		expectErr   error
+	}
+
+	parseds := []parsed{
+		{volumesFrom: "123456789", expectID: "123456789", expectMode: "", err: false, expectErr: nil},
+		{volumesFrom: "123456789:nocopy", expectID: "123456789", expectMode: "nocopy", err: false, expectErr: nil},
+		{volumesFrom: "123456789:", expectID: "123456789", expectMode: "", err: false, expectErr: nil},
+		{volumesFrom: "", expectID: "", expectMode: "", err: true, expectErr: fmt.Errorf("invalid argument volumes-from")},
+		{volumesFrom: ":", expectID: "", expectMode: "", err: true, expectErr: fmt.Errorf("failed to parse container's id")},
+	}
+
+	for _, p := range parseds {
+		containerID, mode, err := ParseVolumesFrom(p.volumesFrom)
+		if p.err {
+			assert.Equal(err, p.expectErr)
+		} else {
+			assert.NoError(err, p.expectErr)
+			assert.Equal(p.expectID, containerID)
+			assert.Equal(p.expectMode, mode)
 		}
 	}
 }
