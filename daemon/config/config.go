@@ -1,7 +1,11 @@
 package config
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 
@@ -10,6 +14,8 @@ import (
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume"
+
+	"github.com/spf13/pflag"
 )
 
 // Config refers to daemon's whole configurations.
@@ -109,4 +115,102 @@ func (cfg *Config) Validate() error {
 	// TODO: add config validation
 
 	return nil
+}
+
+//MergeConfigurations merges flagSet flags and config file flags into Config.
+func (cfg *Config) MergeConfigurations(config *Config, flagSet *pflag.FlagSet) error {
+	contents, err := ioutil.ReadFile(cfg.ConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to read contents from config file %s: %s", cfg.ConfigFile, err)
+	}
+
+	var origin map[string]interface{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&origin); err != nil {
+		return fmt.Errorf("failed to decode json: %s", err)
+	}
+
+	if len(origin) == 0 {
+		return nil
+	}
+
+	fileFlags := make(map[string]interface{}, 0)
+	iterateConfig(origin, fileFlags)
+
+	// check if invalid or unknown flag exist in config file
+	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
+		return err
+	}
+
+	// check conflict in command line flags and config file
+	if err = getConflictConfigurations(flagSet, fileFlags); err != nil {
+		return err
+	}
+
+	fileConfig := &Config{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(fileConfig); err != nil {
+		return fmt.Errorf("failed to decode json: %s", err)
+	}
+
+	// merge configurations from command line flags and config file
+	err = mergeConfigurations(fileConfig, cfg)
+	return err
+
+}
+
+// iterateConfig resolves key-value from config file iteratly.
+func iterateConfig(origin map[string]interface{}, config map[string]interface{}) {
+	for k, v := range origin {
+		if c, ok := v.(map[string]interface{}); ok {
+			iterateConfig(c, config)
+		} else {
+			config[k] = v
+		}
+	}
+}
+
+// find unknown flag in config file
+func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
+	var unknownFlags []string
+
+	for k := range fileFlags {
+		f := flagSet.Lookup(k)
+		if f == nil {
+			unknownFlags = append(unknownFlags, k)
+		}
+	}
+
+	if len(unknownFlags) > 0 {
+		return fmt.Errorf("unknown flags: %s", strings.Join(unknownFlags, ", "))
+	}
+
+	return nil
+}
+
+// find conflict in command line flags and config file, note that if flag value
+// is slice type, we will skip it and merge it from flags and config file later.
+func getConflictConfigurations(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
+	var conflictFlags []string
+	flagSet.Visit(func(f *pflag.Flag) {
+		flagType := f.Value.Type()
+		if strings.Contains(flagType, "Slice") {
+			return
+		}
+		if v, exist := fileFlags[f.Name]; exist {
+			conflictFlags = append(conflictFlags, fmt.Sprintf("from flag: %s and from config file: %s", f.Value.String(), v))
+		}
+	})
+
+	if len(conflictFlags) > 0 {
+		return fmt.Errorf("found conflict flags in command line and config file: %v", strings.Join(conflictFlags, ", "))
+	}
+
+	return nil
+}
+
+// merge flagSet and config file into cfg
+func mergeConfigurations(src *Config, dest *Config) error {
+	return utils.Merge(src, dest)
 }

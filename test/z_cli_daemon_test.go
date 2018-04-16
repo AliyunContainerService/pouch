@@ -144,6 +144,51 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileConfilct(c *check.C) {
 	c.Assert(err, check.NotNil)
 }
 
+// TestDaemonNestObjectConfilct tests start daemon with configure file contains nest objects confilicts with parameter.
+func (suite *PouchDaemonSuite) TestDaemonNestObjectConfilct(c *check.C) {
+	path := "/tmp/pouch_nest.json"
+	type TLSConfig struct {
+		CA               string `json:"tlscacert,omitempty"`
+		Cert             string `json:"tlscert,omitempty"`
+		Key              string `json:"tlskey,omitempty"`
+		VerifyRemote     bool   `json:"tlsverify"`
+		ManagerWhiteList string `json:"manager-whitelist"`
+	}
+	cfg := struct {
+		TLS TLSConfig
+	}{
+		TLS: TLSConfig{
+			CA:   "ca",
+			Cert: "cert",
+			Key:  "key",
+		},
+	}
+	err := CreateConfigFile(path, cfg)
+	c.Assert(err, check.IsNil)
+	defer os.Remove(path)
+
+	dcfg, err := StartDefaultDaemon("--tlscacert", "ca", "--config-file="+path)
+	dcfg.KillDaemon()
+	c.Assert(err, check.NotNil)
+}
+
+// TestDaemonSliceFlagNotConflict tests start daemon with configure file contains slice flag will not oconfilicts with parameter.
+func (suite *PouchDaemonSuite) TestDaemonSliceFlagNotConflict(c *check.C) {
+	path := "/tmp/pouch_slice.json"
+	cfg := struct {
+		Labels []string `json:"label"`
+	}{
+		Labels: []string{"a=a", "b=b"},
+	}
+	err := CreateConfigFile(path, cfg)
+	c.Assert(err, check.IsNil)
+	defer os.Remove(path)
+
+	dcfg, err := StartDefaultDaemon("--label", "c=d", "--config-file="+path)
+	dcfg.KillDaemon()
+	c.Assert(err, check.IsNil)
+}
+
 // TestDaemonConfigFileUnknownFlag tests start daemon with unknown flags in configure file.
 func (suite *PouchDaemonSuite) TestDaemonConfigFileUnknownFlag(c *check.C) {
 	path := "/tmp/pouch.json"
