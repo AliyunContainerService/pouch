@@ -174,14 +174,18 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 			logrus.Errorf("failed to recover container: %s,  %v", containerMeta.ID, err)
 		}
 
-		if err := mgr.Client.RecoverContainer(ctx, containerMeta.ID, io); err == nil {
-			return nil
+		err = mgr.Client.RecoverContainer(ctx, containerMeta.ID, io)
+		if err != nil && strings.Contains(err.Error(), "not found") {
+			logrus.Infof("container %s not found, executes mark stopped and release resources", containerMeta.ID)
+			if err := mgr.markStoppedAndRelease(&Container{meta: containerMeta}, nil); err != nil {
+				logrus.Errorf("failed to mark container: %s stop status, err: %v", containerMeta.ID, err)
+			}
+		} else if err != nil {
+			logrus.Errorf("failed to recover container: %s,  %v", containerMeta.ID, err)
+			// release io
+			io.Close()
+			mgr.IOs.Remove(containerMeta.ID)
 		}
-
-		logrus.Errorf("failed to recover container: %s,  %v", containerMeta.ID, err)
-		// release io
-		io.Close()
-		mgr.IOs.Remove(containerMeta.ID)
 
 		return nil
 	}
