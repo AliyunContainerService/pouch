@@ -17,8 +17,6 @@ function pre()
 {
     mkdir -p $BUILDPATH
 
-    git submodule update --init
-
     mkdir -p $BUILDPATH/src/github.com/docker
     [ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
     ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
