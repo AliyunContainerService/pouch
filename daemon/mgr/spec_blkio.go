@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/quota"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -95,13 +96,14 @@ func getThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevic
 func setupDiskQuota(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper) error {
 	s := spec.s
 
-	rootFSQuota, ok := meta.Config.DiskQuota["/"]
-	if !ok || rootFSQuota == "" {
-		commonQuota, ok := meta.Config.DiskQuota[".*"]
-		if !ok || commonQuota == "" {
-			return nil
-		}
-		rootFSQuota = commonQuota
+	rootFSQuota := quota.GetDefaultQuota(meta.Config.DiskQuota)
+	if rootFSQuota == "" {
+		return nil
+	}
+
+	qid := "0"
+	if meta.Config.QuotaID != "" {
+		qid = meta.Config.QuotaID
 	}
 
 	if s.Hooks == nil {
@@ -118,7 +120,7 @@ func setupDiskQuota(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper)
 
 	quotaPrestart := specs.Hook{
 		Path: target,
-		Args: []string{"set-diskquota", meta.BaseFS, rootFSQuota, meta.Config.QuotaID},
+		Args: []string{"set-diskquota", meta.BaseFS, rootFSQuota, qid},
 	}
 	s.Hooks.Prestart = append(s.Hooks.Prestart, quotaPrestart)
 
