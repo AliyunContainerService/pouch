@@ -16,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -167,6 +168,10 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
+	if err := d.addSystemLabels(); err != nil {
+		return err
+	}
+
 	d.server = server.Server{
 		Config:          d.config,
 		ContainerMgr:    containerMgr,
@@ -266,6 +271,27 @@ func (d *Daemon) ShutdownPlugin() error {
 			logrus.Errorf("stop prehook execute error %v", err)
 		}
 	}
+	return nil
+}
+
+// addSystemLabels adds some system labels to daemon's config.
+// Currently, pouchd add node ip and serial number to pouchd with the format:
+// node_ip=192.168.0.1
+// SN=xxxxx
+func (d *Daemon) addSystemLabels() error {
+	d.config.Lock()
+	defer d.config.Unlock()
+	if d.config.Labels == nil {
+		d.config.Labels = make([]string, 0)
+	}
+	// get node IP
+	nodeIP := system.GetNodeIP()
+	d.config.Labels = append(d.config.Labels, fmt.Sprintf("node_ip=%s", nodeIP))
+
+	// get serial number
+	serialNo := system.GetSerialNumber()
+	d.config.Labels = append(d.config.Labels, fmt.Sprintf("SN=%s", serialNo))
+
 	return nil
 }
 

@@ -43,6 +43,18 @@ func (suite *APIDaemonUpdateSuite) TestUpdateDaemon(c *check.C) {
 	err = request.DecodeBody(&info, resp.Body)
 	c.Assert(err, check.IsNil)
 
-	c.Assert(info.Labels, check.DeepEquals, labels)
+	for _, label := range labels {
+		isContained := false
+		for _, infoLabel := range info.Labels {
+			if infoLabel == label {
+				isContained = true
+				break
+			}
+		}
+		if !isContained {
+			c.Fatalf("label %s should be in labels in info API", label)
+		}
+	}
+	//c.Assert(info.Labels, check.DeepEquals, labels)
 	// TODO: add checking image proxy
 }
