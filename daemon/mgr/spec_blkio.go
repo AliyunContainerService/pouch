@@ -97,7 +97,11 @@ func setupDiskQuota(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper)
 
 	rootFSQuota, ok := meta.Config.DiskQuota["/"]
 	if !ok || rootFSQuota == "" {
-		return nil
+		commonQuota, ok := meta.Config.DiskQuota[".*"]
+		if !ok || commonQuota == "" {
+			return nil
+		}
+		rootFSQuota = commonQuota
 	}
 
 	if s.Hooks == nil {
@@ -114,7 +118,7 @@ func setupDiskQuota(ctx context.Context, meta *ContainerMeta, spec *SpecWrapper)
 
 	quotaPrestart := specs.Hook{
 		Path: target,
-		Args: []string{"set-diskquota", meta.BaseFS, rootFSQuota},
+		Args: []string{"set-diskquota", meta.BaseFS, rootFSQuota, meta.Config.QuotaID},
 	}
 	s.Hooks.Prestart = append(s.Hooks.Prestart, quotaPrestart)
 

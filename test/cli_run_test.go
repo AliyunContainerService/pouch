@@ -808,6 +808,7 @@ func (suite *PouchRunSuite) TestRunWithDiskQuota(c *check.C) {
 	for _, line := range strings.Split(out, "\n") {
 		if strings.Contains(line, "/") && strings.Contains(line, "2048000") {
 			found = true
+			break
 		}
 	}
 
@@ -850,4 +851,66 @@ func (suite *PouchRunSuite) TestRunWithExitCode(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
+}
+
+// TestRunWithDiskQuotaRegular tests running container with --disk-quota.
+func (suite *PouchRunSuite) TestRunWithDiskQuotaRegular(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+
+	volumeName := "diskquota-volume"
+	containerName := "diskquota-regular"
+
+	ret := command.PouchRun("volume", "create", "-n", volumeName, "-o", "size=256m", "-o", "mount=/data/volume")
+	defer func() {
+		command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+	}()
+	ret.Assert(c, icmd.Success)
+
+	ret = command.PouchRun("run",
+		"--disk-quota=1024m",
+		`--disk-quota=".*=512m"`,
+		`--disk-quota="/mnt/mount1=768m"`,
+		"-v", "/data/mount1:/mnt/mount1",
+		"-v", "/data/mount2:/mnt/mount2",
+		"-v", "diskquota-volume:/mnt/mount3",
+		"--name", containerName, busyboxImage, "df")
+	defer func() {
+		command.PouchRun("rm", "-f", containerName).Assert(c, icmd.Success)
+	}()
+	ret.Assert(c, icmd.Success)
+
+	out := ret.Stdout()
+
+	rootFound := false
+	mount1Found := false
+	mount2Found := false
+	mount3Found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "/") && strings.Contains(line, "1048576") {
+			rootFound = true
+			continue
+		}
+
+		if strings.Contains(line, "/mnt/mount1") && strings.Contains(line, "786432") {
+			mount1Found = true
+			continue
+		}
+
+		if strings.Contains(line, "/mnt/mount2") && strings.Contains(line, "524288") {
+			mount2Found = true
+			continue
+		}
+
+		if strings.Contains(line, "/mnt/mount3") && strings.Contains(line, "262144") {
+			mount3Found = true
+			continue
+		}
+	}
+
+	c.Assert(rootFound, check.Equals, true)
+	c.Assert(mount1Found, check.Equals, true)
+	c.Assert(mount2Found, check.Equals, true)
+	c.Assert(mount3Found, check.Equals, true)
 }

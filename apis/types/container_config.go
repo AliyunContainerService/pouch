@@ -79,6 +79,9 @@ type ContainerConfig struct {
 	// Open `stdin`
 	OpenStdin bool `json:"OpenStdin,omitempty"`
 
+	// set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id
+	QuotaID string `json:"QuotaID,omitempty"`
+
 	// Whether to start container in rich container mode. (default false)
 	Rich bool `json:"Rich,omitempty"`
 
@@ -148,6 +151,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig OnBuild false */
 
 /* polymorph ContainerConfig OpenStdin false */
+
+/* polymorph ContainerConfig QuotaID false */
 
 /* polymorph ContainerConfig Rich false */
 

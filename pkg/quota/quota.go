@@ -24,7 +24,7 @@ var (
 type BaseQuota interface {
 	StartQuotaDriver(dir string) (string, error)
 	SetSubtree(dir string, qid uint32) (uint32, error)
-	SetDiskQuota(dir string, size string, quotaID int) error
+	SetDiskQuota(dir string, size string, quotaID uint32) error
 	CheckMountpoint(devID uint64) (string, bool, string)
 	GetFileAttr(dir string) uint32
 	SetFileAttr(dir string, id uint32) error
@@ -92,7 +92,7 @@ func SetSubtree(dir string, qid uint32) (uint32, error) {
 }
 
 // SetDiskQuota is used to set quota for directory.
-func SetDiskQuota(dir string, size string, quotaID int) error {
+func SetDiskQuota(dir string, size string, quotaID uint32) error {
 	return Gquota.SetDiskQuota(dir, size, quotaID)
 }
 
@@ -119,4 +119,23 @@ func SetFileAttrNoOutput(dir string, id uint32) {
 //GetNextQuatoID returns the next available quota id.
 func GetNextQuatoID() (uint32, error) {
 	return Gquota.GetNextQuatoID()
+}
+
+//GetDefaultQuota returns the default quota size.
+func GetDefaultQuota(quotas map[string]string) string {
+	if quotas == nil {
+		return ""
+	}
+
+	quota, ok := quotas["/"]
+	if ok && quota != "" {
+		return quota
+	}
+
+	quota, ok = quotas[".*"]
+	if ok && quota != "" {
+		return quota
+	}
+
+	return ""
 }

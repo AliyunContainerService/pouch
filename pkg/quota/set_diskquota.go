@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/pkg/reexec"
@@ -37,13 +38,18 @@ func processSetQuotaReexec() {
 		}
 	}()
 
-	if len(os.Args) != 3 {
-		err = fmt.Errorf("invalid arguments: %v, it should be: %s: <path> <size>", os.Args, os.Args[0])
+	if len(os.Args) != 4 {
+		err = fmt.Errorf("invalid arguments: %v, it should be: %s: <path> <size> <quota id>", os.Args, os.Args[0])
 		return
 	}
 
 	basefs := os.Args[1]
 	size := os.Args[2]
+	id, err := strconv.Atoi(os.Args[3])
+	if err != nil {
+		return
+	}
+	qid = uint32(id)
 
 	logrus.Infof("set diskquota: %v", os.Args)
 
@@ -60,18 +66,19 @@ func processSetQuotaReexec() {
 			return
 		}
 
-		qid, err = SetSubtree(dir, qid)
+		qid, err = SetSubtree(dir, uint32(qid))
 		if err != nil {
 			logrus.Errorf("failed to set subtree: %v", err)
 			return
 		}
 
-		err = SetDiskQuota(dir, size, int(qid))
+		err = SetDiskQuota(dir, size, qid)
 		if err != nil {
 			logrus.Errorf("failed to set disk quota: %v", err)
+			return
 		}
 
-		setQuotaForDir(dir, qid)
+		setQuotaForDir(dir, uint32(qid))
 	}
 
 	return

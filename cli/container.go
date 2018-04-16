@@ -62,6 +62,7 @@ type container struct {
 	capDrop        []string
 	IntelRdtL3Cbm  string
 	diskQuota      []string
+	quotaID        string
 	oomScoreAdj    int64
 	specAnnotation []string
 	cgroupParent   string
@@ -180,6 +181,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			InitScript:     c.initScript,
 			ExposedPorts:   ports,
 			DiskQuota:      diskQuota,
+			QuotaID:        c.quotaID,
 			SpecAnnotation: specAnnotation,
 		},
 
