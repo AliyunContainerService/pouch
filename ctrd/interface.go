@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -73,4 +74,7 @@ type SnapshotAPIClient interface {
 	GetSnapshot(ctx context.Context, id string) (snapshots.Info, error)
 	// RemoveSnapshot removes the snapshot by id.
 	RemoveSnapshot(ctx context.Context, id string) error
+	// GetMounts returns the mounts for the active snapshot transaction identified
+	// by key.
+	GetMounts(ctx context.Context, id string) ([]mount.Mount, error)
 }

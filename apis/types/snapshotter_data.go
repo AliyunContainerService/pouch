@@ -13,10 +13,10 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// GraphDriverData Information about a container's snapshotter.
-// swagger:model GraphDriverData
+// SnapshotterData Information about a container's snapshotter.
+// swagger:model SnapshotterData
 
-type GraphDriverData struct {
+type SnapshotterData struct {
 
 	// data
 	// Required: true
@@ -27,12 +27,12 @@ type GraphDriverData struct {
 	Name string `json:"Name"`
 }
 
-/* polymorph GraphDriverData Data false */
+/* polymorph SnapshotterData Data false */
 
-/* polymorph GraphDriverData Name false */
+/* polymorph SnapshotterData Name false */
 
-// Validate validates this graph driver data
-func (m *GraphDriverData) Validate(formats strfmt.Registry) error {
+// Validate validates this snapshotter data
+func (m *SnapshotterData) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateData(formats); err != nil {
@@ -51,7 +51,7 @@ func (m *GraphDriverData) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *GraphDriverData) validateData(formats strfmt.Registry) error {
+func (m *SnapshotterData) validateData(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Data) { // not required
 		return nil
@@ -60,7 +60,7 @@ func (m *GraphDriverData) validateData(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *GraphDriverData) validateName(formats strfmt.Registry) error {
+func (m *SnapshotterData) validateName(formats strfmt.Registry) error {
 
 	if err := validate.RequiredString("Name", "body", string(m.Name)); err != nil {
 		return err
@@ -70,7 +70,7 @@ func (m *GraphDriverData) validateName(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (m *GraphDriverData) MarshalBinary() ([]byte, error) {
+func (m *SnapshotterData) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -78,8 +78,8 @@ func (m *GraphDriverData) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *GraphDriverData) UnmarshalBinary(b []byte) error {
-	var res GraphDriverData
+func (m *SnapshotterData) UnmarshalBinary(b []byte) error {
+	var res SnapshotterData
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

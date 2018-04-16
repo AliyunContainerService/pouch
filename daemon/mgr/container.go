@@ -409,6 +409,20 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 
+	// Get snapshot UpperDir
+	var upperDir string
+	mounts, err := mgr.Client.GetMounts(ctx, id)
+	if err != nil {
+		return nil, err
+	} else if len(mounts) != 1 {
+		return nil, fmt.Errorf("failed to get snapshot %s mounts: not equals one", id)
+	}
+	for _, opt := range mounts[0].Options {
+		if strings.HasPrefix(opt, "upperdir=") {
+			upperDir = strings.TrimPrefix(opt, "upperdir=")
+		}
+	}
+
 	// set lxcfs binds
 	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
 		config.HostConfig.Binds = append(config.HostConfig.Binds, lxcfs.LxcfsParentDir+":/var/lib/lxc:shared")
@@ -468,6 +482,17 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return ociimage.Config, nil
 	}); err != nil {
 		return nil, err
+	}
+
+	// set snapshotter for container
+	// TODO(ziren): now we only support overlayfs
+	meta.Snapshotter = &types.SnapshotterData{
+		Name: "overlayfs",
+		Data: map[string]string{},
+	}
+
+	if upperDir != "" {
+		meta.Snapshotter.Data["UpperDir"] = upperDir
 	}
 
 	container := &Container{
@@ -627,6 +652,9 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		}
 		c.meta.State.Pid = int64(pid)
 		c.meta.State.ExitCode = 0
+
+		// set Snapshot MergedDir
+		c.meta.Snapshotter.Data["MergedDir"] = c.meta.BaseFS
 	} else {
 		c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 		c.meta.State.Error = err.Error()
@@ -1260,6 +1288,12 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 			}
 		}
 	}
+
+	// unset Snapshot MergedDir. Stop a container will
+	// delete the containerd container, the merged dir
+	// will also be deleted, so we should unset the
+	// container's MergedDir.
+	c.meta.Snapshotter.Data["MergedDir"] = ""
 
 	// update meta
 	if err := c.Write(mgr.Store); err != nil {

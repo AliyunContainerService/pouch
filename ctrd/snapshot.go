@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/containerd/containerd/leases"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/opencontainers/image-spec/identity"
@@ -61,4 +62,18 @@ func (c *Client) RemoveSnapshot(ctx context.Context, id string) error {
 	defer service.Close()
 
 	return service.Remove(ctx, id)
+}
+
+// GetMounts returns the mounts for the active snapshot transaction identified
+// by key.
+func (c *Client) GetMounts(ctx context.Context, id string) ([]mount.Mount, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	defer service.Close()
+
+	return service.Mounts(ctx, id)
 }

@@ -104,6 +104,11 @@ type ContainerMeta struct {
 	// exec ids
 	ExecIds string `json:"ExecIDs,omitempty"`
 
+	// Snapshotter, GraphDriver is same, keep both
+	// just for compatibility
+	// snapshotter informations of container
+	Snapshotter *types.SnapshotterData `json:"Snapshotter,omitempty"`
+
 	// graph driver
 	GraphDriver *types.GraphDriverData `json:"GraphDriver,omitempty"`
 

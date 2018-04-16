@@ -88,6 +88,9 @@ type ContainerJSON struct {
 	// The size of files that have been created or changed by this container.
 	SizeRw *int64 `json:"SizeRw,omitempty"`
 
+	// snapshotter
+	Snapshotter *SnapshotterData `json:"Snapshotter,omitempty"`
+
 	// The state of the container.
 	State *ContainerState `json:"State,omitempty"`
 }
@@ -138,6 +141,8 @@ type ContainerJSON struct {
 
 /* polymorph ContainerJSON SizeRw false */
 
+/* polymorph ContainerJSON Snapshotter false */
+
 /* polymorph ContainerJSON State false */
 
 // Validate validates this container JSON
@@ -165,6 +170,11 @@ func (m *ContainerJSON) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateNetworkSettings(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateSnapshotter(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -247,6 +257,25 @@ func (m *ContainerJSON) validateNetworkSettings(formats strfmt.Registry) error {
 		if err := m.NetworkSettings.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("NetworkSettings")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateSnapshotter(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Snapshotter) { // not required
+		return nil
+	}
+
+	if m.Snapshotter != nil {
+
+		if err := m.Snapshotter.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("Snapshotter")
 			}
 			return err
 		}
