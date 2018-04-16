@@ -85,6 +85,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
 	flagSet.StringVar(&cfg.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
 	flagSet.BoolVar(&cfg.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
+	flagSet.StringVar(&cfg.TLS.ManagerWhiteList, "manager-whitelist", "", "Set tls name whitelist, multiple values are separated by commas")
 	flagSet.BoolVarP(&printVersion, "version", "v", false, "Print daemon version")
 	flagSet.StringVar(&cfg.DefaultRuntime, "default-runtime", "runc", "Default OCI Runtime")
 	flagSet.BoolVar(&cfg.IsLxcfsEnabled, "enable-lxcfs", false, "Enable Lxcfs to make container to isolate /proc")
@@ -314,7 +315,16 @@ func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
 func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
 	var unknownFlags []string
 
-	for k := range fileFlags {
+	for k, v := range fileFlags {
+		if m, ok := v.(map[string]interface{}); ok {
+			for k = range m {
+				f := flagSet.Lookup(k)
+				if f == nil {
+					unknownFlags = append(unknownFlags, k)
+				}
+			}
+			continue
+		}
 		f := flagSet.Lookup(k)
 		if f == nil {
 			unknownFlags = append(unknownFlags, k)
