@@ -195,7 +195,7 @@ func checkVolume(v *types.Volume) error {
 }
 
 func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
-	size := defaultSize
+	size := ""
 	config := &types.VolumeConfig{
 		FileSystem: defaultFileSystem,
 		MountOpt:   defaultFileSystem,
@@ -206,11 +206,13 @@ func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
 		size = s
 	}
 
-	sizeInt, err := bytefmt.ToMegabytes(size)
-	if err != nil {
-		return nil, err
+	if size != "" {
+		sizeInt, err := bytefmt.ToMegabytes(size)
+		if err != nil {
+			return nil, err
+		}
+		config.Size = strconv.Itoa(int(sizeInt)) + "M"
 	}
-	config.Size = strconv.Itoa(int(sizeInt)) + "M"
 
 	// Parse filesystem
 	if fs, ok := options[optionFS]; ok {

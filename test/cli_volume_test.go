@@ -15,6 +15,11 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
+var (
+	// DefaultVolumeMountPath defines the default volume mount path.
+	DefaultVolumeMountPath = DefaultRootDir + "/volume"
+)
+
 // PouchVolumeSuite is the test suite for volume CLI.
 type PouchVolumeSuite struct{}
 
@@ -46,7 +51,7 @@ func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 		ExitCode: 1,
 		Err:      "No such file or directory",
 	}
-	err := icmd.RunCommand("stat", "/mnt/local/"+funcname).Compare(expct)
+	err := icmd.RunCommand("stat", DefaultVolumeMountPath+"/"+funcname).Compare(expct)
 	c.Assert(err, check.IsNil)
 
 }
@@ -232,7 +237,7 @@ func (suite *PouchVolumeSuite) TestVolumeBindReplaceMode(c *check.C) {
 
 	found := false
 	for _, m := range got.Mounts {
-		if m.Replace == "dr" && m.Mode == "dr" && m.Source == "/mnt/local/volume_TestVolumeBindReplaceMode/home" {
+		if m.Replace == "dr" && m.Mode == "dr" && m.Source == DefaultVolumeMountPath+"/volume_TestVolumeBindReplaceMode/home" {
 			found = true
 		}
 	}
@@ -303,7 +308,7 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 		if strings.Contains(line, volumeName) {
 			if !strings.Contains(line, "local") ||
 				!strings.Contains(line, "g") ||
-				!strings.Contains(line, "/mnt/local") {
+				!strings.Contains(line, DefaultVolumeMountPath) {
 				c.Errorf("list result have no driver or name or size or mountpoint, line: %s", line)
 				break
 			}
