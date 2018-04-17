@@ -44,14 +44,7 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		return err
 	}
 
-	// create io
-	// var io containerd.IOCreation
-	var io cio.Creation
-	if process.P.Terminal {
-		io = cio.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, true)
-	} else {
-		io = cio.NewIO(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr)
-	}
+	io := containerio.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, process.P.Terminal, process.IO.Stdin != nil)
 
 	// create exec process in container
 	execProcess, err := pack.task.Exec(ctx, process.ExecID, process.P, io)
@@ -401,12 +394,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p *containerPack, err0 error) {
 	var pack *containerPack
 
-	var io cio.Creation
-	if cc.Spec.Process.Terminal {
-		io = cio.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, true)
-	} else {
-		io = cio.NewIO(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr)
-	}
+	io := containerio.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, cc.Spec.Process.Terminal, cc.IO.Stdin != nil)
 
 	// create task
 	task, err := container.NewTask(ctx, io)

@@ -348,7 +348,7 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 	name := "TestNetworkDisconnect"
 
-	command.PouchRun("run", "-d", "--name", name, "--net", "bridge", busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, "--net", "bridge", busyboxImage, "top").Assert(c, icmd.Success)
 
 	inspectInfo := command.PouchRun("inspect", name).Stdout()
 	metaJSON := []types.ContainerJSON{}

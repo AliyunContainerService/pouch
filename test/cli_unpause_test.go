@@ -30,7 +30,7 @@ func (suite *PouchUnpauseSuite) TearDownTest(c *check.C) {
 func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 	containernames := []string{"bar1", "bar2"}
 	for _, name := range containernames {
-		command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+		command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 		command.PouchRun("start", name).Assert(c, icmd.Success)
 

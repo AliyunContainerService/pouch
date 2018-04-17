@@ -38,7 +38,7 @@ func (suite *PouchStartSuite) TearDownTest(c *check.C) {
 // TestStartCommand tests "pouch start" work.
 func (suite *PouchStartSuite) TestStartCommand(c *check.C) {
 	name := "start-normal"
-	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
@@ -93,7 +93,7 @@ func (suite *PouchStartSuite) TestStartWithEnv(c *check.C) {
 	name := "start-env"
 	env := "abc=123"
 
-	command.PouchRun("create", "--name", name, "-e", env, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", name, "-e", env, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
@@ -154,7 +154,7 @@ func (suite *PouchStartSuite) TestStartWithHostname(c *check.C) {
 	name := "start-hostname"
 	hostname := "pouch"
 
-	command.PouchRun("create", "--name", name, "--hostname", hostname, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", name, "--hostname", hostname, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
@@ -171,7 +171,7 @@ func (suite *PouchStartSuite) TestStartWithSysctls(c *check.C) {
 	sysctl := "net.ipv4.ip_forward=1"
 	name := "start-sysctl"
 
-	command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
+	command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
@@ -188,7 +188,7 @@ func (suite *PouchStartSuite) TestStartWithAppArmor(c *check.C) {
 	appArmor := "apparmor=unconfined"
 	name := "start-apparmor"
 
-	command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
+	command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
@@ -203,7 +203,7 @@ func (suite *PouchStartSuite) TestStartWithSeccomp(c *check.C) {
 	seccomp := "seccomp=unconfined"
 	name := "start-seccomp"
 
-	command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
+	command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)

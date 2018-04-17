@@ -645,11 +645,20 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 
 	labels, annotations := extractLabels(container.Config.Labels)
 
+	imageRef := container.Image
+	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(imageRef, "sha256:"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image %s: %v", imageRef, err)
+	}
+	if len(imageInfo.RepoDigests) > 0 {
+		imageRef = imageInfo.RepoDigests[0]
+	}
+
 	status := &runtime.ContainerStatus{
 		Id:          container.ID,
 		Metadata:    metadata,
 		Image:       &runtime.ImageSpec{Image: container.Config.Image},
-		ImageRef:    container.Image,
+		ImageRef:    imageRef,
 		Mounts:      mounts,
 		ExitCode:    exitCode,
 		State:       state,

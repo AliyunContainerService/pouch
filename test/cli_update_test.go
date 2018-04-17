@@ -38,7 +38,7 @@ func (suite *PouchUpdateSuite) TearDownTest(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	name := "update-container-cpu"
 
-	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -78,7 +78,7 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	name := "update-running-container"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -118,7 +118,7 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	name := "update-stopped-container"
 
-	command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -160,7 +160,7 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
 	name := "update-container-with-invalid-value"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	res := command.PouchRun("update", "--memory-swappiness", "-2", name)
 	c.Assert(res.Error, check.NotNil)
@@ -177,7 +177,7 @@ func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateContainerWithoutFlag(c *check.C) {
 	name := "update-container-without-flag"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("update", name).Assert(c, icmd.Success)
 
