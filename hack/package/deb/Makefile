@@ -52,8 +52,8 @@ install: build
 	# install containerd
 	echo "Download and install containerd."
 	[ -d $(TMP) ] || mkdir -p /tmp/tmp.pouch
-	wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.0/containerd-1.0.0.linux-amd64.tar.gz -P $(TMP)
-	tar xf $(TMP)/containerd-1.0.0.linux-amd64.tar.gz -C $(TMP) && cp -f $(TMP)/bin/* debian/pouch/usr/bin/
+	wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P $(TMP)
+	tar xf $(TMP)/containerd-1.0.3.linux-amd64.tar.gz -C $(TMP) && cp -f $(TMP)/bin/* debian/pouch/usr/bin/
 
 	# install runc
 	echo "Download and install runc."
