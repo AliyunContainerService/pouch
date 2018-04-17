@@ -124,6 +124,9 @@ function target()
 		echo "verify pouch version"
 		pouch version
 
+        # copy tls file
+        cp -rf $DIR/test/tls /tmp/
+
 		# If test is failed, print pouch daemon log.
 		$DIR/test/integration-test -test.v -check.v || { echo "pouch daemon log:"; cat $TMP/log; return 1; } 
 		;;

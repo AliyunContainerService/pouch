@@ -98,19 +98,32 @@ func (d *Config) NewArgs(args ...string) {
 // IsDaemonUp checks if the pouchd is launched.
 func (d *Config) IsDaemonUp() bool {
 	// if pouchd is started with -l option, use the first listen address
+	var sock string
+
 	for _, v := range d.Args {
 		if strings.Contains(v, "-l") || strings.Contains(v, "--listen") {
 			if strings.Contains(v, "--listen-cri") {
 				continue
 			}
-			var sock string
 			if strings.Contains(v, "=") {
 				sock = strings.Split(v, "=")[1]
+				break
 			} else {
 				sock = strings.Fields(v)[1]
+				break
 			}
-			return command.PouchRun("--host", sock, "version").ExitCode == 0
 		}
+	}
+
+	for _, v := range d.Args {
+		if strings.Contains(v, "--tlsverify") {
+			// TODO: need to verify server with TLS
+			return true
+		}
+	}
+
+	if len(sock) != 0 {
+		return command.PouchRun("--host", sock, "version").ExitCode == 0
 	}
 
 	return command.PouchRun("version").ExitCode == 0
