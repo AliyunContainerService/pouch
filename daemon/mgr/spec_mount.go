@@ -17,8 +17,8 @@ func clearReadonly(m *specs.Mount) {
 	m.Options = opts
 }
 
-func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
-	s := spec.s
+// setupMounts create mount spec.
+func setupMounts(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	mounts := s.Mounts
 	if c.HostConfig == nil {
 		return nil
@@ -73,8 +73,6 @@ func setupMounts(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error
 				}
 			}
 		}
-		s.Linux.ReadonlyPaths = nil
-		s.Linux.MaskedPaths = nil
 	}
 	return nil
 }

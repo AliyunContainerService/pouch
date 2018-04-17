@@ -312,7 +312,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		c.meta.Config.User = execConfig.User
 	}
 
-	if err = setupProcessUser(ctx, c.meta, &SpecWrapper{s: &specs.Spec{Process: process}}); err != nil {
+	if err = setupUser(ctx, c.meta, &specs.Spec{Process: process}); err != nil {
 		return err
 	}
 
@@ -607,32 +607,17 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 }
 
 func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container) error {
-	// new a default spec.
-	s, err := ctrd.NewDefaultSpec(ctx, c.ID())
-	if err != nil {
-		return errors.Wrapf(err, "failed to generate spec: %s", c.ID())
+	// CgroupParent from HostConfig will be first priority to use,
+	// then will be value from mgr.Config.CgroupParent
+	if c.meta.HostConfig.CgroupParent == "" {
+		c.meta.HostConfig.CgroupParent = mgr.Config.CgroupParent
 	}
 
-	var cgroupsParent string
-	if c.meta.HostConfig.CgroupParent != "" {
-		cgroupsParent = c.meta.HostConfig.CgroupParent
-	} else if mgr.Config.CgroupParent != "" {
-		cgroupsParent = mgr.Config.CgroupParent
-	}
-
-	// cgroupsPath must be absolute path
-	// call filepath.Clean is to avoid bad
-	// path just like../../../.../../BadPath
-	if cgroupsParent != "" {
-		if !filepath.IsAbs(cgroupsParent) {
-			cgroupsParent = filepath.Clean("/" + cgroupsParent)
-		}
-
-		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID())
-	}
-
-	var prioArr []int
-	var argsArr [][]string
+	var (
+		err     error
+		prioArr []int
+		argsArr [][]string
+	)
 	if mgr.containerPlugin != nil {
 		prioArr, argsArr, err = mgr.containerPlugin.PreStart(c)
 		if err != nil {
@@ -641,7 +626,6 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 
 	sw := &SpecWrapper{
-		s:       s,
 		ctrMgr:  mgr,
 		volMgr:  mgr.VolumeMgr,
 		netMgr:  mgr.NetworkMgr,
@@ -649,10 +633,8 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		argsArr: argsArr,
 	}
 
-	for _, setup := range SetupFuncs() {
-		if err = setup(ctx, c.meta, sw); err != nil {
-			return err
-		}
+	if err = createSpec(ctx, c.meta, sw); err != nil {
+		return err
 	}
 
 	// open container's stdio.
@@ -660,15 +642,12 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	if err != nil {
 		return errors.Wrap(err, "failed to open io")
 	}
-	if io.Stdin != nil && io.Stdin.OpenStdin() {
-		s.Process.Terminal = true
-	}
 
 	if err := mgr.Client.CreateContainer(ctx, &ctrd.Container{
 		ID:      c.ID(),
 		Image:   c.Image(),
 		Runtime: c.meta.HostConfig.Runtime,
-		Spec:    s,
+		Spec:    sw.s,
 		IO:      io,
 	}); err != nil {
 		logrus.Errorf("failed to create new containerd container: %s", err.Error())
