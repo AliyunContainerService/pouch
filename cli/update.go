@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/opts"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/spf13/cobra"

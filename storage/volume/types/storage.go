@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	"github.com/alibaba/pouch/volume/types/meta"
+	"github.com/alibaba/pouch/storage/volume/types/meta"
 )
 
 // StorageSpec represents storage spec.

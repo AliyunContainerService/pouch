@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
+	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/opts"
 
 	strfmt "github.com/go-openapi/strfmt"
 )

@@ -3,8 +3,8 @@ package demo
 import (
 	"path"
 
-	"github.com/alibaba/pouch/volume/driver"
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume/driver"
+	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 func init() {

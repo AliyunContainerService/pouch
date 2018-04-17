@@ -17,8 +17,8 @@ import (
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/debug"
 	"github.com/alibaba/pouch/pkg/exec"
-	"github.com/alibaba/pouch/pkg/quota"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
 
 	"github.com/docker/docker/pkg/reexec"

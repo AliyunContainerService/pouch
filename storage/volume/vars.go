@@ -1,7 +1,7 @@
 package volume
 
 import (
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 const (

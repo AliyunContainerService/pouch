@@ -3,7 +3,7 @@ package driver
 import (
 	"regexp"
 
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/pkg/errors"
 )
