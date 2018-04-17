@@ -139,6 +139,10 @@ type SystemInfo struct {
 	//
 	LoggingDriver string `json:"LoggingDriver,omitempty"`
 
+	// Indicates if lxcfs is enabled.
+	//
+	LxcfsEnabled bool `json:"LxcfsEnabled,omitempty"`
+
 	// Total amount of physical memory available on the host, in kilobytes (kB).
 	//
 	MemTotal int64 `json:"MemTotal,omitempty"`
@@ -250,6 +254,8 @@ type SystemInfo struct {
 /* polymorph SystemInfo LiveRestoreEnabled false */
 
 /* polymorph SystemInfo LoggingDriver false */
+
+/* polymorph SystemInfo LxcfsEnabled false */
 
 /* polymorph SystemInfo MemTotal false */
 
