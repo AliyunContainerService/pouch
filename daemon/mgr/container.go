@@ -1576,7 +1576,7 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 	}
 
 	// parse diskquota regexe
-	res := make([]*quota.RegExp, 0)
+	var res []*quota.RegExp
 	for path, size := range quotas {
 		re := regexp.MustCompile(path)
 		res = append(res, &quota.RegExp{re, path, size})
