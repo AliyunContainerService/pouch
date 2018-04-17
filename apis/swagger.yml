@@ -2826,6 +2826,7 @@ definitions:
 
   ContainerState:
     type: "object"
+    required: [StartedAt, FinishedAt]
     properties:
       Status:
         $ref: "#/definitions/Status"
@@ -2866,9 +2867,11 @@ definitions:
       StartedAt:
         description: "The time when this container was last started."
         type: "string"
+        x-nullable: false
       FinishedAt:
         description: "The time when this container last exited."
         type: "string"
+        x-nullable: false
 
   ContainerLogsOptions:
     type: "object"
