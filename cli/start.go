@@ -96,7 +96,7 @@ func (s *StartCommand) runStart(args []string) error {
 
 	info, err := apiClient.ContainerGet(ctx, container)
 	if err != nil {
-
+		return err
 	}
 
 	code := info.State.ExitCode

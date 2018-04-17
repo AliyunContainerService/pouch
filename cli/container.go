@@ -21,6 +21,7 @@ type container struct {
 	user       string
 	groupAdd   []string
 	hostname   string
+	rm         bool
 
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
