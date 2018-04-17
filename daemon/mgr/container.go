@@ -1305,7 +1305,9 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	// delete the containerd container, the merged dir
 	// will also be deleted, so we should unset the
 	// container's MergedDir.
-	c.meta.Snapshotter.Data["MergedDir"] = ""
+	if c.meta.Snapshotter != nil && c.meta.Snapshotter.Data != nil {
+		c.meta.Snapshotter.Data["MergedDir"] = ""
+	}
 
 	// update meta
 	if err := c.Write(mgr.Store); err != nil {
