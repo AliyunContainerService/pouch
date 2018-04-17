@@ -31,9 +31,35 @@ Pouch: Version 0.3.0 is recommanded.
 
 ## Install and Configure
 
+An all-in-one kubernetes cluster with pouch runtime could be deployed by running:
+
+```
+hack/kubernetes/allinone.sh
+
+```
+Please refer to https://github.com/alibaba/pouch/blob/master/hack/kubernetes/allinone.sh .
+
 ### Install Pouch
 
 You can easily setup a basic Pouch environment, see [INSTALLATION.md](../../INSTALLATION.md).
+
+### Configure Pouch
+
+On Ubuntu 16.04+:
+
+```
+sed -i 's/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true/g' /usr/lib/systemd/system/pouch.service
+systemctl daemon-reload
+systemctl restart pouch
+```
+
+On CentOS 7:
+
+```
+sed -i 's/ExecStart=\/usr\/local\/bin\/pouchd/ExecStart=\/usr\/local\/bin\/pouchd --enable-cri=true/g' /lib/systemd/system/pouch.service
+systemctl daemon-reload
+systemctl restart pouch
+```
 
 ### Install CNI
 
