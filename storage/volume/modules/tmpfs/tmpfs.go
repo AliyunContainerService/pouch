@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/volume/driver"
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume/driver"
+	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 var (

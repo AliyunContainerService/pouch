@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 // Driver represents volume driver base operation interface.

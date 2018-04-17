@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/quota"
+	"github.com/alibaba/pouch/storage/quota"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 

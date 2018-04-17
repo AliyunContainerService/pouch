@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/pkg/errtypes"
-	"github.com/alibaba/pouch/volume"
-	"github.com/alibaba/pouch/volume/types"
+	"github.com/alibaba/pouch/storage/volume"
+	"github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/pkg/errors"
 )

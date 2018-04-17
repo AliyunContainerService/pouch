@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alibaba/pouch/volume/types/meta"
+	"github.com/alibaba/pouch/storage/volume/types/meta"
 )
 
 // VolumeConditionType defines volume condition type.

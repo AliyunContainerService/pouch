@@ -13,9 +13,9 @@ import (
 
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/volume/driver"
-	"github.com/alibaba/pouch/volume/types"
-	"github.com/alibaba/pouch/volume/types/meta"
+	"github.com/alibaba/pouch/storage/volume/driver"
+	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/alibaba/pouch/storage/volume/types/meta"
 
 	"github.com/go-ini/ini"
 )

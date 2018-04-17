@@ -68,8 +68,8 @@ if [ "$help" = "yes" ]; then
     echo ""
     echo "     ./module            To comiple directly on current codes, include added modules"
     echo ""
-    echo "     ./module --add-volume=github.com/alibaba/pouch/volume/examples/demo"
-    echo "     A example show how to add a driver module, 'github.com/alibaba/pouch/volume/examples/demo' is a Go's package"
+    echo "     ./module --add-volume=github.com/alibaba/pouch/storage/volume/examples/demo"
+    echo "     A example show how to add a driver module, 'github.com/alibaba/pouch/storage/volume/examples/demo' is a Go's package"
     echo "     can be found in \$GOPATH"
     exit 0
 fi

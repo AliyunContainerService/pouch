@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/alibaba/pouch/pkg/client"
 	metastore "github.com/alibaba/pouch/pkg/meta"
-	"github.com/alibaba/pouch/volume/driver"
-	volerr "github.com/alibaba/pouch/volume/error"
-	"github.com/alibaba/pouch/volume/types"
-	"github.com/alibaba/pouch/volume/types/meta"
+	"github.com/alibaba/pouch/storage/controlserver/client"
+	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
+	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/alibaba/pouch/storage/volume/types/meta"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

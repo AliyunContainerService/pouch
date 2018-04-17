@@ -9,7 +9,7 @@ import (
 	"github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/volume"
+	"github.com/alibaba/pouch/storage/volume"
 )
 
 // Config refers to daemon's whole configurations.
