@@ -12,6 +12,11 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
+var (
+	// DefaultRootDir defines the default root dir for pouchd.
+	DefaultRootDir = "/var/lib/pouch"
+)
+
 // StartDefaultDaemonDebug starts a deamon with default configuration and debug on.
 func StartDefaultDaemonDebug(args ...string) (*daemon.Config, error) {
 	cfg := daemon.NewConfig()

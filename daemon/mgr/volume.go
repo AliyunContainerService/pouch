@@ -3,6 +3,7 @@ package mgr
 import (
 	"context"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -80,6 +81,11 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 		}
 
 		id.Options[key] = opt
+	}
+
+	// set default volume mount path
+	if mount, ok := id.Options["mount"]; !ok || mount == "" {
+		id.Options["mount"] = path.Dir(vm.core.VolumeMetaPath)
 	}
 
 	return vm.core.CreateVolume(id)

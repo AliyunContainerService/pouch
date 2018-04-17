@@ -105,6 +105,11 @@ func rootFSToAPIType(rootFs *v1.RootFS) types.ImageInfoRootFS {
 // ociImageToPouchImage transfer the image from OCI format to Pouch format.
 func ociImageToPouchImage(ociImage v1.Image) (types.ImageInfo, error) {
 	imageConfig := ociImage.Config
+
+	volumes := make(map[string]interface{})
+	for k, obj := range imageConfig.Volumes {
+		volumes[k] = obj
+	}
 	cfg := &types.ContainerConfig{
 		// TODO: add more fields
 		User:       imageConfig.User,
@@ -114,6 +119,7 @@ func ociImageToPouchImage(ociImage v1.Image) (types.ImageInfo, error) {
 		WorkingDir: imageConfig.WorkingDir,
 		Labels:     imageConfig.Labels,
 		StopSignal: imageConfig.StopSignal,
+		Volumes:    volumes,
 	}
 
 	rootFs := rootFSToAPIType(&ociImage.RootFS)
