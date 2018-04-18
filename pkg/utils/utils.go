@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -246,4 +248,28 @@ func StringInSlice(input []string, str string) bool {
 
 	exists, _ := Contains(result, str)
 	return exists
+}
+
+// checkPidfileStatus check if pidfile exist and validate pid exist in /proc, but not validate whether process is running.
+func checkPidfileStatus(path string) error {
+	if pidByte, err := ioutil.ReadFile(path); err == nil {
+		if _, err := os.Stat("/proc/" + string(pidByte)); err == nil {
+			return fmt.Errorf("found daemon pid %s, check it status", string(pidByte))
+		}
+	}
+
+	return nil
+}
+
+// NewPidfile checks if pidfile exist, and saves daemon pid.
+func NewPidfile(path string) error {
+	if err := checkPidfileStatus(path); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(path, []byte(fmt.Sprintf("%d", os.Getpid())), 0644); err != nil {
+		return err
+	}
+
+	return nil
 }

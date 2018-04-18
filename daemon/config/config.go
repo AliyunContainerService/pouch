@@ -94,6 +94,9 @@ type Config struct {
 
 	// EnableProfiler indicates whether pouchd setup profiler like pprof and stack dumping etc
 	EnableProfiler bool `json:"enableProfiler"`
+
+	// Pidfile keeps daemon pid
+	Pidfile string `json:"pidfile,omitempty"`
 }
 
 // Validate validates the user input config.
