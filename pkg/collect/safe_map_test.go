@@ -50,6 +50,27 @@ func TestSafeMapPutAndGet(t *testing.T) {
 	assert.Equal(t, value.data, []string{"asdfgh", "123344"})
 }
 
+// TestSafeMapDirectNew test functions should not panic.
+func TestSafeMapDirectNew(t *testing.T) {
+	assert := assert.New(t)
+	defer func() {
+		if err := recover(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	sm := &SafeMap{}
+	// test Put not panic
+	sm.Put("k", "v")
+
+	// test Remove not panic
+	sm.Remove("k")
+
+	// test Values not panic
+	values := sm.Values()
+	assert.Equal(values, map[string]interface{}{})
+}
+
 func TestSafeMapRemove(t *testing.T) {
 	safeMap := NewSafeMap()
 	assert.Equal(t, len(safeMap.inner), 0)

@@ -15,6 +15,12 @@ import (
 	"github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+var (
+	// GCExecProcessTick is the time interval to trigger gc unused exec config,
+	// time unit is minute.
+	GCExecProcessTick = 5
+)
+
 const (
 	// DefaultStopTimeout is the timeout (in seconds) for the syscall signal used to stop a container.
 	DefaultStopTimeout = 10
@@ -43,6 +49,9 @@ type ContainerExecConfig struct {
 
 	// Error represents the exec process response error.
 	Error error
+
+	// WaitForClean means exec process can be removed.
+	WaitForClean bool
 }
 
 // AttachConfig wraps some infos of attaching.

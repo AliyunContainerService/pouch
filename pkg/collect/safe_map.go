@@ -25,10 +25,28 @@ func (m *SafeMap) Get(k string) *Value {
 	return &Value{v, ok}
 }
 
+// Values returns all key-values stored in map
+func (m *SafeMap) Values() map[string]interface{} {
+	m.RLock()
+	defer m.RUnlock()
+
+	nmap := make(map[string]interface{})
+	for k, v := range m.inner {
+		nmap[k] = v
+	}
+
+	return nmap
+}
+
 // Put stores a key-value pair into inner map safely.
 func (m *SafeMap) Put(k string, v interface{}) {
 	m.Lock()
 	defer m.Unlock()
+
+	if m.inner == nil {
+		return
+	}
+
 	m.inner[k] = v
 }
 

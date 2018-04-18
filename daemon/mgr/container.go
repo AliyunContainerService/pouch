@@ -150,6 +150,8 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APICli
 	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
 	mgr.Client.SetExecExitHooks(mgr.execExitedAndRelease)
 
+	go mgr.execProcessGC()
+
 	return mgr, mgr.Restore(ctx)
 }
 
@@ -1741,4 +1743,33 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, meta *ContainerMeta,
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	meta.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", namespaces.Default, info.Name, "rootfs")
+}
+
+// execProcessGC cleans unused exec processes config every 5 minutes.
+func (mgr *ContainerManager) execProcessGC() {
+	for range time.Tick(time.Duration(GCExecProcessTick) * time.Minute) {
+		execProcesses := mgr.ExecProcesses.Values()
+		cleaned := 0
+
+		for id, v := range execProcesses {
+			execConfig, ok := v.(*ContainerExecConfig)
+			if !ok {
+				logrus.Warnf("get incorrect exec config: %v", v)
+				continue
+			}
+			// if unused exec processes are found, we will tag them, and clean
+			// them in next loop, so that we can ensure exec process can get
+			// correct exit code.
+			if execConfig.WaitForClean {
+				cleaned++
+				mgr.ExecProcesses.Remove(id)
+			} else if !execConfig.Running {
+				execConfig.WaitForClean = true
+			}
+		}
+
+		if cleaned > 0 {
+			logrus.Debugf("clean %d unused exec process", cleaned)
+		}
+	}
 }
