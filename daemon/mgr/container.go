@@ -1583,6 +1583,9 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 
 func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *ContainerMeta) error {
 	if c.Config.DiskQuota == nil {
+		if c.Config.QuotaID != "" && c.Config.QuotaID != "0" {
+			return fmt.Errorf("invalid argument, set quota-id without disk-quota")
+		}
 		return nil
 	}
 
