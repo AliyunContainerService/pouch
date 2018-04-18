@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
@@ -120,6 +121,21 @@ func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
 		list = append(list, int(ps.Pid))
 	}
 	return list, nil
+}
+
+// ContainerStats returns stats of the container.
+func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
+	if !c.lock.Trylock(id) {
+		return nil, errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return pack.task.Metrics(ctx)
 }
 
 // ProbeContainer probe the container's status, if timeout <= 0, will block to receive message.

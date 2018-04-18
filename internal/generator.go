@@ -52,5 +52,5 @@ func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error)
 
 // GenCriMgr generates a CriMgr instance.
 func GenCriMgr(d DaemonProvider) (mgr.CriMgr, error) {
-	return mgr.NewCriManager(d.Config(), d.CtrMgr(), d.ImgMgr())
+	return mgr.NewCriManager(d.Config(), d.Containerd(), d.CtrMgr(), d.ImgMgr())
 }

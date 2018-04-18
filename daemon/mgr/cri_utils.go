@@ -7,16 +7,23 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/go-openapi/strfmt"
 
+	"github.com/containerd/cgroups"
+	containerdtypes "github.com/containerd/containerd/api/types"
+	containerdmount "github.com/containerd/containerd/mount"
+	"github.com/containerd/typeurl"
+	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
+	"golang.org/x/sys/unix"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -231,6 +238,18 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 	return nil
 }
 
+// applySandboxResources applies LinuxPodSandboxConfig to pouch's HostConfig.
+func applySandboxResources(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandboxConfig) error {
+	if lc == nil {
+		return nil
+	}
+
+	// Apply Cgroup options.
+	hc.CgroupParent = lc.CgroupParent
+
+	return nil
+}
+
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
 func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
@@ -255,6 +274,12 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 		return nil, err
 	}
 
+	// Apply resource options.
+	err = applySandboxResources(hc, config.GetLinux())
+	if err != nil {
+		return nil, err
+	}
+
 	return createConfig, nil
 }
 
@@ -274,11 +299,17 @@ func toCriSandbox(c *ContainerMeta) (*runtime.PodSandbox, error) {
 		return nil, err
 	}
 	labels, annotations := extractLabels(c.Config.Labels)
+
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.PodSandbox{
-		Id:       c.ID,
-		Metadata: metadata,
-		State:    state,
-		// TODO: fill "CreatedAt" when it is appropriate.
+		Id:          c.ID,
+		Metadata:    metadata,
+		State:       state,
+		CreatedAt:   createdAt,
 		Labels:      labels,
 		Annotations: annotations,
 	}, nil
@@ -455,6 +486,60 @@ func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandbox
 		}
 	}
 }
+func (c *CriManager) getContainerMetrics(meta *ContainerMeta, stats *containerdtypes.Metric) (*runtime.ContainerStats, error) {
+	var usedBytes, inodesUsed uint64
+	cs := &runtime.ContainerStats{}
+
+	sn, err := c.SnapshotStore.get(meta.ID)
+	if err == nil {
+		usedBytes = sn.size
+		inodesUsed = sn.inodes
+	}
+	cs.WritableLayer = &runtime.FilesystemUsage{
+		Timestamp: sn.timestamp,
+		StorageId: &runtime.StorageIdentifier{
+			Uuid: c.ImageFSUUID,
+		},
+		UsedBytes:  &runtime.UInt64Value{usedBytes},
+		InodesUsed: &runtime.UInt64Value{inodesUsed},
+	}
+
+	metadata, err := parseContainerName(meta.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of container %q: %v", meta.ID, err)
+	}
+
+	labels, annotations := extractLabels(meta.Config.Labels)
+
+	cs.Attributes = &runtime.ContainerAttributes{
+		Id:          meta.ID,
+		Metadata:    metadata,
+		Labels:      labels,
+		Annotations: annotations,
+	}
+
+	if stats != nil {
+		s, err := typeurl.UnmarshalAny(stats.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract container metrics: %v", err)
+		}
+		metrics := s.(*cgroups.Metrics)
+		if metrics.CPU != nil && metrics.CPU.Usage != nil {
+			cs.Cpu = &runtime.CpuUsage{
+				Timestamp:            stats.Timestamp.UnixNano(),
+				UsageCoreNanoSeconds: &runtime.UInt64Value{metrics.CPU.Usage.Total},
+			}
+		}
+		if metrics.Memory != nil && metrics.Memory.Usage != nil {
+			cs.Memory = &runtime.MemoryUsage{
+				Timestamp:       stats.Timestamp.UnixNano(),
+				WorkingSetBytes: &runtime.UInt64Value{metrics.Memory.Usage.Usage},
+			}
+		}
+	}
+
+	return cs, nil
+}
 
 // getAppArmorSecurityOpts gets appArmor options from container config.
 func getAppArmorSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string, error) {
@@ -605,7 +690,15 @@ func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxI
 // Apply Linux-specific options if applicable.
 func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, podSandboxID string) error {
 	if lc := config.GetLinux(); lc != nil {
-		// TODO: resource restriction.
+		resources := lc.GetResources()
+		if resources != nil {
+			createConfig.HostConfig.Resources.CPUPeriod = resources.GetCpuPeriod()
+			createConfig.HostConfig.Resources.CPUQuota = resources.GetCpuQuota()
+			createConfig.HostConfig.Resources.CPUShares = resources.GetCpuShares()
+			createConfig.HostConfig.Resources.Memory = resources.GetMemoryLimitInBytes()
+			createConfig.HostConfig.Resources.CpusetCpus = resources.GetCpusetCpus()
+			createConfig.HostConfig.Resources.CpusetMems = resources.GetCpusetMems()
+		}
 
 		// Apply security context.
 		if err := applyContainerSecurityContext(lc, podSandboxID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
@@ -613,7 +706,11 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		}
 	}
 
-	// TODO: apply cgroupParent derived from the sandbox config.
+	// Apply cgroupsParent derived from the sandbox config.
+	if lc := sandboxConfig.GetLinux(); lc != nil {
+		// Apply Cgroup options.
+		createConfig.HostConfig.CgroupParent = lc.CgroupParent
+	}
 
 	return nil
 }
@@ -640,6 +737,11 @@ func toCriContainer(c *ContainerMeta) (*runtime.Container, error) {
 	labels, annotations := extractLabels(c.Config.Labels)
 	sandboxID := c.Config.Labels[sandboxIDLabelKey]
 
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.Container{
 		Id:           c.ID,
 		PodSandboxId: sandboxID,
@@ -647,9 +749,9 @@ func toCriContainer(c *ContainerMeta) (*runtime.Container, error) {
 		Image:        &runtime.ImageSpec{Image: c.Config.Image},
 		ImageRef:     c.Image,
 		State:        state,
-		// TODO: fill "CreatedAt" when it is appropriate.
-		Labels:      labels,
-		Annotations: annotations,
+		CreatedAt:    createdAt,
+		Labels:       labels,
+		Annotations:  annotations,
 	}, nil
 }
 
@@ -778,4 +880,61 @@ func parseUserFromImageUser(id string) string {
 	}
 	// no group, just return the id
 	return id
+}
+
+// imageFSPath returns containerd image filesystem path.
+func imageFSPath(rootDir, snapshotter string) string {
+	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", snapshotPlugin, snapshotter))
+}
+
+// getDeviceUUID gets device uuid for a given path.
+func getDeviceUUID(path string) (string, error) {
+	mount, err := lookupMount(path)
+	if err != nil {
+		return "", err
+	}
+	rdev := unix.Mkdev(uint32(mount.Major), uint32(mount.Minor))
+	return deviceUUID(rdev)
+}
+
+// lookupMount gets mount info of a given path.
+func lookupMount(path string) (containerdmount.Info, error) {
+	return containerdmount.Lookup(path)
+}
+
+// deviceUUID gets device uuid of a device. The passed in rdev should
+// be linux device number.
+func deviceUUID(rdev uint64) (string, error) {
+	const uuidDir = "/dev/disk/by-uuid"
+	files, err := ioutil.ReadDir(uuidDir)
+	if err != nil {
+		return "", err
+	}
+	for _, file := range files {
+		path := filepath.Join(uuidDir, file.Name())
+
+		trdev, err := blkrdev(path)
+		if err != nil {
+			continue
+		}
+
+		if rdev == trdev {
+			return file.Name(), nil
+		}
+	}
+
+	return "", fmt.Errorf("device %d not found", rdev)
+}
+
+// blkdev returns the rdev of a block device or an error if not a block device
+func blkrdev(device string) (uint64, error) {
+	info, err := os.Stat(device)
+	if err != nil {
+		return 0, err
+	}
+	stat := info.Sys().(*syscall.Stat_t)
+	if (stat.Mode & syscall.S_IFMT) != syscall.S_IFBLK {
+		return 0, fmt.Errorf("%s is not a block device", device)
+	}
+	return stat.Rdev, nil
 }

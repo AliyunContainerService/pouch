@@ -29,6 +29,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/libnetwork"
@@ -57,6 +58,9 @@ type ContainerMgr interface {
 
 	// Unpause a container.
 	Unpause(ctx context.Context, name string) error
+
+	// Stats of a container.
+	Stats(ctx context.Context, name string) (*containerdtypes.Metric, error)
 
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
@@ -709,6 +713,23 @@ func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int
 	}
 
 	return mgr.markStoppedAndRelease(c, msg)
+}
+
+// Stats gets the stat of a container.
+func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*containerdtypes.Metric, error) {
+	var (
+		err error
+		c   *Container
+	)
+
+	if c, err = mgr.container(name); err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return mgr.Client.ContainerStats(ctx, c.ID())
 }
 
 // Pause pauses a running container.
