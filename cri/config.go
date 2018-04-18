@@ -8,4 +8,6 @@ type Config struct {
 	NetworkPluginBinDir string
 	// NetworkPluginConfDir is the directory in which the admin places a CNI conf.
 	NetworkPluginConfDir string
+	// SandboxImage is the image used by sandbox container.
+	SandboxImage string
 }
