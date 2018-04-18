@@ -122,7 +122,8 @@ func Merge(src, dest interface{}) error {
 	return doMerge(srcVal, destVal)
 }
 
-// doMerge, begin merge action
+// doMerge, begin merge action, note that we will merge slice type,
+// but we do not validate if slice has duplicate values.
 func doMerge(src, dest reflect.Value) error {
 	if !src.IsValid() || !dest.CanSet() || isEmptyValue(src) {
 		return nil
@@ -142,6 +143,9 @@ func doMerge(src, dest reflect.Value) error {
 				return err
 			}
 		}
+
+	case reflect.Slice:
+		dest.Set(reflect.AppendSlice(dest, src))
 
 	default:
 		dest.Set(src)

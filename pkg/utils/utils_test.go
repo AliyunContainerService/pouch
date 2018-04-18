@@ -138,6 +138,7 @@ func TestMerge(t *testing.T) {
 		Sc bool
 		Sd map[string]string
 		Se nestS
+		Sf []string
 	}
 
 	getIntAddr := func(i int) *int {
@@ -183,6 +184,11 @@ func TestMerge(t *testing.T) {
 			src:      &simple{},
 			dest:     &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
 			expected: &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
+			ok:       true,
+		}, {
+			src:      &simple{Sa: 1, Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo"}},
+			dest:     &simple{Sa: 2, Sb: "world", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}, Sf: []string{"foo"}},
+			expected: &simple{Sa: 1, Sb: "world", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
 			ok:       true,
 		},
 	} {

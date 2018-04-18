@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	osexec "os/exec"
 	"os/signal"
@@ -270,92 +267,9 @@ func checkLxcfsCfg() error {
 
 // load daemon config file
 func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
-	configFile := cfg.ConfigFile
-	if configFile == "" {
+	if cfg.ConfigFile == "" {
 		return nil
 	}
 
-	contents, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to read contents from config file %s: %s", configFile, err)
-	}
-
-	var fileFlags map[string]interface{}
-	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&fileFlags); err != nil {
-		return fmt.Errorf("failed to decode json: %s", err)
-	}
-
-	if len(fileFlags) == 0 {
-		return nil
-	}
-
-	// check if invalid or unknown flag exist in config file
-	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
-		return err
-	}
-
-	// check conflict in command line flags and config file
-	if err = getConflictConfigurations(flagSet, fileFlags); err != nil {
-		return err
-	}
-
-	fileConfig := &config.Config{}
-	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(fileConfig); err != nil {
-		return fmt.Errorf("failed to decode json: %s", err)
-	}
-
-	// merge configurations from command line flags and config file
-	err = mergeConfigurations(fileConfig, cfg)
-	return err
-}
-
-// find unknown flag in config file
-func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
-	var unknownFlags []string
-
-	for k, v := range fileFlags {
-		if m, ok := v.(map[string]interface{}); ok {
-			for k = range m {
-				f := flagSet.Lookup(k)
-				if f == nil {
-					unknownFlags = append(unknownFlags, k)
-				}
-			}
-			continue
-		}
-		f := flagSet.Lookup(k)
-		if f == nil {
-			unknownFlags = append(unknownFlags, k)
-		}
-	}
-
-	if len(unknownFlags) > 0 {
-		return fmt.Errorf("unknown flags: %s", strings.Join(unknownFlags, ", "))
-	}
-
-	return nil
-}
-
-// find conflict in command line flags and config file
-func getConflictConfigurations(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
-	var conflictFlags []string
-	flagSet.Visit(func(f *pflag.Flag) {
-		if v, exist := fileFlags[f.Name]; exist {
-			conflictFlags = append(conflictFlags, fmt.Sprintf("from flag: %s and from config file: %s", f.Value.String(), v))
-		}
-	})
-
-	if len(conflictFlags) > 0 {
-		return fmt.Errorf("found conflict flags in command line and config file: %v", strings.Join(conflictFlags, ", "))
-	}
-
-	return nil
-}
-
-// merge flagSet and config file into cfg
-func mergeConfigurations(src *config.Config, dest *config.Config) error {
-	return utils.Merge(src, dest)
+	return cfg.MergeConfigurations(cfg, flagSet)
 }
