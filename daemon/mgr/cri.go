@@ -47,8 +47,6 @@ const (
 	// nameDelimiter is used to construct pouch container names.
 	nameDelimiter = "_"
 
-	defaultSandboxImage = "k8s.gcr.io/pause-amd64:3.0"
-
 	// Address and port of stream server.
 	// TODO: specify them in the parameters of pouchd.
 	streamServerAddress = ""
@@ -92,6 +90,8 @@ type CriManager struct {
 
 	// SandboxStore stores the configuration of sandboxes.
 	SandboxStore *collect.SafeMap
+	// SandboxImage is the image used by sandbox container.
+	SandboxImage string
 }
 
 // NewCriManager creates a brand new cri manager.
@@ -108,6 +108,7 @@ func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) 
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 		SandboxStore:   collect.NewSafeMap(),
+		SandboxImage:   config.CriConfig.SandboxImage,
 	}
 
 	return NewCriWrapper(c), nil
@@ -136,8 +137,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	config := r.GetConfig()
 
 	// Step 1: Prepare image for the sandbox.
-	// TODO: make sandbox image configurable.
-	image := defaultSandboxImage
+	image := c.SandboxImage
 
 	// Make sure the sandbox image exists.
 	err := c.ensureSandboxImageExists(ctx, image)
