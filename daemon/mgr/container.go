@@ -1500,7 +1500,6 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 
 		for _, oldMountPoint := range oldMeta.Mounts {
 			mp := &types.MountPoint{
-				Name:        oldMountPoint.Name,
 				Source:      oldMountPoint.Source,
 				Destination: oldMountPoint.Destination,
 				Driver:      oldMountPoint.Driver,
@@ -1509,7 +1508,7 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 				Propagation: oldMountPoint.Propagation,
 			}
 
-			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; !exist {
+			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
 				mp.Name = oldMountPoint.Name
 				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
 				if err != nil {
