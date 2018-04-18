@@ -154,7 +154,7 @@ As a developer, you may need to build and test Pouch binaries via source code. T
 
 * Linux Kernel 3.10+
 * Go 1.9.0+
-* containerd: 1.0.0
+* containerd: 1.0.3
 * runc: 1.0.0-rc4
 * runv: 1.0.0 (option)
 
@@ -170,8 +170,8 @@ Here are the shell scripts to install `containerd` and `runc`:
 
 ``` shell
 # install containerd
-$ wget https://github.com/containerd/containerd/releases/download/v1.0.0/containerd-1.0.0.linux-amd64.tar.gz
-$ tar -xzvf containerd-1.0.0.linux-amd64.tar.gz -C /usr/local
+$ wget https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz
+$ tar -xzvf containerd-1.0.3.linux-amd64.tar.gz -C /usr/local
 $
 # install runc
 $ wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc4/runc.amd64 -P /usr/local/bin
@@ -207,7 +207,7 @@ With all needed binaries installed, you could start pouchd via:
 
 ``` shell
 $ pouchd
-INFO[0000] starting containerd                           module=containerd revision=a543c937eb0a05e1636714ee2be70819d745b960 version=v1.0.0-beta.2
+INFO[0000] starting containerd                           module=containerd revision=773c489c9c1b21a6d78b5c538cd395416ec50f88 version=v1.0.3
 INFO[0000] setting subreaper...                          module=containerd
 INFO[0000] loading plugin "io.containerd.content.v1.content"...  module=containerd type=io.containerd.content.v1
 INFO[0000] loading plugin "io.containerd.snapshotter.v1.btrfs"...  module=containerd type=io.containerd.snapshotter.v1

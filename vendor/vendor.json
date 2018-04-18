@@ -48,274 +48,364 @@
 			"revisionTime": "2017-09-25T15:48:32Z"
 		},
 		{
-			"checksumSHA1": "3tWZA853zC/N1yoGDEkkye76Vv0=",
+			"checksumSHA1": "1ny6UV3Oq4kaqpQtM8bs9W9e3vw=",
 			"path": "github.com/containerd/containerd",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "V/ZFMKUvTntwELx2zTjn/9IFUqw=",
 			"path": "github.com/containerd/containerd/api/services/containers/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "ytKOuPbkTKeohUCQic4Lj84Ziok=",
 			"path": "github.com/containerd/containerd/api/services/content/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "eh6ojTLkyD74CdIZQ3eXfZ+PXe4=",
 			"path": "github.com/containerd/containerd/api/services/diff/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "POopGyHC86XK1x1JiWM87GTAn2Y=",
 			"path": "github.com/containerd/containerd/api/services/events/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "1dxdRVo/M+qxju/g3qJRF7YTHM0=",
 			"path": "github.com/containerd/containerd/api/services/images/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "1ZMMqlWf7pULtxt5nyuPH80d0cM=",
 			"path": "github.com/containerd/containerd/api/services/introspection/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "zXk5Iysb2WwjIqR1aI4Q5Zf3z6Q=",
 			"path": "github.com/containerd/containerd/api/services/leases/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "k3TKbtkLHuLwnkwyC2GzvVSFCvg=",
 			"path": "github.com/containerd/containerd/api/services/namespaces/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "p92B86Iterov0pPTRJeQhplmajI=",
 			"path": "github.com/containerd/containerd/api/services/snapshots/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "mAY8zwmpZNpUwADPN9Z49ms2RHg=",
 			"path": "github.com/containerd/containerd/api/services/tasks/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "Dg8dXaHGBe0cl0i2TYoF1JGosKM=",
 			"path": "github.com/containerd/containerd/api/services/version/v1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "ipG7UbQLw+D8/a4ozTU4jeYy0ms=",
 			"path": "github.com/containerd/containerd/api/types",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "SJUjrP+5a7rPcAI1b2cCyAF6tZ0=",
 			"path": "github.com/containerd/containerd/api/types/task",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "kJfhXsAcyS+vNMFrDuKmHCwVjbU=",
+			"checksumSHA1": "vmjGd4DU++wHR9j8jVfqnfJ1T10=",
 			"path": "github.com/containerd/containerd/cio",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "y6g/5Ap0iZ4raZiXxrSgrFK5uwY=",
 			"path": "github.com/containerd/containerd/containers",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "roT1XMBn4EeuAeHbnJ4X28xEY3k=",
+			"checksumSHA1": "HKpNJauKC9EFE1TRpb0OEWz7Z8k=",
 			"path": "github.com/containerd/containerd/content",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "IqqBK06hDnn7N1nd9YT9mwrr96w=",
+			"checksumSHA1": "dSA87kF3LtOulayUERfYM7pyI8E=",
 			"path": "github.com/containerd/containerd/contrib/seccomp",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "5q0XKUS32i7Ya0eRUaLEKGTdALw=",
+			"checksumSHA1": "HaGYavEIgh2i7/BlY1Cz0BUCzuk=",
 			"path": "github.com/containerd/containerd/dialer",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "ZaDOX0+f+4i5QbEX1Cj9IqTO3Dg=",
 			"path": "github.com/containerd/containerd/diff",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "UDnsOzIZ7OjbJwzsnNIjSLv2NPA=",
 			"path": "github.com/containerd/containerd/errdefs",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "kFY+ix4N/7RjphrMHysZ1fOFDaU=",
 			"path": "github.com/containerd/containerd/events",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "JIxNXnUE8cXHSs0RfR06HDg8OKA=",
 			"path": "github.com/containerd/containerd/events/exchange",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "6niiX9GDBEsr/Fspe4kKxo3LP40=",
 			"path": "github.com/containerd/containerd/filters",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "bD3NnBfoTKHZRsAvy29iApaH0zY=",
+			"checksumSHA1": "T3Mh6YtUWwvGvWISfjzV0JlUNSI=",
 			"path": "github.com/containerd/containerd/fs",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "r8cyY1bjwO/nYmhH4mZpljtKGsI=",
 			"path": "github.com/containerd/containerd/identifiers",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "pUDS7qJrPgsAhX3BK1CWvX+ocT4=",
 			"path": "github.com/containerd/containerd/images",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "LPyRLtrZmGUuVtKGR2YOEFuUYgE=",
 			"path": "github.com/containerd/containerd/leases",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "S/WJn5s0172DnsFQPUaKyMKV+y4=",
 			"path": "github.com/containerd/containerd/linux/runctypes",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "GAO2s2joEUZTNqjiGnYHSKNcKBs=",
 			"path": "github.com/containerd/containerd/log",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "9TAbHDo2J6zlyRRTdqX7sHLMM0A=",
 			"path": "github.com/containerd/containerd/mount",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "DQCB4LvBRb2YbKpX46qHUK5KUr4=",
 			"path": "github.com/containerd/containerd/namespaces",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "/9N2aS6wwe6wTw6hL+Fp0myyCQQ=",
+			"checksumSHA1": "cI6H8ev4txgLraSFUDMGcRVqrcg=",
 			"path": "github.com/containerd/containerd/oci",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "cHlAhW3GRpfMAE22/lbjL3Z9a0s=",
 			"path": "github.com/containerd/containerd/platforms",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "2JrdtO+2kyFupHzWn+EsQ0DVgAU=",
 			"path": "github.com/containerd/containerd/plugin",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "hEqrZG0ijylicdei1Kc4IScAshI=",
 			"path": "github.com/containerd/containerd/progress",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "1QZqDFrsA0ehoxh14hzwW/knL4Q=",
 			"path": "github.com/containerd/containerd/protobuf/google/rpc",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "YnpU8vh+PQIJ2pC+hdSAjYAAb8k=",
 			"path": "github.com/containerd/containerd/reference",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "nndE0L9SBDzGUNqZN562aIQC3uA=",
 			"path": "github.com/containerd/containerd/remotes",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "PriKCFVJIjLn3y1jLTNb+9RsG7A=",
 			"path": "github.com/containerd/containerd/remotes/docker",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "CHt96fWy3eXjcCqxJg5SXjkofCA=",
 			"path": "github.com/containerd/containerd/remotes/docker/schema1",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "OuOr/HVV29fKoThNjloWKOb13YE=",
+			"checksumSHA1": "eHFZrtLsqkippwdT4O1cOnadqac=",
 			"path": "github.com/containerd/containerd/rootfs",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "DzMZUrndYzzDT7nqwcxHq2oC8Kc=",
 			"path": "github.com/containerd/containerd/snapshots",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "cySW+bDNOg3QtSzk+GoHvIOJjB0=",
+			"checksumSHA1": "8u2ZojhEDaoA4Co6usLof+TKj78=",
 			"path": "github.com/containerd/containerd/sys",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "+YDgb2+Z+6ySwEF7z/jEUv8XaGo=",
+			"checksumSHA1": "grEvoaogoFLNPAH7XjjNgau3SNY=",
 			"path": "github.com/containerd/containerd/version",
-			"revision": "89623f28b87a6004d4b785663257362d1658a729",
-			"revisionTime": "2017-12-05T05:15:20Z"
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
 		},
 		{
 			"checksumSHA1": "Pse/Y1lqxmWpXKh7dpbO9S+vKvU=",

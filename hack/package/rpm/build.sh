@@ -48,8 +48,8 @@ function build_pouch()
 {
     # install containerd
     echo "Downloading containerd."
-    wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.0/containerd-1.0.0.linux-amd64.tar.gz -P $TMP
-    tar xf $TMP/containerd-1.0.0.linux-amd64.tar.gz -C $TMP && cp -f $TMP/bin/* $BINDIR/
+    wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P $TMP
+    tar xf $TMP/containerd-1.0.3.linux-amd64.tar.gz -C $TMP && cp -f $TMP/bin/* $BINDIR/
 
     # install runc
     echo "Downloading runc."
