@@ -2,6 +2,10 @@ package utils
 
 import (
 	goerrors "errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -339,5 +343,47 @@ func TestStringInSlice(t *testing.T) {
 				t.Errorf("StringInSlice() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCheckPidExist(t *testing.T) {
+	assert := assert.New(t)
+
+	type tCase struct {
+		path     string
+		pidexist bool
+	}
+
+	// mock pidfiles with a must-exist pid 1 and a must-not-exist pid 1 << 30
+	dir, err := ioutil.TempDir("/tmp/", "")
+	assert.NoError(err)
+	defer os.RemoveAll(dir)
+	file1 := filepath.Join(dir, "file1")
+	file2 := filepath.Join(dir, "file2")
+	err = ioutil.WriteFile(file1, []byte(fmt.Sprintf("%d", 1)), 0644)
+	assert.NoError(err)
+	err = ioutil.WriteFile(file2, []byte(fmt.Sprintf("%d", 1<<30)), 0644)
+	assert.NoError(err)
+
+	for _, t := range []tCase{
+		{
+			path:     "/foo/bar",
+			pidexist: false,
+		},
+		{
+			path:     file1,
+			pidexist: true,
+		},
+		{
+			path:     file2,
+			pidexist: false,
+		},
+	} {
+		err := checkPidfileStatus(t.path)
+		if t.pidexist {
+			assert.Error(err)
+		} else {
+			assert.NoError(err)
+		}
 	}
 }

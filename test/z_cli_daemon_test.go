@@ -378,3 +378,26 @@ func (suite *PouchDaemonSuite) TestDaemonTlsVerify(c *check.C) {
 		c.Assert(err, check.IsNil)
 	}
 }
+
+// TestDaemonStartOverOneTimes tests start daemon over one times should fail.
+func (suite *PouchDaemonSuite) TestDaemonStartOverOneTimes(c *check.C) {
+	dcfg1 := daemon.NewConfig()
+	dcfg1.Listen = ""
+	addr1 := "unix:///var/run/pouchtest1.sock"
+	dcfg1.NewArgs("--listen=" + addr1)
+	err := dcfg1.StartDaemon()
+	c.Assert(err, check.IsNil)
+
+	// verify listen to tcp works
+	command.PouchRun("--host", addr1, "version").Assert(c, icmd.Success)
+	defer dcfg1.KillDaemon()
+
+	// test second daemon with same pidfile should start fail
+	dcfg2 := daemon.NewConfig()
+	dcfg2.Listen = ""
+	addr2 := "unix:///var/run/pouchtest2.sock"
+	dcfg2.NewArgs("--listen=" + addr2)
+	err = dcfg2.StartDaemon()
+	c.Assert(err, check.NotNil)
+
+}

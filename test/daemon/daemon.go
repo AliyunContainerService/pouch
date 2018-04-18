@@ -23,6 +23,7 @@ const (
 	Listen        = "unix:///tmp/test/pouch/pouchd.sock"
 	ContainerdAdd = "/tmp/test/pouch/containerd.sock"
 	ListenCRI     = "unix:///tmp/test/pouch/pouchcri.sock"
+	Pidfile       = "/tmp/test/pouch/pouch.pid"
 )
 
 // Config is the configuration of pouch daemon.
@@ -42,6 +43,7 @@ type Config struct {
 	HomeDir        string
 	ContainerdAddr string
 	ListenCri      string
+	Pidfile        string
 
 	// pid of pouchd
 	Pid int
@@ -66,6 +68,7 @@ func NewConfig() Config {
 	result.HomeDir = HomeDir
 	result.ContainerdAddr = ContainerdAdd
 	result.ListenCri = ListenCRI
+	result.Pidfile = Pidfile
 
 	result.timeout = 15
 	result.Debug = true
@@ -88,6 +91,9 @@ func (d *Config) NewArgs(args ...string) {
 	}
 	if len(d.ListenCri) != 0 {
 		d.Args = append(d.Args, "--listen-cri="+d.ListenCri)
+	}
+	if len(d.Pidfile) != 0 {
+		d.Args = append(d.Args, "--pidfile="+d.Pidfile)
 	}
 
 	if len(args) != 0 {

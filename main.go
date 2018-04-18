@@ -100,6 +100,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
 	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
+	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 }
 
 // parse flags
@@ -147,6 +148,17 @@ func runDaemon() error {
 			return fmt.Errorf("failed to mkdir: %v", err)
 		}
 	}
+
+	// saves daemon pid to pidfile.
+	if err := utils.NewPidfile(cfg.Pidfile); err != nil {
+		logrus.Errorf("failed to create pidfile: %s", err)
+		return err
+	}
+	defer func() {
+		if err := os.Remove(cfg.Pidfile); err != nil {
+			logrus.Errorf("failed to delete pidfile: %s", err)
+		}
+	}()
 
 	// define and start all required processes.
 	if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
