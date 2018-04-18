@@ -120,6 +120,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		Labels:             mgr.config.Labels,
 		// LiveRestoreEnabled: ,
 		// LoggingDriver: ,
+		LxcfsEnabled:    mgr.config.IsLxcfsEnabled,
 		MemTotal:        totalMem,
 		Name:            hostname,
 		NCPU:            int64(runtime.NumCPU()),

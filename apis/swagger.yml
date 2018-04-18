@@ -1352,6 +1352,13 @@ definitions:
         x-nullable: false
         default: false
         example: false
+      LxcfsEnabled:
+        description: |
+          Indicates if lxcfs is enabled.
+        type: "boolean"
+        x-nullable: false
+        default: false
+        example: false
       ContainerdCommit:
         $ref: "#/definitions/Commit"
       RuncCommit:
