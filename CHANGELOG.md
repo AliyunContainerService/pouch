@@ -1,5 +1,111 @@
 # CHANGELOG
 
+## 0.4.0 (2018-04-19)
+
+### Remote API && Client
+
+* Add `lxcfs` enabled info to `info` command [\#1152](https://github.com/alibaba/pouch/pull/1152) ([zhuangqh](https://github.com/zhuangqh))
+* Add `snapshotter` info to pouch `inspect` command [\#1130](https://github.com/alibaba/pouch/pull/1130) ([HusterWan](https://github.com/HusterWan))
+* Add `--rm` flag to pouch `run` command [\#1125](https://github.com/alibaba/pouch/pull/1125) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix make inspect output to an array [\#1119](https://github.com/alibaba/pouch/pull/1119) ([faycheng](https://github.com/faycheng))
+* Add image proxy info to pouch `info` command [\#1102](https://github.com/alibaba/pouch/pull/1102) ([ZouRui89](https://github.com/ZouRui89))
+* Add `--volumes-from` flags to pouch `create` command [\#1131](https://github.com/alibaba/pouch/pull/1131) ([rudyfly](https://github.com/rudyfly))
+* Add `--cpu-period` and `--cpu-quota` to pouch `create` command [\#1067](https://github.com/alibaba/pouch/pull/1067) ([allencloud](https://github.com/allencloud))
+* Refactor move parameters parse and validate part into `opts` package [\#1041](https://github.com/alibaba/pouch/pull/1041) ([HusterWan](https://github.com/HusterWan))
+* Fix `image inspect` and `network inspect` command docs [\#1053](https://github.com/alibaba/pouch/pull/1053) ([HusterWan](https://github.com/HusterWan))
+* Fix restful api url should support both with or without version info [\#1035](https://github.com/alibaba/pouch/pull/1035) ([HusterWan](https://github.com/HusterWan))
+* Fix client login logic [\#1044](https://github.com/alibaba/pouch/pull/1044) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add `--annotation` to pouch `create` command [\#1046](https://github.com/alibaba/pouch/pull/1046) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix make json ID be Id to be compatible with Moby API [\#1066](https://github.com/alibaba/pouch/pull/1066) ([allencloud](https://github.com/allencloud))
+* Fix make pouch `create` output to an array [\#1034](https://github.com/alibaba/pouch/pull/1034) ([ZouRui89](https://github.com/ZouRui89))
+* Add more daemon option in `info` API [\#1122](https://github.com/alibaba/pouch/pull/1122) ([allencloud](https://github.com/allencloud))
+* Add more informations in `volume list` result [\#1028](https://github.com/alibaba/pouch/pull/1028) ([rudyfly](https://github.com/rudyfly))
+* Fix modify `volume inspect` docs [\#1029](https://github.com/alibaba/pouch/pull/1029) ([rudyfly](https://github.com/rudyfly))
+
+### Runtime
+
+* Fix errors when using `volume-from` creates container[\#1161](https://github.com/alibaba/pouch/pull/1161) ([rudyfly](https://github.com/rudyfly))
+* Fix set quota-id without disk-quota [\#1157](https://github.com/alibaba/pouch/pull/1157) ([rudyfly](https://github.com/rudyfly))
+* Upgrade `containerd` vendor version to `v1.0.3` [\#1148](https://github.com/alibaba/pouch/pull/1148) ([fuweid](https://github.com/fuweid))
+* Refactor move `pkg/opts` package to `api/opts` [\#1147](https://github.com/alibaba/pouch/pull/1147) ([allencloud](https://github.com/allencloud))
+* Add support parsing volumes from docker image [\#1145](https://github.com/alibaba/pouch/pull/1145) ([rudyfly](https://github.com/rudyfly))
+* Fix code style: we should not define a empty slice with `make` [\#1142](https://github.com/alibaba/pouch/pull/1142) ([oiooj](https://github.com/oiooj))
+* Fix pouchd panic when meta snapshotter is nil [\#1140](https://github.com/alibaba/pouch/pull/1140) ([oiooj](https://github.com/oiooj))
+* Fix set diskquota failed without quota id [\#1136](https://github.com/alibaba/pouch/pull/1136) ([rudyfly](https://github.com/rudyfly))
+* Add node ip and sn into daemon labels [\#1134](https://github.com/alibaba/pouch/pull/1134) ([allencloud](https://github.com/allencloud))
+* Refactor config file resolve [\#1132](https://github.com/alibaba/pouch/pull/1132) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add support to gc unused exec processes [\#1129](https://github.com/alibaba/pouch/pull/1129) ([Ace-Tang](https://github.com/Ace-Tang))
+* Make TLS config params can be setup in the file [\#1126](https://github.com/alibaba/pouch/pull/1126) ([yyb196](https://github.com/yyb196))
+* Add plugin point before endpoint creating [\#1124](https://github.com/alibaba/pouch/pull/1124) ([yyb196](https://github.com/yyb196))
+* Fix return err when `ExecContainer` failed [\#1117](https://github.com/alibaba/pouch/pull/1117) ([oblivionfallout](https://github.com/oblivionfallout))
+* Fix remove ip mask in `Networks.IPAddress` [\#1116](https://github.com/alibaba/pouch/pull/1116) ([rudyfly](https://github.com/rudyfly))
+* Setup profiler and don't bother to enable debug level log [\#1111](https://github.com/alibaba/pouch/pull/1111) ([yyb196](https://github.com/yyb196))
+* Fix we should do not append `latest` tag to the image when it already has a tag [\#1110](https://github.com/alibaba/pouch/pull/1110) ([yyb196](https://github.com/yyb196))
+* Fix make container exit with real exit code [\#1099](https://github.com/alibaba/pouch/pull/1099) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add more flags in daemon config file [\#1088](https://github.com/alibaba/pouch/pull/1088) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: fix interface casting error [\#1085](https://github.com/alibaba/pouch/pull/1085) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix `gocyclo` issues in go report [\#1084](https://github.com/alibaba/pouch/pull/1084) ([zhuangqh](https://github.com/zhuangqh))
+* Fix some spell errors [\#1081](https://github.com/alibaba/pouch/pull/1081) ([dbdd4us](https://github.com/dbdd4us))
+* Add allinone to deploy pouch as available container to kubernetes [\#1070](https://github.com/alibaba/pouch/pull/1070) ([ZouRui89](https://github.com/ZouRui89))
+* Fix golint not found has exit code 1 [\#1059](https://github.com/alibaba/pouch/pull/1059) ([sunyuan3](https://github.com/sunyuan3))
+* Add `diskquota` support regular expression [\#1057](https://github.com/alibaba/pouch/pull/1057) ([rudyfly](https://github.com/rudyfly))
+* Fix sync abnormal containers status when start pouchd [\#1056](https://github.com/alibaba/pouch/pull/1056) ([HusterWan](https://github.com/HusterWan))
+* Remove duplicate error messages in network package [\#1048](https://github.com/alibaba/pouch/pull/1048) ([faycheng](https://github.com/faycheng))
+* Fix setup hook in advance to avoid panic if no prestart hook setup before [\#1038](https://github.com/alibaba/pouch/pull/1038) ([yyb196](https://github.com/yyb196))
+* Enable setup common name whitelist for tls checking [\#1036](https://github.com/alibaba/pouch/pull/1036) ([yyb196](https://github.com/yyb196))
+
+### Network
+
+* Refactor manage `libnetwork` by subtree instead of submodule [\#1135](https://github.com/alibaba/pouch/pull/1135) ([rudyfly](https://github.com/rudyfly))
+* Fix make pouch network non-existent return exit code 1 [\#1089](https://github.com/alibaba/pouch/pull/1089) ([allencloud](https://github.com/allencloud))
+* Fix delete endpoint after failing to create endpoint [\#1069](https://github.com/alibaba/pouch/pull/1069) ([faycheng](https://github.com/faycheng))
+* Add support for inspecting network by ID [\#1040](https://github.com/alibaba/pouch/pull/1040) ([faycheng](https://github.com/faycheng))
+
+### Kubernetes
+
+* Fix make infra image configurable [\#1159](https://github.com/alibaba/pouch/pull/1159) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Add `--enable-cri` flag to `pouchd` to specify whether enable CRI [\#1118](https://github.com/alibaba/pouch/pull/1118) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix we should get image ID from `containerd` [\#1112](https://github.com/alibaba/pouch/pull/1112) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Add image auth for cri manager [\#1097](https://github.com/alibaba/pouch/pull/1097) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Add selinux support for cri manager [\#1092](https://github.com/alibaba/pouch/pull/1092) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix loop `InspectExec` to finish in `ExecSync` and `Exec` operations [\#1086](https://github.com/alibaba/pouch/pull/1086) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix for `privileged` container, make `dir` prefix with `/sys` ReadWrite [\#1055](https://github.com/alibaba/pouch/pull/1055) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix distinguish `cmd` and `entrypoint` better [\#1045](https://github.com/alibaba/pouch/pull/1045) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix specify both `cmd` and `args` when create a container [\#1027](https://github.com/alibaba/pouch/pull/1027) ([YaoZengzeng](https://github.com/YaoZengzeng))
+
+### Test
+
+* Add `lxcfs` binary check [\#1127](https://github.com/alibaba/pouch/pull/1127) ([Letty5411](https://github.com/Letty5411))
+* Add `tls` test [\#1115](https://github.com/alibaba/pouch/pull/1115) ([Letty5411](https://github.com/Letty5411))
+* Add mock test for `create` client [\#1106](https://github.com/alibaba/pouch/pull/1106) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Seperate integration test and cri test in travisCI [\#1098](https://github.com/alibaba/pouch/pull/1098) ([Letty5411](https://github.com/Letty5411))
+* Add mock test for `top` client [\#1093](https://github.com/alibaba/pouch/pull/1093) ([zhuangqh](https://github.com/zhuangqh))
+* Add mock test for `resize` and `restart` client [\#1090](https://github.com/alibaba/pouch/pull/1090) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Add tests for `label` and config file in `pouchd` [\#1087](https://github.com/alibaba/pouch/pull/1087) ([Letty5411](https://github.com/Letty5411))
+* Refine `pouchd` test framework [\#1078](https://github.com/alibaba/pouch/pull/1078) ([Letty5411](https://github.com/Letty5411))
+* Add mock test `pause` and `unpause` client [\#1074](https://github.com/alibaba/pouch/pull/1074) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Add mock test for `remove` and `stop` client [\#1064](https://github.com/alibaba/pouch/pull/1064) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Modify hardcode testcase for device `/dev/sda` [\#1054](https://github.com/alibaba/pouch/pull/1054) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add mock test for `list` client [\#1049](https://github.com/alibaba/pouch/pull/1049) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Add mock test for `get` client [\#1037](https://github.com/alibaba/pouch/pull/1037) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Add mock test for `image` operations on client side [\#1032](https://github.com/alibaba/pouch/pull/1032) ([ZouRui89](https://github.com/ZouRui89))
+* Add mock test for `volume` operations on client side [\#1026](https://github.com/alibaba/pouch/pull/1026) ([ZouRui89](https://github.com/ZouRui89))
+* Add mock test for `update` client [\#1024](https://github.com/alibaba/pouch/pull/1024) ([Dewey-Ding](https://github.com/Dewey-Ding))
+* Add unit test in circleci [\#1039](https://github.com/alibaba/pouch/pull/1039) ([ZouRui89](https://github.com/ZouRui89))
+* Add circleci parallel testing to split unit-test and code-check [\#1043](https://github.com/alibaba/pouch/pull/1043) ([allencloud](https://github.com/allencloud))
+* Fix logic error in `volume create` mock test [\#1033](https://github.com/alibaba/pouch/pull/1033) ([ZouRui89](https://github.com/ZouRui89))
+* Add restricts in codecov.yml to ignore files [\#1050](https://github.com/alibaba/pouch/pull/1050) ([allencloud](https://github.com/allencloud))
+
+### New Contributors
+
+Here is the list of new contributors:
+
+* [Dewey-Ding](https://github.com/Dewey-Ding)
+* [oiooj](https://github.com/oiooj)
+* [dbdd4us](https://github.com/dbdd4us))
+* [zhuangqh](https://github.com/zhuangqh)
+* [oblivionfallout](https://github.com/oblivionfallout)
+
 ## 0.3.0 (2018-03-30)
 
 **IMPORTANT**: Pouch 0.3.0 has met almost all your basic needs for kubernetes:
