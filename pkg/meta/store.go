@@ -56,19 +56,19 @@ func NewStore(cfg Config) (*Store, error) {
 		cfg.Driver = DefaultStore
 	}
 
-	if _, ok := backend[cfg.Driver]; !ok {
+	if _, ok := backendFactory[cfg.Driver]; !ok {
 		return nil, fmt.Errorf("store driver %s not found", cfg.Driver)
+	}
+	backend, err := backendFactory[cfg.Driver](cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create driver %s failed: %v", cfg.Driver, err)
 	}
 
 	s := &Store{
 		Config:   cfg,
-		backend:  backend[cfg.Driver],
+		backend:  backend,
 		trieLock: new(sync.Mutex),
 		trie:     patricia.NewTrie(),
-	}
-
-	if err := s.backend.New(cfg); err != nil {
-		return nil, err
 	}
 
 	keys := []string{}

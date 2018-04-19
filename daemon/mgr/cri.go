@@ -6,13 +6,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
-	"github.com/alibaba/pouch/pkg/collect"
+	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/version"
 
@@ -88,10 +89,10 @@ type CriManager struct {
 	// SandboxBaseDir is the directory used to store sandbox files like /etc/hosts, /etc/resolv.conf, etc.
 	SandboxBaseDir string
 
-	// SandboxStore stores the configuration of sandboxes.
-	SandboxStore *collect.SafeMap
 	// SandboxImage is the image used by sandbox container.
 	SandboxImage string
+	// SandboxStore stores the configuration of sandboxes.
+	SandboxStore *meta.Store
 }
 
 // NewCriManager creates a brand new cri manager.
@@ -107,8 +108,21 @@ func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) 
 		CniMgr:         NewCniManager(&config.CriConfig),
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
-		SandboxStore:   collect.NewSafeMap(),
 		SandboxImage:   config.CriConfig.SandboxImage,
+	}
+
+	c.SandboxStore, err = meta.NewStore(meta.Config{
+		Driver:  "local",
+		BaseDir: path.Join(config.HomeDir, "sandboxes-meta"),
+		Buckets: []meta.Bucket{
+			{
+				Name: meta.MetaJSONFile,
+				Type: reflect.TypeOf(SandboxMeta{}),
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sandbox meta store: %v", err)
 	}
 
 	return NewCriWrapper(c), nil
@@ -205,10 +219,11 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}
 
 	sandboxMeta := &SandboxMeta{
+		ID:        id,
 		Config:    config,
 		NetNSPath: netnsPath,
 	}
-	c.SandboxStore.Put(id, sandboxMeta)
+	c.SandboxStore.Put(sandboxMeta)
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
 }
@@ -217,9 +232,9 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 // sandbox, they should be forcibly terminated.
 func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (*runtime.StopPodSandboxResponse, error) {
 	podSandboxID := r.GetPodSandboxId()
-	res, ok := c.SandboxStore.Get(podSandboxID).Result()
-	if !ok {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore", podSandboxID)
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
 	sandboxMeta := res.(*SandboxMeta)
 
@@ -312,7 +327,10 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 		return nil, fmt.Errorf("failed to remove root directory %q: %v", sandboxRootDir, err)
 	}
 
-	c.SandboxStore.Remove(podSandboxID)
+	err = c.SandboxStore.Remove(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove meta %q: %v", sandboxRootDir, err)
+	}
 
 	return &runtime.RemovePodSandboxResponse{}, nil
 }
@@ -321,9 +339,9 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (*runtime.PodSandboxStatusResponse, error) {
 	podSandboxID := r.GetPodSandboxId()
 
-	res, ok := c.SandboxStore.Get(podSandboxID).Result()
-	if !ok {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore", podSandboxID)
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
 	sandboxMeta := res.(*SandboxMeta)
 

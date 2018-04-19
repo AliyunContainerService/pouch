@@ -3,13 +3,10 @@ package meta
 // DefaultStore defines the default store backend.
 const DefaultStore = "local"
 
-var backend map[string]Backend
+var backendFactory map[string]func(Config) (Backend, error)
 
 // Backend is an interface which describes what a store should support.
 type Backend interface {
-	// meta store contructor.
-	New(Config) error
-
 	// Put write key-value into store.
 	Put(bucket string, key string, value []byte) error
 
@@ -30,9 +27,9 @@ type Backend interface {
 }
 
 // Register registers a backend to be daemon's store.
-func Register(name string, b Backend) {
-	if backend == nil {
-		backend = make(map[string]Backend)
+func Register(name string, create func(Config) (Backend, error)) {
+	if backendFactory == nil {
+		backendFactory = make(map[string]func(Config) (Backend, error))
 	}
-	backend[name] = b
+	backendFactory[name] = create
 }
