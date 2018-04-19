@@ -2,6 +2,8 @@ package mgr
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -9,7 +11,9 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/storage/quota"
+
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 )
 
 //setup hooks specified by user via plugins, if set rich mode and init-script exists set init-script
@@ -70,6 +74,72 @@ func setupHook(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper) 
 		Path: target,
 		Args: []string{"set-diskquota", c.BaseFS, rootFSQuota, qid},
 	})
+
+	// set volume mount tab
+	if err := setMountTab(ctx, c, specWrapper); err != nil {
+		return errors.Wrap(err, "failed to set volume mount tab prestart hook")
+	}
+
+	return nil
+}
+
+func setMountTab(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+	if len(c.BaseFS) == 0 {
+		return nil
+	}
+
+	// set rootfs mount tab
+	context := "/ / ext4 rw 0 0\n"
+	if rootID, e := quota.GetDevID(c.BaseFS); e == nil {
+		_, _, rootFsType := quota.CheckMountpoint(rootID)
+		if len(rootFsType) > 0 {
+			context = fmt.Sprintf("/ / %s rw 0 0\n", rootFsType)
+		}
+	}
+
+	// set mount point tab
+	i := 1
+	for _, m := range c.Mounts {
+		if m.Source == "" || m.Destination == "" {
+			continue
+		}
+
+		finfo, err := os.Stat(m.Source)
+		if err != nil || !finfo.IsDir() {
+			continue
+		}
+
+		tempLine := fmt.Sprintf("/dev/v%02dd %s ext4 rw 0 0\n", i, m.Destination)
+		if tmpID, e := quota.GetDevID(m.Source); e == nil {
+			_, _, fsType := quota.CheckMountpoint(tmpID)
+			if len(fsType) > 0 {
+				tempLine = fmt.Sprintf("/dev/v%02dd %s %s rw 0 0\n", i, m.Destination, fsType)
+			}
+		}
+
+		i++
+		context += tempLine
+	}
+
+	// set shm mount tab
+	context += "shm /dev/shm tmpfs rw 0 0\n"
+
+	// save into mtab file.
+	mtabPath := filepath.Join(c.BaseFS, "etc/mtab")
+	hostmtabPath := filepath.Join(spec.ctrMgr.(*ContainerManager).Store.BaseDir, c.ID, "mtab")
+
+	os.Remove(hostmtabPath)
+	os.MkdirAll(filepath.Dir(hostmtabPath), 0755)
+	err := ioutil.WriteFile(hostmtabPath, []byte(context), 0644)
+	if err != nil {
+		return fmt.Errorf("write %s failure", hostmtabPath)
+	}
+
+	mtabPrestart := specs.Hook{
+		Path: "/bin/cp",
+		Args: []string{"-f", hostmtabPath, mtabPath},
+	}
+	spec.s.Hooks.Prestart = append(spec.s.Hooks.Prestart, mtabPrestart)
 
 	return nil
 }
