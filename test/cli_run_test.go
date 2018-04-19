@@ -378,13 +378,18 @@ func (suite *PouchRunSuite) TestRunWithLocalVolume(c *check.C) {
 	name := funcname
 
 	command.PouchRun("volume", "create", "--name", funcname).Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
+	}()
+
 	command.PouchRun("run", "--name", name, "-v", funcname+":/tmp", busyboxImage, "touch", "/tmp/test").Assert(c, icmd.Success)
+	defer func() {
+		DelContainerForceMultyTime(c, name)
+	}()
 
-	// check the existence of /mnt/local/function/test
-	icmd.RunCommand("stat", "/mnt/local/"+funcname+"/test").Assert(c, icmd.Success)
+	// check the existence of /var/lib/pouch/volume/function/test
+	icmd.RunCommand("stat", DefaultVolumeMountPath+"/"+funcname+"/test").Assert(c, icmd.Success)
 
-	DelContainerForceMultyTime(c, name)
-	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
 }
 
 // checkFileContains checks the content of fname contains expt
