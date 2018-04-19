@@ -941,6 +941,7 @@ func (suite *PouchRunSuite) TestRunWithVolumesFrom(c *check.C) {
 	// run container1
 	command.PouchRun("run", "-d",
 		"-v", volumeName+":/mnt",
+		"-v", "/tmp:/tmp",
 		"--name", containerName1, busyboxImage, "top").Assert(c, icmd.Success)
 	defer func() {
 		command.PouchRun("rm", "-f", containerName1).Assert(c, icmd.Success)
