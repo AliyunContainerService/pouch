@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	Register("local", &localStore{})
+	Register("local", NewLocalStore)
 }
 
 type localStore struct {
@@ -20,16 +20,19 @@ type localStore struct {
 	cache map[string][]byte
 }
 
-func (s *localStore) New(cfg Config) error {
+// NewLocalStore is used to make local metadata store instance.
+func NewLocalStore(cfg Config) (Backend, error) {
 	if !path.IsAbs(cfg.BaseDir) {
-		return fmt.Errorf("Not absolute path: %s", cfg.BaseDir)
+		return nil, fmt.Errorf("Not absolute path: %s", cfg.BaseDir)
 	}
 	if err := mkdirIfNotExist(cfg.BaseDir); err != nil {
-		return err
+		return nil, err
 	}
 
-	s.cache = make(map[string][]byte, 64)
-	s.base = cfg.BaseDir
+	s := &localStore{
+		cache: make(map[string][]byte, 64),
+		base:  cfg.BaseDir,
+	}
 
 	// initialize cache
 	handle := func(f os.FileInfo) error {
@@ -40,7 +43,12 @@ func (s *localStore) New(cfg Config) error {
 
 		return nil
 	}
-	return walkDir(s.base, handle)
+
+	if err := walkDir(s.base, handle); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (s *localStore) Path(key string) string {
