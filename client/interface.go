@@ -69,5 +69,5 @@ type NetworkAPIClient interface {
 	NetworkCreate(ctx context.Context, req *types.NetworkCreateConfig) (*types.NetworkCreateResp, error)
 	NetworkRemove(ctx context.Context, networkID string) error
 	NetworkInspect(ctx context.Context, networkID string) (*types.NetworkInspectResp, error)
-	NetworkList(ctx context.Context) (*types.NetworkListResp, error)
+	NetworkList(ctx context.Context) ([]types.NetworkResource, error)
 }

@@ -346,14 +346,14 @@ func (n *NetworkListCommand) runNetworkList(args []string) error {
 
 	ctx := context.Background()
 	apiClient := n.cli.Client()
-	resp, err := apiClient.NetworkList(ctx)
+	respNetworkResource, err := apiClient.NetworkList(ctx)
 	if err != nil {
 		return err
 	}
 
 	display := n.cli.NewTableDisplay()
 	display.AddRow([]string{"NETWORK ID", "NAME", "DRIVER", "SCOPE"})
-	for _, network := range resp.Networks {
+	for _, network := range respNetworkResource {
 		display.AddRow([]string{
 			network.ID[:10],
 			network.Name,

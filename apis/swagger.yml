@@ -1081,7 +1081,7 @@ paths:
           200:
             description: "Summary networks that matches the query"
             schema:
-                $ref: "#/definitions/NetworkListResp"
+                $ref: "#/definitions/NetworkResource"
           500:
             $ref: "#/responses/500ErrorResponse"
         tags: ["Network"]
@@ -3171,40 +3171,77 @@ definitions:
         additionalProperties:
           type: "string"
 
-  NetworkInfo:
-      type: "object"
-      description: "NetworkInfo represents the configuration of a network"
-      properties:
-        Name:
-          description: "Name is the name of the network."
+  NetworkResource:
+    type: "object"
+    description: "NetworkResource is the body of the \"get network\" http response message"
+    properties:
+      Name:
+        description: "Name is the requested name of the network"
+        type: "string"
+      Id:
+        description: "ID uniquely identifies a network on a single machine"
+        type: "string"
+      Scope:
+        description: "Scope describes the level at which the network exists (e.g. `global` for cluster-wide or `local` for machine level)"
+        type: "string"
+      Driver:
+        description: "Driver is the Driver name used to create the network (e.g. `bridge`, `overlay`)"
+        type: "string"
+      EnableIPv6:
+        description: "EnableIPv6 represents whether to enable IPv6"
+        type: "boolean"
+      IPAM:
+        description: ""
+        type: "object"
+        $ref: "#/definitions/IPAM"
+      Internal:
+        description: "Internal represents if the network is used internal only"
+        type: "boolean"
+      Containers:
+        description: "Containers contains endpoints belonging to the network"
+        type: "object"
+      IndexConfigs:
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/EndpointResource"
+      Options:
+        description: "Options holds the network specific options to use for when creating the network"
+        type: "object"
+        x-nullable: true
+        additionalProperties:
           type: "string"
-        Id:
+        example:
+          com.example.some-options: "some-option"
+          com.example.some-other-options: "some-other-option"
+      Labels:
+        description: "Labels holds metadata specific to the network being created"
+        type: "object"
+        x-nullable: true
+        additionalProperties:
           type: "string"
-          description: "ID uniquely identifies a network on a single machine"
-        Driver:
-          type: "string"
-          description: "Driver is the Driver name used to create the network"
-        Scope:
-          type: "string"
-          description: "Scope describes the level at which the network exists"
+        example:
+          com.example.some-label: "some-label"
+          com.example.some-other-label: "some-other-label"
 
-
-  NetworkListResp:
-      type: "object"
-      required: [Networks, Warnings]
-      properties:
-        Networks:
-          type: "array"
-          x-nullable: false
-          description: "List of networks"
-          items:
-            $ref: "#/definitions/NetworkInfo"
-        Warnings:
-          type: "array"
-          x-nullable: false
-          description: "Warnings that occurred when fetching the list of networks"
-          items:
-            type: "string"
+  EndpointResource:
+    type: "object"
+    description: "NetworkResource is the body of the \"get network\" http response message"
+    properties:
+      Name:
+        description: "Name is the requested name of the network"
+        type: "string"
+      EndpointID:
+        description: "EndpointID represents the endpoint's id"
+        type: "string"
+      MacAddress:
+        description: "MacAddress represents the enpoint's mac address"
+        type: "string"
+      IPv4Address:
+        description: "IPv4Address represents the enpoint's ipv4 address"
+        type: "string"
+      IPv6Address:
+        description: "IPv4Address represents the enpoint's ipv6 address"
+        type: "string"
 
   IPAM:
     type: "object"
