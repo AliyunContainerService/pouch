@@ -1086,6 +1086,41 @@ paths:
             $ref: "#/responses/500ErrorResponse"
         tags: ["Network"]
 
+  /networks/{id}/disconnect:
+    post:
+      summary: "Disconnect a container from a network"
+      operationId: "NetworkDisconnect"
+      consumes:
+        - "application/json"
+      responses:
+        200:
+          description: "No error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Network or container not found"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Network ID or name"
+          required: true
+          type: "string"
+        - name: "NetworkDisconnect"
+          in: "body"
+          required: true
+          description: "Network disconnect parameters"
+          schema:
+            $ref: "#/definitions/NetworkDisconnect"
+      tags: ["Network"]
+
 definitions:
   Error:
     type: "object"
@@ -2479,6 +2514,17 @@ definitions:
         x-nullable: false
         items:
           type: "string"
+
+  NetworkDisconnect:
+    description: "Parameters of network disconnect"
+    type: "object"
+    properties:
+      Container:
+        type: "string"
+        description: "The ID or name of the container to disconnect from the network."
+      Force:
+        type: "boolean"
+        description: "Force the container to disconnect from the network."
 
   ImageInfo:
     description: "An object containing all details of an image at API side"

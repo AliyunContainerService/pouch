@@ -343,3 +343,36 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 
 	command.PouchRun("rm", "-f", funcname)
 }
+
+// TestNetworkDisconnect is to verify the correctness of 'network disconnect' command.
+func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
+	name := "TestNetworkDisconnect"
+
+	command.PouchRun("run", "-d", "--name", name, "--net", "bridge", busyboxImage).Assert(c, icmd.Success)
+
+	inspectInfo := command.PouchRun("inspect", name).Stdout()
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	if _, ok := metaJSON[0].NetworkSettings.Networks["bridge"]; !ok {
+		c.Errorf("container network mode should be 'bridge'")
+	}
+
+	command.PouchRun("network", "disconnect", "bridge", name).Assert(c, icmd.Success)
+	inspectInfo = command.PouchRun("inspect", name).Stdout()
+	metaJSON = []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	if len(metaJSON[0].NetworkSettings.Networks) != 0 {
+		c.Errorf("container network config should be empty")
+	}
+
+	// Check restart container is ok after disconnect netowrk
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
