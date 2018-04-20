@@ -87,13 +87,13 @@ type Config struct {
 	CgroupParent string `json:"cgroup-parent,omitempty"`
 
 	// PluginPath is set the path where plugin so file put
-	PluginPath string `json:"plugin"`
+	PluginPath string `json:"plugin,omitempty"`
 
 	// Labels is the metadata of daemon
-	Labels []string `json:"labels,omitempty"`
+	Labels []string `json:"label,omitempty"`
 
 	// EnableProfiler indicates whether pouchd setup profiler like pprof and stack dumping etc
-	EnableProfiler bool `json:"enableProfiler"`
+	EnableProfiler bool `json:"enable-profiler,omitempty"`
 
 	// Pidfile keeps daemon pid
 	Pidfile string `json:"pidfile,omitempty"`
