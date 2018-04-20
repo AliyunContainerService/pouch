@@ -36,18 +36,16 @@ func TestNetworkList(t *testing.T) {
 			return nil, fmt.Errorf("expected GET method, got %s", req.Method)
 		}
 
-		netListResp, err := json.Marshal(types.NetworkListResp{
-			Networks: []*types.NetworkInfo{
-				{
-					Driver: "bridge",
-					ID:     "1",
-					Name:   "net-1",
-				},
-				{
-					Driver: "bridge",
-					ID:     "2",
-					Name:   "net-2",
-				},
+		netListResp, err := json.Marshal([]types.NetworkResource{
+			{
+				Driver: "bridge",
+				ID:     "1",
+				Name:   "net-1",
+			},
+			{
+				Driver: "bridge",
+				ID:     "2",
+				Name:   "net-2",
 			},
 		})
 		if err != nil {
@@ -67,5 +65,5 @@ func TestNetworkList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, len(network.Networks), 2)
+	assert.Equal(t, len(network), 2)
 }

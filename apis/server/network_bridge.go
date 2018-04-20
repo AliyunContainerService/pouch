@@ -43,9 +43,9 @@ func (s *Server) listNetwork(ctx context.Context, rw http.ResponseWriter, req *h
 		return err
 	}
 
-	respNetworks := types.NetworkListResp{Networks: []*types.NetworkInfo{}, Warnings: nil}
+	respNetworks := []types.NetworkResource{}
 	for _, net := range networks {
-		respNetworks.Networks = append(respNetworks.Networks, &types.NetworkInfo{
+		respNetworks = append(respNetworks, types.NetworkResource{
 			Name:   net.Name,
 			ID:     net.ID,
 			Driver: net.Type,
