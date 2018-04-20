@@ -61,6 +61,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --pid string                   PID namespace to use
   -p, --port strings                 Set container ports mapping
       --privileged                   Give extended privileges to the container
+      --quota-id string              Specified quota id, if id < 0, it means pouchd alloc a unique quota id
       --restart string               Restart policy to apply when container exits
       --rich                         Start container in rich container mode. (default false)
       --rich-mode string             Choose one rich container mode. dumb-init(default), systemd, sbin-init
@@ -72,6 +73,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
   -u, --user string                  UID
       --uts string                   UTS namespace to use
   -v, --volume strings               Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared"
+      --volumes-from strings         set volumes from other containers, format is <container>[:mode]
   -w, --workdir string               Set the working directory in a container
 ```
 

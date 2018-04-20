@@ -102,7 +102,7 @@ Here is the list of new contributors:
 
 * [Dewey-Ding](https://github.com/Dewey-Ding)
 * [oiooj](https://github.com/oiooj)
-* [dbdd4us](https://github.com/dbdd4us))
+* [dbdd4us](https://github.com/dbdd4us)
 * [zhuangqh](https://github.com/zhuangqh)
 * [oblivionfallout](https://github.com/oblivionfallout)
 
