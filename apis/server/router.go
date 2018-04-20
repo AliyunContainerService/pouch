@@ -72,6 +72,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/networks/create", s.createNetwork)
 	s.addRoute(r, http.MethodGet, "/networks/{name:.*}", s.getNetwork)
 	s.addRoute(r, http.MethodDelete, "/networks/{name:.*}", s.deleteNetwork)
+	s.addRoute(r, http.MethodPost, "/networks/{id:.*}/connect", s.connectToNetwork)
 
 	// metrics
 	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())

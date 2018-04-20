@@ -12,6 +12,7 @@ import (
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -74,6 +75,36 @@ func (s *Server) deleteNetwork(ctx context.Context, rw http.ResponseWriter, req 
 		return err
 	}
 	rw.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) connectToNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	networkIdOrName := mux.Vars(req)["id"]
+
+	net, err := s.NetworkMgr.Get(ctx, networkIdOrName)
+	if err != nil || net == nil {
+		return err
+	}
+
+	connectConfig := &types.NetworkConnectConfig{}
+	// decode request body
+	if err := json.NewDecoder(req.Body).Decode(connectConfig); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := connectConfig.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	container, err := s.ContainerMgr.Get(context.Background(), connectConfig.Container)
+	if err != nil || container == nil {
+		return errors.Wrap(err, "the container to be connected doesn't exist")
+	}
+
+	if err := s.NetworkMgr.Connect(ctx, container, networkIdOrName, connectConfig.EndpointConfig); err != nil {
+		return err
+	}
+	rw.WriteHeader(http.StatusOK)
 	return nil
 }
 

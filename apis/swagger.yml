@@ -1086,6 +1086,36 @@ paths:
             $ref: "#/responses/500ErrorResponse"
         tags: ["Network"]
 
+  /networks/{id}/connect:
+    post:
+      summary: "Connect a container to a network"
+      operationId: "NetworkConnect"
+      consumes:
+        - "application/json"
+      responses:
+        200:
+          description: "No error"
+        404:
+          description: "Network or container not found"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Network ID or name"
+          required: true
+          type: "string"
+        - name: "container"
+          in: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/NetworkConnectConfig"
+      tags: ["Network"]
+
 definitions:
   Error:
     type: "object"
@@ -3085,6 +3115,16 @@ definitions:
         type: "string"
       MaximumRetryCount:
         type: "integer"
+
+  NetworkConnectConfig:
+    type: "object"
+    description: "contains the request for the remote API: POST /networks/{id:.*}/connect"
+    properties:
+      Container:
+        type: "string"
+        description: "The ID or name of the container to connect to the network."
+      EndpointConfig:
+        $ref: "#/definitions/EndpointSettings"
 
   NetworkCreateConfig:
     type: "object"

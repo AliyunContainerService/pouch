@@ -12,6 +12,7 @@ import (
 
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"github.com/pkg/errors"
+	"path"
 )
 
 // containerID returns the container's id, the parameter 'nameOrPrefix' may be container's
@@ -198,4 +199,26 @@ func parsePSOutput(output []byte, pids []int) (*types.ContainerProcessList, erro
 		}
 	}
 	return procList, nil
+}
+
+// ParseLink parses and validates the specified string as a link format (name:alias)
+func ParseLink(val string) (string, string, error) {
+	if val == "" {
+		return "", "", fmt.Errorf("empty string specified for links")
+	}
+	arr := strings.Split(val, ":")
+	if len(arr) > 2 {
+		return "", "", fmt.Errorf("bad format for links: %s", val)
+	}
+	if len(arr) == 1 {
+		return val, val, nil
+	}
+	// This is kept because we can actually get a HostConfig with links
+	// from an already created container and the format is not `foo:bar`
+	// but `/foo:/c1/bar`
+	if strings.HasPrefix(arr[0], "/") {
+		_, alias := path.Split(arr[1])
+		return arr[0][1:], alias, nil
+	}
+	return arr[0], arr[1], nil
 }
