@@ -76,9 +76,11 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --pid string                   PID namespace to use
   -p, --port strings                 Set container ports mapping
       --privileged                   Give extended privileges to the container
+      --quota-id string              Specified quota id, if id < 0, it means pouchd alloc a unique quota id
       --restart string               Restart policy to apply when container exits
       --rich                         Start container in rich container mode. (default false)
       --rich-mode string             Choose one rich container mode. dumb-init(default), systemd, sbin-init
+      --rm                           Automatically remove the container after it exits
       --runtime string               OCI runtime to use for this container
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options
@@ -87,6 +89,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -u, --user string                  UID
       --uts string                   UTS namespace to use
   -v, --volume strings               Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared"
+      --volumes-from strings         set volumes from other containers, format is <container>[:mode]
   -w, --workdir string               Set the working directory in a container
 ```
 
