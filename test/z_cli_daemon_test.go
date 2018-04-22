@@ -127,8 +127,8 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
 	// config file cowork with parameter, no conflict
 }
 
-// TestDaemonConfigFileConfilct tests start daemon with configure file confilicts with parameter.
-func (suite *PouchDaemonSuite) TestDaemonConfigFileConfilct(c *check.C) {
+// TestDaemonConfigFileConflict tests start daemon with configure file conflicts with parameter.
+func (suite *PouchDaemonSuite) TestDaemonConfigFileConflict(c *check.C) {
 	path := "/tmp/pouch.json"
 	cfg := struct {
 		ContainerdPath string `json:"containerd-path"`
@@ -144,8 +144,8 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileConfilct(c *check.C) {
 	c.Assert(err, check.NotNil)
 }
 
-// TestDaemonNestObjectConfilct tests start daemon with configure file contains nest objects confilicts with parameter.
-func (suite *PouchDaemonSuite) TestDaemonNestObjectConfilct(c *check.C) {
+// TestDaemonNestObjectConflict tests start daemon with configure file contains nest objects conflicts with parameter.
+func (suite *PouchDaemonSuite) TestDaemonNestObjectConflict(c *check.C) {
 	path := "/tmp/pouch_nest.json"
 	type TLSConfig struct {
 		CA               string `json:"tlscacert,omitempty"`
@@ -172,7 +172,7 @@ func (suite *PouchDaemonSuite) TestDaemonNestObjectConfilct(c *check.C) {
 	c.Assert(err, check.NotNil)
 }
 
-// TestDaemonSliceFlagNotConflict tests start daemon with configure file contains slice flag will not oconfilicts with parameter.
+// TestDaemonSliceFlagNotConflict tests start daemon with configure file contains slice flag will not conflicts with parameter.
 func (suite *PouchDaemonSuite) TestDaemonSliceFlagNotConflict(c *check.C) {
 	path := "/tmp/pouch_slice.json"
 	cfg := struct {
@@ -206,7 +206,7 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileUnknownFlag(c *check.C) {
 	dcfg.KillDaemon()
 }
 
-// TestDaemonConfigFileAndCli tests start daemon with configure file and CLI .
+// TestDaemonConfigFileAndCli tests start daemon with configure file and CLI.
 func (suite *PouchDaemonSuite) TestDaemonConfigFileAndCli(c *check.C) {
 	// Check default configure file could work
 
