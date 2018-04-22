@@ -1,6 +1,6 @@
 # Roadmap
 
-Roadmap provides detailed description of items that project pouch would decide to prioritize. This helps pouch contributors understand more about the evloving direction and whether a potential contribution is off the direction.
+Roadmap provides detailed description of items that project pouch would decide to prioritize. This helps pouch contributors understand more about the evolving direction and whether a potential contribution is off the direction.
 
 If the feature is not listed below, it does not mean that we will never take that into consideration. We always say that all contributions are warmly welcomed. Please understand that such kind of contributions may take a little bit more time for committers to review.
 

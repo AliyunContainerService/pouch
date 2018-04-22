@@ -4,7 +4,7 @@ Two quick-starts are provided, one for end-users, the other one for developers.
 
 As an end user who wish to use Pouch, please read [End User Quick-Start](#end-user-quick-start) to install and explore Pouch.
 
-As a developer who wish to hack on Pouch, please read [Developer Quick-Start](#developer-quick-start) to start hacking and get invloved in the project!
+As a developer who wish to hack on Pouch, please read [Developer Quick-Start](#developer-quick-start) to start hacking and get involved in the project!
 
 ## End User Quick-Start
 

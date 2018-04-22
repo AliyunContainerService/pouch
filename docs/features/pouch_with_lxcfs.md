@@ -48,7 +48,7 @@ Here is the architeture of LXCFS and container:
 
 It is quite transparent and easy for users to enjoy resource view isolation by enabling LXCFS. Actually, software LXCFS would be automatically installed on host along with pouch software if it does not exist in $PATH.
 
-Before experiencing LXCFS guranteed resouce view isolation, user needs to make sure that LXCFS mode is enabled in pouchd. If LXCFS mode has not been set, user needs to stop pouchd and start pouchd via command `pouchd --enable-lxcfs`. Only by enabling LXCFS mode in pouchd can users make use of LXCFS functionality in containers.
+Before experiencing LXCFS guaranteed resouce view isolation, user needs to make sure that LXCFS mode is enabled in pouchd. If LXCFS mode has not been set, user needs to stop pouchd and start pouchd via command `pouchd --enable-lxcfs`. Only by enabling LXCFS mode in pouchd can users make use of LXCFS functionality in containers.
 
 With LXCFS mode enabled in pouchd, pouchd has extra ability to create containers which has isolated resource view. Besides this, pouchd is still capable to create general ones without resource view isolation.
 

@@ -124,7 +124,7 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
 	//// Must kill it, as we may loose the pid in next call.
 	//defer dcfg.KillDaemon()
 
-	// config file cowork with parameter, no confilct
+	// config file cowork with parameter, no conflict
 }
 
 // TestDaemonConfigFileConfilct tests start daemon with configure file confilicts with parameter.

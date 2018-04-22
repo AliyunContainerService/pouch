@@ -48,7 +48,7 @@ Document [GRPC-API.md](api/GRPC_API.md) contains all raw gRPC API details. Pouch
 
 ### gRPC API Changelog
 
-Document [GRPC-API-CHANGELOG.md](api/GRPC_API_CHANGELOG.md) contains GRPC API changelog. In principle, gRPC API of Pouch should always keep still even if more versions are released. However, when pouch evolves, more functionality, direction adjustment and bugfix in API would make gRPC API change, and we pouch provides gRPC API changelog to track all the evloving.
+Document [GRPC-API-CHANGELOG.md](api/GRPC_API_CHANGELOG.md) contains GRPC API changelog. In principle, gRPC API of Pouch should always keep still even if more versions are released. However, when pouch evolves, more functionality, direction adjustment and bugfix in API would make gRPC API change, and we pouch provides gRPC API changelog to track all the evolving.
 
 ## Kubernetes
 

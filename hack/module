@@ -62,7 +62,7 @@ if [ "$help" = "yes" ]; then
     echo "     module [options]"
     echo ""
     echo "options:"
-    echo "     --help, -h          Print help infomation"
+    echo "     --help, -h          Print help information"
     echo "     --add-volume=       Add a volume driver module to compile"
     echo "     --clean             Remove temporary codes, the 'build.go'"
     echo ""

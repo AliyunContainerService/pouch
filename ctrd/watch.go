@@ -43,7 +43,7 @@ func (w *watch) add(pack *containerPack) {
 	w.Lock()
 	defer w.Unlock()
 
-	// TODO(ziren): AcquireQuota may ocurred an error
+	// TODO(ziren): AcquireQuota may occurred an error
 	// record stream client for grpc client.
 	_ = pack.client.Consume(1)
 

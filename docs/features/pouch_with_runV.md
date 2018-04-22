@@ -1,6 +1,6 @@
 # Pouch with runV
 
-Container technology develops rapidly recently. It provides much convenience for application packing and resource utilization improvement. At the same time it brings benefits, LXC-based container technology also loses the appropriate security. Specifically, containers share operating system kernel on one machine. Once one container attemps to attack kernel, all workload on this host would be influenced.
+Container technology develops rapidly recently. It provides much convenience for application packing and resource utilization improvement. At the same time it brings benefits, LXC-based container technology also loses the appropriate security. Specifically, containers share operating system kernel on one machine. Once one container attempts to attack kernel, all workload on this host would be influenced.
 
 For some scenarios which are sensitive and strict to security, pure container technology has apparent defects. What's more, in cloud era multi-tenancy is the rigid demand from cloud customers. Therefore, strong isolation must be guaranteed seriously. In another word, container techonology needs more security hardening.
 

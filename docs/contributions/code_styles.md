@@ -27,6 +27,6 @@ For a project, existing tools and rules may not be sufficient. To align more in 
 * Const object should be declared at the beginning of the go file, following package name and importing;
 * When generating error in an action failure, we should generally use the way of `fmt.Errorf("failed to do something: %v", err)`;
 * No matter log or error, first letter of the message must be lower-case;
-* When occuring nesting errors, we recommend first considering using package `github.com/pkg/errors`;
+* When occurring nesting errors, we recommend first considering using package `github.com/pkg/errors`;
 * Every comment should begin with `//` plus a space, and please don't forget the whitespace, and end with a `.`;
 * We should take `DRY(Don't Repeat Yourself)` into more consideration.

@@ -146,7 +146,7 @@ type Resources struct {
 	// Disable OOM Killer for the container.
 	OomKillDisable *bool `json:"OomKillDisable,omitempty"`
 
-	// Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.
+	// Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.
 	//
 	PidsLimit int64 `json:"PidsLimit,omitempty"`
 

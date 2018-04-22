@@ -78,7 +78,7 @@
 * Add `lxcfs` binary check [\#1127](https://github.com/alibaba/pouch/pull/1127) ([Letty5411](https://github.com/Letty5411))
 * Add `tls` test [\#1115](https://github.com/alibaba/pouch/pull/1115) ([Letty5411](https://github.com/Letty5411))
 * Add mock test for `create` client [\#1106](https://github.com/alibaba/pouch/pull/1106) ([Dewey-Ding](https://github.com/Dewey-Ding))
-* Seperate integration test and cri test in travisCI [\#1098](https://github.com/alibaba/pouch/pull/1098) ([Letty5411](https://github.com/Letty5411))
+* Separate integration test and cri test in travisCI [\#1098](https://github.com/alibaba/pouch/pull/1098) ([Letty5411](https://github.com/Letty5411))
 * Add mock test for `top` client [\#1093](https://github.com/alibaba/pouch/pull/1093) ([zhuangqh](https://github.com/zhuangqh))
 * Add mock test for `resize` and `restart` client [\#1090](https://github.com/alibaba/pouch/pull/1090) ([Dewey-Ding](https://github.com/Dewey-Ding))
 * Add tests for `label` and config file in `pouchd` [\#1087](https://github.com/alibaba/pouch/pull/1087) ([Letty5411](https://github.com/Letty5411))
@@ -182,13 +182,13 @@ So kubernetes 1.9.X is recommended now
 
 ### Kubernetes
 
-* With this PR, we can get the error informations when stream server handles `exec` or `attach` commands occured errors [\#1007](https://github.com/alibaba/pouch/pull/1007)
+* With this PR, we can get the error informations when stream server handles `exec` or `attach` commands occurred errors [\#1007](https://github.com/alibaba/pouch/pull/1007)
 * Add websocket support for cri stream server [\#985](https://github.com/alibaba/pouch/pull/985)
 * Fix handle image format 'namespace/name:tag' correctly [\#981](https://github.com/alibaba/pouch/pull/981)
 * Fix pull image and get its status with RefDigest [\#973](https://github.com/alibaba/pouch/pull/973)
 * Store sandbox config informations for cri manager [\#955](https://github.com/alibaba/pouch/pull/955)
-* Seperate stdout & stderr of container io and support host network mode for sandbox [\#945](https://github.com/alibaba/pouch/pull/945)
-* Implement ReadOnlyRootfs and add `no-new-privilegs` support to cri manager [\#935](https://github.com/alibaba/pouch/pull/935)
+* Separate stdout & stderr of container io and support host network mode for sandbox [\#945](https://github.com/alibaba/pouch/pull/945)
+* Implement ReadOnlyRootfs and add `no-new-privileges` support to cri manager [\#935](https://github.com/alibaba/pouch/pull/935)
 * Add support getting the logs of container to cri manager [\#928](https://github.com/alibaba/pouch/pull/928)
 * Add support setting pod dns configuration to cri manager [\#912](https://github.com/alibaba/pouch/pull/912)
 * Wrap cri manager to log every cri operation [\#899](https://github.com/alibaba/pouch/pull/899)
