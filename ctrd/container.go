@@ -377,7 +377,8 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 
 	defer func() {
 		if err0 != nil {
-			nc.Delete(ctx, containerd.WithSnapshotCleanup)
+			// Delete snapshot when start failed, may cause data lost.
+			nc.Delete(ctx)
 		}
 	}()
 

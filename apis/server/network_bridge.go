@@ -77,6 +77,22 @@ func (s *Server) deleteNetwork(ctx context.Context, rw http.ResponseWriter, req 
 	return nil
 }
 
+func (s *Server) disconnectNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	network := &types.NetworkDisconnect{}
+	// decode request body
+	if err := json.NewDecoder(req.Body).Decode(network); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := network.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	name := mux.Vars(req)["name"]
+
+	return s.ContainerMgr.DisconnectContainerFromNetwork(ctx, network.Container, name, network.Force)
+}
+
 func buildNetworkInspectResp(n *networktypes.Network) *types.NetworkInspectResp {
 	info := n.Network.Info()
 	network := &types.NetworkInspectResp{

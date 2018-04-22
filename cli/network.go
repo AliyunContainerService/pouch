@@ -41,6 +41,7 @@ func (n *NetworkCommand) Init(c *Cli) {
 	c.AddCommand(n, &NetworkRemoveCommand{})
 	c.AddCommand(n, &NetworkInspectCommand{})
 	c.AddCommand(n, &NetworkListCommand{})
+	c.AddCommand(n, &NetworkDisconnectCommand{})
 }
 
 // networkCreateDescription is used to describe network create command in detail and auto generate command doc.
@@ -374,4 +375,53 @@ NETWORK ID   NAME   DRIVER    SCOPE
 55f134176c   net3   bridge
 e495f50913   net1   bridge
 `
+}
+
+// networkDisconnectDescription is used to describe network disconnect command in detail and auto generate comand doc.
+var networkDisconnectDescription = "Disconnect a container from a network"
+
+// NetworkDisconnectCommand use to implement 'network disconnect' command, it disconnects given container from given network.
+type NetworkDisconnectCommand struct {
+	baseCommand
+	network   string
+	container string
+	force     bool
+}
+
+// Init initializes 'network disconnect' command.
+func (nd *NetworkDisconnectCommand) Init(c *Cli) {
+	nd.cli = c
+	nd.cmd = &cobra.Command{
+		Use:   "disconnect [OPTIONS] NETWORK CONTAINER",
+		Short: "Disconnect a container from a network",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return nd.runNetworkDisconnect(args)
+		},
+		Example: nd.networkDisconnectExample(),
+	}
+	nd.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (nd *NetworkDisconnectCommand) addFlags() {
+	// add flags
+	nd.cmd.Flags().BoolVarP(&nd.force, "force", "f", false, "Force the container to disconnect from a network")
+}
+
+// runNetworkDisconnect is the entry of 'disconnect' command.
+func (nd *NetworkDisconnectCommand) runNetworkDisconnect(args []string) error {
+	nd.network = args[0]
+	nd.container = args[1]
+
+	ctx := context.Background()
+	apiClient := nd.cli.Client()
+
+	return apiClient.NetworkDisconnect(ctx, nd.network, nd.container, nd.force)
+}
+
+// networkDisconnectExample shows examples in 'disconnect' command, and is used in auto-generated cli docs.
+func (nd *NetworkDisconnectCommand) networkDisconnectExample() string {
+	return `$ pouch network disconnect bridge test
+	`
 }

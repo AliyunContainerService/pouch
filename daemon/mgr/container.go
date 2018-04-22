@@ -96,6 +96,10 @@ type ContainerMgr interface {
 
 	// Restart restart a running container.
 	Restart(ctx context.Context, name string, timeout int64) error
+
+	// DisconnectContainerFromNetwork disconnects the given container from
+	// given network
+	DisconnectContainerFromNetwork(ctx context.Context, containerName, networkName string, force bool) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -1173,6 +1177,69 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 
 	// start container
 	return mgr.start(ctx, c, "")
+}
+
+// DisconnectContainerFromNetwork disconnects the given container from
+// given network
+func (mgr *ContainerManager) DisconnectContainerFromNetwork(ctx context.Context, containerName, networkName string, force bool) error {
+	c, err := mgr.container(containerName)
+	if err != nil {
+		// TODO(ziren): if force is true, force delete endpoint
+		return err
+	}
+
+	// Get network
+	network, err := mgr.NetworkMgr.Get(ctx, networkName)
+	if err != nil {
+		return fmt.Errorf("failed to get network %s when disconnecting container %s: %v", networkName, c.Name(), err)
+	}
+
+	// container cannot be disconnected from host network
+	networkMode := c.meta.HostConfig.NetworkMode
+	if IsHost(networkMode) && IsHost(network.Mode) {
+		return fmt.Errorf("container cannot be disconnected from host network or connected to hostnetwork ")
+	}
+
+	networkSettings := c.meta.NetworkSettings
+	if networkSettings == nil {
+		return nil
+	}
+
+	epConfig, ok := networkSettings.Networks[network.Name]
+	if !ok {
+		// container not attached to the given network
+		return fmt.Errorf("failed to disconnect container from network: container %s not attach to %s", c.Name(), networkName)
+	}
+
+	endpoint := mgr.buildContainerEndpoint(c.meta)
+	endpoint.Name = network.Name
+	endpoint.EndpointConfig = epConfig
+	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
+		logrus.Errorf("failed to remove endpoint: %v", err)
+		return err
+	}
+
+	// disconnect an endpoint success, delete endpoint info from container json
+	delete(networkSettings.Networks, network.Name)
+
+	// if container has no network attached any more, set NetworkDisabled to true
+	// so that not setup Network Namespace when restart the container
+	if len(networkSettings.Networks) == 0 {
+		c.meta.Config.NetworkDisabled = true
+	}
+
+	// container meta changed, refresh the cache
+	// remove old container from cache
+	mgr.cache.Remove(c.ID())
+	// add new container to cache
+	mgr.cache.Put(c.ID(), c)
+
+	// update container meta json
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+	}
+
+	return nil
 }
 
 func (mgr *ContainerManager) openContainerIO(id string, attach *AttachConfig) (*containerio.IO, error) {
