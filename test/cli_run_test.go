@@ -1027,3 +1027,24 @@ func (suite *PouchRunSuite) TestRunWithVolumesFromWithDupclicate(c *check.C) {
 
 	c.Assert(volumeFound, check.Equals, true)
 }
+
+// TestRunWithUlimit tests running container with --ulimit flag.
+func (suite *PouchRunSuite) TestRunWithUlimit(c *check.C) {
+	cname := "TestRunWithUlimit"
+	res := command.PouchRun("run", "--ulimit", "nproc=256", "--name", cname, busyboxImage, "sh", "-c", "ulimit -p")
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, "256\n")
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	ul := result[0].HostConfig.Ulimits[0]
+	c.Assert(ul.Name, check.Equals, "nproc")
+	c.Assert(int(ul.Hard), check.Equals, 256)
+	c.Assert(int(ul.Soft), check.Equals, 256)
+
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/user"
@@ -50,6 +51,10 @@ func setupProcess(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	}
 
 	if err := setupCapabilities(ctx, c.HostConfig, s); err != nil {
+		return err
+	}
+
+	if err := setupRlimits(ctx, c.HostConfig, s); err != nil {
 		return err
 	}
 
@@ -156,5 +161,19 @@ func setupAppArmor(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 		s.Process.ApparmorProfile = appArmorProfile
 	}
 
+	return nil
+}
+
+func setupRlimits(ctx context.Context, hostConfig *types.HostConfig, s *specs.Spec) error {
+	var rlimits []specs.POSIXRlimit
+	for _, ul := range hostConfig.Ulimits {
+		rlimits = append(rlimits, specs.POSIXRlimit{
+			Type: "RLIMIT_" + strings.ToUpper(ul.Name),
+			Hard: uint64(ul.Hard),
+			Soft: uint64(ul.Soft),
+		})
+	}
+
+	s.Process.Rlimits = rlimits
 	return nil
 }

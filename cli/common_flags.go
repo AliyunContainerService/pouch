@@ -11,6 +11,10 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// blkio
 	flagSet.Uint16Var(&c.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Var(&c.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
+	flagSet.Var(&c.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
+	flagSet.Var(&c.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
+	flagSet.Var(&c.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
+	flagSet.Var(&c.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
 
 	// capbilities
 	flagSet.StringSliceVar(&c.capAdd, "cap-add", nil, "Add Linux capabilities")
@@ -25,10 +29,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	// device related options
 	flagSet.StringSliceVarP(&c.devices, "device", "", nil, "Add a host device to the container")
-	flagSet.Var(&c.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
-	flagSet.Var(&c.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
-	flagSet.Var(&c.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")
-	flagSet.Var(&c.blkioDeviceWriteIOps, "device-write-iops", "Limit write rate (IO per second) from a device")
 
 	flagSet.BoolVar(&c.enableLxcfs, "enableLxcfs", false, "Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd")
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
@@ -83,6 +83,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVar(&c.volumesFrom, "volumes-from", nil, "set volumes from other containers, format is <container>[:mode]")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")
+	flagSet.Var(&c.ulimit, "ulimit", "Set container ulimit")
 
 	flagSet.BoolVar(&c.rich, "rich", false, "Start container in rich container mode. (default false)")
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")

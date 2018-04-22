@@ -117,3 +117,13 @@ func (suite *PouchExecSuite) TestExecAfterContainerRestart(c *check.C) {
 		c.Errorf("failed to exec in container: %s", out)
 	}
 }
+
+// TestExecUlimit test ulimit set container.
+func (suite *PouchExecSuite) TestExecUlimit(c *check.C) {
+	name := "TestExecUlimit"
+	command.PouchRun("run", "-d", "--name", name, "--ulimit", "nproc=256", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	out := command.PouchRun("exec", name, "sh", "-c", "ulimit -p").Stdout()
+	c.Assert(out, check.Equals, "256\n")
+}

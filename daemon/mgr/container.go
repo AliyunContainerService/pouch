@@ -316,6 +316,11 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		return err
 	}
 
+	// set exec process ulimit
+	if err := setupRlimits(ctx, c.meta.HostConfig, &specs.Spec{Process: process}); err != nil {
+		return err
+	}
+
 	execConfig.Running = true
 	defer func() {
 		if err != nil {

@@ -434,3 +434,19 @@ func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 	c.Assert(util.PartialEqual(annotationStr, "a=b"), check.IsNil)
 	c.Assert(util.PartialEqual(annotationStr, "foo=bar"), check.IsNil)
 }
+
+// TestCreateWithUlimit tests creating container with annotation.
+func (suite *PouchCreateSuite) TestCreateWithUlimit(c *check.C) {
+	cname := "TestCreateWithUlimit"
+	command.PouchRun("create", "--ulimit", "nproc=21", "--name", cname, busyboxImage).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	ul := result[0].HostConfig.Ulimits[0]
+	c.Assert(ul.Name, check.Equals, "nproc")
+	c.Assert(int(ul.Hard), check.Equals, 21)
+	c.Assert(int(ul.Soft), check.Equals, 21)
+}
