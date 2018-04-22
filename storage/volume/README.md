@@ -141,4 +141,4 @@ As of now, volume supports the following operations: create/remove/list/inspect,
 
 ## Volume roadmap
 
-Pouch volume will implement the interface of [CSI(contianer storage interface)](https://github.com/container-storage-interface/spec), as a node-server integrating with control-server to achieve volume scheduling ability.
+Pouch volume will implement the interface of [CSI(container storage interface)](https://github.com/container-storage-interface/spec), as a node-server integrating with control-server to achieve volume scheduling ability.

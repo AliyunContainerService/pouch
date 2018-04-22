@@ -2223,7 +2223,7 @@ definitions:
         x-nullable: true
       PidsLimit:
         description: |
-          Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.
+          Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.
         type: "integer"
         format: "int64"
       Ulimits:
@@ -3345,14 +3345,14 @@ parameters:
 
 responses:
   401ErrorResponse:
-    description: An unexpected 401 error occured.
+    description: An unexpected 401 error occurred.
     schema:
       $ref: "#/definitions/Error"
   404ErrorResponse:
-    description: An unexpected 404 error occured.
+    description: An unexpected 404 error occurred.
     schema:
       $ref: "#/definitions/Error"
   500ErrorResponse:
-    description: An unexpected server error occured.
+    description: An unexpected server error occurred.
     schema:
       $ref: "#/definitions/Error"

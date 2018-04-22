@@ -370,7 +370,7 @@ func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 		c.Errorf("container network config should be empty")
 	}
 
-	// Check restart container is ok after disconnect netowrk
+	// Check restart container is ok after disconnect network
 	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 

@@ -41,5 +41,5 @@ COPY . /go/src/github.com/alibaba/pouch
 WORKDIR /go/src/github.com/alibaba/pouch
 
 # The environment is setup, when run what you need, just setup the CMD when `pouch run`
-# For exmaple, this Dockerfile will build an image named `pouch-image`.
+# For example, this Dockerfile will build an image named `pouch-image`.
 # When running unit test, just execute `pouch run pouch-image make unit-test`.

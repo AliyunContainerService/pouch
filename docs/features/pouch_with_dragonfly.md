@@ -25,7 +25,7 @@ server can be deployed in two way, on the physical mechaine or on a container, t
 2.install client
 
 - Downloading [client package](https://github.com/alibaba/Dragonfly/blob/master/package/df-client.linux-amd64.tar.gz).
-- untar the package `tar xzvf df-client.linux-amd64.tar.gz -C /usr/local/bin`, or you can untar it to any directory you like, but remember to add client path into PATH enviroment, `export PATH=$PATH:/usr/local/bin/df-client`.
+- untar the package `tar xzvf df-client.linux-amd64.tar.gz -C /usr/local/bin`, or you can untar it to any directory you like, but remember to add client path into PATH environment, `export PATH=$PATH:/usr/local/bin/df-client`.
 - add server ip into client config file, `/etc/dragonfly.conf`, nodeIp is the host ip which you deploy server
 
 ```
@@ -52,7 +52,7 @@ More dragonfly usage information you can find in [dragonfly usage](https://githu
 }
 ```
 
-3.pull a image `reg.docker.alibaba-inc.com/base/busybox:latest`, you can find the following ouput in `~/.small-dragonfly/logs/dfdaemon.log`, which means dragonfly works.
+3.pull a image `reg.docker.alibaba-inc.com/base/busybox:latest`, you can find the following output in `~/.small-dragonfly/logs/dfdaemon.log`, which means dragonfly works.
 
 ```
 time="2018-03-06 20:08:00" level=debug msg="pre access:http://storage.docker.aliyun-inc.com/docker/registry/v2/blobs/sha256/1b/1b5110ff48b0aa7112544e1666cc7199f812243ded4128f0a1b2be027c7    38bec/data?Expires=1520339335&OSSAccessKeyId=LTAIfYaNrksx0ktL&Signature=fVEYIQzIaXyqIcAhypbmzaUx5x8%3D"
