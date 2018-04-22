@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -75,4 +77,31 @@ func (suite *PouchStopSuite) TestStopInWrongWay(c *check.C) {
 		res := command.PouchRun("stop", tc.args)
 		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
 	}
+}
+
+// TestStopMultiContainers tries to stop more than one container.
+func (suite *PouchStopSuite) TestStopMultiContainers(c *check.C) {
+	name1 := "TestStopMultiContainer-1"
+	name2 := "TestStopMultiContainer-2"
+
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name1, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name2, busyboxImage).Assert(c, icmd.Success)
+
+	command.PouchRun("stop", "-t", "3", name1, name2).Assert(c, icmd.Success)
+
+	// test if the container is already stopped
+	output := command.PouchRun("inspect", name1).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
+
+	output = command.PouchRun("inspect", name2).Stdout()
+	result = []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
+
 }

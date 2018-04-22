@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 // stopDescription is used to describe stop command in detail and auto generate command doc.
-var stopDescription = "Stop a running container in Pouchd. Waiting the given number of seconds before forcefully killing the container." +
+var stopDescription = "Stop one or more running containers in Pouchd. Waiting the given number of seconds before forcefully killing the container." +
 	"This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. " +
 	"The container that you stopped will be terminated. "
 
@@ -23,10 +25,10 @@ type StopCommand struct {
 func (s *StopCommand) Init(c *Cli) {
 	s.cli = c
 	s.cmd = &cobra.Command{
-		Use:   "stop [OPTIONS] CONTAINER",
-		Short: "Stop a running container",
+		Use:   "stop [OPTIONS] CONTAINER [CONTAINER...]",
+		Short: "Stop one or more running containers",
 		Long:  stopDescription,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return s.runStop(args)
 		},
@@ -46,11 +48,19 @@ func (s *StopCommand) runStop(args []string) error {
 	ctx := context.Background()
 	apiClient := s.cli.Client()
 
-	container := args[0]
-
-	if err := apiClient.ContainerStop(ctx, container, strconv.Itoa(s.timeout)); err != nil {
-		return fmt.Errorf("failed to stop container %s: %v", container, err)
+	var errs []string
+	for _, name := range args {
+		if err := apiClient.ContainerStop(ctx, name, strconv.Itoa(s.timeout)); err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+		fmt.Printf("%s\n", name)
 	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+
 	return nil
 }
 
@@ -59,8 +69,8 @@ func stopExample() string {
 	return `$ pouch ps
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Running   docker.io/library/busybox:latest   runc
-$ pouch stop foo 
-$ pouch ps 
+$ pouch stop foo
+$ pouch ps
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Stopped   docker.io/library/busybox:latest   runc`
 }
