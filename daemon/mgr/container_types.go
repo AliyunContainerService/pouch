@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -213,26 +214,48 @@ func (meta *ContainerMeta) merge(getconfig func() (v1.ImageConfig, error)) error
 func (meta *ContainerMeta) FormatStatus() (string, error) {
 	var status string
 
-	// return status if container is not running
-	if meta.State.Status != types.StatusRunning && meta.State.Status != types.StatusPaused {
+	switch meta.State.Status {
+	case types.StatusRunning, types.StatusPaused:
+		start, err := time.Parse(utils.TimeLayout, meta.State.StartedAt)
+		if err != nil {
+			return "", err
+		}
+
+		startAt, err := utils.FormatTimeInterval(start.UnixNano())
+		if err != nil {
+			return "", err
+		}
+
+		status = "Up " + startAt
+		if meta.State.Status == types.StatusPaused {
+			status += "(paused)"
+		}
+
+	case types.StatusStopped, types.StatusExited:
+		finish, err := time.Parse(utils.TimeLayout, meta.State.FinishedAt)
+		if err != nil {
+			return "", err
+		}
+
+		finishAt, err := utils.FormatTimeInterval(finish.UnixNano())
+		if err != nil {
+			return "", err
+		}
+
+		//FIXME: if stop status is needed ?
+		exitCode := meta.State.ExitCode
+		if meta.State.Status == types.StatusStopped {
+			status = fmt.Sprintf("Stopped (%d) %s", exitCode, finishAt)
+		}
+		if meta.State.Status == types.StatusExited {
+			status = fmt.Sprintf("Exited (%d) %s", exitCode, finishAt)
+		}
+	}
+
+	if status == "" {
 		return string(meta.State.Status), nil
 	}
 
-	// format container status if container is running
-	start, err := time.Parse(utils.TimeLayout, meta.State.StartedAt)
-	if err != nil {
-		return "", err
-	}
-
-	startAt, err := utils.FormatTimeInterval(start.UnixNano())
-	if err != nil {
-		return "", err
-	}
-
-	status = "Up " + startAt
-	if meta.State.Status == types.StatusPaused {
-		status += "(paused)"
-	}
 	return status, nil
 }
 

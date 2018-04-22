@@ -66,7 +66,7 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
 
-		c.Assert(kv[name].status[0], check.Equals, "stopped")
+		c.Assert(kv[name].status[0], check.Equals, "Stopped")
 	}
 
 	defer DelContainerForceMultyTime(c, name)
@@ -164,6 +164,11 @@ func psToKV(ps string) map[string]psTable {
 			pst.created = items[5:8]
 			pst.image = items[8]
 			pst.runtime = items[9]
+		} else if items[2] == "Stopped" || items[2] == "Exited" {
+			pst.status = items[2:6]
+			pst.created = items[6:9]
+			pst.image = items[9]
+			pst.runtime = items[10]
 		} else {
 			pst.status = items[2:3]
 			pst.created = items[3:6]

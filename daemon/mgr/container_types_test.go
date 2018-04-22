@@ -31,13 +31,27 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 			err:      nil,
 		},
 		{
+			name: "Exited",
+			input: &ContainerMeta{
+				State: &types.ContainerState{
+					Status:     types.StatusExited,
+					FinishedAt: time.Now().Add(0 - utils.Hour).UTC().Format(utils.TimeLayout),
+					ExitCode:   0,
+				},
+			},
+			expected: "Exited (0) 1 hour",
+			err:      nil,
+		},
+		{
 			name: "Stopped",
 			input: &ContainerMeta{
 				State: &types.ContainerState{
-					Status: types.StatusStopped,
+					Status:     types.StatusStopped,
+					FinishedAt: time.Now().Add(0 - utils.Minute).UTC().Format(utils.TimeLayout),
+					ExitCode:   1,
 				},
 			},
-			expected: string(types.StatusStopped),
+			expected: "Stopped (1) 1 minute",
 			err:      nil,
 		},
 		{
