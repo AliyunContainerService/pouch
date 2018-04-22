@@ -1087,9 +1087,6 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		}
 
 		// Upgrade succeeded, refresh the cache
-		// remove old container from cache
-		mgr.cache.Remove(c.ID())
-		// add new container to cache
 		mgr.cache.Put(c.ID(), c)
 	}
 
@@ -1229,9 +1226,6 @@ func (mgr *ContainerManager) DisconnectContainerFromNetwork(ctx context.Context,
 	}
 
 	// container meta changed, refresh the cache
-	// remove old container from cache
-	mgr.cache.Remove(c.ID())
-	// add new container to cache
 	mgr.cache.Put(c.ID(), c)
 
 	// update container meta json
