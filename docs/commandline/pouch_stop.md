@@ -1,13 +1,13 @@
 ## pouch stop
 
-Stop a running container
+Stop one or more running containers
 
 ### Synopsis
 
-Stop a running container in Pouchd. Waiting the given number of seconds before forcefully killing the container.This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. The container that you stopped will be terminated. 
+Stop one or more running containers in Pouchd. Waiting the given number of seconds before forcefully killing the container.This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. The container that you stopped will be terminated. 
 
 ```
-pouch stop [OPTIONS] CONTAINER
+pouch stop [OPTIONS] CONTAINER [CONTAINER...]
 ```
 
 ### Examples
@@ -16,8 +16,8 @@ pouch stop [OPTIONS] CONTAINER
 $ pouch ps
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Running   docker.io/library/busybox:latest   runc
-$ pouch stop foo 
-$ pouch ps 
+$ pouch stop foo
+$ pouch ps
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Stopped   docker.io/library/busybox:latest   runc
 ```
