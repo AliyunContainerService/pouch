@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
@@ -610,7 +611,11 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		//		* Case 2: container has failed to start; it has a zero finishedAt
 		//				  time, but a non-zero exit code.
 		//		* Case 3: container has been created, but not started (yet).
-		if finishedAt != 0 {
+		finishTime, err := time.Parse(utils.TimeLayout, container.State.FinishedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse container finish time %s: %v", container.State.FinishedAt, err)
+		}
+		if !finishTime.IsZero() {
 			state = runtime.ContainerState_CONTAINER_EXITED
 			switch {
 			case container.State.OOMKilled:
