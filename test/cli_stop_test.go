@@ -46,7 +46,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	res := command.PouchRun("ps", "-a")
 
 	// FIXME: It's better if we use inspect to filter status.
-	if out := res.Combined(); !strings.Contains(out, "stopped") {
+	if out := res.Combined(); !strings.Contains(out, "Stopped") {
 		c.Fatalf("unexpected output %s expected Stopped\n", out)
 	}
 
@@ -57,7 +57,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	res = command.PouchRun("ps", "-a")
 
 	// FIXME: It's better if we use inspect to filter status.
-	if out := res.Combined(); !strings.Contains(out, "stopped") {
+	if out := res.Combined(); !strings.Contains(out, "Stopped") {
 		c.Fatalf("unexpected output %s expected Stopped\n", out)
 	}
 }
