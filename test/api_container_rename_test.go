@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"net/url"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -38,4 +40,42 @@ func (suite *APIContainerRenameSuite) TestRenameOk(c *check.C) {
 	CheckRespStatus(c, resp, 204)
 
 	DelContainerForceOk(c, newname)
+}
+
+// TestRenameOk test create api is ok with default parameters.
+func (suite *APIContainerRenameSuite) TestRenameById(c *check.C) {
+	oldname := "TestRenameOk"
+	newname := "NewTestRenameOk"
+
+	resp, err := CreateBusyboxContainer(c, oldname, "top")
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	ccr := types.ContainerCreateResp{}
+	err = json.NewDecoder(resp.Body).Decode(&ccr)
+	c.Assert(err, check.IsNil)
+	cid := ccr.ID
+
+	newq := url.Values{}
+	newq.Add("name", newname)
+	resp2, err := request.Post("/containers/"+cid+"/rename", request.WithQuery(newq))
+	c.Assert(err, check.IsNil)
+	defer resp2.Body.Close()
+	CheckRespStatus(c, resp2, 204)
+
+	DelContainerForceOk(c, newname)
+
+	resp3, err := CreateBusyboxContainer(c, oldname, "top")
+	c.Assert(err, check.IsNil)
+	defer resp3.Body.Close()
+
+	ccr = types.ContainerCreateResp{}
+	err = json.NewDecoder(resp3.Body).Decode(&ccr)
+	c.Assert(err, check.IsNil)
+
+	DelContainerForceOk(c, oldname)
+
+	if ccr.ID == "" {
+		c.Errorf("container with old name %s create error. %v", oldname, ccr)
+	}
 }

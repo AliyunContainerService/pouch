@@ -859,7 +859,7 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	c.Lock()
 	defer c.Unlock()
 
-	mgr.NameToID.Remove(oldName)
+	mgr.NameToID.Remove(c.Name())
 	mgr.NameToID.Put(newName, c.ID())
 
 	c.meta.Name = newName
