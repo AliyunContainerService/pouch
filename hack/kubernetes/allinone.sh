@@ -11,21 +11,35 @@ KUBERNETES_VERSION_CENTOS="1.9.4"
 MASTER_CIDR="10.244.1.0/24"
 
 install_pouch_ubuntu() {
-	sudo apt-get install lxcfs
-	sudo apt-get install curl apt-transport-https ca-certificates software-properties-common
+	apt-get install lxcfs
+	apt-get install curl apt-transport-https ca-certificates software-properties-common
 	curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
-	sudo add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
-	sudo apt-get update
-	sudo apt-get install pouch
-	sudo service pouch start
+	add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
+	apt-get -y update
+	apt-get install -y pouch
+	systemctl enable pouch
+	systemctl start pouch
 }
 
 install_pouch_centos() {
-	sudo yum install -y yum-utils
-	sudo yum-config-manager --add-repo http://mirrors.aliyun.com/opsx/opsx-centos7.repo
-	sudo yum update
-	sudo yum install pouch
-	sudo systemctl start pouch
+	yum install -y yum-utils
+	yum-config-manager --add-repo http://mirrors.aliyun.com/opsx/opsx-centos7.repo
+	yum -y update
+	yum install -y pouch
+	systemctl enable pouch
+	systemctl start pouch
+}
+
+config_pouch_ubuntu() {
+	sed -i 's/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true/g' /usr/lib/systemd/system/pouch.service
+	systemctl daemon-reload
+	systemctl restart pouch
+}
+
+config_pouch_centos() {
+	sed -i 's/ExecStart=\/usr\/local\/bin\/pouchd/ExecStart=\/usr\/local\/bin\/pouchd --enable-cri=true/g' /lib/systemd/system/pouch.service
+	systemctl daemon-reload
+	systemctl restart pouch
 }
 
 install_kubelet_ubuntu() {
@@ -130,6 +144,7 @@ case "$lsb_dist" in
 
     ubuntu)
         install_pouch_ubuntu
+        config_pouch_ubuntu
         install_kubelet_ubuntu
         install_cni_ubuntu
         config_kubelet
@@ -139,6 +154,7 @@ case "$lsb_dist" in
 
     fedora|centos|redhat)
         install_pouch_centos
+        config_pouch_centos
         install_kubelet_centos
         install_cni_centos
         config_kubelet
