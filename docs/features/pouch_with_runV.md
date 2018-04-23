@@ -47,8 +47,8 @@ sudo yum install -y qemu qemu-kvm
 First, clone version v1.0.0 of runv project from GitHub:
 
 ```
-mkdir -p $Home/go/src/github.com/hyper
-cd $Home/go/src/github.com/hyper
+mkdir -p $Home/go/src/github.com/hyperhq
+cd $Home/go/src/github.com/hyperhq
 git clone --branch v1.0.0 https://github.com/hyperhq/runv.git
 export GOPATH=$HOME/go
 ```
@@ -72,7 +72,7 @@ Then binary runv will be located in your PATH.
 [hyperstart](https://github.com/hyperhq/hyperstart) provides init task for hypervisor-based containers. We need to build guest kernel and initrd.img from source code version v1.0.0 as well:
 
 ```
-cd $Home/go/src/github.com/hyper
+cd $Home/go/src/github.com/hyperhq
 git clone --branch v1.0.0 https://github.com/hyperhq/hyperstart.git
 cd hyperstart
 ./autogen.sh
