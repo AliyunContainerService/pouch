@@ -674,7 +674,7 @@ func (sb *sandbox) resolveName(req string, networkName string, epList []*endpoin
 func (sb *sandbox) SetKey(basePath string) error {
 	start := time.Now()
 	defer func() {
-		log.Debugf("sandbox set key processing took %s for container %s", time.Now().Sub(start), sb.ContainerID())
+		log.Debugf("sandbox set key processing took %s for container %s", time.Since(start), sb.ContainerID())
 	}()
 
 	if basePath == "" {
