@@ -30,6 +30,7 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
 	"github.com/opencontainers/image-spec/specs-go/v1"
@@ -96,6 +97,9 @@ type ContainerMgr interface {
 
 	// Restart restart a running container.
 	Restart(ctx context.Context, name string, timeout int64) error
+
+	// Connect is used to connect a container to a network.
+	Connect(ctx context.Context, name string, networkIDOrName string, epConfig *types.EndpointSettings) error
 
 	// DisconnectContainerFromNetwork disconnects the given container from
 	// given network
@@ -1174,6 +1178,44 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 	return mgr.start(ctx, c, "")
 }
 
+// Connect is used to connect a container to a network.
+func (mgr *ContainerManager) Connect(ctx context.Context, name string, networkIDOrName string, epConfig *types.EndpointSettings) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get container: %s", name)
+	} else if c == nil {
+		return fmt.Errorf("container: %s is not exist", name)
+	}
+
+	n, err := mgr.NetworkMgr.Get(context.Background(), networkIDOrName)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get network: %s", networkIDOrName)
+	} else if n == nil {
+		return fmt.Errorf("network: %s is not exist", networkIDOrName)
+	}
+
+	if epConfig == nil {
+		epConfig = &types.EndpointSettings{}
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if c.meta.State.Status != types.StatusRunning {
+		if c.meta.State.Status == types.StatusDead {
+			return fmt.Errorf("Container %s is marked for removal and cannot be connected or disconnected to the network", c.meta.ID)
+		}
+
+		if err := mgr.updateNetworkConfig(c.meta, n.Name, epConfig); err != nil {
+			return err
+		}
+	} else if err := mgr.connectToNetwork(ctx, c.meta, networkIDOrName, epConfig); err != nil {
+		return err
+	}
+
+	return c.Write(mgr.Store)
+}
+
 // DisconnectContainerFromNetwork disconnects the given container from
 // given network
 func (mgr *ContainerManager) DisconnectContainerFromNetwork(ctx context.Context, containerName, networkName string, force bool) error {
@@ -1277,6 +1319,105 @@ func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*con
 	mgr.IOs.Put(id, io)
 
 	return io, nil
+}
+
+func (mgr *ContainerManager) updateNetworkConfig(container *ContainerMeta, networkIDOrName string, endpointConfig *types.EndpointSettings) error {
+	if IsContainer(container.HostConfig.NetworkMode) {
+		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+	}
+
+	// TODO check bridge-mode conflict
+
+	if IsUserDefined(container.HostConfig.NetworkMode) {
+		if hasUserDefinedIPAddress(endpointConfig) {
+			return fmt.Errorf("user specified IP address is supported on user defined networks only")
+		}
+		if endpointConfig != nil && len(endpointConfig.Aliases) > 0 {
+			return fmt.Errorf("network-scoped alias is supported only for containers in user defined networks")
+		}
+	} else {
+		addShortID := true
+		shortID := utils.TruncateID(container.ID)
+		for _, alias := range endpointConfig.Aliases {
+			if alias == shortID {
+				addShortID = false
+				break
+			}
+		}
+		if addShortID {
+			endpointConfig.Aliases = append(endpointConfig.Aliases, shortID)
+		}
+	}
+
+	network, err := mgr.NetworkMgr.Get(context.Background(), networkIDOrName)
+	if err != nil {
+		return err
+	}
+
+	if err := validateNetworkingConfig(network.Network, endpointConfig); err != nil {
+		return err
+	}
+
+	container.NetworkSettings.Networks[network.Name] = endpointConfig
+
+	return nil
+}
+
+func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *ContainerMeta, networkIDOrName string, epConfig *types.EndpointSettings) (err error) {
+	if IsContainer(container.HostConfig.NetworkMode) {
+		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+	}
+
+	// TODO check bridge mode conflict
+
+	network, err := mgr.NetworkMgr.Get(context.Background(), networkIDOrName)
+	if err != nil {
+		return errors.Wrap(err, "failed to get network")
+	}
+
+	endpoint := mgr.buildContainerEndpoint(container)
+	endpoint.Name = network.Name
+	endpoint.EndpointConfig = epConfig
+	if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
+		logrus.Errorf("failed to create endpoint: %v", err)
+		return err
+	}
+
+	return mgr.updateNetworkConfig(container, networkIDOrName, endpoint.EndpointConfig)
+}
+
+func (mgr *ContainerManager) updateNetworkSettings(container *ContainerMeta, n libnetwork.Network) error {
+	if container.NetworkSettings == nil {
+		container.NetworkSettings = &types.NetworkSettings{Networks: make(map[string]*types.EndpointSettings)}
+	}
+
+	if !IsHost(container.HostConfig.NetworkMode) && IsHost(n.Type()) {
+		return fmt.Errorf("container cannot be connected to host network")
+	}
+
+	for s := range container.NetworkSettings.Networks {
+		sn, err := mgr.NetworkMgr.Get(context.Background(), s)
+		if err != nil {
+			continue
+		}
+
+		if sn.Name == n.Name() {
+			// Avoid duplicate config
+			return nil
+		}
+		if !IsPrivate(sn.Type) || !IsPrivate(n.Type()) {
+			return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
+		}
+		if IsNone(sn.Name) || IsNone(n.Name()) {
+			return fmt.Errorf("container cannot be connected to multiple networks with one of the networks in none mode")
+		}
+	}
+
+	if _, ok := container.NetworkSettings.Networks[n.Name()]; !ok {
+		container.NetworkSettings.Networks[n.Name()] = new(types.EndpointSettings)
+	}
+
+	return nil
 }
 
 func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*containerio.IO, error) {
