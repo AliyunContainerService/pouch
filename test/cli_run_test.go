@@ -978,3 +978,52 @@ func (suite *PouchRunSuite) TestRunWithVolumesFrom(c *check.C) {
 
 	c.Assert(volumeFound, check.Equals, true)
 }
+
+// TestRunWithVolumesFromWithDupclicate tests running container with --volumes-from.
+func (suite *PouchRunSuite) TestRunWithVolumesFromWithDupclicate(c *check.C) {
+	volumeName := "volumesfromDupclicate-test-volume"
+	containerName1 := "volumesfromDupclicate-test-1"
+	containerName2 := "volumesfromDupclicate-test-2"
+
+	// create volume
+	command.PouchRun("volume", "create", "-n", volumeName).Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+	}()
+
+	// run container1
+	command.PouchRun("run", "-d",
+		"-v", volumeName+":/mnt",
+		"-v", "/tmp:/tmp",
+		"--name", containerName1, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("rm", "-f", containerName1).Assert(c, icmd.Success)
+	}()
+
+	// stop container1
+	command.PouchRun("stop", containerName1).Assert(c, icmd.Success)
+
+	// run container2
+	command.PouchRun("run", "-d",
+		"-v", "/tmp:/tmp",
+		"--volumes-from", containerName1,
+		"--name", containerName2, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("rm", "-f", containerName2).Assert(c, icmd.Success)
+	}()
+
+	// inspect container2
+	ret := command.PouchRun("inspect", containerName2)
+	ret.Assert(c, icmd.Success)
+	out := ret.Stdout()
+
+	volumeFound := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "\"volumesfromDupclicate-test-volume\": \"/mnt\"") {
+			volumeFound = true
+			break
+		}
+	}
+
+	c.Assert(volumeFound, check.Equals, true)
+}

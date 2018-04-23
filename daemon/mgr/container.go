@@ -1526,6 +1526,11 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 			continue
 		}
 
+		if opts.CheckDuplicateMountPoint(meta.Mounts, dest) {
+			logrus.Warnf("duplicate mount point: %s from image", dest)
+			continue
+		}
+
 		mp := new(types.MountPoint)
 		mp.Name = name
 		mp.Named = true
@@ -1547,51 +1552,7 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 		meta.Mounts = append(meta.Mounts, mp)
 	}
 
-	// parse volumes from other containers
-	for _, v := range meta.HostConfig.VolumesFrom {
-		var containerID, mode string
-		containerID, mode, err = opts.ParseVolumesFrom(v)
-		if err != nil {
-			return err
-		}
-
-		var oldMeta *ContainerMeta
-		oldMeta, err = mgr.Get(ctx, containerID)
-		if err != nil {
-			return err
-		}
-
-		for _, oldMountPoint := range oldMeta.Mounts {
-			mp := &types.MountPoint{
-				Source:      oldMountPoint.Source,
-				Destination: oldMountPoint.Destination,
-				Driver:      oldMountPoint.Driver,
-				Named:       oldMountPoint.Named,
-				RW:          oldMountPoint.RW,
-				Propagation: oldMountPoint.Propagation,
-			}
-
-			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
-				mp.Name = oldMountPoint.Name
-				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
-				if err != nil {
-					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
-					return errors.Wrap(err, "failed to bind volume")
-				}
-				meta.Config.Volumes[mp.Name] = oldMountPoint.Destination
-			}
-
-			err = opts.ParseBindMode(mp, mode)
-			if err != nil {
-				logrus.Errorf("failed to parse volumes-from mode: %s, err: %v", mode, err)
-				return err
-			}
-
-			meta.Mounts = append(meta.Mounts, mp)
-		}
-
-	}
-
+	// parse binds
 	for _, b := range meta.HostConfig.Binds {
 		var parts []string
 		parts, err = opts.CheckBind(b)
@@ -1615,6 +1576,11 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 			mode = parts[2]
 		default:
 			return errors.Errorf("unknown bind: %s", b)
+		}
+
+		if opts.CheckDuplicateMountPoint(meta.Mounts, mp.Destination) {
+			logrus.Warnf("duplicate mount point: %s", mp.Destination)
+			continue
 		}
 
 		if mp.Source == "" {
@@ -1671,6 +1637,55 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 		}
 
 		meta.Mounts = append(meta.Mounts, mp)
+	}
+
+	// parse volumes from other containers
+	for _, v := range meta.HostConfig.VolumesFrom {
+		var containerID, mode string
+		containerID, mode, err = opts.ParseVolumesFrom(v)
+		if err != nil {
+			return err
+		}
+
+		var oldMeta *ContainerMeta
+		oldMeta, err = mgr.Get(ctx, containerID)
+		if err != nil {
+			return err
+		}
+
+		for _, oldMountPoint := range oldMeta.Mounts {
+			if opts.CheckDuplicateMountPoint(meta.Mounts, oldMountPoint.Destination) {
+				logrus.Warnf("duplicate mount point: %s on container: %s", oldMountPoint.Destination, containerID)
+				continue
+			}
+
+			mp := &types.MountPoint{
+				Source:      oldMountPoint.Source,
+				Destination: oldMountPoint.Destination,
+				Driver:      oldMountPoint.Driver,
+				Named:       oldMountPoint.Named,
+				RW:          oldMountPoint.RW,
+				Propagation: oldMountPoint.Propagation,
+			}
+
+			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
+				mp.Name = oldMountPoint.Name
+				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
+				if err != nil {
+					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
+					return errors.Wrap(err, "failed to bind volume")
+				}
+				meta.Config.Volumes[mp.Name] = oldMountPoint.Destination
+			}
+
+			err = opts.ParseBindMode(mp, mode)
+			if err != nil {
+				logrus.Errorf("failed to parse volumes-from mode: %s, err: %v", mode, err)
+				return err
+			}
+
+			meta.Mounts = append(meta.Mounts, mp)
+		}
 	}
 
 	return nil
