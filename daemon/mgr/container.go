@@ -450,7 +450,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	meta := &ContainerMeta{
 		State: &types.ContainerState{
-			Status: types.StatusCreated,
+			Status:     types.StatusCreated,
+			StartedAt:  time.Time{}.UTC().Format(utils.TimeLayout),
+			FinishedAt: time.Time{}.UTC().Format(utils.TimeLayout),
 		},
 		ID:         id,
 		Image:      image.ID,

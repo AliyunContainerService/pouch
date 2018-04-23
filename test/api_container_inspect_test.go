@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
@@ -45,6 +47,10 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	c.Assert(got.Image, check.Equals, busyboxImage)
 	c.Assert(got.Name, check.Equals, cname)
 	c.Assert(got.Created, check.NotNil)
+	// StartedAt time should be 0001-01-01T00:00:00Z for a non-started container
+	c.Assert(got.State.StartedAt, check.Equals, time.Time{}.UTC().Format(time.RFC3339Nano))
+	// FinishAt time should be 0001-01-01T00:00:00Z for a non-stopped container
+	c.Assert(got.State.FinishedAt, check.Equals, time.Time{}.UTC().Format(time.RFC3339Nano))
 
 	DelContainerForceOk(c, cname)
 }

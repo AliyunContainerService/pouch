@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ContainerState container state
@@ -27,7 +28,8 @@ type ContainerState struct {
 	ExitCode int64 `json:"ExitCode,omitempty"`
 
 	// The time when this container last exited.
-	FinishedAt string `json:"FinishedAt,omitempty"`
+	// Required: true
+	FinishedAt string `json:"FinishedAt"`
 
 	// Whether this container has been killed because it ran out of memory.
 	OOMKilled bool `json:"OOMKilled,omitempty"`
@@ -55,7 +57,8 @@ type ContainerState struct {
 	Running bool `json:"Running,omitempty"`
 
 	// The time when this container was last started.
-	StartedAt string `json:"StartedAt,omitempty"`
+	// Required: true
+	StartedAt string `json:"StartedAt"`
 
 	// status
 	Status Status `json:"Status,omitempty"`
@@ -87,6 +90,16 @@ type ContainerState struct {
 func (m *ContainerState) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateFinishedAt(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateStartedAt(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateStatus(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -95,6 +108,24 @@ func (m *ContainerState) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ContainerState) validateFinishedAt(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("FinishedAt", "body", string(m.FinishedAt)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateStartedAt(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("StartedAt", "body", string(m.StartedAt)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
