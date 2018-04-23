@@ -102,3 +102,13 @@ func ParseBindMode(mp *types.MountPoint, mode string) error {
 	mp.Mode = mode
 	return nil
 }
+
+// CheckDuplicateMountPoint is used to check duplicate mount point
+func CheckDuplicateMountPoint(mounts []*types.MountPoint, destination string) bool {
+	for _, sm := range mounts {
+		if sm.Destination == destination {
+			return true
+		}
+	}
+	return false
+}
