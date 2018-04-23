@@ -37,7 +37,8 @@ An all-in-one kubernetes cluster with pouch runtime could be deployed by running
 hack/kubernetes/allinone.sh
 
 ```
-Please refer to https://github.com/alibaba/pouch/blob/master/hack/kubernetes/allinone.sh .
+
+Please refer to [allinone](https://github.com/alibaba/pouch/blob/master/hack/kubernetes/allinone.sh) .
 
 ### Install Pouch
 
