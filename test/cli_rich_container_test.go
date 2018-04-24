@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime"
@@ -10,7 +11,6 @@ import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
-	"encoding/json"
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -148,6 +148,10 @@ func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWrongArgs(c *chec
 }
 
 // TestRichContainerSbinInitWorks check the initd works.
+/*
+Comment the test (Ace-Tang).
+related issue : https://github.com/alibaba/pouch/issues/960
+related pr: https://github.com/alibaba/pouch/pull/1128
 func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -190,6 +194,7 @@ func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
 
 	command.PouchRun("rm", "-f", funcname)
 }
+*/
 
 // TestRichContainerSystemdWorks check the systemd works.
 func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) {
