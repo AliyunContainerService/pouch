@@ -657,39 +657,35 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		s.Process.Terminal = true
 	}
 
-	err = mgr.Client.CreateContainer(ctx, &ctrd.Container{
+	if err := mgr.Client.CreateContainer(ctx, &ctrd.Container{
 		ID:      c.ID(),
 		Image:   c.Image(),
 		Runtime: c.meta.HostConfig.Runtime,
 		Spec:    s,
 		IO:      io,
-	})
-	if err == nil {
-		c.meta.State.Status = types.StatusRunning
-		c.meta.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
-		pid, err := mgr.Client.ContainerPID(ctx, c.ID())
-		if err != nil {
-			return errors.Wrapf(err, "failed to get PID of container: %s", c.ID())
-		}
-		c.meta.State.Pid = int64(pid)
-		c.meta.State.ExitCode = 0
+	}); err != nil {
+		logrus.Errorf("failed to create new containerd container: %s", err.Error())
 
-		// set Snapshot MergedDir
-		c.meta.Snapshotter.Data["MergedDir"] = c.meta.BaseFS
-	} else {
-		c.meta.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
-		c.meta.State.Error = err.Error()
-		c.meta.State.Pid = 0
-		//TODO: make exit code more correct.
-		c.meta.State.ExitCode = 127
-
-		// release io
-		io.Close()
-		mgr.IOs.Remove(c.ID())
+		// TODO(ziren): markStoppedAndRelease may failed
+		// we should clean resources of container when start failed
+		_ = mgr.markStoppedAndRelease(c, nil)
+		return err
 	}
 
-	c.Write(mgr.Store)
-	return err
+	// Create containerd container success.
+	c.meta.State.Status = types.StatusRunning
+	c.meta.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
+	pid, err := mgr.Client.ContainerPID(ctx, c.ID())
+	if err != nil {
+		return errors.Wrapf(err, "failed to get PID of container %s", c.ID())
+	}
+	c.meta.State.Pid = int64(pid)
+	c.meta.State.ExitCode = 0
+
+	// set Snapshot MergedDir
+	c.meta.Snapshotter.Data["MergedDir"] = c.meta.BaseFS
+
+	return c.Write(mgr.Store)
 }
 
 // Stop stops a running container.
