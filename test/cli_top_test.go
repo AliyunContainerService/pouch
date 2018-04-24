@@ -55,7 +55,7 @@ func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
 	name := "TestTopContainer"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	res := command.PouchRun("top", name)
 	c.Assert(res.Error, check.IsNil)

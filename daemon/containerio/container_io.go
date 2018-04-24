@@ -43,11 +43,16 @@ type IO struct {
 func NewIO(opt *Option) *IO {
 	backends := createBackend(opt)
 
-	return &IO{
+	i := &IO{
 		Stdout: create(opt, stdout, backends),
 		Stderr: create(opt, stderr, backends),
-		Stdin:  create(opt, stdin, backends),
 	}
+
+	if opt.stdin {
+		i.Stdin = create(opt, stdin, backends)
+	}
+
+	return i
 }
 
 // AddBackend adds more backends to container's stdio.
@@ -55,11 +60,14 @@ func (io *IO) AddBackend(opt *Option) {
 	backends := createBackend(opt)
 
 	for t, s := range map[stdioType]*ContainerIO{
-		stdin:  io.Stdin,
 		stdout: io.Stdout,
 		stderr: io.Stderr,
 	} {
 		s.add(opt, t, backends)
+	}
+
+	if opt.stdin && io.Stdin != nil {
+		io.Stdin.add(opt, stdin, backends)
 	}
 }
 
@@ -67,7 +75,9 @@ func (io *IO) AddBackend(opt *Option) {
 func (io *IO) Close() error {
 	io.Stderr.Close()
 	io.Stdout.Close()
-	io.Stdin.Close()
+	if io.Stdin != nil {
+		io.Stdin.Close()
+	}
 	return nil
 }
 

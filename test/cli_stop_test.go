@@ -36,7 +36,7 @@ func (suite *PouchStopSuite) TearDownTest(c *check.C) {
 func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	name := "stop-normal"
 
-	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
@@ -84,8 +84,8 @@ func (suite *PouchStopSuite) TestStopMultiContainers(c *check.C) {
 	name1 := "TestStopMultiContainer-1"
 	name2 := "TestStopMultiContainer-2"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name1, busyboxImage).Assert(c, icmd.Success)
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name2, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name1, busyboxImage, "top").Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name2, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("stop", "-t", "3", name1, name2).Assert(c, icmd.Success)
 

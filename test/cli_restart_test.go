@@ -34,7 +34,7 @@ func (suite *PouchRestartSuite) TearDownTest(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
 	name := "TestPouchRestart"
 
-	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	res := command.PouchRun("restart", "-t", "1", name)
 	c.Assert(res.Error, check.IsNil)

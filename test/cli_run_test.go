@@ -42,7 +42,7 @@ func (suite *PouchRunSuite) TearDownTest(c *check.C) {
 func (suite *PouchRunSuite) TestRun(c *check.C) {
 	name := "test-run"
 
-	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	res := command.PouchRun("ps").Assert(c, icmd.Success)
 	if out := res.Combined(); !strings.Contains(out, name) {
@@ -268,7 +268,7 @@ func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	sysctl := "net.ipv4.ip_forward=1"
 	name := "run-sysctl"
 
-	res := command.PouchRun("run", "-d", "--name", name, "--sysctl", sysctl, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--sysctl", sysctl, busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("exec", name, "cat", "/proc/sys/net/ipv4/ip_forward").Stdout()
@@ -283,7 +283,7 @@ func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
 	user := "1001"
 	name := "run-user"
 
-	res := command.PouchRun("run", "-d", "--name", name, "--user", user, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, "--user", user, busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("exec", name, "id", "-u").Stdout()
@@ -293,7 +293,7 @@ func (suite *PouchRunSuite) TestRunWithUser(c *check.C) {
 	DelContainerForceMultyTime(c, name)
 
 	name = "run-user-admin"
-	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	command.PouchRun("exec", name, "adduser", "--disabled-password", "admin").Assert(c, icmd.Success)
 	output = command.PouchRun("exec", "-u", "admin", name, "whoami").Stdout()
 	if !strings.Contains(output, "admin") {
@@ -402,7 +402,7 @@ func checkFileContains(c *check.C, fname string, expt string) {
 // TestRunWithLimitedMemory is to verify the valid running container with -m
 func (suite *PouchRunSuite) TestRunWithLimitedMemory(c *check.C) {
 	cname := "TestRunWithLimitedMemory"
-	command.PouchRun("run", "-d", "-m", "100m", "--name", cname, busyboxImage).Stdout()
+	command.PouchRun("run", "-d", "-m", "100m", "--name", cname, busyboxImage, "top").Stdout()
 
 	// test if the value is in inspect result
 	output := command.PouchRun("inspect", cname).Stdout()
@@ -746,7 +746,7 @@ func (suite *PouchRunSuite) TestRunWithCgroupParent(c *check.C) {
 }
 
 func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
-	command.PouchRun("run", "-d", "-m", "300M", "--cgroup-parent", cgroupParent, "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--cgroup-parent", cgroupParent, "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}

@@ -259,7 +259,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 	{
 		result := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname,
 			"-p", "1234:80",
-			busyboxImage)
+			busyboxImage, "top")
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)

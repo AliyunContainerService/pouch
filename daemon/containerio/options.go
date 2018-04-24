@@ -12,6 +12,7 @@ import (
 type Option struct {
 	id            string
 	rootDir       string
+	stdin         bool
 	backends      map[string]struct{}
 	hijack        http.Hijacker
 	hijackUpgrade bool
@@ -43,6 +44,13 @@ func WithID(id string) func(*Option) {
 func WithRootDir(dir string) func(*Option) {
 	return func(opt *Option) {
 		opt.rootDir = dir
+	}
+}
+
+// WithStdin specified whether open the container's stdin.
+func WithStdin(stdin bool) func(*Option) {
+	return func(opt *Option) {
+		opt.stdin = stdin
 	}
 }
 

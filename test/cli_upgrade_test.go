@@ -94,7 +94,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
 	name := "TestPouchUpgradeContainerMemCpu"
 
-	command.PouchRun("run", "-d", "-m", "300m", "--cpu-share", "20", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300m", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("upgrade", "-m", "500m", "--cpu-share", "40", "--name", name, busyboxImage125).Assert(c, icmd.Success)
 

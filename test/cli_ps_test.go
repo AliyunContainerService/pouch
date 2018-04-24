@@ -40,7 +40,7 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 
 	// create
 	{
-		command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+		command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())
