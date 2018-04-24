@@ -35,7 +35,10 @@ jobs:
       - checkout
       - run: 
           name: install golint
-          command: go get github.com/golang/lint/golint
+          command: |
+            mkdir -p $GOPATH/src/golang.org/x \
+            && git clone https://github.com/golang/lint.git $GOPATH/src/golang.org/x/lint \
+            && go get -u golang.org/x/lint/golint
       - run: 
           name: install swagger-0.12.0
           command: |
