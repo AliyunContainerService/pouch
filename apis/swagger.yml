@@ -2104,9 +2104,6 @@ definitions:
       - properties:
           RestartPolicy:
             $ref: "#/definitions/RestartPolicy"
-          Image:
-            type: "string"
-            description: "Image ID or Name"
           Env:
             description: |
               A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.

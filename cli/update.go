@@ -5,7 +5,6 @@ import (
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/spf13/cobra"
 )
@@ -51,7 +50,6 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringSliceVarP(&uc.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
-	flagSet.StringVar(&uc.image, "image", "", "Image of container")
 }
 
 // updateRun is the entry of update command.
@@ -93,17 +91,7 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 		return err
 	}
 
-	var image string
-	if uc.image != "" {
-		ref, err := reference.Parse(uc.image)
-		if err != nil {
-			return err
-		}
-		image = ref.String()
-	}
-
 	updateConfig := &types.UpdateConfig{
-		Image:         image,
 		Env:           uc.env,
 		Labels:        labels,
 		RestartPolicy: restartPolicy,

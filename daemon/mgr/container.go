@@ -897,50 +897,19 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	defer c.Unlock()
 
 	// update ContainerConfig of a container.
-	if !c.IsStopped() && config.Image != "" || len(config.Env) > 0 {
-		return fmt.Errorf("Only can update the container's image or Env when it is stopped")
+	if c.IsRunning() && len(config.Env) > 0 {
+		return fmt.Errorf("Only can update the container's Env when it stopped")
 	}
 
-	if config.Image != "" {
-		image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
-		if err != nil {
-			return err
-		}
-		// TODO Image param is duplicate in ContainerMeta
-		// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
-		// return the first item of list will not equal input image name.
-		// issue: https://github.com/alibaba/pouch/issues/1001
-		// if specify a tag image, we should use the specified name
-		var refTagged string
-		imageNamed, err := reference.ParseNamedReference(config.Image)
-		if err != nil {
-			return err
-		}
-		if _, ok := imageNamed.(reference.Tagged); ok {
-			refTagged = reference.WithDefaultTagIfMissing(imageNamed).String()
-		}
-
-		ref := ""
-		if len(image.RepoTags) > 0 {
-			if utils.StringInSlice(image.RepoTags, refTagged) {
-				ref = refTagged
-			} else {
-				ref = image.RepoTags[0]
-			}
-		} else {
-			ref = image.RepoDigests[0]
-		}
-		c.meta.Config.Image = ref
-		c.meta.Image = ref
-	}
-
-	if len(config.Env) != 0 {
-		for k, v := range config.Env {
-			c.meta.Config.Env[k] = v
-		}
+	for _, v := range config.Env {
+		c.meta.Config.Env = append(c.meta.Config.Env, v)
 	}
 
 	if len(config.Labels) != 0 {
+		if c.meta.Config.Labels == nil {
+			c.meta.Config.Labels = map[string]string{}
+		}
+
 		for k, v := range config.Labels {
 			c.meta.Config.Labels[k] = v
 		}
