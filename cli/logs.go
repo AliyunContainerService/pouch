@@ -63,15 +63,6 @@ func (lc *LogsCommand) runLogs(args []string) error {
 	ctx := context.Background()
 	apiClient := lc.cli.Client()
 
-	c, err := apiClient.ContainerGet(ctx, containerName)
-	if err != nil {
-		return err
-	}
-
-	if !validDrivers[c.HostConfig.LogConfig.Type] {
-		return fmt.Errorf("\"logs\" command is supported only for \"json-file\" and \"journald\" logging drivers (got; %s)", c.HostConfig.LogConfig.Type)
-	}
-
 	opts := types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
