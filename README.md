@@ -7,7 +7,8 @@
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alibaba/pouch)](https://goreportcard.com/report/github.com/alibaba/pouch)
 
-<img src="docs/static_files/logo/pouch_10x4_orange.png" width="480"/>
+![pouchcontainer-logo-800](https://user-images.githubusercontent.com/6755791/39180769-55f3b742-47ea-11e8-8762-78aeedcbba78.png)
+
 
 ## Main Links
 
