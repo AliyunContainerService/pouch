@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
+	"github.com/vishvananda/netlink"
 )
 
 // PouchNetworkSuite is the test suite for network CLI.
@@ -342,6 +343,73 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	command.PouchRun("rm", "-f", funcname)
+}
+
+func createBridge(bridgeName string) (netlink.Link, error) {
+	br, err := netlink.LinkByName(bridgeName)
+	if err == nil && br != nil {
+		return br, nil
+	}
+
+	la := netlink.NewLinkAttrs()
+	la.Name = bridgeName
+
+	b := &netlink.Bridge{LinkAttrs: la}
+	if err := netlink.LinkAdd(b); err != nil {
+		return nil, err
+	}
+
+	br, err = netlink.LinkByName(bridgeName)
+	if err != nil {
+		return nil, err
+	}
+
+	return br, nil
+}
+
+// TestNetworkConnect is to verify the correctness of 'network connect' command.
+func (suite *PouchNetworkSuite) TestNetworkConnect(c *check.C) {
+	bridgeName := "p1"
+	networkName := "net1"
+	containerName := "connect-test"
+
+	// create bridge device
+	br, err := createBridge("p1")
+	c.Assert(err, check.Equals, nil)
+	defer netlink.LinkDel(br)
+
+	// create bridge network
+	command.PouchRun("network", "create",
+		"-d", "bridge",
+		"--subnet=172.18.0.0/24", "--gateway=172.18.0.1",
+		"-o", "com.docker.network.bridge.name="+bridgeName, networkName).Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("network", "rm", networkName).Assert(c, icmd.Success)
+	}()
+
+	// create container
+	command.PouchRun("run", "-d", "--name", containerName, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("rm", "-f", containerName).Assert(c, icmd.Success)
+	}()
+
+	// connect a network
+	command.PouchRun("network", "connect", networkName, containerName).Assert(c, icmd.Success)
+
+	// inspect container check result
+	ret := command.PouchRun("inspect", containerName)
+	ret.Assert(c, icmd.Success)
+
+	out := ret.Stdout()
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "net1") {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
 }
 
 // TestNetworkDisconnect is to verify the correctness of 'network disconnect' command.

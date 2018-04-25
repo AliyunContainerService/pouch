@@ -92,7 +92,7 @@ function target()
 	integration-test)
 
 	    install_dumb_init || echo "Warning: dumb-init install failed! rich container related tests will be skipped"
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "cd test && go test -c -o integration-test"
+		docker run --rm -v $(pwd):$SOURCEDIR -e GOPATH=/go:$SOURCEDIR/extra/libnetwork/Godeps/_workspace $IMAGE bash -c "cd test && go test -c -o integration-test"
 
 		#start pouch daemon
 		echo "start pouch daemon"

@@ -41,6 +41,7 @@ func (n *NetworkCommand) Init(c *Cli) {
 	c.AddCommand(n, &NetworkRemoveCommand{})
 	c.AddCommand(n, &NetworkInspectCommand{})
 	c.AddCommand(n, &NetworkListCommand{})
+	c.AddCommand(n, &NetworkConnectCommand{})
 	c.AddCommand(n, &NetworkDisconnectCommand{})
 }
 
@@ -375,6 +376,91 @@ NETWORK ID   NAME   DRIVER    SCOPE
 55f134176c   net3   bridge
 e495f50913   net1   bridge
 `
+}
+
+// networkConnectDescription is used to describe network connect command in detail and auto generate command doc.
+var networkConnectDescription = "Connect a container to a network in pouchd. " +
+	"It must specify network's name and container's name."
+
+// NetworkConnectCommand is used to implement 'network connect' command.
+type NetworkConnectCommand struct {
+	baseCommand
+
+	ipAddress    string
+	ipv6Address  string
+	links        []string
+	aliases      []string
+	linklocalips []string
+}
+
+// Init initializes NetworkConnectCommand command.
+func (n *NetworkConnectCommand) Init(c *Cli) {
+	n.cli = c
+
+	n.cmd = &cobra.Command{
+		Use:   "connect [OPTIONS] NETWORK CONTAINER",
+		Short: "Connect a container to a network",
+		Long:  networkConnectDescription,
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return n.runNetworkConnect(args)
+		},
+		Example: networkConnectExample(),
+	}
+
+	n.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (n *NetworkConnectCommand) addFlags() {
+	flagSet := n.cmd.Flags()
+
+	flagSet.StringVar(&n.ipAddress, "ip", "", "IP Address")
+	flagSet.StringVar(&n.ipv6Address, "ip6", "", "IPv6 Address")
+	flagSet.StringSliceVar(&n.links, "link", []string{}, "Add link to another container")
+	flagSet.StringSliceVar(&n.aliases, "alias", []string{}, "Add network-scoped alias for the container")
+	flagSet.StringSliceVar(&n.linklocalips, "link-local-ip", []string{}, "Add a link-local address for the container")
+}
+
+// runNetworkConnect is the entry of NetworkConnectCommand command.
+func (n *NetworkConnectCommand) runNetworkConnect(args []string) error {
+	network := args[0]
+	container := args[1]
+	if network == "" {
+		return fmt.Errorf("network name cannot be empty")
+	}
+	if container == "" {
+		return fmt.Errorf("container name cannot be empty")
+	}
+
+	networkReq := &types.NetworkConnect{
+		Container: container,
+		EndpointConfig: &types.EndpointSettings{
+			IPAMConfig: &types.EndpointIPAMConfig{
+				IPV4Address:  n.ipAddress,
+				IPV6Address:  n.ipv6Address,
+				LinkLocalIps: n.linklocalips,
+			},
+			Links:   n.links,
+			Aliases: n.aliases,
+		},
+	}
+
+	ctx := context.Background()
+	apiClient := n.cli.Client()
+	err := apiClient.NetworkConnect(ctx, network, networkReq)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("container %s is connected to network %s\n", container, network)
+
+	return nil
+}
+
+// networkConnectExample shows examples in network connect command, and is used in auto-generated cli docs.
+func networkConnectExample() string {
+	return `$ pouch network connect net1 container1
+container container1 is connected to network net1`
 }
 
 // networkDisconnectDescription is used to describe network disconnect command in detail and auto generate comand doc.

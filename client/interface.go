@@ -70,5 +70,6 @@ type NetworkAPIClient interface {
 	NetworkRemove(ctx context.Context, networkID string) error
 	NetworkInspect(ctx context.Context, networkID string) (*types.NetworkInspectResp, error)
 	NetworkList(ctx context.Context) ([]types.NetworkResource, error)
+	NetworkConnect(ctx context.Context, network string, req *types.NetworkConnect) error
 	NetworkDisconnect(ctx context.Context, networkID, containerID string, force bool) error
 }
