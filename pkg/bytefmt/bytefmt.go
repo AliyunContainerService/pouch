@@ -87,6 +87,15 @@ func ToKilobytes(s string) (uint64, error) {
 
 // ToBytes parses a string formatted by ByteSize as bytes.
 func ToBytes(s string) (uint64, error) {
+	l := len(s)
+	if l < 1 {
+		return 0, ErrorInvalidByte
+	}
+
+	if s[l-1] != 'b' && s[l-1] != 'B' {
+		s = s + "B"
+	}
+
 	parts := bytesPattern.FindStringSubmatch(strings.TrimSpace(s))
 	if len(parts) < 3 {
 		return 0, ErrorInvalidByte
