@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
 	"github.com/alibaba/pouch/test/environment"
@@ -96,36 +95,27 @@ func (suite *PouchDaemonSuite) TestDaemonListenTCP(c *check.C) {
 	}
 }
 
-// TestDaemonConfigFile tests start daemon with configure file works.
-func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
-	configFile := "/tmp/pouch.json"
-	file, err := os.Create(configFile)
-	c.Assert(err, check.IsNil)
-	defer file.Close()
-	defer os.Remove(configFile)
-
-	// Unmarshal config.Config, all fields in this struct could be handled in configuration file.
-	cfg := config.Config{
-		Debug: true,
-	}
-	s, _ := json.Marshal(cfg)
-	fmt.Fprintf(file, "%s", s)
-	file.Sync()
-
-	// TODO: uncomment this when issue #1003 is fixed.
-	//dcfg, err := StartDefaultDaemonDebug("--config-file="+configFile)
-	//{
-	//	err := dcfg.StartDaemon()
-	//	c.Assert(err, check.IsNil)
-	//}
-	//
-	//// TODO: verify more
-	//
-	//// Must kill it, as we may loose the pid in next call.
-	//defer dcfg.KillDaemon()
-
-	// config file cowork with parameter, no conflict
-}
+//// TestDaemonConfigFile tests start daemon with configure file works.
+//func (suite *PouchDaemonSuite) TestDaemonConfigFile(c *check.C) {
+//	path := "/tmp/pouch.json"
+//
+//	// Unmarshal config.Config, all fields in this struct could be handled in configuration file.
+//	cfg := config.Config{
+//		Debug: true,
+//	}
+//	err := CreateConfigFile(path, cfg)
+//	c.Assert(err, check.IsNil)
+//	defer os.Remove(path)
+//
+//	dcfg, err := StartDefaultDaemonDebug("--config-file=" + path)
+//	{
+//		err := dcfg.StartDaemon()
+//		c.Assert(err, check.IsNil)
+//	}
+//
+//	// Must kill it, as we may loose the pid in next call.
+//	defer dcfg.KillDaemon()
+//}
 
 // TestDaemonConfigFileConflict tests start daemon with configure file conflicts with parameter.
 func (suite *PouchDaemonSuite) TestDaemonConfigFileConflict(c *check.C) {
@@ -206,29 +196,27 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileUnknownFlag(c *check.C) {
 	dcfg.KillDaemon()
 }
 
-// TestDaemonConfigFileAndCli tests start daemon with configure file and CLI.
+// TestDaemonConfigFileAndCli tests start daemon with configure file and CLI .
 func (suite *PouchDaemonSuite) TestDaemonConfigFileAndCli(c *check.C) {
 	// Check default configure file could work
+	path := "/etc/pouch/config.json"
+	cfg := struct {
+		Labels []string `json:"label,omitempty"`
+	}{
+		Labels: []string{"a=b"},
+	}
+	err := CreateConfigFile(path, cfg)
+	c.Assert(err, check.IsNil)
+	defer os.Remove(path)
 
-	// TODO: uncomment if issue #1003 is fixed
-	//path := "/etc/pouch/config.json"
-	//cfg := struct {
-	//	Labels []string `json:"labels,omitempty"`
-	//}{
-	//	Labels: []string{"a=b"},
-	//}
-	//err := CreateConfigFile(path, cfg)
-	//c.Assert(err, check.IsNil)
-	//defer os.Remove(path)
-	//
-	//// Do Not specify configure file explicitly, it should work.
-	//dcfg, err := StartDefaultDaemonDebug()
-	//c.Assert(err, check.IsNil)
-	//defer dcfg.KillDaemon()
-	//
-	//result := RunWithSpecifiedDaemon(dcfg, "info")
-	//err = util.PartialEqual(result.Stdout(), "a=b")
-	//c.Assert(err, check.IsNil)
+	// Do Not specify configure file explicitly, it should work.
+	dcfg, err := StartDefaultDaemonDebug()
+	c.Assert(err, check.IsNil)
+	defer dcfg.KillDaemon()
+
+	result := RunWithSpecifiedDaemon(dcfg, "info")
+	err = util.PartialEqual(result.Stdout(), "a=b")
+	c.Assert(err, check.IsNil)
 }
 
 // TestDaemonInvalideArgs tests invalid args in deamon return error
