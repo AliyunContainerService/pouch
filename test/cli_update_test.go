@@ -210,7 +210,7 @@ func (suite *PouchUpdateSuite) TestUpdateContainerEnv(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
 	name := "update-running-container-env"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	res := command.PouchRun("update", "--env", "foo=bar", name)
 	c.Assert(res.Error, check.NotNil)
@@ -228,7 +228,7 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateContainerLabel(c *check.C) {
 	name := "update-container-label"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("update", "--label", "foo=bar", name).Assert(c, icmd.Success)
 
