@@ -101,9 +101,9 @@ type ContainerMgr interface {
 	// Connect is used to connect a container to a network.
 	Connect(ctx context.Context, name string, networkIDOrName string, epConfig *types.EndpointSettings) error
 
-	// DisconnectContainerFromNetwork disconnects the given container from
+	// Disconnect disconnects the given container from
 	// given network
-	DisconnectContainerFromNetwork(ctx context.Context, containerName, networkName string, force bool) error
+	Disconnect(ctx context.Context, containerName, networkName string, force bool) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -528,7 +528,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	defer container.Unlock()
 
 	// store disk
-	container.Write(mgr.Store)
+	if err := container.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return nil, err
+	}
 
 	// add to collection
 	mgr.NameToID.Put(name, id)
@@ -753,7 +756,12 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 	}
 
 	c.meta.State.Status = types.StatusPaused
-	c.Write(mgr.Store)
+
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -784,7 +792,12 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	}
 
 	c.meta.State.Status = types.StatusRunning
-	c.Write(mgr.Store)
+
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -863,7 +876,11 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	mgr.NameToID.Put(newName, c.ID())
 
 	c.meta.Name = newName
-	c.Write(mgr.Store)
+
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
 
 	return nil
 }
@@ -966,7 +983,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 
 	// store disk.
 	if updateErr == nil {
-		c.Write(mgr.Store)
+		updateErr = c.Write(mgr.Store)
 	}
 
 	return updateErr
@@ -1093,7 +1110,10 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	}
 
 	// Works fine, store new container info to disk.
-	c.Write(mgr.Store)
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
 
 	return nil
 }
@@ -1216,9 +1236,9 @@ func (mgr *ContainerManager) Connect(ctx context.Context, name string, networkID
 	return c.Write(mgr.Store)
 }
 
-// DisconnectContainerFromNetwork disconnects the given container from
+// Disconnect disconnects the given container from
 // given network
-func (mgr *ContainerManager) DisconnectContainerFromNetwork(ctx context.Context, containerName, networkName string, force bool) error {
+func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, networkName string, force bool) error {
 	c, err := mgr.container(containerName)
 	if err != nil {
 		// TODO(ziren): if force is true, force delete endpoint
@@ -1271,6 +1291,7 @@ func (mgr *ContainerManager) DisconnectContainerFromNetwork(ctx context.Context,
 	// update container meta json
 	if err := c.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
+		return err
 	}
 
 	return nil
@@ -1509,7 +1530,9 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	// update meta
 	if err := c.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
+		return err
 	}
+
 	return nil
 }
 
@@ -1532,6 +1555,7 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 	c.meta.State.Status = types.StatusExited
 	if err := c.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
+		return err
 	}
 
 	// send exit event to monitor
