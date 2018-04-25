@@ -30,9 +30,7 @@ ENV GOPATH=/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 # install golint. currently golint has no released version.
-RUN mkdir -p $GOPATH/src/golang.org/x \
-  && git clone https://github.com/golang/lint.git $GOPATH/src/golang.org/x/lint \
-  && go get -u golang.org/x/lint/golint
+RUN go get -u golang.org/x/lint/golint
 
 # install swagger 0.12.0
 RUN wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_linux_amd64 \
