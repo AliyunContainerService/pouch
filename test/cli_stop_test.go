@@ -39,6 +39,10 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
+	// test stop a created container
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	// start the created container
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
 	// test stop a running container

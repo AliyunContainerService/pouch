@@ -709,8 +709,8 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 	c.Lock()
 	defer c.Unlock()
 
-	if c.IsStopped() {
-		// stopping a stopped container is valid.
+	if !c.IsRunning() {
+		// stopping a non-running container is valid.
 		return nil
 	}
 
