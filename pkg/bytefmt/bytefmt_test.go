@@ -96,6 +96,11 @@ func TestToBytes(t *testing.T) {
 			expect: uint64(10.5 * 1024),
 			err:    nil,
 		},
+		{
+			input:  "1024000",
+			expect: 1024000,
+			err:    nil,
+		},
 	}
 	for _, test := range tests {
 		out, err := ToBytes(test.input)

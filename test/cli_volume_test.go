@@ -167,6 +167,19 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
 	command.PouchRun("volume", "remove", funcname)
 }
 
+// TestVolumeCreateWithSize tests creating volume with -o size=xxx.
+func (suite *PouchVolumeSuite) TestVolumeCreateWithSize(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+
+	command.PouchRun("volume", "create", "--name", funcname, "-o", "size=1048576").Assert(c, icmd.Success)
+	command.PouchRun("volume", "remove", funcname)
+}
+
 // TestVolumeInspectFormat tests the inspect format of volume works.
 func (suite *PouchVolumeSuite) TestVolumeInspectFormat(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
