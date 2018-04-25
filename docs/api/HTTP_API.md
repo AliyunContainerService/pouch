@@ -39,7 +39,7 @@ API is an HTTP API served by Pouch Engine.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|string|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Example HTTP response
@@ -111,7 +111,7 @@ POST /containers/create
 |**400**|bad parameter|[Error](#error)|
 |**404**|no such image|[Error](#error)|
 |**409**|conflict|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -169,7 +169,7 @@ GET /containers/json
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary containers that matches the query|< [Container](#container) > array|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -197,8 +197,8 @@ DELETE /containers/{id}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -358,9 +358,9 @@ Run a command inside a running container.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**201**|no error|[ExecCreateResp](#execcreateresp)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
 |**409**|container is paused|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -402,8 +402,8 @@ Return low-level information about a container.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[ContainerJSON](#containerjson)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -449,8 +449,8 @@ Note: This endpoint works only for containers with the `json-file` or `journald`
 |---|---|---|
 |**101**|logs returned as a stream|string (binary)|
 |**200**|logs returned as a string in response body|string|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -477,8 +477,8 @@ POST /containers/{id}/pause
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -506,9 +506,9 @@ POST /containers/{id}/rename
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
 |**409**|name already in use|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -566,8 +566,8 @@ POST /containers/{id}/restart
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -595,8 +595,8 @@ POST /containers/{id}/start
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -624,8 +624,8 @@ POST /containers/{id}/stop
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -653,8 +653,8 @@ POST /containers/{id}/top
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[ContainerProcessList](#containerprocesslist)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -681,8 +681,8 @@ POST /containers/{id}/unpause
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -711,8 +711,8 @@ POST /containers/{id}/update
 |---|---|---|
 |**200**|no error|No Content|
 |**400**|bad parameter|[Error](#error)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -741,8 +741,8 @@ POST /containers/{id}/upgrade
 |---|---|---|
 |**200**|no error|No Content|
 |**400**|bad parameter|[Error](#error)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -770,7 +770,7 @@ POST /daemon/update
 |---|---|---|
 |**200**|no error|No Content|
 |**400**|bad parameter|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -900,7 +900,7 @@ POST /images/create
 |---|---|---|
 |**200**|no error|No Content|
 |**404**|image not found|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -939,7 +939,7 @@ Return a list of stored images.
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary image data for the images matching the query|< [ImageInfo](#imageinfo) > array|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -990,7 +990,7 @@ GET /images/search
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|No error|< [SearchResultItem](#searchresultitem) > array|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1023,7 +1023,7 @@ Remove an image by reference.
 |---|---|---|
 |**204**|No error|No Content|
 |**404**|no such image|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Example HTTP response
@@ -1061,7 +1061,7 @@ Return the information about image
 |---|---|---|
 |**200**|no error|[ImageInfo](#imageinfo)|
 |**404**|no such image|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1106,7 +1106,7 @@ GET /info
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[SystemInfo](#systeminfo)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 <a name="networklist"></a>
@@ -1121,7 +1121,7 @@ GET /networks
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary networks that matches the query|[NetworkListResp](#networklistresp)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1155,7 +1155,7 @@ POST /networks/create
 |**201**|The network was created successfully|[NetworkCreateResp](#networkcreateresp)|
 |**400**|bad parameter|[Error](#error)|
 |**409**|name already in use|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -1192,8 +1192,8 @@ GET /networks/{id}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|No error|[NetworkInspectResp](#networkinspectresp)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1226,8 +1226,8 @@ DELETE /networks/{id}
 |---|---|---|
 |**204**|No error|No Content|
 |**403**|operation not supported for pre-defined networks|[Error](#error)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -1247,7 +1247,7 @@ GET /version
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|no error|[SystemVersion](#systemversion)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 <a name="volumelist"></a>
@@ -1269,7 +1269,7 @@ GET /volumes
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|Summary volume data that matches the query|[VolumeListResp](#volumelistresp)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1328,7 +1328,7 @@ POST /volumes/create
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**201**|The volume was created successfully|[VolumeInfo](#volumeinfo)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Consumes
@@ -1381,8 +1381,8 @@ GET /volumes/{id}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**200**|No error|[VolumeInfo](#volumeinfo)|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Produces
@@ -1414,8 +1414,8 @@ DELETE /volumes/{id}
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|No error|No Content|
-|**404**|An unexpected 404 error occured.|[Error](#error)|
-|**500**|An unexpected server error occured.|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -1900,7 +1900,7 @@ Container configuration that depends on the host we are running on
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.<br>The range is in [-1000, 1000].  <br>**Minimum value** : `-1000`  <br>**Maximum value** : `1000`|integer (int)|
 |**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
-|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|[PortMap](#portmap)|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
@@ -2249,7 +2249,7 @@ A container's resources (cgroups config, ulimits, etc)
 |**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
 |**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
-|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#resources-ulimits) > array|
 
@@ -2420,7 +2420,7 @@ UpdateConfig holds the mutable attributes of a Container. Those attributes can b
 |**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
 |**NanoCPUs**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
-|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this paramter support.|integer (int64)|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**RestartPolicy**  <br>*optional*||[RestartPolicy](#restartpolicy)|
 |**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimits](#updateconfig-ulimits) > array|
