@@ -10,6 +10,7 @@ RUN apt-get update \
     gcc \
     vim \
     tree \
+    rubygems \
     && apt-get clean
 
 # set go version this image use
@@ -35,6 +36,14 @@ RUN go get -u github.com/golang/lint/golint
 # install swagger 0.12.0
 RUN wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_linux_amd64 \
     && chmod +x /bin/swagger
+
+# install markdownlint tool
+RUN gem install rake \
+    && gem install bundler \
+    && git clone https://github.com/markdownlint/markdownlint.git \
+    && cd markdownlint \
+    && git checkout v0.4.0 \
+    && rake install
 
 COPY . /go/src/github.com/alibaba/pouch
 
