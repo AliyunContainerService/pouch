@@ -34,7 +34,7 @@ func (suite *PouchRestartSuite) TearDownTest(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
 	name := "TestPouchRestart"
 
-	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("restart", "-t", "1", name)
 	c.Assert(res.Error, check.IsNil)
@@ -47,18 +47,14 @@ func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
 }
 
 // TestPouchRestartStoppedContainer is to verify the correctness of restarting a stopped container.
+// Pouch should be compatible with moby's API. Restarting a stopped container is allowed.
 func (suite *PouchRestartSuite) TestPouchRestartStoppedContainer(c *check.C) {
 	name := "TestPouchRestartStoppedContainer"
 
 	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("restart", "-t", "1", name)
-	c.Assert(res.Error, check.NotNil)
-
-	expectString := "cannot restart a non running container"
-	if out := res.Combined(); !strings.Contains(out, expectString) {
-		c.Fatalf("unexpected output: %s, expected: %s", out, expectString)
-	}
+	c.Assert(res.Error, check.IsNil)
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

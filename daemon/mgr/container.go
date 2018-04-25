@@ -1180,20 +1180,19 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.IsRunning() {
-		return fmt.Errorf("cannot restart a non running container")
-	}
-
 	if timeout == 0 {
 		timeout = c.StopTimeout()
 	}
 
-	// stop container
-	if err := mgr.stop(ctx, c, timeout); err != nil {
-		return errors.Wrapf(err, "failed to stop container")
+	if c.IsRunning() {
+		// stop container if it is running.
+		if err := mgr.stop(ctx, c, timeout); err != nil {
+			logrus.Errorf("failed to stop container %s when restarting: %v", c.ID(), err)
+			return errors.Wrapf(err, fmt.Sprintf("failed to stop container %s", c.ID()))
+		}
 	}
-	logrus.Debug("Restart: container " + c.ID() + "  stopped succeeded")
 
+	logrus.Debugf("start container %s when restarting", c.ID())
 	// start container
 	return mgr.start(ctx, c, "")
 }

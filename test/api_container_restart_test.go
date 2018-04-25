@@ -54,7 +54,7 @@ func (suite *APIContainerRestartSuite) TestAPIRestartStoppedContainer(c *check.C
 
 	resp, err := request.Post("/containers/"+cname+"/restart", query)
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 500)
+	CheckRespStatus(c, resp, 204)
 
 	DelContainerForceOk(c, cname)
 }
