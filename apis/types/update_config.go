@@ -22,9 +22,6 @@ type UpdateConfig struct {
 	//
 	Env []string `json:"Env"`
 
-	// Image ID or Name
-	Image string `json:"Image,omitempty"`
-
 	// List of labels set to container.
 	Labels map[string]string `json:"Labels,omitempty"`
 
@@ -44,8 +41,6 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	var data struct {
 		Env []string `json:"Env,omitempty"`
 
-		Image string `json:"Image,omitempty"`
-
 		Labels map[string]string `json:"Labels,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
@@ -55,8 +50,6 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	}
 
 	m.Env = data.Env
-
-	m.Image = data.Image
 
 	m.Labels = data.Labels
 
@@ -78,16 +71,12 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	var data struct {
 		Env []string `json:"Env,omitempty"`
 
-		Image string `json:"Image,omitempty"`
-
 		Labels map[string]string `json:"Labels,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
 	}
 
 	data.Env = m.Env
-
-	data.Image = m.Image
 
 	data.Labels = m.Labels
 
