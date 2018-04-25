@@ -34,4 +34,4 @@ After these steps, a pod and its corresponding application container is created 
 
 This diagram briefly explains pouch CRI internal module workflow：
 
-![CRI workflow](../static_files/pouch_whith_cri_work_flow.png)
+![CRI workflow](../static_files/pouch_with_cri_work_flow.png)
