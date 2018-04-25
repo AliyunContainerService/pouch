@@ -92,9 +92,6 @@ type Resources struct {
 	// A list of devices to add to the container.
 	Devices []*DeviceMapping `json:"Devices"`
 
-	// Disk limit (in bytes).
-	DiskQuota int64 `json:"DiskQuota,omitempty"`
-
 	// Maximum IO in bytes per second for the container system drive (Windows only)
 	IOMaximumBandwidth uint64 `json:"IOMaximumBandwidth,omitempty"`
 
@@ -195,8 +192,6 @@ type Resources struct {
 /* polymorph Resources DeviceCgroupRules false */
 
 /* polymorph Resources Devices false */
-
-/* polymorph Resources DiskQuota false */
 
 /* polymorph Resources IOMaximumBandwidth false */
 
