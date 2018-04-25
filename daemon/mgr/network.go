@@ -67,8 +67,13 @@ type NetworkManager struct {
 // NewNetworkManager creates a brand new network manager.
 func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMgr) (*NetworkManager, error) {
 	// Create a new controller instance
-	cfg.NetworkConfg.MetaPath = path.Dir(store.BaseDir)
-	cfg.NetworkConfg.ExecRoot = network.DefaultExecRoot
+	if cfg.NetworkConfig.MetaPath == "" {
+		cfg.NetworkConfig.MetaPath = path.Dir(store.BaseDir)
+	}
+
+	if cfg.NetworkConfig.ExecRoot == "" {
+		cfg.NetworkConfig.ExecRoot = network.DefaultExecRoot
+	}
 
 	initNetworkLog(cfg)
 
@@ -81,17 +86,17 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 		logrus.Errorf("failed to new network manager, can not get container list")
 		return nil, errors.Wrap(err, "failed to get container list")
 	}
-	cfg.NetworkConfg.ActiveSandboxes = make(map[string]interface{})
+	cfg.NetworkConfig.ActiveSandboxes = make(map[string]interface{})
 	for _, c := range ctrs {
 		endpoint := BuildContainerEndpoint(c)
-		sbOptions, err := buildSandboxOptions(cfg.NetworkConfg, endpoint)
+		sbOptions, err := buildSandboxOptions(cfg.NetworkConfig, endpoint)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to build sandbox options")
 		}
-		cfg.NetworkConfg.ActiveSandboxes[c.NetworkSettings.SandboxID] = sbOptions
+		cfg.NetworkConfig.ActiveSandboxes[c.NetworkSettings.SandboxID] = sbOptions
 	}
 
-	ctlOptions, err := controllerOptions(cfg.NetworkConfg)
+	ctlOptions, err := controllerOptions(cfg.NetworkConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build network options")
 	}
@@ -104,7 +109,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 	return &NetworkManager{
 		store:      store,
 		controller: controller,
-		config:     cfg.NetworkConfg,
+		config:     cfg.NetworkConfig,
 	}, nil
 }
 
@@ -449,16 +454,16 @@ func controllerOptions(cfg network.Config) ([]nwconfig.Option, error) {
 	options = append(options, nwconfig.OptionDefaultNetwork("bridge"))
 
 	// set bridge options
-	options = append(options, bridgeDriverOptions())
+	options = append(options, bridgeDriverOptions(cfg.BridgeConfig))
 
 	return options, nil
 }
 
-func bridgeDriverOptions() nwconfig.Option {
+func bridgeDriverOptions(cfg network.BridgeConfig) nwconfig.Option {
 	bridgeConfig := options.Generic{
-		"EnableIPForwarding":  true,
-		"EnableIPTables":      true,
-		"EnableUserlandProxy": true}
+		"EnableIPForwarding":  cfg.IPForward,
+		"EnableIPTables":      cfg.IPTables,
+		"EnableUserlandProxy": cfg.UserlandProxy}
 	bridgeOption := options.Generic{netlabel.GenericData: bridgeConfig}
 
 	return nwconfig.OptionDriverConfig("bridge", bridgeOption)

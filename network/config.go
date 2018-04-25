@@ -5,33 +5,32 @@ var DefaultExecRoot = "/var/run/pouch"
 
 // Config defines the network configuration.
 type Config struct {
-	Type string
+	Type string `json:"-"`
 
-	MetaPath   string // meta store
-	ExecRoot   string // exec root
-	DNS        []string
-	DNSOptions []string
-	DNSSearch  []string
+	MetaPath   string   `json:"meta-path"`     // meta store
+	ExecRoot   string   `json:"exec-root-dir"` // exec root
+	DNS        []string `json:"dns"`
+	DNSOptions []string `json:"dns-options"`
+	DNSSearch  []string `json:"dns-search"`
 
 	// bridge config
-	BridgeConfig BridgeConfig
+	BridgeConfig BridgeConfig `json:"bridge-config"`
 
-	ActiveSandboxes map[string]interface{}
+	ActiveSandboxes map[string]interface{} `json:"-"`
 }
 
 // BridgeConfig defines the bridge network configuration.
 type BridgeConfig struct {
-	Name        string
-	IP          string
-	FixedCIDR   string
-	GatewayIPv4 string
-	PreferredIP string
+	Name        string `json:"bridge-name"`
+	IP          string `json:"bip"`
+	FixedCIDR   string `json:"fixed-cidr"`
+	GatewayIPv4 string `json:"default-gateway"`
+	PreferredIP string `json:"preferred-ip"`
 
-	Mtu               int
-	ICC               bool
-	IPTables          bool
-	IPForward         bool
-	IPMasq            bool
-	UserlandProxy     bool
-	UserlandProxyPath string
+	Mtu           int  `json:"mtu"`
+	ICC           bool `json:"icc"`
+	IPTables      bool `json:"iptables"`
+	IPForward     bool `json:"ipforward"`
+	IPMasq        bool `json:"ipmasq"`
+	UserlandProxy bool `json:"userland-proxy"`
 }

@@ -285,7 +285,7 @@ func (d *Daemon) MetaStore() *meta.Store {
 }
 
 func (d *Daemon) networkInit(ctx context.Context) error {
-	return mode.NetworkModeInit(ctx, d.config.NetworkConfg, d.networkMgr)
+	return mode.NetworkModeInit(ctx, d.config.NetworkConfig, d.networkMgr)
 }
 
 // ContainerPlugin returns the container plugin fetched from shared file

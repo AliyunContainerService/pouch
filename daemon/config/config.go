@@ -25,10 +25,10 @@ type Config struct {
 	sync.Mutex
 
 	//Volume config
-	VolumeConfig volume.Config `json:"volume-config"`
+	VolumeConfig volume.Config `json:"volume-config,omitempty"`
 
 	// Network config
-	NetworkConfg network.Config
+	NetworkConfig network.Config `json:"network-config,omitempty"`
 
 	// Whether enable cri manager.
 	IsCriEnabled bool `json:"enable-cri,omitempty"`
@@ -132,7 +132,7 @@ func (cfg *Config) Validate() error {
 }
 
 //MergeConfigurations merges flagSet flags and config file flags into Config.
-func (cfg *Config) MergeConfigurations(config *Config, flagSet *pflag.FlagSet) error {
+func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	contents, err := ioutil.ReadFile(cfg.ConfigFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -206,7 +206,6 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 				r.Field(i).Set(reflect.MakeSlice(reflect.TypeOf([]string{}), 0, 0))
 			}
 		}
-
 	})
 
 	return cfg
