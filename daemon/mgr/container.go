@@ -706,8 +706,9 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.IsRunning() {
-		return fmt.Errorf("container's status is not running: %s", c.meta.State.Status)
+	if c.IsStopped() {
+		// stopping a stopped container is valid.
+		return nil
 	}
 
 	if timeout == 0 {
@@ -720,7 +721,7 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int64) error {
 	msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), timeout)
 	if err != nil {
-		return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
+		return errors.Wrapf(err, "failed to destroy container %s", c.ID())
 	}
 
 	return mgr.markStoppedAndRelease(c, msg)

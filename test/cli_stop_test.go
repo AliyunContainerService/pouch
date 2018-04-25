@@ -41,6 +41,9 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
+	// test stop a running container
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	// test stop a stopped container
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
 	res := command.PouchRun("ps", "-a")
