@@ -109,7 +109,7 @@ type ObjectMeta struct {
 	// Name is primarily intended for creation idempotence and configuration definition.
 	Name string `json:"Name,omitempty"`
 
-	// Clainmer is user name string to indicate who create this object.
+	// Claimer is user name string to indicate who create this object.
 	Claimer string `json:"Claimer,omitempty"`
 
 	// Namespace defines the space within which name must be unique.
