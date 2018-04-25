@@ -1600,11 +1600,16 @@ func (mgr *ContainerManager) bindVolume(ctx context.Context, name string, meta *
 func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta) error {
 	logrus.Debugf("bind volumes: %v", meta.HostConfig.Binds)
 
+	type emptyStruct struct{}
+
 	var err error
 
 	if meta.Config.Volumes == nil {
 		meta.Config.Volumes = make(map[string]interface{})
 	}
+
+	// define a volume map to duplicate removal
+	volumeSet := map[string]emptyStruct{}
 
 	if meta.Mounts == nil {
 		meta.Mounts = make([]*types.MountPoint, 0)
@@ -1624,8 +1629,13 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 		return errors.Wrapf(err, "failed to get image: %s", meta.Image)
 	}
 	for dest := range image.Config.Volumes {
+		if _, exist := meta.Config.Volumes[dest]; !exist {
+			meta.Config.Volumes[dest] = emptyStruct{}
+		}
+
+		// check if volume has been created
 		name := randomid.Generate()
-		if _, exist := meta.Config.Volumes[name]; exist {
+		if _, exist := volumeSet[name]; exist {
 			continue
 		}
 
@@ -1651,7 +1661,7 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 			return err
 		}
 
-		meta.Config.Volumes[mp.Name] = mp.Destination
+		volumeSet[mp.Name] = emptyStruct{}
 		meta.Mounts = append(meta.Mounts, mp)
 	}
 
@@ -1681,13 +1691,18 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 			return errors.Errorf("unknown bind: %s", b)
 		}
 
+		if mp.Source == "" {
+			mp.Source = randomid.Generate()
+
+			// Source is empty, anonymouse volume
+			if _, exist := meta.Config.Volumes[mp.Destination]; !exist {
+				meta.Config.Volumes[mp.Destination] = emptyStruct{}
+			}
+		}
+
 		if opts.CheckDuplicateMountPoint(meta.Mounts, mp.Destination) {
 			logrus.Warnf("duplicate mount point: %s", mp.Destination)
 			continue
-		}
-
-		if mp.Source == "" {
-			mp.Source = randomid.Generate()
 		}
 
 		err = opts.ParseBindMode(mp, mode)
@@ -1699,14 +1714,15 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 		if !path.IsAbs(mp.Source) {
 			// volume bind.
 			name := mp.Source
-			if _, exist := meta.Config.Volumes[name]; !exist {
+			if _, exist := volumeSet[name]; !exist {
 				mp.Name = name
 				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, name, meta)
 				if err != nil {
 					logrus.Errorf("failed to bind volume: %s, err: %v", name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
-				meta.Config.Volumes[mp.Name] = mp.Destination
+
+				volumeSet[mp.Name] = emptyStruct{}
 			}
 
 			if mp.Replace != "" {
@@ -1771,14 +1787,16 @@ func (mgr *ContainerManager) parseBinds(ctx context.Context, meta *ContainerMeta
 				Propagation: oldMountPoint.Propagation,
 			}
 
-			if _, exist := meta.Config.Volumes[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
+			if _, exist := volumeSet[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
 				mp.Name = oldMountPoint.Name
 				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
 				if err != nil {
 					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
-				meta.Config.Volumes[mp.Name] = oldMountPoint.Destination
+
+				meta.Config.Volumes[mp.Destination] = emptyStruct{}
+				volumeSet[mp.Name] = emptyStruct{}
 			}
 
 			err = opts.ParseBindMode(mp, mode)
@@ -1901,7 +1919,12 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 }
 
 func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *ContainerMeta) error {
-	for name := range c.Config.Volumes {
+	for _, mount := range c.Mounts {
+		name := mount.Name
+		if name == "" {
+			continue
+		}
+
 		v, err := mgr.VolumeMgr.Get(ctx, name)
 		if err != nil {
 			logrus.Errorf("failed to get volume: %s", name)

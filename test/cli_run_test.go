@@ -970,7 +970,7 @@ func (suite *PouchRunSuite) TestRunWithVolumesFrom(c *check.C) {
 
 	volumeFound := false
 	for _, line := range strings.Split(out, "\n") {
-		if strings.Contains(line, "\"volumesfrom-test-volume\": \"/mnt\"") {
+		if strings.Contains(line, "\"volumesfrom-test-volume\"") {
 			volumeFound = true
 			break
 		}
@@ -1019,7 +1019,7 @@ func (suite *PouchRunSuite) TestRunWithVolumesFromWithDupclicate(c *check.C) {
 
 	volumeFound := false
 	for _, line := range strings.Split(out, "\n") {
-		if strings.Contains(line, "\"volumesfromDupclicate-test-volume\": \"/mnt\"") {
+		if strings.Contains(line, "\"volumesfromDupclicate-test-volume\"") {
 			volumeFound = true
 			break
 		}
