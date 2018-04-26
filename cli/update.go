@@ -58,10 +58,11 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 	container := args[0]
 	ctx := context.Background()
 
-	labels, err := opts.ParseLabels(uc.labels)
-	if err != nil {
-		return err
-	}
+	// UpdateConfig.Label's type change to []string
+	// labels, err := opts.ParseLabels(uc.labels)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if err := opts.ValidateMemorySwappiness(uc.memorySwappiness); err != nil {
 		return err
@@ -95,7 +96,7 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 
 	updateConfig := &types.UpdateConfig{
 		Env:           uc.env,
-		Labels:        labels,
+		Label:         uc.labels,
 		RestartPolicy: restartPolicy,
 		Resources:     resource,
 	}

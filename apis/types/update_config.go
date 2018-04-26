@@ -23,7 +23,7 @@ type UpdateConfig struct {
 	Env []string `json:"Env"`
 
 	// List of labels set to container.
-	Labels map[string]string `json:"Labels,omitempty"`
+	Label []string `json:"Label"`
 
 	// restart policy
 	RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
@@ -41,7 +41,7 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	var data struct {
 		Env []string `json:"Env,omitempty"`
 
-		Labels map[string]string `json:"Labels,omitempty"`
+		Label []string `json:"Label,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
 	}
@@ -51,7 +51,7 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 
 	m.Env = data.Env
 
-	m.Labels = data.Labels
+	m.Label = data.Label
 
 	m.RestartPolicy = data.RestartPolicy
 
@@ -71,14 +71,14 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	var data struct {
 		Env []string `json:"Env,omitempty"`
 
-		Labels map[string]string `json:"Labels,omitempty"`
+		Label []string `json:"Label,omitempty"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
 	}
 
 	data.Env = m.Env
 
-	data.Labels = m.Labels
+	data.Label = m.Label
 
 	data.RestartPolicy = m.RestartPolicy
 
@@ -103,6 +103,10 @@ func (m *UpdateConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateLabel(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateRestartPolicy(formats); err != nil {
 		res = append(res, err)
 	}
@@ -116,6 +120,15 @@ func (m *UpdateConfig) Validate(formats strfmt.Registry) error {
 func (m *UpdateConfig) validateEnv(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Env) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *UpdateConfig) validateLabel(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Label) { // not required
 		return nil
 	}
 
