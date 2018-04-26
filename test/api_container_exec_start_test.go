@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/go-check/check"
 )
@@ -24,14 +27,22 @@ func (suite *APIContainerExecStartSuite) SetUpTest(c *check.C) {
 	PullImage(c, busyboxImage)
 }
 
-func checkEchoSuccess(c *check.C, conn net.Conn, br *bufio.Reader, exp string) {
+func checkEchoSuccess(c *check.C, tty bool, conn net.Conn, br *bufio.Reader, exp string) {
 	defer conn.Close()
 
 	// Allocate a large space incase there is error.
-	got := make([]byte, len(exp))
-	_, err := io.ReadFull(br, got)
+	var (
+		buf bytes.Buffer
+		err error
+	)
+
+	if !tty {
+		_, err = stdcopy.StdCopy(&buf, &buf, br)
+	} else {
+		_, err = io.Copy(&buf, br)
+	}
 	c.Assert(err, check.IsNil)
-	c.Assert(string(got), check.Equals, exp, check.Commentf("Expected %s, got %s", exp, string(got)))
+	c.Assert(strings.TrimSpace(buf.String()), check.Equals, exp, check.Commentf("Expected %s, got %s", exp, buf.String()))
 }
 
 // TestContainerExecStartWithoutUpgrade tests start exec without upgrade which will return 200 OK.
@@ -49,7 +60,7 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartWithoutUpgrade(c 
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	checkEchoSuccess(c, conn, br, "test")
+	checkEchoSuccess(c, false, conn, br, "test")
 
 	DelContainerForceOk(c, cname)
 }
@@ -68,7 +79,7 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStart(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 101)
 
-	checkEchoSuccess(c, conn, reader, "test")
+	checkEchoSuccess(c, false, conn, reader, "test")
 
 	DelContainerForceOk(c, cname)
 }

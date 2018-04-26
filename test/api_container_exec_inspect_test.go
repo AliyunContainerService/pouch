@@ -32,7 +32,7 @@ func (suite *APIContainerExecInspectSuite) TestContainerExecInspectOk(c *check.C
 	StartContainerOk(c, cname)
 
 	obj := map[string]interface{}{
-		"Cmd":    []string{"echo", "test"},
+		"Cmd":    []string{"sleep", "9"},
 		"Detach": true,
 	}
 	body := request.WithJSONBody(obj)
@@ -59,10 +59,10 @@ func (suite *APIContainerExecInspectSuite) TestContainerExecInspectOk(c *check.C
 
 	// start the exec
 	{
-		resp, conn, reader, err := StartContainerExec(c, execid, false, false)
+		resp, conn, _, err := StartContainerExec(c, execid, false, false)
 		c.Assert(err, check.IsNil)
 		CheckRespStatus(c, resp, 101)
-		checkEchoSuccess(c, conn, reader, "test")
+		c.Assert(conn.Close(), check.IsNil)
 	}
 
 	// inspect the exec after exec start
