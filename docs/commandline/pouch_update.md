@@ -32,7 +32,6 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
       --cpuset-mems string      MEMs in cpuset
   -e, --env strings             Set environment variables for container
   -h, --help                    help for update
-      --image string            Image of container
   -l, --label strings           Set label for container
   -m, --memory string           Container memory limit
       --memory-swap string      Container swap limit
