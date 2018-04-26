@@ -75,6 +75,46 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
+// TestUpdateCpuPeriod is to verify the correctness of updating container cpu-period.
+func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
+	name := "update-container-cpu-period"
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	containerID := result[0].ID
+
+	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_period_us"
+	if _, err := os.Stat(file); err != nil {
+		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+	}
+
+	command.PouchRun("update", "--cpu-period", "2000", name).Assert(c, icmd.Success)
+
+	out, err := exec.Command("cat", file).Output()
+	if err != nil {
+		c.Fatalf("execute cat command failed: %v", err)
+	}
+
+	if !strings.Contains(string(out), "2000") {
+		c.Fatalf("unexpected output %s expected %s\n", string(out), "2000")
+	}
+
+	inspectInfo := command.PouchRun("inspect", name).Stdout()
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	c.Assert(metaJSON[0].HostConfig.CPUPeriod, check.Equals, int64(2000))
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}
+
 // TestUpdateRunningContainer is to verify the correctness of updating a running container.
 func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	name := "update-running-container"

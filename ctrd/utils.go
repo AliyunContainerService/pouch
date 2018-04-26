@@ -146,10 +146,13 @@ func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) 
 
 	// toLinuxCPU
 	shares := uint64(resources.CPUShares)
+	period := uint64(resources.CPUPeriod)
 	r.CPU = &specs.LinuxCPU{
 		Cpus:   resources.CpusetCpus,
 		Mems:   resources.CpusetMems,
 		Shares: &shares,
+		Period: &period,
+		Quota:  &resources.CPUQuota,
 	}
 
 	// toLinuxMemory
@@ -158,9 +161,10 @@ func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) 
 		swappiness = uint64(*(resources.MemorySwappiness))
 	}
 	r.Memory = &specs.LinuxMemory{
-		Limit:      &resources.Memory,
-		Swap:       &resources.MemorySwap,
-		Swappiness: &swappiness,
+		Limit:       &resources.Memory,
+		Swap:        &resources.MemorySwap,
+		Swappiness:  &swappiness,
+		Reservation: &resources.MemoryReservation,
 	}
 
 	// TODO: add more fields.
