@@ -68,6 +68,7 @@ type container struct {
 	oomScoreAdj    int64
 	specAnnotation []string
 	cgroupParent   string
+	ulimit         Ulimit
 
 	//add for rich container mode
 	rich       bool
@@ -221,6 +222,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				Devices:       deviceMappings,
 				IntelRdtL3Cbm: intelRdtL3Cbm,
 				CgroupParent:  c.cgroupParent,
+				Ulimits:       c.ulimit.value(),
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,

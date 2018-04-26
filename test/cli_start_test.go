@@ -267,3 +267,14 @@ func (suite *PouchStartSuite) TestStartWithExitCode(c *check.C) {
 	}
 	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
 }
+
+// TestStartWithUlimit starts a container with --ulimit.
+func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
+	name := "start-ulimit"
+
+	res := command.PouchRun("create", "--name", name, "--ulimit", "nproc=256", busyboxImage)
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}

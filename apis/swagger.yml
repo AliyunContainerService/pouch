@@ -2258,17 +2258,7 @@ definitions:
           A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
         type: "array"
         items:
-          type: "object"
-          properties:
-            Name:
-              description: "Name of ulimit"
-              type: "string"
-            Soft:
-              description: "Soft limit"
-              type: "integer"
-            Hard:
-              description: "Hard limit"
-              type: "integer"
+          $ref: "#/definitions/Ulimit"
       # Applicable to Windows
       CpuCount:
         description: |
@@ -2371,6 +2361,20 @@ definitions:
       PathOnHost: "/dev/deviceName"
       PathInContainer: "/dev/deviceName"
       CgroupPermissions: "mrw"
+
+  Ulimit:
+    type: "object"
+    description: "A list of resource limits"
+    properties:
+      Name:
+        description: "Name of ulimit"
+        type: "string"
+      Soft:
+        description: "Soft limit"
+        type: "integer"
+      Hard:
+        description: "Hard limit"
+        type: "integer"
 
   Container:
     description: |

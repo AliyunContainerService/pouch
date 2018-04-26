@@ -154,7 +154,7 @@ type Resources struct {
 
 	// A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
 	//
-	Ulimits []*ResourcesUlimitsItems0 `json:"Ulimits"`
+	Ulimits []*Ulimit `json:"Ulimits"`
 }
 
 /* polymorph Resources BlkioDeviceReadBps false */
@@ -656,55 +656,6 @@ func (m *Resources) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Resources) UnmarshalBinary(b []byte) error {
 	var res Resources
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ResourcesUlimitsItems0 resources ulimits items0
-// swagger:model ResourcesUlimitsItems0
-
-type ResourcesUlimitsItems0 struct {
-
-	// Hard limit
-	Hard int64 `json:"Hard,omitempty"`
-
-	// Name of ulimit
-	Name string `json:"Name,omitempty"`
-
-	// Soft limit
-	Soft int64 `json:"Soft,omitempty"`
-}
-
-/* polymorph ResourcesUlimitsItems0 Hard false */
-
-/* polymorph ResourcesUlimitsItems0 Name false */
-
-/* polymorph ResourcesUlimitsItems0 Soft false */
-
-// Validate validates this resources ulimits items0
-func (m *ResourcesUlimitsItems0) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ResourcesUlimitsItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ResourcesUlimitsItems0) UnmarshalBinary(b []byte) error {
-	var res ResourcesUlimitsItems0
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
