@@ -2,6 +2,7 @@ package containerio
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -45,18 +46,8 @@ func (c *cio) Close() error {
 	return c.closer.Close()
 }
 
-// FIFOSet is a set of fifos for use with tasks
-type FIFOSet struct {
-	// Dir is the directory holding the task fifos
-	Dir string
-	// In, Out, and Err fifo paths
-	In, Out, Err string
-	// Terminal returns true if a terminal is being used for the task
-	Terminal bool
-}
-
 // NewFifos returns a new set of fifos for the task
-func NewFifos(id string, stdin bool) (*FIFOSet, error) {
+func NewFifos(id string, stdin bool) (*containerdio.FIFOSet, error) {
 	root := "/run/containerd/fifo"
 	if err := os.MkdirAll(root, 0700); err != nil {
 		return nil, err
@@ -65,7 +56,7 @@ func NewFifos(id string, stdin bool) (*FIFOSet, error) {
 	if err != nil {
 		return nil, err
 	}
-	fifos := &FIFOSet{
+	fifos := &containerdio.FIFOSet{
 		Dir: dir,
 		In:  filepath.Join(dir, id+"-stdin"),
 		Out: filepath.Join(dir, id+"-stdout"),
@@ -109,7 +100,7 @@ func (g *wgCloser) Cancel() {
 	g.cancel()
 }
 
-func copyIO(fifos *FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, err error) {
+func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, err error) {
 	var (
 		f           io.ReadWriteCloser
 		set         []io.Closer
@@ -182,6 +173,33 @@ func NewIOWithTerminal(stdin io.Reader, stdout, stderr io.Writer, terminal bool,
 		}()
 		cfg := containerdio.Config{
 			Terminal: terminal,
+			Stdout:   paths.Out,
+			Stderr:   paths.Err,
+			Stdin:    paths.In,
+		}
+		i := &cio{config: cfg}
+		set := &ioSet{
+			in:  stdin,
+			out: stdout,
+			err: stderr,
+		}
+		closer, err := copyIO(paths, set, cfg.Terminal)
+		if err != nil {
+			return nil, err
+		}
+		i.closer = closer
+		return i, nil
+	}
+}
+
+// WithAttach attaches the existing io for a task to the provided io.Reader/Writers
+func WithAttach(stdin io.Reader, stdout, stderr io.Writer) containerdio.Attach {
+	return func(paths *containerdio.FIFOSet) (containerdio.IO, error) {
+		if paths == nil {
+			return nil, fmt.Errorf("cannot attach to existing fifos")
+		}
+		cfg := containerdio.Config{
+			Terminal: paths.Terminal,
 			Stdout:   paths.Out,
 			Stderr:   paths.Err,
 			Stdin:    paths.In,

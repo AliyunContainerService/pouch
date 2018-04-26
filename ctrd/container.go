@@ -12,7 +12,6 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
@@ -164,7 +163,7 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 		return errors.Wrap(err, "failed to load container")
 	}
 
-	task, err := lc.Task(ctx, cio.WithAttach(io.Stdin, io.Stdout, io.Stderr))
+	task, err := lc.Task(ctx, containerio.WithAttach(io.Stdin, io.Stdout, io.Stderr))
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
