@@ -68,6 +68,7 @@ func (rc *RunCommand) runRun(args []string) error {
 		config.Cmd = args[1:]
 	}
 	containerName := rc.name
+	config.ContainerConfig.OpenStdin = rc.stdin
 
 	ctx := context.Background()
 	apiClient := rc.cli.Client()
