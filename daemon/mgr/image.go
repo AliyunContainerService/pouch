@@ -145,6 +145,10 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, image *types.ImageInfo
 	}
 	if refTagged, ok := refNamed.(reference.Tagged); ok {
 		ref = refTagged.String()
+	} else {
+		// add default tag ":latest" for image which is to be removed
+		defaultTaggedRef := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
+		ref = defaultTaggedRef.Name() + ":" + defaultTaggedRef.Tag()
 	}
 
 	if err := mgr.client.RemoveImage(ctx, ref); err != nil {
