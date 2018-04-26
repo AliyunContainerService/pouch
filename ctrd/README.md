@@ -1,6 +1,6 @@
 # ctrd
 
-ctrd is a package to interact with containerd using containerd's exposed API. Pouch will vendor package containerd in repo [containerd/containerd](https://github.com/containerd/containerd) and [alibaba/containerd](https://github.com/containerd/containerd).
+ctrd is a package to interact with containerd using containerd's exposed API. Pouch will vendor package containerd in repo [containerd/containerd](https://github.com/containerd/containerd) and [alibaba/containerd](https://github.com/alibaba/containerd).
 
 ## difference between containerds
 
