@@ -212,12 +212,21 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
 
 	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
-	res := command.PouchRun("update", "--env", "foo=bar", name)
-	c.Assert(res.Error, check.NotNil)
+	command.PouchRun("update", "--env", "foo=bar", name).Assert(c, icmd.Success)
 
-	expectedStr := "Only can update the container's Env when it stopped"
-	if out := res.Combined(); !strings.Contains(out, expectedStr) {
-		c.Fatalf("unexpected output: %s, expected: %s", out, expectedStr)
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
+		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
+	}
+
+	output = command.PouchRun("exec", name, "env").Stdout()
+	if !strings.Contains(output, "foo=bar") {
+		c.Fatalf("Update running container env not worked")
 	}
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
