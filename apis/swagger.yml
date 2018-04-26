@@ -2110,10 +2110,10 @@ definitions:
             type: "array"
             items:
               type: "string"
-          Labels:
+          Label:
             description: "List of labels set to container."
-            type: "object"
-            additionalProperties:
+            type: "array"
+            items:
               type: "string"
 
   ContainerUpgradeConfig:
