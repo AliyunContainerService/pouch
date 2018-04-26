@@ -877,6 +877,10 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	c.Lock()
 	defer c.Unlock()
 
+	if c.IsRunning() && config.Resources.KernelMemory != 0 {
+		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID())
+	}
+
 	if len(config.Labels) != 0 {
 		if c.meta.Config.Labels == nil {
 			c.meta.Config.Labels = map[string]string{}
@@ -887,29 +891,11 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}
 
-	// update resources of container.
-	resources := config.Resources
-	cResources := &c.meta.HostConfig.Resources
-	if resources.BlkioWeight != 0 {
-		cResources.BlkioWeight = resources.BlkioWeight
-	}
-	if resources.CPUShares != 0 {
-		cResources.CPUShares = resources.CPUShares
-	}
-	if resources.CpusetCpus != "" {
-		cResources.CpusetCpus = resources.CpusetCpus
-	}
-	if resources.CpusetMems != "" {
-		cResources.CpusetMems = resources.CpusetMems
-	}
-	if resources.Memory != 0 {
-		cResources.Memory = resources.Memory
-	}
-	if resources.MemorySwap != 0 {
-		cResources.MemorySwap = resources.MemorySwap
+	// update Resources of a container.
+	if err := mgr.updateContainerResources(c.meta, config.Resources); err != nil {
+		return fmt.Errorf("failed to update container %s resources: %v", c.ID(), err)
 	}
 
-	// update HostConfig of a container.
 	// TODO update restartpolicy when container is running.
 	if config.RestartPolicy.Name != "" {
 		c.meta.HostConfig.RestartPolicy = config.RestartPolicy
@@ -943,6 +929,53 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	return updateErr
+}
+
+// updateContainerResources update container's resources parameters.
+func (mgr *ContainerManager) updateContainerResources(c *ContainerMeta, resources types.Resources) error {
+	// update resources of container.
+	cResources := &c.HostConfig.Resources
+	if resources.BlkioWeight != 0 {
+		cResources.BlkioWeight = resources.BlkioWeight
+	}
+	if resources.CPUPeriod != 0 {
+		cResources.CPUPeriod = resources.CPUPeriod
+	}
+	if resources.CPUQuota != 0 {
+		cResources.CPUQuota = resources.CPUQuota
+	}
+	if resources.CPUShares != 0 {
+		cResources.CPUShares = resources.CPUShares
+	}
+	if resources.CpusetCpus != "" {
+		cResources.CpusetCpus = resources.CpusetCpus
+	}
+	if resources.CpusetMems != "" {
+		cResources.CpusetMems = resources.CpusetMems
+	}
+	if resources.Memory != 0 {
+		// if memory limit smaller than already set memoryswap limit and doesn't
+		// update the memoryswap limit, then error out.
+		if cResources.MemorySwap != 0 && resources.Memory > cResources.MemorySwap && resources.MemorySwap == 0 {
+			return fmt.Errorf("Memory limit should be smaller than already set memoryswap limit, update the memoryswap at the same time")
+		}
+		cResources.Memory = resources.Memory
+	}
+	if resources.MemorySwap != 0 {
+		cResources.MemorySwap = resources.MemorySwap
+	}
+
+	if resources.MemorySwap != 0 {
+		cResources.MemorySwap = resources.MemorySwap
+	}
+	if resources.MemoryReservation != 0 {
+		cResources.MemoryReservation = resources.MemoryReservation
+	}
+	if resources.KernelMemory != 0 {
+		cResources.KernelMemory = resources.KernelMemory
+	}
+
+	return nil
 }
 
 // updateContainerEnv update the container's envs in /etc/instanceInfo and /etc/profile.d/pouchenv.sh
