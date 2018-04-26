@@ -23,7 +23,7 @@ type Config struct {
 	sync.Mutex
 
 	//Volume config
-	VolumeConfig volume.Config
+	VolumeConfig volume.Config `json:"volume-config"`
 
 	// Network config
 	NetworkConfg network.Config

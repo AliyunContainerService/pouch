@@ -3,6 +3,7 @@ package volume
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	metastore "github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/storage/controlserver/client"
@@ -31,6 +32,20 @@ func NewCore(cfg Config) (*Core, error) {
 		c.BaseURL = cfg.ControlAddress
 	} else {
 		c.EnableControl = false
+	}
+
+	if cfg.DriverAlias != "" {
+		parts := strings.Split(cfg.DriverAlias, ";")
+		for _, p := range parts {
+			alias := strings.Split(p, "=")
+			if len(alias) != 2 {
+				return nil, errors.Errorf("invalid driver alias: %s", p)
+			}
+
+			if err := driver.Alias(alias[0], alias[1]); err != nil {
+				return nil, errors.Wrapf(err, "failed to set driver alias: %s", p)
+			}
+		}
 	}
 
 	volumeStore, err := metastore.NewStore(metastore.Config{

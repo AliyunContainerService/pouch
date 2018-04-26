@@ -182,3 +182,23 @@ func ListDriverOption(name string) map[string]types.Option {
 	}
 	return nil
 }
+
+// Alias is used to add driver name's alias into exist driver.
+func Alias(name, alias string) error {
+	d, exist := backendDrivers.Get(name)
+	if !exist {
+		return errors.Errorf("volume driver: %s is not exist", name)
+	}
+
+	matched, err := regexp.MatchString(driverNameRegexp, alias)
+	if err != nil {
+		return err
+	}
+	if !matched {
+		return errors.Errorf("Invalid driver name: %s, not match: %s", name, driverNameRegexp)
+	}
+
+	backendDrivers.Add(alias, d)
+
+	return nil
+}
