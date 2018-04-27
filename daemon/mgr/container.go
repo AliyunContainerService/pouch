@@ -883,7 +883,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	defer c.Unlock()
 
 	if c.IsRunning() && config.Resources.KernelMemory != 0 {
-		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID())
+		return errors.Wrapf(nil, fmt.Sprintf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID()))
 	}
 
 	// compatibility with alidocker, UpdateConfig.Label is []string
@@ -896,7 +896,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		// support remove some labels
 		newLabels, err := opts.ParseLabels(config.Label)
 		if err != nil {
-			return fmt.Errorf("failed to parse labels: %v", err)
+			return errors.Wrapf(err, "failed to parse labels")
 		}
 
 		for k, v := range newLabels {
@@ -908,9 +908,14 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}
 
+	// update container disk quota
+	if err := mgr.updateContainerDiskQuota(ctx, c.meta, config.DiskQuota); err != nil {
+		return errors.Wrapf(err, fmt.Sprintf("failed to update container %s diskquota", c.ID()))
+	}
+
 	// update Resources of a container.
 	if err := mgr.updateContainerResources(c.meta, config.Resources); err != nil {
-		return fmt.Errorf("failed to update container %s resources: %v", c.ID(), err)
+		return errors.Wrapf(err, fmt.Sprintf("failed to update container %s resources", c.ID()))
 	}
 
 	// TODO update restartpolicy when container is running.
@@ -923,7 +928,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	if (c.IsRunning() || c.IsPaused()) && len(config.Env) > 0 && c.meta.Snapshotter != nil {
 		if mergedDir, exists := c.meta.Snapshotter.Data["MergedDir"]; exists {
 			if err := mgr.updateContainerEnv(c.meta.Config.Env, mergedDir); err != nil {
-				return fmt.Errorf("failed to update env of running container: %v", err)
+				return errors.Wrapf(err, "failed to update env of running container")
 			}
 		}
 	}
@@ -946,6 +951,65 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	return updateErr
+}
+
+func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *ContainerMeta, diskQuota string) error {
+	if diskQuota == "" {
+		return nil
+	}
+
+	quotaMap, err := opts.ParseDiskQuota([]string{diskQuota})
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse disk quota")
+	}
+
+	c.Config.DiskQuota = quotaMap
+
+	// set mount point disk quota
+	if err := mgr.setMountPointDiskQuota(ctx, c); err != nil {
+		return errors.Wrapf(err, "failed to set mount point disk quota")
+	}
+
+	var qid uint32
+	if c.Config.QuotaID != "" {
+		id, err := strconv.Atoi(c.Config.QuotaID)
+		if err != nil {
+			return errors.Wrapf(err, "invalid argument, QuotaID: %s", c.Config.QuotaID)
+		}
+
+		// if QuotaID is < 0, it means pouchd alloc a unique quota id.
+		if id < 0 {
+			qid, err = quota.GetNextQuatoID()
+			if err != nil {
+				return errors.Wrap(err, "failed to get next quota id")
+			}
+
+			// update QuotaID
+			c.Config.QuotaID = strconv.Itoa(int(qid))
+		} else {
+			qid = uint32(id)
+		}
+	}
+
+	// get rootfs quota
+	defaultQuota := quota.GetDefaultQuota(quotaMap)
+	if qid > 0 && defaultQuota == "" {
+		return fmt.Errorf("set quota id but have no set default quota size")
+	}
+	// update container rootfs disk quota
+	status := c.State.Status
+	if (status == types.StatusRunning || status == types.StatusPaused) && c.Snapshotter != nil {
+		basefs, ok := c.Snapshotter.Data["MergedDir"]
+		if !ok || basefs == "" {
+			return fmt.Errorf("Container is running, but MergedDir is missing")
+		}
+
+		if err := quota.SetRootfsDiskQuota(basefs, defaultQuota, qid); err != nil {
+			return errors.Wrapf(err, "failed to set container rootfs diskquota")
+		}
+	}
+
+	return nil
 }
 
 // updateContainerResources update container's resources parameters.
