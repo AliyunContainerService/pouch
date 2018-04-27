@@ -18,7 +18,7 @@ Updated: 2018.3.30
 
 ## Overview
 
-This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime in China.
+This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime in the domestic.
 
 ![pouch_with_kubernetes](../static_files/pouch_with_kubernetes.png)
 
