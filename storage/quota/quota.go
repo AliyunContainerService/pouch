@@ -1,6 +1,12 @@
 package quota
 
 import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/alibaba/pouch/pkg/kernel"
@@ -138,4 +144,95 @@ func GetDefaultQuota(quotas map[string]string) string {
 	}
 
 	return ""
+}
+
+// SetRootfsDiskQuota is to set container rootfs dir disk quota.
+func SetRootfsDiskQuota(basefs, size string, quotaID uint32) error {
+	overlayfs, err := getOverlay(basefs)
+	if err != nil || overlayfs == nil {
+		return fmt.Errorf("failed to get lowerdir: %v", err)
+	}
+
+	for _, dir := range []string{overlayfs.Upper, overlayfs.Work} {
+		_, err = StartQuotaDriver(dir)
+		if err != nil {
+			return fmt.Errorf("failed to start quota driver: %v", err)
+		}
+
+		quotaID, err = SetSubtree(dir, quotaID)
+		if err != nil {
+			return fmt.Errorf("failed to set subtree: %v", err)
+		}
+
+		err = SetDiskQuota(dir, size, quotaID)
+		if err != nil {
+			return fmt.Errorf("failed to set disk quota: %v", err)
+		}
+
+		return setQuotaForDir(dir, quotaID)
+	}
+
+	return nil
+}
+
+func setQuotaForDir(src string, qid uint32) error {
+	filepath.Walk(src, func(path string, fd os.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("setQuota walk dir %s get error %v", path, err)
+		}
+
+		SetFileAttrNoOutput(path, qid)
+		return nil
+	})
+
+	return nil
+}
+
+func getOverlay(basefs string) (*OverlayMount, error) {
+	overlayfs := &OverlayMount{}
+
+	fd, err := os.Open("/proc/mounts")
+	if err != nil {
+		return nil, err
+	}
+	defer fd.Close()
+
+	br := bufio.NewReader(fd)
+	for {
+		line, _, c := br.ReadLine()
+		if c == io.EOF {
+			break
+		}
+
+		parts := strings.Split(string(line), " ")
+		if len(parts) != 6 {
+			continue
+		}
+		if parts[1] != basefs || parts[2] != "overlay" {
+			continue
+		}
+
+		mountParams := strings.Split(parts[3], ",")
+		for _, p := range mountParams {
+			switch {
+			case strings.Contains(p, "lowerdir"):
+				if s := strings.Split(p, "="); len(s) == 2 {
+					overlayfs.Lower = s[1]
+				}
+
+			case strings.Contains(p, "upperdir"):
+				if s := strings.Split(p, "="); len(s) == 2 {
+					overlayfs.Upper = s[1]
+				}
+
+			case strings.Contains(p, "workdir"):
+				if s := strings.Split(p, "="); len(s) == 2 {
+					overlayfs.Work = s[1]
+					break
+				}
+			}
+		}
+	}
+
+	return overlayfs, nil
 }

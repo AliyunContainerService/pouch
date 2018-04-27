@@ -1,13 +1,9 @@
 package quota
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
@@ -53,93 +49,7 @@ func processSetQuotaReexec() {
 
 	logrus.Infof("set diskquota: %v", os.Args)
 
-	overlayfs, err := getOverlay(basefs)
-	if err != nil || overlayfs == nil {
-		logrus.Errorf("failed to get lowerdir: %v", err)
-		return
-	}
-
-	for _, dir := range []string{overlayfs.Upper, overlayfs.Work} {
-		_, err = StartQuotaDriver(dir)
-		if err != nil {
-			logrus.Errorf("failed to start quota driver: %v", err)
-			return
-		}
-
-		qid, err = SetSubtree(dir, uint32(qid))
-		if err != nil {
-			logrus.Errorf("failed to set subtree: %v", err)
-			return
-		}
-
-		err = SetDiskQuota(dir, size, qid)
-		if err != nil {
-			logrus.Errorf("failed to set disk quota: %v", err)
-			return
-		}
-
-		setQuotaForDir(dir, uint32(qid))
-	}
+	err = SetRootfsDiskQuota(basefs, size, qid)
 
 	return
-}
-
-func setQuotaForDir(src string, qid uint32) {
-	filepath.Walk(src, func(path string, fd os.FileInfo, err error) error {
-		if err != nil {
-			logrus.Warnf("setQuota walk dir %s get error %v", path, err)
-			return nil
-		}
-		SetFileAttrNoOutput(path, qid)
-		return nil
-	})
-}
-
-func getOverlay(basefs string) (*OverlayMount, error) {
-	overlayfs := &OverlayMount{}
-
-	fd, err := os.Open("/proc/mounts")
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-
-	br := bufio.NewReader(fd)
-	for {
-		line, _, c := br.ReadLine()
-		if c == io.EOF {
-			break
-		}
-
-		parts := strings.Split(string(line), " ")
-		if len(parts) != 6 {
-			continue
-		}
-		if parts[1] != basefs || parts[2] != "overlay" {
-			continue
-		}
-
-		mountParams := strings.Split(parts[3], ",")
-		for _, p := range mountParams {
-			switch {
-			case strings.Contains(p, "lowerdir"):
-				if s := strings.Split(p, "="); len(s) == 2 {
-					overlayfs.Lower = s[1]
-				}
-
-			case strings.Contains(p, "upperdir"):
-				if s := strings.Split(p, "="); len(s) == 2 {
-					overlayfs.Upper = s[1]
-				}
-
-			case strings.Contains(p, "workdir"):
-				if s := strings.Split(p, "="); len(s) == 2 {
-					overlayfs.Work = s[1]
-					break
-				}
-			}
-		}
-	}
-
-	return overlayfs, nil
 }

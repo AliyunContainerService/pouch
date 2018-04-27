@@ -2115,6 +2115,9 @@ definitions:
             type: "array"
             items:
               type: "string"
+          DiskQuota:
+            type: "string"
+            description: "update disk quota for container"
 
   ContainerUpgradeConfig:
     description: |
