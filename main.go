@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
@@ -239,7 +240,7 @@ func initLog() {
 
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
-		TimestampFormat: "2006-01-02 15:04:05.000000000",
+		TimestampFormat: time.RFC3339Nano,
 	}
 	logrus.SetFormatter(formatter)
 }
