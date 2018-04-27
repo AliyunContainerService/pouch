@@ -10,6 +10,7 @@ Updated: 2018.3.30
     - [Install CNI](#install-cni)
     - [Install Kubernetes Components](#install-kubernetes-components)
     - [Setting up the master node](#setting-up-the-master-node)
+    - [Setting up ImageRepository](#setting-up-imagerepository)   
     - [Setting up the minion nodes](#setting-up-the-minion-nodes)
     - [Setting up CNI network routes](#setting-up-cni-network-routes)
   - [Run and Verify](#run-and-verify)
@@ -17,7 +18,7 @@ Updated: 2018.3.30
 
 ## Overview
 
-This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime.If it's not convenience for you,there is an easy guide for you to quickly experience this amazing combination in the domestic [Kubernetes + Pouch + Domestic](docs/kubernetes/pouch_with_kubernetes_deploying_domestic.md).
+This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime in China.
 
 ![pouch_with_kubernetes](../static_files/pouch_with_kubernetes.png)
 
@@ -28,17 +29,6 @@ Kubernetes: Version 1.9.X is recommanded.
 NOTE: It will be failed to deploy with recent released Kubernetes 1.10.0. Because Kubernetes 1.10.0 has updated CRI from v1alpha1 to v1alpha2 which Pouch has not supported yet. We will try to full support CRI v1alpha1 first and then v1alpha2.
 
 Pouch: Version 0.3.0 is recommanded.
-
-## Install and Configure
-
-An all-in-one kubernetes cluster with pouch runtime could be deployed by running:
-
-```
-hack/kubernetes/allinone.sh
-
-```
-
-Please refer to [allinone](https://github.com/alibaba/pouch/blob/master/hack/kubernetes/allinone.sh) .
 
 ### Install Pouch
 
@@ -67,30 +57,26 @@ systemctl restart pouch
 On Ubuntu 16.04+:
 
 ```
-apt-get update && apt-get install -y apt-transport-https
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-apt-get update
-apt-get install -y kubernetes-cni
+CNI_VERSION="v0.6.0"
+mkdir -p /opt/cni/bin
+curl -L "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-amd64-${CNI_VERSION}.tgz" | tar -C /opt/cni/bin -xz
 ```
 
 On CentOS 7:
 
 ```
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=http://yum.kubernetes.io/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo 
+[kubernetes] 
+name=Kubernetes 
+baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64 
+enabled=1 
+gpgcheck=0 
+repo_gpgcheck=0 
+gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+	http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg 
 EOF
 setenforce 0
-yum install -y kubernetes-cni
+yum install -y kubernetes-cni 
 ```
 
 Configure CNI networks:
@@ -131,13 +117,22 @@ EOF
 On Ubuntu 16.04+:
 
 ```sh
-apt-get install -y kubelet kubeadm kubectl
+RELEASE="v1.9.4"
+mkdir -p /opt/bin
+cd /opt/bin
+curl -L --remote-name-all https://storage.googleapis.com/kubernetes-release/release/${RELEASE}/bin/linux/amd64/{kubeadm,kubelet,kubectl}
+chmod +x {kubeadm,kubelet,kubectl}
+
+curl -sSL "https://raw.githubusercontent.com/kubernetes/kubernetes/${RELEASE}/build/debs/kubelet.service" | sed "s:/usr/bin:/opt/bin:g" > /etc/systemd/system/kubelet.service
+mkdir -p /etc/systemd/system/kubelet.service.d
+curl -sSL "https://raw.githubusercontent.com/kubernetes/kubernetes/${RELEASE}/build/debs/10-kubeadm.conf" | sed "s:/usr/bin:/opt/bin:g" > /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 ```
 
 On CentOS 7:
 
 ```sh
-yum install -y kubelet kubeadm kubectl
+RELEASE="1.9.4-0.x86_64"
+yum -y install kubelet-${RELEASE} kubeadm-${RELEASE} kubectl-${RELEASE}
 ```
 
 Configure kubelet with Pouch as its runtime:
@@ -149,12 +144,20 @@ systemctl daemon-reload
 
 For more details, please check [install kubelet](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl).
 
+### Setting up ImageRepository
+
+    vim kubeadm.conf
+    
+    apiVersion: kubeadm.k8s.io/v1alpha1    
+    kind: MasterConfiguration    
+    imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
+
 ### Setting up the master node
 
 For more detailed Kubernetes cluster installation, please check [Using kubeadm to Create a Cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 
 ```
-kubeadm init
+kubeadm init --config kubeadm.conf
 ```
 
 NOTE: If you want to use CNI plugin other than bridge, please check [Installing a pod network](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#pod-network).
@@ -248,9 +251,14 @@ rtt min/avg/max/mdev = 0.041/0.055/0.068/0.012 ms
 
 ## Troubleshooting
 
-- Because `kubeadm` still assumes docker as the only container runtime which can be used with kubernetes. When you use `kubeadm` to initialize the master node or join the minion node to the cluster, you may encounter the following error message:`[ERROR SystemVerification]: failed to get docker info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?`. Use the flag `--skip-preflight-checks` to skip the check, like `kubeadm init --skip-preflight-checks`.
+- Because `kubeadm` still assumes docker as the only container runtime which can be used with kubernetes. When you use `kubeadm` to initialize the master node or join the minion node to the cluster, you may encounter the following error message:`[ERROR SystemVerification]: failed to get docker info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?`. Use the flag `--skip-preflight-checks` to skip the check, like `kubeadm init --ignore-preflight-errors=all`.
 
-- Kubernetes 1.10.0 has been released recently and you may install it by default.However, for the NOTE metioned above, Kubernetes 1.9.X is recommanded for current Pouch.In ubuntu, we could use `apt-cache madison kubelet` to search the Kubernetes version which is available, then specify the version when install it, like `apt-get install kubelet=1.9.4-00`.
+- Kubernetes 1.10.0 has been released recently and you may install it by default.However, for the NOTE metioned above, Kubernetes 1.9.X is recommanded for current Pouch.
+
+	 In Ubuntu, we could use `apt-cache madison kubelet` to search the Kubernetes version which is available, then specify the version when install it, like `apt-get -y install
+kubelet=1.9.4-00 kubeadm=1.9.4-00 kubectl=1.9.4-00`.
+
+	In Centos, we could use `yum search --showduplicates kubelet` to search the Kubernetes version which is available, then specify the version when install it, like `yum -y install kubelet-1.9.4-0.x86_64 kubeadm-1.9.4-0.x86_64 kubectl-1.9.4-0.x86_64`
 
 - By default Pouch will not enable the CRI. If you'd like to deploy Kubernetes with Pouch, you should start pouchd with the configuration like `pouchd --enable-cri`.
 
