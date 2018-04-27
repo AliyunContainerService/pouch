@@ -70,6 +70,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --security-opt strings         Security Options
       --sysctl strings               Sysctl options
   -t, --tty                          Allocate a pseudo-TTY
+      --ulimit value                 Set container ulimit (default [])
   -u, --user string                  UID
       --uts string                   UTS namespace to use
   -v, --volume strings               Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared"

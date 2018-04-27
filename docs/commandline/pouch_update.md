@@ -27,6 +27,7 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
 
 ```
       --blkio-weight uint16     Block IO (relative weight), between 10 and 1000, or 0 to disable
+      --cpu-period int          Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
       --cpu-share int           CPU shares (relative weight)
       --cpuset-cpus string      CPUs in cpuset
       --cpuset-mems string      MEMs in cpuset

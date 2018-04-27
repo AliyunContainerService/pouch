@@ -86,6 +86,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --security-opt strings         Security Options
       --sysctl strings               Sysctl options
   -t, --tty                          Allocate a pseudo-TTY
+      --ulimit value                 Set container ulimit (default [])
   -u, --user string                  UID
       --uts string                   UTS namespace to use
   -v, --volume strings               Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared"
