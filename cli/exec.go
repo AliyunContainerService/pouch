@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/spf13/cobra"
 )
@@ -62,7 +63,7 @@ func (e *ExecCommand) runExec(args []string) error {
 
 	createExecConfig := &types.ExecCreateConfig{
 		Cmd:          command,
-		Tty:          e.Terminal || e.Interactive,
+		Tty:          e.Terminal,
 		Detach:       e.Detach,
 		AttachStderr: !e.Detach,
 		AttachStdout: !e.Detach,
@@ -79,7 +80,7 @@ func (e *ExecCommand) runExec(args []string) error {
 	// start exec process.
 	startExecConfig := &types.ExecStartConfig{
 		Detach: e.Detach,
-		Tty:    e.Terminal && e.Interactive,
+		Tty:    e.Terminal,
 	}
 
 	conn, reader, err := apiClient.ContainerStartExec(ctx, createResp.ID, startExecConfig)
@@ -95,19 +96,26 @@ func (e *ExecCommand) runExec(args []string) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			io.Copy(os.Stdout, reader)
-		}()
-	}
-	if createExecConfig.AttachStdin {
-		in, out, err := setRawMode(true, false)
-		if err != nil {
-			return fmt.Errorf("failed to set raw mode")
-		}
-		defer func() {
-			if err := restoreMode(in, out); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to restore term mode")
+			if !e.Terminal {
+				stdcopy.StdCopy(os.Stdout, os.Stderr, reader)
+			} else {
+				io.Copy(os.Stdout, reader)
 			}
 		}()
+	}
+
+	if createExecConfig.AttachStdin {
+		if e.Terminal {
+			in, out, err := setRawMode(true, false)
+			if err != nil {
+				return fmt.Errorf("failed to set raw mode")
+			}
+			defer func() {
+				if err := restoreMode(in, out); err != nil {
+					fmt.Fprintf(os.Stderr, "failed to restore term mode")
+				}
+			}()
+		}
 
 		go func() {
 			io.Copy(conn, os.Stdin)

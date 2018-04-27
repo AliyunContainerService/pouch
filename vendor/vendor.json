@@ -494,6 +494,12 @@
 			"revisionTime": "2018-01-31T23:13:00Z"
 		},
 		{
+			"checksumSHA1": "H1rrbVmeE1z2TnkF7tSrfh+qUOY=",
+			"path": "github.com/docker/docker/pkg/stdcopy",
+			"revision": "53a58da551e961b3710bbbdfabbc162c3f5f30f6",
+			"revisionTime": "2018-01-31T23:13:00Z"
+		},
+		{
 			"checksumSHA1": "1IPGX6/BnX7QN4DjbBk0UafTB2U=",
 			"path": "github.com/docker/go-connections/nat",
 			"revision": "7395e3f8aa162843a74ed6d48e79627d9792ac55",

@@ -3,6 +3,7 @@ package ctrd
 import (
 	"context"
 	"fmt"
+	"io"
 	"runtime"
 	"syscall"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -43,7 +45,17 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		return err
 	}
 
-	io := containerio.NewIOWithTerminal(process.IO.Stdin, process.IO.Stdout, process.IO.Stderr, process.P.Terminal, process.IO.Stdin != nil)
+	var (
+		pStdout io.Writer = process.IO.Stdout
+		pStderr io.Writer = process.IO.Stderr
+	)
+
+	if !process.P.Terminal {
+		pStdout = stdcopy.NewStdWriter(pStdout, stdcopy.Stdout)
+		pStderr = stdcopy.NewStdWriter(pStderr, stdcopy.Stderr)
+	}
+
+	io := containerio.NewIOWithTerminal(process.IO.Stdin, pStdout, pStderr, process.P.Terminal, process.IO.Stdin != nil)
 
 	// create exec process in container
 	execProcess, err := pack.task.Exec(ctx, process.ExecID, process.P, io)
