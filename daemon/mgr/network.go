@@ -6,6 +6,7 @@ import (
 	"net"
 	"path"
 	"strings"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
@@ -486,9 +487,8 @@ func initNetworkLog(cfg *config.Config) {
 	}
 
 	formatter := &netlog.TextFormatter{
-		ForceColors:     true,
 		FullTimestamp:   true,
-		TimestampFormat: "2006-01-02 15:04:05.000000000",
+		TimestampFormat: time.RFC3339Nano,
 	}
 	netlog.SetFormatter(formatter)
 }
