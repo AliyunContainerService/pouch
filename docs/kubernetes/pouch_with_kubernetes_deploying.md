@@ -17,7 +17,7 @@ Updated: 2018.3.30
 
 ## Overview
 
-This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime.If it's not convenience for you,there is an easy guide for you to quickly experience this amazing combination in the domestic [Kubernetes + Pouch + Domestic](docs/kubernetes/pouch_with_kubernetes_deploying_domestic.md).
+This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime.If it's not convenience for you,there is an easy guide for you to quickly experience this amazing combination in the domestic [Kubernetes + Pouch + Domestic](../pouch_with_kubernetes_deploying_domestic.md).
 
 ![pouch_with_kubernetes](../static_files/pouch_with_kubernetes.png)
 
