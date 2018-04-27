@@ -89,6 +89,11 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 				break
 			}
 		}
+
+		// delete the finished exec process in containerd
+		if _, err := execProcess.Delete(context.TODO()); err != nil {
+			logrus.Warnf("failed to delete exec process %s: %s", process.ExecID, err)
+		}
 	}()
 
 	// start the exec process
