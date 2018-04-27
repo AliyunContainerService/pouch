@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
-	"github.com/stretchr/testify/assert"
+	digest "github.com/opencontainers/go-digest"
 )
 
 // PouchCreateSuite is the test suite for create CLI.
@@ -43,6 +43,10 @@ func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 
 	res.Assert(c, icmd.Success)
 
+	// create command should add newline at the end of result
+	digStr := strings.TrimSpace(res.Combined())
+	c.Assert(res.Combined(), check.Equals, fmt.Sprintf("%s\n", digStr))
+
 	defer DelContainerForceMultyTime(c, name)
 }
 
@@ -57,7 +61,10 @@ func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
 	res = command.PouchRun("create", "--name", name, imageID)
 
 	res.Assert(c, icmd.Success)
-	assert.Equal(c, len(res.Combined()), 64)
+
+	digHexStr := strings.TrimSpace(res.Combined())
+	_, err := digest.Parse(fmt.Sprintf("%s:%s", digest.SHA256, digHexStr))
+	c.Assert(err, check.IsNil)
 
 	DelContainerForceMultyTime(c, name)
 }
