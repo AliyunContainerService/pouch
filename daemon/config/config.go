@@ -90,7 +90,7 @@ type Config struct {
 	PluginPath string `json:"plugin,omitempty"`
 
 	// Labels is the metadata of daemon
-	Labels []string `json:"label,omitempty"`
+	Labels []string `json:"labels,omitempty"`
 
 	// EnableProfiler indicates whether pouchd setup profiler like pprof and stack dumping etc
 	EnableProfiler bool `json:"enable-profiler,omitempty"`

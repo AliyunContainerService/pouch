@@ -101,7 +101,7 @@ func setupFlags(cmd *cobra.Command) {
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
-	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
+	flagSet.StringSliceVar(&cfg.Labels, "labels", []string{}, "Set metadata for Pouch daemon")
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 }
