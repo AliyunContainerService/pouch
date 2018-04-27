@@ -100,15 +100,17 @@ func (rc *RunCommand) runRun(args []string) error {
 	wait := make(chan struct{})
 
 	if rc.attach || rc.stdin {
-		in, out, err := setRawMode(rc.stdin, false)
-		if err != nil {
-			return fmt.Errorf("failed to set raw mode")
-		}
-		defer func() {
-			if err := restoreMode(in, out); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to restore term mode")
+		if rc.tty {
+			in, out, err := setRawMode(rc.stdin, false)
+			if err != nil {
+				return fmt.Errorf("failed to set raw mode")
 			}
-		}()
+			defer func() {
+				if err := restoreMode(in, out); err != nil {
+					fmt.Fprintf(os.Stderr, "failed to restore term mode")
+				}
+			}()
+		}
 
 		conn, br, err := apiClient.ContainerAttach(ctx, containerName, rc.stdin)
 		if err != nil {
