@@ -68,7 +68,7 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	if len(result.Warnings) != 0 {
 		fmt.Printf("WARNING: %s \n", strings.Join(result.Warnings, "\n"))
 	}
-	fmt.Printf(result.ID)
+	fmt.Println(result.ID)
 	return nil
 }
 
