@@ -75,13 +75,6 @@ type AttachConfig struct {
 	CriLogFile *os.File
 }
 
-// ContainerRemoveOption wraps the container remove interface params.
-type ContainerRemoveOption struct {
-	Force  bool
-	Volume bool
-	Link   bool
-}
-
 // ContainerListOption wraps the container list interface params.
 type ContainerListOption struct {
 	All bool

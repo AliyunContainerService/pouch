@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +20,8 @@ be released.
 // RmCommand is used to implement 'rm' command.
 type RmCommand struct {
 	baseCommand
-	force bool
+	force         bool
+	removeVolumes bool
 }
 
 // Init initializes RmCommand command.
@@ -39,7 +42,10 @@ func (r *RmCommand) Init(c *Cli) {
 
 // addFlags adds flags for specific command.
 func (r *RmCommand) addFlags() {
-	r.cmd.Flags().BoolVarP(&r.force, "force", "f", false, "if the container is running, force to remove it")
+	flagSet := r.cmd.Flags()
+
+	flagSet.BoolVarP(&r.force, "force", "f", false, "if the container is running, force to remove it")
+	flagSet.BoolVarP(&r.removeVolumes, "volumes", "v", false, "remove container's volumes that create by the container")
 }
 
 // runRm is the entry of RmCommand command.
@@ -47,8 +53,13 @@ func (r *RmCommand) runRm(args []string) error {
 	ctx := context.Background()
 	apiClient := r.cli.Client()
 
+	options := &types.ContainerRemoveOptions{
+		Force:   r.force,
+		Volumes: r.removeVolumes,
+	}
+
 	for _, name := range args {
-		if err := apiClient.ContainerRemove(ctx, name, r.force); err != nil {
+		if err := apiClient.ContainerRemove(ctx, name, options); err != nil {
 			return fmt.Errorf("failed to remove container: %v", err)
 		}
 		fmt.Printf("%s\n", name)

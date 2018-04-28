@@ -3376,6 +3376,17 @@ definitions:
       Width:
         type: "integer"
 
+  ContainerRemoveOptions:
+    description: "options of remove container"
+    type: "object"
+    properties:
+      Force:
+        type: "boolean"
+      Volumes:
+        type: "boolean"
+      Link:
+        type: "boolean"
+
 parameters:
   id:
     name: id

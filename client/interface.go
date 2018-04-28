@@ -23,7 +23,7 @@ type ContainerAPIClient interface {
 	ContainerCreate(ctx context.Context, config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error)
 	ContainerStart(ctx context.Context, name, detachKeys string) error
 	ContainerStop(ctx context.Context, name, timeout string) error
-	ContainerRemove(ctx context.Context, name string, force bool) error
+	ContainerRemove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error
 	ContainerList(ctx context.Context, all bool) ([]*types.Container, error)
 	ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error)
 	ContainerCreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -145,7 +147,7 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 
 	if rc.rm {
-		if err := apiClient.ContainerRemove(ctx, containerName, true); err != nil {
+		if err := apiClient.ContainerRemove(ctx, containerName, &types.ContainerRemoveOptions{Force: true}); err != nil {
 			return fmt.Errorf("failed to remove container %s: %v", containerName, err)
 		}
 	}

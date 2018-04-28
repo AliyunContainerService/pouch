@@ -28,6 +28,9 @@ var (
 
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
+
+	// ErrUsingbyContainers represents that object is useing by containers
+	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
 )
 
 const (
@@ -39,6 +42,7 @@ const (
 	codeTimeout
 	codeLockfailed
 	codeNotImplemented
+	codeInUse
 )
 
 type errorType struct {
@@ -68,6 +72,11 @@ func IsInvalidParam(err error) bool {
 // IsTimeout checks the error is time out or not.
 func IsTimeout(err error) bool {
 	return checkError(err, codeTimeout)
+}
+
+// IsInUse checks the error is using by others or not.
+func IsInUse(err error) bool {
+	return checkError(err, codeInUse)
 }
 
 func checkError(err error, code int) bool {

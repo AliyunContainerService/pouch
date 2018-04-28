@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
+
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +37,7 @@ func PruneAllContainers(apiClient client.ContainerAPIClient) error {
 
 	for _, ctr := range containers {
 		// force to remove the containers
-		if err := apiClient.ContainerRemove(ctx, ctr.ID, true); err != nil {
+		if err := apiClient.ContainerRemove(ctx, ctr.ID, &types.ContainerRemoveOptions{Force: true}); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("fail to remove container (%s)", ctr.ID))
 		}
 	}
