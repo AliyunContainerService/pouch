@@ -13,6 +13,7 @@ type Option struct {
 	id            string
 	rootDir       string
 	stdin         bool
+	muxDisabled   bool
 	backends      map[string]struct{}
 	hijack        http.Hijacker
 	hijackUpgrade bool
@@ -51,6 +52,13 @@ func WithRootDir(dir string) func(*Option) {
 func WithStdin(stdin bool) func(*Option) {
 	return func(opt *Option) {
 		opt.stdin = stdin
+	}
+}
+
+// WithMuxDisabled specified whether mux stdout & stderr of container IO.
+func WithMuxDisabled(muxDisabled bool) func(*Option) {
+	return func(opt *Option) {
+		opt.muxDisabled = muxDisabled
 	}
 }
 

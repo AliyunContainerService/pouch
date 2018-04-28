@@ -51,7 +51,8 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 
 	startConfig := &apitypes.ExecStartConfig{}
 	attachConfig := &AttachConfig{
-		Streams: streams,
+		Streams:     streams,
+		MuxDisabled: true,
 	}
 
 	err = s.containerMgr.StartExec(ctx, execid, startConfig, attachConfig)

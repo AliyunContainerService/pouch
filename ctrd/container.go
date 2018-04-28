@@ -50,7 +50,7 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 		pStderr io.Writer = process.IO.Stderr
 	)
 
-	if !process.P.Terminal {
+	if !process.P.Terminal && !process.IO.MuxDisabled {
 		pStdout = stdcopy.NewStdWriter(pStdout, stdcopy.Stdout)
 		pStderr = stdcopy.NewStdWriter(pStderr, stdcopy.Stderr)
 	}
