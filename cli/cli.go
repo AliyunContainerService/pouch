@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
+	"time"
 
 	"github.com/alibaba/pouch/client"
 
@@ -20,8 +21,9 @@ var pouchDescription = "pouch is a client side tool pouch to interact with daemo
 
 // Option uses to define the global options.
 type Option struct {
-	host string
-	TLS  client.TLSConfig
+	host  string
+	Debug bool
+	TLS   client.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request
@@ -51,6 +53,7 @@ func NewCli() *Cli {
 func (c *Cli) SetFlags() *Cli {
 	flags := c.rootCmd.PersistentFlags()
 	flags.StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify connecting address of Pouch CLI")
+	flags.BoolVarP(&c.Option.Debug, "debug", "D", false, "Switch client log level to DEBUG mode")
 	flags.StringVar(&c.Option.TLS.Key, "tlskey", "", "Specify key file of TLS")
 	flags.StringVar(&c.Option.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
 	flags.StringVar(&c.Option.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
@@ -66,6 +69,20 @@ func (c *Cli) NewAPIClient() {
 	}
 
 	c.APIClient = client
+}
+
+// InitLog initializes log Level and log format of client.
+func (c *Cli) InitLog() {
+	if c.Option.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.Infof("start client at debug level")
+	}
+
+	formatter := &logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339Nano,
+	}
+	logrus.SetFormatter(formatter)
 }
 
 // Client returns API client torwards daemon.
@@ -91,6 +108,7 @@ func (c *Cli) AddCommand(parent, child Command) {
 	childCmd.DisableFlagsInUseLine = true
 
 	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
+		c.InitLog()
 		c.NewAPIClient()
 	}
 
