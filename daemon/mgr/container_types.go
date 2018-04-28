@@ -61,6 +61,12 @@ type AttachConfig struct {
 	Stdout bool
 	Stderr bool
 
+	// For IO backend like http, we need to mux stdout & stderr
+	// if terminal is disabled.
+	// But for other IO backend, it is not necessary.
+	// So we should make it configurable.
+	MuxDisabled bool
+
 	// Attach using http.
 	Hijack  http.Hijacker
 	Upgrade bool

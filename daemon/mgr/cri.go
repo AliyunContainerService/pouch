@@ -709,9 +709,10 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 	var output bytes.Buffer
 	startConfig := &apitypes.ExecStartConfig{}
 	attachConfig := &AttachConfig{
-		Stdout:    true,
-		Stderr:    true,
-		MemBuffer: &output,
+		Stdout:      true,
+		Stderr:      true,
+		MemBuffer:   &output,
+		MuxDisabled: true,
 	}
 
 	err = c.ContainerMgr.StartExec(ctx, execid, startConfig, attachConfig)

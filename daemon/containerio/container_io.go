@@ -37,6 +37,12 @@ type IO struct {
 	Stdout *ContainerIO
 	Stderr *ContainerIO
 	Stdin  *ContainerIO
+
+	// For IO backend like http, we need to mux stdout & stderr
+	// if terminal is disabled.
+	// But for other IO backend, it is not necessary.
+	// So we should make it configurable.
+	MuxDisabled bool
 }
 
 // NewIO creates the container's ios of stdout, stderr, stdin.
@@ -44,8 +50,9 @@ func NewIO(opt *Option) *IO {
 	backends := createBackend(opt)
 
 	i := &IO{
-		Stdout: create(opt, stdout, backends),
-		Stderr: create(opt, stderr, backends),
+		Stdout:      create(opt, stdout, backends),
+		Stderr:      create(opt, stderr, backends),
+		MuxDisabled: opt.muxDisabled,
 	}
 
 	if opt.stdin {

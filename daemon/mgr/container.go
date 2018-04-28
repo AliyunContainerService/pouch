@@ -1613,6 +1613,7 @@ func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*conta
 	options := []func(*containerio.Option){
 		containerio.WithID(id),
 		containerio.WithStdin(attach.Stdin),
+		containerio.WithMuxDisabled(attach.MuxDisabled),
 	}
 
 	if attach != nil {
