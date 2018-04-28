@@ -55,7 +55,7 @@ func createSpec(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper)
 		return err
 	}
 
-	// platform-specifed spec setting
+	// platform-specified spec setting
 	// TODO: support window and Solaris platform
 	if err := populatePlatform(ctx, c, specWrapper); err != nil {
 		return err
