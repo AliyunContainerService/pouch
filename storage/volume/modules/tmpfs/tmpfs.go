@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	dataDir = "/etc/docker/plugins/tmpfs"
+	dataDir = "/mnt/tmpfs"
 )
 
 func init() {

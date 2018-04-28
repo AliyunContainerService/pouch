@@ -44,7 +44,7 @@ type VolumeManager struct {
 
 // NewVolumeManager creates a brand new volume manager.
 func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
-	// init voluem config
+	// init volume config
 	cfg.RemoveVolume = true
 	cfg.DefaultBackend = "local"
 
