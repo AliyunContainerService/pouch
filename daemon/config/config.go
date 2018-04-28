@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -158,9 +159,47 @@ func (cfg *Config) MergeConfigurations(config *Config, flagSet *pflag.FlagSet) e
 	}
 
 	// merge configurations from command line flags and config file
-	err = mergeConfigurations(fileConfig, cfg)
+	err = mergeConfigurations(fileConfig, cfg.delValue(flagSet, fileFlags))
 	return err
 
+}
+
+// delValue deleles value in config, since we do not do conflict check for slice
+// type flag, note that we should remove default flag value in merging, cause
+// this is not reasonable if the flag is not passed. Just set the flag value to
+// null, when same flag has been set in config file.
+func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) *Config {
+	flagSet.VisitAll(func(f *pflag.Flag) {
+		// if flag type not slice or array , then skip
+		if !strings.Contains(f.Value.Type(), "Slice") && !strings.Contains(f.Value.Type(), "Array") {
+			return
+		}
+
+		// if flag is set in command line, then skip
+		if f.Changed {
+			return
+		}
+
+		// if flag is not set in config file, then skip
+		if _, exist := fileFlags[f.Name]; !exist {
+			return
+		}
+
+		// set value as null in config
+		r := reflect.ValueOf(cfg).Elem()
+		rtype := r.Type()
+		for i := 0; i < r.NumField(); i++ {
+			if rtype.Field(i).Type.Kind() != reflect.Slice {
+				continue
+			}
+			if strings.Contains(rtype.Field(i).Tag.Get("json"), f.Name) {
+				r.Field(i).Set(reflect.MakeSlice(reflect.TypeOf([]string{}), 0, 0))
+			}
+		}
+
+	})
+
+	return cfg
 }
 
 // iterateConfig resolves key-value from config file iteratly.
