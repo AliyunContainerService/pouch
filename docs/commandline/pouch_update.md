@@ -37,6 +37,7 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
   -m, --memory string           Container memory limit
       --memory-swap string      Container swap limit
       --memory-swappiness int   Container memory swappiness [0, 100] (default -1)
+      --quota string            Update disk quota for container
       --restart string          Restart policy to apply when container exits
 ```
 
