@@ -63,6 +63,7 @@ foo    18592900006405ee64788bd108ef1de3d24dc3add73725891f4787d0f8e036f5   Up 2 m
 ### Options inherited from parent commands
 
 ```
+  -D, --debug              Switch client log level to DEBUG mode
   -H, --host string        Specify connecting address of Pouch CLI (default "unix:///var/run/pouchd.sock")
       --tlscacert string   Specify CA file of TLS
       --tlscert string     Specify cert file of TLS

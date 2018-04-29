@@ -44,6 +44,7 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
 ### Options inherited from parent commands
 
 ```
+  -D, --debug              Switch client log level to DEBUG mode
   -H, --host string        Specify connecting address of Pouch CLI (default "unix:///var/run/pouchd.sock")
       --tlscacert string   Specify CA file of TLS
       --tlscert string     Specify cert file of TLS
