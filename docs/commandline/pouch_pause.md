@@ -31,6 +31,7 @@ foo      71b9c1   Paused    docker.io/library/busybox:latest   runc
 ### Options inherited from parent commands
 
 ```
+  -D, --debug              Switch client log level to DEBUG mode
   -H, --host string        Specify connecting address of Pouch CLI (default "unix:///var/run/pouchd.sock")
       --tlscacert string   Specify CA file of TLS
       --tlscert string     Specify cert file of TLS

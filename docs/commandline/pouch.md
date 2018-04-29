@@ -9,6 +9,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 ### Options
 
 ```
+  -D, --debug              Switch client log level to DEBUG mode
   -h, --help               help for pouch
   -H, --host string        Specify connecting address of Pouch CLI (default "unix:///var/run/pouchd.sock")
       --tlscacert string   Specify CA file of TLS
