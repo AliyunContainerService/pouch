@@ -241,7 +241,7 @@ func TestDeDuplicate(t *testing.T) {
 			want: []string{"asdfgh01", "asdfgh02", "asdfgh03", "asdfgh04"},
 		},
 		{
-			name: "case with no duplicated",
+			name: "case with two duplicated",
 			args: args{
 				input: []string{"asdfgh01", "asdfgh02", "asdfgh01"},
 			},
