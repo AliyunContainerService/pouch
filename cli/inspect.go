@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cli/inspect"
 
 	"github.com/spf13/cobra"
@@ -45,7 +46,11 @@ func (p *InspectCommand) runInspect(args []string) error {
 	apiClient := p.cli.Client()
 
 	getRefFunc := func(ref string) (interface{}, error) {
-		return apiClient.ContainerGet(ctx, ref)
+		res, err := apiClient.ContainerGet(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		return convContainerJSONToInspectContainerJSON(res), nil
 	}
 
 	return inspect.Inspect(os.Stdout, args, p.format, getRefFunc)
@@ -84,4 +89,39 @@ func inspectExample() string {
 	  "HostRootPath": ""
 	}
 ]`
+}
+
+type inspectContainerJSON struct {
+	*types.ContainerJSON
+
+	Config *inspectContainerConfig `json:"Config,omitempty"`
+}
+
+type inspectContainerConfig struct {
+	*types.ContainerConfig
+
+	QuotaID string `json:"QuotaId,omitempty"`
+}
+
+// convContainerJSONToInspectContainerJSON converts ContainerJSON into inspectContainerJSON.
+//
+// NOTE: It is used to align with existing system and we should remove it after
+// upgrade existing system.
+func convContainerJSONToInspectContainerJSON(from *types.ContainerJSON) *inspectContainerJSON {
+	iCfg := &inspectContainerConfig{
+		ContainerConfig: from.Config,
+		QuotaID:         "",
+	}
+
+	if iCfg.ContainerConfig != nil {
+		iCfg.QuotaID = iCfg.ContainerConfig.QuotaID
+
+		// NOTE: make the QuotaID empty and use QuotaId
+		iCfg.ContainerConfig.QuotaID = ""
+	}
+
+	return &inspectContainerJSON{
+		ContainerJSON: from,
+		Config:        iCfg,
+	}
 }
