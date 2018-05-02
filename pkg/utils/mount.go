@@ -39,7 +39,7 @@ func MountVolume(mountCmd []string, devicePath, mountPath string, timeout time.D
 
 // IsMountpoint is used to check the directory is mountpoint or not.
 func IsMountpoint(dir string) bool {
-	exit, _, _, err := exec.Run(10*time.Second, "/usr/bin/mountpoint", dir)
+	exit, _, _, err := exec.Run(10*time.Second, "mountpoint", dir)
 	if err != nil {
 		return false
 	} else if exit != 0 {
