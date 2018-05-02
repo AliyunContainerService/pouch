@@ -52,22 +52,24 @@ func setupHook(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper) 
 
 	// setup diskquota hook, if rootFSQuota not set skip this part.
 	rootFSQuota := quota.GetDefaultQuota(c.Config.DiskQuota)
-	if rootFSQuota != "" {
-		qid := "0"
-		if c.Config.QuotaID != "" {
-			qid = c.Config.QuotaID
-		}
-
-		target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
-		if err != nil {
-			return err
-		}
-
-		s.Hooks.Prestart = append(s.Hooks.Prestart, specs.Hook{
-			Path: target,
-			Args: []string{"set-diskquota", c.BaseFS, rootFSQuota, qid},
-		})
+	if rootFSQuota == "" {
+		return nil
 	}
+
+	qid := "0"
+	if c.Config.QuotaID != "" {
+		qid = c.Config.QuotaID
+	}
+
+	target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
+	if err != nil {
+		return err
+	}
+
+	s.Hooks.Prestart = append(s.Hooks.Prestart, specs.Hook{
+		Path: target,
+		Args: []string{"set-diskquota", c.BaseFS, rootFSQuota, qid},
+	})
 
 	return nil
 }
