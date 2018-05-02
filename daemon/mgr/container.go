@@ -886,13 +886,14 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		return errors.Wrapf(nil, fmt.Sprintf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID()))
 	}
 
+	// init Container Labels
+	if c.meta.Config.Labels == nil {
+		c.meta.Config.Labels = map[string]string{}
+	}
+
 	// compatibility with alidocker, UpdateConfig.Label is []string
 	// but ContainerConfig.Labels is map[string]string
 	if len(config.Label) != 0 {
-		if c.meta.Config.Labels == nil {
-			c.meta.Config.Labels = map[string]string{}
-		}
-
 		// support remove some labels
 		newLabels, err := opts.ParseLabels(config.Label)
 		if err != nil {
@@ -905,6 +906,15 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 			} else {
 				c.meta.Config.Labels[k] = v
 			}
+		}
+	}
+
+	// TODO(ziren): we should use meta.Config.DiskQuota to record container diskquota
+	// compatibility with alidocker, when set DiskQuota for container
+	// add a DiskQuota label
+	if config.DiskQuota != "" {
+		if _, ok := c.meta.Config.Labels["DiskQuota"]; ok {
+			c.meta.Config.Labels["DiskQuota"] = config.DiskQuota
 		}
 	}
 
