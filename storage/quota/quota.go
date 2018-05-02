@@ -164,12 +164,13 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) error {
 			return fmt.Errorf("failed to set subtree: %v", err)
 		}
 
-		err = SetDiskQuota(dir, size, quotaID)
-		if err != nil {
+		if err := SetDiskQuota(dir, size, quotaID); err != nil {
 			return fmt.Errorf("failed to set disk quota: %v", err)
 		}
 
-		return setQuotaForDir(dir, quotaID)
+		if err := setQuotaForDir(dir, quotaID); err != nil {
+			return fmt.Errorf("failed to set dir quota: %v", err)
+		}
 	}
 
 	return nil
