@@ -26,7 +26,6 @@ type Process struct {
 	running   bool
 	pid       int
 	cmd       *exec.Cmd
-	stop      chan struct{}
 	file      *os.File
 	forceStop bool
 }
@@ -46,17 +45,14 @@ func (p *Process) Stop() error {
 		return errors.Wrap(err, "kill process")
 	}
 
-	// must unlock before wait the stop channel, avoid to lock dead.
+	// unlock process
 	p.Unlock()
-	<-p.stop
 	return nil
 }
 
 // Start start process.
 func (p *Process) Start() error {
 	// initialize command.
-	p.stop = make(chan struct{})
-
 	cmd := exec.Command(p.Path, p.Args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -101,7 +97,6 @@ func (p *Process) Start() error {
 		if p.file != nil {
 			p.file.Close()
 		}
-		close(p.stop)
 	}(p)
 
 	return nil
