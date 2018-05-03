@@ -11,7 +11,6 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
-	"github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // APIClient defines common methods of containerd api client
@@ -56,14 +55,14 @@ type ContainerAPIClient interface {
 
 // ImageAPIClient provides access to containerd image features.
 type ImageAPIClient interface {
-	// GetOciImage returns the OCI Image.
-	GetOciImage(ctx context.Context, ref string) (v1.Image, error)
-	// RemoveImage deletes an image.
+	// GetImage returns containerd.Image by the given reference.
+	GetImage(ctx context.Context, ref string) (containerd.Image, error)
+	// ListImages returns the list of containerd.Image filtered by the given conditions.
+	ListImages(ctx context.Context, filter ...string) ([]containerd.Image, error)
+	// PullImage pulls image by the given reference.
+	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
+	// RemoveImage removes the image by the given reference.
 	RemoveImage(ctx context.Context, ref string) error
-	// ListImages lists all images.
-	ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error)
-	// PullImage downloads an image from the remote repository.
-	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (types.ImageInfo, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features

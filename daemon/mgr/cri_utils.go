@@ -12,7 +12,6 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/go-openapi/strfmt"
 
@@ -723,22 +722,10 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 
 // ensureSandboxImageExists pulls the image when it's not present.
 func (c *CriManager) ensureSandboxImageExists(ctx context.Context, imageRef string) error {
-	_, err := c.ImageMgr.GetImage(ctx, imageRef)
+	_, _, _, err := c.ImageMgr.CheckReference(ctx, imageRef)
 	// TODO: maybe we should distinguish NotFound error with others.
 	if err == nil {
 		return nil
-	}
-
-	refNamed, err := reference.ParseNamedReference(imageRef)
-	if err != nil {
-		return err
-	}
-
-	_, ok := refNamed.(reference.Digested)
-	if !ok {
-		// If the imageRef is not a digest.
-		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
-		imageRef = refTagged.String()
 	}
 
 	err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))

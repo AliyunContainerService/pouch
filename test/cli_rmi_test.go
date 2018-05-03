@@ -64,6 +64,28 @@ func (suite *PouchRmiSuite) TestRmiByImageID(c *check.C) {
 	}
 }
 
+// TestRmiByImageIDWithTwoPrimaryReferences tests "pouch rmi {ID}" work.
+func (suite *PouchRmiSuite) TestRmiByImageIDWithTwoPrimaryReferences(c *check.C) {
+	var (
+		repoTag    = environment.BusyboxRepo + ":" + "1.25"
+		repoDigest = environment.BusyboxRepo + "@" + "sha256:29f5d56d12684887bdfa50dcd29fc31eea4aaf4ad3bec43daf19026a7ce69912"
+	)
+
+	command.PouchRun("pull", repoTag).Assert(c, icmd.Success)
+	command.PouchRun("pull", repoDigest).Assert(c, icmd.Success)
+
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[repoTag][0]
+
+	command.PouchRun("rmi", imageID).Assert(c, icmd.Success)
+
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, repoTag) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, repoTag)
+	}
+}
+
 // TestRmiInWrongWay run rmi in wrong ways.
 func (suite *PouchRmiSuite) TestRmiInWrongWay(c *check.C) {
 	for _, tc := range []struct {

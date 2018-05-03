@@ -29,6 +29,9 @@ var (
 	// BusyboxTag the tag used for busybox image
 	BusyboxTag = "1.28"
 
+	// BusyboxDigest the digest used for busybox image
+	BusyboxDigest = "sha256:58ac43b2cc92c687a32c8be6278e50a063579655fe3090125dcb2af0ff9e1a64"
+
 	// HelloworldRepo the repository of hello-world image
 	HelloworldRepo = "registry.hub.docker.com/library/hello-world"
 

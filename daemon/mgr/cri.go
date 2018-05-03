@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -13,6 +14,7 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -21,7 +23,6 @@ import (
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -848,18 +849,6 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	// TODO: authentication.
 	imageRef := r.GetImage().GetImage()
 
-	refNamed, err := reference.ParseNamedReference(imageRef)
-	if err != nil {
-		return nil, err
-	}
-
-	_, ok := refNamed.(reference.Digested)
-	if !ok {
-		// If the imageRef is not a digest.
-		refTagged := reference.WithDefaultTagIfMissing(refNamed).(reference.Tagged)
-		imageRef = refTagged.String()
-	}
-
 	authConfig := &apitypes.AuthConfig{}
 	if r.Auth != nil {
 		authConfig.Auth = r.Auth.Auth
@@ -870,8 +859,7 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 		authConfig.RegistryToken = r.Auth.RegistryToken
 	}
 
-	err = c.ImageMgr.PullImage(ctx, imageRef, authConfig, bytes.NewBuffer([]byte{}))
-	if err != nil {
+	if err := c.ImageMgr.PullImage(ctx, imageRef, authConfig, bytes.NewBuffer([]byte{})); err != nil {
 		return nil, err
 	}
 
@@ -885,20 +873,16 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 
 // RemoveImage removes the image.
 func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
-	imageRef := r.GetImage().GetImage()
+	imageRef := strings.TrimPrefix(r.GetImage().GetImage(), "sha256:")
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(imageRef, "sha256:"))
-	if err != nil {
-		// TODO: separate ErrImageNotFound with others.
-		// Now we just return empty if the error occurred.
-		return &runtime.RemoveImageResponse{}, nil
-	}
-
-	err = c.ImageMgr.RemoveImage(ctx, imageInfo, strings.TrimPrefix(imageRef, "sha256:"), &ImageRemoveOption{})
-	if err != nil {
+	if err := c.ImageMgr.RemoveImage(ctx, imageRef, false); err != nil {
+		if errtypes.IsNotfound(err) {
+			// TODO: separate ErrImageNotFound with others.
+			// Now we just return empty if the error occurred.
+			return &runtime.RemoveImageResponse{}, nil
+		}
 		return nil, err
 	}
-
 	return &runtime.RemoveImageResponse{}, nil
 }
 

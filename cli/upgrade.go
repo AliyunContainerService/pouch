@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/spf13/cobra"
@@ -61,16 +61,23 @@ func (ug *UpgradeCommand) runUpgrade(args []string) error {
 
 	// Check whether the image has been pulled
 	_, err = apiClient.ImageInspect(ctx, config.Image)
-	if err != nil && strings.Contains(err.Error(), "not found") {
+	if err != nil && errtypes.IsNotfound(err) {
 		fmt.Printf("Image %s not found, try to pull it...\n", config.Image)
 
-		namedRef, err := reference.ParseNamedReference(args[0])
+		namedRef, err := reference.Parse(config.Image)
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %v", err)
 		}
-		taggedRef := reference.WithDefaultTagIfMissing(namedRef).(reference.Tagged)
+		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
-		responseBody, err := apiClient.ImagePull(ctx, taggedRef.Name(), taggedRef.Tag(), fetchRegistryAuth(taggedRef.Name()))
+		var name, tag string
+		if reference.IsNameTagged(namedRef) {
+			name, tag = namedRef.Name(), namedRef.(reference.Tagged).Tag()
+		} else {
+			name = namedRef.String()
+		}
+
+		responseBody, err := apiClient.ImagePull(ctx, name, tag, fetchRegistryAuth(namedRef.Name()))
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %v", err)
 		}
