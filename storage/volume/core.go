@@ -393,7 +393,9 @@ func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.
 		v.Spec.Extra[key] = value
 	}
 
-	if a, ok := dv.(driver.AttachDetach); ok {
+	// if volume has referance, skip to detach volume.
+	ref := v.Option(types.OptionRef)
+	if a, ok := dv.(driver.AttachDetach); ok && ref == "" {
 		if !dv.StoreMode(ctx).IsLocal() {
 			if s, err = c.getStorage(v.StorageID()); err != nil {
 				return nil, err

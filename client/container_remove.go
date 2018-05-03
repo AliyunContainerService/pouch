@@ -3,13 +3,18 @@ package client
 import (
 	"context"
 	"net/url"
+
+	"github.com/alibaba/pouch/apis/types"
 )
 
 // ContainerRemove removes a container.
-func (client *APIClient) ContainerRemove(ctx context.Context, name string, force bool) error {
+func (client *APIClient) ContainerRemove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error {
 	q := url.Values{}
-	if force {
+	if options.Force {
 		q.Set("force", "true")
+	}
+	if options.Volumes {
+		q.Set("v", "true")
 	}
 
 	resp, err := client.delete(ctx, "/containers/"+name, q, nil)

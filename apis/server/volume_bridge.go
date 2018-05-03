@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/randomid"
+	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -35,7 +35,7 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 	}
 
 	if driver == "" {
-		driver = "local"
+		driver = volumetypes.DefaultBackend
 	}
 
 	if err := s.VolumeMgr.Create(ctx, name, driver, options, labels); err != nil {
@@ -99,16 +99,6 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 
 func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
-
-	volume, err := s.VolumeMgr.Get(ctx, name)
-	if err != nil {
-		return err
-	}
-
-	ref := volume.Option("ref")
-	if ref != "" {
-		return fmt.Errorf("failed to remove volume: %s, using by: %s", name, ref)
-	}
 
 	if err := s.VolumeMgr.Remove(ctx, name); err != nil {
 		return err

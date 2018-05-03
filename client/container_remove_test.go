@@ -8,13 +8,15 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/alibaba/pouch/apis/types"
 )
 
 func TestContainerRemoveError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerRemove(context.Background(), "nothing", true)
+	err := client.ContainerRemove(context.Background(), "nothing", &types.ContainerRemoveOptions{Force: true})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -24,7 +26,7 @@ func TestContainerRemoveNotFoundError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusNotFound, "Not Found")),
 	}
-	err := client.ContainerRemove(context.Background(), "no contaienr", true)
+	err := client.ContainerRemove(context.Background(), "no container", &types.ContainerRemoveOptions{Force: true})
 	if err == nil || !strings.Contains(err.Error(), "Not Found") {
 		t.Fatalf("expected a Not Found Error, got %v", err)
 	}
@@ -49,7 +51,7 @@ func TestContainerRemove(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: httpClient,
 	}
-	err := client.ContainerRemove(context.Background(), "container_id", true)
+	err := client.ContainerRemove(context.Background(), "container_id", &types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		t.Fatal(err)
 	}

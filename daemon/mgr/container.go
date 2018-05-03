@@ -28,6 +28,7 @@ import (
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
+	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
@@ -77,7 +78,7 @@ type ContainerMgr interface {
 	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
 
 	// Remove removes a container, it may be running or stopped and so on.
-	Remove(ctx context.Context, name string, option *ContainerRemoveOption) error
+	Remove(ctx context.Context, name string, option *types.ContainerRemoveOptions) error
 
 	// Rename renames a container.
 	Rename(ctx context.Context, oldName string, newName string) error
@@ -209,7 +210,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *ContainerRemoveOption) error {
+func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error {
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
@@ -217,12 +218,12 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !option.Force {
+	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !options.Force {
 		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID())
 	}
 
 	// if the container is running, force to stop it.
-	if c.IsRunning() && option.Force {
+	if c.IsRunning() && options.Force {
 		msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout())
 		if err != nil && !errtypes.IsNotfound(err) {
 			return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
@@ -232,7 +233,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, option *Co
 		}
 	}
 
-	if err := mgr.detachVolumes(ctx, c.meta); err != nil {
+	if err := mgr.detachVolumes(ctx, c.meta, options.Volumes); err != nil {
 		logrus.Errorf("failed to detach volume: %v", err)
 	}
 
@@ -1810,32 +1811,22 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	return nil
 }
 
-func (mgr *ContainerManager) bindVolume(ctx context.Context, name string, meta *ContainerMeta) (string, string, error) {
-	id := meta.ID
-
-	ref := ""
-	driver := "local"
+func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, meta *ContainerMeta) (string, string, error) {
+	driver := volumetypes.DefaultBackend
 	v, err := mgr.VolumeMgr.Get(ctx, name)
 	if err != nil || v == nil {
 		opts := map[string]string{
-			"backend": "local",
+			"backend": driver,
 		}
 		if err := mgr.VolumeMgr.Create(ctx, name, meta.HostConfig.VolumeDriver, opts, nil); err != nil {
 			logrus.Errorf("failed to create volume: %s, err: %v", name, err)
 			return "", "", errors.Wrap(err, "failed to create volume")
 		}
 	} else {
-		ref = v.Option("ref")
 		driver = v.Driver()
 	}
 
-	option := map[string]string{}
-	if ref == "" {
-		option["ref"] = id
-	} else {
-		option["ref"] = ref + "," + id
-	}
-	if _, err := mgr.VolumeMgr.Attach(ctx, name, option); err != nil {
+	if _, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: meta.ID}); err != nil {
 		logrus.Errorf("failed to attach volume: %s, err: %v", name, err)
 		return "", "", errors.Wrap(err, "failed to attach volume")
 	}
@@ -1865,7 +1856,7 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, meta *Cont
 
 	defer func() {
 		if err != nil {
-			if err := mgr.detachVolumes(ctx, meta); err != nil {
+			if err := mgr.detachVolumes(ctx, meta, false); err != nil {
 				logrus.Errorf("failed to detach volume, err: %v", err)
 			}
 		}
@@ -1917,10 +1908,12 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 		case 2:
 			mp.Source = parts[0]
 			mp.Destination = parts[1]
+			mp.Named = true
 		case 3:
 			mp.Source = parts[0]
 			mp.Destination = parts[1]
 			mode = parts[2]
+			mp.Named = true
 		default:
 			return errors.Errorf("unknown bind: %s", b)
 		}
@@ -1950,7 +1943,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 			name := mp.Source
 			if _, exist := volumeSet[name]; !exist {
 				mp.Name = name
-				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, name, meta)
+				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, name, meta)
 				if err != nil {
 					logrus.Errorf("failed to bind volume: %s, err: %v", name, err)
 					return errors.Wrap(err, "failed to bind volume")
@@ -2013,10 +2006,9 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, meta 
 
 		mp := new(types.MountPoint)
 		mp.Name = name
-		mp.Named = true
 		mp.Destination = dest
 
-		mp.Source, mp.Driver, err = mgr.bindVolume(ctx, mp.Name, meta)
+		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, meta)
 		if err != nil {
 			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
@@ -2061,10 +2053,9 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 
 		mp := new(types.MountPoint)
 		mp.Name = name
-		mp.Named = true
 		mp.Destination = dest
 
-		mp.Source, mp.Driver, err = mgr.bindVolume(ctx, mp.Name, meta)
+		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, meta)
 		if err != nil {
 			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
@@ -2117,7 +2108,7 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, me
 
 			if _, exist := volumeSet[oldMountPoint.Name]; len(oldMountPoint.Name) > 0 && !exist {
 				mp.Name = oldMountPoint.Name
-				mp.Source, mp.Driver, err = mgr.bindVolume(ctx, oldMountPoint.Name, meta)
+				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, oldMountPoint.Name, meta)
 				if err != nil {
 					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
 					return errors.Wrap(err, "failed to bind volume")
@@ -2246,42 +2237,23 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 	return nil
 }
 
-func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *ContainerMeta) error {
+func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *ContainerMeta, remove bool) error {
 	for _, mount := range c.Mounts {
 		name := mount.Name
 		if name == "" {
 			continue
 		}
 
-		v, err := mgr.VolumeMgr.Get(ctx, name)
+		_, err := mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID})
 		if err != nil {
-			logrus.Errorf("failed to get volume: %s", name)
-			return err
+			logrus.Warnf("failed to detach volume: %s, err: %v", name, err)
 		}
 
-		option := map[string]string{}
-		ref := v.Option("ref")
-		if ref == "" {
-			continue
-		}
-		if !strings.Contains(ref, c.ID) {
-			continue
-		}
-
-		ids := strings.Split(ref, ",")
-		for i, id := range ids {
-			if id == c.ID {
-				ids = append(ids[:i], ids[i+1:]...)
-				break
+		if remove && !mount.Named {
+			if err := mgr.VolumeMgr.Remove(ctx, name); err != nil && !errtypes.IsInUse(err) {
+				logrus.Warnf("failed to remove volume: %s when remove container", name)
 			}
 		}
-		if len(ids) > 0 {
-			option["ref"] = strings.Join(ids, ",")
-		} else {
-			option["ref"] = ""
-		}
-
-		mgr.VolumeMgr.Detach(ctx, name, option)
 	}
 
 	return nil

@@ -309,14 +309,14 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 	// Remove all containers in the sandbox.
 	for _, container := range containers {
-		err = c.ContainerMgr.Remove(ctx, container.ID, &ContainerRemoveOption{Volume: true, Force: true})
+		err = c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 		if err != nil {
 			// TODO: log an error message or break?
 		}
 	}
 
 	// Remove the sandbox container.
-	err = c.ContainerMgr.Remove(ctx, podSandboxID, &ContainerRemoveOption{Volume: true, Force: true})
+	err = c.ContainerMgr.Remove(ctx, podSandboxID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
 	}
@@ -528,7 +528,7 @@ func (c *CriManager) StopContainer(ctx context.Context, r *runtime.StopContainer
 func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveContainerRequest) (*runtime.RemoveContainerResponse, error) {
 	containerID := r.GetContainerId()
 
-	err := c.ContainerMgr.Remove(ctx, containerID, &ContainerRemoveOption{Volume: true, Force: true})
+	err := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove container %q: %v", containerID, err)
 	}

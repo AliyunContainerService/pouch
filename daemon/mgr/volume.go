@@ -46,7 +46,7 @@ type VolumeManager struct {
 func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
 	// init volume config
 	cfg.RemoveVolume = true
-	cfg.DefaultBackend = "local"
+	cfg.DefaultBackend = types.DefaultBackend
 
 	core, err := volume.NewCore(cfg)
 	if err != nil {
@@ -93,7 +93,16 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 
 // Remove is used to delete an existing volume.
 func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
-	// TODO: check container use.
+	vol, err := vm.Get(ctx, name)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get volume: %s", name)
+	}
+
+	ref := vol.Option(types.OptionRef)
+	if ref != "" {
+		return errors.Wrapf(errtypes.ErrUsingbyContainers, "failed to remove volume: %s", name)
+	}
+
 	id := types.VolumeID{
 		Name: name,
 	}
@@ -102,6 +111,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 			return errors.Wrap(errtypes.ErrNotfound, err.Error())
 		}
 	}
+
 	return nil
 }
 
@@ -147,6 +157,26 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 	id := types.VolumeID{
 		Name: name,
 	}
+
+	v, err := vm.Get(ctx, name)
+	if err != nil {
+		return nil, errors.Errorf("failed to get volume: %s", name)
+	}
+
+	if options == nil {
+		options = make(map[string]string)
+	}
+
+	cid, ok := options[types.OptionRef]
+	if ok && cid != "" {
+		ref := v.Option(types.OptionRef)
+		if ref == "" {
+			options[types.OptionRef] = cid
+		} else {
+			options[types.OptionRef] = strings.Join([]string{ref, cid}, ",")
+		}
+	}
+
 	return vm.core.AttachVolume(id, options)
 }
 
@@ -155,5 +185,39 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 	id := types.VolumeID{
 		Name: name,
 	}
+
+	v, err := vm.Get(ctx, name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get volume: %s", name)
+	}
+
+	if options == nil {
+		options = make(map[string]string)
+	}
+
+	cid, ok := options[types.OptionRef]
+	if ok && cid != "" {
+		ref := v.Option(types.OptionRef)
+		if !strings.Contains(ref, cid) {
+			return v, nil
+		}
+
+		if ref != "" {
+			ids := strings.Split(ref, ",")
+			for i, id := range ids {
+				if id == cid {
+					ids = append(ids[:i], ids[i+1:]...)
+					break
+				}
+			}
+
+			if len(ids) > 0 {
+				options[types.OptionRef] = strings.Join(ids, ",")
+			} else {
+				options[types.OptionRef] = ""
+			}
+		}
+	}
+
 	return vm.core.DetachVolume(id, options)
 }
