@@ -29,8 +29,9 @@ $ pouch rm -f 493028
 ### Options
 
 ```
-  -f, --force   if the container is running, force to remove it
-  -h, --help    help for rm
+  -f, --force     if the container is running, force to remove it
+  -h, --help      help for rm
+  -v, --volumes   remove container's volumes that create by the container
 ```
 
 ### Options inherited from parent commands
