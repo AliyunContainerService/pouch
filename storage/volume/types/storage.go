@@ -8,13 +8,13 @@ import (
 
 // StorageSpec represents storage spec.
 type StorageSpec struct {
-	Type     string              `json:"type"`           // storage type
-	ID       string              `json:"id,omitempty"`   // storage uid or unique name
-	Name     string              `json:"name,omitempty"` // storage cluster name
-	Key      string              `json:"key,omitempty"`  // storage access key
-	API      string              `json:"api"`            // gateway address
-	Address  string              `json:"address"`        // for ceph it's monitor ip:port,ip:port, pangu2's river master
-	PoolSpec map[string]PoolSpec `json:"poolspec"`       // storage pool spec
+	Type     string              `json:"type"`         // storage type
+	ID       string              `json:"id,omitempty"` // storage uid or unique name
+	Address  string              `json:"address"`      // storage address, such as ceph it's monitor ip:port,ip:port
+	PoolSpec map[string]PoolSpec `json:"poolspec"`     // storage pool spec
+
+	ClusterName string `json:"clustername,omitempty"` // storage cluster name
+	Keyring     string `json:"keyring,omitempty"`     // storage access key, such as ceph's keyring user:secret
 }
 
 // PoolSpec represents storage pool spec.

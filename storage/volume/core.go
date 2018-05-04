@@ -27,9 +27,9 @@ type Core struct {
 // NewCore returns Core struct instance with volume config.
 func NewCore(cfg Config) (*Core, error) {
 	c := &Core{Config: cfg}
-	if cfg.ControlAddress != "" {
+	if cfg.ControlServerAddress != "" {
 		c.EnableControl = true
-		c.BaseURL = cfg.ControlAddress
+		c.BaseURL = cfg.ControlServerAddress
 	} else {
 		c.EnableControl = false
 	}
