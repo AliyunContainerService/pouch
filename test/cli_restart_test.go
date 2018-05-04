@@ -58,3 +58,17 @@ func (suite *PouchRestartSuite) TestPouchRestartStoppedContainer(c *check.C) {
 
 	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
+
+// TestPouchRestartPausedContainer is to verify restart paused container
+func (suite *PouchRestartSuite) TestPouchRestartPausedContainer(c *check.C) {
+	name := "TestPouchRestartPausedContainer"
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+
+	command.PouchRun("pause", name).Assert(c, icmd.Success)
+
+	res := command.PouchRun("restart", name)
+	c.Assert(res.Error, check.IsNil)
+
+	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
+}

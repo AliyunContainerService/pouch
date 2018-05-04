@@ -230,7 +230,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug()
 	// Start a test daemon with test args.
 	if err != nil {
-		c.Skip("deamon start failed.")
+		c.Skip("daemon start failed.")
 	}
 	// Must kill it, as we may loose the pid in next call.
 	defer dcfg.KillDaemon()
@@ -266,6 +266,68 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 		c.Fatalf("failed to decode inspect output: %v", err)
 	}
 	c.Assert(string(result[0].State.Status), check.Equals, "running")
+}
+
+// TestDaemonRestartWithPausedContainer tests daemon with paused container.
+func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) {
+	dcfg, err := StartDefaultDaemonDebug()
+	//Start a test daemon with test args.
+	if err != nil {
+		c.Skip("daemon start failed")
+	}
+	defer dcfg.KillDaemon()
+
+	{
+		result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
+		if result.ExitCode != 0 {
+			dcfg.DumpLog()
+			c.Fatalf("pull image failed, err: %v", result)
+		}
+	}
+
+	cname := "TestDaemonRestartWithPausedContainer"
+	{
+		result := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname,
+			"-p", "1234:80", busyboxImage, "top")
+		if result.ExitCode != 0 {
+			dcfg.DumpLog()
+			c.Fatalf("run container failed, err: %v", result)
+		}
+
+		// pause the container
+		result = RunWithSpecifiedDaemon(dcfg, "pause", cname)
+		if result.ExitCode != 0 {
+			dcfg.DumpLog()
+			c.Fatalf("pause container failed, err: %v", result)
+		}
+	}
+	defer DelContainerForceMultyTime(c, cname)
+
+	// restart daemon
+	err = RestartDaemon(dcfg)
+	c.Assert(err, check.IsNil)
+
+	// test if the container is paused.
+	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
+	data := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &data); err != nil {
+		c.Fatalf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(string(data[0].State.Status), check.Equals, "paused")
+
+	// unpause the container
+	result := RunWithSpecifiedDaemon(dcfg, "unpause", cname)
+	if result.ExitCode != 0 {
+		dcfg.DumpLog()
+		c.Fatalf("unpause container failed, err: %v", result)
+	}
+
+	//test if the container is running
+	output = RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
+	if err := json.Unmarshal([]byte(output), &data); err != nil {
+		c.Fatalf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(string(data[0].State.Status), check.Equals, "running")
 }
 
 // TestDaemonLabel tests start daemon with label works.

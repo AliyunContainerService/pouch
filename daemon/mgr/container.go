@@ -181,11 +181,12 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		// put container into cache.
 		mgr.cache.Put(containerMeta.ID, &Container{meta: containerMeta})
 
-		if containerMeta.State.Status != types.StatusRunning {
+		if containerMeta.State.Status != types.StatusRunning &&
+			containerMeta.State.Status != types.StatusPaused {
 			return nil
 		}
 
-		// recover the running container.
+		// recover the running or paused container.
 		io, err := mgr.openContainerIO(containerMeta.ID, containerMeta.Config.OpenStdin)
 		if err != nil {
 			logrus.Errorf("failed to recover container: %s,  %v", containerMeta.ID, err)
@@ -696,7 +697,7 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.IsRunning() {
+	if !c.IsRunning() && !c.IsPaused() {
 		// stopping a non-running container is valid.
 		return nil
 	}
@@ -1385,8 +1386,8 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 		timeout = c.StopTimeout()
 	}
 
-	if c.IsRunning() {
-		// stop container if it is running.
+	if c.IsRunning() || c.IsPaused() {
+		// stop container if it is running or paused.
 		if err := mgr.stop(ctx, c, timeout); err != nil {
 			logrus.Errorf("failed to stop container %s when restarting: %v", c.ID(), err)
 			return errors.Wrapf(err, fmt.Sprintf("failed to stop container %s", c.ID()))

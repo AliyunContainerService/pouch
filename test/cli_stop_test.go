@@ -63,10 +63,24 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 
 	res = command.PouchRun("ps", "-a")
 
-	// FIXME: It's better if we use inspect to filter status.
-	if out := res.Combined(); !strings.Contains(out, "Stopped") {
-		c.Fatalf("unexpected output %s expected Stopped\n", out)
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
 	}
+	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
+
+	// test stop a paused container
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	command.PouchRun("pause", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	output = command.PouchRun("inspect", name).Stdout()
+	result = []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
 }
 
 // TestStopInWrongWay tries to run create in wrong way.
