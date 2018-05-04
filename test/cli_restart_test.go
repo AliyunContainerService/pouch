@@ -63,7 +63,7 @@ func (suite *PouchRestartSuite) TestPouchRestartStoppedContainer(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestartPausedContainer(c *check.C) {
 	name := "TestPouchRestartPausedContainer"
 
-	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 
 	command.PouchRun("pause", name).Assert(c, icmd.Success)
 
