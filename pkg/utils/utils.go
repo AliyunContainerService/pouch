@@ -183,6 +183,11 @@ func DeDuplicate(input []string) []string {
 	result := []string{}
 	internal := map[string]struct{}{}
 	for _, value := range input {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+
 		if _, exist := internal[value]; !exist {
 			internal[value] = struct{}{}
 			result = append(result, value)
