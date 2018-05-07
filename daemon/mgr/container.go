@@ -25,7 +25,6 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
-	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
@@ -36,7 +35,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
 	"github.com/magiconair/properties"
-	"github.com/opencontainers/image-spec/specs-go/v1"
+	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -376,6 +376,11 @@ func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+	imgID, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: check request validate.
 	if config.HostConfig == nil {
 		return nil, fmt.Errorf("HostConfig cannot be nil")
@@ -395,42 +400,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+name)
 	}
 
-	// check the image existed or not, and convert image id to image ref
-	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
-	if err != nil {
-		return nil, err
-	}
-
-	// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
-	// return the first item of list will not equal input image name.
-	// issue: https://github.com/alibaba/pouch/issues/1001
-	// if specify a tag image, we should use the specified name
-	var refTagged string
-	imageNamed, err := reference.ParseNamedReference(config.Image)
-	if err != nil {
-		return nil, err
-	}
-	if _, ok := imageNamed.(reference.Tagged); ok {
-		refTagged = reference.WithDefaultTagIfMissing(imageNamed).String()
-	}
-
-	ref := ""
-	if len(image.RepoTags) > 0 {
-		if utils.StringInSlice(image.RepoTags, refTagged) {
-			ref = refTagged
-		} else {
-			ref = image.RepoTags[0]
-		}
-	} else {
-		ref = image.RepoDigests[0]
-	}
-	config.Image = ref
-
 	// set container runtime
 	if config.HostConfig.Runtime == "" {
 		config.HostConfig.Runtime = mgr.Config.DefaultRuntime
 	}
 
+	config.Image = primaryRef.String()
 	// create a snapshot with image.
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
 		return nil, err
@@ -468,7 +443,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			FinishedAt: time.Time{}.UTC().Format(utils.TimeLayout),
 		},
 		ID:         id,
-		Image:      image.ID,
+		Image:      imgID.String(),
 		Name:       name,
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
@@ -508,12 +483,13 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// merge image's config into container's meta
-	if err := meta.merge(func() (v1.ImageConfig, error) {
-		ociimage, err := mgr.Client.GetOciImage(ctx, config.Image)
+	if err := meta.merge(func() (ocispec.ImageConfig, error) {
+		img, err := mgr.Client.GetImage(ctx, config.Image)
+		ociImage, err := containerdImageToOciImage(ctx, img)
 		if err != nil {
-			return ociimage.Config, err
+			return ocispec.ImageConfig{}, err
 		}
-		return ociimage.Config, nil
+		return ociImage.Config, nil
 	}); err != nil {
 		return nil, err
 	}
@@ -1202,19 +1178,11 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	defer c.Unlock()
 
 	// check the image existed or not, and convert image id to image ref
-	image, err := mgr.ImageMgr.GetImage(ctx, config.Image)
+	_, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
 	if err != nil {
 		return errors.Wrap(err, "failed to get image")
 	}
-
-	// FIXME: image.Name does not exist,so convert Repotags or RepoDigests to ref
-	ref := ""
-	if len(image.RepoTags) > 0 {
-		ref = image.RepoTags[0]
-	} else {
-		ref = image.RepoDigests[0]
-	}
-	config.Image = ref
+	config.Image = primaryRef.String()
 
 	// Nothing changed, no need upgrade.
 	if config.Image == c.Image() {
@@ -2032,7 +2000,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 	var err error
 
 	// parse volumes from image
-	image, err := mgr.ImageMgr.GetImage(ctx, meta.Image)
+	image, err := mgr.ImageMgr.GetImage(ctx, strings.TrimPrefix(meta.Image, digest.Canonical.String()+":"))
 	if err != nil {
 		return errors.Wrapf(err, "failed to get image: %s", meta.Image)
 	}
