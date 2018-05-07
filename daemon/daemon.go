@@ -63,9 +63,18 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		return nil
 	}
 
-	containerd, err := ctrd.NewClient(ctrd.Config{
-		Address: cfg.ContainerdAddr,
-	})
+	// New containerd client
+	containerdBinaryFile := "containerd"
+	if cfg.ContainerdPath != "" {
+		containerdBinaryFile = cfg.ContainerdPath
+	}
+	containerd, err := ctrd.NewClient(cfg.HomeDir,
+		ctrd.WithDebugLog(cfg.Debug),
+		ctrd.WithStartDaemon(true),
+		ctrd.WithContainerdBinary(containerdBinaryFile),
+		ctrd.WithRPCAddr(cfg.ContainerdAddr),
+		ctrd.WithOOMScoreAdjust(cfg.OOMScoreAdjust),
+	)
 	if err != nil {
 		logrus.Errorf("failed to new containerd's client: %v", err)
 		return nil
@@ -216,7 +225,23 @@ func (d *Daemon) Run() error {
 
 // Shutdown stops daemon.
 func (d *Daemon) Shutdown() error {
-	return d.server.Stop()
+	var errMsg string
+
+	if err := d.server.Stop(); err != nil {
+		errMsg = fmt.Sprintf("%s\n", err.Error())
+	}
+
+	logrus.Debugf("Start cleanup containerd...")
+
+	if err := d.containerd.Cleanup(); err != nil {
+		errMsg = fmt.Sprintf("%s\n", err.Error())
+	}
+
+	if errMsg != "" {
+		return fmt.Errorf("failed to shutdown pouchd: %s", errMsg)
+	}
+
+	return nil
 }
 
 // Config gets config of daemon.

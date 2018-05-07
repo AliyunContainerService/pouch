@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	osexec "os/exec"
 	"os/signal"
 	"path"
 	"strings"
@@ -105,6 +104,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
+	flagSet.IntVar(&cfg.OOMScoreAdjust, "oom-score-adj", -500, "Set the oom_score_adj for the daemon")
 }
 
 // parse flags
@@ -164,32 +164,12 @@ func runDaemon() error {
 		}
 	}()
 
+	// set pouchd oom-score
+	if err := utils.SetOOMScore(os.Getpid(), cfg.OOMScoreAdjust); err != nil {
+		logrus.Errorf("failed to set oom-score for pouchd: %v", err)
+	}
+
 	// define and start all required processes.
-	if _, err := os.Stat(cfg.ContainerdAddr); err == nil {
-		os.RemoveAll(cfg.ContainerdAddr)
-	}
-
-	containerdBinaryFile := "containerd"
-	if cfg.ContainerdPath != "" {
-		containerdBinaryFile = cfg.ContainerdPath
-	}
-
-	containerdPath, err := osexec.LookPath(containerdBinaryFile)
-	if err != nil {
-		return fmt.Errorf("failed to find containerd binary %s: %s", containerdBinaryFile, err)
-	}
-
-	var processes exec.Processes = []*exec.Process{
-		{
-			Path: containerdPath,
-			Args: []string{
-				"-a", cfg.ContainerdAddr,
-				"--root", path.Join(cfg.HomeDir, "containerd/root"),
-				"--state", path.Join(cfg.HomeDir, "containerd/state"),
-				"-l", utils.If(cfg.Debug, "debug", "info").(string),
-			},
-		},
-	}
 
 	if cfg.QuotaDriver != "" {
 		quota.SetQuotaDriver(cfg.QuotaDriver)
@@ -198,15 +178,12 @@ func runDaemon() error {
 	if err := checkLxcfsCfg(); err != nil {
 		return err
 	}
-	defer processes.StopAll()
-
-	if err := processes.RunAll(); err != nil {
-		return err
-	}
-	sigHandles = append(sigHandles, processes.StopAll)
 
 	// initialize signal and handle method.
-	signals := make(chan os.Signal, 1)
+	var (
+		waitExit = make(chan struct{})
+		signals  = make(chan os.Signal, 1)
+	)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		sig := <-signals
@@ -217,6 +194,8 @@ func runDaemon() error {
 				logrus.Errorf("failed to handle signal: %v", err)
 			}
 		}
+
+		close(waitExit)
 		os.Exit(1)
 	}()
 
@@ -228,7 +207,11 @@ func runDaemon() error {
 
 	sigHandles = append(sigHandles, d.ShutdownPlugin, d.Shutdown)
 
-	return d.Run()
+	err := d.Run()
+
+	<-waitExit
+
+	return err
 }
 
 // initLog initializes log Level and log format of daemon.
