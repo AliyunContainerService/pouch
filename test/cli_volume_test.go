@@ -15,11 +15,6 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-var (
-	// DefaultVolumeMountPath defines the default volume mount path.
-	DefaultVolumeMountPath = DefaultRootDir + "/volume"
-)
-
 // PouchVolumeSuite is the test suite for volume CLI.
 type PouchVolumeSuite struct{}
 

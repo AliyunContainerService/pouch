@@ -6,16 +6,43 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
+	"github.com/alibaba/pouch/test/request"
 
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 var (
 	// DefaultRootDir defines the default root dir for pouchd.
-	DefaultRootDir = "/var/lib/pouch"
+	DefaultRootDir string
+	// DefaultVolumeMountPath defines the default volume mount path.
+	DefaultVolumeMountPath string
 )
+
+func init() {
+	GetRootDir(&DefaultRootDir)
+	// DefaultVolumeMountPath defines the default volume mount path.
+	DefaultVolumeMountPath = DefaultRootDir + "/volume"
+}
+
+// GetRootDir assign the root dir
+func GetRootDir(rootdir *string) error {
+	resp, err := request.Get("/info")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	got := types.SystemInfo{}
+	err = json.NewDecoder(resp.Body).Decode(&got)
+	if err != nil {
+		return err
+	}
+	*rootdir = got.PouchRootDir
+	return nil
+}
 
 // StartDefaultDaemonDebug starts a deamon with default configuration and debug on.
 func StartDefaultDaemonDebug(args ...string) (*daemon.Config, error) {

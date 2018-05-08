@@ -27,7 +27,7 @@ func (suite *APIImageCreateSuite) SetUpTest(c *check.C) {
 func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", environment.HelloworldRepo)
-	q.Add("tag", "linux")
+	q.Add("tag", "latest")
 	query := request.WithQuery(q)
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
@@ -36,7 +36,7 @@ func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	// TODO: add a waituntil func to check the exsitence of image
 	time.Sleep(5000 * time.Millisecond)
 
-	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":linux")
+	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":latest")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 }
