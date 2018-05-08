@@ -14,7 +14,7 @@ import (
 const (
 	// delimiter used in cri logging format.
 	delimiter = ' '
-	// eof is end-of-line.
+	// eol is end-of-line.
 	eol = '\n'
 	// timestampFormat is the timestamp format used in cri logging format.
 	timestampFormat = time.RFC3339Nano
