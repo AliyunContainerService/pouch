@@ -1,6 +1,7 @@
 # Some user would build a binary for pouch
 pouchd
 pouch
+docker-proxy
 *.patch
 volume_build.go
 coverage.txt
