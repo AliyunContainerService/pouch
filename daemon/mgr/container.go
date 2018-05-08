@@ -2148,7 +2148,7 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 	var res []*quota.RegExp
 	for path, size := range quotas {
 		re := regexp.MustCompile(path)
-		res = append(res, &quota.RegExp{re, path, size})
+		res = append(res, &quota.RegExp{Pattern: re, Path: path, Size: size})
 	}
 
 	for _, mp := range c.Mounts {
