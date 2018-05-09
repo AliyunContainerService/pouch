@@ -73,13 +73,8 @@ func (suite *APISystemSuite) TestVersion(c *check.C) {
 	got.KernelVersion = ""
 	got.BuildTime = ""
 
-	c.Assert(got, check.Equals, types.SystemVersion{
-		APIVersion: version.APIVersion,
-		Arch:       runtime.GOARCH,
-		GoVersion:  runtime.Version(),
-		Os:         runtime.GOOS,
-		Version:    version.Version,
-	})
+	c.Assert(got.APIVersion, check.Equals, version.APIVersion)
+	c.Assert(got.Version, check.Equals, version.Version)
 }
 
 // If the /auth is ready, we can login to the registry.

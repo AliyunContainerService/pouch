@@ -34,7 +34,7 @@ func (suite *PouchImagesSuite) SetUpSuite(c *check.C) {
 	PullImage(c, busyboxImage)
 }
 
-// TestImagesWorks tests "pouch image" work.
+// TestImagesWorks tests "pouch images" work.
 func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	image, err := getImageInfo(apiClient, busyboxImage)
 	c.Assert(err, check.IsNil)
@@ -61,7 +61,7 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	{
 		res := command.PouchRun("images", "--digest").Assert(c, icmd.Success)
 		items := imagesListToKV(res.Combined())[busyboxImage]
-		c.Assert(items[2], check.Equals, strings.TrimPrefix(image.RepoDigests[0], "registry.hub.docker.com/library/busybox@"))
+		c.Assert(items[2], check.Equals, strings.TrimPrefix(image.RepoDigests[0], environment.BusyboxRepo+"@"))
 	}
 }
 

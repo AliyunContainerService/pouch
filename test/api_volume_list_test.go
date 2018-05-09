@@ -25,10 +25,12 @@ func (suite *APIVolumeListSuite) TestVolumeListOk(c *check.C) {
 	// Create a volume with the name "TestVolume1".
 	err := CreateVolume(c, "TestVolume1", "local")
 	c.Assert(err, check.IsNil)
+	defer RemoveVolume(c, "TestVolume1")
 
 	// Create a volume with the name "TestVolume1".
 	err = CreateVolume(c, "TestVolume2", "local")
 	c.Assert(err, check.IsNil)
+	defer RemoveVolume(c, "TestVolume2")
 
 	// Test volume list feature.
 	path := "/volumes"
@@ -40,13 +42,13 @@ func (suite *APIVolumeListSuite) TestVolumeListOk(c *check.C) {
 	volumeListResp := &types.VolumeListResp{}
 	err = request.DecodeBody(volumeListResp, resp.Body)
 	c.Assert(err, check.IsNil)
-	c.Assert(len(volumeListResp.Volumes), check.Equals, 2)
 
-	// Delete the TestVolume1.
-	err = RemoveVolume(c, "TestVolume1")
-	c.Assert(err, check.IsNil)
-
-	// Delete the TestVolume2.
-	err = RemoveVolume(c, "TestVolume2")
-	c.Assert(err, check.IsNil)
+	// Check response having the pre-created two volumes.
+	found := 0
+	for _, volume := range volumeListResp.Volumes {
+		if volume.Name == "TestVolume1" || volume.Name == "TestVolume2" {
+			found++
+		}
+	}
+	c.Assert(found, check.Equals, 2)
 }
