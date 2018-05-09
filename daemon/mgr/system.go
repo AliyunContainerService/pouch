@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -33,16 +34,18 @@ type SystemManager struct {
 	name     string
 	registry *registry.Client
 	config   *config.Config
+	imageMgr ImageMgr
 
 	store *meta.Store
 }
 
 // NewSystemManager creates a brand new system manager.
-func NewSystemManager(cfg *config.Config, store *meta.Store) (*SystemManager, error) {
+func NewSystemManager(cfg *config.Config, store *meta.Store, imageManager ImageMgr) (*SystemManager, error) {
 	return &SystemManager{
 		name:     "system_manager",
 		registry: &registry.Client{},
 		config:   cfg,
+		imageMgr: imageManager,
 		store:    store,
 	}, nil
 }
@@ -96,8 +99,13 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		OSName = osName
 	}
 
+	images, err := mgr.imageMgr.ListImages(context.Background(), "")
+	if err != nil {
+		logrus.Warnf("failed to get image info: %v", err)
+	}
+
 	info := types.SystemInfo{
-		// architecture: ,
+		Architecture: runtime.GOARCH,
 		// CgroupDriver: ,
 		// ContainerdCommit: ,
 		Containers:        cRunning + cPaused + cStopped,
@@ -109,25 +117,25 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		// FIXME: avoid hard code
 		Driver: "overlayfs",
 		// DriverStatus: ,
-		// ExperimentalBuild: ,
-		HTTPProxy: mgr.config.ImageProxy,
+		ExperimentalBuild: false,
+		HTTPProxy:         mgr.config.ImageProxy,
 		// HTTPSProxy: ,
 		// ID: ,
-		// Images: ,
+		Images:             int64(len(images)),
 		IndexServerAddress: "https://index.docker.io/v1/",
 		DefaultRegistry:    mgr.config.DefaultRegistry,
 		KernelVersion:      kernelVersion,
 		Labels:             mgr.config.Labels,
-		// LiveRestoreEnabled: ,
-		// LoggingDriver: ,
-		LxcfsEnabled:    mgr.config.IsLxcfsEnabled,
-		MemTotal:        totalMem,
-		Name:            hostname,
-		NCPU:            int64(runtime.NumCPU()),
-		OperatingSystem: OSName,
-		OSType:          runtime.GOOS,
-		PouchRootDir:    mgr.config.HomeDir,
-		// RegistryConfig: ,
+		LiveRestoreEnabled: true,
+		LoggingDriver:      mgr.config.DefaultLogConfig.Type,
+		LxcfsEnabled:       mgr.config.IsLxcfsEnabled,
+		MemTotal:           totalMem,
+		Name:               hostname,
+		NCPU:               int64(runtime.NumCPU()),
+		OperatingSystem:    OSName,
+		OSType:             runtime.GOOS,
+		PouchRootDir:       mgr.config.HomeDir,
+		RegistryConfig:     &mgr.config.RegistryService,
 		// RuncCommit: ,
 		// Runtimes: ,
 		// SecurityOptions: ,
