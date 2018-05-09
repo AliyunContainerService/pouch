@@ -105,6 +105,9 @@ type Config struct {
 
 	// RegistryService
 	RegistryService types.RegistryServiceConfig `json:"registry-service, omitempty" `
+
+	// oom_score_adj for the daemon
+	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`
 }
 
 // Validate validates the user input config.

@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -267,4 +268,32 @@ func NewPidfile(path string) error {
 		return err
 	}
 	return ioutil.WriteFile(path, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+}
+
+// IsProcessAlive returns true if process with a given pid is running.
+func IsProcessAlive(pid int) bool {
+	err := syscall.Kill(pid, syscall.Signal(0))
+	if err == nil || err == syscall.EPERM {
+		return true
+	}
+
+	return false
+}
+
+// KillProcess force-stops a process.
+func KillProcess(pid int) {
+	syscall.Kill(pid, syscall.SIGKILL)
+}
+
+// SetOOMScore sets process's oom_score value
+// The higher the value of oom_score of any process, the higher is its
+// likelihood of getting killed by the OOM Killer in an out-of-memory situation.
+func SetOOMScore(pid, score int) error {
+	f, err := os.OpenFile(fmt.Sprintf("/proc/%d/oom_score_adj", pid), os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(strconv.Itoa(score))
+	f.Close()
+	return err
 }

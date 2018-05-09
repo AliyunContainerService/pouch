@@ -25,11 +25,11 @@ type WrapperClient struct {
 	streamQuota int
 }
 
-func newWrapperClient(cfg Config) (*WrapperClient, error) {
+func newWrapperClient(rpcAddr string, maxStreamsClient int) (*WrapperClient, error) {
 	options := []containerd.ClientOpt{
 		containerd.WithDefaultNamespace("default"),
 	}
-	cli, err := containerd.New(cfg.Address, options...)
+	cli, err := containerd.New(rpcAddr, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect containerd")
 	}
@@ -52,7 +52,7 @@ func newWrapperClient(cfg Config) (*WrapperClient, error) {
 	return &WrapperClient{
 		client:      cli,
 		lease:       &lease,
-		streamQuota: cfg.MaxStreamsClient,
+		streamQuota: maxStreamsClient,
 	}, nil
 }
 

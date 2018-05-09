@@ -20,6 +20,7 @@ type APIClient interface {
 	SnapshotAPIClient
 
 	Version(ctx context.Context) (containerd.Version, error)
+	Cleanup() error
 }
 
 // ContainerAPIClient provides access to containerd container features.
