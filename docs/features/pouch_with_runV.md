@@ -2,9 +2,9 @@
 
 Container technology develops rapidly recently. It provides much convenience for application packing and resource utilization improvement. At the same time it brings benefits, LXC-based container technology also loses the appropriate security. Specifically, containers share operating system kernel on one machine. Once one container attempts to attack kernel, all workload on this host would be influenced.
 
-For some scenarios which are sensitive and strict to security, pure container technology has apparent defects. What's more, in cloud era multi-tenancy is the rigid demand from cloud customers. Therefore, strong isolation must be guaranteed seriously. In another word, container techonology needs more security hardening.
+For some scenarios which are sensitive and strict to security, pure container technology has apparent defects. What's more, in cloud era multi-tenancy is the rigid demand from cloud customers. Therefore, strong isolation must be guaranteed seriously. In another word, container technology needs more security hardening.
 
-[runV](https://github.com/hyperhq/runv) is a hypervisor-based runtime for [OCI](https://github.com/opencontainers/runtime-spec). It can easily help improve host and container's security by virtualizing a guest kernel which isolates containers and host with a clearer boundary. Although hypervisor-base container brings more commitment on security, it loses some performance caused by virtualization technology. And it takes a litte more time to start a container, since more work needs done, like initrd.img loading, kernel loading, system process bootup and so on.
+[runV](https://github.com/hyperhq/runv) is a hypervisor-based runtime for [OCI](https://github.com/opencontainers/runtime-spec). It can easily help improve host and container's security by virtualizing a guest kernel which isolates containers and host with a clearer boundary. Although hypervisor-base container brings more commitment on security, it loses some performance caused by virtualization technology. And it takes a little more time to start a container, since more work needs done, like initrd.img loading, kernel loading, system process bootup and so on.
 
 ## Architecture
 
@@ -80,7 +80,7 @@ cd hyperstart
 sudo make
 ```
 
-After building kernerl and initrd.img successfully, we should copy guest `kernel` and `initrd.img` to the default directory which runv will look for.
+After building kernel and initrd.img successfully, we should copy guest `kernel` and `initrd.img` to the default directory which runv will look for.
 
 ```
 mkdir /var/lib/hyper/
@@ -124,6 +124,6 @@ It turns out that in experiment above kernel in host physical machine is 4.4.0-1
 
 ## Conclusion
 
-Pouch brings a common way to provide hypervisor-based containers. With pouch, users can take advantanges of both hypervisor-based containers and LXC-based containers according to specific scenario.
+Pouch brings a common way to provide hypervisor-based containers. With pouch, users can take advantages of both hypervisor-based containers and LXC-based containers according to specific scenario.
 
 

@@ -20,5 +20,5 @@ A lot of work has been done to improve container's security in industry. But con
 
 ## Enhancement to Ecosystem
 
-For being open to container ecosystem, Pouch will be designed to be scalable. As a container engine, pouch will support pod and be able to integrate upper orchestraion layer with [kubernetes](https://github.com/kubernetes/kubernetes). For fundamental infrastructure management, pouch will embrace [CNI](https://github.com/containernetworking/cni) and [CSI](https://github.com/container-storage-interface). In the aspect of monitoring, logging and so on, Pouch takes an open role to approach cloud native.
+For being open to container ecosystem, Pouch will be designed to be scalable. As a container engine, pouch will support pod and be able to integrate upper orchestration layer with [kubernetes](https://github.com/kubernetes/kubernetes). For fundamental infrastructure management, pouch will embrace [CNI](https://github.com/containernetworking/cni) and [CSI](https://github.com/container-storage-interface). In the aspect of monitoring, logging and so on, Pouch takes an open role to approach cloud native.
 

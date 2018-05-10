@@ -4,7 +4,7 @@ Container technology provides different isolation environment from traditional v
 
 Container solutions provide a general way for users to limit resource usage of running containers, such as memory, cpu, blkio and so on. Processes in container have no ability to access extra corresponding resources beyond the limited values indeed. However, if processes inside inspect the resource upper limit by command `free`, `cat /proc/meminfo`, `cat /proc/cpuinfo`, `cat /proc/uptime`, they will definitely get information which is correct for host machine, not for container itself.
 
-For example, if we create a general container with limiting 200 MB memory on host of 2 GB memory in total, we can find that resouce upper limit is incorrect via command `free`, and it shows all memory size of the host:
+For example, if we create a general container with limiting 200 MB memory on host of 2 GB memory in total, we can find that resource upper limit is incorrect via command `free`, and it shows all memory size of the host:
 
 ``` shell
 $ pouch run -m 200m registry.hub.docker.com/library/ubuntu:16.04 free -h
@@ -15,9 +15,9 @@ Swap:          2.0G          0B        2.0G
 
 ## Resource View Isolation Scenario
 
-Lacking of resource view isolation, applications may be running abnormally in environment provided by container. Application may be ware of that its runtime is not like that in usual physical machine or virtual machine. Here are some examples that isolation vulnerability influence application's runnning:
+Lacking of resource view isolation, applications may be running abnormally in environment provided by container. Application may be ware of that its runtime is not like that in usual physical machine or virtual machine. Here are some examples that isolation vulnerability influence application's running:
 
-> For plenty of Java applications which are based on JVM, application startup script would mostly rely on the system resouce capacity to allocate heap and stack size for JVM. As a result, application in a 200 MB memory limited container, which is created on a host of 2 GB memory capacity, will think it has rights to access the whole 2 GB memory, then startup script tells Java runtime to allocate heap and stack size according to 2GB which is totally different from it actual maximum size 200 MB. Application startup would fail definitely. Also for Java applications, some libraries would allocated heap and stack size according to their resource view, this will expose potential security issues as well.
+> For plenty of Java applications which are based on JVM, application startup script would mostly rely on the system resource capacity to allocate heap and stack size for JVM. As a result, application in a 200 MB memory limited container, which is created on a host of 2 GB memory capacity, will think it has rights to access the whole 2 GB memory, then startup script tells Java runtime to allocate heap and stack size according to 2GB which is totally different from it actual maximum size 200 MB. Application startup would fail definitely. Also for Java applications, some libraries would allocated heap and stack size according to their resource view, this will expose potential security issues as well.
 
 Not only memory resource view's concern, but also weak CPU resource view isolation.
 
@@ -29,7 +29,7 @@ Resource view isolation will influence system-level applications in container.
 
 ## What is LXCFS
 
-[LXCFS](https://github.com/lxc/lxcfs) is a small [FUSE filesystem](https://en.wikipedia.org/wiki/Filesystem_in_Userspace) written with the intention of making Linux containers feel more like a virtual machine. It started as a side-project of LXC but is useable by any runtime. LXCFS is compatible on Linux kernel 2.6+. And LXCFS will take care that the information provided by crucial files in `procfs` such as:
+[LXCFS](https://github.com/lxc/lxcfs) is a small [FUSE filesystem](https://en.wikipedia.org/wiki/Filesystem_in_Userspace) written with the intention of making Linux containers feel more like a virtual machine. It started as a side-project of LXC but is usable by any runtime. LXCFS is compatible on Linux kernel 2.6+. And LXCFS will take care that the information provided by crucial files in `procfs` such as:
 
 * /proc/cpuinfo
 * /proc/diskstats
@@ -38,9 +38,9 @@ Resource view isolation will influence system-level applications in container.
 * /proc/swaps
 * /proc/uptime
 
-Pouch has supported LXCFS in early versions and has been stable. In another word, if users enable LXCFS, there will be a dameon process lxcfs running on host. Generally, when creating a container with resource limit, some virtual files mapping this container would be created in cgroup filesystm. And LXCFS would dynamically read value in these files like `memory.limit_in_bytes`, and generate a branch new virtual file on the host(for example `/var/lib/lxc/lxcfs/proc/meminfo`), then binding this file to the container. At last, processes in container would get the real resource view by reading files like `/proc/meminfo`.
+Pouch has supported LXCFS in early versions and has been stable. In another word, if users enable LXCFS, there will be a daemon process lxcfs running on host. Generally, when creating a container with resource limit, some virtual files mapping this container would be created in cgroup filesystem. And LXCFS would dynamically read value in these files like `memory.limit_in_bytes`, and generate a branch new virtual file on the host(for example `/var/lib/lxc/lxcfs/proc/meminfo`), then binding this file to the container. At last, processes in container would get the real resource view by reading files like `/proc/meminfo`.
 
-Here is the architeture of LXCFS and container:
+Here is the architecture of LXCFS and container:
 
 ![pouch_with_lxcfs](../static_files/pouch_with_lxcfs.png)
 
@@ -48,7 +48,7 @@ Here is the architeture of LXCFS and container:
 
 It is quite transparent and easy for users to enjoy resource view isolation by enabling LXCFS. Actually, software LXCFS would be automatically installed on host along with pouch software if it does not exist in $PATH.
 
-Before experiencing LXCFS guaranteed resouce view isolation, user needs to make sure that LXCFS mode is enabled in pouchd. If LXCFS mode has not been set, user needs to stop pouchd and start pouchd via command `pouchd --enable-lxcfs`. Only by enabling LXCFS mode in pouchd can users make use of LXCFS functionality in containers.
+Before experiencing LXCFS guaranteed resource view isolation, user needs to make sure that LXCFS mode is enabled in pouchd. If LXCFS mode has not been set, user needs to stop pouchd and start pouchd via command `pouchd --enable-lxcfs`. Only by enabling LXCFS mode in pouchd can users make use of LXCFS functionality in containers.
 
 With LXCFS mode enabled in pouchd, pouchd has extra ability to create containers which has isolated resource view. Besides this, pouchd is still capable to create general ones without resource view isolation.
 
@@ -63,4 +63,4 @@ Swap:          2.0G          0B        2.0G
 
 We can see that total memory size displayed is exactly the same as memory upper limit of container.
 
-After executing command above, we will find that resource view of processes in container is its real resouce upper limit. In another word, applications in container turns much more secure than usual. This is designed to be one kind of essential ability of Pouch.
+After executing command above, we will find that resource view of processes in container is its real resource upper limit. In another word, applications in container turns much more secure than usual. This is designed to be one kind of essential ability of Pouch.

@@ -17,7 +17,7 @@ Take a Travis build from my repository as example:
 
 ### Command to start debug mode
 
-From the guide provied by Travis, we know that a `curl` request is needed to be constructed to start the debug mode, the command template is as following:
+From the guide provided by Travis, we know that a `curl` request is needed to be constructed to start the debug mode, the command template is as following:
 
 ```shell
 #curl -s -X POST \

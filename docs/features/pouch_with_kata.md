@@ -20,7 +20,7 @@ On physical machine with Ubuntu OS installed:
 sudo apt-get install -y qemu qemu-kvm
 ```
 
-On physical machine with RedHat series OS installed:
+On physical machine with Red Hat series OS installed:
 
 ```
 sudo yum install -y qemu qemu-kvm

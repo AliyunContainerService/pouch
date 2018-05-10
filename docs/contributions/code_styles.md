@@ -22,7 +22,7 @@ For a project, existing tools and rules may not be sufficient. To align more in 
 
 ### RULE001 - Add blank line between field's comments
 
-When constructing a struct, if comments needed for fields in struct, keep a blank line between fields. The ecouraged way is as following:
+When constructing a struct, if comments needed for fields in struct, keep a blank line between fields. The encouraged way is as following:
 
 ``` golang
 // correct example
@@ -136,9 +136,9 @@ fmt.Errorf("failed to do something: %v", err)
 
 When an err could be thrown out, please remember to add it in the error construction.
 
-### RULE006 - Return fast to ident less
+### RULE006 - Return fast to indent less
 
-Pouch encourages contributors to take advantages of `return fast` to simply source code and ident less. For example, the following codes are discouraged:
+Pouch encourages contributors to take advantages of `return fast` to simply source code and indent less. For example, the following codes are discouraged:
 
 ``` golang
 // wrong example
@@ -153,7 +153,7 @@ if retry {
 return nil
 ```
 
-In code above, there are some idents which can be avoided. The ecouraged way is like the following:
+In code above, there are some indents which can be avoided. The encouraged way is like the following:
 
 ``` golang
 // correct example

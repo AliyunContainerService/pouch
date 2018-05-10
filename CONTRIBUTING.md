@@ -51,7 +51,7 @@ Every action to make project Pouch better is encouraged. On GitHub, every improv
 * If you find document incorrect, just do it and fix that!
 * ...
 
-Actually it is impossible to list them completely. Just remember one princinple:
+Actually it is impossible to list them completely. Just remember one principle:
 
 > WE ARE LOOKING FORWARD TO ANY PR FROM YOU.
 

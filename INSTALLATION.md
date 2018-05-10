@@ -12,7 +12,7 @@ You can install Pouch automatically on your machine with very few steps. Current
 
 ### Ubuntu
 
-To install Pouch, you need a maintained version of Ubuntu 16.04 (Xenial LTS). Archived versions aren’t supported or tested.
+To install Pouch, you need a maintained version of Ubuntu 16.04 (Xenial LTS). Archived versions aren't supported or tested.
 
 Pouch is conflict with Docker, so you must uninstall Docker before installing Pouch.
 
@@ -76,7 +76,7 @@ Afterwards, you can pull an image and run Pouch containers.
 
 ### CentOS
 
-To install Pouch, you need a maintained version of CentOS 7. Archived versions aren’t supported or tested.
+To install Pouch, you need a maintained version of CentOS 7. Archived versions aren't supported or tested.
 
 We have put rpm package to Aliyun mirrors, you can install pouch using Pouch repository. If you install Pouch for the first on a new host machine, you need to set up the Pouch repository. Then, you can install and update Pouch from repository.
 
