@@ -17,7 +17,7 @@ import (
 )
 
 //setup hooks specified by user via plugins, if set rich mode and init-script exists set init-script
-func setupHook(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper) error {
+func setupHook(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
 	s := specWrapper.s
 	if s.Hooks == nil {
 		s.Hooks = &specs.Hooks{
@@ -83,7 +83,7 @@ func setupHook(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper) 
 	return nil
 }
 
-func setMountTab(ctx context.Context, c *ContainerMeta, spec *SpecWrapper) error {
+func setMountTab(ctx context.Context, c *Container, spec *SpecWrapper) error {
 	if len(c.BaseFS) == 0 {
 		return nil
 	}

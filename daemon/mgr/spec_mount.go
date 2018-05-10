@@ -18,7 +18,7 @@ func clearReadonly(m *specs.Mount) {
 }
 
 // setupMounts create mount spec.
-func setupMounts(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 	mounts := s.Mounts
 	if c.HostConfig == nil {
 		return nil

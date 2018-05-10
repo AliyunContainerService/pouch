@@ -21,14 +21,14 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 	}
 
 	if !c.IsRunning() {
-		return "", fmt.Errorf("container %s is not running", c.ID())
+		return "", fmt.Errorf("container %s is not running", c.ID)
 	}
 
 	execid := randomid.Generate()
 	execConfig := &ContainerExecConfig{
 		ExecID:           execid,
 		ExecCreateConfig: *config,
-		ContainerID:      c.ID(),
+		ContainerID:      c.ID,
 	}
 
 	mgr.ExecProcesses.Put(execid, execConfig)
@@ -65,19 +65,19 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
 		Cwd:      "/",
-		Env:      c.Config().Env,
+		Env:      c.Config.Env,
 	}
 
 	if execConfig.User != "" {
-		c.meta.Config.User = execConfig.User
+		c.Config.User = execConfig.User
 	}
 
-	if err = setupUser(ctx, c.meta, &specs.Spec{Process: process}); err != nil {
+	if err = setupUser(ctx, c, &specs.Spec{Process: process}); err != nil {
 		return err
 	}
 
 	// set exec process ulimit
-	if err := setupRlimits(ctx, c.meta.HostConfig, &specs.Spec{Process: process}); err != nil {
+	if err := setupRlimits(ctx, c.HostConfig, &specs.Spec{Process: process}); err != nil {
 		return err
 	}
 

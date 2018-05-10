@@ -19,7 +19,7 @@ func TestContainerManager_generateID(t *testing.T) {
 		Buckets: []meta.Bucket{
 			{
 				Name: meta.MetaJSONFile,
-				Type: reflect.TypeOf(ContainerMeta{}),
+				Type: reflect.TypeOf(Container{}),
 			},
 		},
 	})
@@ -80,7 +80,7 @@ func TestContainerManager_generateName(t *testing.T) {
 
 func Test_parseSecurityOpt(t *testing.T) {
 	type args struct {
-		meta        *ContainerMeta
+		meta        *Container
 		securityOpt string
 	}
 	tests := []struct {
@@ -91,7 +91,7 @@ func Test_parseSecurityOpt(t *testing.T) {
 		{
 			name: "invalid security option",
 			args: args{
-				meta:        &ContainerMeta{},
+				meta:        &Container{},
 				securityOpt: "",
 			},
 			wantErr: true,
@@ -99,7 +99,7 @@ func Test_parseSecurityOpt(t *testing.T) {
 		{
 			name: "invalid security option",
 			args: args{
-				meta:        &ContainerMeta{},
+				meta:        &Container{},
 				securityOpt: "apparmor:/tmp/file",
 			},
 			wantErr: true,
@@ -107,7 +107,7 @@ func Test_parseSecurityOpt(t *testing.T) {
 		{
 			name: "invalid security option",
 			args: args{
-				meta:        &ContainerMeta{},
+				meta:        &Container{},
 				securityOpt: "apparmor2=/tmp/file",
 			},
 			wantErr: true,
@@ -115,7 +115,7 @@ func Test_parseSecurityOpt(t *testing.T) {
 		{
 			name: "valid security option",
 			args: args{
-				meta:        &ContainerMeta{},
+				meta:        &Container{},
 				securityOpt: "apparmor=/tmp/file",
 			},
 			wantErr: false,
@@ -123,7 +123,7 @@ func Test_parseSecurityOpt(t *testing.T) {
 		{
 			name: "valid security option",
 			args: args{
-				meta:        &ContainerMeta{},
+				meta:        &Container{},
 				securityOpt: "seccomp=asdfghjkl",
 			},
 			wantErr: false,

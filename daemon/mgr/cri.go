@@ -241,7 +241,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	sandboxMeta := res.(*SandboxMeta)
 
 	opts := &ContainerListOption{All: true}
-	filter := func(c *ContainerMeta) bool {
+	filter := func(c *Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
 
@@ -299,7 +299,7 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	podSandboxID := r.GetPodSandboxId()
 
 	opts := &ContainerListOption{All: true}
-	filter := func(c *ContainerMeta) bool {
+	filter := func(c *Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
 
@@ -400,7 +400,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 // ListPodSandbox returns a list of Sandbox.
 func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (*runtime.ListPodSandboxResponse, error) {
 	opts := &ContainerListOption{All: true}
-	filter := func(c *ContainerMeta) bool {
+	filter := func(c *Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelSandbox
 	}
 
@@ -540,7 +540,7 @@ func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 // ListContainers lists all containers matching the filter.
 func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (*runtime.ListContainersResponse, error) {
 	opts := &ContainerListOption{All: true}
-	filter := func(c *ContainerMeta) bool {
+	filter := func(c *Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer
 	}
 

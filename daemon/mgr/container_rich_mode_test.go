@@ -22,7 +22,7 @@ func convertEnvArrayToMap(envs []string) map[string]string {
 }
 
 func TestRichModeSet(t *testing.T) {
-	c := &ContainerMeta{
+	c := &Container{
 		Config: &types.ContainerConfig{
 			Rich: true,
 		},
@@ -35,7 +35,7 @@ func TestRichModeSet(t *testing.T) {
 	assert.Equal(t, types.ContainerConfigRichModeDumbInit, mEnvs1[richModeLaunchEnv])
 
 	//test not set rich mode
-	c = &ContainerMeta{
+	c = &Container{
 		Config: &types.ContainerConfig{
 			Rich: false,
 		},
@@ -44,7 +44,7 @@ func TestRichModeSet(t *testing.T) {
 	assert.Equal(t, 0, len(envs2))
 
 	//test set rich mode manner, not set rich mode
-	c = &ContainerMeta{
+	c = &Container{
 		Config: &types.ContainerConfig{
 			Rich:     false,
 			RichMode: types.ContainerConfigRichModeSystemd,
@@ -54,7 +54,7 @@ func TestRichModeSet(t *testing.T) {
 	assert.Equal(t, 0, len(envs3))
 
 	//test set rich mode manner
-	c = &ContainerMeta{
+	c = &Container{
 		Config: &types.ContainerConfig{
 			Rich:     true,
 			RichMode: types.ContainerConfigRichModeSystemd,
@@ -66,7 +66,7 @@ func TestRichModeSet(t *testing.T) {
 	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs4[richModeLaunchEnv])
 
 	//test set rich mode by env
-	c = &ContainerMeta{
+	c = &Container{
 		Config: &types.ContainerConfig{
 			Env: []string{
 				interRichModeEnv,

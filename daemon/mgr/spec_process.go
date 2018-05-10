@@ -15,7 +15,7 @@ import (
 )
 
 // setupProcess setups spec process.
-func setupProcess(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 	if s.Process == nil {
 		s.Process = &specs.Process{}
 	}
@@ -65,14 +65,14 @@ func setupProcess(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
 	return nil
 }
 
-func createEnvironment(c *ContainerMeta) []string {
+func createEnvironment(c *Container) []string {
 	env := c.Config.Env
 	env = append(env, richContainerModeEnv(c)...)
 
 	return env
 }
 
-func setupUser(ctx context.Context, c *ContainerMeta, s *specs.Spec) (err error) {
+func setupUser(ctx context.Context, c *Container, s *specs.Spec) (err error) {
 	// container rootfs is created by containerd, pouch just creates a snapshot
 	// id and keeps it in memory. If container is in start process, we can not
 	// find if user if exist in container image, so we do some simple check.
@@ -137,7 +137,7 @@ func isAppArmorEnabled() bool {
 	return false
 }
 
-func setupAppArmor(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupAppArmor(ctx context.Context, c *Container, s *specs.Spec) error {
 	if !isAppArmorEnabled() {
 		// Return if the apparmor is disabled.
 		return nil

@@ -24,7 +24,7 @@ type ContainerEvent struct {
 func (e *ContainerEvent) String() string {
 	switch e.Kind {
 	case EvExit:
-		return fmt.Sprintf("%s exit", e.c.ID())
+		return fmt.Sprintf("%s exit", e.c.ID)
 	default:
 		return "none"
 	}

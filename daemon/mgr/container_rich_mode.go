@@ -14,7 +14,7 @@ const (
 	interRichModeEnv = "ali_run_mode=common_vm"
 )
 
-func richContainerModeEnv(c *ContainerMeta) []string {
+func richContainerModeEnv(c *Container) []string {
 	var (
 		ret         = []string{}
 		setRichMode = false
