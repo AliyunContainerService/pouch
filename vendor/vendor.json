@@ -42,6 +42,12 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "LHldeVpaKyJGOlnjDWuHlCwmv3Q=",
+			"path": "github.com/containerd/cgroups",
+			"revision": "f7dd103d3e4e696aa67152f6b4ddd1779a3455a9",
+			"revisionTime": "2017-10-19T14:48:01Z"
+		},
+		{
 			"checksumSHA1": "gg9tZUQP2LP6DmGl0L+JWl1jzXk=",
 			"path": "github.com/containerd/console",
 			"revision": "84eeaae905fa414d03e07bcd6c8d3f19e7cf180e",
@@ -468,6 +474,12 @@
 			"revisionTime": "2016-07-27T18:54:06Z"
 		},
 		{
+			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
+			"path": "github.com/coreos/go-systemd/dbus",
+			"revision": "d1b7d058aa2adfc795ad17ff4aaa2bc64ec11c78",
+			"revisionTime": "2018-04-09T11:15:10Z"
+		},
+		{
 			"checksumSHA1": "CCfIpyo6sGH8gnEdP/0vGSi4ywA=",
 			"path": "github.com/cpuguy83/go-md2man/md2man",
 			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
@@ -620,6 +632,12 @@
 			"path": "github.com/go-resty/resty",
 			"revision": "9ac9c42358f7c3c69ac9f8610e8790d7c338e85d",
 			"revisionTime": "2017-09-25T19:29:30Z"
+		},
+		{
+			"checksumSHA1": "SVZOXtf8YAn8GVGQs5OTwMPqt48=",
+			"path": "github.com/godbus/dbus",
+			"revision": "d41f4c66e71d091df57cfee7bf5978c0d612a174",
+			"revisionTime": "2018-04-06T11:14:27Z"
 		},
 		{
 			"checksumSHA1": "FhLvgtYfuKY0ow9wtLJRoeg7d6w=",
