@@ -316,9 +316,27 @@ func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *
 }
 
 func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	//opts := &types.ContainerLogsOptions{}
+	opts := &types.ContainerLogsOptions{
+		ShowStdout: httputils.BoolValue(req, "stdout"),
+		ShowStderr: httputils.BoolValue(req, "stderr"),
 
-	// TODO
+		Tail:       req.Form.Get("tail"),
+		Since:      req.Form.Get("since"),
+		Until:      req.Form.Get("until"),
+		Follow:     httputils.BoolValue(req, "follow"),
+		Timestamps: httputils.BoolValue(req, "timestamps"),
+
+		// TODO: support the details
+		// Details:    httputils.BoolValue(r, "details"),
+	}
+
+	name := mux.Vars(req)["name"]
+	msgCh, tty, err := s.ContainerMgr.Logs(ctx, name, opts)
+	if err != nil {
+		return err
+	}
+
+	writeLogStream(ctx, rw, tty, opts, msgCh)
 	return nil
 }
 
