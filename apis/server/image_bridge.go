@@ -54,17 +54,6 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	return nil
 }
 
-func (s *Server) listImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	filters := req.FormValue("filters")
-
-	imageList, err := s.ImageMgr.ListImages(ctx, filters)
-	if err != nil {
-		logrus.Errorf("failed to list images: %v", err)
-		return err
-	}
-	return EncodeResponse(rw, http.StatusOK, imageList)
-}
-
 func (s *Server) getImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	idOrRef := mux.Vars(req)["name"]
 
@@ -75,6 +64,17 @@ func (s *Server) getImage(ctx context.Context, rw http.ResponseWriter, req *http
 	}
 
 	return EncodeResponse(rw, http.StatusOK, imageInfo)
+}
+
+func (s *Server) listImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	filters := req.FormValue("filters")
+
+	imageList, err := s.ImageMgr.ListImages(ctx, filters)
+	if err != nil {
+		logrus.Errorf("failed to list images: %v", err)
+		return err
+	}
+	return EncodeResponse(rw, http.StatusOK, imageList)
 }
 
 func (s *Server) searchImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {

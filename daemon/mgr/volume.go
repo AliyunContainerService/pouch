@@ -18,14 +18,14 @@ type VolumeMgr interface {
 	// Create is used to create volume.
 	Create(ctx context.Context, name, driver string, options, labels map[string]string) error
 
-	// Remove is used to delete an existing volume.
-	Remove(ctx context.Context, name string) error
+	// Get returns the information of volume that specified name/id.
+	Get(ctx context.Context, name string) (*types.Volume, error)
 
 	// List returns all volumes on this host.
 	List(ctx context.Context, labels map[string]string) ([]*types.Volume, error)
 
-	// Get returns the information of volume that specified name/id.
-	Get(ctx context.Context, name string) (*types.Volume, error)
+	// Remove is used to delete an existing volume.
+	Remove(ctx context.Context, name string) error
 
 	// Path returns the mount path of volume.
 	Path(ctx context.Context, name string) (string, error)
@@ -91,6 +91,35 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 	return vm.core.CreateVolume(id)
 }
 
+// Get returns the information of volume that specified name/id.
+func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, error) {
+	id := types.VolumeID{
+		Name: name,
+	}
+	vol, err := vm.core.GetVolume(id)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
+		return nil, err
+	}
+	return vol, nil
+}
+
+// List returns all volumes on this host.
+func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]*types.Volume, error) {
+	if _, ok := labels["hostname"]; !ok {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return nil, err
+		}
+
+		labels["hostname"] = hostname
+	}
+
+	return vm.core.ListVolumes(labels)
+}
+
 // Remove is used to delete an existing volume.
 func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	vol, err := vm.Get(ctx, name)
@@ -113,35 +142,6 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	}
 
 	return nil
-}
-
-// List returns all volumes on this host.
-func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]*types.Volume, error) {
-	if _, ok := labels["hostname"]; !ok {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return nil, err
-		}
-
-		labels["hostname"] = hostname
-	}
-
-	return vm.core.ListVolumes(labels)
-}
-
-// Get returns the information of volume that specified name/id.
-func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, error) {
-	id := types.VolumeID{
-		Name: name,
-	}
-	vol, err := vm.core.GetVolume(id)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, errors.Wrap(errtypes.ErrNotfound, err.Error())
-		}
-		return nil, err
-	}
-	return vol, nil
 }
 
 // Path returns the mount path of volume.

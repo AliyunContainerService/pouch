@@ -37,6 +37,19 @@ func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req 
 	return EncodeResponse(rw, http.StatusCreated, networkCreateResp)
 }
 
+func (s *Server) getNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	id := mux.Vars(req)["id"]
+
+	network, err := s.NetworkMgr.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	networkResp := buildNetworkInspectResp(network)
+
+	return EncodeResponse(rw, http.StatusOK, networkResp)
+}
+
 func (s *Server) listNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	networks, err := s.NetworkMgr.List(ctx, map[string]string{})
 	if err != nil {
@@ -52,19 +65,6 @@ func (s *Server) listNetwork(ctx context.Context, rw http.ResponseWriter, req *h
 		})
 	}
 	return EncodeResponse(rw, http.StatusOK, respNetworks)
-}
-
-func (s *Server) getNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	id := mux.Vars(req)["id"]
-
-	network, err := s.NetworkMgr.Get(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	networkResp := buildNetworkInspectResp(network)
-
-	return EncodeResponse(rw, http.StatusOK, networkResp)
 }
 
 func (s *Server) deleteNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {

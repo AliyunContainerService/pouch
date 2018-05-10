@@ -37,21 +37,35 @@ import (
 	"github.com/magiconair/properties"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // ContainerMgr as an interface defines all operations against container.
+// ContainerMgr's functionality could be divided into three parts:
+// 1. regular container management;
+// 2. container exec management;
+// 3. container network management.
 type ContainerMgr interface {
+	// 1. the following functions are related to regular container management
+
 	// Create a new container.
 	Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error)
+
+	// Get the detailed information of container.
+	Get(ctx context.Context, name string) (*ContainerMeta, error)
+
+	// List returns the list of containers.
+	List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error)
 
 	// Start a container.
 	Start(ctx context.Context, id, detachKeys string) error
 
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout int64) error
+
+	// Restart restart a running container.
+	Restart(ctx context.Context, name string, timeout int64) error
 
 	// Pause a container.
 	Pause(ctx context.Context, name string) error
@@ -62,29 +76,8 @@ type ContainerMgr interface {
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
-	// List returns the list of containers.
-	List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error)
-
-	// CreateExec creates exec process's environment.
-	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
-
-	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
-
-	// InspectExec returns low-level information about exec command.
-	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
-
-	// GetExecConfig returns execonfig of a exec process inside container.
-	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
-
-	// Remove removes a container, it may be running or stopped and so on.
-	Remove(ctx context.Context, name string, option *types.ContainerRemoveOptions) error
-
 	// Rename renames a container.
 	Rename(ctx context.Context, oldName string, newName string) error
-
-	// Get the detailed information of container.
-	Get(ctx context.Context, name string) (*ContainerMeta, error)
 
 	// Update updates the configurations of a container.
 	Update(ctx context.Context, name string, config *types.UpdateConfig) error
@@ -98,8 +91,26 @@ type ContainerMgr interface {
 	// Resize resizes the size of container tty.
 	Resize(ctx context.Context, name string, opts types.ResizeOptions) error
 
-	// Restart restart a running container.
-	Restart(ctx context.Context, name string, timeout int64) error
+	// Remove removes a container, it may be running or stopped and so on.
+	Remove(ctx context.Context, name string, option *types.ContainerRemoveOptions) error
+
+	// 2. The following five functions is related to containr exec.
+
+	// CreateExec creates exec process's environment.
+	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
+
+	// StartExec executes a new process in container.
+	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
+
+	// InspectExec returns low-level information about exec command.
+	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
+
+	// GetExecConfig returns execonfig of a exec process inside container.
+	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
+
+	// 3. The following two function is related to network management.
+	// TODO: inconsistency, Connect/Disconnect operation is in newtork_bridge.go in upper API layer.
+	// Here we encapsualted them in container manager, inconsistency exists.
 
 	// Connect is used to connect a container to a network.
 	Connect(ctx context.Context, name string, networkIDOrName string, epConfig *types.EndpointSettings) error
@@ -208,170 +219,6 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		return nil
 	}
 	return mgr.Store.ForEach(fn)
-}
-
-// Remove removes a container, it may be running or stopped and so on.
-func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error {
-	c, err := mgr.container(name)
-	if err != nil {
-		return err
-	}
-	c.Lock()
-	defer c.Unlock()
-
-	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !options.Force {
-		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID())
-	}
-
-	// if the container is running, force to stop it.
-	if c.IsRunning() && options.Force {
-		msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout())
-		if err != nil && !errtypes.IsNotfound(err) {
-			return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
-		}
-		if err := mgr.markStoppedAndRelease(c, msg); err != nil {
-			return errors.Wrapf(err, "failed to mark container: %s stop status", c.ID())
-		}
-	}
-
-	if err := mgr.detachVolumes(ctx, c.meta, options.Volumes); err != nil {
-		logrus.Errorf("failed to detach volume: %v", err)
-	}
-
-	// remove name
-	mgr.NameToID.Remove(c.Name())
-
-	// remove meta data
-	if err := mgr.Store.Remove(c.meta.Key()); err != nil {
-		logrus.Errorf("failed to remove container: %s meta store, %v", c.ID(), err)
-	}
-
-	// remove container cache
-	mgr.cache.Remove(c.ID())
-
-	// remove snapshot
-	if err := mgr.Client.RemoveSnapshot(ctx, c.ID()); err != nil {
-		logrus.Errorf("failed to remove container: %s snapshot, %v", c.ID(), err)
-	}
-
-	return nil
-}
-
-// CreateExec creates exec process's meta data.
-func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error) {
-	c, err := mgr.container(name)
-	if err != nil {
-		return "", err
-	}
-
-	if !c.IsRunning() {
-		return "", fmt.Errorf("container %s is not running", c.ID())
-	}
-
-	execid := randomid.Generate()
-	execConfig := &ContainerExecConfig{
-		ExecID:           execid,
-		ExecCreateConfig: *config,
-		ContainerID:      c.ID(),
-	}
-
-	mgr.ExecProcesses.Put(execid, execConfig)
-
-	return execid, nil
-}
-
-// StartExec executes a new process in container.
-func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error {
-	v, ok := mgr.ExecProcesses.Get(execid).Result()
-	if !ok {
-		return errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+execid)
-	}
-	execConfig, ok := v.(*ContainerExecConfig)
-	if !ok {
-		return fmt.Errorf("invalid exec config type")
-	}
-
-	if attach != nil {
-		attach.Stdin = execConfig.AttachStdin
-	}
-
-	io, err := mgr.openExecIO(execid, attach)
-	if err != nil {
-		return err
-	}
-
-	c, err := mgr.container(execConfig.ContainerID)
-	if err != nil {
-		return err
-	}
-
-	process := &specs.Process{
-		Args:     execConfig.Cmd,
-		Terminal: execConfig.Tty,
-		Cwd:      "/",
-		Env:      c.Config().Env,
-	}
-
-	if execConfig.User != "" {
-		c.meta.Config.User = execConfig.User
-	}
-
-	if err = setupUser(ctx, c.meta, &specs.Spec{Process: process}); err != nil {
-		return err
-	}
-
-	// set exec process ulimit
-	if err := setupRlimits(ctx, c.meta.HostConfig, &specs.Spec{Process: process}); err != nil {
-		return err
-	}
-
-	execConfig.Running = true
-	defer func() {
-		if err != nil {
-			execConfig.Running = false
-			exitCode := 126
-			execConfig.ExitCode = int64(exitCode)
-		}
-		mgr.ExecProcesses.Put(execid, execConfig)
-	}()
-
-	err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
-		ContainerID: execConfig.ContainerID,
-		ExecID:      execid,
-		IO:          io,
-		P:           process,
-	})
-
-	return err
-}
-
-// InspectExec returns low-level information about exec command.
-func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error) {
-	execConfig, err := mgr.GetExecConfig(ctx, execid)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.ContainerExecInspect{
-		ID: execConfig.ExecID,
-		// FIXME: try to use the correct running status of exec
-		Running:     execConfig.Running,
-		ExitCode:    execConfig.ExitCode,
-		ContainerID: execConfig.ContainerID,
-	}, nil
-}
-
-// GetExecConfig returns execonfig of a exec process inside container.
-func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error) {
-	v, ok := mgr.ExecProcesses.Get(execid).Result()
-	if !ok {
-		return nil, errors.Wrap(errtypes.ErrNotfound, "exec process "+execid)
-	}
-	execConfig, ok := v.(*ContainerExecConfig)
-	if !ok {
-		return nil, fmt.Errorf("invalid exec config type")
-	}
-	return execConfig, nil
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
@@ -526,6 +373,45 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		ID:   id,
 		Name: name,
 	}, nil
+}
+
+// Get the detailed information of container.
+func (mgr *ContainerManager) Get(ctx context.Context, name string) (*ContainerMeta, error) {
+	c, err := mgr.container(name)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return c.meta, nil
+}
+
+// List returns the container's list.
+func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error) {
+	metas := []*ContainerMeta{}
+
+	list, err := mgr.Store.List()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, obj := range list {
+		m, ok := obj.(*ContainerMeta)
+		if !ok {
+			return nil, fmt.Errorf("failed to get container list, invalid meta type")
+		}
+		if filter != nil && filter(m) {
+			if option.All {
+				metas = append(metas, m)
+			} else if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
+				metas = append(metas, m)
+			}
+		}
+	}
+
+	return metas, nil
 }
 
 // Start a pre created Container.
@@ -694,6 +580,33 @@ func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int
 	return mgr.markStoppedAndRelease(c, msg)
 }
 
+// Restart restarts a running container.
+func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout int64) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if timeout == 0 {
+		timeout = c.StopTimeout()
+	}
+
+	if c.IsRunning() || c.IsPaused() {
+		// stop container if it is running or paused.
+		if err := mgr.stop(ctx, c, timeout); err != nil {
+			logrus.Errorf("failed to stop container %s when restarting: %v", c.ID(), err)
+			return errors.Wrapf(err, fmt.Sprintf("failed to stop container %s", c.ID()))
+		}
+	}
+
+	logrus.Debugf("start container %s when restarting", c.ID())
+	// start container
+	return mgr.start(ctx, c, "")
+}
+
 // Pause pauses a running container.
 func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 	var (
@@ -781,46 +694,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 	return nil
 }
 
-// List returns the container's list.
-func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*ContainerMeta, error) {
-	metas := []*ContainerMeta{}
-
-	list, err := mgr.Store.List()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, obj := range list {
-		m, ok := obj.(*ContainerMeta)
-		if !ok {
-			return nil, fmt.Errorf("failed to get container list, invalid meta type")
-		}
-		if filter != nil && filter(m) {
-			if option.All {
-				metas = append(metas, m)
-			} else if m.State.Status == types.StatusRunning || m.State.Status == types.StatusPaused {
-				metas = append(metas, m)
-			}
-		}
-	}
-
-	return metas, nil
-}
-
-// Get the detailed information of container.
-func (mgr *ContainerManager) Get(ctx context.Context, name string) (*ContainerMeta, error) {
-	c, err := mgr.container(name)
-	if err != nil {
-		return nil, err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	return c.meta, nil
-}
-
-// Rename renames a container
+// Rename renames a container.
 func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string) error {
 	var (
 		c   *Container
@@ -939,6 +813,53 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	return updateErr
+}
+
+// Remove removes a container, it may be running or stopped and so on.
+func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+	c.Lock()
+	defer c.Unlock()
+
+	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !options.Force {
+		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID())
+	}
+
+	// if the container is running, force to stop it.
+	if c.IsRunning() && options.Force {
+		msg, err := mgr.Client.DestroyContainer(ctx, c.ID(), c.StopTimeout())
+		if err != nil && !errtypes.IsNotfound(err) {
+			return errors.Wrapf(err, "failed to destroy container: %s", c.ID())
+		}
+		if err := mgr.markStoppedAndRelease(c, msg); err != nil {
+			return errors.Wrapf(err, "failed to mark container: %s stop status", c.ID())
+		}
+	}
+
+	if err := mgr.detachVolumes(ctx, c.meta, options.Volumes); err != nil {
+		logrus.Errorf("failed to detach volume: %v", err)
+	}
+
+	// remove name
+	mgr.NameToID.Remove(c.Name())
+
+	// remove meta data
+	if err := mgr.Store.Remove(c.meta.Key()); err != nil {
+		logrus.Errorf("failed to remove container: %s meta store, %v", c.ID(), err)
+	}
+
+	// remove container cache
+	mgr.cache.Remove(c.ID())
+
+	// remove snapshot
+	if err := mgr.Client.RemoveSnapshot(ctx, c.ID()); err != nil {
+		logrus.Errorf("failed to remove container: %s snapshot, %v", c.ID(), err)
+	}
+
+	return nil
 }
 
 func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *ContainerMeta, diskQuota string) error {
@@ -1338,33 +1259,6 @@ func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types
 	}
 
 	return mgr.Client.ResizeContainer(ctx, c.ID(), opts)
-}
-
-// Restart restarts a running container.
-func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout int64) error {
-	c, err := mgr.container(name)
-	if err != nil {
-		return err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	if timeout == 0 {
-		timeout = c.StopTimeout()
-	}
-
-	if c.IsRunning() || c.IsPaused() {
-		// stop container if it is running or paused.
-		if err := mgr.stop(ctx, c, timeout); err != nil {
-			logrus.Errorf("failed to stop container %s when restarting: %v", c.ID(), err)
-			return errors.Wrapf(err, fmt.Sprintf("failed to stop container %s", c.ID()))
-		}
-	}
-
-	logrus.Debugf("start container %s when restarting", c.ID())
-	// start container
-	return mgr.start(ctx, c, "")
 }
 
 // Connect is used to connect a container to a network.
