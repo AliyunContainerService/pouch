@@ -126,7 +126,7 @@ func (c *Ceph) Options() map[string]types.Option {
 func (c *Ceph) Format(ctx driver.Context, v *types.Volume, s *types.Storage) error {
 	ctx.Log.Debugf("Ceph format volume: %s", v.Name)
 
-	device, err := rbdMap(ctx, v, s.Spec.Address, s.Spec.Key)
+	device, err := rbdMap(ctx, v, s.Spec.Address, s.Spec.Keyring)
 	if err != nil {
 		ctx.Log.Errorf("Ceph map volume: %s failed: %v", v.Name, err)
 		return err
@@ -159,7 +159,7 @@ func (c *Ceph) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) err
 	volumePath := v.Path()
 
 	// Map rbd device
-	devName, err := rbdMap(ctx, v, s.Spec.Address, s.Spec.Key)
+	devName, err := rbdMap(ctx, v, s.Spec.Address, s.Spec.Keyring)
 	if err != nil {
 		ctx.Log.Errorf("Ceph volume: %s map error: %v", v.Name, err)
 		return err
@@ -257,7 +257,7 @@ func (c *Ceph) Report(ctx driver.Context) ([]*types.Storage, error) {
 	}
 	keyring := fmt.Sprintf("%s:%s", "admin", key.Value())
 	encoded := base64.StdEncoding.EncodeToString([]byte(keyring))
-	s.Spec.Key = encoded
+	s.Spec.Keyring = encoded
 
 	// get ceph quorum status
 	cmd := NewCephCommand("ceph", conf)

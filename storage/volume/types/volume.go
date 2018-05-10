@@ -87,6 +87,7 @@ type VolumeSpec struct {
 	Selector      Selector `json:"selector"`
 	Operable      bool     `json:"operable"`
 	Backend       string   `json:"backend,omitempty"`
+	MountMode     string   `json:"mountMode,omitempty"`
 	*VolumeConfig `json:"config,inline"`
 	Extra         map[string]string `json:"extra"`
 }
