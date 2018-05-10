@@ -1,17 +1,15 @@
 package client
 
 import (
-	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/alibaba/pouch/pkg/httputils"
 )
 
 var (
@@ -47,14 +45,14 @@ func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 		host = defaultHost
 	}
 
-	newURL, basePath, addr, err := parseHost(host)
+	newURL, basePath, addr, err := httputils.ParseHost(host)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host %s: %v", host, err)
 	}
 
 	tlsConfig := generateTLSConfig(host, tls)
 
-	httpCli := newHTTPClient(newURL, tlsConfig)
+	httpCli := httputils.NewHTTPClient(newURL, tlsConfig, defaultTimeout)
 
 	basePath = generateBaseURL(newURL, tls)
 
@@ -72,57 +70,11 @@ func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 	}, nil
 }
 
-// parseHost inputs a host address string, and output three type:
-// url.URL, basePath and an error
-func parseHost(host string) (*url.URL, string, string, error) {
-	u, err := url.Parse(host)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	var basePath string
-	switch u.Scheme {
-	case "unix":
-		basePath = "http://d"
-	case "tcp":
-		basePath = "http://" + u.Host
-	case "http":
-		basePath = host
-	default:
-		return nil, "", "", fmt.Errorf("not support url scheme %v", u.Scheme)
-	}
-
-	return u, basePath, strings.TrimPrefix(host, u.Scheme+"://"), nil
-}
-
-func newHTTPClient(u *url.URL, tlsConfig *tls.Config) *http.Client {
-	tr := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
-
-	switch u.Scheme {
-	case "unix":
-		unixDial := func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.DialTimeout("unix", u.Path, time.Duration(defaultTimeout))
-		}
-		tr.DialContext = unixDial
-	default:
-		dial := func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, time.Duration(defaultTimeout))
-		}
-		tr.DialContext = dial
-	}
-
-	return &http.Client{
-		Transport: tr,
-	}
-}
-
 // generateTLSConfig configures TLS for API Client.
 func generateTLSConfig(host string, tls TLSConfig) *tls.Config {
 	// init tls config
 	if tls.Key != "" && tls.Cert != "" && !strings.HasPrefix(host, "unix://") {
-		tlsCfg, err := GenTLSConfig(tls.Key, tls.Cert, tls.CA)
+		tlsCfg, err := httputils.GenTLSConfig(tls.Key, tls.Cert, tls.CA)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
 			os.Exit(1)
@@ -173,28 +125,4 @@ func (client *APIClient) GetAPIPath(path string, query url.Values) string {
 // UpdateClientVersion sets client version new value.
 func (client *APIClient) UpdateClientVersion(v string) {
 	client.version = v
-}
-
-// GenTLSConfig returns a tls config object according to inputting parameters.
-func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
-	tlsConfig := &tls.Config{}
-	tlsCert, err := tls.LoadX509KeyPair(cert, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read X509 key pair (cert: %q, key: %q): %v", cert, key, err)
-	}
-	tlsConfig.Certificates = []tls.Certificate{tlsCert}
-	if ca == "" {
-		return tlsConfig, nil
-	}
-
-	cp := x509.NewCertPool()
-	pem, err := ioutil.ReadFile(ca)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CA certificate %q: %v", ca, err)
-	}
-	if !cp.AppendCertsFromPEM(pem) {
-		return nil, fmt.Errorf("failed to append certificates from PEM file: %q", ca)
-	}
-	tlsConfig.ClientCAs = cp
-	return tlsConfig, nil
 }
