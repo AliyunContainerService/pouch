@@ -32,26 +32,26 @@ type NetworkMgr interface {
 	// Create is used to create network.
 	Create(ctx context.Context, create apitypes.NetworkCreateConfig) (*types.Network, error)
 
-	// NetworkRemove is used to delete an existing network.
-	Remove(ctx context.Context, name string) error
+	// Get returns the information of network that specified name/id.
+	Get(ctx context.Context, name string) (*types.Network, error)
 
 	// List returns all networks on this host.
 	List(ctx context.Context, labels map[string]string) ([]*types.Network, error)
 
-	// Get returns the information of network that specified name/id.
-	Get(ctx context.Context, name string) (*types.Network, error)
+	// NetworkRemove is used to delete an existing network.
+	Remove(ctx context.Context, name string) error
 
 	// EndpointCreate is used to create network endpoint.
 	EndpointCreate(ctx context.Context, endpoint *types.Endpoint) (string, error)
 
-	// EndpointRemove is used to remove network endpoint.
-	EndpointRemove(ctx context.Context, endpoint *types.Endpoint) error
+	// EndpointInfo returns the information of endpoint that specified name/id.
+	EndpointInfo(ctx context.Context, name string) (*types.Endpoint, error)
 
 	// EndpointList returns all endpoints.
 	EndpointList(ctx context.Context) ([]*types.Endpoint, error)
 
-	// EndpointInfo returns the information of endpoint that specified name/id.
-	EndpointInfo(ctx context.Context, name string) (*types.Endpoint, error)
+	// EndpointRemove is used to remove network endpoint.
+	EndpointRemove(ctx context.Context, endpoint *types.Endpoint) error
 
 	// Controller returns the network controller.
 	Controller() libnetwork.NetworkController
@@ -119,20 +119,24 @@ func (nm *NetworkManager) Create(ctx context.Context, create apitypes.NetworkCre
 	return &network, nil
 }
 
-// Remove is used to delete an existing network.
-func (nm *NetworkManager) Remove(ctx context.Context, name string) error {
-	nw, err := nm.controller.NetworkByName(name)
-	if err != nil {
-		if err == libnetwork.ErrNoSuchNetwork(name) {
-			return errors.Wrap(errtypes.ErrNotfound, err.Error())
-		}
-		return err
-	}
-	if nw == nil {
-		return nil
+// Get returns the information of network for specified string that represent network name or ID.
+// If network name is given, the network with same name is returned.
+// If prefix of network ID is given, the network with same prefix is returned.
+func (nm *NetworkManager) Get(ctx context.Context, idName string) (*types.Network, error) {
+	n, err := nm.GetNetworkByName(idName)
+	if err != nil && !isNoSuchNetworkError(err) {
+		return nil, err
 	}
 
-	return nw.Delete()
+	if n != nil {
+		return n, nil
+	}
+
+	n, err = nm.GetNetworkByPartialID(idName)
+	if err != nil {
+		return nil, err
+	}
+	return n, err
 }
 
 // List returns all networks on this host.
@@ -151,6 +155,22 @@ func (nm *NetworkManager) List(ctx context.Context, labels map[string]string) ([
 	return net, nil
 }
 
+// Remove is used to delete an existing network.
+func (nm *NetworkManager) Remove(ctx context.Context, name string) error {
+	nw, err := nm.controller.NetworkByName(name)
+	if err != nil {
+		if err == libnetwork.ErrNoSuchNetwork(name) {
+			return errors.Wrap(errtypes.ErrNotfound, err.Error())
+		}
+		return err
+	}
+	if nw == nil {
+		return nil
+	}
+
+	return nw.Delete()
+}
+
 // GetNetworkByName returns the information of network that specified name.
 func (nm *NetworkManager) GetNetworkByName(name string) (*types.Network, error) {
 	n, err := nm.controller.NetworkByName(name)
@@ -163,26 +183,6 @@ func (nm *NetworkManager) GetNetworkByName(name string) (*types.Network, error) 
 		Type:    n.Type(),
 		Network: n,
 	}, nil
-}
-
-// GetNetworksByPartialID returns a list of networks that ID starts with the given prefix.
-func (nm *NetworkManager) GetNetworksByPartialID(partialID string) []*types.Network {
-	var matchedNetworks []*types.Network
-
-	walker := func(nw libnetwork.Network) bool {
-		if strings.HasPrefix(nw.ID(), partialID) {
-			matchedNetwork := &types.Network{
-				Name:    nw.Name(),
-				ID:      nw.ID(),
-				Type:    nw.Type(),
-				Network: nw,
-			}
-			matchedNetworks = append(matchedNetworks, matchedNetwork)
-		}
-		return false
-	}
-	nm.controller.WalkNetworks(walker)
-	return matchedNetworks
 }
 
 // GetNetworkByPartialID returns the information of network that ID starts with the given prefix.
@@ -211,30 +211,30 @@ func (nm *NetworkManager) GetNetworkByPartialID(partialID string) (*types.Networ
 	return matchedNetworks[0], nil
 }
 
+// GetNetworksByPartialID returns a list of networks that ID starts with the given prefix.
+func (nm *NetworkManager) GetNetworksByPartialID(partialID string) []*types.Network {
+	var matchedNetworks []*types.Network
+
+	walker := func(nw libnetwork.Network) bool {
+		if strings.HasPrefix(nw.ID(), partialID) {
+			matchedNetwork := &types.Network{
+				Name:    nw.Name(),
+				ID:      nw.ID(),
+				Type:    nw.Type(),
+				Network: nw,
+			}
+			matchedNetworks = append(matchedNetworks, matchedNetwork)
+		}
+		return false
+	}
+	nm.controller.WalkNetworks(walker)
+	return matchedNetworks
+}
+
 // isNoSuchNetworkError looks up the error type and returns a bool if it is ErrNoSuchNetwork or not.
 func isNoSuchNetworkError(err error) bool {
 	_, ok := err.(libnetwork.ErrNoSuchNetwork)
 	return ok
-}
-
-// Get returns the information of network for specified string that represent network name or ID.
-// If network name is given, the network with same name is returned.
-// If prefix of network ID is given, the network with same prefix is returned.
-func (nm *NetworkManager) Get(ctx context.Context, idName string) (*types.Network, error) {
-	n, err := nm.GetNetworkByName(idName)
-	if err != nil && !isNoSuchNetworkError(err) {
-		return nil, err
-	}
-
-	if n != nil {
-		return n, nil
-	}
-
-	n, err = nm.GetNetworkByPartialID(idName)
-	if err != nil {
-		return nil, err
-	}
-	return n, err
 }
 
 // EndpointCreate is used to create network endpoint.
@@ -330,6 +330,18 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	return endpointName, nil
 }
 
+// EndpointInfo returns the information of endpoint that specified name/id.
+func (nm *NetworkManager) EndpointInfo(ctx context.Context, name string) (*types.Endpoint, error) {
+	// TODO
+	return nil, nil
+}
+
+// EndpointList returns all endpoints.
+func (nm *NetworkManager) EndpointList(ctx context.Context) ([]*types.Endpoint, error) {
+	// TODO
+	return nil, nil
+}
+
 // EndpointRemove is used to remove network endpoint.
 func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.Endpoint) error {
 	sid := endpoint.NetworkConfig.SandboxID
@@ -356,18 +368,6 @@ func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.En
 	nm.cleanEndpointConfig(epConfig)
 
 	return nil
-}
-
-// EndpointList returns all endpoints.
-func (nm *NetworkManager) EndpointList(ctx context.Context) ([]*types.Endpoint, error) {
-	// TODO
-	return nil, nil
-}
-
-// EndpointInfo returns the information of endpoint that specified name/id.
-func (nm *NetworkManager) EndpointInfo(ctx context.Context, name string) (*types.Endpoint, error) {
-	// TODO
-	return nil, nil
 }
 
 // Controller returns the network controller.

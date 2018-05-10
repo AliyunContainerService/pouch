@@ -26,14 +26,14 @@ type ImageMgr interface {
 	// PullImage pulls images from specified registry.
 	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error
 
+	// GetImage returns imageInfo by reference or id.
+	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
+
 	// ListImages lists images stored by containerd.
 	ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error)
 
 	// Search Images from specified registry.
 	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
-
-	// GetImage returns imageInfo by reference or id.
-	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
 
 	// RemoveImage deletes an image by reference.
 	RemoveImage(ctx context.Context, idOrRef string, force bool) error
@@ -81,80 +81,6 @@ func NewImageManager(cfg *config.Config, client ctrd.APIClient) (*ImageManager, 
 	return mgr, nil
 }
 
-// CheckReference returns image ID and actual reference.
-func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (actualID digest.Digest, actualRef reference.Named, primaryRef reference.Named, err error) {
-	var namedRef reference.Named
-
-	namedRef, err = reference.Parse(idOrRef)
-	if err != nil {
-		return
-	}
-
-	// NOTE: we cannot add default registry for the idOrRef directly
-	// because the idOrRef maybe short ID or ID. we should run search
-	// without addDefaultRegistryIfMissing at first round.
-	actualID, actualRef, err = mgr.localStore.Search(namedRef)
-	if err != nil {
-		if !errtypes.IsNotfound(err) {
-			return
-		}
-
-		newIDOrRef := addDefaultRegistryIfMissing(idOrRef, mgr.DefaultRegistry, mgr.DefaultNamespace)
-		if newIDOrRef == idOrRef {
-			return
-		}
-
-		// ideally, the err should be nil
-		namedRef, err = reference.Parse(newIDOrRef)
-		if err != nil {
-			return
-		}
-
-		actualID, actualRef, err = mgr.localStore.Search(namedRef)
-		if err != nil {
-			return
-		}
-	}
-
-	// NOTE: if the actualRef is short ID or ID, the primaryRef is first one of
-	// primary reference
-	if reference.IsNamedOnly(actualRef) {
-		refs := mgr.localStore.GetPrimaryReferences(actualID)
-		if len(refs) == 0 {
-			err = errtypes.ErrNotfound
-			logrus.Errorf("one Image ID must have the primary references, but got nothing")
-			return
-		}
-
-		primaryRef = refs[0]
-	} else {
-		primaryRef, err = mgr.localStore.GetPrimaryReference(actualRef)
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
-// GetImage returns imageInfo by reference.
-func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error) {
-	_, _, ref, err := mgr.CheckReference(ctx, idOrRef)
-	if err != nil {
-		return nil, err
-	}
-
-	img, err := mgr.client.GetImage(ctx, ref.String())
-	if err != nil {
-		return nil, err
-	}
-
-	imgInfo, err := mgr.containerdImageToImageInfo(ctx, img)
-	if err != nil {
-		return nil, err
-	}
-	return &imgInfo, nil
-}
-
 // PullImage pulls images from specified registry.
 func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error {
 	newRef := addDefaultRegistryIfMissing(ref, mgr.DefaultRegistry, mgr.DefaultNamespace)
@@ -183,6 +109,25 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 	}
 
 	return mgr.storeImageReference(ctx, img)
+}
+
+// GetImage returns imageInfo by reference.
+func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error) {
+	_, _, ref, err := mgr.CheckReference(ctx, idOrRef)
+	if err != nil {
+		return nil, err
+	}
+
+	img, err := mgr.client.GetImage(ctx, ref.String())
+	if err != nil {
+		return nil, err
+	}
+
+	imgInfo, err := mgr.containerdImageToImageInfo(ctx, img)
+	if err != nil {
+		return nil, err
+	}
+	return &imgInfo, nil
 }
 
 // ListImages lists images stored by containerd.
@@ -275,6 +220,61 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 		return mgr.client.RemoveImage(ctx, primaryRef.String())
 	}
 	return mgr.localStore.RemoveReference(id, namedRef)
+}
+
+// CheckReference returns image ID and actual reference.
+func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (actualID digest.Digest, actualRef reference.Named, primaryRef reference.Named, err error) {
+	var namedRef reference.Named
+
+	namedRef, err = reference.Parse(idOrRef)
+	if err != nil {
+		return
+	}
+
+	// NOTE: we cannot add default registry for the idOrRef directly
+	// because the idOrRef maybe short ID or ID. we should run search
+	// without addDefaultRegistryIfMissing at first round.
+	actualID, actualRef, err = mgr.localStore.Search(namedRef)
+	if err != nil {
+		if !errtypes.IsNotfound(err) {
+			return
+		}
+
+		newIDOrRef := addDefaultRegistryIfMissing(idOrRef, mgr.DefaultRegistry, mgr.DefaultNamespace)
+		if newIDOrRef == idOrRef {
+			return
+		}
+
+		// ideally, the err should be nil
+		namedRef, err = reference.Parse(newIDOrRef)
+		if err != nil {
+			return
+		}
+
+		actualID, actualRef, err = mgr.localStore.Search(namedRef)
+		if err != nil {
+			return
+		}
+	}
+
+	// NOTE: if the actualRef is short ID or ID, the primaryRef is first one of
+	// primary reference
+	if reference.IsNamedOnly(actualRef) {
+		refs := mgr.localStore.GetPrimaryReferences(actualID)
+		if len(refs) == 0 {
+			err = errtypes.ErrNotfound
+			logrus.Errorf("one Image ID must have the primary references, but got nothing")
+			return
+		}
+
+		primaryRef = refs[0]
+	} else {
+		primaryRef, err = mgr.localStore.GetPrimaryReference(actualRef)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 // updateLocalStore updates the local store.
