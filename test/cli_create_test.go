@@ -474,3 +474,18 @@ func (suite *PouchCreateSuite) TestCreateWithUlimit(c *check.C) {
 	c.Assert(int(ul.Hard), check.Equals, 21)
 	c.Assert(int(ul.Soft), check.Equals, 21)
 }
+
+// TestCreateWithPidsLimit tests running container with --pids-limit flag.
+func (suite *PouchRunSuite) TestCreateWithPidsLimit(c *check.C) {
+	cname := "TestCreateWithPidsLimit"
+	res := command.PouchRun("create", "--pids-limit", "10", "--name", cname, busyboxImage)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	pl := result[0].HostConfig.PidsLimit
+	c.Assert(int(pl), check.Equals, 10)
+}

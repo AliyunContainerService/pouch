@@ -140,7 +140,10 @@ func setupResource(ctx context.Context, c *Container, s *specs.Spec) error {
 		return err
 	}
 
-	//TODO: nedd support Pids, HugepageLimits, Network cgroup set
+	// start to setup pids limit
+	s.Linux.Resources.Pids = &specs.LinuxPids{
+		Limit: c.HostConfig.PidsLimit,
+	}
 
 	return nil
 }

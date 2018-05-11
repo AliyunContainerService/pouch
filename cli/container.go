@@ -69,6 +69,7 @@ type container struct {
 	specAnnotation []string
 	cgroupParent   string
 	ulimit         Ulimit
+	pidsLimit      int64
 
 	//add for rich container mode
 	rich       bool
@@ -223,6 +224,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				IntelRdtL3Cbm: intelRdtL3Cbm,
 				CgroupParent:  c.cgroupParent,
 				Ulimits:       c.ulimit.value(),
+				PidsLimit:     c.pidsLimit,
 			},
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,
