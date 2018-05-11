@@ -21,7 +21,7 @@ type SpecWrapper struct {
 }
 
 // createSpec create a runtime-spec.
-func createSpec(ctx context.Context, c *ContainerMeta, specWrapper *SpecWrapper) error {
+func createSpec(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
 	// new a default spec from containerd.
 	s, err := ctrd.NewDefaultSpec(ctx, c.ID)
 	if err != nil {

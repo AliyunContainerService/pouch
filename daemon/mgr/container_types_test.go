@@ -12,17 +12,17 @@ import (
 
 type tCase struct {
 	name     string
-	input    *ContainerMeta
+	input    *Container
 	expected string
 	err      error
 }
 
-func TestContainerMeta_FormatStatus(t *testing.T) {
+func TestContainer_FormatStatus(t *testing.T) {
 	// TODO: add more cases
 	for _, tc := range []tCase{
 		{
 			name: "Created",
-			input: &ContainerMeta{
+			input: &Container{
 				State: &types.ContainerState{
 					Status: types.StatusCreated,
 				},
@@ -32,7 +32,7 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 		},
 		{
 			name: "Exited",
-			input: &ContainerMeta{
+			input: &Container{
 				State: &types.ContainerState{
 					Status:     types.StatusExited,
 					FinishedAt: time.Now().Add(0 - utils.Hour).UTC().Format(utils.TimeLayout),
@@ -44,7 +44,7 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 		},
 		{
 			name: "Stopped",
-			input: &ContainerMeta{
+			input: &Container{
 				State: &types.ContainerState{
 					Status:     types.StatusStopped,
 					FinishedAt: time.Now().Add(0 - utils.Minute).UTC().Format(utils.TimeLayout),
@@ -56,7 +56,7 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 		},
 		{
 			name: "Running",
-			input: &ContainerMeta{
+			input: &Container{
 				State: &types.ContainerState{
 					Status:    types.StatusRunning,
 					StartedAt: time.Now().Add(0 - utils.Minute).UTC().Format(utils.TimeLayout),
@@ -67,7 +67,7 @@ func TestContainerMeta_FormatStatus(t *testing.T) {
 		},
 		{
 			name: "Paused",
-			input: &ContainerMeta{
+			input: &Container{
 				State: &types.ContainerState{
 					Status:    types.StatusPaused,
 					StartedAt: time.Now().Add(0 - utils.Minute*2).UTC().Format(utils.TimeLayout),

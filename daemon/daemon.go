@@ -54,7 +54,7 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		Buckets: []meta.Bucket{
 			{
 				Name: meta.MetaJSONFile,
-				Type: reflect.TypeOf(mgr.ContainerMeta{}),
+				Type: reflect.TypeOf(mgr.Container{}),
 			},
 		},
 	})

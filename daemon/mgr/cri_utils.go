@@ -266,7 +266,7 @@ func toCriSandboxState(status apitypes.Status) runtime.PodSandboxState {
 	}
 }
 
-func toCriSandbox(c *ContainerMeta) (*runtime.PodSandbox, error) {
+func toCriSandbox(c *Container) (*runtime.PodSandbox, error) {
 	state := toCriSandboxState(c.State.Status)
 	metadata, err := parseSandboxName(c.Name)
 	if err != nil {
@@ -630,7 +630,7 @@ func toCriContainerState(status apitypes.Status) runtime.ContainerState {
 	}
 }
 
-func toCriContainer(c *ContainerMeta) (*runtime.Container, error) {
+func toCriContainer(c *Container) (*runtime.Container, error) {
 	state := toCriContainerState(c.State.Status)
 	metadata, err := parseContainerName(c.Name)
 	if err != nil {
@@ -688,7 +688,7 @@ func filterCRIContainers(containers []*runtime.Container, filter *runtime.Contai
 }
 
 // containerNetns returns the network namespace of the given container.
-func containerNetns(container *ContainerMeta) string {
+func containerNetns(container *Container) string {
 	pid := container.State.Pid
 	if pid == -1 {
 		// Pouch reports pid -1 for an exited container.

@@ -332,7 +332,7 @@ func Test_toCriSandboxState(t *testing.T) {
 
 func Test_toCriSandbox(t *testing.T) {
 	type args struct {
-		c *ContainerMeta
+		c *Container
 	}
 	tests := []struct {
 		name    string
@@ -643,7 +643,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 
 func Test_toCriContainer(t *testing.T) {
 	type args struct {
-		c *ContainerMeta
+		c *Container
 	}
 	tests := []struct {
 		name    string

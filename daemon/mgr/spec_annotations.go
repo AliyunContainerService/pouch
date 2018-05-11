@@ -9,7 +9,7 @@ import (
 )
 
 // setupAnnotations extracts other related options from HostConfig and locate them in spec's annotations which will be dealt by vendored runc.
-func setupAnnotations(ctx context.Context, c *ContainerMeta, s *specs.Spec) error {
+func setupAnnotations(ctx context.Context, c *Container, s *specs.Spec) error {
 	if s.Annotations == nil {
 		s.Annotations = make(map[string]string)
 	}
