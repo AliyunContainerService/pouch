@@ -272,7 +272,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	defer func() {
 		if err != nil {
 			if err := ep.Delete(true); err != nil {
-				logrus.Errorf("could not delete endpoint %s after failing to create endpoint: %v", ep.Name(), err)
+				logrus.Errorf("could not delete endpoint %s after failing to create endpoint(%v)", ep.Name(), err)
 			}
 		}
 	}()
@@ -282,12 +282,12 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	if sb == nil {
 		sandboxOptions, err := nm.sandboxOptions(endpoint)
 		if err != nil {
-			return "", fmt.Errorf("failed to build sandbox options: %v", err)
+			return "", fmt.Errorf("failed to build sandbox options(%v)", err)
 		}
 
 		sb, err = nm.controller.NewSandbox(containerID, sandboxOptions...)
 		if err != nil {
-			return "", fmt.Errorf("failed to create sandbox: %v", err)
+			return "", fmt.Errorf("failed to create sandbox(%v)", err)
 		}
 	}
 	networkConfig.SandboxID = sb.ID()
@@ -299,7 +299,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 		return "", err
 	}
 	if err := ep.Join(sb, joinOptions...); err != nil {
-		return "", fmt.Errorf("failed to join sandbox: %v", err)
+		return "", fmt.Errorf("failed to join sandbox(%v)", err)
 	}
 
 	// update endpoint settings
@@ -344,28 +344,63 @@ func (nm *NetworkManager) EndpointList(ctx context.Context) ([]*types.Endpoint, 
 
 // EndpointRemove is used to remove network endpoint.
 func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.Endpoint) error {
+	var (
+		ep libnetwork.Endpoint
+	)
+
 	sid := endpoint.NetworkConfig.SandboxID
 	epConfig := endpoint.EndpointConfig
 
-	logrus.Debugf("remove endpoint: %s on network: %s", epConfig.EndpointID, endpoint.Name)
+	logrus.Debugf("remove endpoint(%s) on network(%s)", epConfig.EndpointID, endpoint.Name)
 
 	if sid == "" {
 		return nil
 	}
 
+	// find endpoint in network and delete it.
 	sb, err := nm.controller.SandboxByID(sid)
-	if err == nil {
-		if err := sb.Delete(); err != nil {
-			logrus.Errorf("failed to delete sandbox id: %s, err: %v", sid, err)
-			return err
+	if err != nil {
+		return errors.Wrapf(err, "failed to get sandbox by id(%s)", sid)
+	}
+	if sb == nil {
+		return errors.Errorf("failed to get sandbox by id(%s)", sid)
+	}
+
+	eplist := sb.Endpoints()
+	if len(eplist) == 0 {
+		return errors.Errorf("no endpoint in sandbox(%s)", sid)
+	}
+
+	for _, e := range eplist {
+		if e.ID() == epConfig.EndpointID {
+			ep = e
+			break
 		}
-	} else if _, ok := err.(networktypes.NotFoundError); !ok {
-		logrus.Errorf("failed to get sandbox id: %s, err: %v", sid, err)
-		return fmt.Errorf("failed to get sandbox id: %s, err: %v", sid, err)
+	}
+
+	if ep == nil {
+		return errors.Errorf("not connected to the network(%s)", endpoint.Name)
+	}
+
+	if err := ep.Leave(sb); err != nil {
+		return errors.Wrapf(err, "failed to leave network(%s)", endpoint.Name)
+	}
+
+	if err := ep.Delete(false); err != nil {
+		return errors.Wrapf(err, "failed to delete endpoint(%s)", endpoint.ID)
 	}
 
 	// clean endpoint configure data
 	nm.cleanEndpointConfig(epConfig)
+
+	// check sandbox has endpoint or not.
+	eplist = sb.Endpoints()
+	if len(eplist) == 0 {
+		if err := sb.Delete(); err != nil {
+			logrus.Errorf("failed to delete sandbox id(%s), err(%v)", sid, err)
+			return errors.Wrapf(err, "failed to delete sandbox id(%s)", sid)
+		}
+	}
 
 	return nil
 }
@@ -456,7 +491,7 @@ func getIpamConfig(data []apitypes.IPAMConfig) ([]*libnetwork.IpamConf, []*libne
 		iCfg.AuxAddresses = d.AuxAddress
 		ip, _, err := net.ParseCIDR(d.Subnet)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Invalid subnet %s : %v", d.Subnet, err)
+			return nil, nil, fmt.Errorf("Invalid subnet(%s), err(%v)", d.Subnet, err)
 		}
 		if ip.To4() != nil {
 			ipamV4Cfg = append(ipamV4Cfg, &iCfg)
