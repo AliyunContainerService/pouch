@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package runtime
+package v1alpha2
 
 // This file contains all constants defined in CRI.
 
@@ -38,7 +38,7 @@ const (
 
 // LogTag is the tag of a log line in CRI container log.
 // Currently defined log tags:
-// * First tag: Partial/End - P/E.
+// * First tag: Partial/Full - P/F.
 // The field in the container log format can be extended to include multiple
 // tags by using a delimiter, but changes should be rare. If it becomes clear
 // that better extensibility is desired, a more extensible format (e.g., json)

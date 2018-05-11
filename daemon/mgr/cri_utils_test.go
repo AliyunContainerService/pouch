@@ -9,7 +9,7 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 func Test_parseUint32(t *testing.T) {

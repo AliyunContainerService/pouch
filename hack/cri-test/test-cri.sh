@@ -26,7 +26,7 @@ POUCH_SOCK="/var/run/pouchcri.sock"
 CRI_FOCUS=${CRI_FOCUS:-}
 
 # CRI_SKIP skips the test to skip.
-CRI_SKIP=${CRI_SKIP:-"RunAsUserName|seccomp localhost|should error on create with wrong options"}
+CRI_SKIP=${CRI_SKIP:-"RunAsUserName|seccomp localhost|should error on create with wrong options|runtime should support reopening container log"}
 # REPORT_DIR is the the directory to store test logs.
 REPORT_DIR=${REPORT_DIR:-"/tmp/test-cri"}
 
@@ -85,7 +85,7 @@ EOF'
 
 CRITEST=${GOPATH}/bin/critest
 CRITOOL_PKG=github.com/kubernetes-incubator/cri-tools
-
+GINKGO_PKG=github.com/onsi/ginkgo/ginkgo
 # Install critest
 if [ ! -x "$(command -v ${CRITEST})" ]; then
   go get -d ${CRITOOL_PKG}/...
@@ -100,7 +100,7 @@ mkdir -p ${REPORT_DIR}
 test_setup ${REPORT_DIR}
 
 # Run cri validation test
-sudo env PATH=${PATH} GOPATH=${GOPATH} ${CRITEST} --runtime-endpoint=${POUCH_SOCK} --focus="${CRI_FOCUS}" --ginkgo-flags="--skip=\"${CRI_SKIP}\"" validation
+sudo env PATH=${PATH} GOPATH=${GOPATH} ${CRITEST} --runtime-endpoint=${POUCH_SOCK} --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}"
 test_exit_code=$?
 
 test_teardown

@@ -23,7 +23,7 @@ import (
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 const (
@@ -196,7 +196,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// Step 4: Setup networking for the sandbox.
 	var netnsPath string
 	securityContext := config.GetLinux().GetSecurityContext()
-	hostNet := securityContext.GetNamespaceOptions().GetHostNetwork()
+	hostNet := securityContext.GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
 	// If it is in host network, no need to configure the network of sandbox.
 	if !hostNet {
 		container, err := c.ContainerMgr.Get(ctx, id)
@@ -268,7 +268,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	}
 
 	securityContext := sandboxMeta.Config.GetLinux().GetSecurityContext()
-	hostNet := securityContext.GetNamespaceOptions().GetHostNetwork()
+	hostNet := securityContext.GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
 
 	// Teardown network of the pod, if it is not in host network mode.
 	if !hostNet {
@@ -371,7 +371,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	labels, annotations := extractLabels(sandbox.Config.Labels)
 
 	securityContext := sandboxMeta.Config.GetLinux().GetSecurityContext()
-	hostNet := securityContext.GetNamespaceOptions().GetHostNetwork()
+	hostNet := securityContext.GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
 
 	var ip string
 	// No need to get ip for host network mode.
@@ -482,22 +482,11 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Get container log.
 	if config.GetLogPath() != "" {
 		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+		err := c.attachLog(logPath, containerID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create container for opening log file failed: %v", err)
-		}
-		// Attach to the container to get log.
-		attachConfig := &AttachConfig{
-			Stdout:     true,
-			Stderr:     true,
-			CriLogFile: f,
-		}
-		err = c.ContainerMgr.Attach(context.Background(), containerID, attachConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
+			return nil, err
 		}
 	}
-
 	return &runtime.CreateContainerResponse{ContainerId: containerID}, nil
 }
 
@@ -690,6 +679,31 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 // UpdateContainerResources updates ContainerConfig of the container.
 func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.UpdateContainerResourcesRequest) (*runtime.UpdateContainerResourcesResponse, error) {
 	return nil, fmt.Errorf("UpdateContainerResources Not Implemented Yet")
+}
+
+// ReopenContainerLog asks runtime to reopen the stdout/stderr log file
+// for the container. This is often called after the log file has been
+// rotated. If the container is not running, container runtime can choose
+// to either create a new log file and return nil, or return an error.
+// Once it returns error, new container log file MUST NOT be created.
+func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenContainerLogRequest) (*runtime.ReopenContainerLogResponse, error) {
+	containerID := r.GetContainerId()
+	container, err := c.ContainerMgr.Get(ctx, containerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container of %q: %v", containerID, err)
+	}
+	if container.State.Status != apitypes.StatusRunning {
+		return nil, fmt.Errorf("container %q is not running", containerID)
+	}
+	c.ContainerMgr.(*ContainerManager).IOs.Remove(containerID)
+	if container.LogPath != "" {
+		logPath := container.LogPath
+		err := c.attachLog(logPath, containerID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &runtime.ReopenContainerLogResponse{}, nil
 }
 
 // ExecSync executes a command in the container, and returns the stdout output.
