@@ -57,6 +57,8 @@ func (suite *APIContainerLogsSuite) TestNoShowStdoutAndShowStderr(c *check.C) {
 	resp, err := request.Get(fmt.Sprintf("/containers/%s/logs", name))
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, http.StatusBadRequest)
+
+	DelContainerForceOk(c, name)
 }
 
 // TestStdout tests stdout stream.

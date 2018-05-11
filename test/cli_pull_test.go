@@ -37,7 +37,7 @@ func (suite *PouchPullSuite) TestPullWorks(c *check.C) {
 			c.Fatalf("unexpected output %s: should got image %s\n", out, expected)
 		}
 
-		command.PouchRun("rmi", expected).Assert(c, icmd.Success)
+		command.PouchRun("rmi", "-f", expected).Assert(c, icmd.Success)
 	}
 
 	busybox := "registry.hub.docker.com/library/busybox"

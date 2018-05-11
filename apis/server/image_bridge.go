@@ -107,7 +107,7 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 
 	isForce := httputils.BoolValue(req, "force")
 	if !isForce && len(containers) > 0 {
-		return fmt.Errorf("Unable to remove the image %q (must force) - container %s is using this image", image.ID, containers[0].ID)
+		return fmt.Errorf("Unable to remove the image %q (must force) - container (%s, %s) is using this image", image.ID, containers[0].ID, containers[0].Name)
 	}
 
 	if err := s.ImageMgr.RemoveImage(ctx, name, isForce); err != nil {
