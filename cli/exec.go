@@ -123,6 +123,17 @@ func (e *ExecCommand) runExec(args []string) error {
 	}
 
 	wg.Wait()
+
+	execInfo, err := apiClient.ContainerExecInspect(ctx, createResp.ID)
+	if err != nil {
+		return err
+	}
+
+	code := execInfo.ExitCode
+	if code != 0 {
+		return ExitError{Code: int(code)}
+	}
+
 	return nil
 }
 
