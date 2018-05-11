@@ -1,6 +1,6 @@
 # Pouch with Dragonfly
 
-Container technology is helpful to facilitate IT operation and maintenance, but the distribution of images has brought a huge challenge at the same time. The images can be as large as serveral Gibs, pulling images will be very slow, not to mention the situation lots of pulling requests simultaneously or low network bandwidth. Dragonfly can play an important role here, as a P2P technology, it provides very efficient distribution, avoiding images distribution as a bottleneck in container technology.
+Container technology is helpful to facilitate IT operation and maintenance, but the distribution of images has brought a huge challenge at the same time. The images can be as large as several Gibs, pulling images will be very slow, not to mention the situation lots of pulling requests simultaneously or low network bandwidth. Dragonfly can play an important role here, as a P2P technology, it provides very efficient distribution, avoiding images distribution as a bottleneck in container technology.
 
 ## What is Dragonfly
 
@@ -20,7 +20,7 @@ Client concludes two part: dfget and proxy. dfget is a host-side tool for downlo
 
 1.install server
 
-server can be deployed in two way, on the physical mechaine or on a container, the steps is simple in the [install dragonfly server](https://github.com/alibaba/Dragonfly/blob/master/docs/install_server.md)
+server can be deployed in two way, on the physical machine or on a container, the steps is simple in the [install dragonfly server](https://github.com/alibaba/Dragonfly/blob/master/docs/install_server.md)
 
 2.install client
 

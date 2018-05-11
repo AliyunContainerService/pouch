@@ -6,7 +6,7 @@ In order to run custom code provided by users which will be triggered at some po
 * pre-stop daemon point
 * pre-create container point
 * pre-start container point
-* pre-create-endapoint container point
+* pre-create-endpoint container point
 
 Above four points are organized by two Plugin interfaces, which are DaemonPlugin and ContainerPlugin, defined as follow:
 

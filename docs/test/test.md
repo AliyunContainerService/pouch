@@ -111,7 +111,7 @@ ok      github.com/alibaba/pouch/client    0.094s
 
 There are more works to do for integration test compared with unit test.
 
-First you need to make sure `pouch` and `pouchd` binary is installed or builded.
+First you need to make sure `pouch` and `pouchd` binary is installed or built.
 
 Then you need to install containerd, runc, lxcfs and so on. You could refer to function `install_pouch` in `hack/make.sh`. There is also a quick way to install them, just install `pouch` package then replace pouch binary with yours.
 

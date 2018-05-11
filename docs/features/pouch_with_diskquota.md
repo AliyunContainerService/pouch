@@ -71,7 +71,7 @@ number, for example `-o size=10g`.
 After creating diskquota limited volume, users can bind this volume to a
 running container. In the following example, it executes command
 `pouch run -ti -v volume-quota-test:/mnt registry.hub.docker.com/library/busybox:latest df -h`.
-And in running container, directory `/mnt` is resctricted to be size 10GB.
+And in running container, directory `/mnt` is restricted to be size 10GB.
 
 ```bash
 $ pouch volume create -n volume-quota-test -d local -o mount=/data/volume -o size=10g

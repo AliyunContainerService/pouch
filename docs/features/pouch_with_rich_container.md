@@ -1,12 +1,12 @@
 # Rich Container
 
-Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generlized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
+Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generalized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
 
 Rich container mode is not the default mode Pouch provides. It is an additional mode pouch brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
 
 ## Scenario
 
-Container technology and orchestration platforms have turned quite popular right now. They both offer much better environment for applications. Despite this, we have to say containerization is the first step for enterprises to embrace container-related technologies, such as container, orchestration, service mesh and so on. It is quite a real problem to move traditional application into containers. Although some simple applications are always showing friendly to container, more traditional and complicated enterprise applications may not so lucky. These traditional applications are usually coupled with underlying infrastructure, such as architecture of machine, old kernels, even certain software out of maintenance as well. Definitely, strong coupling is not everyone's dish. It is the initiator on the road of digital tranformation in enterprises. So, all the industry is seeking one possible way to work it out. The way docker provides is one, but not the best. In the past 7 years, Alibaba has also experienced the same issue. Fortunately, rich container mode is a much better way to handle this.
+Container technology and orchestration platforms have turned quite popular right now. They both offer much better environment for applications. Despite this, we have to say containerization is the first step for enterprises to embrace container-related technologies, such as container, orchestration, service mesh and so on. It is quite a real problem to move traditional application into containers. Although some simple applications are always showing friendly to container, more traditional and complicated enterprise applications may not so lucky. These traditional applications are usually coupled with underlying infrastructure, such as architecture of machine, old kernels, even certain software out of maintenance as well. Definitely, strong coupling is not everyone's dish. It is the initiator on the road of digital transformation in enterprises. So, all the industry is seeking one possible way to work it out. The way docker provides is one, but not the best. In the past 7 years, Alibaba has also experienced the same issue. Fortunately, rich container mode is a much better way to handle this.
 
 Developers have their own programming style. Their work is to create useful applications, not to design absolute decoupled ones, so they usually take advantages of tools or system services to make it. When containerizing these applications, it is quite weak if only setting one application one process in container. Rich container mode finds out ways to make users configure the inner startup sequence of processes in container including application and system services around.
 
@@ -22,13 +22,13 @@ Users can start rich container mode in Pouch quite easily. Provided that we need
 
 In fact, pouch team plans to add another flag `--initcmd` to make users input prestart hook. Actually it is a simplified one of `--initscript`. Meanwhile it brings more convenience than `--initscript`. `--initcmd` can set any command as user's wish, and things do not need to be located in image in advance. We can say command is decoupled with image. But for `--initscript`, script file must be located in image first. It is some kind of coupling.
 
-If user specifies `--rich` flag and no `--initscript` flag is provided, rich container mode will still be enbaled, but no initscript will be executed. If `-rich` flag misses in command line, while `--initscript` is there, Pouch CLI or pouch daemon will return an error to show that `--initscipt` can only be used along with `--rich` flag.
+If user specifies `--rich` flag and no `--initscript` flag is provided, rich container mode will still be enabled, but no initscript will be executed. If `-rich` flag misses in command line, while `--initscript` is there, Pouch CLI or pouch daemon will return an error to show that `--initscipt` can only be used along with `--rich` flag.
 
 If a container is running with `--rich` flag, then every start or restart of this container will trigger the corresponding initscipt if there is any.
 
 ### Using dumb-init
 
-Here is a simple example for rich container mode using dumb-init to init contaienr:
+Here is a simple example for rich container mode using dumb-init to init container:
 
 1. Install dumb-init as following:
 

@@ -52,7 +52,7 @@ Document [GRPC-API-CHANGELOG.md](api/GRPC_API_CHANGELOG.md) contains GRPC API ch
 
 ## Kubernetes
 
-[Kubernetes](kubernetes) contains all docs about pouch with kubernetes. At the very beginning design of Pouch, pouch team deicded to treat itself as a reliable runtime option for kubernetes. To support kubernetes, pouch has implemented Container Runtime Interface(CRI) directly. Introduction of kubernetes and pouch, how to get started with them combined, and how to test and architecture of them are all included in this document folder.
+[Kubernetes](kubernetes) contains all docs about pouch with kubernetes. At the very beginning design of Pouch, pouch team decided to treat itself as a reliable runtime option for kubernetes. To support kubernetes, pouch has implemented Container Runtime Interface(CRI) directly. Introduction of kubernetes and pouch, how to get started with them combined, and how to test and architecture of them are all included in this document folder.
 
 ## Test Guide
 
@@ -64,7 +64,7 @@ Document [GRPC-API-CHANGELOG.md](api/GRPC_API_CHANGELOG.md) contains GRPC API ch
 
 ## Underlying Tech
 
-[Underlying Tech](underlying_tech) helps users to get more knowledge about the underlying technology adopted in Pouch, such as cGroup, Namespce technology in Linux Kernel, hypervisor-based container technology, lxcfs, and so on. If users wish to master Pouch technology better, this document is a must-read.
+[Underlying Tech](underlying_tech) helps users to get more knowledge about the underlying technology adopted in Pouch, such as Cgroup, Namespce technology in Linux Kernel, hypervisor-based container technology, lxcfs, and so on. If users wish to master Pouch technology better, this document is a must-read.
 
 ## Static Files
 

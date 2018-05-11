@@ -70,7 +70,7 @@ You can easily setup a basic Pouch environment, see [INSTALLATION.md](INSTALLATI
 
 ## Deploying Kubernetes With Pouch
 
-After installing Pouch on your machine, maybe it is the exiciting moment for you to power your Kubernetes cluster by Pouch. There is an easy guide for you to quickly experience this amazing combination [Kubernetes + Pouch](docs/kubernetes/pouch_with_kubernetes_deploying.md).
+After installing Pouch on your machine, maybe it is the exciting moment for you to power your Kubernetes cluster by Pouch. There is an easy guide for you to quickly experience this amazing combination [Kubernetes + Pouch](docs/kubernetes/pouch_with_kubernetes_deploying.md).
 
 ## Contributing
 
