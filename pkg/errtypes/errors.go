@@ -29,7 +29,7 @@ var (
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 
-	// ErrUsingbyContainers represents that object is useing by containers
+	// ErrUsingbyContainers represents that object is used by containers
 	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
 )
 
