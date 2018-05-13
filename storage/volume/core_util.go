@@ -212,6 +212,8 @@ func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
 			return nil, err
 		}
 		config.Size = strconv.Itoa(int(sizeInt)) + "M"
+
+		delete(options, optionSize)
 	}
 
 	// Parse filesystem
@@ -272,9 +274,47 @@ func buildVolumeConfig(options map[string]string) (*types.VolumeConfig, error) {
 	return config, nil
 }
 
+// extractOptionsFromVolumeConfig will extract options from VolumeConfig.
+func extractOptionsFromVolumeConfig(config *types.VolumeConfig) map[string]string {
+	var options = map[string]string{}
+
+	if config == nil {
+		return options
+	}
+
+	if config.Size != "" {
+		options[optionSize] = config.Size
+	}
+
+	if config.FileSystem != "" {
+		options[optionFS] = config.FileSystem
+	}
+
+	if config.WriteBPS != 0 {
+		options[optionWBps] = strconv.FormatInt(config.WriteBPS, 10)
+	}
+
+	if config.ReadBPS != 0 {
+		options[optionRBps] = strconv.FormatInt(config.ReadBPS, 10)
+	}
+
+	if config.TotalIOPS != 0 {
+		options[optionIOps] = strconv.FormatInt(config.TotalIOPS, 10)
+	}
+
+	if config.WriteIOPS != 0 {
+		options[optionWriteIOps] = strconv.FormatInt(config.WriteIOPS, 10)
+	}
+
+	if config.ReadIOPS != 0 {
+		options[optionReadIOps] = strconv.FormatInt(config.ReadIOPS, 10)
+	}
+
+	return options
+}
+
 func checkOptions(v *types.Volume) error {
 	var (
-		deleteOpts []string
 		driverOpts map[string]types.Option
 	)
 
@@ -287,23 +327,6 @@ func checkOptions(v *types.Volume) error {
 		driverOpts = opt.Options()
 	}
 
-	// check extra options is invalid or not.
-	for name := range v.Spec.Extra {
-		if _, ok := commonOptions[name]; ok {
-			continue
-		}
-		if driverOpts != nil {
-			if _, ok := driverOpts[name]; ok {
-				continue
-			}
-		}
-		deleteOpts = append(deleteOpts, name)
-	}
-	for _, d := range deleteOpts {
-		delete(v.Spec.Extra, d)
-	}
-
-	// set driver options into extra map.
 	if driverOpts != nil {
 		for name, opt := range driverOpts {
 			if _, ok := v.Spec.Extra[name]; !ok {
@@ -313,4 +336,25 @@ func checkOptions(v *types.Volume) error {
 	}
 
 	return nil
+}
+
+// ExtractOptionsFromVolume extracts options from a volume.
+func ExtractOptionsFromVolume(v *types.Volume) map[string]string {
+	var options map[string]string
+
+	// extract options from volume config.
+	options = extractOptionsFromVolumeConfig(v.Spec.VolumeConfig)
+
+	// extract options from selector.
+	for _, s := range v.Spec.Selector {
+		k := fmt.Sprintf("selector.%s", s.Key)
+		options[k] = strings.Join(s.Values, ",")
+	}
+
+	// extract options from Extra.
+	for k, v := range v.Spec.Extra {
+		options[k] = v
+	}
+
+	return options
 }

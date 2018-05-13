@@ -144,7 +144,7 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 	}
 	v.SetPath(p)
 
-	// check options, then delete invalid options.
+	// check options, then add some driver-specific options.
 	if err := checkOptions(v); err != nil {
 		return err
 	}
