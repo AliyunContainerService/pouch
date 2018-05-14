@@ -1,4 +1,4 @@
-package mgr
+package src
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
@@ -81,8 +82,8 @@ type CriMgr interface {
 
 // CriManager is an implementation of interface CriMgr.
 type CriManager struct {
-	ContainerMgr ContainerMgr
-	ImageMgr     ImageMgr
+	ContainerMgr mgr.ContainerMgr
+	ImageMgr     mgr.ImageMgr
 	CniMgr       CniMgr
 
 	// StreamServer is the stream server of CRI serves container streaming request.
@@ -98,7 +99,7 @@ type CriManager struct {
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(config *config.Config, ctrMgr ContainerMgr, imgMgr ImageMgr) (CriMgr, error) {
+func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr) (CriMgr, error) {
 	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
@@ -240,8 +241,8 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	}
 	sandboxMeta := res.(*SandboxMeta)
 
-	opts := &ContainerListOption{All: true}
-	filter := func(c *Container) bool {
+	opts := &mgr.ContainerListOption{All: true}
+	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
 
@@ -298,8 +299,8 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodSandboxRequest) (*runtime.RemovePodSandboxResponse, error) {
 	podSandboxID := r.GetPodSandboxId()
 
-	opts := &ContainerListOption{All: true}
-	filter := func(c *Container) bool {
+	opts := &mgr.ContainerListOption{All: true}
+	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
 
@@ -399,8 +400,8 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 
 // ListPodSandbox returns a list of Sandbox.
 func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (*runtime.ListPodSandboxResponse, error) {
-	opts := &ContainerListOption{All: true}
-	filter := func(c *Container) bool {
+	opts := &mgr.ContainerListOption{All: true}
+	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelSandbox
 	}
 
@@ -487,7 +488,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			return nil, fmt.Errorf("failed to create container for opening log file failed: %v", err)
 		}
 		// Attach to the container to get log.
-		attachConfig := &AttachConfig{
+		attachConfig := &mgr.AttachConfig{
 			Stdout:     true,
 			Stderr:     true,
 			CriLogFile: f,
@@ -539,8 +540,8 @@ func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 // ListContainers lists all containers matching the filter.
 func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (*runtime.ListContainersResponse, error) {
-	opts := &ContainerListOption{All: true}
-	filter := func(c *Container) bool {
+	opts := &mgr.ContainerListOption{All: true}
+	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer
 	}
 
@@ -709,7 +710,7 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 
 	var output bytes.Buffer
 	startConfig := &apitypes.ExecStartConfig{}
-	attachConfig := &AttachConfig{
+	attachConfig := &mgr.AttachConfig{
 		Stdout:      true,
 		Stderr:      true,
 		MemBuffer:   &output,
@@ -721,7 +722,7 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
-	var execConfig *ContainerExecConfig
+	var execConfig *mgr.ContainerExecConfig
 	for {
 		execConfig, err = c.ContainerMgr.GetExecConfig(ctx, execid)
 		if err != nil {

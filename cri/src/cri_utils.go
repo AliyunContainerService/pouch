@@ -1,4 +1,4 @@
-package mgr
+package src
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/go-openapi/strfmt"
 
@@ -266,7 +267,7 @@ func toCriSandboxState(status apitypes.Status) runtime.PodSandboxState {
 	}
 }
 
-func toCriSandbox(c *Container) (*runtime.PodSandbox, error) {
+func toCriSandbox(c *mgr.Container) (*runtime.PodSandbox, error) {
 	state := toCriSandboxState(c.State.Status)
 	metadata, err := parseSandboxName(c.Name)
 	if err != nil {
@@ -458,20 +459,20 @@ func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandbox
 // getAppArmorSecurityOpts gets appArmor options from container config.
 func getAppArmorSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string, error) {
 	profile := sc.ApparmorProfile
-	if profile == "" || profile == ProfileRuntimeDefault {
+	if profile == "" || profile == mgr.ProfileRuntimeDefault {
 		// Pouch should applies the default profile by default.
 		return nil, nil
 	}
 
 	// Return unconfined profile explicitly.
-	if profile == ProfileNameUnconfined {
+	if profile == mgr.ProfileNameUnconfined {
 		return []string{fmt.Sprintf("apparmor=%s", profile)}, nil
 	}
 
-	if !strings.HasPrefix(profile, ProfileNamePrefix) {
-		return nil, fmt.Errorf("undefault profile name should prefix with %q", ProfileNamePrefix)
+	if !strings.HasPrefix(profile, mgr.ProfileNamePrefix) {
+		return nil, fmt.Errorf("undefault profile name should prefix with %q", mgr.ProfileNamePrefix)
 	}
-	profile = strings.TrimPrefix(profile, ProfileNamePrefix)
+	profile = strings.TrimPrefix(profile, mgr.ProfileNamePrefix)
 
 	return []string{fmt.Sprintf("apparmor=%s", profile)}, nil
 }
@@ -508,20 +509,20 @@ func getSELinuxSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string
 // getSeccompSecurityOpts get container seccomp options from container seccomp profiles.
 func getSeccompSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string, error) {
 	profile := sc.SeccompProfilePath
-	if profile == "" || profile == ProfileNameUnconfined {
-		return []string{fmt.Sprintf("seccomp=%s", ProfileNameUnconfined)}, nil
+	if profile == "" || profile == mgr.ProfileNameUnconfined {
+		return []string{fmt.Sprintf("seccomp=%s", mgr.ProfileNameUnconfined)}, nil
 	}
 
 	// Return unconfined profile explicitly.
-	if profile == ProfileDockerDefault {
+	if profile == mgr.ProfileDockerDefault {
 		// return nil so pouch will load the default seccomp profile.
 		return nil, nil
 	}
 
-	if !strings.HasPrefix(profile, ProfileNamePrefix) {
-		return nil, fmt.Errorf("undefault profile %q should prefix with %q", profile, ProfileNamePrefix)
+	if !strings.HasPrefix(profile, mgr.ProfileNamePrefix) {
+		return nil, fmt.Errorf("undefault profile %q should prefix with %q", profile, mgr.ProfileNamePrefix)
 	}
-	profile = strings.TrimPrefix(profile, ProfileNamePrefix)
+	profile = strings.TrimPrefix(profile, mgr.ProfileNamePrefix)
 
 	return []string{fmt.Sprintf("seccomp=%s", profile)}, nil
 }
@@ -630,7 +631,7 @@ func toCriContainerState(status apitypes.Status) runtime.ContainerState {
 	}
 }
 
-func toCriContainer(c *Container) (*runtime.Container, error) {
+func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
 	state := toCriContainerState(c.State.Status)
 	metadata, err := parseContainerName(c.Name)
 	if err != nil {
@@ -688,7 +689,7 @@ func filterCRIContainers(containers []*runtime.Container, filter *runtime.Contai
 }
 
 // containerNetns returns the network namespace of the given container.
-func containerNetns(container *Container) string {
+func containerNetns(container *mgr.Container) string {
 	pid := container.State.Pid
 	if pid == -1 {
 		// Pouch reports pid -1 for an exited container.

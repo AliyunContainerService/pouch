@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/alibaba/pouch/apis/plugins"
+	cri "github.com/alibaba/pouch/cri/src"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -51,6 +52,6 @@ func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error)
 }
 
 // GenCriMgr generates a CriMgr instance.
-func GenCriMgr(d DaemonProvider) (mgr.CriMgr, error) {
-	return mgr.NewCriManager(d.Config(), d.CtrMgr(), d.ImgMgr())
+func GenCriMgr(d DaemonProvider) (cri.CriMgr, error) {
+	return cri.NewCriManager(d.Config(), d.CtrMgr(), d.ImgMgr())
 }
