@@ -25,7 +25,7 @@ type DaemonProvider interface {
 
 // GenContainerMgr generates a ContainerMgr instance according to config cfg.
 func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
-	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.NetMgr(), d.Config(), d.ContainerPlugin())
+	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.Config(), d.ContainerPlugin())
 }
 
 // GenSystemMgr generates a SystemMgr instance according to config cfg.
@@ -47,7 +47,7 @@ func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
 
 // GenNetworkMgr generates a NetworkMgr instance according to config cfg.
 func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error) {
-	return mgr.NewNetworkManager(cfg, d.MetaStore())
+	return mgr.NewNetworkManager(cfg, d.MetaStore(), d.CtrMgr())
 }
 
 // GenCriMgr generates a CriMgr instance.

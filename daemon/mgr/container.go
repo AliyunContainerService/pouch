@@ -157,14 +157,13 @@ type ContainerManager struct {
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
 	mgr := &ContainerManager{
 		Store:           store,
 		NameToID:        collect.NewSafeMap(),
 		Client:          cli,
 		ImageMgr:        imgMgr,
 		VolumeMgr:       volMgr,
-		NetworkMgr:      netMgr,
 		IOs:             containerio.NewCache(),
 		ExecProcesses:   collect.NewSafeMap(),
 		cache:           collect.NewSafeMap(),
@@ -2133,25 +2132,7 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 }
 
 func (mgr *ContainerManager) buildContainerEndpoint(c *Container) *networktypes.Endpoint {
-	ep := &networktypes.Endpoint{
-		Owner:           c.ID,
-		Hostname:        c.Config.Hostname,
-		Domainname:      c.Config.Domainname,
-		HostsPath:       c.HostsPath,
-		ExtraHosts:      c.HostConfig.ExtraHosts,
-		HostnamePath:    c.HostnamePath,
-		ResolvConfPath:  c.ResolvConfPath,
-		NetworkDisabled: c.Config.NetworkDisabled,
-		NetworkMode:     c.HostConfig.NetworkMode,
-		DNS:             c.HostConfig.DNS,
-		DNSOptions:      c.HostConfig.DNSOptions,
-		DNSSearch:       c.HostConfig.DNSSearch,
-		MacAddress:      c.Config.MacAddress,
-		PublishAllPorts: c.HostConfig.PublishAllPorts,
-		ExposedPorts:    c.Config.ExposedPorts,
-		PortBindings:    c.HostConfig.PortBindings,
-		NetworkConfig:   c.NetworkSettings,
-	}
+	ep := BuildContainerEndpoint(c)
 
 	if mgr.containerPlugin != nil {
 		ep.Priority, ep.DisableResolver, ep.GenericParams = mgr.containerPlugin.PreCreateEndpoint(c.ID, c.Config.Env)

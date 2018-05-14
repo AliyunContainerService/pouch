@@ -65,12 +65,31 @@ type NetworkManager struct {
 }
 
 // NewNetworkManager creates a brand new network manager.
-func NewNetworkManager(cfg *config.Config, store *meta.Store) (*NetworkManager, error) {
+func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMgr) (*NetworkManager, error) {
 	// Create a new controller instance
 	cfg.NetworkConfg.MetaPath = path.Dir(store.BaseDir)
 	cfg.NetworkConfg.ExecRoot = network.DefaultExecRoot
 
 	initNetworkLog(cfg)
+
+	// get active sandboxes
+	ctrs, err := ctrMgr.List(context.Background(),
+		func(c *Container) bool {
+			return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
+		}, &ContainerListOption{All: true})
+	if err != nil {
+		logrus.Errorf("failed to new network manager, can not get container list")
+		return nil, errors.Wrap(err, "failed to get container list")
+	}
+	cfg.NetworkConfg.ActiveSandboxes = make(map[string]interface{})
+	for _, c := range ctrs {
+		endpoint := BuildContainerEndpoint(c)
+		sbOptions, err := buildSandboxOptions(cfg.NetworkConfg, endpoint)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to build sandbox options")
+		}
+		cfg.NetworkConfg.ActiveSandboxes[c.NetworkSettings.SandboxID] = sbOptions
+	}
 
 	ctlOptions, err := controllerOptions(cfg.NetworkConfg)
 	if err != nil {
@@ -280,7 +299,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	// create sandbox
 	sb := nm.getNetworkSandbox(containerID)
 	if sb == nil {
-		sandboxOptions, err := nm.sandboxOptions(endpoint)
+		sandboxOptions, err := buildSandboxOptions(nm.config, endpoint)
 		if err != nil {
 			return "", fmt.Errorf("failed to build sandbox options(%v)", err)
 		}
@@ -420,6 +439,10 @@ func controllerOptions(cfg network.Config) ([]nwconfig.Option, error) {
 
 	if cfg.ExecRoot != "" {
 		options = append(options, nwconfig.OptionExecRoot(cfg.ExecRoot))
+	}
+
+	if len(cfg.ActiveSandboxes) != 0 {
+		options = append(options, nwconfig.OptionActiveSandboxes(cfg.ActiveSandboxes))
 	}
 
 	options = append(options, nwconfig.OptionDefaultDriver("bridge"))
@@ -562,7 +585,7 @@ func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwo
 	return createOptions, nil
 }
 
-func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork.SandboxOption, error) {
+func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]libnetwork.SandboxOption, error) {
 	var (
 		sandboxOptions []libnetwork.SandboxOption
 		dns            []string
@@ -577,9 +600,9 @@ func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork
 		if len(endpoint.ExtraHosts) == 0 {
 			sandboxOptions = append(sandboxOptions, libnetwork.OptionOriginHostsPath("/etc/hosts"))
 		}
-		if len(endpoint.DNS) == 0 && len(nm.config.DNS) == 0 &&
-			len(endpoint.DNSSearch) == 0 && len(nm.config.DNSSearch) == 0 &&
-			len(endpoint.DNSOptions) == 0 && len(nm.config.DNSOptions) == 0 {
+		if len(endpoint.DNS) == 0 && len(config.DNS) == 0 &&
+			len(endpoint.DNSSearch) == 0 && len(config.DNSSearch) == 0 &&
+			len(endpoint.DNSOptions) == 0 && len(config.DNSOptions) == 0 {
 			sandboxOptions = append(sandboxOptions, libnetwork.OptionOriginResolvConfPath("/etc/resolv.conf"))
 		}
 	} else {
@@ -592,8 +615,8 @@ func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork
 	// parse DNS
 	if len(endpoint.DNS) > 0 {
 		dns = endpoint.DNS
-	} else if len(nm.config.DNS) > 0 {
-		dns = nm.config.DNS
+	} else if len(config.DNS) > 0 {
+		dns = config.DNS
 	}
 	for _, d := range dns {
 		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNS(d))
@@ -602,8 +625,8 @@ func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork
 	// parse DNS Search
 	if len(endpoint.DNSSearch) > 0 {
 		dnsSearch = endpoint.DNSSearch
-	} else if len(nm.config.DNSSearch) > 0 {
-		dnsSearch = nm.config.DNSSearch
+	} else if len(config.DNSSearch) > 0 {
+		dnsSearch = config.DNSSearch
 	}
 	for _, ds := range dnsSearch {
 		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNSSearch(ds))
@@ -612,8 +635,8 @@ func (nm *NetworkManager) sandboxOptions(endpoint *types.Endpoint) ([]libnetwork
 	// parse DNS Options
 	if len(endpoint.DNSOptions) > 0 {
 		dnsOptions = endpoint.DNSOptions
-	} else if len(nm.config.DNSOptions) > 0 {
-		dnsOptions = nm.config.DNSOptions
+	} else if len(config.DNSOptions) > 0 {
+		dnsOptions = config.DNSOptions
 	}
 	for _, ds := range dnsOptions {
 		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNSOptions(ds))
