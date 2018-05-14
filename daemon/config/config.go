@@ -12,7 +12,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
-	"github.com/alibaba/pouch/cri"
+	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume"
@@ -34,7 +34,7 @@ type Config struct {
 	IsCriEnabled bool `json:"enable-cri,omitempty"`
 
 	// CRI config.
-	CriConfig cri.Config
+	CriConfig criconfig.Config
 
 	// Server listening address.
 	Listen []string `json:"listen,omitempty"`

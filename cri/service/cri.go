@@ -5,9 +5,8 @@ import (
 	"os"
 	"syscall"
 
+	cri "github.com/alibaba/pouch/cri/src"
 	"github.com/alibaba/pouch/daemon/config"
-	"github.com/alibaba/pouch/daemon/mgr"
-
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
@@ -16,11 +15,11 @@ import (
 type Service struct {
 	config *config.Config
 	server *grpc.Server
-	criMgr mgr.CriMgr
+	criMgr cri.CriMgr
 }
 
 // NewService creates a brand new cri service.
-func NewService(cfg *config.Config, criMgr mgr.CriMgr) (*Service, error) {
+func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 	s := &Service{
 		config: cfg,
 		server: grpc.NewServer(),

@@ -1,12 +1,11 @@
-package mgr
+package src
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/alibaba/pouch/cri"
-
+	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -42,7 +41,7 @@ type CniManager struct {
 // NewCniManager initializes a brand new cni manager.
 // If initialize failed, return NoopCniManager, we should not make pouchd creashed
 // because of the failure of cni manager.
-func NewCniManager(cfg *cri.Config) CniMgr {
+func NewCniManager(cfg *criconfig.Config) CniMgr {
 	networkPluginBinDir := cfg.NetworkPluginBinDir
 	networkPluginConfDir := cfg.NetworkPluginConfDir
 

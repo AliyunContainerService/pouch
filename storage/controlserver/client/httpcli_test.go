@@ -19,7 +19,7 @@ func Test_isPtr(t *testing.T) {
 		args args
 		want bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,7 +42,7 @@ func Test_parseTLSConfig(t *testing.T) {
 		want    *tls.Config
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -68,7 +68,7 @@ func Test_certpool(t *testing.T) {
 		want    *x509.CertPool
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestHTTPClientNew(t *testing.T) {
 		name string
 		want *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestHTTPClient_verb(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestHTTPClient_TLSConfig(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -200,7 +200,7 @@ func TestHTTPClient_TLS(t *testing.T) {
 		want    *HTTPClient
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -230,7 +230,7 @@ func TestPUT(t *testing.T) {
 		name string
 		want *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -246,7 +246,7 @@ func TestGET(t *testing.T) {
 		name string
 		want *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -262,7 +262,7 @@ func TestPOST(t *testing.T) {
 		name string
 		want *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -278,7 +278,7 @@ func TestDELETE(t *testing.T) {
 		name string
 		want *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -304,7 +304,7 @@ func TestHTTPClient_PUT(t *testing.T) {
 		fields fields
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -339,7 +339,7 @@ func TestHTTPClient_GET(t *testing.T) {
 		fields fields
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -374,7 +374,7 @@ func TestHTTPClient_POST(t *testing.T) {
 		fields fields
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -409,7 +409,7 @@ func TestHTTPClient_DELETE(t *testing.T) {
 		fields fields
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -444,7 +444,7 @@ func TestHTTPClient_Err(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -483,7 +483,7 @@ func TestHTTPClient_Method(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -522,7 +522,7 @@ func TestHTTPClient_URL(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -562,7 +562,7 @@ func TestHTTPClient_SetHeader(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -601,7 +601,7 @@ func TestHTTPClient_Body(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -640,7 +640,7 @@ func TestHTTPClient_JSONBody(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -679,7 +679,7 @@ func TestHTTPClient_Query(t *testing.T) {
 		args   args
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -714,7 +714,7 @@ func TestHTTPClient_Do(t *testing.T) {
 		fields fields
 		want   *HTTPClient
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -753,7 +753,7 @@ func TestHTTPClient_RespCodeEqual(t *testing.T) {
 		args   args
 		want   bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -788,7 +788,7 @@ func TestHTTPClient_StatusCode(t *testing.T) {
 		fields fields
 		want   int
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -827,7 +827,7 @@ func TestHTTPClient_Into(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
