@@ -1,8 +1,8 @@
 package mgr
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -72,7 +72,7 @@ type AttachConfig struct {
 	Upgrade bool
 
 	// Attach using memory buffer.
-	MemBuffer *bytes.Buffer
+	Pipe *io.PipeWriter
 
 	// Attach using streams.
 	Streams *remotecommand.Streams

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,7 +21,6 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
 
-	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -695,55 +695,75 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 // ExecSync executes a command in the container, and returns the stdout output.
 // If command exits with a non-zero exit code, an error is returned.
 func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (*runtime.ExecSyncResponse, error) {
-	// TODO: handle timeout.
 	id := r.GetContainerId()
+
+	timeout := time.Duration(r.GetTimeout()) * time.Second
+	var cancel context.CancelFunc
+	if timeout == 0 {
+		ctx, cancel = context.WithCancel(ctx)
+	} else {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+	}
+	defer cancel()
 
 	createConfig := &apitypes.ExecCreateConfig{
 		Cmd: r.GetCmd(),
 	}
-
 	execid, err := c.ContainerMgr.CreateExec(ctx, id, createConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create exec for container %q: %v", id, err)
 	}
 
-	var output bytes.Buffer
-	startConfig := &apitypes.ExecStartConfig{}
+	reader, writer := io.Pipe()
+	defer writer.Close()
+
 	attachConfig := &AttachConfig{
 		Stdout:      true,
 		Stderr:      true,
-		MemBuffer:   &output,
+		Pipe:        writer,
 		MuxDisabled: true,
 	}
+
+	startConfig := &apitypes.ExecStartConfig{}
 
 	err = c.ContainerMgr.StartExec(ctx, execid, startConfig, attachConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
-	var execConfig *ContainerExecConfig
-	for {
-		execConfig, err = c.ContainerMgr.GetExecConfig(ctx, execid)
+	readWaitCh := make(chan error, 1)
+	var recv bytes.Buffer
+	go func() {
+		defer reader.Close()
+		_, err = io.Copy(&recv, reader)
+		readWaitCh <- err
+	}()
+
+	select {
+	case <-ctx.Done():
+		//TODO maybe stop the execution?
+		return nil, fmt.Errorf("timeout %v exceeded", timeout)
+	case <-readWaitCh:
+		checkError := <-readWaitCh
+		if checkError != nil {
+			return nil, fmt.Errorf("failed while waiting for exec %q: %v", execid, err)
+		}
+		execConfig, err := c.ContainerMgr.GetExecConfig(ctx, execid)
 		if err != nil {
 			return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
 		}
-		// Loop until exec finished.
-		if !execConfig.Running {
-			break
+
+		var stderr []byte
+		if execConfig.Error != nil {
+			stderr = []byte(execConfig.Error.Error())
 		}
-		time.Sleep(100 * time.Millisecond)
-	}
 
-	var stderr []byte
-	if execConfig.Error != nil {
-		stderr = []byte(execConfig.Error.Error())
+		return &runtime.ExecSyncResponse{
+			Stdout:   recv.Bytes(),
+			Stderr:   stderr,
+			ExitCode: int32(execConfig.ExitCode),
+		}, nil
 	}
-
-	return &runtime.ExecSyncResponse{
-		Stdout:   output.Bytes(),
-		Stderr:   stderr,
-		ExitCode: int32(execConfig.ExitCode),
-	}, nil
 }
 
 // Exec prepares a streaming endpoint to execute a command in the container, and returns the address.
