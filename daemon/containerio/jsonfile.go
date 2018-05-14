@@ -21,7 +21,7 @@ func init() {
 
 var jsonFilePathName = "json.log"
 
-// TODO(fuwei): add compress/logrotate configurate
+// TODO(fuwei): add compress/logrotate configure
 type jsonFile struct {
 	closed bool
 
