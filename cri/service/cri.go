@@ -9,7 +9,7 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 
 	"google.golang.org/grpc"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // Service serves the kubelet runtime grpc api which will be consumed by kubelet.

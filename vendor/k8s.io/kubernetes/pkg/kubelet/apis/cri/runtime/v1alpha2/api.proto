@@ -1,7 +1,8 @@
 // To regenerate api.pb.go run hack/update-generated-runtime.sh
 syntax = 'proto3';
 
-package runtime;
+package runtime.v1alpha2;
+option go_package = "v1alpha2";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
@@ -14,7 +15,7 @@ option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.goproto_unrecognized_all) = false;
 
 // Runtime service defines the public APIs for remote container runtimes
-service RuntimeService {
+  RuntimeService {
     // Version returns the runtime name, runtime version, and runtime API version.
     rpc Version(VersionRequest) returns (VersionResponse) {}
 
@@ -63,6 +64,12 @@ service RuntimeService {
     rpc ContainerStatus(ContainerStatusRequest) returns (ContainerStatusResponse) {}
     // UpdateContainerResources updates ContainerConfig of the container.
     rpc UpdateContainerResources(UpdateContainerResourcesRequest) returns (UpdateContainerResourcesResponse) {}
+    // ReopenContainerLog asks runtime to reopen the stdout/stderr log file
+    // for the container. This is often called after the log file has been
+    // rotated. If the container is not running, container runtime can choose
+    // to either create a new log file and return nil, or return an error.
+    // Once it returns error, new container log file MUST NOT be created.
+    rpc ReopenContainerLog(ReopenContainerLogRequest) returns (ReopenContainerLogResponse) {}
 
     // ExecSync runs a command in a container synchronously.
     rpc ExecSync(ExecSyncRequest) returns (ExecSyncResponse) {}
@@ -164,7 +171,9 @@ enum MountPropagation {
 message Mount {
     // Path of the mount within the container.
     string container_path = 1;
-    // Path of the mount on the host.
+    // Path of the mount on the host. If the hostPath doesn't exist, then runtimes
+    // should report error. If the hostpath is a symbolic link, runtimes should
+    // follow the symlink and mount the real destination to container.
     string host_path = 2;
     // If set, the mount is read-only.
     bool readonly = 3;
@@ -174,14 +183,39 @@ message Mount {
     MountPropagation propagation = 5;
 }
 
+// A NamespaceMode describes the intended namespace configuration for each
+// of the namespaces (Network, PID, IPC) in NamespaceOption. Runtimes should
+// map these modes as appropriate for the technology underlying the runtime.
+enum NamespaceMode {
+    // A POD namespace is common to all containers in a pod.
+    // For example, a container with a PID namespace of POD expects to view
+    // all of the processes in all of the containers in the pod.
+    POD       = 0;
+    // A CONTAINER namespace is restricted to a single container.
+    // For example, a container with a PID namespace of CONTAINER expects to
+    // view only the processes in that container.
+    CONTAINER = 1;
+    // A NODE namespace is the namespace of the Kubernetes node.
+    // For example, a container with a PID namespace of NODE expects to view
+    // all of the processes on the host running the kubelet.
+    NODE      = 2;
+}
+
 // NamespaceOption provides options for Linux namespaces.
 message NamespaceOption {
-    // If set, use the host's network namespace.
-    bool host_network = 1;
-    // If set, use the host's PID namespace.
-    bool host_pid = 2;
-    // If set, use the host's IPC namespace.
-    bool host_ipc = 3;
+    // Network namespace for this container/sandbox.
+    // Note: There is currently no way to set CONTAINER scoped network in the Kubernetes API.
+    // Namespaces currently set by the kubelet: POD, NODE
+    NamespaceMode network = 1;
+    // PID namespace for this container/sandbox.
+    // Note: The CRI default is POD, but the v1.PodSpec default is CONTAINER.
+    // The kubelet's runtime manager will set this to CONTAINER explicitly for v1 pods.
+    // Namespaces currently set by the kubelet: POD, CONTAINER, NODE
+    NamespaceMode pid = 2;
+    // IPC namespace for this container/sandbox.
+    // Note: There is currently no way to set CONTAINER scoped IPC in the Kubernetes API.
+    // Namespaces currently set by the kubelet: POD, NODE
+    NamespaceMode ipc = 3;
 }
 
 // Int64Value is the wrapper of int64.
@@ -203,6 +237,9 @@ message LinuxSandboxSecurityContext {
     SELinuxOption selinux_options = 2;
     // UID to run sandbox processes as, when applicable.
     Int64Value run_as_user = 3;
+    // GID to run sandbox processes as, when applicable. run_as_group should only
+    // be specified when run_as_user is specified; otherwise, the runtime MUST error.
+    Int64Value run_as_group = 8;
     // If set, the root filesystem of the sandbox is read-only.
     bool readonly_rootfs = 4;
     // List of groups applied to the first process run in the sandbox, in
@@ -215,7 +252,7 @@ message LinuxSandboxSecurityContext {
     // privileged containers are expected to be run.
     bool privileged = 6;
     // Seccomp profile for the sandbox, candidate values are:
-    // * docker/default: the default profile for the docker container runtime
+    // * runtime/default: the default profile for the container runtime
     // * unconfined: unconfined profile, ie, no seccomp sandboxing
     // * localhost/<full-path-to-profile>: the profile installed on the node.
     //   <full-path-to-profile> is the full path of the profile.
@@ -384,7 +421,7 @@ message PodSandboxStatus {
 message PodSandboxStatusResponse {
     // Status of the PodSandbox.
     PodSandboxStatus status = 1;
-    // Info is extra information of the PodSandbox. The key could be abitrary string, and
+    // Info is extra information of the PodSandbox. The key could be arbitrary string, and
     // value should be in json format. The information could include anything useful for
     // debug, e.g. network namespace for linux container based container runtime.
     // It should only be returned non-empty when Verbose is true.
@@ -519,6 +556,10 @@ message LinuxContainerSecurityContext {
     // UID to run the container process as. Only one of run_as_user and
     // run_as_username can be specified at a time.
     Int64Value run_as_user = 5;
+    // GID to run the container process as. run_as_group should only be specified
+    // when run_as_user or run_as_username is specified; otherwise, the runtime
+    // MUST error.
+    Int64Value run_as_group = 12;
     // User name to run the container process as. If specified, the user MUST
     // exist in the container image (i.e. in the /etc/passwd inside the image),
     // and be resolved there by the runtime; otherwise, the runtime MUST error.
@@ -536,7 +577,7 @@ message LinuxContainerSecurityContext {
     //    http://wiki.apparmor.net/index.php/AppArmor_Core_Policy_Reference
     string apparmor_profile = 9;
     // Seccomp profile for the container, candidate values are:
-    // * docker/default: the default profile for the docker container runtime
+    // * runtime/default: the default profile for the container runtime
     // * unconfined: unconfined profile, ie, no seccomp sandboxing
     // * localhost/<full-path-to-profile>: the profile installed on the node.
     //   <full-path-to-profile> is the full path of the profile.
@@ -554,6 +595,26 @@ message LinuxContainerConfig {
     LinuxContainerResources resources = 1;
     // LinuxContainerSecurityContext configuration for the container.
     LinuxContainerSecurityContext security_context = 2;
+}
+
+// WindowsContainerConfig contains platform-specific configuration for
+// Windows-based containers.
+message WindowsContainerConfig {
+    // Resources specification for the container.
+    WindowsContainerResources resources = 1;
+}
+
+// WindowsContainerResources specifies Windows specific configuration for
+// resources.
+message WindowsContainerResources {
+    // CPU shares (relative weight vs. other containers). Default: 0 (not specified).
+    int64 cpu_shares = 1;
+    // Number of CPUs available to the container. Default: 0 (not specified).
+    int64 cpu_count = 2;
+    // Specifies the portion of processor cycles that this container can use as a percentage times 100.
+    int64 cpu_maximum = 3;
+    // Memory limit in bytes. Default: 0 (not specified).
+    int64 memory_limit_in_bytes = 4;
 }
 
 // ContainerMetadata holds all necessary information for building the container
@@ -643,6 +704,8 @@ message ContainerConfig {
 
     // Configuration specific to Linux containers.
     LinuxContainerConfig linux = 15;
+   // Configuration specific to Windows containers.
+   WindowsContainerConfig windows = 16;
 }
 
 message CreateContainerRequest {
@@ -800,7 +863,7 @@ message ContainerStatus {
 message ContainerStatusResponse {
     // Status of the container.
     ContainerStatus status = 1;
-    // Info is extra information of the Container. The key could be abitrary string, and
+    // Info is extra information of the Container. The key could be arbitrary string, and
     // value should be in json format. The information could include anything useful for
     // debug, e.g. pid for linux container based container runtime.
     // It should only be returned non-empty when Verbose is true.
@@ -941,7 +1004,7 @@ message ImageStatusRequest {
 message ImageStatusResponse {
     // Status of the image.
     Image image = 1;
-    // Info is extra information of the Image. The key could be abitrary string, and
+    // Info is extra information of the Image. The key could be arbitrary string, and
     // value should be in json format. The information could include anything useful
     // for debug, e.g. image config for oci image based container runtime.
     // It should only be returned non-empty when Verbose is true.
@@ -1036,7 +1099,7 @@ message StatusRequest {
 message StatusResponse {
     // Status of the Runtime.
     RuntimeStatus status = 1;
-    // Info is extra information of the Runtime. The key could be abitrary string, and
+    // Info is extra information of the Runtime. The key could be arbitrary string, and
     // value should be in json format. The information could include anything useful for
     // debug, e.g. plugins used by the container runtime.
     // It should only be returned non-empty when Verbose is true.
@@ -1051,18 +1114,18 @@ message UInt64Value {
     uint64 value = 1;
 }
 
-// StorageIdentifier uniquely identify the storage..
-message StorageIdentifier{
-    // UUID of the device.
-    string uuid = 1;
+// FilesystemIdentifier uniquely identify the filesystem.
+message FilesystemIdentifier{
+    // Mountpoint of a filesystem.
+    string mountpoint = 1;
 }
 
 // FilesystemUsage provides the filesystem usage information.
 message FilesystemUsage {
     // Timestamp in nanoseconds at which the information were collected. Must be > 0.
     int64 timestamp = 1;
-    // The underlying storage of the filesystem.
-    StorageIdentifier storage_id = 2;
+    // The unique identifier of the filesystem.
+    FilesystemIdentifier fs_id = 2;
     // UsedBytes represents the bytes used for images on the filesystem.
     // This may differ from the total bytes used on the filesystem and may not
     // equal CapacityBytes - AvailableBytes.
@@ -1152,4 +1215,12 @@ message MemoryUsage {
     int64 timestamp = 1;
     // The amount of working set memory in bytes.
     UInt64Value working_set_bytes = 2;
+}
+
+message ReopenContainerLogRequest {
+    // ID of the container for which to reopen the log.
+    string container_id = 1;
+}
+
+message ReopenContainerLogResponse{
 }

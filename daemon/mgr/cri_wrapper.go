@@ -3,7 +3,7 @@ package mgr
 import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // CriWrapper wraps CriManager and logs each operation for debugging convenice.
@@ -233,6 +233,23 @@ func (c *CriWrapper) UpdateContainerResources(ctx context.Context, r *runtime.Up
 		}
 	}()
 	return c.CriManager.UpdateContainerResources(ctx, r)
+}
+
+// ReopenContainerLog asks runtime to reopen the stdout/stderr log file
+// for the container. This is often called after the log file has been
+// rotated. If the container is not running, container runtime can choose
+// to either create a new log file and return nil, or return an error.
+// Once it returns error, new container log file MUST NOT be created.
+func (c *CriWrapper) ReopenContainerLog(ctx context.Context, r *runtime.ReopenContainerLogRequest) (res *runtime.ReopenContainerLogResponse, err error) {
+	logrus.Infof("ReopenContainerLog for %q", r.GetContainerId())
+	defer func() {
+		if err != nil {
+			logrus.Errorf("ReopenContainerLog for %q failed", r.GetContainerId())
+		} else {
+			logrus.Infof("ReopenContainerLog for %q returns successfully", r.GetContainerId())
+		}
+	}()
+	return c.CriManager.ReopenContainerLog(ctx, r)
 }
 
 // ExecSync executes a command in the container, and returns the stdout output.

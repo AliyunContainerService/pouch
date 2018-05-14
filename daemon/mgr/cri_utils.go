@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/strfmt"
 
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 func parseUint32(s string) (uint32, error) {
@@ -176,13 +176,13 @@ func modifySandboxNamespaceOptions(nsOpts *runtime.NamespaceOption, hostConfig *
 	if nsOpts == nil {
 		return
 	}
-	if nsOpts.HostPid {
+	if nsOpts.GetPid() == runtime.NamespaceMode_NODE {
 		hostConfig.PidMode = namespaceModeHost
 	}
-	if nsOpts.HostIpc {
+	if nsOpts.GetIpc() == runtime.NamespaceMode_NODE {
 		hostConfig.IpcMode = namespaceModeHost
 	}
-	if nsOpts.HostNetwork {
+	if nsOpts.GetNetwork() == runtime.NamespaceMode_NODE {
 		hostConfig.NetworkMode = namespaceModeHost
 	}
 }
@@ -230,7 +230,7 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 	return nil
 }
 
-// makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
+// makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtime.PodSandboxConfig.
 func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
@@ -435,21 +435,24 @@ func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandbox
 		nsMode   *string
 	}{
 		{
-			hostMode: nsOpts.HostPid,
+			hostMode: nsOpts.GetPid() == runtime.NamespaceMode_NODE,
 			nsMode:   &hostConfig.PidMode,
 		},
 		{
-			hostMode: nsOpts.HostIpc,
+			hostMode: nsOpts.GetIpc() == runtime.NamespaceMode_NODE,
 			nsMode:   &hostConfig.IpcMode,
 		},
 		{
-			hostMode: nsOpts.HostNetwork,
+			hostMode: nsOpts.GetNetwork() == runtime.NamespaceMode_NODE,
 			nsMode:   &hostConfig.NetworkMode,
 		},
 	} {
 		if n.hostMode {
 			*n.nsMode = namespaceModeHost
 		} else {
+			if n.nsMode == &hostConfig.PidMode && nsOpts.GetPid() == runtime.NamespaceMode_CONTAINER {
+				continue
+			}
 			*n.nsMode = sandboxNSMode
 		}
 	}
@@ -765,4 +768,22 @@ func parseUserFromImageUser(id string) string {
 	}
 	// no group, just return the id
 	return id
+}
+
+func (c *CriManager) attachLog(logPath string, containerID string) error {
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+	if err != nil {
+		return fmt.Errorf("failed to create container for opening log file failed: %v", err)
+	}
+	// Attach to the container to get log.
+	attachConfig := &AttachConfig{
+		Stdout:     true,
+		Stderr:     true,
+		CriLogFile: f,
+	}
+	err = c.ContainerMgr.Attach(context.Background(), containerID, attachConfig)
+	if err != nil {
+		return fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
+	}
+	return nil
 }
