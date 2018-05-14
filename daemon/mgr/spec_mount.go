@@ -19,7 +19,14 @@ func clearReadonly(m *specs.Mount) {
 
 // setupMounts create mount spec.
 func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
-	mounts := s.Mounts
+	// TODO: we can suggest containerd to add the cgroup into the default spec.
+	mounts := append(s.Mounts, specs.Mount{
+		Destination: "/sys/fs/cgroup",
+		Type:        "cgroup",
+		Source:      "cgroup",
+		Options:     []string{"ro", "nosuid", "noexec", "nodev"},
+	})
+
 	if c.HostConfig == nil {
 		return nil
 	}
