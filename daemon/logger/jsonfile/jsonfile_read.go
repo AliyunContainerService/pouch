@@ -13,7 +13,7 @@ func (lf *JSONLogFile) ReadLogMessages(cfg *logger.ReadConfig) *logger.LogWatche
 
 	go func() {
 		// NOTE: We cannot close the channel in the JSONLogFile.read
-		// function because we cannot gurantee that watcher will be
+		// function because we cannot guarantee that watcher will be
 		// close the channel. Since the watcher is created in the
 		// JSONLogFile.ReadLogMessages, we make sure that watcher.Msgs
 		// can be closed after the JSONLogFile.read.
