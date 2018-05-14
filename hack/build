@@ -31,6 +31,8 @@ function server()
     cd $BUILDPATH/src/github.com/alibaba/pouch
     echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
     GOOS=linux $GOBUILD -o $BINARY_NAME -tags 'selinux'
+
+    GOOS=linux $GOBUILD -o docker-proxy -tags 'autogen sqlite_omit_load_extension pkcs11 selinux daemon journald libdm_no_deferred_remove' -installsuffix netgo -a -ldflags '-linkmode=external' ./extra/libnetwork/cmd/proxy
 }
 
 function client()
