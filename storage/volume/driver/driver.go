@@ -1,8 +1,11 @@
 package driver
 
 import (
+	"fmt"
 	"regexp"
+	"sync"
 
+	"github.com/alibaba/pouch/plugins"
 	"github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/pkg/errors"
@@ -13,6 +16,8 @@ const (
 	driverNameRegexp = "^[a-zA-Z0-9].*$"
 	// Option's name can only contain these characters, a-z 0-9 - _.
 	optionNameRegexp = "^[a-z0-9-_].*$"
+	// volumePluginType is the plugin which implements volume driver
+	volumePluginType = "VolumeDriver"
 )
 
 const (
@@ -82,44 +87,88 @@ func (m VolumeStoreMode) UseLocalMeta() bool {
 	return (m & UseLocalMetaStore) != 0
 }
 
-//
-type driverTable map[string]Driver
-
-// Add is used to add driver into driver table.
-func (t driverTable) Add(name string, d Driver) {
-	t[name] = d
-}
-
-// Del is used to delete driver from driver table.
-func (t driverTable) Del(name string) {
-	delete(t, name)
+// driverTable contains all volume drivers
+type driverTable struct {
+	sync.Mutex
+	drivers map[string]Driver
 }
 
 // Get is used to get driver from driver table.
-func (t driverTable) Get(name string) (Driver, bool) {
-	v, ok := t[name]
-	return v, ok
+func (t *driverTable) Get(name string) (Driver, error) {
+	t.Lock()
+	v, ok := t.drivers[name]
+	if ok {
+		t.Unlock()
+		return v, nil
+	}
+	t.Unlock()
+
+	plugin, err := plugins.Get(volumePluginType, name)
+	if err != nil {
+		return nil, fmt.Errorf("%s driver not found: %v", name, err)
+	}
+
+	driver := NewRemoteDriverWrapper(name, plugin)
+
+	t.Lock()
+	defer t.Unlock()
+
+	v, ok = t.drivers[name]
+	if !ok {
+		v = driver
+		t.drivers[name] = v
+	}
+
+	return v, nil
 }
 
-var backendDrivers driverTable
+// GetAll will list all volume drivers.
+func (t *driverTable) GetAll() ([]Driver, error) {
+	pluginList, err := plugins.GetAll(volumePluginType)
+	if err != nil {
+		return nil, fmt.Errorf("error listing plugins: %v", err)
+	}
+
+	var driverList []Driver
+
+	t.Lock()
+	defer t.Unlock()
+
+	for _, d := range t.drivers {
+		driverList = append(driverList, d)
+	}
+
+	for _, p := range pluginList {
+		d, ok := t.drivers[p.Name]
+		if ok {
+			// the driver has existed, ignore it.
+			continue
+		}
+
+		d = NewRemoteDriverWrapper(p.Name, p)
+
+		t.drivers[p.Name] = d
+		driverList = append(driverList, d)
+	}
+
+	return driverList, nil
+}
+
+var backendDrivers = &driverTable{
+	drivers: make(map[string]Driver),
+}
 
 // Register add a backend driver module.
 func Register(d Driver) error {
-	if backendDrivers == nil {
-		backendDrivers = make(driverTable)
-	}
 	ctx := Contexts()
+	driverName := d.Name(ctx)
 
-	matched, err := regexp.MatchString(driverNameRegexp, d.Name(ctx))
+	matched, err := regexp.MatchString(driverNameRegexp, driverName)
 	if err != nil {
 		return err
 	}
 	if !matched {
-		return errors.Errorf("Invalid driver name: %s, not match: %s", d.Name(ctx), driverNameRegexp)
-	}
-
-	if _, ok := backendDrivers.Get(d.Name(ctx)); ok {
-		return errors.Errorf("Backend driver's name \"%s\" duplicate", d.Name(ctx))
+		return errors.Errorf("Invalid driver name: %s, not match: %s", driverName, driverNameRegexp)
 	}
 
 	if !d.StoreMode(ctx).Valid() {
@@ -138,43 +187,54 @@ func Register(d Driver) error {
 		}
 	}
 
-	backendDrivers.Add(d.Name(ctx), d)
+	backendDrivers.Lock()
+	defer backendDrivers.Unlock()
+
+	if _, ok := backendDrivers.drivers[driverName]; ok {
+		return errors.Errorf("backend driver's name \"%s\" duplicate", driverName)
+	}
+
+	backendDrivers.drivers[driverName] = d
 	return nil
 }
 
-// Get return one backend driver with specified name.
-func Get(name string) (Driver, bool) {
+// Get returns one backend driver with specified name.
+func Get(name string) (Driver, error) {
 	return backendDrivers.Get(name)
+}
+
+// GetAll returns all volume drivers.
+func GetAll() ([]Driver, error) {
+	return backendDrivers.GetAll()
 }
 
 // Exist return true if the backend driver is registered.
 func Exist(name string) bool {
-	_, ok := Get(name)
-	return ok
-}
-
-// List return all backend drivers.
-func List() []Driver {
-	drivers := make([]Driver, 0, 5)
-	for _, d := range backendDrivers {
-		drivers = append(drivers, d)
+	_, err := Get(name)
+	if err != nil {
+		return false
 	}
-	return drivers
+
+	return true
 }
 
-// AllDriversName return all backend driver's name.
+// AllDriversName return all registered backend driver's name.
 func AllDriversName() []string {
-	names := make([]string, 0, 5)
-	for n := range backendDrivers {
+	backendDrivers.Lock()
+	defer backendDrivers.Unlock()
+
+	var names []string
+	for n := range backendDrivers.drivers {
 		names = append(names, n)
 	}
+
 	return names
 }
 
 // ListDriverOption return backend driver's options by name.
 func ListDriverOption(name string) map[string]types.Option {
-	dv, ok := Get(name)
-	if !ok {
+	dv, err := Get(name)
+	if err != nil {
 		return nil
 	}
 	if opt, ok := dv.(Opt); ok {
@@ -185,11 +245,6 @@ func ListDriverOption(name string) map[string]types.Option {
 
 // Alias is used to add driver name's alias into exist driver.
 func Alias(name, alias string) error {
-	d, exist := backendDrivers.Get(name)
-	if !exist {
-		return errors.Errorf("volume driver: %s is not exist", name)
-	}
-
 	matched, err := regexp.MatchString(driverNameRegexp, alias)
 	if err != nil {
 		return err
@@ -198,7 +253,22 @@ func Alias(name, alias string) error {
 		return errors.Errorf("Invalid driver name: %s, not match: %s", name, driverNameRegexp)
 	}
 
-	backendDrivers.Add(alias, d)
+	backendDrivers.Lock()
+	defer backendDrivers.Unlock()
+
+	// check whether the driver exists
+	d, ok := backendDrivers.drivers[name]
+	if !ok {
+		return errors.Errorf("volume driver: %s is not exist", name)
+	}
+
+	// alias should not exist
+	_, ok = backendDrivers.drivers[alias]
+	if ok {
+		return errors.Errorf("Invalid volume alias: %s, duplicate", name)
+	}
+
+	backendDrivers.drivers[alias] = d
 
 	return nil
 }

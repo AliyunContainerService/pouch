@@ -42,7 +42,7 @@ func (p *Local) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
 // Create a local volume.
 func (p *Local) Create(ctx driver.Context, v *types.Volume, s *types.Storage) error {
 	ctx.Log.Debugf("Local create volume: %s", v.Name)
-	mountPath := v.Path()
+	mountPath, _ := p.Path(ctx, v)
 
 	if st, exist := os.Stat(mountPath); exist != nil {
 		if e := os.MkdirAll(mountPath, 0755); e != nil {

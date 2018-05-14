@@ -76,34 +76,75 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 		},
 	}
 
+	ctx := driver.Contexts()
+
 	// first, try to get volume from local store.
 	obj, err := c.store.Get(id.Name)
 	if err == nil {
-		return obj.(*types.Volume), nil
+		v, ok := obj.(*types.Volume)
+		if !ok {
+			return nil, volerr.ErrVolumeNotFound
+		}
+
+		// get the volume driver.
+		dv, err := driver.Get(v.Spec.Backend)
+		if err != nil {
+			return nil, err
+		}
+
+		// if the driver implements Getter interface.
+		if d, ok := dv.(driver.Getter); ok {
+			curV, err := d.Get(ctx, id.Name)
+			if err != nil {
+				return nil, volerr.ErrVolumeNotFound
+			}
+
+			v.Status.MountPoint = curV.Status.MountPoint
+		}
+
+		return v, nil
 	}
 
 	if err != metastore.ErrObjectNotFound {
 		return nil, err
 	}
-	err = volerr.ErrVolumeNotFound
 
 	// then, try to get volume from central store.
 	if c.EnableControl {
-		url, err := c.volumeURL(id)
-		if err != nil {
-			return nil, err
+		if url, err := c.volumeURL(id); err == nil {
+			if err := client.New().Get(url, v); err == nil {
+				return v, nil
+			}
 		}
+	}
 
-		if err = client.New().Get(url, v); err == nil {
-			return v, nil
-		}
-		if ce, ok := err.(client.Error); ok && ce.IsNotFound() {
-			return nil, volerr.ErrVolumeNotFound
-		}
+	// at last, scan all drivers
+	logrus.Debugf("probing all drivers for volume with name(%s)", id.Name)
+	drivers, err := driver.GetAll()
+	if err != nil {
 		return nil, err
 	}
 
-	return nil, err
+	for _, dv := range drivers {
+		d, ok := dv.(driver.Getter)
+		if !ok {
+			continue
+		}
+		v, err := d.Get(ctx, id.Name)
+		if err != nil {
+			// not found, ignore it
+			continue
+		}
+
+		// store volume meta
+		if err := c.store.Put(v); err != nil {
+			return nil, err
+		}
+
+		return v, nil
+	}
+
+	return nil, volerr.ErrVolumeNotFound
 }
 
 // ExistVolume return 'true' if volume be found and not errors.
@@ -128,60 +169,65 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 		return volerr.ErrVolumeExisted
 	}
 
-	v, err := c.newVolume(id)
+	v, err := types.NewVolume(id)
 	if err != nil {
 		return errors.Wrapf(err, "Create volume")
 	}
 
-	dv, ok := driver.Get(v.Spec.Backend)
-	if !ok {
-		return errors.Errorf("Backend driver: %s not found", v.Spec.Backend)
-	}
-
-	p, err := c.volumePath(v, dv)
+	dv, err := driver.Get(v.Spec.Backend)
 	if err != nil {
 		return err
 	}
-	v.SetPath(p)
 
-	// check options, then delete invalid options.
+	// check options, then add some driver-specific options.
 	if err := checkOptions(v); err != nil {
 		return err
 	}
 
 	// Create volume's meta.
 	ctx := driver.Contexts()
+	var s *types.Storage
 
-	if !dv.StoreMode(ctx).UseLocalMeta() {
+	if dv.StoreMode(ctx).CentralCreateDelete() {
 		url, err := c.volumeURL()
 		if err != nil {
 			return err
 		}
 
+		// before creating, we can't get the path
+		p, err := c.volumePath(v, dv)
+		if err != nil {
+			return err
+		}
+		v.SetPath(p)
+
 		if err := client.New().Create(url, v); err != nil {
 			return errors.Wrap(err, "Create volume")
 		}
-	}
 
-	// Create volume's store room on local.
-	var s *types.Storage
-	if !dv.StoreMode(ctx).IsLocal() {
+		// get the storage
 		s, err = c.getStorage(v.StorageID())
 		if err != nil {
 			return err
 		}
-	}
-
-	if !dv.StoreMode(ctx).CentralCreateDelete() {
-		if err := dv.Create(ctx, v, s); err != nil {
+	} else {
+		if err := dv.Create(ctx, v, nil); err != nil {
 			return err
 		}
+
+		// after creating volume, we can get the path
+		p, err := c.volumePath(v, dv)
+		if err != nil {
+			return err
+		}
+		v.SetPath(p)
 
 		if err := c.store.Put(v); err != nil {
 			return err
 		}
 	}
 
+	// format the volume
 	if f, ok := dv.(driver.Formator); ok {
 		err := f.Format(ctx, v, s)
 		if err == nil {
@@ -205,10 +251,10 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 // ListVolumes return all volumes.
 // Param 'labels' use to filter the volumes, only return those you want.
 func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
-	var ls = make([]*types.Volume, 0)
+	var retVolumes = make([]*types.Volume, 0)
 
 	// first, list local meta store.
-	list, err := c.store.List()
+	metaList, err := c.store.List()
 	if err != nil {
 		return nil, err
 	}
@@ -222,20 +268,77 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 
 		logrus.Debugf("List volume URL: %s, labels: %s", url, labels)
 
-		if err := client.New().ListKeys(url, &ls); err != nil {
+		if err := client.New().ListKeys(url, &retVolumes); err != nil {
 			return nil, errors.Wrap(err, "List volume's name")
 		}
 	}
 
-	for _, obj := range list {
-		v, ok := obj.(*types.Volume)
-		if !ok {
-			return nil, fmt.Errorf("failed to get volumes in store")
-		}
-		ls = append(ls, v)
+	// at last, scan all drivers.
+	logrus.Debugf("probing all drivers for listing volume")
+	drivers, err := driver.GetAll()
+	if err != nil {
+		return nil, err
 	}
 
-	return ls, nil
+	ctx := driver.Contexts()
+
+	var realVolumes = map[string]*types.Volume{}
+	var volumeDrivers = map[string]driver.Driver{}
+
+	for _, dv := range drivers {
+		volumeDrivers[dv.Name(ctx)] = dv
+
+		d, ok := dv.(driver.Lister)
+		if !ok {
+			// not Lister, ignore it.
+			continue
+		}
+		vList, err := d.List(ctx)
+		if err != nil {
+			logrus.Warnf("volume driver %s list error: %v", dv.Name(ctx), err)
+			continue
+		}
+
+		for _, v := range vList {
+			realVolumes[v.Name] = v
+		}
+	}
+
+	for name, obj := range metaList {
+		v, ok := obj.(*types.Volume)
+		if !ok {
+			continue
+		}
+
+		d, ok := volumeDrivers[v.Spec.Backend]
+		if !ok {
+			// driver not exist, ignore it
+			continue
+		}
+
+		// the local driver and tmpfs driver
+		if d.StoreMode(ctx).IsLocal() {
+			retVolumes = append(retVolumes, v)
+			continue
+		}
+
+		rv, ok := realVolumes[name]
+		if !ok {
+			// real volume not exist, ignore it
+			continue
+		}
+		v.Status.MountPoint = rv.Status.MountPoint
+
+		delete(realVolumes, name)
+
+		retVolumes = append(retVolumes, v)
+	}
+
+	for _, v := range realVolumes {
+		retVolumes = append(retVolumes, v)
+	}
+
+	return retVolumes, nil
 }
 
 // ListVolumeName return the name of all volumes only.
@@ -244,7 +347,7 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 	var names []string
 
 	// first, list local meta store.
-	list, err := c.store.List()
+	metaList, err := c.store.List()
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +366,65 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 		}
 	}
 
-	for name := range list {
+	// at last, scan all drivers
+	logrus.Debugf("probing all drivers for listing volume")
+	drivers, err := driver.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := driver.Contexts()
+
+	var realVolumes = map[string]*types.Volume{}
+	var volumeDrivers = map[string]driver.Driver{}
+
+	for _, dv := range drivers {
+		volumeDrivers[dv.Name(ctx)] = dv
+
+		d, ok := dv.(driver.Lister)
+		if !ok {
+			continue
+		}
+		vList, err := d.List(ctx)
+		if err != nil {
+			logrus.Warnf("volume driver %s list error: %v", dv.Name(ctx), err)
+			continue
+		}
+
+		for _, v := range vList {
+			realVolumes[v.Name] = v
+		}
+	}
+
+	for name, obj := range metaList {
+		v, ok := obj.(*types.Volume)
+		if !ok {
+			continue
+		}
+
+		d, ok := volumeDrivers[v.Spec.Backend]
+		if !ok {
+			// driver not exist, ignore it
+			continue
+		}
+
+		if d.StoreMode(ctx).IsLocal() {
+			names = append(names, name)
+			continue
+		}
+
+		_, ok = realVolumes[name]
+		if !ok {
+			// real volume not exist, ignore it
+			continue
+		}
+
+		delete(realVolumes, name)
+
+		names = append(names, name)
+	}
+
+	for name := range realVolumes {
 		names = append(names, name)
 	}
 
@@ -278,11 +439,7 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 	}
 
 	// Call interface to remove meta info.
-	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := c.store.Remove(id.Name); err != nil {
-			return err
-		}
-	} else {
+	if dv.StoreMode(driver.Contexts()).CentralCreateDelete() {
 		url, err := c.volumeURL(id)
 		if err != nil {
 			return errors.Wrap(err, "Remove volume: "+id.String())
@@ -290,19 +447,14 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 		if err := client.New().Delete(url, v); err != nil {
 			return errors.Wrap(err, "Remove volume: "+id.String())
 		}
-	}
-
-	// Call driver's Remove method to remove the volume.
-	if !dv.StoreMode(driver.Contexts()).CentralCreateDelete() {
-		var s *types.Storage
-		if !dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-			s, err = c.getStorage(v.StorageID())
-			if err != nil {
-				return err
-			}
+	} else {
+		// Call driver's Remove method to remove the volume.
+		if err := dv.Remove(driver.Contexts(), v, nil); err != nil {
+			return err
 		}
 
-		if err := dv.Remove(driver.Contexts(), v, s); err != nil {
+		// delete the meta
+		if err := c.store.Remove(id.Name); err != nil {
 			return err
 		}
 	}
@@ -326,9 +478,9 @@ func (c *Core) GetVolumeDriver(id types.VolumeID) (*types.Volume, driver.Driver,
 	if err != nil {
 		return nil, nil, err
 	}
-	dv, ok := driver.Get(v.Spec.Backend)
-	if !ok {
-		return nil, nil, errors.Errorf("Backend driver: %s not found", v.Spec.Backend)
+	dv, err := driver.Get(v.Spec.Backend)
+	if err != nil {
+		return nil, nil, errors.Errorf("failed to get backend driver %s: %v", v.Spec.Backend, err)
 	}
 	return v, dv, nil
 }
@@ -341,21 +493,25 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 	}
 
 	ctx := driver.Contexts()
-	var s *types.Storage
 
 	// merge extra to volume spec extra.
 	for key, value := range extra {
 		v.Spec.Extra[key] = value
 	}
 
-	if a, ok := dv.(driver.AttachDetach); ok {
-		if !dv.StoreMode(ctx).IsLocal() {
+	if d, ok := dv.(driver.AttachDetach); ok {
+		var (
+			s   *types.Storage
+			err error
+		)
+
+		if dv.StoreMode(ctx).CentralCreateDelete() {
 			if s, err = c.getStorage(v.StorageID()); err != nil {
 				return nil, err
 			}
 		}
 
-		if err = a.Attach(ctx, v, s); err != nil {
+		if err = d.Attach(ctx, v, s); err != nil {
 			return nil, err
 		}
 	}
@@ -386,7 +542,6 @@ func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.
 	}
 
 	ctx := driver.Contexts()
-	var s *types.Storage
 
 	// merge extra to volume spec extra.
 	for key, value := range extra {
@@ -395,14 +550,19 @@ func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.
 
 	// if volume has referance, skip to detach volume.
 	ref := v.Option(types.OptionRef)
-	if a, ok := dv.(driver.AttachDetach); ok && ref == "" {
-		if !dv.StoreMode(ctx).IsLocal() {
+	if d, ok := dv.(driver.AttachDetach); ok && ref == "" {
+		var (
+			s   *types.Storage
+			err error
+		)
+
+		if dv.StoreMode(ctx).CentralCreateDelete() {
 			if s, err = c.getStorage(v.StorageID()); err != nil {
 				return nil, err
 			}
 		}
 
-		if err = a.Detach(ctx, v, s); err != nil {
+		if err = d.Detach(ctx, v, s); err != nil {
 			return nil, err
 		}
 	}

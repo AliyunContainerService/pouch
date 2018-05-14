@@ -43,6 +43,18 @@ type Formator interface {
 	Format(Context, *types.Volume, *types.Storage) error
 }
 
+// Getter represents volume get interface.
+type Getter interface {
+	// Get a volume from driver
+	Get(Context, string) (*types.Volume, error)
+}
+
+// Lister represents volume list interface
+type Lister interface {
+	// List a volume from driver
+	List(Context) ([]*types.Volume, error)
+}
+
 // GatewayDriver represents storage gateway interface.
 type GatewayDriver interface {
 	// Report storage cluster status.
