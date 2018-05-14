@@ -3,6 +3,7 @@ package request
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,6 +22,15 @@ var defaultTimeout = time.Second * 10
 
 // Option defines a type used to update http.Request.
 type Option func(*http.Request) error
+
+// WithContext sets the ctx of http.Request.
+func WithContext(ctx context.Context) Option {
+	return func(r *http.Request) error {
+		r2 := r.WithContext(ctx)
+		*r = *r2
+		return nil
+	}
+}
 
 // WithHeader sets the Header of http.Request.
 func WithHeader(key string, value string) Option {
@@ -72,6 +82,23 @@ func Delete(endpoint string, opts ...Option) (*http.Response, error) {
 
 	fullPath := apiClient.BaseURL() + apiClient.GetAPIPath(endpoint, url.Values{})
 	req, err := newRequest(http.MethodDelete, fullPath, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return apiClient.HTTPCli.Do(req)
+}
+
+// Debug sends request to the default pouchd server to get the debug info.
+//
+// NOTE: without any vesion information.
+func Debug(endpoint string) (*http.Response, error) {
+	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	fullPath := apiClient.BaseURL() + endpoint
+	req, err := newRequest(http.MethodGet, fullPath)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +165,6 @@ func newRequest(method, url string, opts ...Option) (*http.Request, error) {
 			return nil, err
 		}
 	}
-	//fmt.Println(req)
-
 	return req, nil
 }
 

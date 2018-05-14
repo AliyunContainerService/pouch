@@ -19,6 +19,7 @@ import (
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/containerio"
+	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/lxcfs"
 	networktypes "github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/collect"
@@ -118,6 +119,9 @@ type ContainerMgr interface {
 	// Disconnect disconnects the given container from
 	// given network
 	Disconnect(ctx context.Context, containerName, networkName string, force bool) error
+
+	// Logs is used to return log created by the container.
+	Logs(ctx context.Context, name string, logsOpt *types.ContainerLogsOptions) (<-chan *logger.LogMessage, bool, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -282,6 +286,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			bind := fmt.Sprintf("%s%s:%s%s", sourceDir, procFile, destDir, procFile)
 			config.HostConfig.Binds = append(config.HostConfig.Binds, bind)
 		}
+	}
+
+	// FIXME(fuwei): only support LogConfig is json-file right now
+	config.HostConfig.LogConfig = &types.LogConfig{
+		LogDriver: types.LogConfigLogDriverJSONFile,
 	}
 
 	container := &Container{
@@ -1366,7 +1375,7 @@ func (mgr *ContainerManager) openContainerIO(id string, stdin bool) (*containeri
 	options := []func(*containerio.Option){
 		containerio.WithID(id),
 		containerio.WithRootDir(root),
-		containerio.WithRawFile(),
+		containerio.WithJSONFile(),
 		containerio.WithStdin(stdin),
 	}
 
@@ -1501,10 +1510,14 @@ func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*conta
 }
 
 func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*containerio.IO, error) {
+	rootDir := mgr.Store.Path(id)
 	options := []func(*containerio.Option){
 		containerio.WithID(id),
+		containerio.WithRootDir(rootDir),
+		containerio.WithJSONFile(),
 		containerio.WithStdin(attach.Stdin),
 	}
+
 	if attach != nil {
 		options = append(options, attachConfigToOptions(attach)...)
 	} else {

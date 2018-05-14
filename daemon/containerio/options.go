@@ -72,13 +72,13 @@ func WithDiscard() func(*Option) {
 	}
 }
 
-// WithRawFile specified the raw-file backend.
-func WithRawFile() func(*Option) {
+// WithJSONFile specified the jsonfile backend.
+func WithJSONFile() func(*Option) {
 	return func(opt *Option) {
 		if opt.backends == nil {
 			opt.backends = make(map[string]struct{})
 		}
-		opt.backends["raw-file"] = struct{}{}
+		opt.backends["jsonfile"] = struct{}{}
 	}
 }
 

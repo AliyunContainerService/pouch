@@ -89,8 +89,8 @@ type HostConfig struct {
 	// A list of links for the container in the form `container_name:alias`.
 	Links []string `json:"Links"`
 
-	// log config
-	LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+	// The logging configuration for this container
+	LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 	// Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.
 	NetworkMode string `json:"NetworkMode,omitempty"`
@@ -204,7 +204,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		Links []string `json:"Links,omitempty"`
 
-		LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
@@ -374,7 +374,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		Links []string `json:"Links,omitempty"`
 
-		LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
@@ -871,110 +871,6 @@ func (m *HostConfig) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *HostConfig) UnmarshalBinary(b []byte) error {
 	var res HostConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// HostConfigAO0LogConfig The logging configuration for this container
-// swagger:model HostConfigAO0LogConfig
-
-type HostConfigAO0LogConfig struct {
-
-	// config
-	Config map[string]string `json:"Config,omitempty"`
-
-	// type
-	Type string `json:"Type,omitempty"`
-}
-
-/* polymorph HostConfigAO0LogConfig Config false */
-
-/* polymorph HostConfigAO0LogConfig Type false */
-
-// Validate validates this host config a o0 log config
-func (m *HostConfigAO0LogConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateType(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-var hostConfigAO0LogConfigTypeTypePropEnum []interface{}
-
-func init() {
-	var res []string
-	if err := json.Unmarshal([]byte(`["json-file","syslog","journald","gelf","fluentd","awslogs","splunk","etwlogs","none"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		hostConfigAO0LogConfigTypeTypePropEnum = append(hostConfigAO0LogConfigTypeTypePropEnum, v)
-	}
-}
-
-const (
-	// HostConfigAO0LogConfigTypeJSONFile captures enum value "json-file"
-	HostConfigAO0LogConfigTypeJSONFile string = "json-file"
-	// HostConfigAO0LogConfigTypeSyslog captures enum value "syslog"
-	HostConfigAO0LogConfigTypeSyslog string = "syslog"
-	// HostConfigAO0LogConfigTypeJournald captures enum value "journald"
-	HostConfigAO0LogConfigTypeJournald string = "journald"
-	// HostConfigAO0LogConfigTypeGelf captures enum value "gelf"
-	HostConfigAO0LogConfigTypeGelf string = "gelf"
-	// HostConfigAO0LogConfigTypeFluentd captures enum value "fluentd"
-	HostConfigAO0LogConfigTypeFluentd string = "fluentd"
-	// HostConfigAO0LogConfigTypeAwslogs captures enum value "awslogs"
-	HostConfigAO0LogConfigTypeAwslogs string = "awslogs"
-	// HostConfigAO0LogConfigTypeSplunk captures enum value "splunk"
-	HostConfigAO0LogConfigTypeSplunk string = "splunk"
-	// HostConfigAO0LogConfigTypeEtwlogs captures enum value "etwlogs"
-	HostConfigAO0LogConfigTypeEtwlogs string = "etwlogs"
-	// HostConfigAO0LogConfigTypeNone captures enum value "none"
-	HostConfigAO0LogConfigTypeNone string = "none"
-)
-
-// prop value enum
-func (m *HostConfigAO0LogConfig) validateTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, hostConfigAO0LogConfigTypeTypePropEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *HostConfigAO0LogConfig) validateType(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Type) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateTypeEnum("LogConfig"+"."+"Type", "body", m.Type); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *HostConfigAO0LogConfig) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *HostConfigAO0LogConfig) UnmarshalBinary(b []byte) error {
-	var res HostConfigAO0LogConfig
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

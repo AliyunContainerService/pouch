@@ -50,7 +50,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/update", s.updateContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
 	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", s.logsContainer)
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", withCancelHandler(s.logsContainer))
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
 
@@ -105,6 +105,38 @@ func profilerSetup(mainRouter *mux.Router) {
 }
 
 type handler func(context.Context, http.ResponseWriter, *http.Request) error
+
+// withCancelHandler will use context to cancel the handler. Otherwise, if the
+// the connection has been cut by the client or firewall, the server handler
+// will hang and cause goroutine leak.
+func withCancelHandler(h handler) handler {
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		notifier, ok := rw.(http.CloseNotifier)
+		if !ok {
+			return h(ctx, rw, req)
+		}
+
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+
+		waitCh := make(chan struct{})
+		defer close(waitCh)
+
+		// NOTE: in order to avoid the race , we should get the
+		// channel before select.
+		//
+		// Related issue: https://github.com/grpc-ecosystem/grpc-gateway/pull/120.
+		closeNotify := notifier.CloseNotify()
+		go func() {
+			select {
+			case <-closeNotify:
+				cancel()
+			case <-waitCh:
+			}
+		}()
+		return h(ctx, rw, req)
+	}
+}
 
 func filter(handler handler, s *Server) http.HandlerFunc {
 	pctx := context.Background()

@@ -101,7 +101,7 @@ type Config struct {
 	Pidfile string `json:"pidfile,omitempty"`
 
 	// Default log configuration
-	DefaultLogConfig types.HostConfigAO0LogConfig `json:"default-log-config, omitempty"`
+	DefaultLogConfig types.LogConfig `json:"default-log-config, omitempty"`
 
 	// RegistryService
 	RegistryService types.RegistryServiceConfig `json:"registry-service, omitempty" `

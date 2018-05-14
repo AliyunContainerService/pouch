@@ -127,7 +127,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		KernelVersion:      kernelVersion,
 		Labels:             mgr.config.Labels,
 		LiveRestoreEnabled: true,
-		LoggingDriver:      mgr.config.DefaultLogConfig.Type,
+		LoggingDriver:      mgr.config.DefaultLogConfig.LogDriver,
 		LxcfsEnabled:       mgr.config.IsLxcfsEnabled,
 		MemTotal:           totalMem,
 		Name:               hostname,

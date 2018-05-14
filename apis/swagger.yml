@@ -586,6 +586,10 @@ paths:
           description: "logs returned as a string in response body"
           schema:
             type: "string"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
         404:
           $ref: "#/responses/404ErrorResponse"
         500:
@@ -1904,25 +1908,9 @@ definitions:
             type: "string"
             description: "Path to a file where the container ID is written"
           LogConfig:
-            type: "object"
             description: "The logging configuration for this container"
-            properties:
-              Type:
-                type: "string"
-                enum:
-                  - "json-file"
-                  - "syslog"
-                  - "journald"
-                  - "gelf"
-                  - "fluentd"
-                  - "awslogs"
-                  - "splunk"
-                  - "etwlogs"
-                  - "none"
-              Config:
-                type: "object"
-                additionalProperties:
-                  type: "string"
+            type: "object"
+            $ref: "#/definitions/LogConfig"
           RestartPolicy:
             type: "object"
             description: "Restart policy to be used to manage the container"
@@ -2130,6 +2118,29 @@ definitions:
         properties:
           HostConfig:
             $ref: "#/definitions/HostConfig"
+
+  LogConfig:
+    description: "The logging configuration for this container"
+    type: "object"
+    properties:
+      Type:
+        type: "string"
+        x-go-name: "LogDriver"
+        enum:
+          - "json-file"
+          - "syslog"
+          - "journald"
+          - "gelf"
+          - "fluentd"
+          - "awslogs"
+          - "splunk"
+          - "etwlogs"
+          - "none"
+      Config:
+        type: "object"
+        x-go-name: "LogOpts"
+        additionalProperties:
+          type: "string"
 
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"

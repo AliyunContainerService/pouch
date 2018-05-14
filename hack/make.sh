@@ -172,9 +172,9 @@ function target()
 		#start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
-			pouchd --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
+			pouchd --debug --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
 		else
-			pouchd > $TMP/log 2>&1 &
+			pouchd --debug > $TMP/log 2>&1 &
 		fi
 
 		# wait until pouch daemon is ready
