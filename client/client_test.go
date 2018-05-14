@@ -15,7 +15,6 @@ var (
 func TestNewAPIClient(t *testing.T) {
 	assert := assert.New(t)
 	kvs := map[string]bool{
-		"":                      false,
 		"foobar":                true,
 		"tcp://localhost:2476":  false,
 		"http://localhost:2476": false,
@@ -43,7 +42,7 @@ func Test_generateBaseURL(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

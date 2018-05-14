@@ -209,7 +209,7 @@ func TestWeightDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -232,7 +232,7 @@ func TestWeightDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.WeightDevice
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -432,7 +432,7 @@ func TestThrottleBpsDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -455,7 +455,7 @@ func TestThrottleBpsDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.ThrottleDevice
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -655,7 +655,7 @@ func TestThrottleIOpsDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -678,7 +678,7 @@ func TestThrottleIOpsDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.ThrottleDevice
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
