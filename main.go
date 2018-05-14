@@ -181,12 +181,26 @@ func runDaemon() error {
 
 	// initialize signal and handle method.
 	var (
-		waitExit = make(chan struct{})
-		signals  = make(chan os.Signal, 1)
+		errCh    = make(chan error, 1)
+		signalCh = make(chan os.Signal, 1)
 	)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
+
+	// new daemon instance, this is core.
+	d := daemon.NewDaemon(cfg)
+	if d == nil {
+		return fmt.Errorf("failed to new daemon")
+	}
+
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
+	sigHandles = append(sigHandles, d.ShutdownPlugin, d.Shutdown)
+
 	go func() {
-		sig := <-signals
+		// FIXME: I think the Run() should always return error.
+		errCh <- d.Run()
+	}()
+
+	select {
+	case sig := <-signalCh:
 		logrus.Warnf("received signal: %s", sig)
 
 		for _, handle := range sigHandles {
@@ -195,23 +209,12 @@ func runDaemon() error {
 			}
 		}
 
-		close(waitExit)
 		os.Exit(1)
-	}()
-
-	// new daemon instance, this is core.
-	d := daemon.NewDaemon(cfg)
-	if d == nil {
-		return fmt.Errorf("failed to new daemon")
+	case err := <-errCh:
+		// FIXME: should we do the cleanup like signal handle?
+		return err
 	}
-
-	sigHandles = append(sigHandles, d.ShutdownPlugin, d.Shutdown)
-
-	err := d.Run()
-
-	<-waitExit
-
-	return err
+	return nil
 }
 
 // initLog initializes log Level and log format of daemon.
