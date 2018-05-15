@@ -254,6 +254,13 @@ func TestDeDuplicate(t *testing.T) {
 			},
 			want: []string{"asdfgh01"},
 		},
+		{
+			name: "case with null character string and white space",
+			args: args{
+				input: []string{"", "asdfgh01", "  "},
+			},
+			want: []string{"asdfgh01"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
