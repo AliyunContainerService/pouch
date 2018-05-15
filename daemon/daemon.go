@@ -166,17 +166,18 @@ func (d *Daemon) Run() error {
 	}
 	d.volumeMgr = volumeMgr
 
-	networkMgr, err := internal.GenNetworkMgr(d.config, d)
-	if err != nil {
-		return err
-	}
-	d.networkMgr = networkMgr
-
 	containerMgr, err := internal.GenContainerMgr(ctx, d)
 	if err != nil {
 		return err
 	}
 	d.containerMgr = containerMgr
+
+	networkMgr, err := internal.GenNetworkMgr(d.config, d)
+	if err != nil {
+		return err
+	}
+	d.networkMgr = networkMgr
+	containerMgr.(*mgr.ContainerManager).NetworkMgr = networkMgr
 
 	if err := d.addSystemLabels(); err != nil {
 		return err

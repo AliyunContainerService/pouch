@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	networktypes "github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -101,6 +102,29 @@ func (mgr *ContainerManager) generateName(id string) string {
 		}
 	}
 	return name
+}
+
+// BuildContainerEndpoint is used to build container's endpoint config.
+func BuildContainerEndpoint(c *Container) *networktypes.Endpoint {
+	return &networktypes.Endpoint{
+		Owner:           c.ID,
+		Hostname:        c.Config.Hostname,
+		Domainname:      c.Config.Domainname,
+		HostsPath:       c.HostsPath,
+		ExtraHosts:      c.HostConfig.ExtraHosts,
+		HostnamePath:    c.HostnamePath,
+		ResolvConfPath:  c.ResolvConfPath,
+		NetworkDisabled: c.Config.NetworkDisabled,
+		NetworkMode:     c.HostConfig.NetworkMode,
+		DNS:             c.HostConfig.DNS,
+		DNSOptions:      c.HostConfig.DNSOptions,
+		DNSSearch:       c.HostConfig.DNSSearch,
+		MacAddress:      c.Config.MacAddress,
+		PublishAllPorts: c.HostConfig.PublishAllPorts,
+		ExposedPorts:    c.Config.ExposedPorts,
+		PortBindings:    c.HostConfig.PortBindings,
+		NetworkConfig:   c.NetworkSettings,
+	}
 }
 
 func parseSecurityOpts(c *Container, securityOpts []string) error {

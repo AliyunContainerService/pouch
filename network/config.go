@@ -15,6 +15,8 @@ type Config struct {
 
 	// bridge config
 	BridgeConfig BridgeConfig
+
+	ActiveSandboxes map[string]interface{}
 }
 
 // BridgeConfig defines the bridge network configuration.

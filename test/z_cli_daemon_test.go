@@ -288,7 +288,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) 
 	cname := "TestDaemonRestartWithPausedContainer"
 	{
 		result := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname,
-			"-p", "1234:80", busyboxImage, "top")
+			"-p", "5678:80", busyboxImage, "top")
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("run container failed, err: %v", result)
