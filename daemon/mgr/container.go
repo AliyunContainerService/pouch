@@ -1340,8 +1340,12 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
-		logrus.Errorf("failed to remove endpoint: %v", err)
-		return err
+		// TODO(ziren): it is a trick, we should wrapper sanbox
+		// not found as an error type
+		if !strings.Contains(err.Error(), "not found") {
+			logrus.Errorf("failed to remove endpoint: %v", err)
+			return err
+		}
 	}
 
 	// disconnect an endpoint success, delete endpoint info from container json
@@ -1573,31 +1577,44 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 		}
 	}
 
-	// release resource
-	if io := mgr.IOs.Get(c.ID); io != nil {
-		io.Close()
-		mgr.IOs.Remove(c.ID)
-	}
-
-	// release network
-	if c.NetworkSettings != nil {
-		for name, epConfig := range c.NetworkSettings.Networks {
-			endpoint := mgr.buildContainerEndpoint(c)
-			endpoint.Name = name
-			endpoint.EndpointConfig = epConfig
-			if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
-				logrus.Errorf("failed to remove endpoint: %v", err)
-				return err
-			}
-		}
-	}
-
 	// unset Snapshot MergedDir. Stop a container will
 	// delete the containerd container, the merged dir
 	// will also be deleted, so we should unset the
 	// container's MergedDir.
 	if c.Snapshotter != nil && c.Snapshotter.Data != nil {
 		c.Snapshotter.Data["MergedDir"] = ""
+	}
+
+	// Remove io and network config may occur error, so we should update
+	// container's status on disk as soon as possible.
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
+
+	// release resource
+	if io := mgr.IOs.Get(c.ID); io != nil {
+		io.Close()
+		mgr.IOs.Remove(c.ID)
+	}
+
+	// No network binded, just return
+	if c.NetworkSettings == nil {
+		return nil
+	}
+
+	for name, epConfig := range c.NetworkSettings.Networks {
+		endpoint := mgr.buildContainerEndpoint(c)
+		endpoint.Name = name
+		endpoint.EndpointConfig = epConfig
+		if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
+			// TODO(ziren): it is a trick, we should wrapper "sanbox
+			// not found"" as an error type
+			if !strings.Contains(err.Error(), "not found") {
+				logrus.Errorf("failed to remove endpoint: %v", err)
+				return err
+			}
+		}
 	}
 
 	// update meta
