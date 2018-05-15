@@ -1,8 +1,8 @@
 package mgr
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -71,8 +71,8 @@ type AttachConfig struct {
 	Hijack  http.Hijacker
 	Upgrade bool
 
-	// Attach using memory buffer.
-	MemBuffer *bytes.Buffer
+	// Attach using pipe.
+	Pipe *io.PipeWriter
 
 	// Attach using streams.
 	Streams *remotecommand.Streams
