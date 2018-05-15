@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/daemon/logger"
@@ -130,6 +131,10 @@ func (jf *jsonFile) copy(source string, reader io.ReadCloser) {
 			Line:      bs,
 			Timestamp: createdTime,
 		}); err != nil {
+			if strings.Contains(err.Error(), os.ErrClosed.Error()) {
+				logrus.Warnf("failed to copy %v message into jsonfile: the container may be stopped: %v", source, err)
+				return
+			}
 			logrus.Errorf("failed to copy %v message into jsonfile: %v", source, err)
 			return
 		}
