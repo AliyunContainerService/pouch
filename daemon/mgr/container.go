@@ -1547,9 +1547,9 @@ func attachConfigToOptions(attach *AttachConfig) []func(*containerio.Option) {
 		if attach.Stdin {
 			options = append(options, containerio.WithStdinHijack())
 		}
-	} else if attach.MemBuffer != nil {
-		// Attaching using memory buffer.
-		options = append(options, containerio.WithMemBuffer(attach.MemBuffer))
+	} else if attach.Pipe != nil {
+		// Attaching using pipe.
+		options = append(options, containerio.WithPipe(attach.Pipe))
 	} else if attach.Streams != nil {
 		// Attaching using streams.
 		options = append(options, containerio.WithStreams(attach.Streams))
