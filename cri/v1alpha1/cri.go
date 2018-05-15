@@ -1,4 +1,4 @@
-package src
+package v1alpha1
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -87,7 +86,7 @@ type CriManager struct {
 	CniMgr       CniMgr
 
 	// StreamServer is the stream server of CRI serves container streaming request.
-	StreamServer stream.Server
+	StreamServer Server
 
 	// SandboxBaseDir is the directory used to store sandbox files like /etc/hosts, /etc/resolv.conf, etc.
 	SandboxBaseDir string

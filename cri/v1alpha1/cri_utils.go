@@ -1,4 +1,4 @@
-package src
+package v1alpha1
 
 import (
 	"bytes"
@@ -14,8 +14,8 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/go-openapi/strfmt"
 
+	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )

@@ -1,4 +1,4 @@
-package stream
+package v1alpha1
 
 import (
 	"io"
@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/cri/stream/constant"
 	"github.com/alibaba/pouch/cri/stream/portforward"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
@@ -92,7 +93,7 @@ var DefaultConfig = Config{
 type server struct {
 	config  Config
 	runtime Runtime
-	cache   *requestCache
+	cache   *stream.RequestCache
 	server  *http.Server
 }
 
@@ -101,7 +102,7 @@ func NewServer(config Config, runtime Runtime) (Server, error) {
 	s := &server{
 		config:  config,
 		runtime: runtime,
-		cache:   newRequestCache(),
+		cache:   stream.NewRequestCache(),
 	}
 
 	if s.config.BaseURL == nil {

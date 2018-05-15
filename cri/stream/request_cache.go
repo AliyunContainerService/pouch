@@ -22,7 +22,7 @@ var (
 // requestCache caches streaming (exec/attach/port-forward) requests and generates a single-use
 // random token for their retrieval. The requestCache is used for building streaming URLs without
 // the need to encode every request parameter in the URL.
-type requestCache struct {
+type RequestCache struct {
 	// tokens maps the generate token to the request for fast retrieval.
 	tokens map[string]*list.Element
 	// ll maintains an age-ordered request list for faster garbage collection of expired requests.
@@ -40,15 +40,15 @@ type cacheEntry struct {
 	expireTime time.Time
 }
 
-func newRequestCache() *requestCache {
-	return &requestCache{
+func NewRequestCache() *RequestCache {
+	return &RequestCache{
 		ll:     list.New(),
 		tokens: make(map[string]*list.Element),
 	}
 }
 
 // Insert the given request into the cache and returns the token used for fetching it out.
-func (c *requestCache) Insert(req request) (token string, err error) {
+func (c *RequestCache) Insert(req request) (token string, err error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -69,7 +69,7 @@ func (c *requestCache) Insert(req request) (token string, err error) {
 }
 
 // Consume the token (remove it from the cache) and return the cached request, if found.
-func (c *requestCache) Consume(token string) (req request, found bool) {
+func (c *RequestCache) Consume(token string) (req request, found bool) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	ele, ok := c.tokens[token]
@@ -88,7 +88,7 @@ func (c *requestCache) Consume(token string) (req request, found bool) {
 }
 
 // uniqueToken generates a random URL-safe token and ensures uniqueness.
-func (c *requestCache) uniqueToken() (string, error) {
+func (c *RequestCache) uniqueToken() (string, error) {
 	const maxTries = 10
 	// Number of bytes to be TokenLen when base64 encoded.
 	tokenSize := math.Ceil(float64(TokenLen) * 6 / 8)
@@ -108,7 +108,7 @@ func (c *requestCache) uniqueToken() (string, error) {
 }
 
 // Must be write-locked prior to calling.
-func (c *requestCache) gc() {
+func (c *RequestCache) gc() {
 	now := time.Now()
 	for c.ll.Len() > 0 {
 		oldest := c.ll.Back()

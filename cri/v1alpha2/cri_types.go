@@ -1,7 +1,7 @@
-package src
+package v1alpha2
 
 import (
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // SandboxMeta represents the sandbox's meta data.
