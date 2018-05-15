@@ -1,4 +1,4 @@
-package mgr
+package src
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -332,7 +333,7 @@ func Test_toCriSandboxState(t *testing.T) {
 
 func Test_toCriSandbox(t *testing.T) {
 	type args struct {
-		c *Container
+		c *mgr.Container
 	}
 	tests := []struct {
 		name    string
@@ -611,8 +612,8 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 
 func TestCriManager_updateCreateConfig(t *testing.T) {
 	type fields struct {
-		ContainerMgr ContainerMgr
-		ImageMgr     ImageMgr
+		ContainerMgr mgr.ContainerMgr
+		ImageMgr     mgr.ImageMgr
 	}
 	type args struct {
 		createConfig  *apitypes.ContainerCreateConfig
@@ -643,7 +644,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 
 func Test_toCriContainer(t *testing.T) {
 	type args struct {
-		c *Container
+		c *mgr.Container
 	}
 	tests := []struct {
 		name    string
@@ -696,8 +697,8 @@ func Test_imageToCriImage(t *testing.T) {
 
 func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 	type fields struct {
-		ContainerMgr ContainerMgr
-		ImageMgr     ImageMgr
+		ContainerMgr mgr.ContainerMgr
+		ImageMgr     mgr.ImageMgr
 	}
 	type args struct {
 		ctx   context.Context

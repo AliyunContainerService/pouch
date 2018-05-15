@@ -9,7 +9,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
-	cri "github.com/alibaba/pouch/cri/service"
+	criservice "github.com/alibaba/pouch/cri/service"
+	cri "github.com/alibaba/pouch/cri/src"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -33,9 +34,9 @@ type Daemon struct {
 	imageMgr        mgr.ImageMgr
 	volumeMgr       mgr.VolumeMgr
 	networkMgr      mgr.NetworkMgr
-	criMgr          mgr.CriMgr
+	criMgr          cri.CriMgr
 	server          server.Server
-	criService      *cri.Service
+	criService      *criservice.Service
 	containerPlugin plugins.ContainerPlugin
 	daemonPlugin    plugins.DaemonPlugin
 }
@@ -339,7 +340,7 @@ func (d *Daemon) RunCriService(stopCh chan error) {
 	}
 	d.criMgr = criMgr
 
-	d.criService, err = cri.NewService(d.config, criMgr)
+	d.criService, err = criservice.NewService(d.config, criMgr)
 	if err != nil {
 		return
 	}

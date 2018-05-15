@@ -1,4 +1,4 @@
-package cri
+package config
 
 // Config defines the CRI configuration.
 type Config struct {

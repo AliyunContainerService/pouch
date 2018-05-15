@@ -1,4 +1,4 @@
-package mgr
+package src
 
 import (
 	"bytes"
@@ -13,11 +13,12 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
+	"github.com/alibaba/pouch/daemon/mgr"
 
 	"github.com/sirupsen/logrus"
 )
 
-func newStreamServer(ctrMgr ContainerMgr, address string, port string) (stream.Server, error) {
+func newStreamServer(ctrMgr mgr.ContainerMgr, address string, port string) (stream.Server, error) {
 	config := stream.DefaultConfig
 	config.Address = net.JoinHostPort(address, port)
 	runtime := newStreamRuntime(ctrMgr)
@@ -25,10 +26,10 @@ func newStreamServer(ctrMgr ContainerMgr, address string, port string) (stream.S
 }
 
 type streamRuntime struct {
-	containerMgr ContainerMgr
+	containerMgr mgr.ContainerMgr
 }
 
-func newStreamRuntime(ctrMgr ContainerMgr) stream.Runtime {
+func newStreamRuntime(ctrMgr mgr.ContainerMgr) stream.Runtime {
 	return &streamRuntime{containerMgr: ctrMgr}
 }
 
@@ -50,7 +51,7 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 	}
 
 	startConfig := &apitypes.ExecStartConfig{}
-	attachConfig := &AttachConfig{
+	attachConfig := &mgr.AttachConfig{
 		Streams:     streams,
 		MuxDisabled: true,
 	}
@@ -78,7 +79,7 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 
 // Attach attaches to a running container.
 func (s *streamRuntime) Attach(containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error {
-	attachConfig := &AttachConfig{
+	attachConfig := &mgr.AttachConfig{
 		Stdin:   streamOpts.Stdin,
 		Stdout:  streamOpts.Stdout,
 		Stderr:  streamOpts.Stderr,

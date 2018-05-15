@@ -1,4 +1,4 @@
-package mgr
+package src
 
 import (
 	"github.com/sirupsen/logrus"
