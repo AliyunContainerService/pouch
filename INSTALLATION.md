@@ -36,14 +36,13 @@ sudo apt-get install curl apt-transport-https ca-certificates software-propertie
 curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
 ```
 
-Verify that you now have the key with the fingerprint `B615 DDD7 90C7 0912 582D  DC2D D7AE A5ED 439A E9EC`, by searching for the last 8 characters of the fingerprint.
+Verify that you now have the key with the fingerprint `F443 EDD0 4A58 7E8B F645  9C40 CF68 F84A BE2F 475F`, by searching for the last 8 characters of the fingerprint.
 
 ``` bash
-$ apt-key fingerprint 439AE9EC
-pub   2048R/439AE9EC 2018-01-31
-      Key fingerprint = B615 DDD7 90C7 0912 582D  DC2D D7AE A5ED 439A E9EC
-uid                  Pouch Release <pouch-dev@list.alibaba-inc.com>
-sub   2048R/B3D2A915 2018-01-31
+$ apt-key fingerprint BE2F475F
+pub   4096R/BE2F475F 2018-02-28
+      Key fingerprint = F443 EDD0 4A58 7E8B F645  9C40 CF68 F84A BE2F 475F
+uid                  opsx-admin <opsx@service.alibaba.com>
 ```
 
 **2. Set up the pouch repository**
