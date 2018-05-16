@@ -88,12 +88,23 @@ GOROOT=/usr/local/go
 GOPATH=/go
 ```
 
-Then copy or clone or link pouch source code to the GOPATH：
+Then copy or clone pouch source code to the GOPATH：
 
 ```
 # pwd
 /go/src/github.com/alibaba/pouch
 ```
+
+The following steps are also needed to make sure libnetwork package could be found:
+
+```
+BUILDPATH=/tmp/pouchbuild
+mkdir -p $BUILDPATH/src/github.com/docker
+cp -r /go/src/github.com/alibaba/pouch/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
+export GOPATH=$GOPATH:$BUILDPATH:$BUILDPATH/src/github.com/docker/libnetwork/Godeps/_workspace
+```
+
+And please notice that files in `/tmp` directory may be deleted after reboot.
 
 Now you could run unit test as following:
 
