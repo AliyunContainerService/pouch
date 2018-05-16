@@ -10,7 +10,7 @@ import (
 )
 
 func TestReadLogMessagesWithRemoveFileInFollowMode(t *testing.T) {
-	f, err := ioutil.TempFile("/root", "tail-file")
+	f, err := ioutil.TempFile("", "tail-file")
 	if err != nil {
 		t.Fatalf("unexpected error during create tempfile: %v", err)
 	}
