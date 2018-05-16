@@ -14,9 +14,9 @@ pouch top CONTAINER [ps OPTIONS]
 
 ```
 $ pouch top 44f675
-	UID     PID      PPID     C    STIME    TTY    TIME        CMD
-	root    28725    28714    0    3月14     ?      00:00:00    sh
-	
+UID     PID      PPID     C    STIME    TTY    TIME        CMD
+root    28725    28714    0    3月14     ?      00:00:00    sh
+
 ```
 
 ### Options
