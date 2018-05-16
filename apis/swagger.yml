@@ -2894,7 +2894,10 @@ definitions:
       AppArmorProfile:
         type: "string"
       ExecIDs:
-        type: "string"
+        description: "exec ids of container"
+        type: "array"
+        items:
+          type: "string"
       HostConfig:
         $ref: "#/definitions/HostConfig"
       SizeRw:
