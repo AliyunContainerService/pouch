@@ -10,6 +10,16 @@ Exec a process in a running container
 pouch exec [OPTIONS] CONTAINER COMMAND [ARG...]
 ```
 
+### Examples
+
+```
+$ pouch exec -it 25bf50 ps
+PID   USER     TIME  COMMAND
+    1 root      0:00 /bin/sh
+   38 root      0:00 ps
+
+```
+
 ### Options
 
 ```

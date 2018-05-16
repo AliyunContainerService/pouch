@@ -157,14 +157,13 @@ type ContainerManager struct {
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, netMgr NetworkMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, cfg *config.Config, contPlugin plugins.ContainerPlugin) (*ContainerManager, error) {
 	mgr := &ContainerManager{
 		Store:           store,
 		NameToID:        collect.NewSafeMap(),
 		Client:          cli,
 		ImageMgr:        imgMgr,
 		VolumeMgr:       volMgr,
-		NetworkMgr:      netMgr,
 		IOs:             containerio.NewCache(),
 		ExecProcesses:   collect.NewSafeMap(),
 		cache:           collect.NewSafeMap(),
@@ -1341,8 +1340,12 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
-		logrus.Errorf("failed to remove endpoint: %v", err)
-		return err
+		// TODO(ziren): it is a trick, we should wrapper sanbox
+		// not found as an error type
+		if !strings.Contains(err.Error(), "not found") {
+			logrus.Errorf("failed to remove endpoint: %v", err)
+			return err
+		}
 	}
 
 	// disconnect an endpoint success, delete endpoint info from container json
@@ -1544,9 +1547,9 @@ func attachConfigToOptions(attach *AttachConfig) []func(*containerio.Option) {
 		if attach.Stdin {
 			options = append(options, containerio.WithStdinHijack())
 		}
-	} else if attach.MemBuffer != nil {
-		// Attaching using memory buffer.
-		options = append(options, containerio.WithMemBuffer(attach.MemBuffer))
+	} else if attach.Pipe != nil {
+		// Attaching using pipe.
+		options = append(options, containerio.WithPipe(attach.Pipe))
 	} else if attach.Streams != nil {
 		// Attaching using streams.
 		options = append(options, containerio.WithStreams(attach.Streams))
@@ -1574,31 +1577,44 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 		}
 	}
 
-	// release resource
-	if io := mgr.IOs.Get(c.ID); io != nil {
-		io.Close()
-		mgr.IOs.Remove(c.ID)
-	}
-
-	// release network
-	if c.NetworkSettings != nil {
-		for name, epConfig := range c.NetworkSettings.Networks {
-			endpoint := mgr.buildContainerEndpoint(c)
-			endpoint.Name = name
-			endpoint.EndpointConfig = epConfig
-			if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
-				logrus.Errorf("failed to remove endpoint: %v", err)
-				return err
-			}
-		}
-	}
-
 	// unset Snapshot MergedDir. Stop a container will
 	// delete the containerd container, the merged dir
 	// will also be deleted, so we should unset the
 	// container's MergedDir.
 	if c.Snapshotter != nil && c.Snapshotter.Data != nil {
 		c.Snapshotter.Data["MergedDir"] = ""
+	}
+
+	// Remove io and network config may occur error, so we should update
+	// container's status on disk as soon as possible.
+	if err := c.Write(mgr.Store); err != nil {
+		logrus.Errorf("failed to update meta: %v", err)
+		return err
+	}
+
+	// release resource
+	if io := mgr.IOs.Get(c.ID); io != nil {
+		io.Close()
+		mgr.IOs.Remove(c.ID)
+	}
+
+	// No network binded, just return
+	if c.NetworkSettings == nil {
+		return nil
+	}
+
+	for name, epConfig := range c.NetworkSettings.Networks {
+		endpoint := mgr.buildContainerEndpoint(c)
+		endpoint.Name = name
+		endpoint.EndpointConfig = epConfig
+		if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
+			// TODO(ziren): it is a trick, we should wrapper "sanbox
+			// not found"" as an error type
+			if !strings.Contains(err.Error(), "not found") {
+				logrus.Errorf("failed to remove endpoint: %v", err)
+				return err
+			}
+		}
 	}
 
 	// update meta
@@ -2133,25 +2149,7 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 }
 
 func (mgr *ContainerManager) buildContainerEndpoint(c *Container) *networktypes.Endpoint {
-	ep := &networktypes.Endpoint{
-		Owner:           c.ID,
-		Hostname:        c.Config.Hostname,
-		Domainname:      c.Config.Domainname,
-		HostsPath:       c.HostsPath,
-		ExtraHosts:      c.HostConfig.ExtraHosts,
-		HostnamePath:    c.HostnamePath,
-		ResolvConfPath:  c.ResolvConfPath,
-		NetworkDisabled: c.Config.NetworkDisabled,
-		NetworkMode:     c.HostConfig.NetworkMode,
-		DNS:             c.HostConfig.DNS,
-		DNSOptions:      c.HostConfig.DNSOptions,
-		DNSSearch:       c.HostConfig.DNSSearch,
-		MacAddress:      c.Config.MacAddress,
-		PublishAllPorts: c.HostConfig.PublishAllPorts,
-		ExposedPorts:    c.Config.ExposedPorts,
-		PortBindings:    c.HostConfig.PortBindings,
-		NetworkConfig:   c.NetworkSettings,
-	}
+	ep := BuildContainerEndpoint(c)
 
 	if mgr.containerPlugin != nil {
 		ep.Priority, ep.DisableResolver, ep.GenericParams = mgr.containerPlugin.PreCreateEndpoint(c.ID, c.Config.Env)

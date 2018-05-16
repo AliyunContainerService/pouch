@@ -34,8 +34,8 @@ type ContainerJSON struct {
 	// driver
 	Driver string `json:"Driver,omitempty"`
 
-	// exec ids
-	ExecIds string `json:"ExecIDs,omitempty"`
+	// exec ids of container
+	ExecIds []string `json:"ExecIDs"`
 
 	// graph driver
 	GraphDriver *GraphDriverData `json:"GraphDriver,omitempty"`
@@ -159,6 +159,11 @@ func (m *ContainerJSON) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateExecIds(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateGraphDriver(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -213,6 +218,15 @@ func (m *ContainerJSON) validateConfig(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateExecIds(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ExecIds) { // not required
+		return nil
 	}
 
 	return nil

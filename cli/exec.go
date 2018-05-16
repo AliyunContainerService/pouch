@@ -138,7 +138,10 @@ func (e *ExecCommand) runExec(args []string) error {
 }
 
 // execExample shows examples in exec command, and is used in auto-generated cli docs.
-// TODO: add example
 func execExample() string {
-	return ""
+	return `$ pouch exec -it 25bf50 ps
+PID   USER     TIME  COMMAND
+    1 root      0:00 /bin/sh
+   38 root      0:00 ps
+`
 }
