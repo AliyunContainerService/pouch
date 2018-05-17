@@ -1085,3 +1085,22 @@ func (suite *PouchRunSuite) TestRunWithUlimit(c *check.C) {
 	c.Assert(int(ul.Soft), check.Equals, 256)
 
 }
+
+// TestRunWithPidsLimit tests running container with --pids-limit flag.
+func (suite *PouchRunSuite) TestRunWithPidsLimit(c *check.C) {
+	cname := "TestRunWithPidsLimit"
+	pidfile := "/sys/fs/cgroup/pids/pids.max"
+	res := command.PouchRun("run", "--pids-limit", "10", "--name", cname, busyboxImage, "cat", pidfile)
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, "10\n")
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	pl := result[0].HostConfig.PidsLimit
+	c.Assert(int(pl), check.Equals, 10)
+}

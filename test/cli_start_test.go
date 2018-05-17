@@ -285,3 +285,14 @@ func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestStartWithPidsLimit tests running container with --pids-limit flag.
+func (suite *PouchStartSuite) TestStartWithPidsLimit(c *check.C) {
+	name := "TestStartWithPidsLimit"
+	pidfile := "/sys/fs/cgroup/pids/pids.max"
+	res := command.PouchRun("create", "--pids-limit", "10", "--name", name, busyboxImage, "cat", pidfile)
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}
