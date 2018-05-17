@@ -37,7 +37,7 @@ func (suite *PouchPsSuite) TearDownTest(c *check.C) {
 // TODO: check more value, like id/runtime.
 func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 	name := "ps-normal"
-
+	defer DelContainerForceMultyTime(c, name)
 	// create
 	{
 		command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
@@ -69,7 +69,6 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		c.Assert(kv[name].status[0], check.Equals, "Stopped")
 	}
 
-	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestPsAll tests "pouch ps -a" work

@@ -96,7 +96,7 @@ func (suite *PouchStopSuite) TestStopInWrongWay(c *check.C) {
 		// {name: "missing container name", args: ""},
 	} {
 		res := command.PouchRun("stop", tc.args)
-		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
 	}
 }
 

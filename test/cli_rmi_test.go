@@ -99,6 +99,6 @@ func (suite *PouchRmiSuite) TestRmiInWrongWay(c *check.C) {
 		// {name: "missing image name", args: ""},
 	} {
 		res := command.PouchRun("rmi", tc.args)
-		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
 	}
 }

@@ -122,13 +122,15 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 		"--subnet", subnet).Assert(c, icmd.Success)
 	command.PouchRun("network", "inspect", funcname).Assert(c, icmd.Success)
 
+	defer DelContainerForceMultyTime(c, funcname)
 	{
 		// Assign network to a container works
 		expct := icmd.Expected{
 			ExitCode: 0,
 			Out:      "eth0",
 		}
-		err := command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage, "ip", "link", "ls", "eth0").Compare(expct)
+		err := command.PouchRun("run", "--name", funcname, "--net", funcname, busyboxImage,
+			"ip", "link", "ls", "eth0").Compare(expct)
 		c.Assert(err, check.IsNil)
 
 		DelContainerForceMultyTime(c, funcname)
@@ -253,7 +255,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
 		"--gateway", gateway,
 		"--subnet", subnet,
 		"--label", "test=foo").Assert(c, icmd.Success)
-	command.PouchRun("network", "remove", funcname)
+	defer command.PouchRun("network", "remove", funcname)
 }
 
 // TestNetworkCreateWithOption tests creating network with option.
@@ -274,7 +276,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
 		"--gateway", gateway,
 		"--subnet", subnet,
 		"--option", "test=foo").Assert(c, icmd.Success)
-	command.PouchRun("network", "remove", funcname)
+	defer command.PouchRun("network", "remove", funcname)
 }
 
 // TestNetworkCreateDup tests creating duplicate network return error.
@@ -301,6 +303,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 		"-d", "bridge",
 		"--gateway", gateway1,
 		"--subnet", subnet1).Assert(c, icmd.Success)
+	defer command.PouchRun("network", "remove", funcname)
 
 	err := command.PouchRun("network", "create",
 		"--name", funcname,
@@ -309,7 +312,6 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 		"--subnet", subnet2).Compare(expct)
 	c.Assert(err, check.IsNil)
 
-	command.PouchRun("network", "remove", funcname)
 }
 
 func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
@@ -417,6 +419,7 @@ func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 	name := "TestNetworkDisconnect"
 
 	command.PouchRun("run", "-d", "--name", name, "--net", "bridge", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
 
 	inspectInfo := command.PouchRun("inspect", name).Stdout()
 	metaJSON := []types.ContainerJSON{}
@@ -441,6 +444,4 @@ func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 	// Check restart container is ok after disconnect network
 	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

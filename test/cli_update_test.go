@@ -39,7 +39,9 @@ func (suite *PouchUpdateSuite) TearDownTest(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	name := "update-container-cpu"
 
-	command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -71,15 +73,15 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	}
 
 	c.Assert(metaJSON[0].HostConfig.CPUShares, check.Equals, int64(40))
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateCpuPeriod is to verify the correctness of updating container cpu-period.
 func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
 	name := "update-container-cpu-period"
 
-	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -111,15 +113,15 @@ func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
 	}
 
 	c.Assert(metaJSON[0].HostConfig.CPUPeriod, check.Equals, int64(2000))
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateRunningContainer is to verify the correctness of updating a running container.
 func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	name := "update-running-container"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -151,15 +153,15 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	}
 
 	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateStoppedContainer is to verify the correctness of updating a stopped container.
 func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	name := "update-stopped-container"
 
-	command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -193,43 +195,43 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	}
 
 	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateContainerInvalidValue is to verify the correctness of updating a container with invalid value.
 func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
 	name := "update-container-with-invalid-value"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
-	res := command.PouchRun("update", "--memory-swappiness", "-2", name)
-	c.Assert(res.Error, check.NotNil)
+	res = command.PouchRun("update", "--memory-swappiness", "-2", name)
+	c.Assert(res.Stderr(), check.NotNil)
 
 	expectString := "invalid memory swappiness: -2 (its range is -1 or 0-100)"
 	if out := res.Combined(); !strings.Contains(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateContainerWithoutFlag is to verify the correctness of updating a container without any flag.
 func (suite *PouchUpdateSuite) TestUpdateContainerWithoutFlag(c *check.C) {
 	name := "update-container-without-flag"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("update", name).Assert(c, icmd.Success)
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateContainerEnv is to verify the correctness of updating env of container.
 func (suite *PouchUpdateSuite) TestUpdateContainerEnv(c *check.C) {
 	name := "update-container-env"
 
-	command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("update", "--env", "foo=bar", name).Assert(c, icmd.Success)
 
@@ -242,15 +244,15 @@ func (suite *PouchUpdateSuite) TestUpdateContainerEnv(c *check.C) {
 	if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
 		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestUpdateRunningContainerEnv is to verify the correctness of updating env of an running container.
 func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
 	name := "update-running-container-env"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("update", "--env", "foo=bar", name).Assert(c, icmd.Success)
 
@@ -268,16 +270,15 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
 	if !strings.Contains(output, "foo=bar") {
 		c.Fatalf("Update running container env not worked")
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
-
 }
 
 // TestUpdateContainerLabel is to verify the correctness of updating label of container.
 func (suite *PouchUpdateSuite) TestUpdateContainerLabel(c *check.C) {
 	name := "update-container-label"
 
-	command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("update", "--label", "foo=bar", name).Assert(c, icmd.Success)
 
@@ -290,6 +291,4 @@ func (suite *PouchUpdateSuite) TestUpdateContainerLabel(c *check.C) {
 	if v, ok := result[0].Config.Labels["foo"]; !ok || v != "bar" {
 		c.Errorf("expect 'foo=bar' in Labels, got: %v", result[0].Config.Labels)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

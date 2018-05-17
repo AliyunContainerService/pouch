@@ -40,14 +40,13 @@ func (suite *PouchCreateSuite) TearDownTest(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 	name := "create-normal"
 	res := command.PouchRun("create", "--name", name, busyboxImage)
-
+	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	// create command should add newline at the end of result
 	digStr := strings.TrimSpace(res.Combined())
 	c.Assert(res.Combined(), check.Equals, fmt.Sprintf("%s\n", digStr))
 
-	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestCreateNameByImageID is to verify the correctness of creating contaier with specified name by image id.
@@ -59,14 +58,13 @@ func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
 	imageID := imagesListToKV(res.Combined())[busyboxImage][0]
 
 	res = command.PouchRun("create", "--name", name, imageID)
-
+	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	digHexStr := strings.TrimSpace(res.Combined())
 	_, err := digest.Parse(fmt.Sprintf("%s:%s", digest.SHA256, digHexStr))
 	c.Assert(err, check.IsNil)
 
-	DelContainerForceMultyTime(c, name)
 }
 
 // TestCreateDuplicateContainerName is to verify duplicate container names.
@@ -74,12 +72,11 @@ func (suite *PouchCreateSuite) TestCreateDuplicateContainerName(c *check.C) {
 	name := "duplicate"
 
 	res := command.PouchRun("create", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	defer DelContainerForceMultyTime(c, name)
-
 	res = command.PouchRun("create", "--name", name, busyboxImage)
-	c.Assert(res.Error, check.NotNil)
+	c.Assert(res.Stderr(), check.NotNil)
 
 	if out := res.Combined(); !strings.Contains(out, "already exist") {
 		c.Fatalf("unexpected output %s expected already exist\n", out)
@@ -92,9 +89,9 @@ func (suite *PouchCreateSuite) TestCreateDuplicateContainerName(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateWithArgs(c *check.C) {
 	name := "TestCreateWithArgs"
 	res := command.PouchRun("create", "--name", name, busyboxImage, "/bin/ls")
-	res.Assert(c, icmd.Success)
-
 	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
 }
 
 // TestCreateWithTTY is to verify tty flag.
@@ -103,9 +100,9 @@ func (suite *PouchCreateSuite) TestCreateWithArgs(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateWithTTY(c *check.C) {
 	name := "TestCreateWithTTY"
 	res := command.PouchRun("create", "-t", "--name", name, busyboxImage)
-	res.Assert(c, icmd.Success)
-
 	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
 }
 
 // TestPouchCreateVolume is to verify volume flag.
@@ -120,9 +117,9 @@ func (suite *PouchCreateSuite) TestPouchCreateVolume(c *check.C) {
 	}
 
 	res := command.PouchRun("create", "-v /tmp:/tmp", "--name", funcname, busyboxImage)
-	res.Assert(c, icmd.Success)
-
 	defer DelContainerForceMultyTime(c, funcname)
+
+	res.Assert(c, icmd.Success)
 }
 
 // TestCreateInWrongWay tries to run create in wrong way.
@@ -137,7 +134,7 @@ func (suite *PouchCreateSuite) TestCreateInWrongWay(c *check.C) {
 		// {name: "missing image name", args: ""},
 	} {
 		res := command.PouchRun("create", tc.args)
-		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
 	}
 }
 
@@ -147,8 +144,8 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 	name := "create-label"
 
 	res := command.PouchRun("create", "--name", name, "-l", label, busyboxImage)
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -169,8 +166,8 @@ func (suite *PouchCreateSuite) TestCreateWithSysctls(c *check.C) {
 	name := "create-sysctl"
 
 	res := command.PouchRun("create", "--name", name, "--sysctl", sysctl, busyboxImage)
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -191,8 +188,8 @@ func (suite *PouchCreateSuite) TestCreateWithAppArmor(c *check.C) {
 	name := "create-apparmor"
 
 	res := command.PouchRun("create", "--name", name, "--security-opt", appArmor, busyboxImage)
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -219,8 +216,8 @@ func (suite *PouchCreateSuite) TestCreateWithSeccomp(c *check.C) {
 	name := "create-seccomp"
 
 	res := command.PouchRun("create", "--name", name, "--security-opt", seccomp, busyboxImage)
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -247,8 +244,8 @@ func (suite *PouchCreateSuite) TestCreateWithCapability(c *check.C) {
 	name := "create-capability"
 
 	res := command.PouchRun("create", "--name", name, "--cap-add", capability, busyboxImage, "brctl", "addbr", "foobar")
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -274,8 +271,8 @@ func (suite *PouchCreateSuite) TestCreateWithPrivilege(c *check.C) {
 	name := "create-privilege"
 
 	res := command.PouchRun("create", "--name", name, "--privileged", busyboxImage, "brctl", "addbr", "foobar")
-	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 
@@ -291,6 +288,7 @@ func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 	name := "create-lxcfs"
 
 	res := command.PouchRun("create", "--name", name, "--enableLxcfs=true", busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -311,6 +309,8 @@ func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 	name := "TestCreateWithEnv"
 
 	res := command.PouchRun("create", "--name", name, "-e TEST=true", busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -334,6 +334,7 @@ func (suite *PouchCreateSuite) TestCreateWithWorkDir(c *check.C) {
 	name := "TestCreateWithWorkDir"
 
 	res := command.PouchRun("create", "--name", name, "-w /tmp/test", busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -353,6 +354,8 @@ func (suite *PouchCreateSuite) TestCreateWithUser(c *check.C) {
 	user := "1001"
 
 	res := command.PouchRun("create", "--name", name, "--user", user, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -370,6 +373,8 @@ func (suite *PouchCreateSuite) TestCreateWithIntelRdt(c *check.C) {
 	intelRdt := "L3:<cache_id0>=<cbm0>"
 
 	res := command.PouchRun("create", "--name", name, "--intel-rdt-l3-cbm", intelRdt, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -387,7 +392,11 @@ func (suite *PouchCreateSuite) TestCreateWithAliOSMemoryOptions(c *check.C) {
 	memoryWmarkRatio := "30"
 	memoryExtra := "50"
 
-	res := command.PouchRun("create", "--name", name, "--memory-wmark-ratio", memoryWmarkRatio, "--memory-extra", memoryExtra, "--memory-force-empty-ctl", "1", "--sche-lat-switch", "1", busyboxImage)
+	res := command.PouchRun("create", "--name", name, "--memory-wmark-ratio",
+		memoryWmarkRatio, "--memory-extra", memoryExtra, "--memory-force-empty-ctl", "1",
+		"--sche-lat-switch", "1", busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -407,7 +416,10 @@ func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 	name := "TestCreateWithOOMOption"
 	oomScore := "100"
 
-	res := command.PouchRun("create", "--name", name, "--oom-score-adj", oomScore, "--oom-kill-disable", busyboxImage)
+	res := command.PouchRun("create", "--name", name, "--oom-score-adj", oomScore,
+		"--oom-kill-disable", busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+
 	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
@@ -423,7 +435,10 @@ func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 // TestCreateWithAnnotation tests creating container with annotation.
 func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 	cname := "TestCreateWithAnnotation"
-	command.PouchRun("create", "--annotation", "a=b", "--annotation", "foo=bar", "--name", cname, busyboxImage).Stdout()
+	res := command.PouchRun("create", "--annotation", "a=b", "--annotation", "foo=bar",
+		"--name", cname, busyboxImage)
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
@@ -445,7 +460,9 @@ func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 // TestCreateWithUlimit tests creating container with annotation.
 func (suite *PouchCreateSuite) TestCreateWithUlimit(c *check.C) {
 	cname := "TestCreateWithUlimit"
-	command.PouchRun("create", "--ulimit", "nproc=21", "--name", cname, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("create", "--ulimit", "nproc=21", "--name", cname, busyboxImage)
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}

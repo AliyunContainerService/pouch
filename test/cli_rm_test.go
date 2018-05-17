@@ -41,10 +41,13 @@ func (suite *PouchRmSuite) TestContainerRmWithVolume(c *check.C) {
 	expectVolumeNums := strings.Count(ret.Stdout(), "\n")
 
 	// run container with volume
-	command.PouchRun("run", "-d", "--name", containerName,
+	res := command.PouchRun("run", "-d", "--name", containerName,
 		"-v", volumeName+":/mnt",
 		"-v", "/home",
-		busyboxImage, "top").Assert(c, icmd.Success)
+		busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, containerName)
+
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("rm", "-vf", containerName).Assert(c, icmd.Success)
 
