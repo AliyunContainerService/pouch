@@ -688,23 +688,7 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 // to either create a new log file and return nil, or return an error.
 // Once it returns error, new container log file MUST NOT be created.
 func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenContainerLogRequest) (*runtime.ReopenContainerLogResponse, error) {
-	containerID := r.GetContainerId()
-	container, err := c.ContainerMgr.Get(ctx, containerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container of %q: %v", containerID, err)
-	}
-	if container.State.Status != apitypes.StatusRunning {
-		return nil, fmt.Errorf("container %q is not running", containerID)
-	}
-	c.ContainerMgr.(*mgr.ContainerManager).IOs.Remove(containerID)
-	if container.LogPath != "" {
-		logPath := container.LogPath
-		err := c.attachLog(logPath, containerID)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &runtime.ReopenContainerLogResponse{}, nil
+	return nil, fmt.Errorf("UpdateContainerResources Not Implemented Yet")
 }
 
 // ExecSync executes a command in the container, and returns the stdout output.
