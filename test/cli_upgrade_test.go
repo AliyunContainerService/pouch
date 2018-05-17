@@ -41,60 +41,60 @@ func (suite *PouchUpgradeSuite) TeadDownTest(c *check.C) {
 func (suite *PouchUpgradeSuite) TestPouchUpgrade(c *check.C) {
 	name := "TestPouchUpgrade"
 
-	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
-	res := command.PouchRun("upgrade", "--name", name, busyboxImage125)
-	c.Assert(res.Error, check.IsNil)
+	res = command.PouchRun("upgrade", "--name", name, busyboxImage125)
+	res.Assert(c, icmd.Success)
 
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output: %s, expected: %s", out, name)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
-
 }
 
 // TestPouchUpgradeNoChange is to verify pouch upgrade command with same image.
 func (suite *PouchUpgradeSuite) TestPouchUpgradeNoChange(c *check.C) {
 	name := "TestPouchUpgradeNoChange"
 
-	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
-	res := command.PouchRun("upgrade", "--name", name, busyboxImage)
-	c.Assert(res.Error, check.NotNil)
+	res = command.PouchRun("upgrade", "--name", name, busyboxImage)
+	c.Assert(res.Stderr(), check.NotNil)
 
 	expectedStr := "failed to upgrade container: image not changed"
 	if out := res.Combined(); !strings.Contains(out, expectedStr) {
 		c.Fatalf("unexpected output: %s, expected: %s", out, expectedStr)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
-
 }
 
 // TestPouchUpgradeStoppedContainer is to verify pouch upgrade a stopped command.
 func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	name := "TestPouchUpgradeStoppedContainer"
 
-	command.PouchRun("create", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("create", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
-	res := command.PouchRun("upgrade", "--name", name, busyboxImage125)
-	c.Assert(res.Error, check.IsNil)
+	res = command.PouchRun("upgrade", "--name", name, busyboxImage125)
+	res.Assert(c, icmd.Success)
 
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output: %s, expected %s", out, name)
 	}
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestPouchUpgradeContainerMemCpu is to verify pouch upgrade container's memory
 func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
 	name := "TestPouchUpgradeContainerMemCpu"
 
-	command.PouchRun("run", "-d", "-m", "300m", "--cpu-share", "20", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "-m", "300m", "--cpu-share", "20", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("upgrade", "-m", "500m", "--cpu-share", "40", "--name", name, busyboxImage125).Assert(c, icmd.Success)
 
@@ -137,15 +137,15 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
 	if !strings.Contains(string(out), "40") {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "40")
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }
 
 // TestPouchUpgradeContainerLabels is to verify pouch upgrade container's labels
 func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 	name := "TestPouchUpgradeContainerLabels"
 
-	command.PouchRun("run", "-d", "--label", "test=foo", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--label", "test=foo", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("upgrade", "--label", "test1=bar", "--name", name, busyboxImage125).Assert(c, icmd.Success)
 
@@ -163,6 +163,4 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 	if !reflect.DeepEqual(result[0].Config.Labels, labels) {
 		c.Errorf("unexpected output: %s, expected: %s", result[0].Config.Labels, labels)
 	}
-
-	command.PouchRun("rm", "-f", name).Assert(c, icmd.Success)
 }

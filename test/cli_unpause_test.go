@@ -31,10 +31,9 @@ func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 	containernames := []string{"bar1", "bar2"}
 	for _, name := range containernames {
 		command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+		defer DelContainerForceMultyTime(c, name)
 
 		command.PouchRun("start", name).Assert(c, icmd.Success)
-
-		defer DelContainerForceMultyTime(c, name)
 	}
 
 	command.PouchRun("pause", containernames[0]).Assert(c, icmd.Success)
@@ -50,11 +49,11 @@ func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 
 	for arg, ok := range args {
 		res := command.PouchRun("unpause", arg)
-
-		expected := check.IsNil
 		if !ok {
-			expected = check.NotNil
+			c.Assert(res.Stderr(), check.NotNil)
+		} else {
+			res.Assert(c, icmd.Success)
 		}
-		c.Assert(res.Error, expected)
+
 	}
 }

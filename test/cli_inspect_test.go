@@ -37,7 +37,9 @@ func (suite *PouchInspectSuite) TearDownTest(c *check.C) {
 func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 	name := "inspect-format-print"
 
-	command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
@@ -53,26 +55,23 @@ func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 	// inspect Memory
 	output = command.PouchRun("inspect", "-f", "{{.HostConfig.Memory}}", name).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%d\n", result[0].HostConfig.Memory))
-
-	DelContainerForceMultyTime(c, name)
 }
 
 // TestInspectWrongFormat is to verify using wrong format flag of inspect command.
 func (suite *PouchInspectSuite) TestInspectWrongFormat(c *check.C) {
 	name := "inspect-wrong-format-print"
 
-	command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
-	res := command.PouchRun("inspect", "-f", "{{.NotExists}}", name)
-	c.Assert(res.Error, check.NotNil)
+	res = command.PouchRun("inspect", "-f", "{{.NotExists}}", name)
+	c.Assert(res.Stderr(), check.NotNil)
 
 	expectString := "Template parsing error"
 	if out := res.Combined(); !strings.Contains(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
-
-	DelContainerForceMultyTime(c, name)
-
 }
 
 // TestMultiInspect is to verify inspect command with multiple args.
@@ -134,10 +133,10 @@ func (suite *PouchInspectSuite) TestMultiInspectErrors(c *check.C) {
 
 	for _, errCase := range errorCases {
 		runContainers(errCase.containers)
+		defer delContainers(errCase.containers)
 		res := command.PouchRun("inspect", "-f", "{{.Name}}", errCase.args[0], errCase.args[1])
-		c.Assert(res.Error, check.NotNil)
+		c.Assert(res.Stderr(), check.NotNil)
 		output := res.Combined()
 		c.Assert(output, check.Equals, errCase.expectedOutput)
-		delContainers(errCase.containers)
 	}
 }

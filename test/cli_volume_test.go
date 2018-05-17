@@ -51,28 +51,6 @@ func (suite *PouchVolumeSuite) TestVolumeWorks(c *check.C) {
 
 }
 
-// TestVolumeWorks tests "pouch volume" work.
-func (suite *PouchVolumeSuite) TestVolumeCreateLocalAndMountPoint(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
-
-	command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp").Assert(c, icmd.Success)
-	output := command.PouchRun("volume", "inspect", funcname).Stdout()
-	if !strings.Contains(output, "local") {
-		c.Errorf("failed to get the backend driver, expect:local, acturally: %s", output)
-	}
-
-	if !strings.Contains(output, "/tmp/"+funcname) {
-		c.Errorf("failed to get the mountpoint, expect:/tmp/%s, acturally: %s", funcname, output)
-	}
-
-	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
-}
-
 // TestVolumeCreateLocalDriverAndSpecifyMountPoint tests "pouch volume create" works.
 func (suite *PouchVolumeSuite) TestVolumeCreateLocalDriverAndSpecifyMountPoint(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
@@ -82,8 +60,12 @@ func (suite *PouchVolumeSuite) TestVolumeCreateLocalDriverAndSpecifyMountPoint(c
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp").Assert(c, icmd.Success)
-	output := command.PouchRun("volume", "inspect", funcname).Stdout()
+	res := command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp")
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("volume", "inspect", funcname)
+	res.Assert(c, icmd.Success)
+	output := res.Stdout()
 	if !strings.Contains(output, "local") {
 		c.Errorf("failed to get the backend driver, expect:local, acturally: %s", output)
 	}
@@ -110,10 +92,12 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithMountPointExitsFile(c *check.
 	}
 
 	icmd.RunCommand("touch", "/tmp/"+funcname)
-	err := command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp").Compare(expct)
-	c.Assert(err, check.IsNil)
 
-	command.PouchRun("volume", "remove", funcname)
+	err := command.PouchRun("volume", "create", "--name", funcname,
+		"--driver", "local", "-o", "mount=/tmp").Compare(expct)
+	defer command.PouchRun("volume", "remove", funcname)
+
+	c.Assert(err, check.IsNil)
 }
 
 // TestVolumeCreateWrongDriver tests using wrong driver returns error.
@@ -130,10 +114,11 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWrongDriver(c *check.C) {
 		Err:      "not found",
 	}
 
-	err := command.PouchRun("volume", "create", "--name", funcname, "--driver", "wrongdriver").Compare(expct)
-	c.Assert(err, check.IsNil)
+	err := command.PouchRun("volume", "create", "--name",
+		funcname, "--driver", "wrongdriver").Compare(expct)
+	defer command.PouchRun("volume", "remove", funcname)
 
-	command.PouchRun("volume", "remove", funcname)
+	c.Assert(err, check.IsNil)
 }
 
 // TestVolumeCreateWithLabel tests creating volume with label.
@@ -146,7 +131,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithLabel(c *check.C) {
 	}
 
 	command.PouchRun("volume", "create", "--name", funcname, "--label", "test=foo").Assert(c, icmd.Success)
-	command.PouchRun("volume", "remove", funcname)
+	defer command.PouchRun("volume", "remove", funcname)
 }
 
 // TestVolumeCreateWithSelector tests creating volume with --selector.
@@ -159,7 +144,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
 	}
 
 	command.PouchRun("volume", "create", "--name", funcname, "--selector", "test=foo").Assert(c, icmd.Success)
-	command.PouchRun("volume", "remove", funcname)
+	defer command.PouchRun("volume", "remove", funcname)
 }
 
 // TestVolumeCreateWithSize tests creating volume with -o size=xxx.
@@ -172,7 +157,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSize(c *check.C) {
 	}
 
 	command.PouchRun("volume", "create", "--name", funcname, "-o", "size=1048576").Assert(c, icmd.Success)
-	command.PouchRun("volume", "remove", funcname)
+	defer command.PouchRun("volume", "remove", funcname)
 }
 
 // TestVolumeInspectFormat tests the inspect format of volume works.
@@ -210,9 +195,10 @@ func (suite *PouchVolumeSuite) TestVolumeUsingByContainer(c *check.C) {
 	volumeName := "volume_" + funcname
 	command.PouchRun("volume", "create", "--name", volumeName).Assert(c, icmd.Success)
 	command.PouchRun("run", "-d", "-v", volumeName+":/mnt", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, funcname)
 
 	ret := command.PouchRun("volume", "rm", volumeName)
-	c.Assert(ret.Error, check.NotNil)
+	c.Assert(ret.Stderr(), check.NotNil)
 
 	command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
 	command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)

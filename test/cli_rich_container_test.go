@@ -112,8 +112,10 @@ func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C)
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("run", "-d", "--rich", "--rich-mode", "dumb-init", "--name", funcname,
-		busyboxImage, "sleep", "10000").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--rich", "--rich-mode", "dumb-init", "--name", funcname,
+		busyboxImage, "sleep", "10000")
+	defer DelContainerForceMultyTime(c, funcname)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", funcname).Stdout()
 	result := []types.ContainerJSON{}
@@ -134,8 +136,6 @@ func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C)
 	command.PouchRun("pause", funcname).Assert(c, icmd.Success)
 	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
 	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
-
-	command.PouchRun("rm", "-f", funcname)
 }
 
 // TestRichContainerWrongArgs check the wrong args of rich container.
@@ -213,8 +213,10 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 		c.Skip("/usr/lib/systemd/systemd doesn't exist in test image")
 	}
 
-	command.PouchRun("run", "-d", "--privileged", "--rich", "--rich-mode", "systemd",
-		"--name", funcname, centosImage, "/usr/bin/sleep 1000").Assert(c, icmd.Success)
+	res := command.PouchRun("run", "-d", "--privileged", "--rich", "--rich-mode", "systemd",
+		"--name", funcname, centosImage, "/usr/bin/sleep 1000")
+	defer DelContainerForceMultyTime(c, funcname)
+	res.Assert(c, icmd.Success)
 
 	output := command.PouchRun("inspect", funcname).Stdout()
 	result := []types.ContainerJSON{}
@@ -238,6 +240,4 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
 	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemdd"), check.Equals, true)
 	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
-
-	command.PouchRun("rm", "-f", funcname)
 }

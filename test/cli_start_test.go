@@ -38,21 +38,22 @@ func (suite *PouchStartSuite) TearDownTest(c *check.C) {
 // TestStartCommand tests "pouch start" work.
 func (suite *PouchStartSuite) TestStartCommand(c *check.C) {
 	name := "start-normal"
-	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("create", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
-
-	defer DelContainerForceMultyTime(c, name)
 }
 
 // TestStartInTTY tests "pouch start -i" work.
 func (suite *PouchStartSuite) TestStartInTTY(c *check.C) {
 	// make echo server
 	name := "start-tty"
-	command.PouchRun("create", "--name", name, busyboxImage, "cat").Assert(c, icmd.Success)
+	res := command.PouchRun("create", "--name", name, busyboxImage, "cat")
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	// start tty and redirect
 	cmd := exec.Command(environment.PouchBinary, "start", "-a", "-i", name)
@@ -84,7 +85,7 @@ func (suite *PouchStartSuite) TestStartInWrongWay(c *check.C) {
 		{name: "unknown flag", args: "-k"},
 	} {
 		res := command.PouchRun("start", tc.args)
-		c.Assert(res.Error, check.NotNil, check.Commentf(tc.name))
+		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
 	}
 }
 
@@ -93,8 +94,9 @@ func (suite *PouchStartSuite) TestStartWithEnv(c *check.C) {
 	name := "start-env"
 	env := "abc=123"
 
-	command.PouchRun("create", "--name", name, "-e", env, busyboxImage, "top").Assert(c, icmd.Success)
+	res := command.PouchRun("create", "--name", name, "-e", env, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	output := command.PouchRun("exec", name, "/bin/env").Stdout()
@@ -110,8 +112,9 @@ func (suite *PouchStartSuite) TestStartWithEntrypoint(c *check.C) {
 	name := "start-entrypoint"
 
 	command.PouchRun("create", "--name", name, "--entrypoint", "sh", busyboxImage).Assert(c, icmd.Success)
-	command.PouchRun("start", name).Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
 
 	//TODO: check entrypoint really works
 }
@@ -120,7 +123,8 @@ func (suite *PouchStartSuite) TestStartWithEntrypoint(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithWorkDir(c *check.C) {
 	name := "start-workdir"
 
-	command.PouchRun("create", "--name", name, "--entrypoint", "pwd", "-w", "/tmp", busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", name, "--entrypoint", "pwd",
+		"-w", "/tmp", busyboxImage).Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	output := command.PouchRun("start", "-a", name).Stdout()
@@ -136,6 +140,7 @@ func (suite *PouchStartSuite) TestStartWithUser(c *check.C) {
 	group := "1001"
 
 	command.PouchRun("create", "--name", name, "--user", user, busyboxImage, "id", "-u")
+	defer DelContainerForceMultyTime(c, name)
 	output := command.PouchRun("start", "-a", name).Stdout()
 	if !strings.Contains(output, user) {
 		c.Errorf("failed to start a container with user: %s", output)
@@ -143,6 +148,8 @@ func (suite *PouchStartSuite) TestStartWithUser(c *check.C) {
 
 	name = "start-group"
 	command.PouchRun("create", "--name", name, "--user", user+":"+group, busyboxImage, "id", "-g")
+	defer DelContainerForceMultyTime(c, name)
+
 	output = command.PouchRun("start", "-a", name).Stdout()
 	if !strings.Contains(output, group) {
 		c.Errorf("failed to start a container with user:group : %s", output)

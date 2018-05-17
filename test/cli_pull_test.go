@@ -75,12 +75,12 @@ func (suite *PouchPullSuite) TestPullInWrongWay(c *check.C) {
 	// pull unknown images
 	{
 		res := command.PouchRun("pull", "unknown")
-		c.Assert(res.Error, check.NotNil)
+		c.Assert(res.Stderr(), check.NotNil)
 	}
 
 	// pull with invalid flag
 	{
 		res := command.PouchRun("pull", busyboxImage, "-f")
-		c.Assert(res.Error, check.NotNil)
+		c.Assert(res.Stderr(), check.NotNil)
 	}
 }
