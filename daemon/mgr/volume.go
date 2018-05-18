@@ -139,6 +139,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 		if strings.Contains(err.Error(), "not found") {
 			return errors.Wrap(errtypes.ErrNotfound, err.Error())
 		}
+		return err
 	}
 
 	return nil
