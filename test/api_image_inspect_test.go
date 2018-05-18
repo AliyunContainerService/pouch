@@ -26,9 +26,11 @@ func (suite *APIImageInspectSuite) SetUpTest(c *check.C) {
 
 // TestImageInspectOk tests inspecting images is OK.
 func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
+	repoID := environment.BusyboxID
 	repoTag, repoDigest := busyboxImage, fmt.Sprintf("%s@%s", environment.BusyboxRepo, environment.BusyboxDigest)
 
 	for _, image := range []string{
+		repoID,
 		repoTag,
 		repoDigest,
 		fmt.Sprintf("%s:whatever@%s", environment.BusyboxRepo, environment.BusyboxDigest),
@@ -43,7 +45,7 @@ func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 
 		// TODO: More specific check is needed
 		c.Assert(got.Config, check.NotNil)
-		c.Assert(got.ID, check.NotNil)
+		c.Assert(got.ID, check.Equals, repoID)
 		c.Assert(got.CreatedAt, check.NotNil)
 		c.Assert(got.Size, check.NotNil)
 		c.Assert(reflect.DeepEqual(got.RepoTags, []string{repoTag}), check.Equals, true)

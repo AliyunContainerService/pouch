@@ -1,6 +1,8 @@
 package mgr
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -141,16 +143,23 @@ func (store *imageStore) Search(ref reference.Named) (digest.Digest, reference.N
 
 	// if the reference is short ID or ID
 	//
-	// NOTE: by default, use the sha256 as the digest algorithm
-	id, err := store.searchIDs(digest.Canonical.String(), ref.String())
+	// NOTE: by default, use the sha256 as the digest algorithm if missing
+	// algorithm header.
+	id, err := store.searchIDs(ref.String())
 	if err != nil {
 		return "", nil, err
 	}
 	return id, ref, nil
 }
 
-func (store *imageStore) searchIDs(algo string, prefixID string) (digest.Digest, error) {
+func (store *imageStore) searchIDs(refID string) (digest.Digest, error) {
 	var ids []digest.Digest
+	var id string
+
+	id = refID
+	if !strings.HasPrefix(refID, digest.Canonical.String()) {
+		id = fmt.Sprintf("%s:%s", digest.Canonical.String(), refID)
+	}
 
 	fn := func(_ patricia.Prefix, item patricia.Item) error {
 		if got, ok := item.(digest.Digest); ok {
@@ -158,17 +167,17 @@ func (store *imageStore) searchIDs(algo string, prefixID string) (digest.Digest,
 		}
 
 		if len(ids) > 1 {
-			return pkgerrors.Wrap(errtypes.ErrTooMany, "image: "+prefixID)
+			return pkgerrors.Wrap(errtypes.ErrTooMany, "image: "+refID)
 		}
 		return nil
 	}
 
-	if err := store.idSet.VisitSubtree(patricia.Prefix(algo+":"+prefixID), fn); err != nil {
+	if err := store.idSet.VisitSubtree(patricia.Prefix(id), fn); err != nil {
 		return "", err
 	}
 
 	if len(ids) == 0 {
-		return "", pkgerrors.Wrap(errtypes.ErrNotfound, "image: "+prefixID)
+		return "", pkgerrors.Wrap(errtypes.ErrNotfound, "image: "+refID)
 	}
 	return ids[0], nil
 }
