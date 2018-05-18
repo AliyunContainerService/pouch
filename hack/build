@@ -47,6 +47,32 @@ function client()
     $GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli
 }
 
+#
+# Do not calculate the coverage for the following pkgs
+#
+SKIP_PKGS=(\
+    "github.com/alibaba/pouch/vendor" \
+    "github.com/alibaba/pouch/extra" \
+    "github.com/alibaba/pouch/test" \
+    "github.com/alibaba/pouch/apis/types" \
+    "github.com/alibaba/pouch/cri/config" \
+    "github.com/alibaba/pouch/storage/volume/examples/demo" \
+    "github.com/alibaba/pouch/storage/volume/types" \
+)
+
+function testserver()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    cmd="go list ./... "
+    for j in $(seq 0 $(( ${#SKIP_PKGS[@]} -1)) ); do
+        cmd+="| grep -v \"${SKIP_PKGS[$j]}\" "
+    done
+
+    pkgs=$(eval $cmd |grep -v 'github.com/alibaba/pouch/cli' | tr '\n' ','|sed 's/,$//g')
+
+    go test -c -race -cover -covermode=atomic -o pouchd-test -coverpkg $pkgs
+}
+
 function vet()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
@@ -58,7 +84,13 @@ function unit-test()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
     go test -i
-    for d in `go list ./... | grep -v 'github.com/alibaba/pouch/test' | grep -v 'github.com/alibaba/pouch/extra' | grep -v 'github.com/alibaba/pouch/vendor' `
+
+    cmd="go list ./... "
+    for j in $(seq 0 $(( ${#SKIP_PKGS[@]} -1)) ); do
+        cmd+="| grep -v \"${SKIP_PKGS[$j]}\" "
+    done
+
+    for d in $(eval $cmd |grep -vw '^github.com/alibaba/pouch$' )
     do
         go test -race -coverprofile=profile.out -covermode=atomic $d
         if [ -f profile.out ] ; then

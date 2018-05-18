@@ -25,6 +25,7 @@ func (suite *APIContainerExecInspectSuite) SetUpTest(c *check.C) {
 
 // TestContainerCreateExecOk tests execing containers is OK.
 func (suite *APIContainerExecInspectSuite) TestContainerExecInspectOk(c *check.C) {
+	c.Skip("skip flaky test due to issue#1372")
 	cname := "TestContainerExecInspectOk"
 
 	CreateBusyboxContainerOk(c, cname)
