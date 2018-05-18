@@ -1088,6 +1088,14 @@ func (suite *PouchRunSuite) TestRunWithUlimit(c *check.C) {
 
 // TestRunWithPidsLimit tests running container with --pids-limit flag.
 func (suite *PouchRunSuite) TestRunWithPidsLimit(c *check.C) {
+	// pids cgroup may not supported in inner ci
+	SkipIfFalse(c, func() bool {
+		if _, err := os.Stat("/sys/fs/cgroup/pids"); err != nil {
+			return false
+		}
+		return true
+	})
+
 	cname := "TestRunWithPidsLimit"
 	pidfile := "/sys/fs/cgroup/pids/pids.max"
 	res := command.PouchRun("run", "--pids-limit", "10", "--name", cname, busyboxImage, "cat", pidfile)
