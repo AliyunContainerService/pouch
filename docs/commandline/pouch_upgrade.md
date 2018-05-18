@@ -61,6 +61,7 @@ test1
       --oom-kill-disable             Disable OOM Killer
       --oom-score-adj int            Tune host's OOM preferences (-1000 to 1000) (default -500)
       --pid string                   PID namespace to use
+      --pids-limit int               Set container pids limit, -1 for unlimited (default -1)
   -p, --port strings                 Set container ports mapping
       --privileged                   Give extended privileges to the container
       --quota-id string              Specified quota id, if id < 0, it means pouchd alloc a unique quota id
