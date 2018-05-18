@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -178,8 +179,11 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 		return err
 	}
 
-	// should remove all the references if the reference is Named Only
-	if reference.IsNamedOnly(namedRef) {
+	// should remove all the references if the reference is ID (Named Only)
+	// or Digest ID (Tagged Named)
+	if reference.IsNamedOnly(namedRef) ||
+		strings.HasPrefix(id.String(), namedRef.String()) {
+
 		// NOTE: the user maybe use the following references to pull one image
 		//
 		//	busybox:1.25
@@ -257,9 +261,11 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 		}
 	}
 
-	// NOTE: if the actualRef is short ID or ID, the primaryRef is first one of
-	// primary reference
-	if reference.IsNamedOnly(actualRef) {
+	// NOTE: if the actualRef is ID (Named Only) or Digest ID (Tagged Named)
+	// the primaryRef is first one of primary reference
+	if reference.IsNamedOnly(actualRef) ||
+		strings.HasPrefix(actualID.String(), actualRef.String()) {
+
 		refs := mgr.localStore.GetPrimaryReferences(actualID)
 		if len(refs) == 0 {
 			err = errtypes.ErrNotfound

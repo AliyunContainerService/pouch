@@ -43,9 +43,6 @@ func TestDefaultTagIfMissing(t *testing.T) {
 	assert.Equal(t, false, strings.Contains(named.String(), "latest"))
 }
 
-func TestIsNamedOnly(t *testing.T) {
-}
-
 func TestParse(t *testing.T) {
 	type tCase struct {
 		name     string
@@ -121,6 +118,14 @@ func TestParse(t *testing.T) {
 			input:    "busybox@sha256:1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac",
 			expected: nil,
 			err:      errors.New("invalid checksum digest length"),
+		}, {
+			name:  "Digest ID",
+			input: "sha256:1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac",
+			expected: taggedReference{
+				Named: namedReference{"sha256"},
+				tag:   "1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac",
+			},
+			err: nil,
 		},
 	} {
 		ref, err := Parse(tc.input)

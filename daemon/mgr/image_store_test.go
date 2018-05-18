@@ -112,9 +112,24 @@ func TestSearch(t *testing.T) {
 
 	// search
 	{
-		// should return id if the reference is id
+		// should return id if the reference is id without algorithm header
 		{
 			namedStr := id.Hex()
+
+			namedRef, err := reference.Parse(namedStr)
+			if err != nil {
+				t.Fatalf("unexpected error during parse reference %v: %v", namedStr, err)
+			}
+
+			gotID, gotRef, err := store.Search(namedRef)
+			assert.Equal(t, err, nil)
+			assert.Equal(t, gotID.String(), id.String())
+			assert.Equal(t, gotRef.String(), namedRef.String())
+		}
+
+		// should return id if the reference is digest id
+		{
+			namedStr := id.String()
 
 			namedRef, err := reference.Parse(namedStr)
 			if err != nil {
@@ -202,7 +217,7 @@ func TestSearch(t *testing.T) {
 
 		// should return ErrTooMany if the reference is commonPart
 		{
-			namedStr := id.Hex()[:20]
+			namedStr := id.String()[:20]
 
 			namedRef, err := reference.Parse(namedStr)
 			if err != nil {

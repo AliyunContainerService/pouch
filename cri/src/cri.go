@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -649,7 +648,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 	labels, annotations := extractLabels(container.Config.Labels)
 
 	imageRef := container.Image
-	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(imageRef, "sha256:"))
+	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image %s: %v", imageRef, err)
 	}
@@ -826,7 +825,7 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 			continue
 		}
 		// NOTE: we should query image cache to get the correct image info.
-		imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(i.ID, "sha256:"))
+		imageInfo, err := c.ImageMgr.GetImage(ctx, i.ID)
 		if err != nil {
 			continue
 		}
@@ -850,7 +849,7 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 		return nil, err
 	}
 
-	imageInfo, err := c.ImageMgr.GetImage(ctx, strings.TrimPrefix(ref.String(), "sha256:"))
+	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
 		// TODO: separate ErrImageNotFound with others.
 		// Now we just return empty if the error occurred.
@@ -894,7 +893,7 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 
 // RemoveImage removes the image.
 func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequest) (*runtime.RemoveImageResponse, error) {
-	imageRef := strings.TrimPrefix(r.GetImage().GetImage(), "sha256:")
+	imageRef := r.GetImage().GetImage()
 
 	if err := c.ImageMgr.RemoveImage(ctx, imageRef, false); err != nil {
 		if errtypes.IsNotfound(err) {

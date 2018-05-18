@@ -26,6 +26,9 @@ var (
 	// BusyboxRepo the repository of busybox image
 	BusyboxRepo = "registry.hub.docker.com/library/busybox"
 
+	// BusyboxID the digest ID used for busybox image
+	BusyboxID = "sha256:8ac48589692a53a9b8c2d1ceaa6b402665aa7fe667ba51ccc03002300856d8c7"
+
 	// BusyboxTag the tag used for busybox image
 	BusyboxTag = "1.28"
 

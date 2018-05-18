@@ -64,6 +64,22 @@ func (suite *PouchRmiSuite) TestRmiByImageID(c *check.C) {
 	}
 }
 
+// TestRmiByImageDigestID tests "pouch rmi sha256:xxx" work.
+func (suite *PouchRmiSuite) TestRmiByImageDigestID(c *check.C) {
+	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
+
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[helloworldImage][0]
+
+	command.PouchRun("rmi", "sha256:"+imageID).Assert(c, icmd.Success)
+
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, helloworldImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, helloworldImage)
+	}
+}
+
 // TestRmiByImageIDWithTwoPrimaryReferences tests "pouch rmi {ID}" work.
 func (suite *PouchRmiSuite) TestRmiByImageIDWithTwoPrimaryReferences(c *check.C) {
 	var (

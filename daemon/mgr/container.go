@@ -36,7 +36,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
 	"github.com/magiconair/properties"
-	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -1919,7 +1918,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 	var err error
 
 	// parse volumes from image
-	image, err := mgr.ImageMgr.GetImage(ctx, strings.TrimPrefix(meta.Image, digest.Canonical.String()+":"))
+	image, err := mgr.ImageMgr.GetImage(ctx, meta.Image)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get image: %s", meta.Image)
 	}
