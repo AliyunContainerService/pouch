@@ -159,7 +159,7 @@ func (mgr *SystemManager) Version() (types.SystemVersion, error) {
 		Arch:          runtime.GOARCH,
 		BuildTime:     version.BuildTime,
 		GitCommit:     version.GitCommit,
-		GoVersion:     version.GOVersion,
+		GoVersion:     runtime.Version(),
 		KernelVersion: kernelVersion,
 		Os:            runtime.GOOS,
 		Version:       version.Version,

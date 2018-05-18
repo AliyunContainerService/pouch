@@ -1,16 +1,16 @@
 package version
 
-// Version represents the version of pouchd.
-const Version = "0.4.0"
+// Version package values is auto-generated, the following values will be overwrited at build time.
+var (
+	// Version represents the version of pouchd.
+	Version = "0.4.0"
 
-// BuildTime is the time when this binary of daemon is built
-var BuildTime = "unknown"
+	// BuildTime is the time when pouch binary is built
+	BuildTime = "unknown"
 
-// APIVersion means the api version daemon serves
-var APIVersion = "1.24"
+	// APIVersion means the api version daemon serves
+	APIVersion = "1.24"
 
-// GOVersion is the go version to build Pouch
-var GOVersion = "go1.9.1"
-
-// GitCommit is the commit id to build Pouch
-var GitCommit = "unknown"
+	// GitCommit is the commit id to build Pouch
+	GitCommit = "unknown"
+)

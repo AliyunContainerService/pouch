@@ -122,7 +122,7 @@ func parseFlags(cmd *cobra.Command, flags []string) {
 func runDaemon() error {
 	//user specifies --version or -v, print version and return.
 	if printVersion {
-		fmt.Println(version.Version)
+		fmt.Printf("pouchd version: %s, build: %s, build at: %s\n", version.Version, version.GitCommit, version.BuildTime)
 		return nil
 	}
 

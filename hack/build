@@ -6,8 +6,15 @@ DIR="$( cd "$( dirname "$0" )/.." && pwd )"
 cd $DIR/
 GOPATH=$BUILDPATH:$BUILDPATH/src/github.com/docker/libnetwork/Godeps/_workspace
 
+
 # Go parameters
+VERSION="0.4.0"
+APIVERSION="1.24"
+GITCOMMIT=$(git describe --dirty --always --tags 2> /dev/null || true)
+BUILDTIME=$(date --rfc-3339 s 2> /dev/null | sed -e 's/ /T/')
+PKG=github.com/alibaba/pouch
 GOBUILD="go build"
+GOLDFLAGS="-X $PKG/version.GitCommit=${GITCOMMIT} -X $PKG/version.Version=${VERSION} -X $PKG/version.ApiVersion=${APIVERSION} -X $PKG/version.BuildTime=$BUILDTIME"
 
 # Binary name of CLI and Daemon
 BINARY_NAME=pouchd
@@ -30,7 +37,7 @@ function server()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
     echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
-    GOOS=linux $GOBUILD -o $BINARY_NAME -tags 'selinux'
+    GOOS=linux $GOBUILD -ldflags "${GOLDFLAGS}" -o $BINARY_NAME -tags 'selinux'
 }
 
 function client()
