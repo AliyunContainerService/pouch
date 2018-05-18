@@ -66,6 +66,7 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	fmt.Fprintln(os.Stdout, "Storage Driver:", info.Driver)
 	fmt.Fprintln(os.Stdout, "Driver Status:", info.DriverStatus)
 	fmt.Fprintln(os.Stdout, "Logging Driver:", info.LoggingDriver)
+	fmt.Fprintln(os.Stdout, "Volume Drivers:", info.VolumeDrivers)
 	fmt.Fprintln(os.Stdout, "Cgroup Driver:", info.CgroupDriver)
 	if len(info.Runtimes) > 0 {
 		fmt.Fprintln(os.Stdout, "Runtimes:")

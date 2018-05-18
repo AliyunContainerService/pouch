@@ -207,6 +207,10 @@ type SystemInfo struct {
 	// Version string of the daemon.
 	//
 	ServerVersion string `json:"ServerVersion,omitempty"`
+
+	// The list of volume drivers which the pouchd supports
+	//
+	VolumeDrivers []string `json:"VolumeDrivers"`
 }
 
 /* polymorph SystemInfo Architecture false */
@@ -279,6 +283,8 @@ type SystemInfo struct {
 
 /* polymorph SystemInfo ServerVersion false */
 
+/* polymorph SystemInfo VolumeDrivers false */
+
 // Validate validates this system info
 func (m *SystemInfo) Validate(formats strfmt.Registry) error {
 	var res []error
@@ -324,6 +330,11 @@ func (m *SystemInfo) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSecurityOptions(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateVolumeDrivers(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -475,6 +486,15 @@ func (m *SystemInfo) validateRuntimes(formats strfmt.Registry) error {
 func (m *SystemInfo) validateSecurityOptions(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.SecurityOptions) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *SystemInfo) validateVolumeDrivers(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.VolumeDrivers) { // not required
 		return nil
 	}
 

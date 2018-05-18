@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/registry"
+	volumedriver "github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/version"
 
 	"github.com/pkg/errors"
@@ -103,6 +104,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 	if err != nil {
 		logrus.Warnf("failed to get image info: %v", err)
 	}
+	volumeDrivers := volumedriver.AllDriversName()
 
 	info := types.SystemInfo{
 		Architecture: runtime.GOARCH,
@@ -128,6 +130,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		Labels:             mgr.config.Labels,
 		LiveRestoreEnabled: true,
 		LoggingDriver:      mgr.config.DefaultLogConfig.LogDriver,
+		VolumeDrivers:      volumeDrivers,
 		LxcfsEnabled:       mgr.config.IsLxcfsEnabled,
 		MemTotal:           totalMem,
 		Name:               hostname,
