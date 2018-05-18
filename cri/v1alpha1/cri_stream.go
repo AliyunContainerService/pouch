@@ -1,4 +1,4 @@
-package src
+package v1alpha1
 
 import (
 	"bytes"
@@ -11,25 +11,24 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/daemon/mgr"
 
 	"github.com/sirupsen/logrus"
 )
 
-func newStreamServer(ctrMgr mgr.ContainerMgr, address string, port string) (stream.Server, error) {
-	config := stream.DefaultConfig
+func newStreamServer(ctrMgr mgr.ContainerMgr, address string, port string) (Server, error) {
+	config := DefaultConfig
 	config.Address = net.JoinHostPort(address, port)
 	runtime := newStreamRuntime(ctrMgr)
-	return stream.NewServer(config, runtime)
+	return NewServer(config, runtime)
 }
 
 type streamRuntime struct {
 	containerMgr mgr.ContainerMgr
 }
 
-func newStreamRuntime(ctrMgr mgr.ContainerMgr) stream.Runtime {
+func newStreamRuntime(ctrMgr mgr.ContainerMgr) Runtime {
 	return &streamRuntime{containerMgr: ctrMgr}
 }
 

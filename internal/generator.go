@@ -5,7 +5,6 @@ import (
 	"path"
 
 	"github.com/alibaba/pouch/apis/plugins"
-	cri "github.com/alibaba/pouch/cri/src"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -49,9 +48,4 @@ func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
 // GenNetworkMgr generates a NetworkMgr instance according to config cfg.
 func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error) {
 	return mgr.NewNetworkManager(cfg, d.MetaStore(), d.CtrMgr())
-}
-
-// GenCriMgr generates a CriMgr instance.
-func GenCriMgr(d DaemonProvider) (cri.CriMgr, error) {
-	return cri.NewCriManager(d.Config(), d.CtrMgr(), d.ImgMgr())
 }
