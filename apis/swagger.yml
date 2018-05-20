@@ -1283,6 +1283,13 @@ definitions:
         description: |
           The logging driver to use as a default for new containers.
         type: "string"
+      VolumeDrivers:
+        description: |
+          The list of volume drivers which the pouchd supports
+        type: "array"
+        items:
+          type: "string"
+        example: ["local", "tmpfs"]
       CgroupDriver:
         description: |
           The driver to use for managing cgroups.

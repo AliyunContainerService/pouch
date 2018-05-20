@@ -3,6 +3,7 @@ package driver
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"sync"
 
 	"github.com/alibaba/pouch/plugins"
@@ -220,6 +221,9 @@ func Exist(name string) bool {
 
 // AllDriversName return all registered backend driver's name.
 func AllDriversName() []string {
+	// probing all volume plugins.
+	backendDrivers.GetAll()
+
 	backendDrivers.Lock()
 	defer backendDrivers.Unlock()
 
@@ -227,6 +231,9 @@ func AllDriversName() []string {
 	for n := range backendDrivers.drivers {
 		names = append(names, n)
 	}
+
+	// sort the names.
+	sort.Strings(names)
 
 	return names
 }
