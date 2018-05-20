@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
@@ -37,6 +38,8 @@ type ContainerAPIClient interface {
 	ContainerPIDs(ctx context.Context, id string) ([]int, error)
 	// ContainerPID returns the container's init process id.
 	ContainerPID(ctx context.Context, id string) (int, error)
+	// ContainerStats returns stats of the container.
+	ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error)
 	// ExecContainer executes a process in container.
 	ExecContainer(ctx context.Context, process *Process) error
 	// RecoverContainer reload the container from metadata and watch it, if program be restarted.
@@ -85,4 +88,9 @@ type SnapshotAPIClient interface {
 	// GetMounts returns the mounts for the active snapshot transaction identified
 	// by key.
 	GetMounts(ctx context.Context, id string) ([]mount.Mount, error)
+	// GetSnapshotUsage returns the resource usage of an active or committed snapshot
+	// excluding the usage of parent snapshots.
+	GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error)
+	// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
+	WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error
 }

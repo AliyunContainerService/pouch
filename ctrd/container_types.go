@@ -14,6 +14,7 @@ type Container struct {
 	ID      string
 	Image   string
 	Runtime string
+	Labels  map[string]string
 	IO      *containerio.IO
 	Spec    *specs.Spec
 
