@@ -1,4 +1,4 @@
-package src
+package v1alpha1
 
 import (
 	"fmt"
@@ -78,9 +78,6 @@ func (c *CniManager) Name() string {
 // are launched.
 func (c *CniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
 	_, err := c.plugin.SetUpPod(*podNetwork)
-	if err != nil {
-		return fmt.Errorf("failed to setup network for sandbox %q: %v", podNetwork.ID, err)
-	}
 
 	defer func() {
 		if err != nil {
@@ -91,6 +88,10 @@ func (c *CniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
 			}
 		}
 	}()
+
+	if err != nil {
+		return fmt.Errorf("failed to setup network for sandbox %q: %v", podNetwork.ID, err)
+	}
 
 	return nil
 }
