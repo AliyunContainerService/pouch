@@ -26,7 +26,7 @@ func (suite *PouchUnpauseSuite) SetUpSuite(c *check.C) {
 func (suite *PouchUnpauseSuite) TearDownTest(c *check.C) {
 }
 
-// TestStopWorks tests "pouch unpause" work.
+// TestUnpauseWorks tests "pouch unpause" work.
 func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 	containernames := []string{"bar1", "bar2"}
 	for _, name := range containernames {
@@ -56,4 +56,21 @@ func (suite *PouchUnpauseSuite) TestUnpauseWorks(c *check.C) {
 		}
 
 	}
+}
+
+// TestUnpauseMultiContainers is to verify the correctness of unpausing more than one paused container.
+func (suite *PouchUnpauseSuite) TestUnpauseMultiContainers(c *check.C) {
+	containernames := []string{"bar1", "bar2"}
+	for _, name := range containernames {
+		command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+		defer DelContainerForceMultyTime(c, name)
+
+		command.PouchRun("start", name).Assert(c, icmd.Success)
+	}
+
+	res := command.PouchRun("pause", containernames[0], containernames[1])
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("unpause", containernames[0], containernames[1])
+	res.Assert(c, icmd.Success)
 }

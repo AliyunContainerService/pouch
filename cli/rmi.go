@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -43,19 +45,27 @@ func (rmi *RmiCommand) runRmi(args []string) error {
 	ctx := context.Background()
 	apiClient := rmi.cli.Client()
 
+	var errs []string
 	for _, name := range args {
 		if err := apiClient.ImageRemove(ctx, name, rmi.force); err != nil {
-			return fmt.Errorf("failed to remove image: %v", err)
+			errs = append(errs, err.Error())
+			continue
 		}
 		fmt.Printf("%s\n", name)
 	}
+
+	if len(errs) > 0 {
+		return errors.New("failed to remove images: " + strings.Join(errs, ""))
+	}
+
 	return nil
 }
 
 // rmiExample shows examples in rmi command, and is used in auto-generated cli docs.
 func rmiExample() string {
-	return `$ pouch rmi registry.hub.docker.com/library/busybox:latest
+	return `$ pouch rmi registry.hub.docker.com/library/busybox:latest registry.hub.docker.com/library/busybox:1.28
 registry.hub.docker.com/library/busybox:latest
+registry.hub.docker.com/library/busybox:1.28
 $ pouch create --name test registry.hub.docker.com/library/busybox:latest
 container ID: e5952417f9ee94621bbeaec532be1803ae2dedeb11a80f578a6d621e04a95afd, name: test
 $ pouch rmi registry.hub.docker.com/library/busybox:latest

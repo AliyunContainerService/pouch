@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"strconv"
-
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ func (rc *RestartCommand) Init(c *Cli) {
 	rc.cli = c
 
 	rc.cmd = &cobra.Command{
-		Use:   "restart [OPTION] CONTAINER [CONTAINERS]",
+		Use:   "restart [OPTION] CONTAINER [CONTAINER...]",
 		Short: "restart one or more containers",
 		Long:  restartDescription,
 		Args:  cobra.MinimumNArgs(1),
@@ -46,11 +47,17 @@ func (rc *RestartCommand) runRestart(args []string) error {
 	ctx := context.Background()
 	apiClient := rc.cli.Client()
 
+	var errs []string
 	for _, name := range args {
 		if err := apiClient.ContainerRestart(ctx, name, strconv.Itoa(rc.timeout)); err != nil {
-			return fmt.Errorf("failed to restart container: %v", err)
+			errs = append(errs, err.Error())
+			continue
 		}
 		fmt.Printf("%s\n", name)
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 
 	return nil
