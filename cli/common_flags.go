@@ -84,7 +84,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")
 	flagSet.Var(&c.ulimit, "ulimit", "Set container ulimit")
-	flagSet.Int64Var(&c.pidsLimit, "pids-limit", -1, "Set container pids limit, -1 for unlimited")
+	flagSet.Int64Var(&c.pidsLimit, "pids-limit", 0, "Set container pids limit")
 
 	flagSet.BoolVar(&c.rich, "rich", false, "Start container in rich container mode. (default false)")
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
