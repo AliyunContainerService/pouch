@@ -108,6 +108,11 @@ type Config struct {
 
 	// oom_score_adj for the daemon
 	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`
+
+	// runtimes config
+	// TODO(Ace-Tang): runtime args is not support, since containerd is not support,
+	// add a resolution later if it needed.
+	Runtimes map[string]types.Runtime `json:"add-runtime,omitempty"`
 }
 
 // Validate validates the user input config.
@@ -128,6 +133,16 @@ func (cfg *Config) Validate() error {
 
 	// TODO: add config validation
 
+	// validates runtimes config
+	if len(cfg.Runtimes) == 0 {
+		cfg.Runtimes = make(map[string]types.Runtime)
+	}
+	if _, exist := cfg.Runtimes[cfg.DefaultRuntime]; exist {
+		return fmt.Errorf("default runtime %s cannot be re-register", cfg.DefaultRuntime)
+	}
+	// add default runtime
+	cfg.Runtimes[cfg.DefaultRuntime] = types.Runtime{Path: cfg.DefaultRuntime}
+
 	return nil
 }
 
@@ -141,17 +156,16 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 		return fmt.Errorf("failed to read contents from config file %s: %s", cfg.ConfigFile, err)
 	}
 
-	var origin map[string]interface{}
-	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&origin); err != nil {
+	var fileFlags map[string]interface{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&fileFlags); err != nil {
 		return fmt.Errorf("failed to decode json: %s", err)
 	}
 
-	if len(origin) == 0 {
+	if len(fileFlags) == 0 {
 		return nil
 	}
 
-	fileFlags := make(map[string]interface{}, 0)
-	iterateConfig(origin, fileFlags)
+	transferTLSConfig(fileFlags)
 
 	// check if invalid or unknown flag exist in config file
 	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
@@ -209,6 +223,29 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 	})
 
 	return cfg
+}
+
+// transferTLSConfig fetch key value from tls config
+// {
+//   "tlscert": "...",
+//   "tlscacert": "..."
+// }
+// add this transfer logic since no flag named TLS, but tlscert, tlscert...
+// we should fetch them to do unknown flags and conflict flags check
+func transferTLSConfig(config map[string]interface{}) {
+	v, exist := config["TLS"]
+	if !exist {
+		return
+	}
+
+	var tlscofig map[string]interface{}
+	iterateConfig(map[string]interface{}{
+		"TLS": v,
+	}, tlscofig)
+
+	for k, v := range tlscofig {
+		config[k] = v
+	}
 }
 
 // iterateConfig resolves key-value from config file iteratly.

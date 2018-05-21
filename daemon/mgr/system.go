@@ -140,7 +140,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		PouchRootDir:       mgr.config.HomeDir,
 		RegistryConfig:     &mgr.config.RegistryService,
 		// RuncCommit: ,
-		// Runtimes: ,
+		Runtimes: mgr.config.Runtimes,
 		// SecurityOptions: ,
 		ServerVersion:   version.Version,
 		ListenAddresses: mgr.config.Listen,

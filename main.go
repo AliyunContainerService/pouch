@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/config/opt"
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
@@ -42,17 +43,11 @@ func main() {
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDaemon()
+			return runDaemon(cmd)
 		},
 	}
 
 	setupFlags(cmdServe)
-	parseFlags(cmdServe, os.Args[1:])
-	if err := loadDaemonFile(cfg, cmdServe.Flags()); err != nil {
-		logrus.Errorf("failed to load daemon file: %s", err)
-		os.Exit(1)
-	}
-
 	if err := cmdServe.Execute(); err != nil {
 		logrus.Error(err)
 		os.Exit(1)
@@ -116,21 +111,16 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 	flagSet.IntVar(&cfg.OOMScoreAdjust, "oom-score-adj", -500, "Set the oom_score_adj for the daemon")
-}
+	flagSet.Var(opt.NewRuntime(&cfg.Runtimes), "add-runtime", "register a OCI runtime to daemon")
 
-// parse flags
-func parseFlags(cmd *cobra.Command, flags []string) {
-	err := cmd.Flags().Parse(flags)
-	if err == nil || err == pflag.ErrHelp {
-		return
-	}
-
-	cmd.SetOutput(os.Stderr)
-	cmd.Usage()
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
-func runDaemon() error {
+func runDaemon(cmd *cobra.Command) error {
+	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
+		return fmt.Errorf("failed to load daemon file: %s", err)
+	}
+
 	//user specifies --version or -v, print version and return.
 	if printVersion {
 		fmt.Printf("pouchd version: %s, build: %s, build at: %s\n", version.Version, version.GitCommit, version.BuildTime)
