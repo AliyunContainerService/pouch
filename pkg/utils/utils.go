@@ -176,9 +176,14 @@ func doMerge(src, dest reflect.Value) error {
 
 	case reflect.Map:
 		for _, key := range src.MapKeys() {
-			if err := doMerge(src.MapIndex(key), dest.MapIndex(key)); err != nil {
-				return err
+			srcElem := src.MapIndex(key)
+			if !srcElem.IsValid() || isEmptyValue(srcElem) {
+				continue
 			}
+			if dest.IsNil() {
+				dest.Set(reflect.MakeMap(dest.Type()))
+			}
+			dest.SetMapIndex(key, srcElem)
 		}
 
 	case reflect.Slice:
