@@ -91,7 +91,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
 
 	// cgroup
-	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "default", "Optional parent cgroup for the container")
+	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "", "Optional parent cgroup for the container")
 
 	// disk quota
 	flagSet.StringSliceVar(&c.diskQuota, "disk-quota", nil, "Set disk quota for container")
