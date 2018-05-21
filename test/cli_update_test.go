@@ -292,3 +292,59 @@ func (suite *PouchUpdateSuite) TestUpdateContainerLabel(c *check.C) {
 		c.Errorf("expect 'foo=bar' in Labels, got: %v", result[0].Config.Labels)
 	}
 }
+
+// TestUpdateContainerEnvValue is to verify the correctness of updating env's value of container.
+func (suite *PouchUpdateSuite) TestUpdateContainerEnvValue(c *check.C) {
+	name := "update-container-env-value"
+
+	res := command.PouchRun("run", "-d", "--env", "foo=bar", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	command.PouchRun("update", "--env", "foo=bar1", name).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	if !utils.StringInSlice(result[0].Config.Env, "foo=bar1") {
+		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
+	}
+
+	if utils.StringInSlice(result[0].Config.Env, "foo=bar") {
+		c.Errorf("expect change 'foo=bar' to 'foo=bar1', but got: %v", result[0].Config.Env)
+	}
+
+	output = command.PouchRun("exec", name, "env").Stdout()
+	if !strings.Contains(output, "foo=bar1") {
+		c.Fatalf("Update running container env not worked")
+	}
+}
+
+// TestUpdateContainerDeleteEnv is to verify the correctness of delete env by update interface
+func (suite *PouchUpdateSuite) TestUpdateContainerDeleteEnv(c *check.C) {
+	name := "update-container-delete-env"
+
+	res := command.PouchRun("run", "-d", "--env", "foo=bar", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	command.PouchRun("update", "--env", "foo=", name).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	if utils.StringInSlice(result[0].Config.Env, "foo=bar") {
+		c.Errorf("expect 'foo=bar' env being deleted, but not")
+	}
+
+	output = command.PouchRun("exec", name, "env").Stdout()
+	if strings.Contains(output, "foo=bar") {
+		c.Errorf("foo=bar env should be deleted from container's env")
+	}
+}
