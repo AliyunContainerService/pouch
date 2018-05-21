@@ -296,3 +296,19 @@ func (suite *PouchStartSuite) TestStartWithPidsLimit(c *check.C) {
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestStartMultiContainers tries to start more than one container.
+func (suite *PouchStartSuite) TestStartMultiContainers(c *check.C) {
+	containernames := []string{"TestStartMultiContainer-1", "TestStartMultiContainer-2"}
+	for _, name := range containernames {
+		res := command.PouchRun("create", "--name", name, busyboxImage, "top")
+		defer DelContainerForceMultyTime(c, name)
+		res.Assert(c, icmd.Success)
+	}
+
+	res := command.PouchRun("start", containernames[0], containernames[1])
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("stop", containernames[0], containernames[1])
+	res.Assert(c, icmd.Success)
+}

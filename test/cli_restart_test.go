@@ -71,3 +71,20 @@ func (suite *PouchRestartSuite) TestPouchRestartPausedContainer(c *check.C) {
 
 	command.PouchRun("restart", name).Assert(c, icmd.Success)
 }
+
+// TestPouchRestartMultiContainers is to verify the correctness of restarting more than one running container.
+func (suite *PouchRestartSuite) TestPouchRestartMultiContainers(c *check.C) {
+	containernames := []string{"TestPouchRestartMultiContainer-1", "TestPouchRestartMultiContainer-2"}
+	for _, name := range containernames {
+		res := command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage)
+		defer DelContainerForceMultyTime(c, name)
+		res.Assert(c, icmd.Success)
+	}
+
+	res := command.PouchRun("restart", "-t", "1", containernames[0], containernames[1])
+	res.Assert(c, icmd.Success)
+
+	if out := res.Combined(); !strings.Contains(out, containernames[0]) || !strings.Contains(out, containernames[1]) {
+		c.Fatalf("unexpected output: %s, expected: %s\n%s", out, containernames[0], containernames[1])
+	}
+}
