@@ -47,6 +47,7 @@ type ImageAPIClient interface {
 	ImageInspect(ctx context.Context, name string) (types.ImageInfo, error)
 	ImagePull(ctx context.Context, name, tag, encodedAuth string) (io.ReadCloser, error)
 	ImageRemove(ctx context.Context, name string, force bool) error
+	ImageTag(ctx context.Context, image string, tag string) error
 }
 
 // VolumeAPIClient defines methods of Volume client.
