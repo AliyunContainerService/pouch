@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
+	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
 )
@@ -56,6 +57,8 @@ type ContainerAPIClient interface {
 
 // ImageAPIClient provides access to containerd image features.
 type ImageAPIClient interface {
+	// CreateImageReference creates the image data into meta data in the containerd.
+	CreateImageReference(ctx context.Context, img ctrdmetaimages.Image) (ctrdmetaimages.Image, error)
 	// GetImage returns containerd.Image by the given reference.
 	GetImage(ctx context.Context, ref string) (containerd.Image, error)
 	// ListImages returns the list of containerd.Image filtered by the given conditions.
