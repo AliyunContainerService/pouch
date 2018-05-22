@@ -19,6 +19,8 @@ func init() {
 func (suite *PouchUnpauseSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
+	environment.PruneAllContainers(apiClient)
+
 	PullImage(c, busyboxImage)
 }
 

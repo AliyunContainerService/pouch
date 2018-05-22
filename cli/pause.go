@@ -33,12 +33,6 @@ func (p *PauseCommand) Init(c *Cli) {
 		},
 		Example: pauseExample(),
 	}
-	p.addFlags()
-}
-
-// addFlags adds flags for specific command.
-func (p *PauseCommand) addFlags() {
-	// TODO: add flags here
 }
 
 // runPause is the entry of pause command.
