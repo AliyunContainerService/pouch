@@ -1,25 +1,29 @@
 ## pouch pause
 
-Pause a running container
+Pause one or more running containers
 
 ### Synopsis
 
-Pause a running container object in Pouchd. when pausing, the container will pause its running but hold all the relevant resource.This is useful when you wish to pause a container for a while and to restore the running status later.The container you paused will pause without being terminated.
+Pause one or more running containers in Pouchd. when pausing, the container will pause its running but hold all the relevant resource.This is useful when you wish to pause a container for a while and to restore the running status later.The container you paused will pause without being terminated.
 
 ```
-pouch pause CONTAINER
+pouch pause CONTAINER [CONTAINER...]
 ```
 
 ### Examples
 
 ```
 $ pouch ps
-Name     ID       Status    Image                              Runtime
-foo      71b9c1   Running   docker.io/library/busybox:latest   runc
-$ pouch pause foo
+Name   ID       Status          Created          Image                                            Runtime
+foo2   87259c   Up 25 seconds   26 seconds ago   registry.hub.docker.com/library/busybox:latest   runc
+foo1   77188c   Up 46 seconds   47 seconds ago   registry.hub.docker.com/library/busybox:latest   runc
+$ pouch pause foo1 foo2
+foo1
+foo2
 $ pouch ps
-Name     ID       Status    Image                              Runtime
-foo      71b9c1   Paused    docker.io/library/busybox:latest   runc
+Name   ID       Status                Created        Image                                            Runtime
+foo2   87259c   Up 1 minute(paused)   1 minute ago   registry.hub.docker.com/library/busybox:latest   runc
+foo1   77188c   Up 1 minute(paused)   1 minute ago   registry.hub.docker.com/library/busybox:latest   runc
 ```
 
 ### Options

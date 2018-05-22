@@ -5,10 +5,10 @@ Remove one or more containers
 ### Synopsis
 
 
-Remove a container object in Pouchd.
+Remove one or more containers in Pouchd.
 If a container be stopped or created, you can remove it. 
-If the container be running, you can also remove it with flag force.
-When the container be removed, the all resource of the container will
+If the container is running, you can also remove it with flag force.
+When the container is removed, the all resources of the container will
 be released.
 
 
@@ -19,11 +19,18 @@ pouch rm [OPTIONS] CONTAINER [CONTAINER...]
 ### Examples
 
 ```
-$ pouch rm 5d3152
-5d3152
-
-$ pouch rm -f 493028
-493028
+$ pouch ps -a
+Name   ID       Status                  Created          Image                                            Runtime
+foo    03cd58   Exited (0) 25 seconds   26 seconds ago   registry.hub.docker.com/library/busybox:latest   runc
+$ pouch rm foo
+foo
+$ pouch ps
+Name   ID       Status         Created          Image                                            Runtime
+foo2   1d979d   Up 5 seconds   6 seconds ago    registry.hub.docker.com/library/busybox:latest   runc
+foo1   83e3cf   Up 9 seconds   10 seconds ago   registry.hub.docker.com/library/busybox:latest   runc
+$ pouch rm -f foo1 foo2
+foo1
+foo2
 ```
 
 ### Options
