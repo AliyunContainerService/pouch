@@ -10,9 +10,11 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // containerID returns the container's id, the parameter 'nameOrPrefix' may be container's
@@ -222,4 +224,140 @@ func parsePSOutput(output []byte, pids []int) (*types.ContainerProcessList, erro
 		}
 	}
 	return procList, nil
+}
+
+// validateConfig validates container config
+func validateConfig(config *types.ContainerCreateConfig) ([]string, error) {
+	// validates container hostconfig
+	warnings := make([]string, 0)
+	warns, err := validateResource(&config.HostConfig.Resources)
+	if err != nil {
+		return nil, err
+	}
+	warnings = append(warnings, warns...)
+
+	// TODO: add more validate here
+	return warnings, nil
+}
+
+func validateResource(r *types.Resources) ([]string, error) {
+	cgroupInfo := system.NewCgroupInfo()
+	if cgroupInfo == nil {
+		return nil, nil
+	}
+	warnings := make([]string, 0, 64)
+
+	// validates memory cgroup value
+	if cgroupInfo.Memory != nil {
+		if !cgroupInfo.Memory.MemoryLimit {
+			warn := "Current Kernel does not support memory limit, discard --memory"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.Memory = 0
+		}
+		if !cgroupInfo.Memory.MemorySwap {
+			warn := "Current Kernel does not support memory swap, discard --memory-swap"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.MemorySwap = -1
+		}
+		if !cgroupInfo.Memory.MemorySwappiness {
+			warn := "Current Kernel does not support memory swappiness , discard --memory-swappiness"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.MemorySwappiness = nil
+		}
+		if !cgroupInfo.Memory.OOMKillDisable {
+			warn := "Current Kernel does not support disable oom kill, discard --oom-kill-disable"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.OomKillDisable = nil
+		}
+	}
+
+	// validates cpu cgroup value
+	if cgroupInfo.CPU != nil {
+		if !cgroupInfo.CPU.CpusetCpus {
+			warn := "Current Kernel does not support cpuset cpus, discard --cpuset-cpus"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.CpusetCpus = ""
+		}
+		if !cgroupInfo.CPU.CpusetCpus {
+			warn := "Current Kernel does not support cpuset cpus, discard --cpuset-mems"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.CpusetMems = ""
+		}
+		if !cgroupInfo.CPU.CPUShares {
+			warn := "Current Kernel does not support cpu shares, discard --cpu-share"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.CPUShares = 0
+		}
+		if !cgroupInfo.CPU.CPUQuota {
+			warn := "Current Kernel does not support cpu quota, discard --cpu-quota"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.CPUQuota = 0
+		}
+		if !cgroupInfo.CPU.CPUPeriod {
+			warn := "Current Kernel does not support cpu period, discard --cpu-period"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.CPUPeriod = 0
+		}
+	}
+
+	// validates blkio cgroup value
+	if cgroupInfo.Blkio != nil {
+		if !cgroupInfo.Blkio.BlkioWeight {
+			warn := "Current Kernel does not support blkio weight, discard --blkio-weight"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioWeight = 0
+		}
+		if !cgroupInfo.Blkio.BlkioWeightDevice {
+			warn := "Current Kernel does not support blkio weight device, discard --blkio-weight-device"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioWeightDevice = []*types.WeightDevice{}
+		}
+		if !cgroupInfo.Blkio.BlkioDeviceReadBps {
+			warn := "Current Kernel does not support blkio device throttle read bps, discard --device-read-bps"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioDeviceReadBps = []*types.ThrottleDevice{}
+		}
+		if !cgroupInfo.Blkio.BlkioDeviceWriteBps {
+			warn := "Current Kernel does not support blkio device throttle write bps, discard --device-write-bps"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioDeviceWriteBps = []*types.ThrottleDevice{}
+		}
+		if !cgroupInfo.Blkio.BlkioDeviceReadIOps {
+			warn := "Current Kernel does not support blkio device throttle read iops, discard --device-read-iops"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioDeviceReadIOps = []*types.ThrottleDevice{}
+		}
+		if !cgroupInfo.Blkio.BlkioDeviceWriteIOps {
+			warn := "Current Kernel does not support blkio device throttle, discard --device-write-iops"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.BlkioDeviceWriteIOps = []*types.ThrottleDevice{}
+		}
+	}
+
+	// validates pid cgroup value
+	if cgroupInfo.Pids != nil {
+		if !cgroupInfo.Pids.Pids {
+			warn := "Current Kernel does not support pids cgroup, discard --pids-limit"
+			logrus.Warn(warn)
+			warnings = append(warnings, warn)
+			r.PidsLimit = 0
+		}
+	}
+
+	return warnings, nil
 }
