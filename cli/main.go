@@ -29,6 +29,7 @@ func main() {
 	cli.AddCommand(base, &RmiCommand{})
 	cli.AddCommand(base, &VolumeCommand{})
 	cli.AddCommand(base, &NetworkCommand{})
+	cli.AddCommand(base, &TagCommand{})
 
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
