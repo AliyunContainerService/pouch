@@ -31,7 +31,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch logout](pouch_logout.md)	 - Logout from a registry
 * [pouch logs](pouch_logs.md)	 - Print a container's logs
 * [pouch network](pouch_network.md)	 - Manage pouch networks
-* [pouch pause](pouch_pause.md)	 - Pause a running container
+* [pouch pause](pouch_pause.md)	 - Pause one or more running containers
 * [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
 * [pouch remount-lxcfs](pouch_remount-lxcfs.md)	 - remount lxcfs bind in containers
@@ -40,10 +40,10 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it
-* [pouch start](pouch_start.md)	 - Start a created or stopped container
+* [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
 * [pouch top](pouch_top.md)	 - Display the running processes of a container
-* [pouch unpause](pouch_unpause.md)	 - Unpause a paused container
+* [pouch unpause](pouch_unpause.md)	 - Unpause one or more paused container
 * [pouch update](pouch_update.md)	 - Update the configurations of a container
 * [pouch upgrade](pouch_upgrade.md)	 - Upgrade a container with new image and args
 * [pouch version](pouch_version.md)	 - Print versions about Pouch CLI and Pouchd
