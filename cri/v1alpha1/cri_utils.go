@@ -1,4 +1,4 @@
-package src
+package v1alpha1
 
 import (
 	"bytes"

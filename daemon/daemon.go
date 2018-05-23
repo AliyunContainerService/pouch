@@ -9,8 +9,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
-	criservice "github.com/alibaba/pouch/cri/service"
-	cri "github.com/alibaba/pouch/cri/src"
+	criservice "github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -34,9 +33,7 @@ type Daemon struct {
 	imageMgr        mgr.ImageMgr
 	volumeMgr       mgr.VolumeMgr
 	networkMgr      mgr.NetworkMgr
-	criMgr          cri.CriMgr
 	server          server.Server
-	criService      *criservice.Service
 	containerPlugin plugins.ContainerPlugin
 	daemonPlugin    plugins.DaemonPlugin
 }
@@ -211,7 +208,7 @@ func (d *Daemon) Run() error {
 	}()
 
 	criStopCh := make(chan error)
-	go d.RunCriService(criStopCh)
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh)
 
 	err = <-criStopCh
 	if err != nil {
@@ -320,53 +317,4 @@ func (d *Daemon) addSystemLabels() error {
 	d.config.Labels = append(d.config.Labels, fmt.Sprintf("SN=%s", serialNo))
 
 	return nil
-}
-
-// RunCriService start cri service if pouchd is specified with --enable-cri.
-func (d *Daemon) RunCriService(stopCh chan error) {
-	var err error
-
-	defer func() {
-		stopCh <- err
-		close(stopCh)
-	}()
-
-	if !d.config.IsCriEnabled {
-		return
-	}
-
-	criMgr, err := internal.GenCriMgr(d)
-	if err != nil {
-		return
-	}
-	d.criMgr = criMgr
-
-	d.criService, err = criservice.NewService(d.config, criMgr)
-	if err != nil {
-		return
-	}
-
-	grpcServerCloseCh := make(chan struct{})
-	go func() {
-		if err := d.criService.Serve(); err != nil {
-			logrus.Errorf("failed to start grpc server: %v", err)
-		}
-		close(grpcServerCloseCh)
-	}()
-
-	streamServerCloseCh := make(chan struct{})
-	go func() {
-		if err := d.criMgr.StreamServerStart(); err != nil {
-			logrus.Errorf("failed to start stream server: %v", err)
-		}
-		close(streamServerCloseCh)
-	}()
-
-	<-streamServerCloseCh
-	logrus.Infof("CRI Stream server stopped")
-	<-grpcServerCloseCh
-	logrus.Infof("CRI GRPC server stopped")
-
-	logrus.Infof("CRI service stopped")
-	return
 }
