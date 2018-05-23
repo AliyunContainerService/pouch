@@ -39,3 +39,25 @@ func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 }
+
+// TestPluginVolumeCreateOk tests creating a volume which created by volume plugin
+func (suite *APIVolumeCreateSuite) TestPluginVolumeCreateOk(c *check.C) {
+	vol := "TestPluginVolumeCreateOk"
+
+	obj := map[string]interface{}{
+		"Driver":     "local-persist",
+		"Name":       vol,
+		"DriverOpts": map[string]string{"mountpoint": "/data/images"},
+	}
+
+	path := "/volumes/create"
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(path, body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	path = "/volumes/" + vol
+	resp, err = request.Delete(path)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+}

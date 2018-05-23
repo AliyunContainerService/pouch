@@ -96,6 +96,16 @@ function install_lxcfs
 	fi
 }
 
+# local-persist is a volume plugin
+function install_local_persist
+{
+	echo "Try installing local-persist"
+	wget --quiet -O /tmp/local-persist \
+		https://github.com/CWSpear/local-persist/releases/download/v1.3.0/local-persist-linux-amd64
+	chmod +x /tmp/local-persist
+	mv /tmp/local-persist /usr/local/bin/
+}
+
 function install_nsenter
 {
 	echo "Try installing nsenter"
@@ -193,7 +203,13 @@ function target
 			$IMAGE \
 			bash -c "cd test && go test -c -o integration-test"
 
-		#start pouch daemon
+		install_local_persist
+
+        	# start local-persist
+		echo "start local-persist volume plugin"
+        	local-persist > $TMP/volume.log 2 >&1 &
+
+		# start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
 			pouchd --debug --enable-lxcfs=true \
