@@ -36,7 +36,7 @@ type Resources struct {
 	//
 	BlkioDeviceWriteIOps []*ThrottleDevice `json:"BlkioDeviceWriteIOps"`
 
-	// Block IO weight (relative weight).
+	// Block IO weight (relative weight), need CFQ IO Scheduler enable.
 	// Maximum: 1000
 	// Minimum: 0
 	BlkioWeight uint16 `json:"BlkioWeight,omitempty"`
