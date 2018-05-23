@@ -24,3 +24,6 @@ env:
 
 script:
   - sudo make -e ${TEST_SUITE}
+
+after_success:
+- bash <(curl -s https://codecov.io/bash) || echo Codecov_Did_Not_Collect_Coverage_Reports
