@@ -2,12 +2,16 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
@@ -261,12 +265,43 @@ func PullImage(c *check.C, image string) {
 	resp, err := request.Get("/images/" + image + "/json")
 	c.Assert(err, check.IsNil)
 
-	if resp.StatusCode == 404 {
-		q := url.Values{}
-		q.Add("fromImage", image)
-		query := request.WithQuery(q)
-		resp, err = request.Post("/images/create", query)
-		c.Assert(err, check.IsNil)
-		c.Assert(resp.StatusCode, check.Equals, 200)
+	if resp.StatusCode == http.StatusOK {
+		resp.Body.Close()
+		return
 	}
+
+	q := url.Values{}
+	q.Add("fromImage", image)
+	resp, err = request.Post("/images/create", request.WithQuery(q))
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 200)
+
+	defer resp.Body.Close()
+	c.Assert(fetchPullStatus(resp.Body), check.IsNil)
+}
+
+func fetchPullStatus(r io.ReadCloser) error {
+	dec := json.NewDecoder(r)
+	if _, err := dec.Token(); err != nil {
+		return fmt.Errorf("failed to read the opening token: %v", err)
+	}
+
+	for dec.More() {
+		var infos []ctrd.ProgressInfo
+
+		if err := dec.Decode(&infos); err != nil {
+			return fmt.Errorf("failed to decode: %v", err)
+		}
+
+		for _, info := range infos {
+			if info.ErrorMessage != "" {
+				return fmt.Errorf(info.ErrorMessage)
+			}
+		}
+	}
+
+	if _, err := dec.Token(); err != nil {
+		return fmt.Errorf("failed to read the closing token: %v", err)
+	}
+	return nil
 }

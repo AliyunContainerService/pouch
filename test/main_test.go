@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/alibaba/pouch/client"
-	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/go-check/check"
 )
@@ -26,8 +25,6 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	apiClient = commonAPIClient.(*client.APIClient)
-
-	command.PouchRun("pull", busyboxImage)
 
 	os.Exit(m.Run())
 }
