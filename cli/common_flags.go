@@ -10,7 +10,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// please add the following flag by name in alphabetical order
 	// blkio
 	flagSet.Uint16Var(&c.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
-	flagSet.Var(&c.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight)")
+	flagSet.Var(&c.blkioWeightDevice, "blkio-weight-device", "Block IO weight (relative device weight), need CFQ IO Scheduler enable")
 	flagSet.Var(&c.blkioDeviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
 	flagSet.Var(&c.blkioDeviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flagSet.Var(&c.blkioDeviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) from a device")

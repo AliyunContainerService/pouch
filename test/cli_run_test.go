@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -576,6 +577,14 @@ func (suite *PouchRunSuite) TestRunBlockIOWeightDevice(c *check.C) {
 	if !found {
 		c.Skip("fail to find available disk for blkio test")
 	}
+
+	SkipIfFalse(c, func() bool {
+		file := fmt.Sprintf("/sys/block/%s/queue/scheduler", strings.Trim(testDisk, "/dev/"))
+		if data, err := ioutil.ReadFile(file); err == nil {
+			return strings.Contains(string(data), "[cfq]")
+		}
+		return false
+	})
 
 	command.PouchRun("run", "-d", "--blkio-weight-device", testDisk+":100",
 		"--name", cname, busyboxImage, "sleep", "10000").Stdout()
