@@ -46,13 +46,13 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 	}
 
 	var (
-		pStdout io.Writer = process.IO.Stdout
-		pStderr io.Writer = process.IO.Stderr
+		pStdout io.WriteCloser = process.IO.Stdout
+		pStderr io.WriteCloser = process.IO.Stderr
 	)
 
 	if !process.P.Terminal && !process.IO.MuxDisabled {
-		pStdout = stdcopy.NewStdWriter(pStdout, stdcopy.Stdout)
-		pStderr = stdcopy.NewStdWriter(pStderr, stdcopy.Stderr)
+		pStdout = containerio.NewWriteCloserWrapper(stdcopy.NewStdWriter(pStdout, stdcopy.Stdout), pStdout)
+		pStderr = containerio.NewWriteCloserWrapper(stdcopy.NewStdWriter(pStderr, stdcopy.Stderr), pStderr)
 	}
 
 	io := containerio.NewIOWithTerminal(process.IO.Stdin, pStdout, pStderr, process.P.Terminal, process.IO.Stdin != nil)

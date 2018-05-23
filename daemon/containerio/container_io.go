@@ -3,6 +3,7 @@ package containerio
 import (
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/alibaba/pouch/pkg/ringbuff"
 
@@ -34,9 +35,10 @@ func (t stdioType) String() string {
 
 // IO wraps the three container's ios of stdout, stderr, stdin.
 type IO struct {
-	Stdout *ContainerIO
-	Stderr *ContainerIO
-	Stdin  *ContainerIO
+	Stdout   *ContainerIO
+	Stderr   *ContainerIO
+	Stdin    *ContainerIO
+	backends []*containerBackend
 
 	// For IO backend like http, we need to mux stdout & stderr
 	// if terminal is disabled.
@@ -52,6 +54,7 @@ func NewIO(opt *Option) *IO {
 	i := &IO{
 		Stdout:      create(opt, stdout, backends),
 		Stderr:      create(opt, stderr, backends),
+		backends:    backends,
 		MuxDisabled: opt.muxDisabled,
 	}
 
@@ -76,14 +79,27 @@ func (io *IO) AddBackend(opt *Option) {
 	if opt.stdin && io.Stdin != nil {
 		io.Stdin.add(opt, stdin, backends)
 	}
+
+	io.backends = append(io.backends, backends...)
 }
 
 // Close closes the container's io.
-func (io *IO) Close() error {
-	io.Stderr.Close()
-	io.Stdout.Close()
-	if io.Stdin != nil {
-		io.Stdin.Close()
+func (io *IO) Close(force bool) error {
+	if force {
+		io.Stderr.Close()
+		io.Stdout.Close()
+		if io.Stdin != nil {
+			io.Stdin.Close()
+		}
+	}
+
+	for _, b := range io.backends {
+		name := b.backend.Name()
+
+		// Wait all the rings of backend to be closed first to avoid data leak.
+		b.wg.Wait()
+		b.backend.Close()
+		logrus.Infof("close containerio backend: %s", name)
 	}
 	return nil
 }
@@ -91,7 +107,7 @@ func (io *IO) Close() error {
 // ContainerIO used to control the container's stdio.
 type ContainerIO struct {
 	Option
-	backends []containerBackend
+	backends []*containerBackend
 	total    int64
 	typ      stdioType
 	closed   bool
@@ -99,12 +115,12 @@ type ContainerIO struct {
 	ring *ringbuff.RingBuff
 }
 
-func (cio *ContainerIO) add(opt *Option, typ stdioType, backends map[string]containerBackend) {
+func (cio *ContainerIO) add(opt *Option, typ stdioType, backends []*containerBackend) {
 	if typ == stdin {
 		for _, b := range backends {
 			if b.backend.Name() == opt.stdinBackend {
 				cio.backends = append(cio.backends, b)
-				go func(b containerBackend) {
+				go func(b *containerBackend) {
 					cio.converge(b.backend.Name(), opt.id, b.backend.In())
 					b.backend.Close()
 				}(b)
@@ -118,7 +134,7 @@ func (cio *ContainerIO) add(opt *Option, typ stdioType, backends map[string]cont
 	}
 }
 
-func create(opt *Option, typ stdioType, backends map[string]containerBackend) *ContainerIO {
+func create(opt *Option, typ stdioType, backends []*containerBackend) *ContainerIO {
 	io := &ContainerIO{
 		total:  0,
 		typ:    typ,
@@ -131,7 +147,7 @@ func create(opt *Option, typ stdioType, backends map[string]containerBackend) *C
 		for _, b := range backends {
 			if b.backend.Name() == opt.stdinBackend {
 				io.backends = append(io.backends, b)
-				go func(b containerBackend) {
+				go func(b *containerBackend) {
 					// For backend with stdin, close it if stdin finished.
 					io.converge(b.backend.Name(), opt.id, b.backend.In())
 					b.backend.Close()
@@ -148,8 +164,8 @@ func create(opt *Option, typ stdioType, backends map[string]containerBackend) *C
 	return io
 }
 
-func createBackend(opt *Option) map[string]containerBackend {
-	backends := make(map[string]containerBackend)
+func createBackend(opt *Option) []*containerBackend {
+	backends := []*containerBackend{}
 
 	for _, create := range backendFactorys {
 		backend := create()
@@ -163,22 +179,26 @@ func createBackend(opt *Option) map[string]containerBackend {
 			continue
 		}
 
-		backends[backend.Name()] = containerBackend{
+		backends = append(backends, &containerBackend{
 			backend: backend,
 			outRing: ringbuff.New(10),
 			errRing: ringbuff.New(10),
-		}
+			wg:      &sync.WaitGroup{},
+		})
 	}
 
 	// start to subscribe stdout and stderr ring buffer.
 	for _, b := range backends {
 
 		// the goroutine don't exit forever.
-		go func(b containerBackend) {
+		b.wg.Add(2)
+		go func(b *containerBackend) {
 			subscribe(b.backend.Name(), opt.id, b.outRing, b.backend.Out())
+			b.wg.Done()
 		}(b)
-		go func(b containerBackend) {
+		go func(b *containerBackend) {
 			subscribe(b.backend.Name(), opt.id, b.errRing, b.backend.Err())
+			b.wg.Done()
 		}(b)
 	}
 
@@ -252,11 +272,15 @@ func (cio *ContainerIO) Close() error {
 		// we need to close ringbuf before close backend, because close ring will flush
 		// the remain data into backend.
 		name := b.backend.Name()
-		b.outRing.Close()
-		b.errRing.Close()
-		b.backend.Close()
 
-		logrus.Infof("close containerio backend: %s, id: %s", name, cio.id)
+		switch cio.typ {
+		case stdout:
+			b.outRing.Close()
+		case stderr:
+			b.errRing.Close()
+		}
+
+		logrus.Infof("close %v ring of containerio backend: %s, id: %s", cio.typ, name, cio.id)
 	}
 
 	cio.closed = true
@@ -267,6 +291,8 @@ type containerBackend struct {
 	backend Backend
 	outRing *ringbuff.RingBuff
 	errRing *ringbuff.RingBuff
+
+	wg *sync.WaitGroup
 }
 
 // subscribe be called in a groutine.

@@ -71,8 +71,8 @@ func NewFifos(id string, stdin bool) (*containerdio.FIFOSet, error) {
 }
 
 type ioSet struct {
-	in       io.Reader
-	out, err io.Writer
+	stdin          io.ReadCloser
+	stdout, stderr io.WriteCloser
 }
 
 type wgCloser struct {
@@ -122,8 +122,9 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 		}
 		set = append(set, f)
 		go func(w io.WriteCloser) {
-			io.Copy(w, ioset.in)
+			io.Copy(w, ioset.stdin)
 			w.Close()
+			ioset.stdin.Close()
 		}(f)
 	}
 
@@ -133,8 +134,9 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 	set = append(set, f)
 	wg.Add(1)
 	go func(r io.ReadCloser) {
-		io.Copy(ioset.out, r)
+		io.Copy(ioset.stdout, r)
 		r.Close()
+		ioset.stdout.Close()
 		wg.Done()
 	}(f)
 
@@ -146,11 +148,15 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 	if !tty {
 		wg.Add(1)
 		go func(r io.ReadCloser) {
-			io.Copy(ioset.err, r)
+			io.Copy(ioset.stderr, r)
 			r.Close()
+			ioset.stderr.Close()
 			wg.Done()
 		}(f)
+	} else {
+		ioset.stderr.Close()
 	}
+
 	return &wgCloser{
 		wg:     wg,
 		dir:    fifos.Dir,
@@ -160,7 +166,7 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 }
 
 // NewIOWithTerminal creates a new io set with the provied io.Reader/Writers for use with a terminal
-func NewIOWithTerminal(stdin io.Reader, stdout, stderr io.Writer, terminal bool, stdinEnable bool) containerdio.Creation {
+func NewIOWithTerminal(stdin io.ReadCloser, stdout, stderr io.WriteCloser, terminal bool, stdinEnable bool) containerdio.Creation {
 	return func(id string) (_ containerdio.IO, err error) {
 		paths, err := NewFifos(id, stdinEnable)
 		if err != nil {
@@ -179,9 +185,9 @@ func NewIOWithTerminal(stdin io.Reader, stdout, stderr io.Writer, terminal bool,
 		}
 		i := &cio{config: cfg}
 		set := &ioSet{
-			in:  stdin,
-			out: stdout,
-			err: stderr,
+			stdin:  stdin,
+			stdout: stdout,
+			stderr: stderr,
 		}
 		closer, err := copyIO(paths, set, cfg.Terminal)
 		if err != nil {
@@ -193,7 +199,7 @@ func NewIOWithTerminal(stdin io.Reader, stdout, stderr io.Writer, terminal bool,
 }
 
 // WithAttach attaches the existing io for a task to the provided io.Reader/Writers
-func WithAttach(stdin io.Reader, stdout, stderr io.Writer) containerdio.Attach {
+func WithAttach(stdin io.ReadCloser, stdout, stderr io.WriteCloser) containerdio.Attach {
 	return func(paths *containerdio.FIFOSet) (containerdio.IO, error) {
 		if paths == nil {
 			return nil, fmt.Errorf("cannot attach to existing fifos")
@@ -206,9 +212,9 @@ func WithAttach(stdin io.Reader, stdout, stderr io.Writer) containerdio.Attach {
 		}
 		i := &cio{config: cfg}
 		set := &ioSet{
-			in:  stdin,
-			out: stdout,
-			err: stderr,
+			stdin:  stdin,
+			stdout: stdout,
+			stderr: stderr,
 		}
 		closer, err := copyIO(paths, set, cfg.Terminal)
 		if err != nil {

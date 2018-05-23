@@ -215,7 +215,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		} else if err != nil {
 			logrus.Errorf("failed to recover container: %s,  %v", id, err)
 			// release io
-			io.Close()
+			io.Close(true)
 			mgr.IOs.Remove(id)
 		}
 
@@ -1627,7 +1627,8 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 
 	// release resource
 	if io := mgr.IOs.Get(c.ID); io != nil {
-		io.Close()
+		// Use a more elegant way to judge whether to close the IO forcibly.
+		io.Close(m == nil)
 		mgr.IOs.Remove(c.ID)
 	}
 
@@ -1725,7 +1726,7 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 		}
 
 		// close io
-		io.Close()
+		io.Close(false)
 		mgr.IOs.Remove(id)
 	}
 
