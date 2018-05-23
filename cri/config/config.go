@@ -10,4 +10,6 @@ type Config struct {
 	NetworkPluginConfDir string
 	// SandboxImage is the image used by sandbox container.
 	SandboxImage string
+	// CriVersion is the cri version
+	CriVersion string
 }
