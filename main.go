@@ -154,15 +154,17 @@ func runDaemon() error {
 	}
 
 	// saves daemon pid to pidfile.
-	if err := utils.NewPidfile(cfg.Pidfile); err != nil {
-		logrus.Errorf("failed to create pidfile: %s", err)
-		return err
-	}
-	defer func() {
-		if err := os.Remove(cfg.Pidfile); err != nil {
-			logrus.Errorf("failed to delete pidfile: %s", err)
+	if cfg.Pidfile != "" {
+		if err := utils.NewPidfile(cfg.Pidfile); err != nil {
+			logrus.Errorf("failed to create pidfile: %s", err)
+			return err
 		}
-	}()
+		defer func() {
+			if err := os.Remove(cfg.Pidfile); err != nil {
+				logrus.Errorf("failed to delete pidfile: %s", err)
+			}
+		}()
+	}
 
 	// set pouchd oom-score
 	if err := utils.SetOOMScore(os.Getpid(), cfg.OOMScoreAdjust); err != nil {
