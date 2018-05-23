@@ -2,6 +2,7 @@ package ctrd
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -67,6 +68,8 @@ type ImageAPIClient interface {
 	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
 	// RemoveImage removes the image by the given reference.
 	RemoveImage(ctx context.Context, ref string) error
+	// ImportImage creates a set of images by tarstream.
+	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features

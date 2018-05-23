@@ -152,6 +152,32 @@ paths:
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
 
+  /images/load:
+     post:
+      summary: "Import images"
+      description: |
+        Load a set of images by oci.v1 format tar stream
+      consumes:
+        - application/x-tar
+      responses:
+        200:
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "imageTarStream"
+          in: "body"
+          description: "tar stream containing images"
+          schema:
+            type: "string"
+            format: "binary"
+        - name: "name"
+          in: "query"
+          description: "set the image name for the tar stream, default unknown/unknown"
+          type: "string"
+
   /images/{imageid}/json:
     get:
       summary: "Inspect a image"

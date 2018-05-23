@@ -46,6 +46,9 @@ type ImageMgr interface {
 
 	// CheckReference returns imageID, actual reference and primary reference.
 	CheckReference(ctx context.Context, idOrRef string) (digest.Digest, reference.Named, reference.Named, error)
+
+	// LoadImage creates a set of images by tarstream.
+	LoadImage(ctx context.Context, imageName string, tarstream io.ReadCloser) error
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -345,7 +348,7 @@ func (mgr *ImageManager) updateLocalStore() error {
 
 	for _, img := range imgs {
 		if err := mgr.storeImageReference(ctx, img); err != nil {
-			return err
+			logrus.Warnf("failed to load the image reference into local store: %v", err)
 		}
 	}
 	return nil

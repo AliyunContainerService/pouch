@@ -3,6 +3,7 @@ package ctrd
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -62,6 +63,31 @@ func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 		return errors.Wrap(err, "failed to remove image")
 	}
 	return nil
+}
+
+// ImportImage creates a set of images by tarstream.
+//
+// NOTE: One tar may have several manifests.
+func (c *Client) ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	// NOTE: The import will store the data into boltdb. But the unpack may
+	// fail. It is not transaction.
+	imgs, err := wrapperCli.client.Import(ctx, importer, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, img := range imgs {
+		err = img.Unpack(ctx, containerd.DefaultSnapshotter)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return imgs, nil
 }
 
 // PullImage downloads an image from the remote repository.
