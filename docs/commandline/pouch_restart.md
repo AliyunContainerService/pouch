@@ -7,7 +7,7 @@ restart one or more containers
 restart one or more containers
 
 ```
-pouch restart [OPTION] CONTAINER [CONTAINERS]
+pouch restart [OPTION] CONTAINER [CONTAINER...]
 ```
 
 ### Examples

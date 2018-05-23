@@ -26,6 +26,10 @@ server: pre modules
 client: pre
 	@./hack/build client
 
+.PHONY: testserver
+testserver: pre modules
+	@./hack/build testserver
+
 .PHONY: clean
 clean:
 	$(GOCLEAN)

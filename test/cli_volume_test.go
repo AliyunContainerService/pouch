@@ -204,6 +204,24 @@ func (suite *PouchVolumeSuite) TestVolumeUsingByContainer(c *check.C) {
 	command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
 }
 
+// TestVolumePluginUsingByContainer tests creating container using the plugin volume.
+func (suite *PouchVolumeSuite) TestVolumePluginUsingByContainer(c *check.C) {
+	pc, _, _, _ := runtime.Caller(0)
+	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	var funcname string
+	for i := range tmpname {
+		funcname = tmpname[i]
+	}
+	volumeName := "volume_" + funcname
+	command.PouchRun("volume", "create", "--name", volumeName, "-d", "local-persist", "-o", "mountpoint=/data/volume1").Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "-v", volumeName+":/mnt", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+
+	// delete the container.
+	command.PouchRun("rm", "-f", funcname).Assert(c, icmd.Success)
+	// delete the volume.
+	command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+}
+
 // TestVolumeBindReplaceMode tests the volume "direct replace(dr)" mode.
 func (suite *PouchVolumeSuite) TestVolumeBindReplaceMode(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)

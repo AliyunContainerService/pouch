@@ -23,6 +23,17 @@ if [[ $SOURCEDIR != $DIR ]];then
 	ln -sf $DIR/ $SOURCEDIR
 fi
 
+#
+# CAL_INTEGRATION_TEST_COVERAGE indicates whehter or not calculate integration test coverage.
+# By default it is yes.
+#
+CAL_INTEGRATION_TEST_COVERAGE=${CAL_INTEGRATION_TEST_COVERAGE:-"yes"}
+if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
+	POUCHD="pouchd-test -test.coverprofile=$DIR/integrationcover.out DEVEL"
+else
+	POUCHD="pouchd"
+fi
+
 function get_containerd_version
 {
 	if which containerd &>/dev/null; then
@@ -96,6 +107,16 @@ function install_lxcfs
 	fi
 }
 
+# local-persist is a volume plugin
+function install_local_persist
+{
+	echo "Try installing local-persist"
+	wget --quiet -O /tmp/local-persist \
+		https://github.com/CWSpear/local-persist/releases/download/v1.3.0/local-persist-linux-amd64
+	chmod +x /tmp/local-persist
+	mv /tmp/local-persist /usr/local/bin/
+}
+
 function install_nsenter
 {
 	echo "Try installing nsenter"
@@ -157,6 +178,9 @@ function install_pouch
 	install_runc
 	# copy pouch daemon and pouch cli to PATH
 	echo "Install pouch."
+	if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
+		cp -f $DIR/pouchd-test /usr/local/bin/
+	fi
 	cp -f $DIR/pouch $DIR/pouchd /usr/local/bin/
 	install_lxcfs
 	install_nsenter
@@ -169,9 +193,19 @@ function target
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
 		;;
 	build)
+		#
+		# Also build pouchd-test binary if CAL_INTEGRATION_TEST_COVERAGE doesn't
+		# equal to 'no'.
+		#
+		if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
+			docker run --rm -v $(pwd):$SOURCEDIR $IMAGE \
+				bash -c "make testserver"  >$TMP/build.log ||
+				{ echo "make build log:"; cat $TMP/build.log; return 1; }
+		fi
 		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE \
 			bash -c "make build"  >$TMP/build.log ||
 			{ echo "make build log:"; cat $TMP/build.log; return 1; }
+
 		install_pouch  >$TMP/install.log ||
 			{ echo "install pouch log:"; cat $TMP/install.log; return 1; }
 		;;
@@ -184,22 +218,29 @@ function target
 		env PATH=$GOROOT/bin:$PATH $SOURCEDIR/hack/cri-test/test-cri.sh
 		;;
 	integration-test)
-
+		
 		install_dumb_init ||
 			echo "Warning: dumb-init install failed!\
 				 rich container related tests will be skipped"
+	
 		docker run --rm -v $(pwd):$SOURCEDIR \
 			-e GOPATH=/go:$SOURCEDIR/extra/libnetwork/Godeps/_workspace \
 			$IMAGE \
 			bash -c "cd test && go test -c -o integration-test"
 
-		#start pouch daemon
+		install_local_persist
+
+        	# start local-persist
+		echo "start local-persist volume plugin"
+        	local-persist > $TMP/volume.log 2 >&1 &
+
+		# start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
-			pouchd --debug --enable-lxcfs=true \
+			$POUCHD --debug --enable-lxcfs=true \
 				--lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
 		else
-			pouchd --debug > $TMP/log 2>&1 &
+			$POUCHD --debug > $TMP/log 2>&1 &
 		fi
 
 		# wait until pouch daemon is ready
@@ -226,8 +267,14 @@ function target
 		cp -rf $DIR/test/tls /tmp/
 
 		# If test is failed, print pouch daemon log.
-		$DIR/test/integration-test -test.v -check.v ||
-			{ echo "pouch daemon log:"; cat $TMP/log; return 1; } 
+		set +e
+		$DIR/test/integration-test -test.v -check.v
+		if (( $? != 0 )); then
+			echo "pouch daemon log:"
+			cat $TMP/log
+			return 1
+		fi
+		set -e
 		;;
 	*)
 		echo "no such target: $target"
@@ -253,7 +300,26 @@ function main
 
 	for target in ${targets[@]}; do
 		target $target
+		ret=$?
+		if (( $ret != 0 )); then
+			return $ret
+		fi
 	done
+	
+	if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
+		if ! echo ${targets[@]} | grep -q "integration" ; then 
+			return $ret
+		fi
+		# 
+		# kill pouchd-test and get the coverage
+		#
+		pkill --signal 3 pouchd-test || echo "no pouchd-test to be killed"
+		sleep 5
+
+		tail -1 $TMP/log 
+		cat $DIR/integrationcover.out >> $DIR/coverage.txt
+		return $ret
+	fi
 }
 
 main "$@"

@@ -214,10 +214,11 @@ func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http
 }
 
 // CreateVolume creates a volume in pouchd.
-func CreateVolume(c *check.C, name, driver string) error {
+func CreateVolume(c *check.C, name, driver string, options map[string]string) error {
 	obj := map[string]interface{}{
-		"Driver": driver,
-		"Name":   name,
+		"Driver":     driver,
+		"Name":       name,
+		"DriverOpts": options,
 	}
 	path := "/volumes/create"
 	body := request.WithJSONBody(obj)
