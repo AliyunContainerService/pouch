@@ -117,6 +117,21 @@ function install_local_persist
 	mv /tmp/local-persist /usr/local/bin/
 }
 
+# clean the local-persist
+function clean_local_persist
+{
+	echo "Try cleaning local-persist"
+	pid=$(pgrep local-persist)
+
+	if [[ $pid ]]; then
+		echo "Try killing local-persist process"
+		kill -9 $pid
+	fi
+
+	echo "Try removing local-persist.sock"
+	rm -rf /var/run/docker/plugins/local-persist.sock
+}
+
 function install_nsenter
 {
 	echo "Try installing nsenter"
@@ -269,11 +284,16 @@ function target
 		# If test is failed, print pouch daemon log.
 		set +e
 		$DIR/test/integration-test -test.v -check.v
+
 		if (( $? != 0 )); then
 			echo "pouch daemon log:"
 			cat $TMP/log
+			clean_local_persist
 			return 1
 		fi
+
+		clean_local_persist
+
 		set -e
 		;;
 	*)
