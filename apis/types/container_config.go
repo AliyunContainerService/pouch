@@ -35,6 +35,9 @@ type ContainerConfig struct {
 	// Command to run specified an array of strings.
 	Cmd []string `json:"Cmd"`
 
+	// Whether to generate the network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container.
+	DisableNetworkFiles bool `json:"DisableNetworkFiles,omitempty"`
+
 	// Set disk quota for container
 	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
@@ -125,6 +128,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig AttachStdout false */
 
 /* polymorph ContainerConfig Cmd false */
+
+/* polymorph ContainerConfig DisableNetworkFiles false */
 
 /* polymorph ContainerConfig DiskQuota false */
 

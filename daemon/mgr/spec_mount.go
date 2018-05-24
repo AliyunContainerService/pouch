@@ -3,8 +3,12 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"github.com/alibaba/pouch/apis/types"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/sirupsen/logrus"
 )
 
 func clearReadonly(m *specs.Mount) {
@@ -31,6 +35,11 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		return nil
 	}
 	for _, mp := range c.Mounts {
+		if trySetupNetworkMount(mp, c) {
+			// ignore the network mount, we will handle it later.
+			continue
+		}
+
 		// check duplicate mountpoint
 		for _, sm := range mounts {
 			if sm.Destination == mp.Destination {
@@ -69,6 +78,12 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 			Options:     opts,
 		})
 	}
+
+	// if disable hostfiles, we will not mount the hosts files into container.
+	if !c.Config.DisableNetworkFiles {
+		mounts = append(mounts, generateNetworkMounts(c)...)
+	}
+
 	s.Mounts = mounts
 
 	if c.HostConfig.Privileged {
@@ -82,4 +97,57 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		}
 	}
 	return nil
+}
+
+// generateNetworkMounts will generate network mounts.
+func generateNetworkMounts(c *Container) []specs.Mount {
+	mounts := make([]specs.Mount, 0)
+
+	fileBinds := []struct {
+		Name   string
+		Source string
+		Dest   string
+	}{
+		{"HostnamePath", c.HostnamePath, "/etc/hostname"},
+		{"HostsPath", c.HostsPath, "/etc/hosts"},
+		{"ResolvConfPath", c.ResolvConfPath, "/etc/resolv.conf"},
+	}
+
+	for _, bind := range fileBinds {
+		if bind.Source != "" {
+			_, err := os.Stat(bind.Source)
+			if err != nil {
+				logrus.Warnf("%s set to %s, but stat error: %v, skip it", bind.Name, bind.Source, err)
+			} else {
+				mounts = append(mounts, specs.Mount{
+					Source:      bind.Source,
+					Destination: bind.Dest,
+					Type:        "bind",
+					Options:     []string{"rbind", "rprivate"},
+				})
+			}
+		}
+	}
+
+	return mounts
+}
+
+// trySetupNetworkMount will try to set network mount.
+func trySetupNetworkMount(mount *types.MountPoint, c *Container) bool {
+	if mount.Destination == "/etc/hostname" {
+		c.HostnamePath = mount.Source
+		return true
+	}
+
+	if mount.Destination == "/etc/hosts" {
+		c.HostsPath = mount.Source
+		return true
+	}
+
+	if mount.Destination == "/etc/resolv.conf" {
+		c.ResolvConfPath = mount.Source
+		return true
+	}
+
+	return false
 }
