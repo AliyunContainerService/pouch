@@ -265,6 +265,34 @@ paths:
         500:
           $ref: "#/responses/500ErrorResponse"
 
+  /images/{imageid}/tag:
+    post:
+      summary: "Tag an image"
+      description: "Add tag reference to the existing image"
+      parameters:
+        - $ref: "#/parameters/imageid"
+        - name: "repo"
+          in: "query"
+          description: "The repository to tag in. For example, `someuser/someimage`."
+          type: "string"
+        - name: "tag"
+          in: "query"
+          description: "The name of the new tag."
+          type: "string"
+      responses:
+        201:
+          description: "No error"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "no such image"
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+
   /images/{imageid}:
     delete:
       summary: "Remove an image"
