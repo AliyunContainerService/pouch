@@ -1528,12 +1528,12 @@ func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*conta
 
 	options := []func(*containerio.Option){
 		containerio.WithID(id),
-		containerio.WithStdin(attach.Stdin),
-		containerio.WithMuxDisabled(attach.MuxDisabled),
 	}
 
 	if attach != nil {
 		options = append(options, attachConfigToOptions(attach)...)
+		options = append(options, containerio.WithStdin(attach.Stdin))
+		options = append(options, containerio.WithMuxDisabled(attach.MuxDisabled))
 	} else {
 		options = append(options, containerio.WithDiscard())
 	}
@@ -1551,11 +1551,11 @@ func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*con
 		containerio.WithID(id),
 		containerio.WithRootDir(rootDir),
 		containerio.WithJSONFile(),
-		containerio.WithStdin(attach.Stdin),
 	}
 
 	if attach != nil {
 		options = append(options, attachConfigToOptions(attach)...)
+		options = append(options, containerio.WithStdin(attach.Stdin))
 	} else {
 		options = append(options, containerio.WithDiscard())
 	}
