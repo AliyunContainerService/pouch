@@ -22,10 +22,11 @@ var (
 )
 
 const (
-	busyboxImage125 = "registry.hub.docker.com/library/busybox:1.25"
-	testHubAddress  = "registry.hub.docker.com"
-	testHubUser     = "pouchcontainertest"
-	testHubPasswd   = "pouchcontainertest"
+	busyboxImage125   = "registry.hub.docker.com/library/busybox:1.25"
+	busyboxImage125ID = "sha256:e02e811dd08fd49e7f6032625495118e63f597eb150403d02e3238af1df240ba"
+	testHubAddress    = "registry.hub.docker.com"
+	testHubUser       = "pouchcontainertest"
+	testHubPasswd     = "pouchcontainertest"
 
 	testDaemonHTTPSAddr = "tcp://0.0.0.0:2000"
 	serverCa            = "/tmp/tls/server/ca.pem"

@@ -21,14 +21,14 @@ func init() {
 func (suite *PouchTagSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	PullImage(c, busyboxImage)
+	PullImage(c, busyboxImage125)
 }
 
 // TestImageTagOKWithSourceImageName tests OK.
 func (suite *PouchTagSuite) TestImageTagOKWithSourceImageName(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "source.name"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
-	command.PouchRun("tag", busyboxImage, tagRef).Assert(c, icmd.Success)
+	command.PouchRun("tag", busyboxImage125, tagRef).Assert(c, icmd.Success)
 	defer forceDeleteImage(c, tagRef)
 
 	command.PouchRun("image", "inspect", tagRef).Assert(c, icmd.Success)
@@ -39,7 +39,7 @@ func (suite *PouchTagSuite) TestImageTagOKWithSourceImageID(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "source.id"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 
-	command.PouchRun("tag", environment.BusyboxID, tagRef).Assert(c, icmd.Success)
+	command.PouchRun("tag", busyboxImage125ID, tagRef).Assert(c, icmd.Success)
 	defer forceDeleteImage(c, tagRef)
 
 	command.PouchRun("image", "inspect", tagRef).Assert(c, icmd.Success)
@@ -50,7 +50,7 @@ func (suite *PouchTagSuite) TestImageTagOKTargetWithoutTag(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "latest"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 
-	command.PouchRun("tag", busyboxImage, repo).Assert(c, icmd.Success)
+	command.PouchRun("tag", busyboxImage125, repo).Assert(c, icmd.Success)
 	defer forceDeleteImage(c, tagRef)
 
 	command.PouchRun("image", "inspect", tagRef).Assert(c, icmd.Success)
@@ -62,7 +62,7 @@ func (suite *PouchTagSuite) TestImageTagFailToUseDigest(c *check.C) {
 	dig := "sha256:1ac48589692a53a9b8c2d1ceaa6b402665aa7fe667ba51ccc03002300856d8c7"
 
 	tagRef := fmt.Sprintf("%s:%s@%s", repo, tag, dig)
-	got := command.PouchRun("tag", busyboxImage, tagRef).Stderr()
+	got := command.PouchRun("tag", busyboxImage125, tagRef).Stderr()
 	c.Assert(got, check.NotNil)
 
 	expectedErr := "refusing to create a tag with a digest reference"
@@ -76,7 +76,7 @@ func (suite *PouchTagSuite) TestImageTagFailToUseSha256AsName(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagfail/sha256", "1.25"
 
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
-	got := command.PouchRun("tag", busyboxImage, tagRef).Stderr()
+	got := command.PouchRun("tag", busyboxImage125, tagRef).Stderr()
 	c.Assert(got, check.NotNil)
 
 	expectedErr := "refusing to create an reference using digest algorithm as name"
