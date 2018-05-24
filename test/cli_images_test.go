@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -39,6 +40,12 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	image, err := getImageInfo(apiClient, busyboxImage)
 	c.Assert(err, check.IsNil)
 
+	sortImageID := func(ids string) string {
+		idSlice := strings.Fields(ids)
+		sort.Strings(idSlice)
+		return strings.Join(idSlice, "\n")
+	}
+
 	// without flag
 	{
 		res := command.PouchRun("images").Assert(c, icmd.Success)
@@ -52,8 +59,10 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 		resQ := command.PouchRun("images", "-q").Assert(c, icmd.Success)
 		resQuiet := command.PouchRun("images", "--quiet").Assert(c, icmd.Success)
 
-		c.Assert(resQ.Combined(), check.Equals, resQuiet.Combined())
-		err := util.PartialEqual(strings.TrimSpace(resQ.Combined()), utils.TruncateID(image.ID))
+		qIDs, quietIDs := sortImageID(resQ.Combined()), sortImageID(resQuiet.Combined())
+
+		c.Assert(qIDs, check.Equals, quietIDs)
+		err := util.PartialEqual(strings.TrimSpace(qIDs), utils.TruncateID(image.ID))
 		c.Assert(err, check.IsNil)
 	}
 
