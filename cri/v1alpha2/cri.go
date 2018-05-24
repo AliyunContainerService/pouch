@@ -667,7 +667,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Message:     message,
 		Labels:      labels,
 		Annotations: annotations,
-		// TODO: LogPath.
+		LogPath:     container.LogPath,
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil
