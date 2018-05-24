@@ -41,7 +41,7 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaWorks(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("volume", "create", "--name", funcname, "-d", "local", "-o", "size=1g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", funcname, "-d", "local", "-o", "opt.size=1g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", funcname)
 
 	command.PouchRun("run", "-d", "-v", funcname+":/mnt", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
@@ -76,10 +76,10 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaMultiWorks(c *check.C) {
 	name1 := funcname + "1"
 	name2 := funcname + "2"
 
-	command.PouchRun("volume", "create", "--name", name1, "-d", "local", "-o", "size=2.2g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", name1, "-d", "local", "-o", "opt.size=2.2g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", name1)
 
-	command.PouchRun("volume", "create", "--name", name2, "-d", "local", "-o", "size=3.2g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", name2, "-d", "local", "-o", "opt.size=3.2g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", name2)
 
 	command.PouchRun("run", "-d", "-v", name1+":/mnt/test1", "-v", name2+":/mnt/test2", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)

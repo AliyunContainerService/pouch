@@ -959,7 +959,7 @@ paths:
                   Scope: "local"
                   Options:
                     device: "tmpfs"
-                    o: "size=100m,uid=1000"
+                    o: "opt.size=100m,uid=1000"
                     type: "tmpfs"
               Warnings: []
         500:

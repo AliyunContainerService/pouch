@@ -47,24 +47,22 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 		return err
 	}
 
+	status := map[string]interface{}{}
+	for k, v := range volume.Options() {
+		if k != "" && v != "" {
+			status[k] = v
+		}
+	}
+	status["size"] = volume.Size()
+
 	respVolume := types.VolumeInfo{
 		Name:       name,
 		Driver:     driver,
 		Labels:     config.Labels,
 		Mountpoint: volume.Path(),
+		Status:     status,
 		CreatedAt:  volume.CreationTimestamp.Format("2006-1-2 15:04:05"),
 	}
-
-	var status map[string]interface{}
-	for k, v := range volume.Options() {
-		if k != "" && v != "" {
-			if status == nil {
-				status = make(map[string]interface{})
-			}
-			status[k] = v
-		}
-	}
-	respVolume.Status = status
 
 	return EncodeResponse(rw, http.StatusCreated, respVolume)
 }
@@ -75,24 +73,23 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 	if err != nil {
 		return err
 	}
+
+	status := map[string]interface{}{}
+	for k, v := range volume.Options() {
+		if k != "" && v != "" {
+			status[k] = v
+		}
+	}
+	status["size"] = volume.Size()
+
 	respVolume := types.VolumeInfo{
 		Name:       volume.Name,
 		Driver:     volume.Driver(),
 		Mountpoint: volume.Path(),
 		CreatedAt:  volume.CreateTime(),
 		Labels:     volume.Labels,
+		Status:     status,
 	}
-
-	var status map[string]interface{}
-	for k, v := range volume.Options() {
-		if k != "" && v != "" {
-			if status == nil {
-				status = make(map[string]interface{})
-			}
-			status[k] = v
-		}
-	}
-	respVolume.Status = status
 
 	return EncodeResponse(rw, http.StatusOK, respVolume)
 }
@@ -105,25 +102,22 @@ func (s *Server) listVolume(ctx context.Context, rw http.ResponseWriter, req *ht
 
 	respVolumes := types.VolumeListResp{Volumes: []*types.VolumeInfo{}, Warnings: nil}
 	for _, volume := range volumes {
+		status := map[string]interface{}{}
+		for k, v := range volume.Options() {
+			if k != "" && v != "" {
+				status[k] = v
+			}
+		}
+		status["size"] = volume.Size()
+
 		respVolume := &types.VolumeInfo{
 			Name:       volume.Name,
 			Driver:     volume.Driver(),
 			Mountpoint: volume.Path(),
 			CreatedAt:  volume.CreateTime(),
 			Labels:     volume.Labels,
+			Status:     status,
 		}
-
-		var status map[string]interface{}
-		for k, v := range volume.Options() {
-			if k != "" && v != "" {
-				if status == nil {
-					status = make(map[string]interface{})
-				}
-				status[k] = v
-			}
-		}
-		respVolume.Status = status
-
 		respVolumes.Volumes = append(respVolumes.Volumes, respVolume)
 	}
 	return EncodeResponse(rw, http.StatusOK, respVolumes)
