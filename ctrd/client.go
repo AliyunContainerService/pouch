@@ -302,6 +302,10 @@ func (c *Client) Cleanup() error {
 		return err
 	}
 
+	// Note(ziren): notify containerd is dead before containerd
+	// is really dead
+	c.watch.setContainerdDead(true)
+
 	// Ask the daemon to quit
 	syscall.Kill(c.daemonPid, syscall.SIGTERM)
 
