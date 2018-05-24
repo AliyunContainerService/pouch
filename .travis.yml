@@ -15,8 +15,14 @@ notifications:
     on_error: always
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y -qq autoconf automake
+  |
+    git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)' || {
+      echo "travis doesn't run for document-only changed"
+      exit
+    }
+
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq autoconf automake
 
 env:
   - TEST_SUITE=integration-test
