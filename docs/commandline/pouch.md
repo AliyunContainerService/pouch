@@ -42,6 +42,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch run](pouch_run.md)	 - Create a new container and start it
 * [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
+* [pouch tag](pouch_tag.md)	 - Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
 * [pouch top](pouch_top.md)	 - Display the running processes of a container
 * [pouch unpause](pouch_unpause.md)	 - Unpause one or more paused container
 * [pouch update](pouch_update.md)	 - Update the configurations of a container
