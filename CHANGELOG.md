@@ -1,5 +1,158 @@
 # CHANGELOG
 
+## 0.5.0 (2018-05-25)
+
+**IMPORTANT**: In PouchContainer 0.5.0 we have done many things that important to all users of PouchContainer:
+
+1. PouchContainer now supports CRI v1alpha2 that will support for Kubernetes 1.10.0
+2. Add plugin mechanism that we can use many existing volume and network plugins
+3. Add many container and image tools like `logs` and `tag` command that will be very helpful for daily container operation
+4. PouchContainer now is more stable and works well in production environment
+
+### Remote API && Client
+
+* Add instruction comment for the `blkio-weight-device` flag of `run` command [\#1381](https://github.com/alibaba/pouch/pull/1381) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix `cgroup-parent` can not be set from the daemon config file [\#1361](https://github.com/alibaba/pouch/pull/1361) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add volume drivers info to system info [\#1352](https://github.com/alibaba/pouch/pull/1352) ([shaloulcy](https://github.com/shaloulcy))
+* Fix `ExecIDs` parameter of `ContainerConfig` should be a slice [\#1324](https://github.com/alibaba/pouch/pull/1324) ([HusterWan](https://github.com/HusterWan))
+* Refactor format `topExamples` code and add `execExample` [\#1319](https://github.com/alibaba/pouch/pull/1319) ([soarpenguin](https://github.com/soarpenguin))
+* Enhance add more field in `pouch info` command [\#1238](https://github.com/alibaba/pouch/pull/1238) ([ZouRui89](https://github.com/ZouRui89))
+* Add `debug` flag to pouch client [\#1234](https://github.com/alibaba/pouch/pull/1234) ([shaloulcy](https://github.com/shaloulcy))
+* Fix `exec` command align with Moby `v1.24` API [\#1226](https://github.com/alibaba/pouch/pull/1226) ([fuweid](https://github.com/fuweid))
+* Fix volume info of `inspect` output is incompatible with Moby API [\#1213](https://github.com/alibaba/pouch/pull/1213) ([HusterWan](https://github.com/HusterWan))
+* Refactor network list api, make it compatible with Mody API [\#1173](https://github.com/alibaba/pouch/pull/1173) ([rudyfly](https://github.com/rudyfly))
+
+### Runtime
+
+* Fix container may be killed when ontainerd instance exit [\#1407](https://github.com/alibaba/pouch/pull/1407) ([HusterWan](https://github.com/HusterWan))
+* Fix panic when execute `exec` command with flag `-d` [\#1394](https://github.com/alibaba/pouch/pull/1394) ([HusterWan](https://github.com/HusterWan))
+* New `tag` tool for pouch that allow create alias name for images [\#1378](https://github.com/alibaba/pouch/pull/1378) ([fuweid](https://github.com/fuweid))
+* Fix add judge for whether pidfile path is given when start pouch daemon [\#1374](https://github.com/alibaba/pouch/pull/1374) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix map type can not be merged [\#1367](https://github.com/alibaba/pouch/pull/1367) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add support for updating or deleting an env value [\#1364](https://github.com/alibaba/pouch/pull/1364) ([HusterWan](https://github.com/HusterWan))
+* Add support for managing more containers in some commands [\#1357](https://github.com/alibaba/pouch/pull/1357) ([xiechengsheng](https://github.com/xiechengsheng))
+* Fix remove `pids-limit` initial value [\#1354](https://github.com/alibaba/pouch/pull/1354) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add support for using an image by digest id [\#1351](https://github.com/alibaba/pouch/pull/1351) ([fuweid](https://github.com/fuweid))
+* Support generate version information at build time [\#1350](https://github.com/alibaba/pouch/pull/1350) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix let `execConfig` value assignment before IO close, so thath `CRI` test case can get right result before container exit [\#1340](https://github.com/alibaba/pouch/pull/1340) ([ZouRui89](https://github.com/ZouRui89))
+* Fix make the jsonfile exit friendly [\#1330](https://github.com/alibaba/pouch/pull/1330) ([fuweid](https://github.com/fuweid))
+* Fix `markStopped` may failed that will cause container status not right [\#1322](https://github.com/alibaba/pouch/pull/1322) ([HusterWan](https://github.com/HusterWan))
+* Fix mount `/sys/fs/cgroup` into container [\#1314](https://github.com/alibaba/pouch/pull/1314) ([fuweid](https://github.com/fuweid))
+* Fix make pouch daemon exit friendly [\#1311](https://github.com/alibaba/pouch/pull/1311) ([fuweid](https://github.com/fuweid))
+* Refactor eliminate `containerMeta` in pouch daemon manager [\#1300](https://github.com/alibaba/pouch/pull/1300) ([allencloud](https://github.com/allencloud))
+* New `logs` API implement to redirct container's `StdOut` and `StdErr` to json file [\#1298](https://github.com/alibaba/pouch/pull/1298) ([fuweid](https://github.com/fuweid))
+* Refactor reorder function sequence to make it more reasonable [\#1296](https://github.com/alibaba/pouch/pull/1296) ([allencloud](https://github.com/allencloud))
+* Add support for taking over old containerd instance when pouchd restart [\#1275](https://github.com/alibaba/pouch/pull/1275) ([HusterWan](https://github.com/HusterWan))
+* Fix can't stop a `paused` container [\#1269](https://github.com/alibaba/pouch/pull/1269) ([shaloulcy](https://github.com/shaloulcy))
+* Refactor image manager: redesign the `imageStore` in image manager and make it more clear and stable [\#1267](https://github.com/alibaba/pouch/pull/1267) ([fuweid](https://github.com/fuweid))
+* Fix compatibility with alidocker when update container diskquota [\#1264](https://github.com/alibaba/pouch/pull/1264) ([HusterWan](https://github.com/HusterWan))
+* Fix change the `QuotaID` to `QuotaId` to align with Moby `v1.24` API [\#1263](https://github.com/alibaba/pouch/pull/1263) ([fuweid](https://github.com/fuweid))
+* Refactor facilitate make.sh `build` part code [\#1261](https://github.com/alibaba/pouch/pull/1261) ([u2takey](https://github.com/u2takey))
+* Fix set container env failed because `Invalid cross-device link` error [\#1260](https://github.com/alibaba/pouch/pull/1260) ([HusterWan](https://github.com/HusterWan))
+* Fix the output file is used incorrectly & fix the wrong test case name [\#1258](https://github.com/alibaba/pouch/pull/1258) ([xieyanke](https://github.com/xieyanke))
+* Add `--volume` flag when remove container that will delete all anonymous volumes created by pouchd [\#1255](https://github.com/alibaba/pouch/pull/1255) ([rudyfly](https://github.com/rudyfly))
+* Fix mountpoint binary not found error [\#1253](https://github.com/alibaba/pouch/pull/1253) ([shaloulcy](https://github.com/shaloulcy))
+* Fix the mount path of tmpfs volume and some misspells [\#1251](https://github.com/alibaba/pouch/pull/1251) ([shaloulcy](https://github.com/shaloulcy))
+* Fix merge flag default value in pouch daemon config, if flag not be passed, we should not merge it with daemon config [\#1246](https://github.com/alibaba/pouch/pull/1246) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add vagrant environment for development [\#1245](https://github.com/alibaba/pouch/pull/1245) ([u2takey](https://github.com/u2takey))
+* Fix free resources after exec exit [\#1240](https://github.com/alibaba/pouch/pull/1240) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix modify log format [\#1239](https://github.com/alibaba/pouch/pull/1239) ([rudyfly](https://github.com/rudyfly))
+* Fix add newline for id when create container [\#1237](https://github.com/alibaba/pouch/pull/1237) ([fuweid](https://github.com/fuweid))
+* Add update restful api support to update container diskquota [\#1235](https://github.com/alibaba/pouch/pull/1235) ([HusterWan](https://github.com/HusterWan))
+* Fix `setRawMode` can only be set when the user set tty [\#1233](https://github.com/alibaba/pouch/pull/1233) ([fuweid](https://github.com/fuweid))
+* Fix compatibility with `alidocker` when update container labels [\#1228](https://github.com/alibaba/pouch/pull/1228) ([HusterWan](https://github.com/HusterWan))
+* Add `--pids-limit` flags to `create` command [\#1227](https://github.com/alibaba/pouch/pull/1227) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add support update container's `cpu-period` [\#1222](https://github.com/alibaba/pouch/pull/1222) ([HusterWan](https://github.com/HusterWan))
+* Add support parsing `ContainerConfig.Volumes` when create container [\#1219](https://github.com/alibaba/pouch/pull/1219) ([rudyfly](https://github.com/rudyfly))
+* Add support updating env when container is running [\#1218](https://github.com/alibaba/pouch/pull/1218) ([HusterWan](https://github.com/HusterWan))
+* Fix volume size without unit [\#1215](https://github.com/alibaba/pouch/pull/1215) ([rudyfly](https://github.com/rudyfly))
+* Fix remove the `DiskQuota` field from `Resource` struct [\#1212](https://github.com/alibaba/pouch/pull/1212) ([fuweid](https://github.com/fuweid))
+* Fix make stopping an non-running container valid [\#1210](https://github.com/alibaba/pouch/pull/1210) ([allencloud](https://github.com/allencloud))
+* Fix make stopping a stopped container return no error [\#1209](https://github.com/alibaba/pouch/pull/1209) ([allencloud](https://github.com/allencloud))
+* Fix make `restart` API support restarting an stopped container [\#1208](https://github.com/alibaba/pouch/pull/1208) ([allencloud](https://github.com/allencloud))
+* Refactor store container info to disk failed should return errors [\#1203](https://github.com/alibaba/pouch/pull/1203) ([HusterWan](https://github.com/HusterWan))
+* Fix make logrus detect whether output with color [\#1202](https://github.com/alibaba/pouch/pull/1202) ([yyb196](https://github.com/yyb196))
+* Fix remove update image and fix bugs when update env [\#1196](https://github.com/alibaba/pouch/pull/1196) ([HusterWan](https://github.com/HusterWan))
+* Fix remove log format type check [\#1192](https://github.com/alibaba/pouch/pull/1192) ([oiooj](https://github.com/oiooj))
+* Fix add default tag `:latest` when using pouch `rmi` command to remove untagged container images. [\#1191](https://github.com/alibaba/pouch/pull/1191) ([xiechengsheng](https://github.com/xiechengsheng))
+* Fix container cannot start after first start failed [\#1190](https://github.com/alibaba/pouch/pull/1190) ([HusterWan](https://github.com/HusterWan))
+* Fix check the duplicate mount point [\#1185](https://github.com/alibaba/pouch/pull/1185) ([rudyfly](https://github.com/rudyfly))
+* Fix if user rename container with id use the real name to clean the cache [\#1182](https://github.com/alibaba/pouch/pull/1182) ([yyb196](https://github.com/yyb196))
+* Add `--ulimit` flag to `create` command [\#1179](https://github.com/alibaba/pouch/pull/1179) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add support recording container's last exit time [\#1176](https://github.com/alibaba/pouch/pull/1176) ([Ace-Tang](https://github.com/Ace-Tang))
+* Fix update `SafeMap` item should just call `Put` method, no need call `Remove` method [\#1175](https://github.com/alibaba/pouch/pull/1175) ([HusterWan](https://github.com/HusterWan))
+* Add support setting volumes to `/etc/mtab` [\#1170](https://github.com/alibaba/pouch/pull/1170) ([rudyfly](https://github.com/rudyfly))
+
+### Documentation
+
+* Update doc of pouch with kubernetes deploying [\#1384](https://github.com/alibaba/pouch/pull/1384) ([Starnop](https://github.com/Starnop))
+* Update `apt-key` fingerprint to `BE2F475F` when install pouch on ubuntu [\#1339](https://github.com/alibaba/pouch/pull/1339) ([rhinoceros](https://github.com/rhinoceros))
+* Add more information about how to run test [\#1331](https://github.com/alibaba/pouch/pull/1331) ([Letty5411](https://github.com/Letty5411))
+* Add misspell tool to check English words [\#1304](https://github.com/alibaba/pouch/pull/1304) ([allencloud](https://github.com/allencloud))
+* Add introduction document about how to run `kata-container` with pouch [\#1295](https://github.com/alibaba/pouch/pull/1295) ([Ace-Tang](https://github.com/Ace-Tang))
+* Add code style introduction document for pouch [\#1283](https://github.com/alibaba/pouch/pull/1283) ([allencloud](https://github.com/allencloud))
+* Add introduction document about how to  deploy kubernetes with pouch powerd by aliyun [\#1236](https://github.com/alibaba/pouch/pull/1236) ([Starnop](https://github.com/Starnop))
+* Fix typos [\#1177](https://github.com/alibaba/pouch/pull/1177) ([wgliang](https://github.com/wgliang))  [\#1178](https://github.com/alibaba/pouch/pull/1178) ([XSAM](https://github.com/XSAM))  [\#1200](https://github.com/alibaba/pouch/pull/1200) ([shaloulcy](https://github.com/shaloulcy))  [\#1189](https://github.com/alibaba/pouch/pull/1189) ([xiechengsheng](https://github.com/xiechengsheng))  [\#1303](https://github.com/alibaba/pouch/pull/1303) ([chuanchang](https://github.com/chuanchang))  [\#1248](https://github.com/alibaba/pouch/pull/1248) ([raoqi](https://github.com/raoqi))  [\#1216](https://github.com/alibaba/pouch/pull/1216) ([shaloulcy](https://github.com/shaloulcy))
+* Fix pouch github address url  [\#1229](https://github.com/alibaba/pouch/pull/1229) ([u2takey](https://github.com/u2takey))
+* Add markdownlint tool in Dockerfile [\#1204](https://github.com/alibaba/pouch/pull/1204) ([allencloud](https://github.com/allencloud))
+
+### Kubernetes
+
+* Fix return container `LogPath` in `ContainerStatusResponse` [\#1401](https://github.com/alibaba/pouch/pull/1401) ([Starnop](https://github.com/Starnop))
+* Fix replace pod default `pause` image with the google released image [\#1382](https://github.com/alibaba/pouch/pull/1382) ([ZouRui89](https://github.com/ZouRui89))
+* Add support both for CRI v1alpha1 and v1alpha2 version [\#1359](https://github.com/alibaba/pouch/pull/1359) ([Starnop](https://github.com/Starnop))
+* Add timeout handler for `execSync` in cri part [\#1318](https://github.com/alibaba/pouch/pull/1318) ([ZouRui89](https://github.com/ZouRui89))
+* Refactor move the `CRI` code out of pouch `mgr` dirctory [\#1317](https://github.com/alibaba/pouch/pull/1317) ([Starnop](https://github.com/Starnop))
+* Fix disable mux stdout and stderr if backend is not http [\#1250](https://github.com/alibaba/pouch/pull/1250) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix handle container io properly when restart pouchd [\#1220](https://github.com/alibaba/pouch/pull/1220) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* Fix evaluate finish time of container in CRI correctly [\#1183](https://github.com/alibaba/pouch/pull/1183) ([YaoZengzeng](https://github.com/YaoZengzeng))
+
+### Storage
+
+* Support volume plugin mechanism, now pouch not only supports `local/tmpfs/ceph` volumes, but also support existing mature docker volume drivers [\#1326](https://github.com/alibaba/pouch/pull/1326) ([shaloulcy](https://github.com/shaloulcy))
+* Fix we should add lock before visit volume boltdb [\#1286](https://github.com/alibaba/pouch/pull/1286) ([rudyfly](https://github.com/rudyfly))
+* Add pouch `plugin` mechanism, so that we can use existing moby volume and network plugins [\#1278](https://github.com/alibaba/pouch/pull/1278) ([shaloulcy](https://github.com/shaloulcy))
+* Fix change volume metadata struct for remote storage manager [\#1271](https://github.com/alibaba/pouch/pull/1271) ([rudyfly](https://github.com/rudyfly))
+* Add `volume-driver-alias` flag to volume manager, we can set alias name for the exist volume drivers [\#1224](https://github.com/alibaba/pouch/pull/1224) ([rudyfly](https://github.com/rudyfly))
+
+### Network
+
+* Fix endpoints are disappeared when pouchd restart [\#1312](https://github.com/alibaba/pouch/pull/1312) ([rudyfly](https://github.com/rudyfly))
+* Fix remove all endpoints when execute `network disconnect` command [\#1284](https://github.com/alibaba/pouch/pull/1284) ([rudyfly](https://github.com/rudyfly))
+* Add `network connect` interface for container [\#1187](https://github.com/alibaba/pouch/pull/1187) ([rudyfly](https://github.com/rudyfly))
+* Add `network disconnect` interface for container [\#1172](https://github.com/alibaba/pouch/pull/1172) ([HusterWan](https://github.com/HusterWan))
+
+### Test
+
+* Fix use `busybox:1.25` instead of `busybox:1.28` in `tag` command cli test [\#1406](https://github.com/alibaba/pouch/pull/1406) ([fuweid](https://github.com/fuweid))
+* Fix use the stable image ID in test case [\#1397](https://github.com/alibaba/pouch/pull/1397) ([fuweid](https://github.com/fuweid))
+* Fix make the PullImage test util work [\#1386](https://github.com/alibaba/pouch/pull/1386) ([fuweid](https://github.com/fuweid))
+* Update split `run` command test file into several files [\#1385](https://github.com/alibaba/pouch/pull/1385) ([Letty5411](https://github.com/Letty5411))
+* Add test cases for `volume plugin` [\#1368](https://github.com/alibaba/pouch/pull/1368) ([shaloulcy](https://github.com/shaloulcy))
+* Add cli test for `pause` command and fix some tiny bugs [\#1360](https://github.com/alibaba/pouch/pull/1360) ([ZouRui89](https://github.com/ZouRui89))
+* Fix `TestRunWithPidsLimit` test case failed because no pids cgroup support [\#1353](https://github.com/alibaba/pouch/pull/1353) ([Ace-Tang](https://github.com/Ace-Tang))
+* Enhance cli related tests [\#1341](https://github.com/alibaba/pouch/pull/1341) ([Letty5411](https://github.com/Letty5411))
+* Fix `ps` command cli tests failed [\#1334](https://github.com/alibaba/pouch/pull/1334) ([HusterWan](https://github.com/HusterWan))
+* Fix missing removal of container when test suit end [\#1327](https://github.com/alibaba/pouch/pull/1327) ([allencloud](https://github.com/allencloud))
+* Fix using existing image and fix shell format error [\#1313](https://github.com/alibaba/pouch/pull/1313) ([Letty5411](https://github.com/Letty5411))
+* Add `-race` flag to `go test` command to detect race [\#1294](https://github.com/alibaba/pouch/pull/1294) ([allencloud](https://github.com/allencloud))
+* Enhance making test more robust [\#1279](https://github.com/alibaba/pouch/pull/1279) ([Letty5411](https://github.com/Letty5411))
+* Fix `restart` the `paused` status container ci failed  [\#1272](https://github.com/alibaba/pouch/pull/1272) ([shaloulcy](https://github.com/shaloulcy))
+* Fix `run` container exit because of no using long run command caused ci failed [\#1214](https://github.com/alibaba/pouch/pull/1214) ([Ace-Tang](https://github.com/Ace-Tang))
+* Trick skip always failed tests [\#1195](https://github.com/alibaba/pouch/pull/1195) ([Ace-Tang](https://github.com/Ace-Tang))
+
+### New Contributors
+
+Here is the list of new contributors:
+
+* [rhinoceros](https://github.com/rhinoceros)
+* [soarpenguin](https://github.com/soarpenguin)
+* [chuanchang](https://github.com/chuanchang)
+* [raoqi](https://github.com/raoqi)
+* [u2takey](https://github.com/u2takey)
+* [shaloulcy](https://github.com/shaloulcy)
+* [xiechengsheng](https://github.com/xiechengsheng)
+
 ## 0.4.0 (2018-04-19)
 
 ### Remote API && Client
