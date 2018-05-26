@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alibaba/pouch/pkg/errtypes"
-	"github.com/alibaba/pouch/pkg/reference"
-
 	"github.com/spf13/cobra"
 )
 
@@ -56,46 +53,18 @@ func (ug *UpgradeCommand) runUpgrade(args []string) error {
 		config.Cmd = args[1:]
 	}
 
-	ctx := context.Background()
-	apiClient := ug.cli.Client()
-
-	// Check whether the image has been pulled
-	_, err = apiClient.ImageInspect(ctx, config.Image)
-	if err != nil && errtypes.IsNotfound(err) {
-		fmt.Printf("Image %s not found, try to pull it...\n", config.Image)
-
-		namedRef, err := reference.Parse(config.Image)
-		if err != nil {
-			return fmt.Errorf("failed to pull image: %v", err)
-		}
-		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
-
-		var name, tag string
-		if reference.IsNameTagged(namedRef) {
-			name, tag = namedRef.Name(), namedRef.(reference.Tagged).Tag()
-		} else {
-			name = namedRef.String()
-		}
-
-		responseBody, err := apiClient.ImagePull(ctx, name, tag, fetchRegistryAuth(namedRef.Name()))
-		if err != nil {
-			return fmt.Errorf("failed to pull image: %v", err)
-		}
-		defer responseBody.Close()
-
-		if err := showProgress(responseBody); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
 	containerName := ug.name
 	if containerName == "" {
 		return fmt.Errorf("failed to upgrade container: must specify container name")
 	}
 
-	// TODO if error is image not found, we can pull image, and retry upgrade
+	ctx := context.Background()
+	apiClient := ug.cli.Client()
+
+	if err := pullMissingImage(ctx, apiClient, config.Image, false); err != nil {
+		return err
+	}
+
 	err = apiClient.ContainerUpgrade(ctx, containerName, config.ContainerConfig, config.HostConfig)
 	if err == nil {
 		fmt.Println(containerName)

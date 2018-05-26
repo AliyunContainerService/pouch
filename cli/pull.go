@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"text/tabwriter"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/credential"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/reference"
@@ -55,28 +57,7 @@ func (p *PullCommand) addFlags() {
 
 // runPull is the entry of pull command.
 func (p *PullCommand) runPull(args []string) error {
-	namedRef, err := reference.Parse(args[0])
-	if err != nil {
-		return fmt.Errorf("failed to pull image: %v", err)
-	}
-	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
-
-	var name, tag string
-	if reference.IsNameTagged(namedRef) {
-		name, tag = namedRef.Name(), namedRef.(reference.Tagged).Tag()
-	} else {
-		name = namedRef.String()
-	}
-
-	ctx := context.Background()
-	apiClient := p.cli.Client()
-	responseBody, err := apiClient.ImagePull(ctx, name, tag, fetchRegistryAuth(namedRef.Name()))
-	if err != nil {
-		return fmt.Errorf("failed to pull image: %v", err)
-	}
-	defer responseBody.Close()
-
-	return showProgress(responseBody)
+	return pullMissingImage(context.Background(), p.cli.Client(), args[0], true)
 }
 
 func fetchRegistryAuth(serverAddress string) string {
@@ -227,4 +208,39 @@ $ pouch images
 IMAGE ID            IMAGE NAME                           SIZE
 bbc3a0323522        docker.io/library/busybox:latest     703.14 KB
 0153c5db97e5        docker.io/library/redis:alpine       9.63 MB`
+}
+
+// pullMissingImage pull the image if it doesn't exist.
+// When `force` is true, always pull the latest image instead of
+// using the local version
+func pullMissingImage(ctx context.Context, apiClient client.CommonAPIClient, image string, force bool) error {
+	if !force {
+		_, inspectError := apiClient.ImageInspect(ctx, image)
+		if inspectError == nil {
+			return nil
+		}
+		if err, ok := inspectError.(client.RespError); !ok {
+			return inspectError
+		} else if err.Code() != http.StatusNotFound {
+			return inspectError
+		}
+	}
+
+	namedRef, _ := reference.Parse(image)
+	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
+
+	var name, tag string
+	if reference.IsNameTagged(namedRef) {
+		name, tag = namedRef.Name(), namedRef.(reference.Tagged).Tag()
+	} else {
+		name = namedRef.String()
+	}
+
+	responseBody, err := apiClient.ImagePull(ctx, name, tag, fetchRegistryAuth(namedRef.Name()))
+	if err != nil {
+		return fmt.Errorf("failed to pull image: %v", err)
+	}
+	defer responseBody.Close()
+
+	return showProgress(responseBody)
 }
