@@ -484,7 +484,7 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 	nwOptions = append(nwOptions, libnetwork.NetworkOptionDriverOpts(networkCreate.Options))
 
 	if create.Name == "ingress" {
-		nwOptions = append(nwOptions, libnetwork.NetworkOptionIngress())
+		nwOptions = append(nwOptions, libnetwork.NetworkOptionIngress(true))
 	}
 
 	if networkCreate.Internal {
