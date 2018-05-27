@@ -93,7 +93,7 @@ func (p *Local) Options() map[string]types.Option {
 func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) error {
 	ctx.Log.Debugf("Local attach volume: %s", v.Name)
 	mountPath := v.Path()
-	size := v.Option("size")
+	size := v.Size()
 	reqID := v.Option("reqID")
 	ids := v.Option("ids")
 

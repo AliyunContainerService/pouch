@@ -180,7 +180,7 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaRegular(c *check.C) {
 	containerName := "diskquota-regular"
 
 	ret := command.PouchRun("volume", "create", "-n", volumeName,
-		"-o", "size=256m", "-o", "mount=/data/volume")
+		"-o", "opt.size=256m", "-o", "mount=/data/volume")
 	defer func() {
 		command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
 	}()

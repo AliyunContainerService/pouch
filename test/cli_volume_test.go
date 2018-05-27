@@ -147,7 +147,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSelector(c *check.C) {
 	defer command.PouchRun("volume", "remove", funcname)
 }
 
-// TestVolumeCreateWithSize tests creating volume with -o size=xxx.
+// TestVolumeCreateWithSize tests creating volume with -o opt.size=xxx.
 func (suite *PouchVolumeSuite) TestVolumeCreateWithSize(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -156,7 +156,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithSize(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	command.PouchRun("volume", "create", "--name", funcname, "-o", "size=1048576").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", funcname, "-o", "opt.size=1048576").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "remove", funcname)
 }
 
@@ -267,15 +267,15 @@ func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
 
 	volumeName := "volume_" + funcname
 	volumeName1 := "volume_" + funcname + "_1"
-	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "size=1g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "opt.size=1g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName1)
 
 	volumeName2 := "volume_" + funcname + "_2"
-	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "size=2g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "opt.size=2g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName2)
 
 	volumeName3 := "volume_" + funcname + "_3"
-	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "size=3g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName3)
 
 	ret := command.PouchRun("volume", "list")
@@ -302,15 +302,15 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 
 	volumeName := "volume_" + funcname
 	volumeName1 := "volume_" + funcname + "_1"
-	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "size=1g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "opt.size=1g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName1)
 
 	volumeName2 := "volume_" + funcname + "_2"
-	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "size=2g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "opt.size=2g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName2)
 
 	volumeName3 := "volume_" + funcname + "_3"
-	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "size=3g").Assert(c, icmd.Success)
+	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName3)
 
 	ret := command.PouchRun("volume", "list", "--size", "--mountpoint")
@@ -319,7 +319,7 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	for _, line := range strings.Split(ret.Stdout(), "\n") {
 		if strings.Contains(line, volumeName) {
 			if !strings.Contains(line, "local") ||
-				!strings.Contains(line, "g") ||
+				!strings.Contains(line, "M") ||
 				!strings.Contains(line, DefaultVolumeMountPath) {
 				c.Errorf("list result have no driver or name or size or mountpoint, line: %s", line)
 				break

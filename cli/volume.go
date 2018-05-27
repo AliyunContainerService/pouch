@@ -152,7 +152,7 @@ func parseVolume(volumeCreateConfig *types.VolumeCreateConfig, v *VolumeCreateCo
 
 // volumeCreateExample shows examples in volume create command, and is used in auto-generated cli docs.
 func volumeCreateExample() string {
-	return `$ pouch volume create -d local -n pouch-volume -o size=100g
+	return `$ pouch volume create -d local -n pouch-volume -o opt.size=100g
 Mountpoint:
 Name:         pouch-volume
 Scope:
