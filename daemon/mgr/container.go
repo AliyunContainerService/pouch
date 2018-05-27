@@ -49,6 +49,9 @@ import (
 type ContainerMgr interface {
 	// 1. the following functions are related to regular container management
 
+	// Restore containers from meta store to memory and recover those container.
+	Restore(ctx context.Context) error
+
 	// Create a new container.
 	Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error)
 
@@ -176,7 +179,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APICli
 
 	go mgr.execProcessGC()
 
-	return mgr, mgr.Restore(ctx)
+	return mgr, nil
 }
 
 // Restore containers from meta store to memory and recover those container.
