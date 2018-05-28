@@ -13,7 +13,7 @@ pouch volume create [OPTIONS]
 ### Examples
 
 ```
-$ pouch volume create -d local -n pouch-volume -o size=100g
+$ pouch volume create -d local -n pouch-volume -o opt.size=100g
 Mountpoint:
 Name:         pouch-volume
 Scope:
