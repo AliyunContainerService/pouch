@@ -290,6 +290,12 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
 	}
 
+	// Wait for a fixed timeout until container stop is observed by event monitor.
+	timeout := time.Duration(defaultStopTimeout) * time.Second
+	if err := c.waitContainerStop(ctx, podSandboxID, timeout); err != nil {
+		return nil, fmt.Errorf("an error occurs during waiting for container %q to stop", podSandboxID)
+	}
+
 	return &runtime.StopPodSandboxResponse{}, nil
 }
 
