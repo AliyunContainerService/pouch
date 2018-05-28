@@ -788,3 +788,28 @@ func (c *CriManager) attachLog(logPath string, containerID string) error {
 	}
 	return nil
 }
+
+// waitContainerStop waits for container to be stopped until timeout exceeds or context is cancelled.
+func (c *CriManager) waitContainerStop(ctx context.Context, containerID string, timeout time.Duration) error {
+	container, err := c.ContainerMgr.Get(ctx, containerID)
+	if err != nil {
+		return err
+	}
+	stopCh := make(chan struct{})
+	timeoutTimer := time.NewTimer(timeout)
+	defer timeoutTimer.Stop()
+	for {
+		if container.State.Status == apitypes.StatusStopped {
+			close(stopCh)
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("wait container %q is cancelled", containerID)
+		case <-timeoutTimer.C:
+			return fmt.Errorf("wait container %q stop timeout", containerID)
+		case <-stopCh:
+			return nil
+		}
+	}
+
+}
