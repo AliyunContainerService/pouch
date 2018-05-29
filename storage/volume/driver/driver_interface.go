@@ -13,10 +13,10 @@ type Driver interface {
 	StoreMode(Context) VolumeStoreMode
 
 	// Create a volume.
-	Create(Context, *types.Volume, *types.Storage) error
+	Create(Context, types.VolumeID) (*types.Volume, error)
 
 	// Remove a volume.
-	Remove(Context, *types.Volume, *types.Storage) error
+	Remove(Context, *types.Volume) error
 
 	// Path returns volume's path.
 	Path(Context, *types.Volume) (string, error)
@@ -31,16 +31,16 @@ type Opt interface {
 // AttachDetach represents volume attach/detach interface.
 type AttachDetach interface {
 	// Attach a Volume to host, enable the volume.
-	Attach(Context, *types.Volume, *types.Storage) error
+	Attach(Context, *types.Volume) error
 
 	// Detach a volume with host, disable the volume.
-	Detach(Context, *types.Volume, *types.Storage) error
+	Detach(Context, *types.Volume) error
 }
 
 // Formator represents volume format interface.
 type Formator interface {
 	// Format a volume.
-	Format(Context, *types.Volume, *types.Storage) error
+	Format(Context, *types.Volume) error
 }
 
 // Getter represents volume get interface.
@@ -53,10 +53,4 @@ type Getter interface {
 type Lister interface {
 	// List a volume from driver
 	List(Context) ([]*types.Volume, error)
-}
-
-// GatewayDriver represents storage gateway interface.
-type GatewayDriver interface {
-	// Report storage cluster status.
-	Report(Context) ([]*types.Storage, error)
 }

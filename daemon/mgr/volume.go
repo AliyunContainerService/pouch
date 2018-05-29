@@ -3,7 +3,6 @@ package mgr
 import (
 	"context"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -16,7 +15,7 @@ import (
 // VolumeMgr defines interface to manage container volume.
 type VolumeMgr interface {
 	// Create is used to create volume.
-	Create(ctx context.Context, name, driver string, options, labels map[string]string) error
+	Create(ctx context.Context, name, driver string, options, labels map[string]string) (*types.Volume, error)
 
 	// Get returns the information of volume that specified name/id.
 	Get(ctx context.Context, name string) (*types.Volume, error)
@@ -59,33 +58,25 @@ func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
 }
 
 // Create is used to create volume.
-func (vm *VolumeManager) Create(ctx context.Context, name, driver string, options, labels map[string]string) error {
+func (vm *VolumeManager) Create(ctx context.Context, name, driver string, options, labels map[string]string) (*types.Volume, error) {
+	if driver == "" {
+		driver = types.DefaultBackend
+	}
+
 	id := types.VolumeID{
 		Name:      name,
 		Driver:    driver,
 		Options:   map[string]string{},
 		Selectors: map[string]string{},
+		Labels:    map[string]string{},
 	}
 
 	if labels != nil {
 		id.Labels = labels
-	} else {
-		id.Labels = map[string]string{}
 	}
 
-	for key, opt := range options {
-		if strings.HasPrefix(key, "selector.") {
-			key = strings.TrimPrefix(key, "selector.")
-			id.Selectors[key] = opt
-			continue
-		}
-
-		id.Options[key] = opt
-	}
-
-	// set default volume mount path
-	if mount, ok := id.Options["mount"]; !ok || mount == "" {
-		id.Options["mount"] = path.Dir(vm.core.VolumeMetaPath)
+	if options != nil {
+		id.Options = options
 	}
 
 	return vm.core.CreateVolume(id)

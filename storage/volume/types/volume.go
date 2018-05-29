@@ -147,16 +147,6 @@ func (v *Volume) Driver() string {
 	return v.Spec.Backend
 }
 
-// StorageID return driver's storage identity.
-func (v *Volume) StorageID() StorageID {
-	return NewStorageID(v.Spec.ClusterID)
-}
-
-// SetStorageUID save storage uid into volume.
-func (v *Volume) SetStorageUID(uid string) {
-	v.Spec.ClusterID = uid
-}
-
 // VolumeID return volume's identity.
 func (v *Volume) VolumeID() VolumeID {
 	return NewVolumeID(v.Name, v.Driver())

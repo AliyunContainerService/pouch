@@ -1771,7 +1771,7 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, meta
 		opts := map[string]string{
 			"backend": driver,
 		}
-		if err := mgr.VolumeMgr.Create(ctx, name, meta.HostConfig.VolumeDriver, opts, nil); err != nil {
+		if _, err := mgr.VolumeMgr.Create(ctx, name, meta.HostConfig.VolumeDriver, opts, nil); err != nil {
 			logrus.Errorf("failed to create volume: %s, err: %v", name, err)
 			return "", "", errors.Wrap(err, "failed to create volume")
 		}

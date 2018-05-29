@@ -7,16 +7,15 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
-	"time"
 
+	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 var (
-	dataDir = "/mnt/local"
+	dataDir = "/var/lib/pouch/volume"
 )
 
 func init() {
@@ -40,23 +39,42 @@ func (p *Local) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
 }
 
 // Create a local volume.
-func (p *Local) Create(ctx driver.Context, v *types.Volume, s *types.Storage) error {
-	ctx.Log.Debugf("Local create volume: %s", v.Name)
-	mountPath, _ := p.Path(ctx, v)
+func (p *Local) Create(ctx driver.Context, id types.VolumeID) (*types.Volume, error) {
+	ctx.Log.Debugf("Local create volume: %s", id.Name)
 
-	if st, exist := os.Stat(mountPath); exist != nil {
-		if e := os.MkdirAll(mountPath, 0755); e != nil {
-			return e
-		}
-	} else if !st.IsDir() {
-		return fmt.Errorf("mount path is not a dir %s", mountPath)
+	var (
+		mountPath = path.Join(dataDir, id.Name)
+		size      string
+	)
+
+	// parse the mount path.
+	if dir, ok := id.Options["mount"]; ok {
+		mountPath = path.Join(dir, id.Name)
 	}
 
-	return nil
+	// parse the size.
+	if value, ok := id.Options["opt.size"]; ok {
+		sizeInt, err := bytefmt.ToMegabytes(value)
+		if err != nil {
+			return nil, err
+		}
+		size = strconv.Itoa(int(sizeInt)) + "M"
+	}
+
+	// create the volume path
+	if st, exist := os.Stat(mountPath); exist != nil {
+		if e := os.MkdirAll(mountPath, 0755); e != nil {
+			return nil, e
+		}
+	} else if !st.IsDir() {
+		return nil, fmt.Errorf("mount path is not a dir %s", mountPath)
+	}
+
+	return types.NewVolumeFromID(mountPath, size, id), nil
 }
 
 // Remove a local volume.
-func (p *Local) Remove(ctx driver.Context, v *types.Volume, s *types.Storage) error {
+func (p *Local) Remove(ctx driver.Context, v *types.Volume) error {
 	ctx.Log.Debugf("Local remove volume: %s", v.Name)
 	mountPath := v.Path()
 
@@ -82,28 +100,15 @@ func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
 // Options returns local volume's options.
 func (p *Local) Options() map[string]types.Option {
 	return map[string]types.Option{
-		"ids":      {Value: "", Desc: "local volume user's ids"},
-		"reqID":    {Value: "", Desc: "create local volume request id"},
-		"freeTime": {Value: "", Desc: "local volume free time"},
-		"mount":    {Value: "", Desc: "local directory"},
+		"mount": {Value: "", Desc: "local directory"},
 	}
 }
 
 // Attach a local volume.
-func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) error {
+func (p *Local) Attach(ctx driver.Context, v *types.Volume) error {
 	ctx.Log.Debugf("Local attach volume: %s", v.Name)
 	mountPath := v.Path()
 	size := v.Size()
-	reqID := v.Option("reqID")
-	ids := v.Option("ids")
-
-	if ids != "" {
-		if !strings.Contains(ids, reqID) {
-			ids = ids + "," + reqID
-		}
-	} else {
-		ids = reqID
-	}
 
 	if st, exist := os.Stat(mountPath); exist != nil {
 		if e := os.MkdirAll(mountPath, 0777); e != nil {
@@ -120,31 +125,12 @@ func (p *Local) Attach(ctx driver.Context, v *types.Volume, s *types.Storage) er
 		}
 	}
 
-	v.SetOption("ids", ids)
-	v.SetOption("freeTime", "")
-
 	return nil
 }
 
 // Detach a local volume.
-func (p *Local) Detach(ctx driver.Context, v *types.Volume, s *types.Storage) error {
+func (p *Local) Detach(ctx driver.Context, v *types.Volume) error {
 	ctx.Log.Debugf("Local detach volume: %s", v.Name)
-	reqID := v.Option("reqID")
-	ids := v.Option("ids")
-
-	arr := strings.Split(ids, ",")
-	newIDs := []string{}
-	for _, id := range arr {
-		if id != reqID {
-			newIDs = append(newIDs, reqID)
-		}
-	}
-
-	if len(newIDs) == 0 {
-		v.SetOption("freeTime", strconv.FormatInt(time.Now().Unix(), 10))
-	}
-
-	v.SetOption("ids", strings.Join(newIDs, ","))
 
 	return nil
 }

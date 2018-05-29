@@ -6,11 +6,9 @@ import (
 	"strings"
 
 	metastore "github.com/alibaba/pouch/pkg/meta"
-	"github.com/alibaba/pouch/storage/controlserver/client"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
-	"github.com/alibaba/pouch/storage/volume/types/meta"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -19,20 +17,12 @@ import (
 // Core represents volume core struct.
 type Core struct {
 	Config
-	BaseURL       string
-	EnableControl bool
-	store         *metastore.Store
+	store *metastore.Store
 }
 
 // NewCore returns Core struct instance with volume config.
 func NewCore(cfg Config) (*Core, error) {
 	c := &Core{Config: cfg}
-	if cfg.ControlServerAddress != "" {
-		c.EnableControl = true
-		c.BaseURL = cfg.ControlServerAddress
-	} else {
-		c.EnableControl = false
-	}
 
 	if cfg.DriverAlias != "" {
 		parts := strings.Split(cfg.DriverAlias, ";")
@@ -70,12 +60,6 @@ func NewCore(cfg Config) (*Core, error) {
 
 // GetVolume return a volume's info with specified name, If not errors.
 func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
-	v := &types.Volume{
-		ObjectMeta: meta.ObjectMeta{
-			Name: id.Name,
-		},
-	}
-
 	ctx := driver.Contexts()
 
 	// first, try to get volume from local store.
@@ -109,16 +93,7 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 		return nil, err
 	}
 
-	// then, try to get volume from central store.
-	if c.EnableControl {
-		if url, err := c.volumeURL(id); err == nil {
-			if err := client.New().Get(url, v); err == nil {
-				return v, nil
-			}
-		}
-	}
-
-	// at last, scan all drivers
+	// scan all drivers
 	logrus.Debugf("probing all drivers for volume with name(%s)", id.Name)
 	drivers, err := driver.GetAll()
 	if err != nil {
@@ -130,6 +105,7 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 		if !ok {
 			continue
 		}
+
 		v, err := d.Get(ctx, id.Name)
 		if err != nil {
 			// not found, ignore it
@@ -160,92 +136,30 @@ func (c *Core) ExistVolume(id types.VolumeID) (bool, error) {
 }
 
 // CreateVolume use to create a volume, if failed, will return error info.
-func (c *Core) CreateVolume(id types.VolumeID) error {
+func (c *Core) CreateVolume(id types.VolumeID) (*types.Volume, error) {
 	exist, err := c.ExistVolume(id)
 	if err != nil {
-		return err
-	}
-	if exist {
-		return volerr.ErrVolumeExisted
+		return nil, err
+	} else if exist {
+		return nil, volerr.ErrVolumeExisted
 	}
 
-	v, err := types.NewVolume(id)
+	dv, err := driver.Get(id.Driver)
 	if err != nil {
-		return errors.Wrapf(err, "Create volume")
+		return nil, err
 	}
 
-	dv, err := driver.Get(v.Spec.Backend)
+	volume, err := dv.Create(driver.Contexts(), id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// check options, then add some driver-specific options.
-	if err := checkOptions(v); err != nil {
-		return err
+	// create the meta
+	if err := c.store.Put(volume); err != nil {
+		return nil, err
 	}
 
-	// Create volume's meta.
-	ctx := driver.Contexts()
-	var s *types.Storage
-
-	if dv.StoreMode(ctx).CentralCreateDelete() {
-		url, err := c.volumeURL()
-		if err != nil {
-			return err
-		}
-
-		// before creating, we can't get the path
-		p, err := c.volumePath(v, dv)
-		if err != nil {
-			return err
-		}
-		v.SetPath(p)
-
-		if err := client.New().Create(url, v); err != nil {
-			return errors.Wrap(err, "Create volume")
-		}
-
-		// get the storage
-		s, err = c.getStorage(v.StorageID())
-		if err != nil {
-			return err
-		}
-	} else {
-		if err := dv.Create(ctx, v, nil); err != nil {
-			return err
-		}
-
-		// after creating volume, we can get the path
-		p, err := c.volumePath(v, dv)
-		if err != nil {
-			return err
-		}
-		v.SetPath(p)
-
-		if err := c.store.Put(v); err != nil {
-			return err
-		}
-	}
-
-	// format the volume
-	if f, ok := dv.(driver.Formator); ok {
-		err := f.Format(ctx, v, s)
-		if err == nil {
-			return nil
-		}
-
-		logrus.Errorf("failed to format new volume: %s, err: %v", v.Name, err)
-		logrus.Warnf("rollback create volume, start to cleanup new volume: %s", v.Name)
-		if err := c.RemoveVolume(id); err != nil {
-			logrus.Errorf("failed to rollback create volume, cleanup new volume: %s, err: %v", v.Name, err)
-			return err
-		}
-
-		// return format error.
-		return err
-	}
-
-	return nil
+	return volume, nil
 }
 
 // ListVolumes return all volumes.
@@ -253,27 +167,13 @@ func (c *Core) CreateVolume(id types.VolumeID) error {
 func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 	var retVolumes = make([]*types.Volume, 0)
 
-	// first, list local meta store.
+	// list local meta store.
 	metaList, err := c.store.List()
 	if err != nil {
 		return nil, err
 	}
 
-	// then, list central store.
-	if c.EnableControl {
-		url, err := c.listVolumeURL(labels)
-		if err != nil {
-			return nil, errors.Wrap(err, "List volume's name")
-		}
-
-		logrus.Debugf("List volume URL: %s, labels: %s", url, labels)
-
-		if err := client.New().ListKeys(url, &retVolumes); err != nil {
-			return nil, errors.Wrap(err, "List volume's name")
-		}
-	}
-
-	// at last, scan all drivers.
+	// scan all drivers.
 	logrus.Debugf("probing all drivers for listing volume")
 	drivers, err := driver.GetAll()
 	if err != nil {
@@ -335,7 +235,12 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 	}
 
 	for _, v := range realVolumes {
+		// found new volumes, store the meta
+		logrus.Warningf("found new volume %s", v.Name)
+		c.store.Put(v)
+
 		retVolumes = append(retVolumes, v)
+
 	}
 
 	return retVolumes, nil
@@ -346,86 +251,13 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 	var names []string
 
-	// first, list local meta store.
-	metaList, err := c.store.List()
+	volumes, err := c.ListVolumes(labels)
 	if err != nil {
-		return nil, err
+		return names, err
 	}
 
-	// then, list central store.
-	if c.EnableControl {
-		url, err := c.listVolumeNameURL(labels)
-		if err != nil {
-			return nil, errors.Wrap(err, "List volume's name")
-		}
-
-		logrus.Debugf("List volume name URL: %s, labels: %s", url, labels)
-
-		if err := client.New().ListKeys(url, &names); err != nil {
-			return nil, errors.Wrap(err, "List volume's name")
-		}
-	}
-
-	// at last, scan all drivers
-	logrus.Debugf("probing all drivers for listing volume")
-	drivers, err := driver.GetAll()
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := driver.Contexts()
-
-	var realVolumes = map[string]*types.Volume{}
-	var volumeDrivers = map[string]driver.Driver{}
-
-	for _, dv := range drivers {
-		volumeDrivers[dv.Name(ctx)] = dv
-
-		d, ok := dv.(driver.Lister)
-		if !ok {
-			continue
-		}
-		vList, err := d.List(ctx)
-		if err != nil {
-			logrus.Warnf("volume driver %s list error: %v", dv.Name(ctx), err)
-			continue
-		}
-
-		for _, v := range vList {
-			realVolumes[v.Name] = v
-		}
-	}
-
-	for name, obj := range metaList {
-		v, ok := obj.(*types.Volume)
-		if !ok {
-			continue
-		}
-
-		d, ok := volumeDrivers[v.Spec.Backend]
-		if !ok {
-			// driver not exist, ignore it
-			continue
-		}
-
-		if d.StoreMode(ctx).IsLocal() {
-			names = append(names, name)
-			continue
-		}
-
-		_, ok = realVolumes[name]
-		if !ok {
-			// real volume not exist, ignore it
-			continue
-		}
-
-		delete(realVolumes, name)
-
-		names = append(names, name)
-	}
-
-	for name := range realVolumes {
-		names = append(names, name)
+	for _, v := range volumes {
+		names = append(names, v.Name)
 	}
 
 	return names, nil
@@ -438,25 +270,14 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 		return errors.Wrap(err, "Remove volume: "+id.String())
 	}
 
-	// Call interface to remove meta info.
-	if dv.StoreMode(driver.Contexts()).CentralCreateDelete() {
-		url, err := c.volumeURL(id)
-		if err != nil {
-			return errors.Wrap(err, "Remove volume: "+id.String())
-		}
-		if err := client.New().Delete(url, v); err != nil {
-			return errors.Wrap(err, "Remove volume: "+id.String())
-		}
-	} else {
-		// Call driver's Remove method to remove the volume.
-		if err := dv.Remove(driver.Contexts(), v, nil); err != nil {
-			return err
-		}
+	// Call driver's Remove method to remove the volume.
+	if err := dv.Remove(driver.Contexts(), v); err != nil {
+		return err
+	}
 
-		// delete the meta
-		if err := c.store.Remove(id.Name); err != nil {
-			return err
-		}
+	// delete the meta
+	if err := c.store.Remove(id.Name); err != nil {
+		return err
 	}
 
 	return nil
@@ -500,35 +321,14 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 	}
 
 	if d, ok := dv.(driver.AttachDetach); ok {
-		var (
-			s   *types.Storage
-			err error
-		)
-
-		if dv.StoreMode(ctx).CentralCreateDelete() {
-			if s, err = c.getStorage(v.StorageID()); err != nil {
-				return nil, err
-			}
-		}
-
-		if err = d.Attach(ctx, v, s); err != nil {
+		if err := d.Attach(ctx, v); err != nil {
 			return nil, err
 		}
 	}
 
-	// Call interface to update meta info.
-	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := c.store.Put(v); err != nil {
-			return nil, err
-		}
-	} else {
-		url, err := c.volumeURL(id)
-		if err != nil {
-			return nil, errors.Wrap(err, "Update volume: "+id.String())
-		}
-		if err := client.New().Update(url, v); err != nil {
-			return nil, errors.Wrap(err, "Update volume: "+id.String())
-		}
+	// update meta info.
+	if err := c.store.Put(v); err != nil {
+		return nil, err
 	}
 
 	return v, nil
@@ -551,35 +351,14 @@ func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.
 	// if volume has referance, skip to detach volume.
 	ref := v.Option(types.OptionRef)
 	if d, ok := dv.(driver.AttachDetach); ok && ref == "" {
-		var (
-			s   *types.Storage
-			err error
-		)
-
-		if dv.StoreMode(ctx).CentralCreateDelete() {
-			if s, err = c.getStorage(v.StorageID()); err != nil {
-				return nil, err
-			}
-		}
-
-		if err = d.Detach(ctx, v, s); err != nil {
+		if err := d.Detach(ctx, v); err != nil {
 			return nil, err
 		}
 	}
 
-	// Call interface to update meta info.
-	if dv.StoreMode(driver.Contexts()).UseLocalMeta() {
-		if err := c.store.Put(v); err != nil {
-			return nil, err
-		}
-	} else {
-		url, err := c.volumeURL(id)
-		if err != nil {
-			return nil, errors.Wrap(err, "Update volume: "+id.String())
-		}
-		if err := client.New().Update(url, v); err != nil {
-			return nil, errors.Wrap(err, "Update volume: "+id.String())
-		}
+	// update meta info.
+	if err := c.store.Put(v); err != nil {
+		return nil, err
 	}
 
 	return v, nil
