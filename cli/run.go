@@ -74,6 +74,11 @@ func (rc *RunCommand) runRun(args []string) error {
 
 	ctx := context.Background()
 	apiClient := rc.cli.Client()
+
+	if err := pullMissingImage(ctx, apiClient, config.Image, false); err != nil {
+		return err
+	}
+
 	result, err := apiClient.ContainerCreate(ctx, config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to run container: %v", err)

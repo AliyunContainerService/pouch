@@ -25,6 +25,11 @@ func (e RespError) Error() string {
 	return e.msg
 }
 
+// Code returns the response  code
+func (e RespError) Code() int {
+	return e.code
+}
+
 // Response wraps the http.Response and other states.
 type Response struct {
 	StatusCode int

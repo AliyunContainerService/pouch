@@ -48,7 +48,7 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	}
 	// Error information has be sent to client, so no need call resp.Write
 	if err := s.ImageMgr.PullImage(ctx, image, &authConfig, rw); err != nil {
-		logrus.Errorf("failed to pull image %s:%s: %v", image, tag, err)
+		logrus.Errorf("failed to pull image %s: %v", image, err)
 		return nil
 	}
 	return nil
