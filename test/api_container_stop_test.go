@@ -92,6 +92,7 @@ func (suite *APIContainerStopSuite) TestStopPausedContainer(c *check.C) {
 
 	got := types.ContainerJSON{}
 	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
 	c.Assert(string(got.State.Status), check.Equals, "stopped")
 
 	DelContainerForceOk(c, cname)
