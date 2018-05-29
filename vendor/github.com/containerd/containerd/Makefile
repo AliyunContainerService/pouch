@@ -1,3 +1,18 @@
+#   Copyright The containerd Authors.
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+
+#       http://www.apache.org/licenses/LICENSE-2.0
+
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+
 # Root directory of the project (absolute path).
 ROOTDIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -12,8 +27,27 @@ ifneq "$(strip $(shell command -v go 2>/dev/null))" ""
 	GOOS ?= $(shell go env GOOS)
 	GOARCH ?= $(shell go env GOARCH)
 else
-	GOOS ?= $$GOOS
-	GOARCH ?= $$GOARCH
+	ifeq ($(GOOS),)
+		# approximate GOOS for the platform if we don't have Go and GOOS isn't
+		# set. We leave GOARCH unset, so that may need to be fixed.
+		ifeq ($(OS),Windows_NT)
+			GOOS = windows
+		else
+			UNAME_S := $(shell uname -s)
+			ifeq ($(UNAME_S),Linux)
+				GOOS = linux
+			endif
+			ifeq ($(UNAME_S),Darwin)
+				GOOS = darwin
+			endif
+			ifeq ($(UNAME_S),FreeBSD)
+				GOOS = freebsd
+			endif
+		endif
+	else
+		GOOS ?= $$GOOS
+		GOARCH ?= $$GOARCH
+	endif
 endif
 
 WHALE = "🇩"
@@ -38,25 +72,35 @@ TEST_REQUIRES_ROOT_PACKAGES=$(filter \
 
 # Project binaries.
 COMMANDS=ctr containerd containerd-stress containerd-release
-BINARIES=$(addprefix bin/,$(COMMANDS))
+MANPAGES=ctr.1 containerd.1 config.toml.5 containerd-config.1
 
+# Build tags seccomp and apparmor are needed by CRI plugin.
+BUILDTAGS ?= seccomp apparmor
 GO_TAGS=$(if $(BUILDTAGS),-tags "$(BUILDTAGS)",)
 GO_LDFLAGS=-ldflags '-s -w -X $(PKG)/version.Version=$(VERSION) -X $(PKG)/version.Revision=$(REVISION) -X $(PKG)/version.Package=$(PKG) $(EXTRA_LDFLAGS)'
 SHIM_GO_LDFLAGS=-ldflags '-s -w -X $(PKG)/version.Version=$(VERSION) -X $(PKG)/version.Revision=$(REVISION) -X $(PKG)/version.Package=$(PKG) -extldflags "-static"'
 
-TESTFLAGS_RACE=
-GO_GCFLAGS=
+#Replaces ":" (*nix), ";" (windows) with newline for easy parsing
+GOPATHS=$(shell echo ${GOPATH} | tr ":" "\n" | tr ";" "\n")
 
-#Detect the target os
-include Makefile.OS
+TESTFLAGS_RACE=
+GO_BUILD_FLAGS=
+# See Golang issue re: '-trimpath': https://github.com/golang/go/issues/13809
+GO_GCFLAGS=$(shell				\
+	set -- ${GOPATHS};			\
+	echo "-gcflags=-trimpath=$${1}/src";	\
+	)
+
 #include platform specific makefile
-include Makefile.$(target_os)
+-include Makefile.$(GOOS)
+
+BINARIES=$(addprefix bin/,$(COMMANDS))
 
 # Flags passed to `go test`
 TESTFLAGS ?= -v $(TESTFLAGS_RACE)
 TESTFLAGS_PARALLEL ?= 8
 
-.PHONY: clean all AUTHORS fmt vet lint dco build binaries test integration generate protos checkprotos coverage ci check help install uninstall vendor release
+.PHONY: clean all AUTHORS build binaries test integration generate protos checkprotos coverage ci check help install uninstall vendor release mandir install-man
 .DEFAULT: default
 
 all: binaries
@@ -97,17 +141,9 @@ proto-fmt: ## check format of proto files
 	@test -z "$$(find . -path ./vendor -prune -o -name '*.proto' -type f -exec grep -Hn "Meta meta = " {} \; | grep -v '(gogoproto.nullable) = false' | tee /dev/stderr)" || \
 		(echo "$(ONI) meta fields in proto files must have option (gogoproto.nullable) = false" && false)
 
-dco: ## dco check
-	@which git-validation > /dev/null 2>/dev/null || (echo "ERROR: git-validation not found" && false)
-ifdef TRAVIS_COMMIT_RANGE
-	git-validation -q -run DCO,short-subject,dangling-whitespace
-else
-	git-validation -v -run DCO,short-subject,dangling-whitespace -range $(EPOCH_TEST_COMMIT)..HEAD
-endif
-
 build: ## build the go packages
 	@echo "$(WHALE) $@"
-	@go build ${EXTRA_FLAGS} ${GO_LDFLAGS} ${GO_GCFLAGS} ${PACKAGES}
+	@go build ${GO_GCFLAGS} ${GO_BUILD_FLAGS} ${EXTRA_FLAGS} ${GO_LDFLAGS} ${PACKAGES}
 
 test: ## run tests, except integration tests and tests that require root
 	@echo "$(WHALE) $@"
@@ -130,14 +166,33 @@ FORCE:
 # Build a binary from a cmd.
 bin/%: cmd/% FORCE
 	@echo "$(WHALE) $@${BINARY_SUFFIX}"
-	@go build -o $@${BINARY_SUFFIX} ${GO_LDFLAGS} ${GO_TAGS} ${GO_GCFLAGS} ./$<
+	@go build ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $@${BINARY_SUFFIX} ${GO_LDFLAGS} ${GO_TAGS}  ./$<
 
 bin/containerd-shim: cmd/containerd-shim FORCE # set !cgo and omit pie for a static shim build: https://github.com/golang/go/issues/17789#issuecomment-258542220
 	@echo "$(WHALE) bin/containerd-shim"
-	@CGO_ENABLED=0 go build -o bin/containerd-shim ${SHIM_GO_LDFLAGS} ${GO_TAGS} ./cmd/containerd-shim
+	@CGO_ENABLED=0 go build ${GO_BUILD_FLAGS} -o bin/containerd-shim ${SHIM_GO_LDFLAGS} ${GO_TAGS} ./cmd/containerd-shim
 
 binaries: $(BINARIES) ## build binaries
 	@echo "$(WHALE) $@"
+
+man: mandir $(addprefix man/,$(MANPAGES))
+	@echo "$(WHALE) $@"
+
+mandir:
+	@mkdir -p man
+
+man/%: docs/man/%.md FORCE
+	@echo "$(WHALE) $<"
+	go-md2man -in "$<" -out "$@"
+
+define installmanpage
+mkdir -p $(DESTDIR)/man/man$(2);
+gzip -c $(1) >$(DESTDIR)/man/man$(2)/$(3).gz;
+endef
+
+install-man:
+	@echo "$(WHALE) $@"
+	$(foreach manpage,$(addprefix man/,$(MANPAGES)), $(call installmanpage,$(manpage),$(subst .,,$(suffix $(manpage))),$(notdir $(manpage))))
 
 release: $(BINARIES)
 	@echo "$(WHALE) $@"

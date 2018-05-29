@@ -1,9 +1,26 @@
+/*
+   Copyright The containerd Authors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package progress
 
 import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strings"
 
@@ -42,19 +59,10 @@ func (w *Writer) Flush() error {
 		return nil
 	}
 
-	if err := w.clear(); err != nil {
+	if err := w.clearLines(); err != nil {
 		return err
 	}
-
-	ws, err := console.Current().Size()
-	if err != nil {
-		return fmt.Errorf("failed to get terminal width: %v", err)
-	}
-	strlines := strings.Split(w.buf.String(), "\n")
-	w.lines = -1
-	for _, line := range strlines {
-		w.lines += (len(stripLine(line))-1)/int(ws.Width) + 1
-	}
+	w.lines = countLines(w.buf.String())
 
 	if _, err := w.w.Write(w.buf.Bytes()); err != nil {
 		return err
@@ -67,7 +75,7 @@ func (w *Writer) Flush() error {
 // TODO(stevvooe): The following are system specific. Break these out if we
 // decide to build this package further.
 
-func (w *Writer) clear() error {
+func (w *Writer) clearLines() error {
 	for i := 0; i < w.lines; i++ {
 		if _, err := fmt.Fprintf(w.w, "\x1b[1A\x1b[2K\r"); err != nil {
 			return err
@@ -75,6 +83,31 @@ func (w *Writer) clear() error {
 	}
 
 	return nil
+}
+
+// countLines in the output. If a line is longer than the console width then
+// an extra line is added to the count for each wrapped line. If the console
+// width is undefined then 0 is returned so that no lines are cleared on the next
+// flush.
+func countLines(output string) int {
+	con, err := console.ConsoleFromFile(os.Stdin)
+	if err != nil {
+		return 0
+	}
+	ws, err := con.Size()
+	if err != nil {
+		return 0
+	}
+	width := int(ws.Width)
+	if width <= 0 {
+		return 0
+	}
+	strlines := strings.Split(output, "\n")
+	lines := -1
+	for _, line := range strlines {
+		lines += (len(stripLine(line))-1)/width + 1
+	}
+	return lines
 }
 
 func stripLine(line string) string {
