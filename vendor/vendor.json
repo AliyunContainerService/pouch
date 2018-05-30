@@ -720,6 +720,12 @@
 			"revisionTime": "2018-01-26T22:59:47Z"
 		},
 		{
+			"checksumSHA1": "i9cuEehq9qjrB7k2WcFjnhjmb9I=",
+			"path": "github.com/ishidawataru/sctp",
+			"revision": "97a3163aa968518c93b6a798624d68786289256b",
+			"revisionTime": "2018-02-16T23:47:41Z"
+		},
+		{
 			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
 			"path": "github.com/kardianos/osext",
 			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
