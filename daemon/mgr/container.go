@@ -97,6 +97,9 @@ type ContainerMgr interface {
 	// Remove removes a container, it may be running or stopped and so on.
 	Remove(ctx context.Context, name string, option *types.ContainerRemoveOptions) error
 
+	// Wait stops processing until the given container is stopped.
+	Wait(ctx context.Context, name string) (types.ContainerWaitOKBody, error)
+
 	// 2. The following five functions is related to container exec.
 
 	// CreateExec creates exec process's environment.
@@ -1300,6 +1303,32 @@ func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types
 	}
 
 	return mgr.Client.ResizeContainer(ctx, c.ID, opts)
+}
+
+// Wait stops processing until the given container is stopped.
+func (mgr *ContainerManager) Wait(ctx context.Context, name string) (types.ContainerWaitOKBody, error) {
+	c, err := mgr.container(name)
+	if err != nil {
+		return types.ContainerWaitOKBody{}, err
+	}
+
+	// We should notice that container's meta data shouldn't be locked in wait process, otherwise waiting for
+	// a running container to stop would make other client commands which manage this container are blocked.
+	// If a container status is exited or stopped, return exit code immediately.
+	if c.IsExited() || c.IsStopped() {
+		return types.ContainerWaitOKBody{
+			Error:      c.State.Error,
+			StatusCode: c.ExitCode(),
+		}, nil
+	}
+	// If a container status is created, return 0 as status code.
+	if c.IsCreated() {
+		return types.ContainerWaitOKBody{
+			StatusCode: 0,
+		}, nil
+	}
+
+	return mgr.Client.WaitContainer(ctx, c.ID)
 }
 
 // Connect is used to connect a container to a network.

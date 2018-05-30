@@ -500,3 +500,35 @@ func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.Resi
 
 	return pack.task.Resize(ctx, uint32(opts.Height), uint32(opts.Width))
 }
+
+// WaitContainer waits until container's status is stopped.
+func (c *Client) WaitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return types.ContainerWaitOKBody{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
+
+	waitExit := func() *Message {
+		return c.ProbeContainer(ctx, id, -1*time.Second)
+	}
+
+	var msg *Message
+	// wait for the task to exit.
+	msg = waitExit()
+
+	errMsg := ""
+	err = msg.RawError()
+	if err != nil {
+		if errtypes.IsTimeout(err) {
+			return types.ContainerWaitOKBody{}, err
+		}
+		errMsg = err.Error()
+	}
+
+	return types.ContainerWaitOKBody{
+		Error:      errMsg,
+		StatusCode: int64(msg.ExitCode()),
+	}, nil
+}
