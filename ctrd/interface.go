@@ -48,6 +48,8 @@ type ContainerAPIClient interface {
 	// ResizeContainer changes the size of the TTY of the init process running
 	// in the container to the given height and width.
 	ResizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error
+	// WaitContainer waits until container's status is stopped.
+	WaitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error)
 	// UpdateResources updates the configurations of a container.
 	UpdateResources(ctx context.Context, id string, resources types.Resources) error
 	// SetExitHooks specified the handlers of container exit.

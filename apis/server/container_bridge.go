@@ -383,3 +383,15 @@ func (s *Server) removeContainers(ctx context.Context, rw http.ResponseWriter, r
 	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
+
+func (s *Server) waitContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	waitStatus, err := s.ContainerMgr.Wait(ctx, name)
+
+	if err != nil {
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, &waitStatus)
+}

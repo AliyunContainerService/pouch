@@ -53,6 +53,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", withCancelHandler(s.logsContainer))
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/wait", withCancelHandler(s.waitContainer))
 
 	// image
 	s.addRoute(r, http.MethodPost, "/images/create", s.pullImage)

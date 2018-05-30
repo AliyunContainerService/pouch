@@ -187,6 +187,11 @@ func (c *Container) Key() string {
 	return c.ID
 }
 
+// ExitCode returns container's ExitCode.
+func (c *Container) ExitCode() int64 {
+	return c.State.ExitCode
+}
+
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
 	return c.State.Status == types.StatusRunning

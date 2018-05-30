@@ -572,6 +572,32 @@ paths:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
+  /containers/{id}/wait:
+    post:
+      summary: "Block until a container stops, then returns the exit code."
+      operationId: "ContainerWait"
+      parameters:
+        - $ref: "#/parameters/id"
+      responses:
+        200:
+          description: "The container has exited."
+          schema:
+            type: "object"
+            required: [StatusCode]
+            properties:
+              StatusCode:
+                description: "Exit code of the container"
+                type: "integer"
+                x-nullable: false
+              Error:
+                description: "The error message of waiting container"
+                type: "string"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /containers/{id}:
     delete:
       summary: "Remove one container"
