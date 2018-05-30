@@ -6,7 +6,6 @@ import (
 	"net"
 	"path"
 	"strings"
-	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
@@ -16,7 +15,6 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
-	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
@@ -74,8 +72,6 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 	if cfg.NetworkConfig.ExecRoot == "" {
 		cfg.NetworkConfig.ExecRoot = network.DefaultExecRoot
 	}
-
-	initNetworkLog(cfg)
 
 	// get active sandboxes
 	ctrs, err := ctrMgr.List(context.Background(),
@@ -540,20 +536,6 @@ func (nm *NetworkManager) getNetworkSandbox(id string) libnetwork.Sandbox {
 		return false
 	})
 	return sb
-}
-
-// libnetwork's logrus version is different from pouchd,
-// so we need to set libnetwork's logrus addintionly.
-func initNetworkLog(cfg *config.Config) {
-	if cfg.Debug {
-		netlog.SetLevel(netlog.DebugLevel)
-	}
-
-	formatter := &netlog.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339Nano,
-	}
-	netlog.SetFormatter(formatter)
 }
 
 func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwork.EndpointOption, error) {
