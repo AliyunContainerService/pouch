@@ -502,6 +502,12 @@
 			"revisionTime": "2018-01-31T23:13:00Z"
 		},
 		{
+			"checksumSHA1": "R4z1KNN4Z7rkpqxQH6P0hEiqKwk=",
+			"path": "github.com/docker/docker/pkg/plugingetter",
+			"revision": "53a58da551e961b3710bbbdfabbc162c3f5f30f6",
+			"revisionTime": "2018-01-31T23:13:00Z"
+		},
+		{
 			"checksumSHA1": "H1rrbVmeE1z2TnkF7tSrfh+qUOY=",
 			"path": "github.com/docker/docker/pkg/stdcopy",
 			"revision": "53a58da551e961b3710bbbdfabbc162c3f5f30f6",
