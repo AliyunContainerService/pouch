@@ -42,7 +42,16 @@ func (client *APIClient) get(ctx context.Context, path string, query url.Values,
 }
 
 func (client *APIClient) post(ctx context.Context, path string, query url.Values, obj interface{}, headers map[string][]string) (*Response, error) {
-	return client.sendRequest(ctx, "POST", path, query, obj, headers)
+	body, err := objectToJSONStream(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.sendRequest(ctx, "POST", path, query, body, headers)
+}
+
+func (client *APIClient) postRawData(ctx context.Context, path string, query url.Values, data io.Reader, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "POST", path, query, data, headers)
 }
 
 func (client *APIClient) delete(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
@@ -50,7 +59,12 @@ func (client *APIClient) delete(ctx context.Context, path string, query url.Valu
 }
 
 func (client *APIClient) hijack(ctx context.Context, path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
-	req, err := client.newRequest("POST", path, query, obj, header)
+	body, err := objectToJSONStream(obj)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := client.newRequest("POST", path, query, body, header)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,20 +95,7 @@ func (client *APIClient) hijack(ctx context.Context, path string, query url.Valu
 	return rwc, br, nil
 }
 
-func (client *APIClient) newRequest(method, path string, query url.Values, obj interface{}, header map[string][]string) (*http.Request, error) {
-	var body io.Reader
-	if method == "POST" {
-		if obj != nil {
-			b, err := json.Marshal(obj)
-			if err != nil {
-				return nil, err
-			}
-			body = bytes.NewReader(b)
-		} else {
-			body = bytes.NewReader([]byte{})
-		}
-	}
-
+func (client *APIClient) newRequest(method, path string, query url.Values, body io.Reader, header map[string][]string) (*http.Request, error) {
 	fullPath := client.baseURL + client.GetAPIPath(path, query)
 	req, err := http.NewRequest(method, fullPath, body)
 	if err != nil {
@@ -110,8 +111,8 @@ func (client *APIClient) newRequest(method, path string, query url.Values, obj i
 	return req, err
 }
 
-func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, obj interface{}, headers map[string][]string) (*Response, error) {
-	req, err := client.newRequest(method, path, query, obj, headers)
+func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, body io.Reader, headers map[string][]string) (*Response, error) {
+	req, err := client.newRequest(method, path, query, body, headers)
 	if err != nil {
 		return nil, err
 	}
@@ -163,4 +164,16 @@ func cancellableDo(ctx context.Context, client *http.Client, req *http.Request) 
 	case resp := <-ctxResp:
 		return resp.response, resp.err
 	}
+}
+
+func objectToJSONStream(obj interface{}) (io.Reader, error) {
+	if obj != nil {
+		b, err := json.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+		return bytes.NewReader(b), nil
+	}
+
+	return nil, nil
 }

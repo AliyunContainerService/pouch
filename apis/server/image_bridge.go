@@ -134,3 +134,18 @@ func (s *Server) postImageTag(ctx context.Context, rw http.ResponseWriter, req *
 	rw.WriteHeader(http.StatusCreated)
 	return nil
 }
+
+// loadImage loads an image by http tar stream.
+func (s *Server) loadImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	imageName := req.FormValue("name")
+	if imageName == "" {
+		imageName = "unknown/unknown"
+	}
+
+	if err := s.ImageMgr.LoadImage(ctx, imageName, req.Body); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	return nil
+}
