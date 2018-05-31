@@ -3,9 +3,10 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  misspell-and-markdown-lint:
+  markdownlint-misspell-shellcheck:
     docker:
-      - image: allencloud/mdlmisspell:v0.1
+      # this image is build from Dockerfile located in ./.circleci/Dockerfile
+      - image: allencloud/pouchlint:v0.1
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
@@ -15,7 +16,12 @@ jobs:
             find  ./ -name  "*.md" | grep -v vendor | grep -v extra |  grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
       - run:
           name: use opensource tool client9/misspell to correct commonly misspelled English words 
-          command: find  ./* -name  "*"  | grep -v extra | grep -v vendor | xargs misspell -error 
+          command: |
+            find  ./* -name  "*"  | grep -v extra | grep -v vendor | xargs misspell -error
+      - run:
+          name: use ShellCheck (https://github.com/koalaman/shellcheck) to check the validateness of shell scripts in pouch repo
+          command: |
+            find ./ -name "*.sh" | grep -v vendor | grep -v extra | xargs shellcheck
 
   code-check:
     docker: 
@@ -52,6 +58,6 @@ workflows:
   version: 2
   ci:
     jobs:
-      - misspell-and-markdown-lint
+      - markdownlint-misspell-shellcheck
       - code-check
       - unit-test
