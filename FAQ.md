@@ -53,7 +53,23 @@ What is more, in data center's architecture, Kubernetes and Pouch locate in diff
 
 Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generalized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
 
-Rich container mode is not the default mode Pouch provides. It is an additional mode pouch brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
+Rich container mode is not the default mode Pouch provides. It is an additional mode pouch brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off. For more info, please refer to [rich container](./docs/features/pouch_with_rich_container.md).
+
+## What is relationship between containerd and Pouch
+
+To be added.
+
+## What is the image storage driver Pouch uses
+
+PouchContainer uses overlay2 as its default image storage driver. To be more detailed, containerd 1.0.0+ begins to make use of overlay2 to store images. While currently containerd is a base component in PouchContainer. For Linux mainline kernel, only kernel version 4.0+ supports overlay2. So, in theory, PouchContainer can only run on Linux distribution which are based on kernel 4.0+. However, RedHat series, like CentOS 7.2+ and so on, supports overlay2 stably since kernel version 3.10.327. For more information on RedHat, please refer to [Red Hat Enterprise Linux Release Dates](https://access.redhat.com/articles/3078#RHEL7).
+
+## Does Pouch support Kubernetes
+
+Yes, Pouch has already implemented all the CRI(container runtime interface). You can use Pouch under Kubernetes out of box. For more details, please refer to [Kubernetes](./docs/kubernetes).
+
+## Does Pouch support Mesos/DCOS
+
+To be added.
 
 ## What is version rule of Pouch
 
