@@ -118,8 +118,8 @@ func (suite *APIContainerLogsSuite) TestSinceAndUntil(c *check.C) {
 
 	allLogs = suite.syncReadLog(c, name, map[string]string{
 		"stdout": "1",
-		"since":  fmt.Sprintf("%d.%09d", sinceTime.Unix(), sinceTime.UnixNano()),
-		"until":  fmt.Sprintf("%d.%09d", untilTime.Unix(), untilTime.UnixNano()),
+		"since":  fmt.Sprintf("%d.%09d", sinceTime.Unix(), sinceTime.Nanosecond()),
+		"until":  fmt.Sprintf("%d.%09d", untilTime.Unix(), untilTime.Nanosecond()),
 	})
 
 	c.Assert(len(allLogs), check.Equals, 1)

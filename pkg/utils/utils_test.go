@@ -398,6 +398,76 @@ func TestCheckPidExist(t *testing.T) {
 	}
 }
 
+func TestGetTimestamp(t *testing.T) {
+	now := time.Now().In(time.UTC)
+
+	tCases := []struct {
+		val      string
+		expected string
+		hasError bool
+	}{
+		// relative time
+		{"1s", fmt.Sprintf("%d", now.Add(-1*time.Second).Unix()), false},
+		{"1m", fmt.Sprintf("%d", now.Add(-1*time.Minute).Unix()), false},
+		{"1.5h", fmt.Sprintf("%d", now.Add(-90*time.Minute).Unix()), false},
+		{"1h30m", fmt.Sprintf("%d", now.Add(-90*time.Minute).Unix()), false},
+
+		// time
+		{"2018-07-16T08:00:00.999999999+08:00", "1531699200.999999999", false},
+		{"2018-07-16T08:00:00.999999999+00:00", "1531728000.999999999", false},
+		{"2018-07-16T08:00:00.999999999-00:00", "1531728000.999999999", false},
+		{"2018-07-16T08:00:00.999999999Z", "1531728000.999999999", false},
+		{"2018-07-16T08:00:00.999999999", "1531728000.999999999", false},
+
+		{"2018-07-16T08:00:00", "1531728000.000000000", false},
+		{"2018-07-16T08:00:00Z", "1531728000.000000000", false},
+		{"2018-07-16T08:00:00+00:00", "1531728000.000000000", false},
+		{"2018-07-16T08:00:00-00:00", "1531728000.000000000", false},
+
+		{"2018-07-16T08:00", "1531728000.000000000", false},
+		{"2018-07-16T08:00Z", "1531728000.000000000", false},
+		{"2018-07-16T08:00+00:00", "1531728000.000000000", false},
+		{"2018-07-16T08:00-00:00", "1531728000.000000000", false},
+
+		{"2018-07-16T08", "1531728000.000000000", false},
+		{"2018-07-16T08Z", "1531728000.000000000", false},
+		{"2018-07-16T08+01:00", "1531724400.000000000", false},
+		{"2018-07-16T08-01:00", "1531731600.000000000", false},
+
+		{"2018-07-16", "1531699200.000000000", false},
+		{"2018-07-16Z", "1531699200.000000000", false},
+		{"2018-07-16+01:00", "1531695600.000000000", false},
+		{"2018-07-16-01:00", "1531702800.000000000", false},
+
+		// timestamp
+		{"0", "0", false},
+		{"12", "12", false},
+		{"12a", "12a", false},
+
+		// invalid input
+		{"-12", "", true},
+		{"2006-01-02T15:04:0Z", "", true},
+		{"2006-01-02T15:04:0", "", true},
+		{"2006-01-02T15:0Z", "", true},
+		{"2006-01-02T15:0", "", true},
+	}
+
+	for _, tc := range tCases {
+		got, err := GetUnixTimestamp(tc.val, now)
+		if err != nil && !tc.hasError {
+			t.Fatalf("unexpected error %v", err)
+		}
+
+		if err == nil && tc.hasError {
+			t.Fatal("expected error, but got nothing")
+		}
+
+		if got != tc.expected {
+			t.Errorf("expected %v, but got %v", tc.expected, got)
+		}
+	}
+}
+
 func TestParseTimestamp(t *testing.T) {
 	tCases := []struct {
 		val          string
