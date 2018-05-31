@@ -2,7 +2,6 @@
 
 set -e
 
-TMP=$(mktemp -d /tmp/pouch.XXXXXX)
 DEFAULT_GPG_KEY=${GPGKEY:-"439AE9EC"}
 MOUNTDIR=/root/deb
 PACKAGEDIR=/root/deb/package/deb/
@@ -42,7 +41,7 @@ dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
 apt-ftparchive release ./ > Release
 
 # if you want to use your gpg key, you should replace '439AE9EC' with your key
-gpg -abs --default-key $DEFAULT_GPG_KEY -o Release.gpg Release
-gpg --clearsign --default-key $DEFAULT_GPG_KEY -o InRelease Release
+gpg -abs --default-key "$DEFAULT_GPG_KEY" -o Release.gpg Release
+gpg --clearsign --default-key "$DEFAULT_GPG_KEY" -o InRelease Release
 
 echo "Build deb package successfully! Please get the package in $PACKAGEDIR!"

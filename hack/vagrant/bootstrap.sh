@@ -31,13 +31,16 @@ install_go(){
     git clone --depth=1 https://github.com/syndbg/goenv.git ~/.goenv
 
     PROFILE="$HOME/.bashrc"
-    echo 'export GOENV_ROOT="$HOME/.goenv"' >> $PROFILE
-    echo 'export PATH="$GOENV_ROOT/bin:$PATH"' >> $PROFILE
-    echo 'eval "$(goenv init -)"' >> $PROFILE
-    echo 'export GOPATH="/go"' >> $PROFILE
+    # shellcheck disable=SC2016
+    echo 'export GOENV_ROOT="$HOME/.goenv"' >> "$PROFILE"
+    # shellcheck disable=SC2016
+    echo 'export PATH="$GOENV_ROOT/bin:$PATH"' >> "$PROFILE"
+    # shellcheck disable=SC2016
+    echo 'eval "$(goenv init -)"' >> "$PROFILE"
+    echo 'export GOPATH="/go"' >> "$PROFILE"
 
-    $HOME/.goenv/bin/goenv install $GOVERSION
-    $HOME/.goenv/bin/goenv global $GOVERSION
+    "$HOME/.goenv/bin/goenv" install "$GOVERSION"
+    "$HOME/.goenv/bin/goenv" global "$GOVERSION"
 }
 
 # install_docker install docker with get.docker.com's shell script

@@ -17,7 +17,7 @@
 set -o nounset
 set -o pipefail
 
-source $(dirname "${BASH_SOURCE[0]}")/test-utils.sh
+source "$(dirname "${BASH_SOURCE[0]}")/test-utils.sh"
 
 POUCH_SOCK="/var/run/pouchcri.sock"
 
@@ -42,8 +42,8 @@ GOPATH=${GOPATH%%:*}
 # Install CNI first
 mkdir -p /etc/cni/net.d /opt/cni/bin
 
-git clone https://github.com/containernetworking/plugins $GOPATH/src/github.com/containernetworking/plugins
-cd $GOPATH/src/github.com/containernetworking/plugins
+git clone https://github.com/containernetworking/plugins "$GOPATH/src/github.com/containernetworking/plugins"
+cd "$GOPATH/src/github.com/containernetworking/plugins"
 
 ./build.sh
 cp bin/* /opt/cni/bin
@@ -89,26 +89,26 @@ GINKGO=${GOPATH}/bin/ginkgo
 GINKGO_PKG=github.com/onsi/ginkgo/ginkgo
 
 # Install critest
-if [ ! -x "$(command -v ${CRITEST})" ]; then
+if [ ! -x "$(command -v "${CRITEST}")" ]; then
   go get -d ${CRITOOL_PKG}/...
-  cd ${GOPATH}/src/${CRITOOL_PKG}
+  cd "${GOPATH}/src/${CRITOOL_PKG}"
   git fetch --all
-  git checkout ${CRITOOL_VERSION}
+  git checkout "${CRITOOL_VERSION}"
   make
 fi
-which ${CRITEST}
+which "${CRITEST}"
 
 # Install ginkgo
-if [ ! -x "$(command -v ${GINKGO})" ]; then
+if [ ! -x "$(command -v "${GINKGO}")" ]; then
   go get -u ${GINKGO_PKG}
 fi
-which ${GINKGO}
+which "${GINKGO}"
 
-mkdir -p ${REPORT_DIR}
-test_setup ${REPORT_DIR}
+mkdir -p "${REPORT_DIR}"
+test_setup "${REPORT_DIR}"
 
 # Run cri validation test
-sudo env PATH=${PATH} GOPATH=${GOPATH} ${CRITEST} --runtime-endpoint=${POUCH_SOCK} --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}"
+sudo env PATH="${PATH}" GOPATH="${GOPATH}" "${CRITEST}" --runtime-endpoint=${POUCH_SOCK} --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}"
 test_exit_code=$?
 
 test_teardown
