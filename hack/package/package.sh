@@ -24,7 +24,7 @@ GITCOMMIT=$( git rev-parse HEAD )
 DIR="$( cd "$( dirname "$0" )/../.." && pwd )"
 
 # Replace Version, BuildTime and CommitID in version.go
-pushd $DIR
+pushd "$DIR"
 sed -i "s#^const Version.*#const Version = \"$VERSION\"#g" version/version.go
 sed -i "s#^var BuildTime.*#var BuildTime = \"$BUILDTIME\"#g" version/version.go
 sed -i "s#^var GitCommit.*#var GitCommit = \"$GITCOMMIT\"#g" version/version.go
@@ -32,25 +32,25 @@ sed -i "s#^var GitCommit.*#var GitCommit = \"$GITCOMMIT\"#g" version/version.go
 # build rpm packages
 function build_rpm() {
 	# build images
-	docker build --network host -t pouch:rpm -f $DIR/hack/package/rpm/centos-7/Dockerfile.x86_64 .
+	docker build --network host -t pouch:rpm -f "$DIR/hack/package/rpm/centos-7/Dockerfile.x86_64" .
 	(( $? != 0 )) && echo "failed to build pouch:rpm image." && exit 1
 
 	docker run --network host -it --rm \
 		-e VERSION="$VERSION" \
 		-e ITERATION="$ITERATION" \
-		-v $KEYDIR:/root/rpm \
+		-v "$KEYDIR:/root/rpm" \
 		pouch:rpm
 }
 
 # build deb packages
 function build_deb() {
 	# build images
-	docker build --network host -t pouch:deb -f $DIR/hack/package/deb/ubuntu-xenial/Dockerfile.x86_64 .
+	docker build --network host -t pouch:deb -f "$DIR/hack/package/deb/ubuntu-xenial/Dockerfile.x86_64" .
 	(( $? != 0 )) && echo "failed to build pouch:deb image." && exit 1
 
 	docker run --network host -it --rm \
 		-e VERSION="$VERSION" \
-		-v $KEYDIR/:/root/deb \
+		-v "$KEYDIR/:/root/deb" \
 		pouch:deb
 }
 

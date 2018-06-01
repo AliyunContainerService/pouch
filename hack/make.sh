@@ -6,7 +6,7 @@ set -ex
 #
 TMP=$(mktemp -d /tmp/pouch.XXXXXX)
 DIR="$( cd "$( dirname "$0" )/.." && pwd )"
-cd $DIR/
+cd "$DIR/"
 
 CONTAINERD_VERSION=
 RUNC_VERSION=
@@ -19,8 +19,8 @@ IMAGE="registry.hub.docker.com/letty/pouchci:latest"
 if [[ $SOURCEDIR != $DIR ]];then
 	[ -d $SOURCEDIR ] && rm -rf $SOURCEDIR
 	POUCHTOPDIR=$(dirname $SOURCEDIR)
-	[ ! -d $POUCHTOPDIR ] && mkdir -p $POUCHTOPDIR
-	ln -sf $DIR/ $SOURCEDIR
+	[ ! -d "$POUCHTOPDIR" ] && mkdir -p "$POUCHTOPDIR"
+	ln -sf "$DIR/" $SOURCEDIR
 fi
 
 #
@@ -71,9 +71,9 @@ function install_containerd
 	else
 		echo "Download and install containerd."
 		wget --quiet \
-			https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P $TMP
-		tar xf $TMP/containerd-1.0.3.linux-amd64.tar.gz -C $TMP &&
-			cp -f $TMP/bin/* /usr/local/bin/
+			https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P "$TMP"
+		tar xf "$TMP/containerd-1.0.3.linux-amd64.tar.gz" -C "$TMP" &&
+			cp -f "$TMP"/bin/* /usr/local/bin/
 	fi;
 }
 
@@ -103,7 +103,7 @@ function install_lxcfs
 			apt-get install -y lxcfs
 		fi
 	else
-		sh -x $DIR/hack/install_lxcfs_on_centos.sh
+		sh -x "$DIR/hack/install_lxcfs_on_centos.sh"
 	fi
 }
 
@@ -125,7 +125,7 @@ function clean_local_persist
 
 	if [[ $pid ]]; then
 		echo "Try killing local-persist process"
-		kill -9 $pid
+		kill -9 "$pid"
 	fi
 
 	echo "Try removing local-persist.sock"
@@ -156,14 +156,14 @@ function install_nsenter
 				autopoint \
 				libtool
 			wget --quiet \
-				https://www.kernel.org/pub/linux/utils/util-linux/v2.24/util-linux-2.24.1.tar.gz -P $TMP
-			tar xf $TMP/util-linux-2.24.1.tar.gz -C $TMP && 
-				cd $TMP/util-linux-2.24.1
+				https://www.kernel.org/pub/linux/utils/util-linux/v2.24/util-linux-2.24.1.tar.gz -P "$TMP"
+			tar xf "$TMP/util-linux-2.24.1.tar.gz" -C "$TMP" &&
+				cd "$TMP/util-linux-2.24.1"
 			./autogen.sh
 			autoreconf -vfi
 			./configure && make 
 			cp ./nsenter /usr/local/bin
-			cd $DIR/
+			cd "$DIR/"
 		fi
 	else
 		yum install -y util-linux
@@ -194,9 +194,9 @@ function install_pouch
 	# copy pouch daemon and pouch cli to PATH
 	echo "Install pouch."
 	if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
-		cp -f $DIR/pouchd-test /usr/local/bin/
+		cp -f "$DIR/pouchd-test" /usr/local/bin/
 	fi
-	cp -f $DIR/pouch $DIR/pouchd /usr/local/bin/
+	cp -f "$DIR/pouch" "$DIR/pouchd" /usr/local/bin/
 	install_lxcfs
 	install_nsenter
 }
@@ -205,7 +205,7 @@ function target
 {
 	case $1 in
 	check)
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE bash -c "make check"
+		docker run --rm -v "$(pwd):$SOURCEDIR" "$IMAGE" bash -c "make check"
 		;;
 	build)
 		#
@@ -213,24 +213,24 @@ function target
 		# equal to 'no'.
 		#
 		if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
-			docker run --rm -v $(pwd):$SOURCEDIR $IMAGE \
-				bash -c "make testserver"  >$TMP/build.log ||
-				{ echo "make build log:"; cat $TMP/build.log; return 1; }
+			docker run --rm -v "$(pwd):$SOURCEDIR" "$IMAGE" \
+				bash -c "make testserver"  >"$TMP/build.log" ||
+				{ echo "make build log:"; cat "$TMP/build.log"; return 1; }
 		fi
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE \
-			bash -c "make build"  >$TMP/build.log ||
-			{ echo "make build log:"; cat $TMP/build.log; return 1; }
+		docker run --rm -v "$(pwd):$SOURCEDIR" "$IMAGE" \
+			bash -c "make build"  >"$TMP/build.log" ||
+			{ echo "make build log:"; cat "$TMP/build.log"; return 1; }
 
-		install_pouch  >$TMP/install.log ||
-			{ echo "install pouch log:"; cat $TMP/install.log; return 1; }
+		install_pouch  >"$TMP/install.log" ||
+			{ echo "install pouch log:"; cat "$TMP/install.log"; return 1; }
 		;;
 	unit-test)
-		docker run --rm -v $(pwd):$SOURCEDIR $IMAGE \
+		docker run --rm -v "$(pwd):$SOURCEDIR" "$IMAGE" \
 			bash -c "make unit-test"
 		;;
 	cri-test)
 		cd $SOURCEDIR
-		env PATH=$GOROOT/bin:$PATH $SOURCEDIR/hack/cri-test/test-cri.sh
+		env PATH="$GOROOT/bin:$PATH" "$SOURCEDIR/hack/cri-test/test-cri.sh"
 		;;
 	integration-test)
 		
@@ -238,7 +238,7 @@ function target
 			echo "Warning: dumb-init install failed!\
 				 rich container related tests will be skipped"
 	
-		docker run --rm -v $(pwd):$SOURCEDIR \
+		docker run --rm -v "$(pwd):$SOURCEDIR" \
 			-e GOPATH=/go:$SOURCEDIR/extra/libnetwork/Godeps/_workspace \
 			$IMAGE \
 			bash -c "cd test && go test -c -o integration-test"
@@ -247,15 +247,15 @@ function target
 
         	# start local-persist
 		echo "start local-persist volume plugin"
-        	local-persist > $TMP/volume.log 2 >&1 &
+		local-persist > "$TMP/volume.log" 2 >&1 &
 
 		# start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
 			$POUCHD --debug --enable-lxcfs=true \
-				--lxcfs=/usr/bin/lxcfs > $TMP/log 2>&1 &
+				--lxcfs=/usr/bin/lxcfs > "$TMP/log" 2>&1 &
 		else
-			$POUCHD --debug > $TMP/log 2>&1 &
+			$POUCHD --debug > "$TMP/log" 2>&1 &
 		fi
 
 		# wait until pouch daemon is ready
@@ -268,7 +268,7 @@ function target
 			elif (( $((daemon_timeout_time--)) == 0 ));then
 				echo "Failed to start pouch daemon"
 				echo "pouch daemon log:"
-				cat $TMP/log 
+				cat "$TMP/log"
 				return 1
 			else
 				sleep 1
@@ -279,15 +279,15 @@ function target
 		pouch version
 
 		# copy tls file
-		cp -rf $DIR/test/tls /tmp/
+		cp -rf "$DIR/test/tls" /tmp/
 
 		# If test is failed, print pouch daemon log.
 		set +e
-		$DIR/test/integration-test -test.v -check.v
+		"$DIR/test/integration-test" -test.v -check.v
 
 		if (( $? != 0 )); then
 			echo "pouch daemon log:"
-			cat $TMP/log
+			cat "$TMP/log"
 			clean_local_persist
 			return 1
 		fi
@@ -312,22 +312,22 @@ function main
 		exit 1
 	fi
 
-	if [[ $# < 1 ]]; then
+	if [[ $# -lt 1 ]]; then
 		targets="check build unit-test integration-test"
 	else
 		targets=($@)
 	fi
 
-	for target in ${targets[@]}; do
-		target $target
+	for target in "${targets[@]}"; do
+		target "$target"
 		ret=$?
-		if (( $ret != 0 )); then
+		if (( ret != 0 )); then
 			return $ret
 		fi
 	done
 	
 	if [[ $CAL_INTEGRATION_TEST_COVERAGE == "yes" ]]; then
-		if ! echo ${targets[@]} | grep -q "integration" ; then 
+		if ! echo "${targets[@]}" | grep -q "integration" ; then
 			return $ret
 		fi
 		# 
@@ -336,8 +336,8 @@ function main
 		pkill --signal 3 pouchd-test || echo "no pouchd-test to be killed"
 		sleep 5
 
-		tail -1 $TMP/log 
-		cat $DIR/integrationcover.out >> $DIR/coverage.txt
+		tail -1 "$TMP/log"
+		cat "$DIR/integrationcover.out" >> "$DIR/coverage.txt"
 		return $ret
 	fi
 }

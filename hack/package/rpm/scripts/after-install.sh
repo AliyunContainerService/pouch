@@ -1,4 +1,5 @@
-if [ $1 -eq 1 ] ; then
+#!/usr/bin/env bash
+if [ "$1" -eq 1 ] ; then
 	systemctl preset pouch > /dev/null 2>&1
 	
 fi

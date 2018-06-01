@@ -15,13 +15,13 @@
 # limitations under the License.
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-. ${ROOT}/versions
+. "${ROOT}/versions"
 # POUCH_FLAGS are the extra flags to use when start pouchd.
 POUCH_FLAGS=${POUCH_FLAGS:-""}
 # RESTART_WAIT_PERIOD is the period to wait before restarting pouchd/containerd.
 RESTART_WAIT_PERIOD=${RESTART_WAIT_PERIOD:-10}
 
-POUCH_SOCK=/var/run/pouchcri.sock
+# POUCH_SOCK=/var/run/pouchcri.sock
 
 pouch_pid=
 containerd_pid=
@@ -35,10 +35,10 @@ test_setup() {
     echo "containerd is not installed, please run hack/make.sh"
     exit 1
   fi
-  containerd_pid_command=`pgrep containerd`
+  containerd_pid_command=$(pgrep containerd)
   containerd_pid=${containerd_pid_command}
   if [ ! -n "${containerd_pid}" ]; then
-    keepalive "/usr/local/bin/containerd" ${RESTART_WAIT_PERIOD} &> ${report_dir}/containerd.log &
+    keepalive "/usr/local/bin/containerd" "${RESTART_WAIT_PERIOD}" &> "${report_dir}/containerd.log" &
     containerd_pid=$!
   fi
   # Wait for containerd to be running by using the containerd client ctr to check the version
@@ -46,11 +46,11 @@ test_setup() {
   readiness_check "ctr version"
 
   # Start pouchd
-  pouch_pid_command=`pgrep pouchd`
+  pouch_pid_command=$(pgrep pouchd)
   pouch_pid=${pouch_pid_command}
   if [ ! -n "${pouch_pid}" ]; then
     keepalive "pouchd --enable-cri --sandbox-image=gcr.io/google_containers/pause-amd64:3.0 ${POUCH_FLAGS}" \
-	  ${RESTART_WAIT_PERIOD} &> ${report_dir}/pouch.log &
+	  "${RESTART_WAIT_PERIOD}" &> "${report_dir}/pouch.log" &
     pouch_pid=$!
   fi
   readiness_check "pouch version"
@@ -71,11 +71,11 @@ test_teardown() {
 # keepalive process is eventually killed in test_teardown.
 keepalive() {
   local command=$1
-  echo ${command}
+  echo "${command}"
   local wait_period=$2
   while true; do
     ${command}
-    sleep ${wait_period}
+    sleep "${wait_period}"
   done
 }
 

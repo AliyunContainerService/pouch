@@ -7,4 +7,4 @@
 # Get the absolute path of this file
 DIR="$( cd "$( dirname "$0"  )" && pwd  )"
 
-swagger generate model -f $DIR/../apis/swagger.yml -t $DIR/../apis -m types
+swagger generate model -f "$DIR/../apis/swagger.yml" -t "$DIR/../apis" -m types
