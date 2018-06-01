@@ -25,6 +25,8 @@ func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req 
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
+	logCreateOptions("network", config)
+
 	network, err := s.NetworkMgr.Create(ctx, *config)
 	if err != nil {
 		return err

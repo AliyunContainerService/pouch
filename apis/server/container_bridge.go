@@ -39,6 +39,8 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
+	logCreateOptions("container", config)
+
 	name := req.FormValue("name")
 
 	// to do compensation to potential nil pointer after validation

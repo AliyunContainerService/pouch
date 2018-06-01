@@ -25,6 +25,8 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
+	logCreateOptions("volume", config)
+
 	name := config.Name
 	driver := config.Driver
 	options := config.DriverOpts

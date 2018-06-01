@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -88,5 +89,15 @@ func writeLogStream(ctx context.Context, w io.Writer, tty bool, opt *types.Conta
 				}
 			}
 		}
+	}
+}
+
+// logCreateOptions will print create args in pouchd logs for debugging.
+func logCreateOptions(objType string, config interface{}) {
+	args, err := json.Marshal(config)
+	if err != nil {
+		logrus.Errorf("failed to marsal config for %s: %v", objType, err)
+	} else {
+		logrus.Infof("create %s with args: %v", objType, string(args))
 	}
 }
