@@ -33,18 +33,25 @@ func (r *remoteDriverWrapper) StoreMode(ctx Context) VolumeStoreMode {
 }
 
 // Create a remote volume.
-func (r *remoteDriverWrapper) Create(ctx Context, v *types.Volume, s *types.Storage) error {
-	ctx.Log.Debugf("driver wrapper [%s] creates volume: %s", r.Name(ctx), v.Name)
+func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeID) (*types.Volume, error) {
+	ctx.Log.Debugf("driver wrapper [%s] creates volume: %s", r.Name(ctx), id.Name)
 
-	options := types.ExtractOptionsFromVolume(v)
+	ctx.Log.Debugf("driver wrapper gets options: %v", id.Options)
 
-	ctx.Log.Debugf("driver wrapper gets options: %v", options)
+	if err := r.proxy.Create(id.Name, id.Options); err != nil {
+		return nil, err
+	}
 
-	return r.proxy.Create(v.Name, options)
+	mountPath, err := r.proxy.Path(id.Name)
+	if err != nil {
+		mountPath = ""
+	}
+
+	return types.NewVolumeFromID(mountPath, "", id), nil
 }
 
 // Remove a remote volume.
-func (r *remoteDriverWrapper) Remove(ctx Context, v *types.Volume, s *types.Storage) error {
+func (r *remoteDriverWrapper) Remove(ctx Context, v *types.Volume) error {
 	ctx.Log.Debugf("driver wrapper [%s] removes volume: %s", r.Name(ctx), v.Name)
 
 	return r.proxy.Remove(v.Name)
@@ -61,15 +68,7 @@ func (r *remoteDriverWrapper) Get(ctx Context, name string) (*types.Volume, erro
 
 	id := types.NewVolumeID(name, r.Name(ctx))
 
-	volume, err := types.NewVolume(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// set the mountpoint
-	volume.Status.MountPoint = rv.Mountpoint
-
-	return volume, nil
+	return types.NewVolumeFromID(rv.Mountpoint, "", id), nil
 }
 
 // List all volumes from remote driver.
@@ -85,15 +84,7 @@ func (r *remoteDriverWrapper) List(ctx Context) ([]*types.Volume, error) {
 
 	for _, rv := range rvList {
 		id := types.NewVolumeID(rv.Name, r.Name(ctx))
-
-		volume, err := types.NewVolume(id)
-		if err != nil {
-			continue
-		}
-
-		// set the mountpoint
-		volume.Status.MountPoint = rv.Mountpoint
-
+		volume := types.NewVolumeFromID(rv.Mountpoint, "", id)
 		vList = append(vList, volume)
 	}
 
@@ -119,7 +110,7 @@ func (r *remoteDriverWrapper) Options() map[string]types.Option {
 }
 
 // Attach a remote volume.
-func (r *remoteDriverWrapper) Attach(ctx Context, v *types.Volume, s *types.Storage) error {
+func (r *remoteDriverWrapper) Attach(ctx Context, v *types.Volume) error {
 	ctx.Log.Debugf("driver wrapper [%s] attach volume: %s", r.Name(ctx), v.Name)
 
 	_, err := r.proxy.Mount(v.Name, v.UID)
@@ -131,7 +122,7 @@ func (r *remoteDriverWrapper) Attach(ctx Context, v *types.Volume, s *types.Stor
 }
 
 // Detach a remote volume.
-func (r *remoteDriverWrapper) Detach(ctx Context, v *types.Volume, s *types.Storage) error {
+func (r *remoteDriverWrapper) Detach(ctx Context, v *types.Volume) error {
 	ctx.Log.Debugf("driver wrapper [%s] detach volume: %s", r.Name(ctx), v.Name)
 
 	return r.proxy.Unmount(v.Name, v.UID)

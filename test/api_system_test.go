@@ -53,11 +53,10 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 	c.Assert(got.NCPU, check.Equals, int64(runtime.NumCPU()))
 
 	// Check the volume drivers
-	c.Assert(len(got.VolumeDrivers), check.Equals, 4)
-	c.Assert(got.VolumeDrivers[0], check.Equals, "ceph")
-	c.Assert(got.VolumeDrivers[1], check.Equals, "local")
-	c.Assert(got.VolumeDrivers[2], check.Equals, "local-persist")
-	c.Assert(got.VolumeDrivers[3], check.Equals, "tmpfs")
+	c.Assert(len(got.VolumeDrivers), check.Equals, 3)
+	c.Assert(got.VolumeDrivers[0], check.Equals, "local")
+	c.Assert(got.VolumeDrivers[1], check.Equals, "local-persist")
+	c.Assert(got.VolumeDrivers[2], check.Equals, "tmpfs")
 }
 
 // TestVersion tests /version API.
