@@ -1240,6 +1240,13 @@
 			"revisionTime": "2017-10-18T16:57:59Z"
 		},
 		{
+			"checksumSHA1": "o+lVDhZsT+PFILKt5S6CgBmcrMs=",
+			"origin": "github.com/alibaba/pouch/vendor/k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
+			"path": "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
+			"revision": "86bd9771515c19a8df7128f53b1c1fa4f00d64ee",
+			"revisionTime": "2018-05-23T02:20:24Z"
+		},
+		{
 			"checksumSHA1": "oRQMrak6qTTdEUnRUMtVpzO9T/A=",
 			"path": "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime",
 			"revision": "18758f502c4a249bf999f34e4a115ec9881cd9f2",

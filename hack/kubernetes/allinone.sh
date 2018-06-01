@@ -2,13 +2,50 @@
 
 # This file allows you to init kuberenete master node with pouch containers available.
 # Ubuntu and CentOS supported.
+# This file is not responsible for CNI network configuration, you need to do it by yourself.
 
 set -o errexit
 set -o nounset
 
-KUBERNETES_VERSION_UBUNTU="1.9.4-00"
-KUBERNETES_VERSION_CENTOS="1.9.4"
-MASTER_CIDR="10.244.1.0/24"
+echo "----------------------------------"
+echo "Please choose the version of kubernetes:"
+echo "(1) kubernetes 1.9"
+echo "(2) kubernetes 1.10"
+echo "(0) exit"
+echo "----------------------------------"
+read input
+case $input in
+    1)
+    KUBERNETES_VERSION_UBUNTU="1.9.4-00"
+    KUBERNETES_VERSION_CENTOS="1.9.4"
+    CRI_VERSION="v1alpha1";;
+    2)
+    KUBERNETES_VERSION_UBUNTU="1.10.2-00"
+    KUBERNETES_VERSION_CENTOS="1.10.2"
+    CRI_VERSION="v1alpha2";;
+    0)
+    exit;;
+esac
+echo "KUBERNETES_VERSION:" $KUBERNETES_VERSION_CENTOS
+
+echo "----------------------------------"
+echo "Is it the master node ?"
+echo "(Y/y) Y"
+echo "(N/n) N"
+echo "(0) exit"
+echo "----------------------------------"
+read input
+case $input in
+    Y | y )
+    MASTER_NODE="true";;
+    N | n)
+    MASTER_NODE="false";;
+    0)
+    exit;;
+esac
+echo "MASTER_NODE:"$MASTER_NODE
+
+MASTER_CIDR="10.244.0.0/16"
 
 install_pouch_ubuntu() {
 	apt-get install lxcfs
@@ -31,14 +68,14 @@ install_pouch_centos() {
 }
 
 config_pouch_ubuntu() {
-	sed -i 's/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true/g' /usr/lib/systemd/system/pouch.service
-	systemctl daemon-reload
+	sed -i "s/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true --cri-version=$CRI_VERSION/g" /usr/lib/systemd/system/pouch.service
+    systemctl daemon-reload
 	systemctl restart pouch
 }
 
 config_pouch_centos() {
-	sed -i 's/ExecStart=\/usr\/local\/bin\/pouchd/ExecStart=\/usr\/local\/bin\/pouchd --enable-cri=true/g' /lib/systemd/system/pouch.service
-	systemctl daemon-reload
+	sed -i "s/ExecStart=\/usr\/local\/bin\/pouchd/ExecStart=\/usr\/local\/bin\/pouchd --enable-cri=true --cri-version=$CRI_VERSION/g" /lib/systemd/system/pouch.service
+    systemctl daemon-reload
 	systemctl restart pouch
 }
 
@@ -83,38 +120,8 @@ config_kubelet() {
 	systemctl start kubelet
 }
 
-config_cni() {
-	mkdir -p /etc/cni/net.d
-	cat >/etc/cni/net.d/10-mynet.conf <<-EOF
-{
-    "cniVersion": "0.3.0",
-    "name": "mynet",
-    "type": "bridge",
-    "bridge": "cni0",
-    "isGateway": true,
-    "ipMasq": true,
-    "ipam": {
-        "type": "host-local",
-        "subnet": "${MASTER_CIDR}",
-        "routes": [
-            { "dst": "0.0.0.0/0"  }
-        ]
-    }
-}
-EOF
-	cat >/etc/cni/net.d/99-loopback.conf <<-EOF
-{
-    "cniVersion": "0.3.0",
-    "type": "loopback"
-}
-EOF
-}
-
 setup_master() {
-	kubeadm init --skip-preflight-checks
-	# enable schedule pods on the master node
-	export KUBECONFIG=/etc/kubernetes/admin.conf
-	kubectl taint nodes --all node-role.kubernetes.io/master:NoSchedule-
+	kubeadm init --pod-network-cidr $MASTER_CIDR --ignore-preflight-errors=all
 }
 
 command_exists() {
@@ -148,8 +155,9 @@ case "$lsb_dist" in
         install_kubelet_ubuntu
         install_cni_ubuntu
         config_kubelet
-        config_cni
-        setup_master
+        if $MASTER_NODE; then
+            setup_master
+        fi
     ;;
 
     fedora|centos|redhat)
@@ -158,8 +166,9 @@ case "$lsb_dist" in
         install_kubelet_centos
         install_cni_centos
         config_kubelet
-        config_cni
-        setup_master
+        if $MASTER_NODE; then
+            setup_master
+        fi
     ;;
 
     *)
