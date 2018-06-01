@@ -256,6 +256,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+name)
 	}
 
+	// set hostname.
+	if config.Hostname.String() == "" {
+		// if hostname is empty, take the part of id as the hostname
+		config.Hostname = strfmt.Hostname(id[:12])
+	}
+
 	// set container runtime
 	if config.HostConfig.Runtime == "" {
 		config.HostConfig.Runtime = mgr.Config.DefaultRuntime
@@ -328,13 +334,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	networkMode := config.HostConfig.NetworkMode
 	if networkMode == "" {
 		config.HostConfig.NetworkMode = "bridge"
-		container.Config.NetworkDisabled = true
 	}
 	container.NetworkSettings = new(types.NetworkSettings)
 	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		container.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	}
-	if container.NetworkSettings.Networks == nil && networkMode != "" && !IsContainer(networkMode) {
+	if container.NetworkSettings.Networks == nil && !IsContainer(config.HostConfig.NetworkMode) {
 		container.NetworkSettings.Networks = make(map[string]*types.EndpointSettings)
 		container.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
@@ -460,31 +465,51 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		c.ResolvConfPath = origContainer.ResolvConfPath
 		c.Config.Hostname = origContainer.Config.Hostname
 		c.Config.Domainname = origContainer.Config.Domainname
-	}
+	} else {
+		// initialise host network mode
+		if IsHost(networkMode) {
+			hostname, err := os.Hostname()
+			if err != nil {
+				return err
+			}
+			c.Config.Hostname = strfmt.Hostname(hostname)
+		}
 
-	// initialise host network mode
-	if IsHost(networkMode) {
-		hostname, err := os.Hostname()
-		if err != nil {
+		// build the network related path.
+		if err := mgr.buildNetworkRelatedPath(c); err != nil {
 			return err
 		}
-		c.Config.Hostname = strfmt.Hostname(hostname)
-	}
 
-	// initialise network endpoint
-	if c.NetworkSettings != nil {
-		for name, endpointSetting := range c.NetworkSettings.Networks {
-			endpoint := mgr.buildContainerEndpoint(c)
-			endpoint.Name = name
-			endpoint.EndpointConfig = endpointSetting
-			if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
-				logrus.Errorf("failed to create endpoint: %v", err)
-				return err
+		// initialise network endpoint
+		if c.NetworkSettings != nil {
+			for name, endpointSetting := range c.NetworkSettings.Networks {
+				endpoint := mgr.buildContainerEndpoint(c)
+				endpoint.Name = name
+				endpoint.EndpointConfig = endpointSetting
+				if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
+					logrus.Errorf("failed to create endpoint: %v", err)
+					return err
+				}
 			}
 		}
 	}
 
 	return mgr.createContainerdContainer(ctx, c)
+}
+
+// buildNetworkRelatedPath builds the network related path.
+func (mgr *ContainerManager) buildNetworkRelatedPath(c *Container) error {
+	// set the hosts file path.
+	c.HostsPath = path.Join(mgr.Store.Path(c.ID), "hosts")
+
+	// set the resolv.conf file path.
+	c.ResolvConfPath = path.Join(mgr.Store.Path(c.ID), "resolv.conf")
+
+	// set the hostname file path.
+	c.HostnamePath = path.Join(mgr.Store.Path(c.ID), "hostname")
+
+	// write the hostname file, other files are filled by libnetwork.
+	return ioutil.WriteFile(c.HostnamePath, []byte(c.Config.Hostname+"\n"), 0644)
 }
 
 func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container) error {

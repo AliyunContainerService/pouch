@@ -34,6 +34,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
 	flagSet.StringSliceVarP(&c.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringVar(&c.hostname, "hostname", "", "Set container's hostname")
+	flagSet.BoolVar(&c.disableNetworkFiles, "disable-network-files", false, "Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false")
 
 	// Intel RDT
 	flagSet.StringVar(&c.IntelRdtL3Cbm, "intel-rdt-l3-cbm", "", "Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel")

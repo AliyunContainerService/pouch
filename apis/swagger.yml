@@ -1839,6 +1839,11 @@ definitions:
         type: "boolean"
         x-nullable: false
         default: true
+      DisableNetworkFiles:
+        description: "Whether to generate the network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container."
+        type: "boolean"
+        x-nullable: false
+        default: false
       ExposedPorts:
         description: "An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`"
         type: "object"

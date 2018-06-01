@@ -216,6 +216,9 @@ func applySandboxSecurityContext(lc *runtime.LinuxPodSandboxConfig, config *apit
 
 // applySandboxLinuxOptions applies LinuxPodSandboxConfig to pouch's HostConfig and ContainerCreateConfig.
 func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandboxConfig, createConfig *apitypes.ContainerCreateConfig, image string) error {
+	// apply the sandbox network_mode, "none" is default.
+	hc.NetworkMode = namespaceModeNone
+
 	if lc == nil {
 		return nil
 	}

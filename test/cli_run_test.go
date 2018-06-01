@@ -332,3 +332,46 @@ func (suite *PouchRunSuite) TestRunWithRM(c *check.C) {
 	output := command.PouchRun("inspect", cname).Stderr()
 	c.Assert(util.PartialEqual(output, cname+": not found"), check.IsNil)
 }
+
+// TestRunWithDisableNetworkFiles is to verify running container with disable-network-files flag.
+func (suite *PouchRunSuite) TestRunWithDisableNetworkFiles(c *check.C) {
+	// Run a container with disable-network-files flag
+	cname1 := "RunWithDisableNetworkFiles"
+	res := command.PouchRun("run", "--disable-network-files", "--name", cname1,
+		busyboxImage, "ls", "/etc")
+	defer DelContainerForceMultyTime(c, cname1)
+
+	res.Assert(c, icmd.Success)
+	output := res.Stdout()
+	if strings.Contains(output, "hostname") {
+		c.Fatal("expected no /etc/hostname, but the file exists")
+	}
+
+	if strings.Contains(output, "hosts") {
+		c.Fatal("expected no /etc/hosts, but the file exists")
+	}
+
+	if strings.Contains(output, "resolv.conf") {
+		// ignore checking the existence of /etc/resolv.conf, because the busybox
+		// contains the file.
+	}
+
+	// Run a container without disable-network-files flag
+	cname2 := "RunWithoutDisableNetworkFiles"
+	res = command.PouchRun("run", "--name", cname2, busyboxImage, "ls", "/etc")
+	defer DelContainerForceMultyTime(c, cname2)
+
+	res.Assert(c, icmd.Success)
+	output = res.Stdout()
+	if !strings.Contains(output, "hostname") {
+		c.Fatal("expected /etc/hostname, but the file does not exist")
+	}
+
+	if !strings.Contains(output, "hosts") {
+		c.Fatal("expected /etc/hosts, but the file does not exist")
+	}
+
+	if !strings.Contains(output, "resolv.conf") {
+		c.Fatal("expected /etc/resolv.conf, but the file does not exist")
+	}
+}

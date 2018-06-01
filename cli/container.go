@@ -10,19 +10,20 @@ import (
 )
 
 type container struct {
-	labels      []string
-	name        string
-	tty         bool
-	volume      []string
-	volumesFrom []string
-	runtime     string
-	env         []string
-	entrypoint  string
-	workdir     string
-	user        string
-	groupAdd    []string
-	hostname    string
-	rm          bool
+	labels              []string
+	name                string
+	tty                 bool
+	volume              []string
+	volumesFrom         []string
+	runtime             string
+	env                 []string
+	entrypoint          string
+	workdir             string
+	user                string
+	groupAdd            []string
+	hostname            string
+	rm                  bool
+	disableNetworkFiles bool
 
 	blkioWeight          uint16
 	blkioWeightDevice    WeightDevice
@@ -173,20 +174,21 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
-			Tty:            c.tty,
-			Env:            c.env,
-			Entrypoint:     strings.Fields(c.entrypoint),
-			WorkingDir:     c.workdir,
-			User:           c.user,
-			Hostname:       strfmt.Hostname(c.hostname),
-			Labels:         labels,
-			Rich:           c.rich,
-			RichMode:       c.richMode,
-			InitScript:     c.initScript,
-			ExposedPorts:   ports,
-			DiskQuota:      diskQuota,
-			QuotaID:        c.quotaID,
-			SpecAnnotation: specAnnotation,
+			Tty:                 c.tty,
+			Env:                 c.env,
+			Entrypoint:          strings.Fields(c.entrypoint),
+			WorkingDir:          c.workdir,
+			User:                c.user,
+			Hostname:            strfmt.Hostname(c.hostname),
+			DisableNetworkFiles: c.disableNetworkFiles,
+			Labels:              labels,
+			Rich:                c.rich,
+			RichMode:            c.richMode,
+			InitScript:          c.initScript,
+			ExposedPorts:        ports,
+			DiskQuota:           diskQuota,
+			QuotaID:             c.quotaID,
+			SpecAnnotation:      specAnnotation,
 		},
 
 		HostConfig: &types.HostConfig{
