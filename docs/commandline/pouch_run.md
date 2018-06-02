@@ -50,6 +50,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --device-read-iops value       Limit read rate (IO per second) from a device (default [])
       --device-write-bps value       Limit write rate (bytes per second) from a device (default [])
       --device-write-iops value      Limit write rate (IO per second) from a device (default [])
+      --disable-network-files        Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false
       --disk-quota strings           Set disk quota for container
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
