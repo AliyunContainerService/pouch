@@ -370,10 +370,10 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	}
 
 	// check snapshot exist or not.
-	if _, err := c.GetSnapshot(ctx, id); err != nil {
-		return errors.Wrapf(err, "failed to create container %s", id)
+	if _, err := c.GetSnapshot(ctx, container.SnapshotKey); err != nil {
+		return errors.Wrapf(err, "failed to create container, id: %s", id)
 	}
-	options = append(options, containerd.WithSnapshot(id))
+	options = append(options, containerd.WithSnapshot(container.SnapshotKey))
 
 	nc, err := wrapperCli.client.NewContainer(ctx, id, options...)
 	if err != nil {

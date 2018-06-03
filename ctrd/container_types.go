@@ -8,11 +8,12 @@ import (
 
 // Container wraps container's info.
 type Container struct {
-	ID      string
-	Image   string
-	Runtime string
-	IO      *containerio.IO
-	Spec    *specs.Spec
+	ID          string
+	Image       string
+	Runtime     string
+	SnapshotKey string
+	IO          *containerio.IO
+	Spec        *specs.Spec
 }
 
 // Process wraps exec process's info.
