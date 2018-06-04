@@ -44,7 +44,10 @@ type Client struct {
 	pool      []scheduler.Factory
 	scheduler scheduler.Scheduler
 
-	hooks []func(string, *Message) error
+	hooks   []func(string, *Message) error
+	options clientOpts
+	cmdDone chan struct{}
+	isStart bool
 }
 
 // NewClient connect to containerd.
@@ -74,11 +77,13 @@ func NewClient(homeDir string, opts ...ClientOpt) (APIClient, error) {
 		oomScoreAdjust: copts.oomScoreAdjust,
 		debugLog:       copts.debugLog,
 		rpcAddr:        copts.rpcAddr,
+		options:        copts,
+		cmdDone:        make(chan struct{}, 1),
 	}
 
 	// start new containerd instance.
 	if copts.startDaemon {
-		if err := client.runContainerdDaemon(homeDir, copts); err != nil {
+		if err := client.runContainerdDaemon(); err != nil {
 			return nil, err
 		}
 	}
@@ -98,6 +103,10 @@ func NewClient(homeDir string, opts ...ClientOpt) (APIClient, error) {
 		return nil, fmt.Errorf("failed to create clients pool scheduler")
 	}
 	client.scheduler = scheduler
+
+	client.isStart = true
+	// handle containerd failure
+	go client.handleConnectContainerd()
 
 	return client, nil
 }
@@ -185,17 +194,17 @@ func (c *Client) Version(ctx context.Context) (containerd.Version, error) {
 	return cli.client.Version(ctx)
 }
 
-func (c *Client) runContainerdDaemon(homeDir string, copts clientOpts) error {
-	if homeDir == "" {
+func (c *Client) runContainerdDaemon() error {
+	if c.homeDir == "" {
 		return fmt.Errorf("ctrd: containerd home dir should not be empty")
 	}
 
-	containerdPath, err := exec.LookPath(copts.containerdBinary)
+	containerdPath, err := exec.LookPath(c.options.containerdBinary)
 	if err != nil {
-		return fmt.Errorf("failed to find containerd binary %s: %v", copts.containerdBinary, err)
+		return fmt.Errorf("failed to find containerd binary %s: %v", c.options.containerdBinary, err)
 	}
 
-	stateDir := path.Join(homeDir, "containerd/state")
+	stateDir := path.Join(c.homeDir, "containerd/state")
 	if _, err := os.Stat(stateDir); err != nil && os.IsNotExist(err) {
 		if err := os.MkdirAll(stateDir, 0666); err != nil {
 			return fmt.Errorf("failed to mkdir %s: %v", stateDir, err)
@@ -257,7 +266,13 @@ func (c *Client) runContainerdDaemon(homeDir string, copts clientOpts) error {
 		return err
 	}
 
-	go cmd.Wait()
+	go func() {
+		cmd.Wait()
+		if c.isStart {
+			c.watch.setContainerdDead(true)
+			c.cmdDone <- struct{}{}
+		}
+	}()
 
 	c.daemonPid = cmd.Process.Pid
 	return nil
@@ -298,6 +313,9 @@ func (c *Client) Cleanup() error {
 		return nil
 	}
 
+	c.isStart = false
+	close(c.cmdDone)
+
 	if err := c.Close(); err != nil {
 		return err
 	}
@@ -327,4 +345,31 @@ func (c *Client) Cleanup() error {
 	os.Remove(c.rpcAddr)
 
 	return nil
+}
+
+// handleConnectContainerd restore containerd
+func (c *Client) handleConnectContainerd() {
+
+	for {
+		logrus.Info("handle restore containerd")
+		_, open := <-c.cmdDone
+		if !open {
+			break
+		}
+		logrus.Infof("ctrd: restore containerd")
+
+		if utils.IsProcessAlive(c.daemonPid) {
+			syscall.Kill(c.daemonPid, syscall.SIGKILL)
+		}
+
+		// leave enough time for tasks to report exit
+		time.Sleep(3 * time.Second)
+		if err := c.runContainerdDaemon(); err != nil {
+			logrus.Errorf("fail to restore containerd: %s", err)
+			time.Sleep(time.Second)
+		}
+
+		// restore task info when containerd get accident
+		c.watch.restoreTask()
+	}
 }

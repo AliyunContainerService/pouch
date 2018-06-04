@@ -1,7 +1,11 @@
 package main
 
 import (
+	"os/exec"
+	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
@@ -142,4 +146,25 @@ func (suite *PouchExecSuite) TestExecExitCode(c *check.C) {
 
 	command.PouchRun("exec", name, "sh", "-c", "exit 101").Assert(c, icmd.Expected{ExitCode: 101})
 	command.PouchRun("exec", name, "sh", "-c", "exit 0").Assert(c, icmd.Success)
+}
+
+// TestExecWithContainerdKilled test containerd get unexpected killed, and will restore
+func (suite *PouchExecSuite) TestExecWithContainerdKilled(c *check.C) {
+	name := "TestExecWithContainerdKilled"
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	res.Assert(c, icmd.Success)
+
+	// give time for containerd restore, more than 3 second.
+	data, err := exec.Command("pidof", "containerd").CombinedOutput()
+	c.Assert(err, check.IsNil)
+	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	c.Assert(err, check.IsNil)
+
+	syscall.Kill(pid, syscall.SIGTERM)
+	time.Sleep(5)
+
+	output := command.PouchRun("exec", name, "echo", "1").Stdout()
+	c.Assert(output, check.Equals, "1\n")
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("rm", name).Assert(c, icmd.Success)
 }
