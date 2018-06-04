@@ -6,6 +6,28 @@ Container solutions provide a general way for users to limit resource usage of r
 
 For example, if we create a general container with limiting 200 MB memory on host of 2 GB memory in total, we can find that resource upper limit is incorrect via command `free`, and it shows all memory size of the host:
 
+Make sure your lxcfs service is running:
+```
+$ service lxcfs start
+Redirecting to /bin/systemctl start lxcfs.service
+$ ps -aux|grep lxcfs
+root     1465765  0.0  0.0  95368  1844 ?        Ssl  11:55   0:00 /usr/bin/lxcfs /var/lib/lxcfs/
+root     1465971  0.0  0.0 112736  2408 pts/0    S+   11:55   0:00 grep --color=auto lxcfs
+```
+
+Enable pouchd lxcfs (with --enable-lxcfs flag):
+```
+$ cat /usr/lib/systemd/system/pouch.service
+[Unit]
+Description=pouch
+
+[Service]
+ExecStart=/usr/local/bin/pouchd --enable-lxcfs
+...
+
+$ systemctl daemon-reload && systemctl restart pouch
+```
+
 ``` shell
 $ pouch run -m 200m registry.hub.docker.com/library/ubuntu:16.04 free -h
               total        used        free      shared  buff/cache   available
