@@ -8,6 +8,10 @@ TMP=$(mktemp -d /tmp/pouch.XXXXXX)
 DIR="$( cd "$( dirname "$0" )/.." && pwd )"
 cd "$DIR/"
 
+#
+# Get the version of dependencies from corresponding commands and compare them with the required version.
+# If they don't meet the requirement, this script will install them.
+#
 CONTAINERD_VERSION=
 REQUIRED_CONTAINERD_VERSION="1.0.3"
 RUNC_VERSION=
