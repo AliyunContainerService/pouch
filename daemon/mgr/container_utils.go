@@ -249,25 +249,26 @@ func validateResource(r *types.Resources) ([]string, error) {
 
 	// validates memory cgroup value
 	if cgroupInfo.Memory != nil {
-		if !cgroupInfo.Memory.MemoryLimit {
+		if r.Memory != 0 && !cgroupInfo.Memory.MemoryLimit {
 			warn := "Current Kernel does not support memory limit, discard --memory"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.Memory = 0
+			r.MemorySwap = 0
 		}
-		if !cgroupInfo.Memory.MemorySwap {
+		if r.MemorySwap != 0 && !cgroupInfo.Memory.MemorySwap {
 			warn := "Current Kernel does not support memory swap, discard --memory-swap"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
-			r.MemorySwap = -1
+			r.MemorySwap = 0
 		}
-		if !cgroupInfo.Memory.MemorySwappiness {
+		if r.MemorySwappiness != nil && !cgroupInfo.Memory.MemorySwappiness {
 			warn := "Current Kernel does not support memory swappiness , discard --memory-swappiness"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.MemorySwappiness = nil
 		}
-		if !cgroupInfo.Memory.OOMKillDisable {
+		if r.OomKillDisable != nil && !cgroupInfo.Memory.OOMKillDisable {
 			warn := "Current Kernel does not support disable oom kill, discard --oom-kill-disable"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
@@ -277,31 +278,31 @@ func validateResource(r *types.Resources) ([]string, error) {
 
 	// validates cpu cgroup value
 	if cgroupInfo.CPU != nil {
-		if !cgroupInfo.CPU.CpusetCpus {
+		if r.CpusetCpus != "" && !cgroupInfo.CPU.CpusetCpus {
 			warn := "Current Kernel does not support cpuset cpus, discard --cpuset-cpus"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.CpusetCpus = ""
 		}
-		if !cgroupInfo.CPU.CpusetCpus {
+		if r.CpusetMems != "" && !cgroupInfo.CPU.CpusetMems {
 			warn := "Current Kernel does not support cpuset cpus, discard --cpuset-mems"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.CpusetMems = ""
 		}
-		if !cgroupInfo.CPU.CPUShares {
+		if r.CPUShares > 0 && !cgroupInfo.CPU.CPUShares {
 			warn := "Current Kernel does not support cpu shares, discard --cpu-share"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.CPUShares = 0
 		}
-		if !cgroupInfo.CPU.CPUQuota {
+		if r.CPUQuota > 0 && !cgroupInfo.CPU.CPUQuota {
 			warn := "Current Kernel does not support cpu quota, discard --cpu-quota"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.CPUQuota = 0
 		}
-		if !cgroupInfo.CPU.CPUPeriod {
+		if r.CPUPeriod > 0 && !cgroupInfo.CPU.CPUPeriod {
 			warn := "Current Kernel does not support cpu period, discard --cpu-period"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
@@ -311,37 +312,37 @@ func validateResource(r *types.Resources) ([]string, error) {
 
 	// validates blkio cgroup value
 	if cgroupInfo.Blkio != nil {
-		if !cgroupInfo.Blkio.BlkioWeight {
+		if r.BlkioWeight > 0 && !cgroupInfo.Blkio.BlkioWeight {
 			warn := "Current Kernel does not support blkio weight, discard --blkio-weight"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.BlkioWeight = 0
 		}
-		if !cgroupInfo.Blkio.BlkioWeightDevice {
+		if len(r.BlkioWeightDevice) > 0 && !cgroupInfo.Blkio.BlkioWeightDevice {
 			warn := "Current Kernel does not support blkio weight device, discard --blkio-weight-device"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.BlkioWeightDevice = []*types.WeightDevice{}
 		}
-		if !cgroupInfo.Blkio.BlkioDeviceReadBps {
+		if len(r.BlkioDeviceReadBps) > 0 && !cgroupInfo.Blkio.BlkioDeviceReadBps {
 			warn := "Current Kernel does not support blkio device throttle read bps, discard --device-read-bps"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.BlkioDeviceReadBps = []*types.ThrottleDevice{}
 		}
-		if !cgroupInfo.Blkio.BlkioDeviceWriteBps {
+		if len(r.BlkioDeviceWriteBps) > 0 && !cgroupInfo.Blkio.BlkioDeviceWriteBps {
 			warn := "Current Kernel does not support blkio device throttle write bps, discard --device-write-bps"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.BlkioDeviceWriteBps = []*types.ThrottleDevice{}
 		}
-		if !cgroupInfo.Blkio.BlkioDeviceReadIOps {
+		if len(r.BlkioDeviceReadIOps) > 0 && !cgroupInfo.Blkio.BlkioDeviceReadIOps {
 			warn := "Current Kernel does not support blkio device throttle read iops, discard --device-read-iops"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.BlkioDeviceReadIOps = []*types.ThrottleDevice{}
 		}
-		if !cgroupInfo.Blkio.BlkioDeviceWriteIOps {
+		if len(r.BlkioDeviceWriteIOps) > 0 && !cgroupInfo.Blkio.BlkioDeviceWriteIOps {
 			warn := "Current Kernel does not support blkio device throttle, discard --device-write-iops"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
@@ -351,7 +352,7 @@ func validateResource(r *types.Resources) ([]string, error) {
 
 	// validates pid cgroup value
 	if cgroupInfo.Pids != nil {
-		if !cgroupInfo.Pids.Pids {
+		if r.PidsLimit != 0 && !cgroupInfo.Pids.Pids {
 			warn := "Current Kernel does not support pids cgroup, discard --pids-limit"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
