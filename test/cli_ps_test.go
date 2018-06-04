@@ -47,6 +47,7 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 
 		c.Assert(kv[name].status[0], check.Equals, "created")
 		c.Assert(kv[name].image, check.Equals, busyboxImage)
+		c.Assert(kv[name].command, check.Equals, `"top"`)
 	}
 
 	// running
@@ -139,6 +140,7 @@ type psTable struct {
 	created []string
 	image   string
 	runtime string
+	command string
 }
 
 // psToKV parse "pouch ps" into key-value mapping.
@@ -163,16 +165,19 @@ func psToKV(ps string) map[string]psTable {
 			pst.created = items[5:8]
 			pst.image = items[8]
 			pst.runtime = items[9]
+			pst.command = items[10]
 		} else if items[2] == "Stopped" || items[2] == "Exited" {
 			pst.status = items[2:6]
 			pst.created = items[6:9]
 			pst.image = items[9]
 			pst.runtime = items[10]
+			pst.command = items[11]
 		} else {
 			pst.status = items[2:3]
 			pst.created = items[3:6]
 			pst.image = items[6]
 			pst.runtime = items[7]
+			pst.command = items[8]
 		}
 		res[items[0]] = pst
 	}
