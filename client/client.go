@@ -1,22 +1,22 @@
 package client
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/pkg/httputils"
 )
 
 var (
 	defaultHost    = "unix:///var/run/pouchd.sock"
 	defaultTimeout = time.Second * 10
+	// defaultVersion is the version of the current stable API
+	defaultVersion = "v1.24"
 )
 
 // APIClient is a API client that performs all operations
@@ -26,84 +26,55 @@ type APIClient struct {
 	addr    string
 	baseURL string
 	HTTPCli *http.Client
+	// version of the server talks to
+	version string
+}
+
+// TLSConfig contains information of tls which users can specify
+type TLSConfig struct {
+	CA               string `json:"tlscacert,omitempty"`
+	Cert             string `json:"tlscert,omitempty"`
+	Key              string `json:"tlskey,omitempty"`
+	VerifyRemote     bool   `json:"tlsverify"`
+	ManagerWhiteList string `json:"manager-whitelist"`
 }
 
 // NewAPIClient initializes a new API client for the given host
-func NewAPIClient(host string, tls utils.TLSConfig) (*APIClient, error) {
+func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 	if host == "" {
 		host = defaultHost
 	}
 
-	newURL, basePath, addr, err := parseHost(host)
+	newURL, basePath, addr, err := httputils.ParseHost(host)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host %s: %v", host, err)
 	}
 
 	tlsConfig := generateTLSConfig(host, tls)
 
-	httpCli := newHTTPClient(newURL, tlsConfig)
+	httpCli := httputils.NewHTTPClient(newURL, tlsConfig, defaultTimeout)
 
 	basePath = generateBaseURL(newURL, tls)
+
+	version := os.Getenv("POUCH_API_VERSION")
+	if version == "" {
+		version = defaultVersion
+	}
 
 	return &APIClient{
 		proto:   newURL.Scheme,
 		addr:    addr,
 		baseURL: basePath,
 		HTTPCli: httpCli,
+		version: version,
 	}, nil
 }
 
-// parseHost inputs a host address string, and output three type:
-// url.URL, basePath and an error
-func parseHost(host string) (*url.URL, string, string, error) {
-	u, err := url.Parse(host)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	var basePath string
-	switch u.Scheme {
-	case "unix":
-		basePath = "http://d"
-	case "tcp":
-		basePath = "http://" + u.Host
-	case "http":
-		basePath = host
-	default:
-		return nil, "", "", fmt.Errorf("not support url scheme %v", u.Scheme)
-	}
-
-	return u, basePath, strings.TrimPrefix(host, u.Scheme+"://"), nil
-}
-
-func newHTTPClient(u *url.URL, tlsConfig *tls.Config) *http.Client {
-	tr := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
-
-	switch u.Scheme {
-	case "unix":
-		unixDial := func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.DialTimeout("unix", u.Path, time.Duration(defaultTimeout))
-		}
-		tr.DialContext = unixDial
-	default:
-		dial := func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, time.Duration(defaultTimeout))
-		}
-		tr.DialContext = dial
-	}
-
-	return &http.Client{
-		Transport: tr,
-	}
-}
-
 // generateTLSConfig configures TLS for API Client.
-func generateTLSConfig(host string, tls utils.TLSConfig) *tls.Config {
+func generateTLSConfig(host string, tls TLSConfig) *tls.Config {
 	// init tls config
 	if tls.Key != "" && tls.Cert != "" && !strings.HasPrefix(host, "unix://") {
-		tlsCfg, err := utils.GenTLSConfig(tls.Key, tls.Cert, tls.CA)
+		tlsCfg, err := httputils.GenTLSConfig(tls.Key, tls.Cert, tls.CA)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "fail to parse tls config %v", err)
 			os.Exit(1)
@@ -115,7 +86,7 @@ func generateTLSConfig(host string, tls utils.TLSConfig) *tls.Config {
 	return nil
 }
 
-func generateBaseURL(u *url.URL, tls utils.TLSConfig) string {
+func generateBaseURL(u *url.URL, tls TLSConfig) string {
 	if tls.Key != "" && tls.Cert != "" && u.Scheme != "unix" {
 		return "https://" + u.Host
 	}
@@ -129,4 +100,29 @@ func generateBaseURL(u *url.URL, tls utils.TLSConfig) string {
 // BaseURL returns the base URL of APIClient
 func (client *APIClient) BaseURL() string {
 	return client.baseURL
+}
+
+// GetAPIPath returns the versioned request path to call the api.
+// It appends the query parameters to the path if they are not empty.
+func (client *APIClient) GetAPIPath(path string, query url.Values) string {
+	var apiPath string
+	if client.version != "" {
+		v := strings.TrimPrefix(client.version, "v")
+		apiPath = fmt.Sprintf("/v%s%s", v, path)
+	} else {
+		apiPath = path
+	}
+
+	u := url.URL{
+		Path: apiPath,
+	}
+	if len(query) > 0 {
+		u.RawQuery = query.Encode()
+	}
+	return u.String()
+}
+
+// UpdateClientVersion sets client version new value.
+func (client *APIClient) UpdateClientVersion(v string) {
+	client.version = v
 }

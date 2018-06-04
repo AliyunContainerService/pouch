@@ -1,69 +1,54 @@
-# pouch
+## pouch
 
-pouch is a client side tool `pouch` to interact with pouchd.
+An efficient container engine
 
-## Description
+### Synopsis
 
-You can use client side tool `pouch` to interact with daemon side process `pouchd`. Flags and arguments can be input to do what actually you wish. Then pouch parses the flags and arguments and sends a RESTful request to daemon side `pouchd`.
+pouch is a client side tool pouch to interact with daemon side process pouchd. Flags and arguments can be input to do what actually you wish. Then pouch parses the flags and arguments and sends a RESTful request to daemon side pouchd.
 
-## Help Information
+### Options
 
-``` markdown
-Usage:
-  pouch [command]
-
-Available Commands:
-  create      Create a new container with specified image
-  help        Help about any command
-  images      show images
-  pull        Pull use to download image from repository
-  start       Start a created container
-  stop        Stop a running container
-  version     Print version
-  volume      Manage pouch volumes
-
-Flags:
+```
+  -D, --debug              Switch client log level to DEBUG mode
   -h, --help               help for pouch
-  -H, --host string        Specify listen address of pouchd (default "unix:///var/run/pouchd.sock")
-      --timeout duration   Set timeout (default 10s)
-      --tlscacert string   Specify CA file of tls
-      --tlscert string     Specify cert file of tls
-      --tlskey string      Specify key file of tls
-      --tlsverify          Switch if verify the remote when using tls
-
-Use "pouch [command] --help" for more information about a command.
+  -H, --host string        Specify connecting address of Pouch CLI (default "unix:///var/run/pouchd.sock")
+      --tlscacert string   Specify CA file of TLS
+      --tlscert string     Specify cert file of TLS
+      --tlskey string      Specify key file of TLS
+      --tlsverify          Use TLS and verify remote
 ```
 
-## Subcommand Guidance
+### SEE ALSO
 
-### create
+* [pouch create](pouch_create.md)	 - Create a new container with specified image
+* [pouch exec](pouch_exec.md)	 - Exec a process in a running container
+* [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
+* [pouch image](pouch_image.md)	 - Manage image
+* [pouch images](pouch_images.md)	 - List all images
+* [pouch info](pouch_info.md)	 - Display system-wide information
+* [pouch inspect](pouch_inspect.md)	 - Get the detailed information of container
+* [pouch load](pouch_load.md)	 - load a set of images from a tar archive or STDIN
+* [pouch login](pouch_login.md)	 - Login to a registry
+* [pouch logout](pouch_logout.md)	 - Logout from a registry
+* [pouch logs](pouch_logs.md)	 - Print a container's logs
+* [pouch network](pouch_network.md)	 - Manage pouch networks
+* [pouch pause](pouch_pause.md)	 - Pause one or more running containers
+* [pouch ps](pouch_ps.md)	 - List containers
+* [pouch pull](pouch_pull.md)	 - Pull an image from registry
+* [pouch remount-lxcfs](pouch_remount-lxcfs.md)	 - remount lxcfs bind in containers
+* [pouch rename](pouch_rename.md)	 - Rename a container with newName
+* [pouch restart](pouch_restart.md)	 - restart one or more containers
+* [pouch rm](pouch_rm.md)	 - Remove one or more containers
+* [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
+* [pouch run](pouch_run.md)	 - Create a new container and start it
+* [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
+* [pouch stop](pouch_stop.md)	 - Stop one or more running containers
+* [pouch tag](pouch_tag.md)	 - Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
+* [pouch top](pouch_top.md)	 - Display the running processes of a container
+* [pouch unpause](pouch_unpause.md)	 - Unpause one or more paused container
+* [pouch update](pouch_update.md)	 - Update the configurations of a container
+* [pouch upgrade](pouch_upgrade.md)	 - Upgrade a container with new image and args
+* [pouch version](pouch_version.md)	 - Print versions about Pouch CLI and Pouchd
+* [pouch volume](pouch_volume.md)	 - Manage pouch volumes
+* [pouch wait](pouch_wait.md)	 - Block until one or more containers stop, then print their exit codes
 
-### helo
-
-### images
-
-### pull
-
-### start
-
-### stop
-
-### version
-
-### volume
-
-## Flag Guidance
-
-### --help
-
-### --host
-
-### --timeout
-
-### --tlscacert
-
-### --tlscert
-
-### --tlskey
-
-### --tlsverify

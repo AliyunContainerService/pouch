@@ -24,22 +24,28 @@ type ContainerConfig struct {
 	ArgsEscaped bool `json:"ArgsEscaped,omitempty"`
 
 	// Whether to attach to `stderr`.
-	AttachStderr *bool `json:"AttachStderr,omitempty"`
+	AttachStderr bool `json:"AttachStderr,omitempty"`
 
 	// Whether to attach to `stdin`.
-	AttachStdin *bool `json:"AttachStdin,omitempty"`
+	AttachStdin bool `json:"AttachStdin,omitempty"`
 
 	// Whether to attach to `stdout`.
-	AttachStdout *bool `json:"AttachStdout,omitempty"`
+	AttachStdout bool `json:"AttachStdout,omitempty"`
 
-	// Command to run specified as a string or an array of strings.
+	// Command to run specified an array of strings.
 	Cmd []string `json:"Cmd"`
+
+	// Whether to generate the network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container.
+	DisableNetworkFiles bool `json:"DisableNetworkFiles,omitempty"`
+
+	// Set disk quota for container
+	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 	// The domain name to use for the container.
 	Domainname string `json:"Domainname,omitempty"`
 
 	// The entry point for the container as a string or an array of strings.
-	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
+	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.
 	//
 	Entrypoint []string `json:"Entrypoint"`
 
@@ -47,17 +53,19 @@ type ContainerConfig struct {
 	//
 	Env []string `json:"Env"`
 
-	// An object mapping ports to an empty object in the form:
-	//
-	// `{"<port>/<tcp|udp>": {}}`
-	//
+	// An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`
 	ExposedPorts map[string]interface{} `json:"ExposedPorts,omitempty"`
 
 	// The hostname to use for the container, as a valid RFC 1123 hostname.
-	Hostname string `json:"Hostname,omitempty"`
+	// Min Length: 1
+	Hostname strfmt.Hostname `json:"Hostname,omitempty"`
 
 	// The name of the image to use when creating the container
-	Image string `json:"Image,omitempty"`
+	// Required: true
+	Image string `json:"Image"`
+
+	// Initial script executed in container. The script will be executed before entrypoint or command
+	InitScript string `json:"InitScript,omitempty"`
 
 	// User-defined key/value metadata.
 	Labels map[string]string `json:"Labels,omitempty"`
@@ -68,32 +76,44 @@ type ContainerConfig struct {
 	// Disable networking for the container.
 	NetworkDisabled bool `json:"NetworkDisabled,omitempty"`
 
-	// `ONBUILD` metadata that were defined in the image's `Dockerfile`.
+	// `ONBUILD` metadata that were defined.
 	OnBuild []string `json:"OnBuild"`
 
 	// Open `stdin`
-	OpenStdin *bool `json:"OpenStdin,omitempty"`
+	OpenStdin bool `json:"OpenStdin,omitempty"`
+
+	// set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id
+	QuotaID string `json:"QuotaID,omitempty"`
+
+	// Whether to start container in rich container mode. (default false)
+	Rich bool `json:"Rich,omitempty"`
+
+	// Choose one rich container mode.(default dumb-init)
+	RichMode string `json:"RichMode,omitempty"`
 
 	// Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.
 	Shell []string `json:"Shell"`
 
+	// annotations send to runtime spec.
+	SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
+
 	// Close `stdin` after one attached client disconnects
-	StdinOnce *bool `json:"StdinOnce,omitempty"`
+	StdinOnce bool `json:"StdinOnce,omitempty"`
 
 	// Signal to stop a container as a string or unsigned integer.
-	StopSignal *string `json:"StopSignal,omitempty"`
+	StopSignal string `json:"StopSignal,omitempty"`
 
 	// Timeout to stop a container in seconds.
 	StopTimeout *int64 `json:"StopTimeout,omitempty"`
 
 	// Attach standard streams to a TTY, including `stdin` if it is not closed.
-	Tty *bool `json:"Tty,omitempty"`
+	Tty bool `json:"Tty,omitempty"`
 
 	// The user that commands are run as inside the container.
 	User string `json:"User,omitempty"`
 
-	// volumes
-	Volumes *ContainerConfigVolumes `json:"Volumes,omitempty"`
+	// An object mapping mount point paths inside the container to empty objects.
+	Volumes map[string]interface{} `json:"Volumes,omitempty"`
 
 	// The working directory for commands to run in.
 	WorkingDir string `json:"WorkingDir,omitempty"`
@@ -109,6 +129,10 @@ type ContainerConfig struct {
 
 /* polymorph ContainerConfig Cmd false */
 
+/* polymorph ContainerConfig DisableNetworkFiles false */
+
+/* polymorph ContainerConfig DiskQuota false */
+
 /* polymorph ContainerConfig Domainname false */
 
 /* polymorph ContainerConfig Entrypoint false */
@@ -121,6 +145,8 @@ type ContainerConfig struct {
 
 /* polymorph ContainerConfig Image false */
 
+/* polymorph ContainerConfig InitScript false */
+
 /* polymorph ContainerConfig Labels false */
 
 /* polymorph ContainerConfig MacAddress false */
@@ -131,7 +157,15 @@ type ContainerConfig struct {
 
 /* polymorph ContainerConfig OpenStdin false */
 
+/* polymorph ContainerConfig QuotaID false */
+
+/* polymorph ContainerConfig Rich false */
+
+/* polymorph ContainerConfig RichMode false */
+
 /* polymorph ContainerConfig Shell false */
+
+/* polymorph ContainerConfig SpecAnnotation false */
 
 /* polymorph ContainerConfig StdinOnce false */
 
@@ -171,7 +205,22 @@ func (m *ContainerConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateHostname(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateImage(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateOnBuild(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRichMode(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -259,10 +308,79 @@ func (m *ContainerConfig) validateExposedPorts(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *ContainerConfig) validateHostname(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Hostname) { // not required
+		return nil
+	}
+
+	if err := validate.MinLength("Hostname", "body", string(m.Hostname), 1); err != nil {
+		return err
+	}
+
+	if err := validate.FormatOf("Hostname", "body", "hostname", m.Hostname.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerConfig) validateImage(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("Image", "body", string(m.Image)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *ContainerConfig) validateOnBuild(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.OnBuild) { // not required
 		return nil
+	}
+
+	return nil
+}
+
+var containerConfigTypeRichModePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["dumb-init","sbin-init","systemd"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		containerConfigTypeRichModePropEnum = append(containerConfigTypeRichModePropEnum, v)
+	}
+}
+
+const (
+	// ContainerConfigRichModeDumbInit captures enum value "dumb-init"
+	ContainerConfigRichModeDumbInit string = "dumb-init"
+	// ContainerConfigRichModeSbinInit captures enum value "sbin-init"
+	ContainerConfigRichModeSbinInit string = "sbin-init"
+	// ContainerConfigRichModeSystemd captures enum value "systemd"
+	ContainerConfigRichModeSystemd string = "systemd"
+)
+
+// prop value enum
+func (m *ContainerConfig) validateRichModeEnum(path, location string, value string) error {
+	if err := validate.Enum(path, location, value, containerConfigTypeRichModePropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *ContainerConfig) validateRichMode(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RichMode) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateRichModeEnum("RichMode", "body", m.RichMode); err != nil {
+		return err
 	}
 
 	return nil
@@ -277,20 +395,41 @@ func (m *ContainerConfig) validateShell(formats strfmt.Registry) error {
 	return nil
 }
 
+// additional properties value enum
+var containerConfigVolumesValueEnum []interface{}
+
+func init() {
+	var res []interface{}
+	if err := json.Unmarshal([]byte(`[{}]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		containerConfigVolumesValueEnum = append(containerConfigVolumesValueEnum, v)
+	}
+}
+func (m *ContainerConfig) validateVolumesValueEnum(path, location string, value interface{}) error {
+	if err := validate.Enum(path, location, value, containerConfigVolumesValueEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *ContainerConfig) validateVolumes(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Volumes) { // not required
 		return nil
 	}
 
-	if m.Volumes != nil {
+	if swag.IsZero(m.Volumes) { // not required
+		return nil
+	}
 
-		if err := m.Volumes.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("Volumes")
-			}
-			return err
+	for k := range m.Volumes {
+
+		if swag.IsZero(m.Volumes[k]) { // not required
+			continue
 		}
+
 	}
 
 	return nil
@@ -307,79 +446,6 @@ func (m *ContainerConfig) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *ContainerConfig) UnmarshalBinary(b []byte) error {
 	var res ContainerConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ContainerConfigVolumes An object mapping mount point paths inside the container to empty objects.
-// swagger:model ContainerConfigVolumes
-
-type ContainerConfigVolumes struct {
-
-	// additional properties
-	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
-}
-
-/* polymorph ContainerConfigVolumes additionalProperties false */
-
-// Validate validates this container config volumes
-func (m *ContainerConfigVolumes) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAdditionalProperties(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-var containerConfigVolumesTypeAdditionalPropertiesPropEnum []interface{}
-
-func init() {
-	var res []interface{}
-	if err := json.Unmarshal([]byte(`[{}]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		containerConfigVolumesTypeAdditionalPropertiesPropEnum = append(containerConfigVolumesTypeAdditionalPropertiesPropEnum, v)
-	}
-}
-
-// prop value enum
-func (m *ContainerConfigVolumes) validateAdditionalPropertiesEnum(path, location string, value interface{}) error {
-	if err := validate.Enum(path, location, value, containerConfigVolumesTypeAdditionalPropertiesPropEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *ContainerConfigVolumes) validateAdditionalProperties(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.AdditionalProperties) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ContainerConfigVolumes) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ContainerConfigVolumes) UnmarshalBinary(b []byte) error {
-	var res ContainerConfigVolumes
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

@@ -2,3 +2,9 @@
 pouchd
 pouch
 *.patch
+volume_build.go
+coverage.txt
+.*.swp
+.editorconfig
+.bashrc
+.idea

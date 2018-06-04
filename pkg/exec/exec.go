@@ -66,7 +66,7 @@ func (p *Process) Start() error {
 		err  error
 	)
 	if p.Output != "" {
-		if file, err = os.OpenFile(p.Path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666); err != nil {
+		if file, err = os.OpenFile(p.Output, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666); err != nil {
 			return errors.Wrap(err, "failed to open file")
 		}
 		p.file = file

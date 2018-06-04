@@ -41,6 +41,9 @@ type EndpointSettings struct {
 	//
 	GlobalIPV6PrefixLen int64 `json:"GlobalIPv6PrefixLen,omitempty"`
 
+	// IP a m config
+	IPAMConfig *EndpointIPAMConfig `json:"IPAMConfig,omitempty"`
+
 	// IPv4 address.
 	//
 	IPAddress string `json:"IPAddress,omitempty"`
@@ -77,6 +80,8 @@ type EndpointSettings struct {
 
 /* polymorph EndpointSettings GlobalIPv6PrefixLen false */
 
+/* polymorph EndpointSettings IPAMConfig false */
+
 /* polymorph EndpointSettings IPAddress false */
 
 /* polymorph EndpointSettings IPPrefixLen false */
@@ -98,6 +103,11 @@ func (m *EndpointSettings) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateIPAMConfig(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateLinks(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -113,6 +123,25 @@ func (m *EndpointSettings) validateAliases(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Aliases) { // not required
 		return nil
+	}
+
+	return nil
+}
+
+func (m *EndpointSettings) validateIPAMConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.IPAMConfig) { // not required
+		return nil
+	}
+
+	if m.IPAMConfig != nil {
+
+		if err := m.IPAMConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("IPAMConfig")
+			}
+			return err
+		}
 	}
 
 	return nil

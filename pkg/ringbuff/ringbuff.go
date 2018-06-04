@@ -2,6 +2,7 @@ package ringbuff
 
 import (
 	"sync"
+	"time"
 )
 
 type ringNode struct {
@@ -127,9 +128,32 @@ func (r *RingBuff) Pop() (interface{}, bool) {
 
 // Close closes the RingBuff.
 func (r *RingBuff) Close() error {
+	// first try to wakeup
+	r.Lock()
+	if r.closed {
+		r.Unlock()
+		return nil
+	}
+	r.cond.Broadcast()
+	r.Unlock()
+
+	for {
+		r.Lock()
+		if r.pushPtr == r.popPtr {
+			// unlock
+			r.Unlock()
+			break
+		}
+
+		// unlock
+		r.Unlock()
+		time.Sleep(time.Millisecond * 10)
+	}
+
 	r.Lock()
 	r.closed = true
 	r.cond.Broadcast()
 	r.Unlock()
+
 	return nil
 }

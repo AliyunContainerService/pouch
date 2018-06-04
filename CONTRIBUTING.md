@@ -38,7 +38,7 @@ Also we must remind that when filing a new issue, please remember to remove the 
 
 ## Code and doc contribution
 
-Every action to make project Pouch better is encouraged. On GitHub, every improvement for Pouch could be via a PR (short for pull request). 
+Every action to make project Pouch better is encouraged. On GitHub, every improvement for Pouch could be via a PR (short for pull request).
 
 * If you find a typo, try to fix it!
 * If you find a bug, try to fix it!
@@ -51,7 +51,7 @@ Every action to make project Pouch better is encouraged. On GitHub, every improv
 * If you find document incorrect, just do it and fix that!
 * ...
 
-Actually it is impossible to list them completely. Just remember one princinple: 
+Actually it is impossible to list them completely. Just remember one principle:
 
 > WE ARE LOOKING FORWARD TO ANY PR FROM YOU.
 
@@ -68,15 +68,17 @@ To put forward a PR, we assume you have registered a GitHub ID. Then you could f
 
 1. **FORK** Pouch to your repository. To make this work, you just need to click the button Fork in right-left of [alibaba/pouch](https://github.com/alibaba/pouch) main page. Then you will end up with your repository in `https://github.com/<your-username>/pouch`, in which `your-username` is your GitHub username.
 
-2. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make. Branch creation should be read the [Git Flow](#git-flow) part.
+1. **CLONE** your own repository to develop locally. Use `git clone https://github.com/<your-username>/pouch.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make.
 
-3. **Set Remote** upstream to be https://github.com/alibaba/pouch.git using the following two commands:
+1. **Set Remote** upstream to be `https://github.com/alibaba/pouch.git` using the following two commands:
+
 ```
 git remote add upstream https://github.com/alibaba/pouch.git
 git remote set-url --push upstream no-pushing
 ```
 
 With this remote setting, you can check you git remote configuration like this:
+
 ```
 $ git remote -v
 origin     https://github.com/<your-username>/pouch.git (fetch)
@@ -93,7 +95,7 @@ Right now we assume every contribution via pull request is for [branch master](h
 
 As a contributor, keep in mind again that every contribution via pull request is for branch master. While in project pouch, there are several other branches, we generally call them rc branches, release branches and backport branches.
 
-Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commit to this branch.
+Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commits to this branch.
 
 When officially releasing a version, there will be a release branch before tagging. After tagging, we will delete the release branch.
 
@@ -108,7 +110,7 @@ Actually in Pouch, we take two rules serious when committing:
 
 #### Commit Message
 
-Commit message could help reviewers better understand what is the purpose of submitted PR. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than ambiguous message. In general, we advocate the following commit message type: 
+Commit message could help reviewers better understand what is the purpose of submitted PR. It could help accelerate the code review procedure as well. We encourage contributors to use **EXPLICIT** commit message rather than ambiguous message. In general, we advocate the following commit message type:
 
 * docs: xxxx. For example, "docs: add docs about storage installation".
 * feature: xxxx.For example, "feature: make result show in sorted order".
@@ -132,11 +134,18 @@ Commit content represents all content changes included in one commit. We had bet
 
 In addition, in the code change part, we suggest that all contributors should read the [code style of Pouch](docs/contributions/code_styles.md).
 
-No matter commit message, or commit content, we do take more emphasis on code review. 
+No matter commit message, or commit content, we do take more emphasis on code review.
 
 ### PR Description
 
 PR is the only way to make change to Pouch project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
+
+### Test case contribution
+
+Any test case would be welcomed. Currently, pouch function test cases are high priority.
+
+* For unit test, you need to create a test file ended with `_test.go` in the same directory as dev package.
+* For integration test, you need to add test scrips in `pouch/test/` directory. The test makes use of [package check](https://github.com/go-check/check), a rich testing extension for Go's testing package. Test scripts are named by pouch commands. For example, all pouch help api tests are included in pouch_api_help_test.go and all pouch help command line tests are included in pouch_cli_help_test.go. For more details, please refer to [gocheck document](https://godoc.org/gopkg.in/check.v1).
 
 ## Engage to help anything
 

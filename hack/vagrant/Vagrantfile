@@ -1,0 +1,20 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# refer: https://github.com/hashicorp/vagrant/issues/9442
+Vagrant::DEFAULT_SERVER_URL.replace('https://vagrantcloud.com')
+
+Vagrant.configure("2") do |config|
+  config.vm.boot_timeout=600
+  # ubuntu/xenial64 is from official ubuntu 16.04 LTS (Xenial Xerus) daily build, which is 
+  # based on the long-term supported Linux release series 4.4, refer: https://app.vagrantup.com/ubuntu
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.synced_folder "../../", "/go/src/github.com/alibaba/pouch"
+  
+  config.vm.define "pouch-dev-node" do |node|
+    node.vm.hostname = "pouch-dev-node"
+  end
+
+  config.vm.box_check_update = false
+end

@@ -1,13 +1,16 @@
 package version
 
-import "time"
+// Version package values is auto-generated, the following values will be overwrited at build time.
+var (
+	// Version represents the version of pouchd.
+	Version = "0.5.0"
 
-// Version represents the version of pouchd.
-const Version = "0.1.0-dev"
+	// BuildTime is the time when pouch binary is built
+	BuildTime = "unknown"
 
-// BuildTime is the time when this binary of daemon is built
-// FIXME: this is dynamical. We need a fixed build time.
-var BuildTime = time.Now().Format(time.RFC3339Nano)
+	// APIVersion means the api version daemon serves
+	APIVersion = "1.24"
 
-// APIVersion means the api version daemon serves
-var APIVersion = "vx.y.z"
+	// GitCommit is the commit id to build Pouch
+	GitCommit = "unknown"
+)

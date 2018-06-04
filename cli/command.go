@@ -8,7 +8,6 @@ import (
 type Command interface {
 	Init(*Cli)
 	Cmd() *cobra.Command
-	Run([]string)
 }
 
 type baseCommand struct {
@@ -17,8 +16,6 @@ type baseCommand struct {
 }
 
 func (b *baseCommand) Init(cli *Cli) {}
-
-func (b *baseCommand) Run(args []string) {}
 
 func (b *baseCommand) Cmd() *cobra.Command {
 	return b.cmd

@@ -3,6 +3,7 @@ package client
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -11,15 +12,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"time"
-)
-
-var (
-	// ErrHTTPNotfound represents the 404 error of a http request.
-	ErrHTTPNotfound = RespError{codeHTTPNotfound, "404: not found"}
-)
-
-const (
-	codeHTTPNotfound = iota
 )
 
 // RespError defines the response error.
@@ -33,6 +25,11 @@ func (e RespError) Error() string {
 	return e.msg
 }
 
+// Code returns the response  code
+func (e RespError) Code() int {
+	return e.code
+}
+
 // Response wraps the http.Response and other states.
 type Response struct {
 	StatusCode int
@@ -40,20 +37,34 @@ type Response struct {
 	Body       io.ReadCloser
 }
 
-func (client *APIClient) get(path string, query url.Values) (*Response, error) {
-	return client.sendRequest("GET", path, query, nil)
+func (client *APIClient) get(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "GET", path, query, nil, headers)
 }
 
-func (client *APIClient) post(path string, query url.Values, obj interface{}) (*Response, error) {
-	return client.sendRequest("POST", path, query, obj)
+func (client *APIClient) post(ctx context.Context, path string, query url.Values, obj interface{}, headers map[string][]string) (*Response, error) {
+	body, err := objectToJSONStream(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.sendRequest(ctx, "POST", path, query, body, headers)
 }
 
-func (client *APIClient) delete(path string, query url.Values) (*Response, error) {
-	return client.sendRequest("DELETE", path, query, nil)
+func (client *APIClient) postRawData(ctx context.Context, path string, query url.Values, data io.Reader, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "POST", path, query, data, headers)
 }
 
-func (client *APIClient) hijack(path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
-	req, err := client.newRequest("POST", path, query, obj, header)
+func (client *APIClient) delete(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "DELETE", path, query, nil, headers)
+}
+
+func (client *APIClient) hijack(ctx context.Context, path string, query url.Values, obj interface{}, header map[string][]string) (net.Conn, *bufio.Reader, error) {
+	body, err := objectToJSONStream(obj)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := client.newRequest("POST", path, query, body, header)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,21 +95,9 @@ func (client *APIClient) hijack(path string, query url.Values, obj interface{}, 
 	return rwc, br, nil
 }
 
-func (client *APIClient) newRequest(method, path string, query url.Values, obj interface{}, header map[string][]string) (*http.Request, error) {
-	var body io.Reader
-	if method == "POST" {
-		if obj != nil {
-			b, err := json.Marshal(obj)
-			if err != nil {
-				return nil, err
-			}
-			body = bytes.NewReader(b)
-		} else {
-			body = bytes.NewReader([]byte{})
-		}
-	}
-
-	req, err := http.NewRequest(method, client.baseURL+getAPIPath(path, query), body)
+func (client *APIClient) newRequest(method, path string, query url.Values, body io.Reader, header map[string][]string) (*http.Request, error) {
+	fullPath := client.baseURL + client.GetAPIPath(path, query)
+	req, err := http.NewRequest(method, fullPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -112,19 +111,15 @@ func (client *APIClient) newRequest(method, path string, query url.Values, obj i
 	return req, err
 }
 
-func (client *APIClient) sendRequest(method, path string, query url.Values, obj interface{}) (*Response, error) {
-	req, err := client.newRequest(method, path, query, obj, nil)
+func (client *APIClient) sendRequest(ctx context.Context, method, path string, query url.Values, body io.Reader, headers map[string][]string) (*Response, error) {
+	req, err := client.newRequest(method, path, query, body, headers)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.HTTPCli.Do(req)
+	resp, err := cancellableDo(ctx, client.HTTPCli, req)
 	if err != nil {
 		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrHTTPNotfound
 	}
 
 	if resp.StatusCode >= 400 {
@@ -144,14 +139,41 @@ func (client *APIClient) sendRequest(method, path string, query url.Values, obj 
 	}, nil
 }
 
-func getAPIPath(path string, query url.Values) string {
-	u := url.URL{
-		Path: path,
+func cancellableDo(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+	type contextResp struct {
+		response *http.Response
+		err      error
 	}
 
-	if len(query) > 0 {
-		u.RawQuery = query.Encode()
+	ctxResp := make(chan contextResp, 1)
+	go func() {
+		resp, err := client.Do(req)
+		ctxResp <- contextResp{
+			response: resp,
+			err:      err,
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		tr := client.Transport.(*http.Transport)
+		tr.CancelRequest(req)
+		<-ctxResp
+		return nil, ctx.Err()
+
+	case resp := <-ctxResp:
+		return resp.response, resp.err
+	}
+}
+
+func objectToJSONStream(obj interface{}) (io.Reader, error) {
+	if obj != nil {
+		b, err := json.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+		return bytes.NewReader(b), nil
 	}
 
-	return u.String()
+	return nil, nil
 }

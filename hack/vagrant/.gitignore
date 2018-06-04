@@ -1,0 +1,5 @@
+# Vagrant cache
+.vagrant/
+
+# ignore log
+*.log

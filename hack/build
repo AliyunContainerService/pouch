@@ -1,0 +1,123 @@
+#!/bin/bash
+set -e
+BUILDPATH=/tmp/pouchbuild
+
+DIR="$( cd "$( dirname "$0" )/.." && pwd )"
+cd $DIR/
+GOPATH=$BUILDPATH:$BUILDPATH/src/github.com/docker/libnetwork/Godeps/_workspace
+
+
+# Go parameters
+VERSION="0.5.0"
+APIVERSION="1.24"
+GITCOMMIT=$(git describe --dirty --always --tags 2> /dev/null || true)
+BUILDTIME=$(date --rfc-3339 s 2> /dev/null | sed -e 's/ /T/')
+PKG=github.com/alibaba/pouch
+GOBUILD="go build"
+GOLDFLAGS="-X $PKG/version.GitCommit=${GITCOMMIT} -X $PKG/version.Version=${VERSION} -X $PKG/version.ApiVersion=${APIVERSION} -X $PKG/version.BuildTime=$BUILDTIME"
+
+# Binary name of CLI and Daemon
+BINARY_NAME=pouchd
+CLI_BINARY_NAME=pouch
+
+function pre()
+{
+    mkdir -p $BUILDPATH
+
+    mkdir -p $BUILDPATH/src/github.com/docker
+    [ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
+    ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
+
+    mkdir -p $BUILDPATH/src/github.com/alibaba
+    [ -L $BUILDPATH/src/github.com/alibaba/pouch ] && rm -f $BUILDPATH/src/github.com/alibaba/pouch
+    ln -s $DIR $BUILDPATH/src/github.com/alibaba/pouch
+}
+
+function server()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
+    GOOS=linux $GOBUILD -ldflags "${GOLDFLAGS}" -o $BINARY_NAME -tags 'selinux'
+}
+
+function client()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    echo "$GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli"
+    $GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli
+}
+
+#
+# Do not calculate the coverage for the following pkgs
+#
+SKIP_PKGS=(\
+    "github.com/alibaba/pouch/vendor" \
+    "github.com/alibaba/pouch/extra" \
+    "github.com/alibaba/pouch/test" \
+    "github.com/alibaba/pouch/apis/types" \
+    "github.com/alibaba/pouch/cri/config" \
+    "github.com/alibaba/pouch/storage/volume/examples/demo" \
+    "github.com/alibaba/pouch/storage/volume/types" \
+)
+
+function testserver()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    cmd="go list ./... "
+    for j in $(seq 0 $(( ${#SKIP_PKGS[@]} -1)) ); do
+        cmd+="| grep -v \"${SKIP_PKGS[$j]}\" "
+    done
+
+    pkgs=$(eval $cmd |grep -v 'github.com/alibaba/pouch/cli' | tr '\n' ','|sed 's/,$//g')
+
+    go test -c -race -cover -covermode=atomic -o pouchd-test -coverpkg $pkgs
+}
+
+function vet()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    GOPACKAGES=`go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//'`
+    go vet $GOPACKAGES 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v "exit status 1" | tee /dev/stderr
+}
+
+function unit-test()
+{
+    cd $BUILDPATH/src/github.com/alibaba/pouch
+    go test -i
+
+    cmd="go list ./... "
+    for j in $(seq 0 $(( ${#SKIP_PKGS[@]} -1)) ); do
+        cmd+="| grep -v \"${SKIP_PKGS[$j]}\" "
+    done
+
+    for d in $(eval $cmd |grep -vw '^github.com/alibaba/pouch$' )
+    do
+        go test -race -coverprofile=profile.out -covermode=atomic $d
+        if [ -f profile.out ] ; then
+            cat profile.out >> coverage.txt
+            rm profile.out >/dev/null 2>&1
+        fi
+    done
+}
+
+function clean()
+{
+    rm -f $BUILDPATH/src/github.com/docker/libnetwork
+    rm -f $BUILDPATH/src/github.com/alibaba/pouch
+    rm -rf $BUILDPATH
+}
+
+function main ()
+{
+    if [[ $# < 1 ]]; then
+        targets="pre"
+    else
+        targets=($@)
+    fi
+
+    for target in ${targets[@]}; do
+        $target
+    done
+}
+
+main "$@"

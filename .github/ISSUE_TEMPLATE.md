@@ -1,18 +1,24 @@
 
-**Issue Description**
+### Ⅰ. Issue Description
 
-**Describe what happened**:
 
-**Describe what you expected to happen**:
+### Ⅱ. Describe what happened
 
-**How to reproduce it (as minimally and precisely as possible)**:
+
+### Ⅲ. Describe what you expected to happen
+
+
+### Ⅳ. How to reproduce it (as minimally and precisely as possible)
+
 1.
 2.
 3.
 
-**Anything else we need to know?**:
+### Ⅴ. Anything else we need to know?
 
-**Environment**:
+
+### Ⅵ. Environment:
+
 - pouch version (use `pouch version`):
 - OS (e.g. from /etc/os-release):
 - Kernel (e.g. `uname -a`):

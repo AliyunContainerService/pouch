@@ -9,10 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func init() {
-	SetupDumpStackTrap()
-}
-
 // SetupDumpStackTrap setups signal trap to dump stack.
 func SetupDumpStackTrap() {
 	c := make(chan os.Signal, 1)

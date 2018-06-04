@@ -7,11 +7,29 @@ go:
 
 go_import_path: github.com/alibaba/pouch
 
+notifications:
+  webhooks:
+    urls:
+      - http://121.201.63.16:6789/ci_notifications
+    on_failure: always
+    on_error: always
+
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y -qq autoconf automake
+  |
+    git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)' || {
+      echo "travis doesn't run for document-only changed"
+      exit
+    }
+
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq autoconf automake
+
+env:
+  - TEST_SUITE=integration-test
+  - TEST_SUITE=cri-test
 
 script:
-  # PATH is not set under sudo, then we set up path mannually.
-  # Ref https://unix.stackexchange.com/questions/83191/how-to-make-sudo-preserve-path
-  - sudo env "PATH=$PATH" hack/make.sh
+  - sudo make -e ${TEST_SUITE}
+
+after_success:
+- bash <(curl -s https://codecov.io/bash) || echo Codecov_Did_Not_Collect_Coverage_Reports

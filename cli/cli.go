@@ -1,22 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"text/tabwriter"
+	"time"
 
 	"github.com/alibaba/pouch/client"
-	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/fatih/structs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
+// pouchDescription is used to describe pouch command in detail and auto generate command doc.
+var pouchDescription = "pouch is a client side tool pouch to interact with daemon side process pouchd. " +
+	"Flags and arguments can be input to do what actually you wish. " +
+	"Then pouch parses the flags and arguments and sends a RESTful request to daemon side pouchd."
+
 // Option uses to define the global options.
 type Option struct {
-	host string
-	TLS  utils.TLSConfig
+	host  string
+	Debug bool
+	TLS   client.TLSConfig
 }
 
 // Cli is the client's core struct, it will be used to manage all subcommand, send http request
@@ -24,7 +31,7 @@ type Option struct {
 type Cli struct {
 	Option
 	rootCmd   *cobra.Command
-	APIClient *client.APIClient
+	APIClient client.CommonAPIClient
 	padding   int
 }
 
@@ -32,7 +39,11 @@ type Cli struct {
 func NewCli() *Cli {
 	return &Cli{
 		rootCmd: &cobra.Command{
-			Use: "pouch",
+			Use:   "pouch",
+			Short: "An efficient container engine",
+			Long:  pouchDescription,
+			// disable displaying auto generation tag in cli docs
+			DisableAutoGenTag: true,
 		},
 		padding: 3,
 	}
@@ -40,9 +51,13 @@ func NewCli() *Cli {
 
 // SetFlags sets all global options.
 func (c *Cli) SetFlags() *Cli {
-	cmd := c.rootCmd
-	cmd.PersistentFlags().StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify listen address of pouchd")
-	utils.SetupTLSFlag(cmd.PersistentFlags(), &c.Option.TLS)
+	flags := c.rootCmd.PersistentFlags()
+	flags.StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify connecting address of Pouch CLI")
+	flags.BoolVarP(&c.Option.Debug, "debug", "D", false, "Switch client log level to DEBUG mode")
+	flags.StringVar(&c.Option.TLS.Key, "tlskey", "", "Specify key file of TLS")
+	flags.StringVar(&c.Option.TLS.Cert, "tlscert", "", "Specify cert file of TLS")
+	flags.StringVar(&c.Option.TLS.CA, "tlscacert", "", "Specify CA file of TLS")
+	flags.BoolVar(&c.Option.TLS.VerifyRemote, "tlsverify", false, "Use TLS and verify remote")
 	return c
 }
 
@@ -56,8 +71,22 @@ func (c *Cli) NewAPIClient() {
 	c.APIClient = client
 }
 
+// InitLog initializes log Level and log format of client.
+func (c *Cli) InitLog() {
+	if c.Option.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.Infof("start client at debug level")
+	}
+
+	formatter := &logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339Nano,
+	}
+	logrus.SetFormatter(formatter)
+}
+
 // Client returns API client torwards daemon.
-func (c *Cli) Client() *client.APIClient {
+func (c *Cli) Client() client.CommonAPIClient {
 	return c.APIClient
 }
 
@@ -67,20 +96,23 @@ func (c *Cli) Run() error {
 }
 
 // AddCommand add a subcommand.
-func (c *Cli) AddCommand(parent, command Command) {
-	command.Init(c)
+func (c *Cli) AddCommand(parent, child Command) {
+	child.Init(c)
 
-	cmd := command.Cmd()
+	parentCmd := parent.Cmd()
+	childCmd := child.Cmd()
 
-	cmd.PreRun = func(cmd *cobra.Command, args []string) {
+	// make command error not return command usage and error
+	childCmd.SilenceUsage = true
+	childCmd.SilenceErrors = true
+	childCmd.DisableFlagsInUseLine = true
+
+	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
+		c.InitLog()
 		c.NewAPIClient()
 	}
 
-	cmd.Run = func(cmd *cobra.Command, args []string) {
-		command.Run(args)
-	}
-
-	parent.Cmd().AddCommand(cmd)
+	parentCmd.AddCommand(childCmd)
 }
 
 // NewTableDisplay creates a display instance, and uses to format output with table.
@@ -118,11 +150,22 @@ func (c *Cli) Print(obj interface{}) {
 			}
 
 		default:
-			continue
+			line = append(line, fmt.Sprintf("%v", v))
 		}
 
 		display.AddRow(line)
 	}
 
 	display.Flush()
+}
+
+// ExitError defines exit error produce by cli commands.
+type ExitError struct {
+	Code   int
+	Status string
+}
+
+// Error inplements error interface.
+func (e ExitError) Error() string {
+	return fmt.Sprintf("Exit Code: %d, Status: %s", e.Code, e.Status)
 }

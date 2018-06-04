@@ -59,6 +59,9 @@ type HostConfig struct {
 	// A list of DNS search domains.
 	DNSSearch []string `json:"DnsSearch"`
 
+	// Whether to enable lxcfs.
+	EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 	// A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.
 	//
 	ExtraHosts []string `json:"ExtraHosts"`
@@ -66,14 +69,15 @@ type HostConfig struct {
 	// A list of additional groups that the container process will run as.
 	GroupAdd []string `json:"GroupAdd"`
 
+	// Initial script executed in container. The script will be executed before entrypoint or command
+	InitScript string `json:"InitScript,omitempty"`
+
 	// IPC sharing mode for the container. Possible values are:
-	//
 	// - `"none"`: own private IPC namespace, with /dev/shm not mounted
 	// - `"private"`: own private IPC namespace
 	// - `"shareable"`: own private IPC namespace, with a possibility to share it with other containers
 	// - `"container:<name|id>"`: join another (shareable) container's IPC namespace
 	// - `"host"`: use the host system's IPC namespace
-	//
 	// If not specified, daemon default is used, which can either be `"private"`
 	// or `"shareable"`, depending on daemon version and configuration.
 	//
@@ -85,24 +89,27 @@ type HostConfig struct {
 	// A list of links for the container in the form `container_name:alias`.
 	Links []string `json:"Links"`
 
-	// log config
-	LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+	// The logging configuration for this container
+	LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 	// Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.
 	NetworkMode string `json:"NetworkMode,omitempty"`
 
 	// An integer value containing the score given to the container in order to tune OOM killer preferences.
+	// The range is in [-1000, 1000].
+	//
+	// Maximum: 1000
+	// Minimum: -1000
 	OomScoreAdj int64 `json:"OomScoreAdj,omitempty"`
 
 	// Set the PID (Process) Namespace mode for the container. It can be either:
-	//
 	// - `"container:<name|id>"`: joins another container's PID namespace
 	// - `"host"`: use the host's PID namespace inside the container
 	//
 	PidMode string `json:"PidMode,omitempty"`
 
 	// A map of exposed container ports and the host port they should map to.
-	PortBindings map[string]HostConfigPortBindingsAnon `json:"PortBindings,omitempty"`
+	PortBindings PortMap `json:"PortBindings,omitempty"`
 
 	// Gives the container full access to the host.
 	Privileged bool `json:"Privileged,omitempty"`
@@ -112,6 +119,15 @@ type HostConfig struct {
 
 	// Mount the container's root filesystem as read only.
 	ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
+
+	// Restart policy to be used to manage the container
+	RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+	// Whether to start container in rich container mode. (default false)
+	Rich bool `json:"Rich,omitempty"`
+
+	// Choose one rich container mode.(default dumb-init)
+	RichMode string `json:"RichMode,omitempty"`
 
 	// Runtime to use with this container.
 	Runtime string `json:"Runtime,omitempty"`
@@ -146,6 +162,8 @@ type HostConfig struct {
 
 	// A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`.
 	VolumesFrom []string `json:"VolumesFrom"`
+
+	Resources
 }
 
 // UnmarshalJSON unmarshals this object from a JSON structure
@@ -172,9 +190,13 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		DNSSearch []string `json:"DnsSearch,omitempty"`
 
+		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 		ExtraHosts []string `json:"ExtraHosts,omitempty"`
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
+
+		InitScript string `json:"InitScript,omitempty"`
 
 		IpcMode string `json:"IpcMode,omitempty"`
 
@@ -182,7 +204,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		Links []string `json:"Links,omitempty"`
 
-		LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
@@ -190,13 +212,19 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		PidMode string `json:"PidMode,omitempty"`
 
-		PortBindings map[string]HostConfigPortBindingsAnon `json:"PortBindings,omitempty"`
+		PortBindings PortMap `json:"PortBindings,omitempty"`
 
 		Privileged bool `json:"Privileged,omitempty"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
+
+		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+		Rich bool `json:"Rich,omitempty"`
+
+		RichMode string `json:"RichMode,omitempty"`
 
 		Runtime string `json:"Runtime,omitempty"`
 
@@ -242,9 +270,13 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 	m.DNSSearch = data.DNSSearch
 
+	m.EnableLxcfs = data.EnableLxcfs
+
 	m.ExtraHosts = data.ExtraHosts
 
 	m.GroupAdd = data.GroupAdd
+
+	m.InitScript = data.InitScript
 
 	m.IpcMode = data.IpcMode
 
@@ -268,6 +300,12 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 	m.ReadonlyRootfs = data.ReadonlyRootfs
 
+	m.RestartPolicy = data.RestartPolicy
+
+	m.Rich = data.Rich
+
+	m.RichMode = data.RichMode
+
 	m.Runtime = data.Runtime
 
 	m.SecurityOpt = data.SecurityOpt
@@ -287,6 +325,12 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.VolumeDriver = data.VolumeDriver
 
 	m.VolumesFrom = data.VolumesFrom
+
+	var aO1 Resources
+	if err := swag.ReadJSON(raw, &aO1); err != nil {
+		return err
+	}
+	m.Resources = aO1
 
 	return nil
 }
@@ -316,9 +360,13 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		DNSSearch []string `json:"DnsSearch,omitempty"`
 
+		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
+
 		ExtraHosts []string `json:"ExtraHosts,omitempty"`
 
 		GroupAdd []string `json:"GroupAdd,omitempty"`
+
+		InitScript string `json:"InitScript,omitempty"`
 
 		IpcMode string `json:"IpcMode,omitempty"`
 
@@ -326,7 +374,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		Links []string `json:"Links,omitempty"`
 
-		LogConfig *HostConfigAO0LogConfig `json:"LogConfig,omitempty"`
+		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
@@ -334,13 +382,19 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		PidMode string `json:"PidMode,omitempty"`
 
-		PortBindings map[string]HostConfigPortBindingsAnon `json:"PortBindings,omitempty"`
+		PortBindings PortMap `json:"PortBindings,omitempty"`
 
 		Privileged bool `json:"Privileged,omitempty"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
+
+		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+		Rich bool `json:"Rich,omitempty"`
+
+		RichMode string `json:"RichMode,omitempty"`
 
 		Runtime string `json:"Runtime,omitempty"`
 
@@ -383,9 +437,13 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 	data.DNSSearch = m.DNSSearch
 
+	data.EnableLxcfs = m.EnableLxcfs
+
 	data.ExtraHosts = m.ExtraHosts
 
 	data.GroupAdd = m.GroupAdd
+
+	data.InitScript = m.InitScript
 
 	data.IpcMode = m.IpcMode
 
@@ -408,6 +466,12 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	data.PublishAllPorts = m.PublishAllPorts
 
 	data.ReadonlyRootfs = m.ReadonlyRootfs
+
+	data.RestartPolicy = m.RestartPolicy
+
+	data.Rich = m.Rich
+
+	data.RichMode = m.RichMode
 
 	data.Runtime = m.Runtime
 
@@ -434,6 +498,12 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	_parts = append(_parts, jsonData)
+
+	aO1, err := swag.WriteJSON(m.Resources)
+	if err != nil {
+		return nil, err
+	}
+	_parts = append(_parts, aO1)
 
 	return swag.ConcatJSON(_parts...), nil
 }
@@ -490,7 +560,15 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validatePortBindings(formats); err != nil {
+	if err := m.validateOomScoreAdj(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRestartPolicy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRichMode(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -503,6 +581,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateVolumesFrom(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.Resources.Validate(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -677,14 +759,71 @@ func (m *HostConfig) validateLogConfig(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *HostConfig) validatePortBindings(formats strfmt.Registry) error {
+func (m *HostConfig) validateOomScoreAdj(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.PortBindings) { // not required
+	if swag.IsZero(m.OomScoreAdj) { // not required
 		return nil
 	}
 
-	if swag.IsZero(m.PortBindings) { // not required
+	if err := validate.MinimumInt("OomScoreAdj", "body", int64(m.OomScoreAdj), -1000, false); err != nil {
+		return err
+	}
+
+	if err := validate.MaximumInt("OomScoreAdj", "body", int64(m.OomScoreAdj), 1000, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *HostConfig) validateRestartPolicy(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RestartPolicy) { // not required
 		return nil
+	}
+
+	if m.RestartPolicy != nil {
+
+		if err := m.RestartPolicy.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("RestartPolicy")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+var hostConfigTypeRichModePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["dumb-init","sbin-init","systemd"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		hostConfigTypeRichModePropEnum = append(hostConfigTypeRichModePropEnum, v)
+	}
+}
+
+// property enum
+func (m *HostConfig) validateRichModeEnum(path, location string, value string) error {
+	if err := validate.Enum(path, location, value, hostConfigTypeRichModePropEnum); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *HostConfig) validateRichMode(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.RichMode) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateRichModeEnum("RichMode", "body", m.RichMode); err != nil {
+		return err
 	}
 
 	return nil
@@ -732,154 +871,6 @@ func (m *HostConfig) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *HostConfig) UnmarshalBinary(b []byte) error {
 	var res HostConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// HostConfigAO0LogConfig The logging configuration for this container
-// swagger:model HostConfigAO0LogConfig
-
-type HostConfigAO0LogConfig struct {
-
-	// config
-	Config map[string]string `json:"Config,omitempty"`
-
-	// type
-	Type string `json:"Type,omitempty"`
-}
-
-/* polymorph HostConfigAO0LogConfig Config false */
-
-/* polymorph HostConfigAO0LogConfig Type false */
-
-// Validate validates this host config a o0 log config
-func (m *HostConfigAO0LogConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateType(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-var hostConfigAO0LogConfigTypeTypePropEnum []interface{}
-
-func init() {
-	var res []string
-	if err := json.Unmarshal([]byte(`["json-file","syslog","journald","gelf","fluentd","awslogs","splunk","etwlogs","none"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		hostConfigAO0LogConfigTypeTypePropEnum = append(hostConfigAO0LogConfigTypeTypePropEnum, v)
-	}
-}
-
-const (
-	// HostConfigAO0LogConfigTypeJSONFile captures enum value "json-file"
-	HostConfigAO0LogConfigTypeJSONFile string = "json-file"
-	// HostConfigAO0LogConfigTypeSyslog captures enum value "syslog"
-	HostConfigAO0LogConfigTypeSyslog string = "syslog"
-	// HostConfigAO0LogConfigTypeJournald captures enum value "journald"
-	HostConfigAO0LogConfigTypeJournald string = "journald"
-	// HostConfigAO0LogConfigTypeGelf captures enum value "gelf"
-	HostConfigAO0LogConfigTypeGelf string = "gelf"
-	// HostConfigAO0LogConfigTypeFluentd captures enum value "fluentd"
-	HostConfigAO0LogConfigTypeFluentd string = "fluentd"
-	// HostConfigAO0LogConfigTypeAwslogs captures enum value "awslogs"
-	HostConfigAO0LogConfigTypeAwslogs string = "awslogs"
-	// HostConfigAO0LogConfigTypeSplunk captures enum value "splunk"
-	HostConfigAO0LogConfigTypeSplunk string = "splunk"
-	// HostConfigAO0LogConfigTypeEtwlogs captures enum value "etwlogs"
-	HostConfigAO0LogConfigTypeEtwlogs string = "etwlogs"
-	// HostConfigAO0LogConfigTypeNone captures enum value "none"
-	HostConfigAO0LogConfigTypeNone string = "none"
-)
-
-// prop value enum
-func (m *HostConfigAO0LogConfig) validateTypeEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, hostConfigAO0LogConfigTypeTypePropEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *HostConfigAO0LogConfig) validateType(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Type) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateTypeEnum("LogConfig"+"."+"Type", "body", m.Type); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *HostConfigAO0LogConfig) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *HostConfigAO0LogConfig) UnmarshalBinary(b []byte) error {
-	var res HostConfigAO0LogConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// HostConfigPortBindingsAnon host config port bindings anon
-// swagger:model HostConfigPortBindingsAnon
-
-type HostConfigPortBindingsAnon struct {
-
-	// The host IP address
-	HostIP string `json:"HostIp,omitempty"`
-
-	// The host port number, as a string
-	HostPort string `json:"HostPort,omitempty"`
-}
-
-/* polymorph HostConfigPortBindingsAnon HostIp false */
-
-/* polymorph HostConfigPortBindingsAnon HostPort false */
-
-// Validate validates this host config port bindings anon
-func (m *HostConfigPortBindingsAnon) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *HostConfigPortBindingsAnon) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *HostConfigPortBindingsAnon) UnmarshalBinary(b []byte) error {
-	var res HostConfigPortBindingsAnon
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

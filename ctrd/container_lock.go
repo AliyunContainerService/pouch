@@ -17,8 +17,9 @@ func (l *containerLock) Trylock(id string) bool {
 	_, ok := l.ids[id]
 	if !ok {
 		l.ids[id] = struct{}{}
+		return true
 	}
-	return !ok
+	return false
 }
 
 func (l *containerLock) Unlock(id string) {
