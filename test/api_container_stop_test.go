@@ -34,7 +34,7 @@ func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNonExistingContainer tests stop a non-existing container return 404.
@@ -60,7 +60,7 @@ func (suite *APIContainerStopSuite) TestStopWait(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestInvalidParam tests using invalid parameter return.
@@ -95,5 +95,5 @@ func (suite *APIContainerStopSuite) TestStopPausedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(string(got.State.Status), check.Equals, "stopped")
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

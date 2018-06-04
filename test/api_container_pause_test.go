@@ -38,7 +38,7 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNonExistingContainer tests pause a non-existing container return 404.
@@ -78,5 +78,5 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

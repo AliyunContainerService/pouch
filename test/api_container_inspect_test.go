@@ -52,7 +52,7 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	// FinishAt time should be 0001-01-01T00:00:00Z for a non-stopped container
 	c.Assert(got.State.FinishedAt, check.Equals, time.Time{}.UTC().Format(time.RFC3339Nano))
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNonExistingContainer tests inspect a non-existing container return 404.
@@ -81,5 +81,5 @@ func (suite *APIContainerInspectSuite) TestInspectPid(c *check.C) {
 
 	c.Assert(got.State.Pid, check.NotNil)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

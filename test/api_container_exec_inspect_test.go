@@ -90,5 +90,5 @@ func (suite *APIContainerExecInspectSuite) TestContainerExecInspectOk(c *check.C
 	c.Assert(execInspect03.Running, check.Equals, false)
 	c.Assert(execInspect03.ExitCode, check.Equals, int64(0))
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

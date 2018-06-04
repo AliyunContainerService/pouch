@@ -43,7 +43,7 @@ func (suite *APIContainerDeleteSuite) TestDeleteRunningCon(c *check.C) {
 
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestDeletePausedCon test deleting paused container return 500.
@@ -61,7 +61,7 @@ func (suite *APIContainerDeleteSuite) TestDeletePausedCon(c *check.C) {
 
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestDeleteStoppedCon test deleting stopped container return 204.

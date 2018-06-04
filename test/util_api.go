@@ -88,27 +88,27 @@ func DelContainerForceMultyTime(c *check.C, cname string) {
 	q := url.Values{}
 	q.Add("force", "true")
 
-	ch := make(chan bool, 1)
+	done := make(chan bool, 1)
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	done := make(chan bool)
+	timeout := make(chan bool)
 	go func() {
 		time.Sleep(3 * time.Second)
-		done <- true
+		timeout <- true
 	}()
 
 	for {
 		select {
-		case <-ch:
-			return
 		case <-done:
+			return
+		case <-timeout:
 			return
 		case <-ticker.C:
 			resp, _ := DelContainerForce(c, cname)
 			if resp.StatusCode == 204 {
-				ch <- true
+				done <- true
 			}
 		}
 	}

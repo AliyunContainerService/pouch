@@ -52,7 +52,7 @@ func (suite *APIContainerLogsSuite) TestNoSuchContainer(c *check.C) {
 func (suite *APIContainerLogsSuite) TestNoShowStdoutAndShowStderr(c *check.C) {
 	name := "logs_without_one_of_showstdout_and_showstderr"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "ls").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	resp, err := request.Get(fmt.Sprintf("/containers/%s/logs", name))
 	c.Assert(err, check.IsNil)
@@ -63,7 +63,7 @@ func (suite *APIContainerLogsSuite) TestNoShowStdoutAndShowStderr(c *check.C) {
 func (suite *APIContainerLogsSuite) TestStdout(c *check.C) {
 	name := "logs_stdout_stream"
 	command.PouchRun("run", "-t", "--name", name, busyboxImage, "echo", "hello").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	allLogs := suite.syncReadLog(c, name, map[string]string{"stdout": "1"})
 	c.Assert(len(allLogs), check.Equals, 1)
@@ -74,7 +74,7 @@ func (suite *APIContainerLogsSuite) TestStdout(c *check.C) {
 func (suite *APIContainerLogsSuite) TestTimestamp(c *check.C) {
 	name := "logs_stdout_stream_with_timestamp"
 	command.PouchRun("run", "-t", "--name", name, busyboxImage, "echo", "hello").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	allLogs := suite.syncReadLog(c, name, map[string]string{"stdout": "1", "timestamps": "1"})
 	c.Assert(len(allLogs), check.Equals, 1)
@@ -88,7 +88,7 @@ func (suite *APIContainerLogsSuite) TestTimestamp(c *check.C) {
 func (suite *APIContainerLogsSuite) TestTails(c *check.C) {
 	name := "logs_stdout_stream_with_tails"
 	command.PouchRun("run", "-t", "--name", name, busyboxImage, "sh", "-c", "for i in $(seq 1 3); do echo hi$i; done").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	allLogs := suite.syncReadLog(c, name, map[string]string{"stdout": "1", "tail": "2"})
 	c.Assert(len(allLogs), check.Equals, 2)
@@ -101,7 +101,7 @@ func (suite *APIContainerLogsSuite) TestTails(c *check.C) {
 func (suite *APIContainerLogsSuite) TestSinceAndUntil(c *check.C) {
 	name := "logs_stdout_stream_with_tails"
 	command.PouchRun("run", "-t", "--name", name, busyboxImage, "sh", "-c", "for i in $(seq 1 3); do echo hi$i; sleep 1; done").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	allLogs := suite.syncReadLog(c, name, map[string]string{"stdout": "1", "timestamps": "1"})
 	c.Assert(len(allLogs), check.Equals, 3)
@@ -126,7 +126,7 @@ func (suite *APIContainerLogsSuite) TestSinceAndUntil(c *check.C) {
 func (suite *APIContainerLogsSuite) TestCheckLeakByFollowing(c *check.C) {
 	name := "logs_check_leak_by_following"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "sh", "-c", "while true; do sleep 1; done").Assert(c, icmd.Success)
-	defer DelContainerForceOk(c, name)
+	defer DelContainerForceMultyTime(c, name)
 
 	// follow one second and check the goroutine leak
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)

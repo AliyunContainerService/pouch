@@ -42,7 +42,7 @@ func (suite *APIContainerResizeSuite) TestContainerResizeOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestContainerResizeWithInvalidSize is to verify resize container with invalid size.
@@ -64,7 +64,7 @@ func (suite *APIContainerResizeSuite) TestContainerResizeWithInvalidSize(c *chec
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 400)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestResizeStoppedContainer is to verify resize a stopped container.
@@ -82,5 +82,5 @@ func (suite *APIContainerResizeSuite) TestResizeStoppedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

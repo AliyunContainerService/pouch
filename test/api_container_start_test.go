@@ -32,7 +32,7 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNonExistingContainer tests start a non-existing container return 404.
@@ -58,7 +58,7 @@ func (suite *APIContainerStartSuite) TestStartStoppedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestStartPausedContainer tests start a contain in paused state will fail.
@@ -75,7 +75,7 @@ func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestStartDetachKeyWork test detatch-keys works.
@@ -94,7 +94,7 @@ func (suite *APIContainerStartSuite) TestStartDetachKeyWork(c *check.C) {
 
 	// TODO: check the "EOF" detatchkey really works.
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestInvalidParam tests using invalid parameter return.

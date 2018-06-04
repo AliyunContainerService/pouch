@@ -62,7 +62,7 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartWithoutUpgrade(c 
 
 	checkEchoSuccess(c, false, conn, br, "test")
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestContainerExecStartOk tests start exec.
@@ -81,7 +81,7 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStart(c *check.C) {
 
 	checkEchoSuccess(c, false, conn, reader, "test")
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestContainerExecStartNotFound tests starting an non-existing execID return error.
