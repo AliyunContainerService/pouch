@@ -43,7 +43,7 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecOk(c *check.C) {
 	request.DecodeBody(&execCreateResp, resp.Body)
 	c.Logf("ExecID is %s", execCreateResp.ID)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestContainerCreateExecNoCmd tests execing containers is OK.
@@ -64,7 +64,7 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecNoCmd(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 201)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestExecCreatedContainer tests creating exec on created container return error.
@@ -83,7 +83,7 @@ func (suite *APIContainerExecSuite) TestExecCreatedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestExecPausedContainer tests creating exec on paused container return error.
@@ -105,7 +105,7 @@ func (suite *APIContainerExecSuite) TestExecPausedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestExecStoppedContainer tests creating exec on stopped container return error.
@@ -127,5 +127,5 @@ func (suite *APIContainerExecSuite) TestExecStoppedContainer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

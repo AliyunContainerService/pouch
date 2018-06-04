@@ -35,7 +35,7 @@ func (suite *APIContainerWaitSuite) TestWaitOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestWaitRunningContainer tests waiting a running container to stop, then returns 200.
@@ -67,7 +67,7 @@ func (suite *APIContainerWaitSuite) TestWaitRunningContainer(c *check.C) {
 	case <-time.After(2 * time.Second):
 		c.Errorf("timeout waiting for `pouch wait` API to exit")
 	}
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestWaitNonExistingContainer tests waiting a non-existing container return 404.

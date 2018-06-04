@@ -48,7 +48,7 @@ func (suite *APIContainerCreateSuite) TestCreateOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(got.ID, check.NotNil)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNilName tests creating container without giving name should succeed.
@@ -70,7 +70,7 @@ func (suite *APIContainerCreateSuite) TestNilName(c *check.C) {
 	c.Assert(got.ID, check.NotNil)
 	c.Assert(got.Name, check.NotNil)
 
-	DelContainerForceOk(c, got.Name)
+	DelContainerForceMultyTime(c, got.Name)
 }
 
 // TestDupContainer tests create a duplicate container, return 409.
@@ -96,7 +96,7 @@ func (suite *APIContainerCreateSuite) TestDupContainer(c *check.C) {
 
 	CheckRespStatus(c, resp, 409)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestNonExistingImg tests using non-existing image return 404.
@@ -146,7 +146,7 @@ func (suite *APIContainerCreateSuite) TestAllocateTTY(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 
 	// TODO: verify TTY works?
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestAddVolume tests add volume is OK.
@@ -173,7 +173,7 @@ func (suite *APIContainerCreateSuite) TestAddVolume(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 
 	// TODO: verify volume
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRuntime tests specify a different runtime, e.g. runv could work.
@@ -200,7 +200,7 @@ func (suite *APIContainerCreateSuite) TestRuntime(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 
 	// TODO: verify runtime
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestLxcfsEnable is OK.
@@ -236,7 +236,7 @@ func (suite *APIContainerCreateSuite) TestLxcfsEnable(c *check.C) {
 
 	c.Assert(got.HostConfig.EnableLxcfs, check.Equals, isEnable)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestRestartPolicyAlways tests create container with restartpolicy is always could work.
@@ -275,7 +275,7 @@ func (suite *APIContainerCreateSuite) TestRestartPolicyAlways(c *check.C) {
 
 	c.Assert(got.HostConfig.RestartPolicy.Name, check.Equals, "always")
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestAliOSOptions tests create container with alios related container isolation options.

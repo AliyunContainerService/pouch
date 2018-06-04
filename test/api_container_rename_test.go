@@ -39,7 +39,7 @@ func (suite *APIContainerRenameSuite) TestRenameOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, newname)
+	DelContainerForceMultyTime(c, newname)
 }
 
 // TestRenameOk test create api is ok with default parameters.
@@ -63,7 +63,7 @@ func (suite *APIContainerRenameSuite) TestRenameById(c *check.C) {
 	defer resp2.Body.Close()
 	CheckRespStatus(c, resp2, 204)
 
-	DelContainerForceOk(c, newname)
+	DelContainerForceMultyTime(c, newname)
 
 	resp3, err := CreateBusyboxContainer(c, oldname, "top")
 	c.Assert(err, check.IsNil)
@@ -73,7 +73,7 @@ func (suite *APIContainerRenameSuite) TestRenameById(c *check.C) {
 	err = json.NewDecoder(resp3.Body).Decode(&ccr)
 	c.Assert(err, check.IsNil)
 
-	DelContainerForceOk(c, oldname)
+	DelContainerForceMultyTime(c, oldname)
 
 	if ccr.ID == "" {
 		c.Errorf("container with old name %s create error. %v", oldname, ccr)

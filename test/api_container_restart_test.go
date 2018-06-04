@@ -39,7 +39,7 @@ func (suite *APIContainerRestartSuite) TestAPIContainerRestart(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestAPIRestartStoppedContainer it to verify restarting a stopped container.
@@ -56,7 +56,7 @@ func (suite *APIContainerRestartSuite) TestAPIRestartStoppedContainer(c *check.C
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
 
 // TestAPIRestartPausedContainer is to verify restarting a paused container.
@@ -75,5 +75,5 @@ func (suite *APIContainerRestartSuite) TestAPIRestartPausedContainer(c *check.C)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }

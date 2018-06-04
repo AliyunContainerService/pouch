@@ -37,5 +37,5 @@ func (suite *APIImageDeleteSuite) TestDeleteUsingImage(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
-	DelContainerForceOk(c, cname)
+	DelContainerForceMultyTime(c, cname)
 }
