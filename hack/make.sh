@@ -8,10 +8,18 @@ TMP=$(mktemp -d /tmp/pouch.XXXXXX)
 DIR="$( cd "$( dirname "$0" )/.." && pwd )"
 cd "$DIR/"
 
+#
+# Get the version of dependencies from corresponding commands and compare them with the required version.
+# If they don't meet the requirement, this script will install them.
+#
 CONTAINERD_VERSION=
+REQUIRED_CONTAINERD_VERSION="1.0.3"
 RUNC_VERSION=
+REQUIRED_RUNC_VERSION="1.0.0-rc4-1"
 NSENTER_VERSION=
+REQUIRED_NSENTER_VERSION="2.24.1"
 DUMB_INIT_VERSION=
+REQUIRED_DUMB_INIT_VERSION="1.2.1"
 
 SOURCEDIR=/go/src/github.com/alibaba/pouch
 
@@ -37,7 +45,7 @@ fi
 function get_containerd_version
 {
 	if which containerd &>/dev/null; then
-		CONTAINERD_VERSION=$(containerd -v|cut -d " " -f 3)
+		CONTAINERD_VERSION=$(containerd -v|cut -d " " -f 3|cut -c 2-)
 	fi
 }
 
@@ -58,7 +66,7 @@ function get_nsenter_version
 function get_dumb_init_version
 {
 	if which dumb-init &>/dev/null; then
-		DUMB_INIT_VERSION=$(dumb-init -V 2>&1 | cut -d " " -f 2)
+		DUMB_INIT_VERSION=$(dumb-init -V 2>&1 | cut -d " " -f 2|cut -c 2-)
 	fi	
 }
 
@@ -66,13 +74,13 @@ function install_containerd
 {
 	echo "Try installing containerd"
 	get_containerd_version
-	if [[ "$CONTAINERD_VERSION" == "v1.0.3" ]]; then
+	if [[ "$CONTAINERD_VERSION" == "$REQUIRED_CONTAINERD_VERSION" ]]; then
 		echo "Containerd already installed."
 	else
 		echo "Download and install containerd."
 		wget --quiet \
-			https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P "$TMP"
-		tar xf "$TMP/containerd-1.0.3.linux-amd64.tar.gz" -C "$TMP" &&
+			"https://github.com/containerd/containerd/releases/download/v${REQUIRED_CONTAINERD_VERSION}/containerd-${REQUIRED_CONTAINERD_VERSION}.linux-amd64.tar.gz" -P "$TMP"
+		tar xf "$TMP/containerd-${REQUIRED_CONTAINERD_VERSION}.linux-amd64.tar.gz" -C "$TMP" &&
 			cp -f "$TMP"/bin/* /usr/local/bin/
 	fi;
 }
@@ -81,12 +89,12 @@ function install_runc
 {
 	echo "Try installing runc"
 	get_runc_version
-	if [[ "$RUNC_VERSION" == "1.0.0-rc4-1" ]]; then
+	if [[ "$RUNC_VERSION" == "$REQUIRED_RUNC_VERSION" ]]; then
 		echo "Runc already installed."
 	else
 		echo "Download and install runc."
 		wget --quiet \
-			https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P /usr/local/bin
+			"https://github.com/alibaba/runc/releases/download/v${REQUIRED_RUNC_VERSION}/runc.amd64" -P /usr/local/bin
 		chmod +x /usr/local/bin/runc.amd64
 		mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
 	fi;
@@ -137,7 +145,7 @@ function install_nsenter
 	echo "Try installing nsenter"
 	get_nsenter_version
 	if grep -qi "ubuntu" /etc/issue ; then
-		if [[ "$NSENTER_VERSION" == "2.24.1" ]]; then
+		if [[ "$NSENTER_VERSION" == "$REQUIRED_NSENTER_VERSION" ]]; then
 			echo "Nsenter already installed."
 		else
 			echo "Download and install nsenter."
@@ -156,9 +164,9 @@ function install_nsenter
 				autopoint \
 				libtool
 			wget --quiet \
-				https://www.kernel.org/pub/linux/utils/util-linux/v2.24/util-linux-2.24.1.tar.gz -P "$TMP"
-			tar xf "$TMP/util-linux-2.24.1.tar.gz" -C "$TMP" &&
-				cd "$TMP/util-linux-2.24.1"
+				"https://www.kernel.org/pub/linux/utils/util-linux/v2.24/util-linux-${REQUIRED_NSENTER_VERSION}.tar.gz" -P "$TMP"
+			tar xf "$TMP/util-linux-${REQUIRED_NSENTER_VERSION}.tar.gz" -C "$TMP" &&
+				cd "$TMP/util-linux-${REQUIRED_NSENTER_VERSION}"
 			./autogen.sh
 			autoreconf -vfi
 			./configure && make 
@@ -175,13 +183,13 @@ function install_dumb_init
 {
 	echo "Try installing dumb-init"
 	get_dumb_init_version
-	if [[ "$DUMB_INIT_VERSION" == "v1.2.1" ]]; then
+	if [[ "$DUMB_INIT_VERSION" == "$REQUIRED_DUMB_INIT_VERSION" ]]; then
 		echo "Dumb-init already installed."
 	else
 		echo "Download and install dumb-init."
 		wget --quiet -O /tmp/dumb-init \
-			 https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64
-		mv tmp/dumb-init /usr/bin/
+			 "https://github.com/Yelp/dumb-init/releases/download/v${REQUIRED_DUMB_INIT_VERSION}/dumb-init_${REQUIRED_DUMB_INIT_VERSION}_amd64"
+		mv /tmp/dumb-init /usr/bin/
 		chmod +x /usr/bin/dumb-init
 	fi
 }

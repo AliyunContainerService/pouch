@@ -19,8 +19,11 @@ BINDIR=$POUCHDIR/bin
 LXC_DIR=$TMP/lxc
 [ -d "$LXC_DIR" ] || mkdir -p "$LXC_DIR"
 
+# Dependency
 # lxcfs stable branch
 LXC_BRANCH="stable-2.0"
+CONTAINERD_VERSION="1.0.3"
+RUNC_VERSION="1.0.0-rc4-1"
 
 # ARCHITECTURE, The architecture name. Usually matches 'uname -m'.
 ARCHITECTURE=$(uname -m)
@@ -47,12 +50,12 @@ function build_pouch()
 {
     # install containerd
     echo "Downloading containerd."
-    wget --quiet https://github.com/containerd/containerd/releases/download/v1.0.3/containerd-1.0.3.linux-amd64.tar.gz -P "$TMP"
-    tar xf "$TMP/containerd-1.0.3.linux-amd64.tar.gz -C $TMP && cp -f $TMP/bin/* $BINDIR/"
+    wget --quiet "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz" -P "$TMP"
+    tar xf "$TMP/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz" -C "$TMP" && cp -f "$TMP"/bin/* "$BINDIR/"
 
     # install runc
     echo "Downloading runc."
-    wget --quiet https://github.com/alibaba/runc/releases/download/v1.0.0-rc4-1/runc.amd64 -P "$BINDIR/"
+    wget --quiet "https://github.com/alibaba/runc/releases/download/v${RUNC_VERSION}/runc.amd64" -P "$BINDIR/"
     chmod +x "$BINDIR/runc.amd64"
     mv "$BINDIR/runc.amd64" "$BINDIR/runc"
 
