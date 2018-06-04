@@ -371,6 +371,12 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		container.Snapshotter.Data["UpperDir"] = upperDir
 	}
 
+	// validate container Config
+	warnings, err := validateConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	container.Lock()
 	defer container.Unlock()
 
@@ -385,8 +391,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	mgr.cache.Put(id, container)
 
 	return &types.ContainerCreateResp{
-		ID:   id,
-		Name: name,
+		ID:       id,
+		Name:     name,
+		Warnings: warnings,
 	}, nil
 }
 
