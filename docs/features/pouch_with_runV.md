@@ -122,6 +122,18 @@ Linux 4.12.4-hyper #18 SMP Mon Sep 4 15:10:13 CST 2017 x86_64 GNU/Linux
 
 It turns out that in experiment above kernel in host physical machine is 4.4.0-101-generic, and that in hypervisor-based container is 4.12.4-hyper. Obviously, they are isolated from each other in term of kernel.
 
+## Run legecy kernels
+
+runV(now kataconatiners) provides a general way to provide an isolated Linux kernel still based on OCI-compatible images. To be honest, Linux kernel running in Guest OS provisioned by runV is quite advanced and new. However, how to make legacy Linux kernel run in Guest OS is still a really huge challenge for the industry when using runV.
+
+### Scenario
+
+It is quite reasonable to make runV provide Guest OS which is running legacy Linux kernel, such as Linux kernel 2.6.32. For the entire industry, there are so much workload running on legacy Linux kernels. If all these workload could only be running on legacy kernels(usually operation team in enterprise could not bear the risk to upgrade legacy Linux kernel to new ones like 4.12 or 4.14), applications in this environment cannot take adavantage of cutting edge technology like container and Kubernetes and so on. Actually no application delivery speed would be gained without doubt, which is fatal in the era of The Internet.
+
+### Legecy kernel support
+
+However, PouchContainer figuires out one way to containerize application which must be running on legecy kernel. This solution is still working on runV. While this part needs to do lots of work to backport new kernel features to the legacy kernel(this part is somewhat difficult to be open source). The following demo shows how to make a Linux kernel 2.6.32 run in Guest OS provided by runV: [make legacy kernel in Guest OS](https://www.youtube.com/watch?v=1w5Ams2k-40).
+
 ## Conclusion
 
 Pouch brings a common way to provide hypervisor-based containers. With pouch, users can take advantages of both hypervisor-based containers and LXC-based containers according to specific scenario.
