@@ -23,8 +23,23 @@ func clearReadonly(m *specs.Mount) {
 
 // setupMounts create mount spec.
 func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
+	var mounts []specs.Mount
+	// Override the default mounts which are duplicate with user defined ones.
+	for _, sm := range s.Mounts {
+		dup := false
+		for _, cm := range c.Mounts {
+			if sm.Destination == cm.Destination {
+				dup = true
+				break
+			}
+		}
+		if dup {
+			continue
+		}
+		mounts = append(mounts, sm)
+	}
 	// TODO: we can suggest containerd to add the cgroup into the default spec.
-	mounts := append(s.Mounts, specs.Mount{
+	mounts = append(mounts, specs.Mount{
 		Destination: "/sys/fs/cgroup",
 		Type:        "cgroup",
 		Source:      "cgroup",
