@@ -43,7 +43,7 @@ func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 	res = command.PouchRun("top", name)
 	c.Assert(res.Stderr(), check.NotNil)
 
-	expectString := "container is not running, can not execute top command"
+	expectString := " is not running, cannot execute top command"
 	if out := res.Combined(); !strings.Contains(out, expectString) {
 		// FIXME(ziren): for debug top error info is empty
 		fmt.Printf("%+v", res)

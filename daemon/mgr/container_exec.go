@@ -61,6 +61,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 		return err
 	}
 
+	c.Lock()
 	process := &specs.Process{
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
@@ -73,13 +74,16 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, confi
 	}
 
 	if err = setupUser(ctx, c, &specs.Spec{Process: process}); err != nil {
+		c.Unlock()
 		return err
 	}
 
 	// set exec process ulimit
 	if err := setupRlimits(ctx, c.HostConfig, &specs.Spec{Process: process}); err != nil {
+		c.Unlock()
 		return err
 	}
+	c.Unlock()
 
 	execConfig.Running = true
 	defer func() {

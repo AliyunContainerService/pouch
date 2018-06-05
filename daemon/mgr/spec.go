@@ -20,8 +20,14 @@ type SpecWrapper struct {
 	argsArr [][]string
 }
 
+// All the functions related to the spec is lock-free for container instance,
+// so when calling functions here like createSpec, setupProcess, setupMounts,
+// setupUser and so on, caller should explicitly add lock for container instance.
+
 // createSpec create a runtime-spec.
 func createSpec(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
+	c.Lock()
+	defer c.Unlock()
 	// new a default spec from containerd.
 	s, err := ctrd.NewDefaultSpec(ctx, c.ID)
 	if err != nil {

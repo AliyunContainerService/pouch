@@ -377,9 +377,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 
-	container.Lock()
-	defer container.Unlock()
-
 	// store disk
 	if err := container.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
@@ -404,9 +401,6 @@ func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, 
 		return nil, err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	return c, nil
 }
 
@@ -424,10 +418,11 @@ func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter, o
 		if !ok {
 			return nil, fmt.Errorf("failed to get container list, invalid meta type")
 		}
+		// TODO: make func filter with no data race
 		if filter != nil && filter(c) {
 			if option.All {
 				cons = append(cons, c)
-			} else if c.State.Status == types.StatusRunning || c.State.Status == types.StatusPaused {
+			} else if c.IsRunningOrPaused() {
 				cons = append(cons, c)
 			}
 		}
@@ -447,23 +442,24 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	return mgr.start(ctx, c, detachKeys)
 }
 
 func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys string) error {
+	c.Lock()
 	if c.Config == nil || c.State == nil {
+		c.Unlock()
 		return errors.Wrapf(errtypes.ErrNotfound, "container %s", c.ID)
 	}
 	c.DetachKeys = detachKeys
 
 	// initialise container network mode
 	networkMode := c.HostConfig.NetworkMode
+
 	if IsContainer(networkMode) {
 		origContainer, err := mgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
 		if err != nil {
+			c.Unlock()
 			return err
 		}
 
@@ -477,6 +473,7 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		if IsHost(networkMode) {
 			hostname, err := os.Hostname()
 			if err != nil {
+				c.Unlock()
 				return err
 			}
 			c.Config.Hostname = strfmt.Hostname(hostname)
@@ -484,6 +481,7 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 
 		// build the network related path.
 		if err := mgr.buildNetworkRelatedPath(c); err != nil {
+			c.Unlock()
 			return err
 		}
 
@@ -495,11 +493,13 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 				endpoint.EndpointConfig = endpointSetting
 				if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
 					logrus.Errorf("failed to create endpoint: %v", err)
+					c.Unlock()
 					return err
 				}
 			}
 		}
 	}
+	c.Unlock()
 
 	return mgr.createContainerdContainer(ctx, c)
 }
@@ -522,9 +522,11 @@ func (mgr *ContainerManager) buildNetworkRelatedPath(c *Container) error {
 func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container) error {
 	// CgroupParent from HostConfig will be first priority to use,
 	// then will be value from mgr.Config.CgroupParent
+	c.Lock()
 	if c.HostConfig.CgroupParent == "" {
 		c.HostConfig.CgroupParent = mgr.Config.CgroupParent
 	}
+	c.Unlock()
 
 	var (
 		err     error
@@ -532,6 +534,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		argsArr [][]string
 	)
 	if mgr.containerPlugin != nil {
+		// TODO: make func PreStart with no data race
 		prioArr, argsArr, err = mgr.containerPlugin.PreStart(c)
 		if err != nil {
 			return errors.Wrapf(err, "get pre-start hook error from container plugin")
@@ -556,13 +559,17 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return errors.Wrap(err, "failed to open io")
 	}
 
-	if err := mgr.Client.CreateContainer(ctx, &ctrd.Container{
+	c.Lock()
+	ctrdContainer := &ctrd.Container{
 		ID:      c.ID,
 		Image:   c.Config.Image,
 		Runtime: c.HostConfig.Runtime,
 		Spec:    sw.s,
 		IO:      io,
-	}); err != nil {
+	}
+	c.Unlock()
+
+	if err := mgr.Client.CreateContainer(ctx, ctrdContainer); err != nil {
 		logrus.Errorf("failed to create new containerd container: %v", err)
 
 		// TODO(ziren): markStoppedAndRelease may failed
@@ -572,36 +579,30 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 
 	// Create containerd container success.
-	c.State.Status = types.StatusRunning
-	c.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
+
 	pid, err := mgr.Client.ContainerPID(ctx, c.ID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get PID of container %s", c.ID)
 	}
-	c.State.Pid = int64(pid)
-	c.State.ExitCode = 0
+
+	c.SetStatusRunning(int64(pid))
 
 	// set Snapshot MergedDir
+	c.Lock()
 	c.Snapshotter.Data["MergedDir"] = c.BaseFS
+	c.Unlock()
 
 	return c.Write(mgr.Store)
 }
 
 // Stop stops a running container.
 func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int64) error {
-	var (
-		err error
-		c   *Container
-	)
-
-	if c, err = mgr.container(name); err != nil {
+	c, err := mgr.container(name)
+	if err != nil {
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
-	if !c.IsRunning() && !c.IsPaused() {
+	if !c.IsRunningOrPaused() {
 		// stopping a non-running container is valid.
 		return nil
 	}
@@ -614,9 +615,10 @@ func (mgr *ContainerManager) Stop(ctx context.Context, name string, timeout int6
 }
 
 func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int64) error {
-	msg, err := mgr.Client.DestroyContainer(ctx, c.ID, timeout)
+	id := c.ID
+	msg, err := mgr.Client.DestroyContainer(ctx, id, timeout)
 	if err != nil {
-		return errors.Wrapf(err, "failed to destroy container %s", c.ID)
+		return errors.Wrapf(err, "failed to destroy container %s", id)
 	}
 
 	return mgr.markStoppedAndRelease(c, msg)
@@ -629,18 +631,16 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	if timeout == 0 {
 		timeout = c.StopTimeout()
 	}
 
-	if c.IsRunning() || c.IsPaused() {
+	if c.IsRunningOrPaused() {
 		// stop container if it is running or paused.
 		if err := mgr.stop(ctx, c, timeout); err != nil {
-			logrus.Errorf("failed to stop container %s when restarting: %v", c.ID, err)
-			return errors.Wrapf(err, fmt.Sprintf("failed to stop container %s", c.ID))
+			ex := fmt.Errorf("failed to stop container %s when restarting: %v", c.ID, err)
+			logrus.Errorf(ex.Error())
+			return ex
 		}
 	}
 
@@ -651,20 +651,9 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 
 // Pause pauses a running container.
 func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
-	var (
-		err error
-		c   *Container
-	)
-
-	if c, err = mgr.container(name); err != nil {
+	c, err := mgr.container(name)
+	if err != nil {
 		return err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	if c.Config == nil || c.State == nil {
-		return errors.Wrapf(errtypes.ErrNotfound, "container %s", c.ID)
 	}
 
 	if !c.IsRunning() {
@@ -675,10 +664,10 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 		return errors.Wrapf(err, "failed to pause container %s", c.ID)
 	}
 
-	c.State.Status = types.StatusPaused
+	c.SetStatusPaused()
 
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
 
@@ -687,34 +676,23 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 
 // Unpause unpauses a paused container.
 func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
-	var (
-		err error
-		c   *Container
-	)
-
-	if c, err = mgr.container(name); err != nil {
+	c, err := mgr.container(name)
+	if err != nil {
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
-	if c.Config == nil || c.State == nil {
-		return errors.Wrap(errtypes.ErrNotfound, "container "+c.ID)
-	}
-
 	if !c.IsPaused() {
-		return fmt.Errorf("container's status is not paused: %v", c.State.Status)
+		return fmt.Errorf("status(%s) of container %s is not paused", c.State.Status, c.ID)
 	}
 
 	if err := mgr.Client.UnpauseContainer(ctx, c.ID); err != nil {
-		return errors.Wrapf(err, "failed to unpause container: %s", c.ID)
+		return errors.Wrapf(err, "failed to unpause container %s", c.ID)
 	}
 
-	c.State.Status = types.StatusRunning
+	c.SetStatusUnpaused()
 
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
 
@@ -738,28 +716,25 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 
 // Rename renames a container.
 func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string) error {
-	var (
-		c   *Container
-		err error
-	)
-
 	if mgr.NameToID.Get(newName).Exist() {
 		return errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+newName)
 	}
 
-	if c, err = mgr.container(oldName); err != nil {
-		return errors.Wrap(err, "failed to rename container")
+	c, err := mgr.container(oldName)
+	if err != nil {
+		return errors.Wrapf(err, "failed to rename container %s", oldName)
 	}
-	c.Lock()
-	defer c.Unlock()
 
-	mgr.NameToID.Remove(c.Name)
+	c.Lock()
+	name := c.Name
+	c.Name = newName
+	c.Unlock()
+
+	mgr.NameToID.Remove(name)
 	mgr.NameToID.Put(newName, c.ID)
 
-	c.Name = newName
-
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
 
@@ -773,12 +748,11 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	if c.IsRunning() && config.Resources.KernelMemory != 0 {
-		return errors.Wrapf(nil, fmt.Sprintf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID))
+		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID)
 	}
+
+	c.Lock()
 
 	// init Container Labels
 	if c.Config.Labels == nil {
@@ -812,24 +786,28 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}
 
+	c.Unlock()
+
 	// update container disk quota
 	if err := mgr.updateContainerDiskQuota(ctx, c, config.DiskQuota); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("failed to update container %s diskquota", c.ID))
+		return errors.Wrapf(err, "failed to update diskquota of container %s", c.ID)
 	}
 
 	// update Resources of a container.
 	if err := mgr.updateContainerResources(c, config.Resources); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("failed to update container %s resources", c.ID))
+		return errors.Wrapf(err, "failed to update resource of container %s", c.ID)
 	}
 
+	c.Lock()
 	// TODO update restartpolicy when container is running.
 	if config.RestartPolicy.Name != "" {
 		c.HostConfig.RestartPolicy = config.RestartPolicy
 	}
+	c.Unlock()
 
 	// update env when container is running, default snapshotter driver
 	// is overlayfs
-	if (c.IsRunning() || c.IsPaused()) && len(config.Env) > 0 && c.Snapshotter != nil {
+	if c.IsRunningOrPaused() && len(config.Env) > 0 && c.Snapshotter != nil {
 		if mergedDir, exists := c.Snapshotter.Data["MergedDir"]; exists {
 			if err := mgr.updateContainerEnv(c.Config.Env, mergedDir); err != nil {
 				return errors.Wrapf(err, "failed to update env of running container")
@@ -897,21 +875,19 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	if err != nil {
 		return err
 	}
-	c.Lock()
-	defer c.Unlock()
 
 	if !c.IsStopped() && !c.IsExited() && !c.IsCreated() && !options.Force {
-		return fmt.Errorf("container: %s is not stopped, can't remove it without flag force", c.ID)
+		return fmt.Errorf("container %s is not stopped, cannot remove it without flag force", c.ID)
 	}
 
 	// if the container is running, force to stop it.
 	if c.IsRunning() && options.Force {
 		msg, err := mgr.Client.DestroyContainer(ctx, c.ID, c.StopTimeout())
 		if err != nil && !errtypes.IsNotfound(err) {
-			return errors.Wrapf(err, "failed to destroy container: %s", c.ID)
+			return errors.Wrapf(err, "failed to destroy container %s", c.ID)
 		}
 		if err := mgr.markStoppedAndRelease(c, msg); err != nil {
-			return errors.Wrapf(err, "failed to mark container: %s stop status", c.ID)
+			return errors.Wrapf(err, "failed to mark container %s stop status", c.ID)
 		}
 	}
 
@@ -920,11 +896,13 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	}
 
 	// remove name
+	c.Lock()
 	mgr.NameToID.Remove(c.Name)
+	c.Unlock()
 
 	// remove meta data
 	if err := mgr.Store.Remove(c.Key()); err != nil {
-		logrus.Errorf("failed to remove container: %s meta store, %v", c.ID, err)
+		logrus.Errorf("failed to remove container %s from meta store: %v", c.ID, err)
 	}
 
 	// remove container cache
@@ -932,7 +910,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 
 	// remove snapshot
 	if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-		logrus.Errorf("failed to remove container: %s snapshot, %v", c.ID, err)
+		logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
 	}
 
 	return nil
@@ -948,22 +926,26 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 		return errors.Wrapf(err, "failed to parse disk quota")
 	}
 
+	c.Lock()
 	c.Config.DiskQuota = quotaMap
+	c.Unlock()
 
 	// set mount point disk quota
 	if err := mgr.setMountPointDiskQuota(ctx, c); err != nil {
 		return errors.Wrapf(err, "failed to set mount point disk quota")
 	}
 
+	c.Lock()
 	var qid uint32
 	if c.Config.QuotaID != "" {
 		id, err := strconv.Atoi(c.Config.QuotaID)
 		if err != nil {
-			return errors.Wrapf(err, "invalid argument, QuotaID: %s", c.Config.QuotaID)
+			return errors.Wrapf(err, "failed to convert QuotaID %s", c.Config.QuotaID)
 		}
 
-		// if QuotaID is < 0, it means pouchd alloc a unique quota id.
+		qid = uint32(id)
 		if id < 0 {
+			// QuotaID is < 0, it means pouchd alloc a unique quota id.
 			qid, err = quota.GetNextQuatoID()
 			if err != nil {
 				return errors.Wrap(err, "failed to get next quota id")
@@ -971,10 +953,9 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 
 			// update QuotaID
 			c.Config.QuotaID = strconv.Itoa(int(qid))
-		} else {
-			qid = uint32(id)
 		}
 	}
+	c.Unlock()
 
 	// get rootfs quota
 	defaultQuota := quota.GetDefaultQuota(quotaMap)
@@ -982,8 +963,8 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 		return fmt.Errorf("set quota id but have no set default quota size")
 	}
 	// update container rootfs disk quota
-	status := c.State.Status
-	if (status == types.StatusRunning || status == types.StatusPaused) && c.Snapshotter != nil {
+	// TODO: add lock for container?
+	if c.IsRunningOrPaused() && c.Snapshotter != nil {
 		basefs, ok := c.Snapshotter.Data["MergedDir"]
 		if !ok || basefs == "" {
 			return fmt.Errorf("Container is running, but MergedDir is missing")
@@ -999,6 +980,8 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 
 // updateContainerResources update container's resources parameters.
 func (mgr *ContainerManager) updateContainerResources(c *Container, resources types.Resources) error {
+	c.Lock()
+	defer c.Unlock()
 	// update resources of container.
 	cResources := &c.HostConfig.Resources
 	if resources.BlkioWeight != 0 {
@@ -1171,9 +1154,6 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	// check the image existed or not, and convert image id to image ref
 	_, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
 	if err != nil {
@@ -1187,7 +1167,8 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	}
 
 	var (
-		needRollback    = false
+		needRollback = false
+		// FIXME: do a deep copy of container?
 		backupContainer = c
 	)
 
@@ -1215,70 +1196,77 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	}
 	c.Image = config.Image
 
+	// If container is not running, we just store this data.
+	if c.State.Status != types.StatusRunning {
+		// Works fine, store new container info to disk.
+		if err := c.Write(mgr.Store); err != nil {
+			logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
+			return err
+		}
+		return nil
+	}
 	// If container is running,  we need change
 	// configuration and recreate it. Else we just store new meta
 	// into disk, next time when starts container, the new configurations
 	// will take effect.
-	if c.IsRunning() {
-		// Inherit volume configurations from old container,
-		// New volume configurations may cover the old one.
-		// c.VolumesFrom = []string{c.ID}
 
-		// FIXME(ziren): here will forcely stop container afer 3s.
-		// If DestroyContainer failed, we think the old container
-		// not changed, so just return error, no need recover it.
-		_, err := mgr.Client.DestroyContainer(ctx, c.ID, 3)
-		if err != nil {
-			return errors.Wrapf(err, "failed to destroy container")
-		}
+	// Inherit volume configurations from old container,
+	// New volume configurations may cover the old one.
+	// c.VolumesFrom = []string{c.ID}
 
-		// remove snapshot of old container
-		if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-			return errors.Wrap(err, "failed to remove snapshot")
-		}
-
-		// wait util old snapshot to be deleted
-		wait := make(chan struct{})
-		go func() {
-			for {
-				// FIXME(ziren) Ensure the removed snapshot be removed
-				// by garbage collection.
-				time.Sleep(100 * time.Millisecond)
-
-				_, err := mgr.Client.GetSnapshot(ctx, c.ID)
-				if err != nil && errdefs.IsNotFound(err) {
-					close(wait)
-					return
-				}
-			}
-		}()
-
-		select {
-		case <-wait:
-			// TODO delete snapshot succeeded
-		case <-time.After(30 * time.Second):
-			needRollback = true
-			return fmt.Errorf("failed to deleted old snapshot: wait old snapshot %s to be deleted timeout(30s)", c.ID)
-		}
-
-		// create a snapshot with image for new container.
-		if err := mgr.Client.CreateSnapshot(ctx, c.ID, config.Image); err != nil {
-			needRollback = true
-			return errors.Wrap(err, "failed to create snapshot")
-		}
-
-		if err := mgr.createContainerdContainer(ctx, c); err != nil {
-			needRollback = true
-			return errors.Wrap(err, "failed to create new container")
-		}
-
-		// Upgrade succeeded, refresh the cache
-		mgr.cache.Put(c.ID, c)
+	// FIXME(ziren): here will forcely stop container afer 3s.
+	// If DestroyContainer failed, we think the old container
+	// not changed, so just return error, no need recover it.
+	if _, err := mgr.Client.DestroyContainer(ctx, c.ID, 3); err != nil {
+		return errors.Wrapf(err, "failed to destroy container")
 	}
+
+	// remove snapshot of old container
+	if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
+		return errors.Wrap(err, "failed to remove snapshot")
+	}
+
+	// wait util old snapshot to be deleted
+	wait := make(chan struct{})
+	go func() {
+		for {
+			// FIXME(ziren) Ensure the removed snapshot be removed
+			// by garbage collection.
+			time.Sleep(100 * time.Millisecond)
+
+			_, err := mgr.Client.GetSnapshot(ctx, c.ID)
+			if err != nil && errdefs.IsNotFound(err) {
+				close(wait)
+				return
+			}
+		}
+	}()
+
+	select {
+	case <-wait:
+		// TODO delete snapshot succeeded
+	case <-time.After(30 * time.Second):
+		needRollback = true
+		return fmt.Errorf("failed to deleted old snapshot: wait old snapshot %s to be deleted timeout(30s)", c.ID)
+	}
+
+	// create a snapshot with image for new container.
+	if err := mgr.Client.CreateSnapshot(ctx, c.ID, config.Image); err != nil {
+		needRollback = true
+		return errors.Wrap(err, "failed to create snapshot")
+	}
+
+	if err := mgr.createContainerdContainer(ctx, c); err != nil {
+		needRollback = true
+		return errors.Wrap(err, "failed to create new container")
+	}
+
+	// Upgrade succeeded, refresh the cache
+	mgr.cache.Put(c.ID, c)
 
 	// Works fine, store new container info to disk.
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
 		return err
 	}
 
@@ -1290,31 +1278,29 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 	if psArgs == "" {
 		psArgs = "-ef"
 	}
+
 	c, err := mgr.container(name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	if !c.IsRunning() {
-		return nil, fmt.Errorf("container is not running, can not execute top command")
+		return nil, fmt.Errorf("container %s is not running, cannot execute top command", c.ID)
 	}
 
 	pids, err := mgr.Client.ContainerPIDs(ctx, c.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get pids of container")
+		return nil, errors.Wrapf(err, "failed to get pids of container %s", c.ID)
 	}
 
 	output, err := exec.Command("ps", strings.Split(psArgs, " ")...).Output()
 	if err != nil {
-		return nil, errors.Wrapf(err, "error running ps")
+		return nil, errors.Wrapf(err, "failed to run ps command")
 	}
 
 	procList, err := parsePSOutput(output, pids)
 	if err != nil {
-		return nil, errors.Wrapf(err, "parsePSOutput failed")
+		return nil, errors.Wrapf(err, "failed parsePSOutput")
 	}
 
 	return procList, nil
@@ -1327,10 +1313,7 @@ func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
-	if !c.IsRunning() && !c.IsPaused() {
+	if !c.IsRunningOrPaused() {
 		return fmt.Errorf("failed to resize container %s: container is not running", c.ID)
 	}
 
@@ -1368,27 +1351,23 @@ func (mgr *ContainerManager) Connect(ctx context.Context, name string, networkID
 	c, err := mgr.container(name)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get container: %s", name)
-	} else if c == nil {
-		return fmt.Errorf("container: %s is not exist", name)
 	}
 
 	n, err := mgr.NetworkMgr.Get(context.Background(), networkIDOrName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get network: %s", networkIDOrName)
-	} else if n == nil {
-		return fmt.Errorf("network: %s is not exist", networkIDOrName)
+		return errors.Wrapf(err, "failed to get network %s", networkIDOrName)
+	}
+	if n == nil {
+		return fmt.Errorf("network %s does not exist", networkIDOrName)
 	}
 
 	if epConfig == nil {
 		epConfig = &types.EndpointSettings{}
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
-	if c.State.Status != types.StatusRunning {
-		if c.State.Status == types.StatusDead {
-			return fmt.Errorf("Container %s is marked for removal and cannot be connected or disconnected to the network", c.ID)
+	if !c.IsRunning() {
+		if c.IsDead() {
+			return fmt.Errorf("container %s is marked for removal and cannot be connected or disconnected to the network %s", c.ID, n.Name)
 		}
 
 		if err := mgr.updateNetworkConfig(c, n.Name, epConfig); err != nil {
@@ -1417,12 +1396,18 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	}
 
 	// container cannot be disconnected from host network
+	c.Lock()
 	networkMode := c.HostConfig.NetworkMode
+	c.Unlock()
+
 	if IsHost(networkMode) && IsHost(network.Mode) {
 		return fmt.Errorf("container cannot be disconnected from host network or connected to hostnetwork ")
 	}
 
+	c.Lock()
 	networkSettings := c.NetworkSettings
+	c.Unlock()
+
 	if networkSettings == nil {
 		return nil
 	}
@@ -1433,7 +1418,9 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 		return fmt.Errorf("failed to disconnect container from network: container %s not attach to %s", c.Name, networkName)
 	}
 
+	c.Lock()
 	endpoint := mgr.buildContainerEndpoint(c)
+	c.Unlock()
 	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
@@ -1450,16 +1437,18 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 
 	// if container has no network attached any more, set NetworkDisabled to true
 	// so that not setup Network Namespace when restart the container
+	c.Lock()
 	if len(networkSettings.Networks) == 0 {
 		c.Config.NetworkDisabled = true
 	}
 
 	// container meta changed, refresh the cache
 	mgr.cache.Put(c.ID, c)
+	c.Unlock()
 
 	// update container meta json
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
 		return err
 	}
 
@@ -1540,7 +1529,9 @@ func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *Co
 		return errors.Wrap(err, "failed to get network")
 	}
 
+	container.Lock()
 	endpoint := mgr.buildContainerEndpoint(container)
+	container.Unlock()
 	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
@@ -1663,16 +1654,18 @@ func attachConfigToOptions(attach *AttachConfig) []func(*containerio.Option) {
 }
 
 func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message) error {
-	c.State.Pid = -1
-	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
-	c.State.Status = types.StatusStopped
-
+	var (
+		code   int64  // container exit code used for container state setting
+		errMsg string // container exit error message used for container state setting
+	)
 	if m != nil {
-		c.State.ExitCode = int64(m.ExitCode())
+		code = int64(m.ExitCode())
 		if err := m.RawError(); err != nil {
-			c.State.Error = err.Error()
+			errMsg = err.Error()
 		}
 	}
+
+	c.SetStatusStopped(code, errMsg)
 
 	// unset Snapshot MergedDir. Stop a container will
 	// delete the containerd container, the merged dir
@@ -1680,6 +1673,16 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	// container's MergedDir.
 	if c.Snapshotter != nil && c.Snapshotter.Data != nil {
 		c.Snapshotter.Data["MergedDir"] = ""
+	}
+
+	// Action Container Remove and function markStoppedAndRelease are conflict.
+	// If a container has been removed and the corresponding meta.json will be removed as well.
+	// However, when this function markStoppedAndRelease still keeps the container instance,
+	// there will be possibility that in markStoppedAndRelease, code calls c.Write(mgr.Store) to
+	// write the removed meta.json again. If that, incompatibilty happens.
+	// As a result, we check whether this container is still in the meta store.
+	if container, err := mgr.container(c.Name); err != nil || container == nil {
+		return nil
 	}
 
 	// Remove io and network config may occur error, so we should update
@@ -1696,7 +1699,9 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	}
 
 	// No network binded, just return
+	c.Lock()
 	if c.NetworkSettings == nil {
+		c.Unlock()
 		return nil
 	}
 
@@ -1709,14 +1714,16 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 			// not found"" as an error type
 			if !strings.Contains(err.Error(), "not found") {
 				logrus.Errorf("failed to remove endpoint: %v", err)
+				c.Unlock()
 				return err
 			}
 		}
 	}
+	c.Unlock()
 
 	// update meta
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
+		logrus.Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
 
@@ -1726,43 +1733,49 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 // exitedAndRelease be register into ctrd as a callback function, when the running container suddenly
 // exited, "ctrd" will call it to set the container's state and release resouce and so on.
 func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
-	// update container info
 	c, err := mgr.container(id)
 	if err != nil {
 		return err
 	}
 
-	c.Lock()
-	defer c.Unlock()
-
 	if err := mgr.markStoppedAndRelease(c, m); err != nil {
 		return err
 	}
 
-	c.State.Status = types.StatusExited
+	c.SetStatusExited()
+
+	// Action Container Remove and function exitedAndRelease are conflict.
+	// If a container has been removed and the corresponding meta.json will be removed as well.
+	// However, when this function exitedAndRelease still keeps the container instance,
+	// there will be possibility that in exitedAndRelease, code calls c.Write(mgr.Store) to
+	// write the removed meta.json again. If that, incompatibilty happens.
+	// As a result, we check whether this container is still in the meta store.
+	if container, err := mgr.container(c.Name); err != nil || container == nil {
+		return nil
+	}
+
 	if err := c.Write(mgr.Store); err != nil {
 		logrus.Errorf("failed to update meta: %v", err)
 		return err
 	}
 
 	// send exit event to monitor
-	mgr.monitor.PostEvent(ContainerExitEvent(c).WithHandle(func(container *Container) error {
+	mgr.monitor.PostEvent(ContainerExitEvent(c).WithHandle(func(c *Container) error {
 		// check status and restart policy
-		container.Lock()
-
-		if !container.IsExited() {
-			container.Unlock()
+		if !c.IsExited() {
 			return nil
 		}
-		policy := (*ContainerRestartPolicy)(container.HostConfig.RestartPolicy)
+
+		c.Lock()
+		policy := (*ContainerRestartPolicy)(c.HostConfig.RestartPolicy)
+		keys := c.DetachKeys
+		c.Unlock()
+
 		if policy == nil || policy.IsNone() {
-			container.Unlock()
 			return nil
 		}
 
-		container.Unlock()
-
-		return mgr.Start(context.TODO(), container.ID, container.DetachKeys)
+		return mgr.Start(context.TODO(), c.ID, keys)
 	}))
 
 	return nil
@@ -1773,7 +1786,7 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) error {
 	v, ok := mgr.ExecProcesses.Get(id).Result()
 	if !ok {
-		return errors.Wrap(errtypes.ErrNotfound, "to be exec process: "+id)
+		return errors.Wrapf(errtypes.ErrNotfound, "exec process %s", id)
 	}
 	execConfig, ok := v.(*ContainerExecConfig)
 	if !ok {
@@ -1796,14 +1809,14 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	return nil
 }
 
-func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, meta *Container) (string, string, error) {
+func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *Container) (string, string, error) {
 	driver := volumetypes.DefaultBackend
 	v, err := mgr.VolumeMgr.Get(ctx, name)
 	if err != nil || v == nil {
 		opts := map[string]string{
 			"backend": driver,
 		}
-		if _, err := mgr.VolumeMgr.Create(ctx, name, meta.HostConfig.VolumeDriver, opts, nil); err != nil {
+		if _, err := mgr.VolumeMgr.Create(ctx, name, c.HostConfig.VolumeDriver, opts, nil); err != nil {
 			logrus.Errorf("failed to create volume: %s, err: %v", name, err)
 			return "", "", errors.Wrap(err, "failed to create volume")
 		}
@@ -1811,7 +1824,7 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, meta
 		driver = v.Driver()
 	}
 
-	if _, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: meta.ID}); err != nil {
+	if _, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
 		logrus.Errorf("failed to attach volume: %s, err: %v", name, err)
 		return "", "", errors.Wrap(err, "failed to attach volume")
 	}
@@ -1825,15 +1838,15 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, meta
 	return mountPath, driver, nil
 }
 
-func (mgr *ContainerManager) generateMountPoints(ctx context.Context, meta *Container) error {
+func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Container) error {
 	var err error
 
-	if meta.Config.Volumes == nil {
-		meta.Config.Volumes = make(map[string]interface{})
+	if c.Config.Volumes == nil {
+		c.Config.Volumes = make(map[string]interface{})
 	}
 
-	if meta.Mounts == nil {
-		meta.Mounts = make([]*types.MountPoint, 0)
+	if c.Mounts == nil {
+		c.Mounts = make([]*types.MountPoint, 0)
 	}
 
 	// define a volume map to duplicate removal
@@ -1841,28 +1854,28 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, meta *Cont
 
 	defer func() {
 		if err != nil {
-			if err := mgr.detachVolumes(ctx, meta, false); err != nil {
+			if err := mgr.detachVolumes(ctx, c, false); err != nil {
 				logrus.Errorf("failed to detach volume, err: %v", err)
 			}
 		}
 	}()
 
-	err = mgr.getMountPointFromVolumes(ctx, meta, volumeSet)
+	err = mgr.getMountPointFromVolumes(ctx, c, volumeSet)
 	if err != nil {
 		return errors.Wrap(err, "failed to get mount point from volumes")
 	}
 
-	err = mgr.getMountPointFromImage(ctx, meta, volumeSet)
+	err = mgr.getMountPointFromImage(ctx, c, volumeSet)
 	if err != nil {
 		return errors.Wrap(err, "failed to get mount point from image")
 	}
 
-	err = mgr.getMountPointFromBinds(ctx, meta, volumeSet)
+	err = mgr.getMountPointFromBinds(ctx, c, volumeSet)
 	if err != nil {
 		return errors.Wrap(err, "failed to get mount point from binds")
 	}
 
-	err = mgr.getMountPointFromContainers(ctx, meta, volumeSet)
+	err = mgr.getMountPointFromContainers(ctx, c, volumeSet)
 	if err != nil {
 		return errors.Wrap(err, "failed to get mount point from containers")
 	}
@@ -1870,13 +1883,13 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, meta *Cont
 	return nil
 }
 
-func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *Container, volumeSet map[string]struct{}) error {
+func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Container, volumeSet map[string]struct{}) error {
 	var err error
 
-	logrus.Debugf("bind volumes: %v", meta.HostConfig.Binds)
+	logrus.Debugf("bind volumes: %v", c.HostConfig.Binds)
 
 	// parse binds
-	for _, b := range meta.HostConfig.Binds {
+	for _, b := range c.HostConfig.Binds {
 		var parts []string
 		parts, err = opts.CheckBind(b)
 		if err != nil {
@@ -1903,7 +1916,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 			return errors.Errorf("unknown bind: %s", b)
 		}
 
-		if opts.CheckDuplicateMountPoint(meta.Mounts, mp.Destination) {
+		if opts.CheckDuplicateMountPoint(c.Mounts, mp.Destination) {
 			logrus.Warnf("duplicate mount point: %s", mp.Destination)
 			continue
 		}
@@ -1912,8 +1925,8 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 			mp.Source = randomid.Generate()
 
 			// Source is empty, anonymouse volume
-			if _, exist := meta.Config.Volumes[mp.Destination]; !exist {
-				meta.Config.Volumes[mp.Destination] = struct{}{}
+			if _, exist := c.Config.Volumes[mp.Destination]; !exist {
+				c.Config.Volumes[mp.Destination] = struct{}{}
 			}
 		}
 
@@ -1928,7 +1941,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 			name := mp.Source
 			if _, exist := volumeSet[name]; !exist {
 				mp.Name = name
-				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, name, meta)
+				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, name, c)
 				if err != nil {
 					logrus.Errorf("failed to bind volume: %s, err: %v", name, err)
 					return errors.Wrap(err, "failed to bind volume")
@@ -1967,18 +1980,18 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, meta *C
 			}
 		}
 
-		meta.Mounts = append(meta.Mounts, mp)
+		c.Mounts = append(c.Mounts, mp)
 	}
 
 	return nil
 }
 
-func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, meta *Container, volumeSet map[string]struct{}) error {
+func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, c *Container, volumeSet map[string]struct{}) error {
 	var err error
 
 	// parse volumes
-	for dest := range meta.Config.Volumes {
-		if opts.CheckDuplicateMountPoint(meta.Mounts, dest) {
+	for dest := range c.Config.Volumes {
+		if opts.CheckDuplicateMountPoint(c.Mounts, dest) {
 			logrus.Warnf("duplicate mount point: %s from volumes", dest)
 			continue
 		}
@@ -1993,7 +2006,7 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, meta 
 		mp.Name = name
 		mp.Destination = dest
 
-		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, meta)
+		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
 			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
@@ -2006,23 +2019,23 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, meta 
 		}
 
 		volumeSet[mp.Name] = struct{}{}
-		meta.Mounts = append(meta.Mounts, mp)
+		c.Mounts = append(c.Mounts, mp)
 	}
 
 	return nil
 }
 
-func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *Container, volumeSet map[string]struct{}) error {
+func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, c *Container, volumeSet map[string]struct{}) error {
 	var err error
 
 	// parse volumes from image
-	image, err := mgr.ImageMgr.GetImage(ctx, meta.Image)
+	image, err := mgr.ImageMgr.GetImage(ctx, c.Image)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get image: %s", meta.Image)
+		return errors.Wrapf(err, "failed to get image: %s", c.Image)
 	}
 	for dest := range image.Config.Volumes {
-		if _, exist := meta.Config.Volumes[dest]; !exist {
-			meta.Config.Volumes[dest] = struct{}{}
+		if _, exist := c.Config.Volumes[dest]; !exist {
+			c.Config.Volumes[dest] = struct{}{}
 		}
 
 		// check if volume has been created
@@ -2031,7 +2044,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 			continue
 		}
 
-		if opts.CheckDuplicateMountPoint(meta.Mounts, dest) {
+		if opts.CheckDuplicateMountPoint(c.Mounts, dest) {
 			logrus.Warnf("duplicate mount point: %s from image", dest)
 			continue
 		}
@@ -2040,7 +2053,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 		mp.Name = name
 		mp.Destination = dest
 
-		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, meta)
+		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
 			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
@@ -2053,7 +2066,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, meta *C
 		}
 
 		volumeSet[mp.Name] = struct{}{}
-		meta.Mounts = append(meta.Mounts, mp)
+		c.Mounts = append(c.Mounts, mp)
 	}
 
 	return nil
@@ -2244,6 +2257,8 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 	return nil
 }
 
+// buildContainerEndpoint builds Endpoints according to container
+// caller should lock container when calling this func.
 func (mgr *ContainerManager) buildContainerEndpoint(c *Container) *networktypes.Endpoint {
 	ep := BuildContainerEndpoint(c)
 
@@ -2263,7 +2278,9 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container, id str
 	}
 
 	// io.containerd.runtime.v1.linux as a const used by runc
+	c.Lock()
 	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", namespaces.Default, info.Name, "rootfs")
+	c.Unlock()
 }
 
 // execProcessGC cleans unused exec processes config every 5 minutes.

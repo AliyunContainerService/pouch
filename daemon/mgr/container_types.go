@@ -184,42 +184,9 @@ type Container struct {
 
 // Key returns container's id.
 func (c *Container) Key() string {
+	c.Lock()
+	defer c.Unlock()
 	return c.ID
-}
-
-// ExitCode returns container's ExitCode.
-func (c *Container) ExitCode() int64 {
-	return c.State.ExitCode
-}
-
-// IsRunning returns container is running or not.
-func (c *Container) IsRunning() bool {
-	return c.State.Status == types.StatusRunning
-}
-
-// IsStopped returns container is stopped or not.
-func (c *Container) IsStopped() bool {
-	return c.State.Status == types.StatusStopped
-}
-
-// IsExited returns container is exited or not.
-func (c *Container) IsExited() bool {
-	return c.State.Status == types.StatusExited
-}
-
-// IsCreated returns container is created or not.
-func (c *Container) IsCreated() bool {
-	return c.State.Status == types.StatusCreated
-}
-
-// IsPaused returns container is paused or not.
-func (c *Container) IsPaused() bool {
-	return c.State.Status == types.StatusPaused
-}
-
-// IsRestarting returns container is restarting or not.
-func (c *Container) IsRestarting() bool {
-	return c.State.Status == types.StatusRestarting
 }
 
 // Write writes container's meta data into meta store.
@@ -229,6 +196,8 @@ func (c *Container) Write(store *meta.Store) error {
 
 // StopTimeout returns the timeout (in seconds) used to stop the container.
 func (c *Container) StopTimeout() int64 {
+	c.Lock()
+	defer c.Unlock()
 	if c.Config.StopTimeout != nil {
 		return *c.Config.StopTimeout
 	}
@@ -236,6 +205,8 @@ func (c *Container) StopTimeout() int64 {
 }
 
 func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
+	c.Lock()
+	defer c.Unlock()
 	config, err := getconfig()
 	if err != nil {
 		return err
@@ -263,6 +234,8 @@ func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 
 // FormatStatus format container status
 func (c *Container) FormatStatus() (string, error) {
+	c.Lock()
+	defer c.Unlock()
 	var status string
 
 	switch c.State.Status {

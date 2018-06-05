@@ -411,7 +411,7 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 	// create task
 	task, err := container.NewTask(ctx, io)
 	if err != nil {
-		return pack, errors.Wrapf(err, "failed to create task, container id: %s", id)
+		return pack, errors.Wrapf(err, "failed to create task for container(%s)", id)
 	}
 
 	defer func() {
@@ -422,17 +422,17 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 
 	statusCh, err := task.Wait(context.TODO())
 	if err != nil {
-		return pack, errors.Wrap(err, "failed to wait task")
+		return pack, errors.Wrapf(err, "failed to wait task in container", id)
 	}
 
-	logrus.Infof("success to new task, container id: %s, pid: %d", id, task.Pid())
+	logrus.Infof("success to create task(pid=%d) in container(%s)", task.Pid(), id)
 
 	// start task
 	if err := task.Start(ctx); err != nil {
-		return pack, errors.Wrapf(err, "failed to start task: %d, container id: %s", task.Pid(), id)
+		return pack, errors.Wrapf(err, "failed to start task(%d) in container(%s)", task.Pid(), id)
 	}
 
-	logrus.Infof("success to start task, container id: %s", id)
+	logrus.Infof("success to start task in container(%s)", id)
 
 	pack = &containerPack{
 		id:        id,
