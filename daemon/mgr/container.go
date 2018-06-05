@@ -25,12 +25,14 @@ import (
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
+	mountutils "github.com/alibaba/pouch/pkg/mount"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
@@ -597,13 +599,23 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 
 	c.Lock()
 	ctrdContainer := &ctrd.Container{
-		ID:      c.ID,
-		Image:   c.Config.Image,
-		Runtime: c.HostConfig.Runtime,
-		Spec:    sw.s,
-		IO:      io,
+		ID:             c.ID,
+		Image:          c.Config.Image,
+		Runtime:        c.HostConfig.Runtime,
+		Spec:           sw.s,
+		IO:             io,
+		RootFSProvided: c.RootFSProvided,
+		BaseFS:         c.BaseFS,
 	}
 	c.Unlock()
+
+	// if creating the container by specified the rootfs, we must check
+	// whether the rootfs is mounted before creation
+	if c.RootFSProvided {
+		if err := mgr.ensureRootFSMounted(c.BaseFS, c.Snapshotter.Data); err != nil {
+			return fmt.Errorf("failed to mount container rootfs: %v", err)
+		}
+	}
 
 	if err := mgr.Client.CreateContainer(ctx, ctrdContainer); err != nil {
 		logrus.Errorf("failed to create new containerd container: %v", err)
@@ -629,6 +641,53 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	c.Unlock()
 
 	return c.Write(mgr.Store)
+}
+
+func (mgr *ContainerManager) ensureRootFSMounted(rootfs string, snapData map[string]string) error {
+	if rootfs == "" || len(snapData) == 0 {
+		return fmt.Errorf("container rootfs or snapshotter data is empty")
+	}
+
+	// check if rootfs already mounted
+	notMounted, err := mountutils.IsLikelyNotMountPoint(rootfs)
+	if err != nil {
+		return err
+	}
+	// rootfs already mounted
+	if !notMounted {
+		return nil
+	}
+
+	var workDir, upperDir, lowerDir string
+	for _, dir := range []string{"WorkDir", "UpperDir", "LowerDir"} {
+		if v, ok := snapData[dir]; ok {
+			switch dir {
+			case "WorkDir":
+				workDir = v
+			case "UpperDir":
+				upperDir = v
+			case "LowerDir":
+				lowerDir = v
+			}
+		}
+	}
+
+	if workDir == "" || upperDir == "" || lowerDir == "" {
+		return fmt.Errorf("faile to mount overlay: one or more dirs in WorkDir, UpperDir and LowerDir are empty")
+	}
+
+	options := []string{
+		fmt.Sprintf("workdir=%s", snapData["WorkDir"]),
+		fmt.Sprintf("upperdir=%s", snapData["UpperDir"]),
+		fmt.Sprintf("lowerdir=%s", snapData["LowerDir"]),
+	}
+	mount := mount.Mount{
+		Type:    "overlay",
+		Source:  "overlay",
+		Options: options,
+	}
+
+	return mount.Mount(rootfs)
 }
 
 // Stop stops a running container.
@@ -949,9 +1008,13 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 		logrus.Errorf("failed to detach volume: %v", err)
 	}
 
-	// remove snapshot
-	if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-		logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
+	// if creating the container by specify rootfs,
+	// there is no snapshot for this container.
+	if !c.RootFSProvided {
+		// remove snapshot
+		if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
+			logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
+		}
 	}
 
 	// When removing a container, we have set up such rule for object removing sequences:
@@ -967,7 +1030,6 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	if err := mgr.Store.Remove(c.Key()); err != nil {
 		logrus.Errorf("failed to remove container %s from meta store: %v", c.ID, err)
 	}
-
 	return nil
 }
 

@@ -345,35 +345,45 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	// get image
-	img, err := wrapperCli.client.GetImage(ctx, ref)
-	if err != nil {
-		if errdefs.IsNotFound(err) {
-			return errors.Wrapf(errtypes.ErrNotfound, "image %s", ref)
+	// if creating the container by specify rootfs, we no need use the image
+	if !container.RootFSProvided {
+		// get image
+		img, err := wrapperCli.client.GetImage(ctx, ref)
+		if err != nil {
+			if errdefs.IsNotFound(err) {
+				return errors.Wrapf(errtypes.ErrNotfound, "image %s", ref)
+			}
+			return errors.Wrapf(err, "failed to get image %s", ref)
 		}
-		return errors.Wrapf(err, "failed to get image %s", ref)
-	}
 
-	logrus.Infof("success to get image %s, container id %s", img.Name(), id)
+		logrus.Infof("success to get image %s, container id %s", img.Name(), id)
+	}
 
 	// create container
-	specOptions := []oci.SpecOpts{
-		oci.WithRootFSPath("rootfs"),
-	}
-
 	options := []containerd.NewContainerOpts{
-		containerd.WithSpec(container.Spec, specOptions...),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
 			Runtime:     container.Runtime,
 			RuntimeRoot: runtimeRoot,
 		}),
 	}
 
-	// check snapshot exist or not.
-	if _, err := c.GetSnapshot(ctx, id); err != nil {
-		return errors.Wrapf(err, "failed to create container %s", id)
+	rootFSPath := "rootfs"
+	// if container is taken over by pouch, not created by pouch
+	if container.RootFSProvided {
+		rootFSPath = container.BaseFS
+	} else { // containers created by pouch must first create snapshot
+		// check snapshot exist or not.
+		if _, err := c.GetSnapshot(ctx, id); err != nil {
+			return errors.Wrapf(err, "failed to create container %s", id)
+		}
+		options = append(options, containerd.WithSnapshot(id))
 	}
-	options = append(options, containerd.WithSnapshot(id))
+
+	// specify Spec for new container
+	specOptions := []oci.SpecOpts{
+		oci.WithRootFSPath(rootFSPath),
+	}
+	options = append(options, containerd.WithSpec(container.Spec, specOptions...))
 
 	nc, err := wrapperCli.client.NewContainer(ctx, id, options...)
 	if err != nil {

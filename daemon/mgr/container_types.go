@@ -180,6 +180,9 @@ type Container struct {
 
 	// Escape keys for detach
 	DetachKeys string
+
+	// RootFSProvided is a flag to point the container is created by specify rootfs
+	RootFSProvided bool
 }
 
 // Key returns container's id.

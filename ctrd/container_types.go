@@ -6,13 +6,22 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-// Container wraps container's info.
+// Container wraps container's info. there have two kind of containers now:
+// One is created by pouch: first using image to create snapshot,
+// then create container by specifying the snapshot;
+// The other is create container by specify container rootfs, we use `RootFSProvided` flag to mark it,
 type Container struct {
 	ID      string
 	Image   string
 	Runtime string
 	IO      *containerio.IO
 	Spec    *specs.Spec
+
+	// BaseFS is rootfs used by containerd container
+	BaseFS string
+
+	// RootFSProvided is a flag to point the container is created by specifying rootfs
+	RootFSProvided bool
 }
 
 // Process wraps exec process's info.
