@@ -1939,6 +1939,15 @@ func (mgr *ContainerManager) releaseContainerResources(c *Container) error {
 func (mgr *ContainerManager) releaseContainerNetwork(c *Container) error {
 	c.Lock()
 	defer c.Unlock()
+
+	// NetworkMgr is nil, which means the pouch daemon is initializing.
+	// And the libnetwork will also initialize, which will release all
+	// staled network resources(endpoint, network and namespace). So we
+	// don't need release the network resources.
+	if mgr.NetworkMgr == nil {
+		return nil
+	}
+
 	if c.NetworkSettings == nil {
 		return nil
 	}
