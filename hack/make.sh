@@ -247,7 +247,7 @@ function target
 				 rich container related tests will be skipped"
 	
 		docker run --rm -v "$(pwd):$SOURCEDIR" \
-			-e GOPATH=/go:$SOURCEDIR/extra/libnetwork/Godeps/_workspace \
+			-e GOPATH=/go \
 			$IMAGE \
 			bash -c "cd test && go test -c -o integration-test"
 
