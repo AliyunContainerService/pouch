@@ -5,10 +5,10 @@ Before=lxc.service
 Documentation=man:lxcfs(1)
 
 [Service]
-ExecStart=/usr/bin/lxcfs /var/lib/lxcfs/
+ExecStart=/usr/bin/pouch-lxcfs /var/lib/pouch-lxcfs/
 KillMode=process
 Restart=on-failure
-ExecStopPost=-/usr/bin/fusermount -u /var/lib/lxcfs
+ExecStopPost=-/usr/bin/fusermount -u /var/lib/pouch-lxcfs
 Delegate=yes
 ExecStartPost=pouch remount-lxcfs
 
