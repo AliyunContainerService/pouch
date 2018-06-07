@@ -3463,12 +3463,16 @@ definitions:
     x-nullable: false
     properties:
       Subnet:
+        description: "subnet address for network"
         type: "string"
       IPRange:
+        description: "sub ip range in sub-network"
         type: "string"
       Gateway:
+        description: "gateway for sub-network"
         type: "string"
       AuxAddress:
+        description: "aux address in sub-network"
         type: "object"
         additionalProperties:
           type: "string"

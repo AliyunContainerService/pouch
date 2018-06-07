@@ -99,6 +99,16 @@ func setupFlags(cmd *cobra.Command) {
 	// volume config
 	flagSet.StringVar(&cfg.VolumeConfig.DriverAlias, "volume-driver-alias", "", "Set volume driver alias, <name=alias>[;name1=alias1]")
 
+	// network config
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.Name, "bridge-name", "", "Set default bridge name")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.IP, "bip", "", "Set bridge IP")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.GatewayIPv4, "default-gateway", "", "Set default bridge gateway")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.FixedCIDR, "fixed-cidr", "", "Set bridge fixed CIDR")
+	flagSet.IntVar(&cfg.NetworkConfig.BridgeConfig.Mtu, "mtu", 1500, "Set bridge MTU")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.IPTables, "iptables", true, "Enable iptables")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.IPForward, "ipforward", true, "Enable ipforward")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.UserlandProxy, "userland-proxy", false, "Enable userland proxy")
+
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
@@ -275,5 +285,5 @@ func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
 		return nil
 	}
 
-	return cfg.MergeConfigurations(cfg, flagSet)
+	return cfg.MergeConfigurations(flagSet)
 }

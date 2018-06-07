@@ -15,13 +15,11 @@ import (
 	"github.com/docker/libnetwork/drivers/bridge"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
 // New is used to initialize bridge network.
 func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMgr) error {
-	// TODO: use config to set bridge network.
 	// TODO: support ipv6.
 
 	// clear exist bridge network
@@ -31,20 +29,79 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		}
 	}
 
+	// set bridge name
+	bridgeName := DefaultBridge
+	if config.Name != "" {
+		bridgeName = config.Name
+	}
+
 	// init host bridge network.
-	if err := initBridgeDevice(); err != nil {
+	br, err := initBridgeDevice(bridgeName)
+	if err != nil {
 		return err
 	}
 
-	ipamV4Conf := &types.IPAMConfig{
+	// get subnet
+	subnet := DefaultSubnet
+	if config.IP != "" {
+		subnet = config.IP
+	} else {
+		addrs, err := netlink.AddrList(br, netlink.FAMILY_V4)
+		if err != nil {
+			return errors.Wrap(err, "failed to get bridge addr")
+		}
+		for _, addr := range addrs {
+			cidr := addr.String()
+			if strings.Contains(cidr, ":") {
+				continue
+			}
+
+			parts := strings.Split(cidr, " ")
+			if len(parts) != 2 {
+				continue
+			}
+
+			subnet = parts[0]
+			break
+		}
+	}
+
+	// get ip range
+	ipRange := DefaultIPRange
+	if config.FixedCIDR != "" {
+		ipRange = config.FixedCIDR
+	} else {
+		ipRange = subnet
+	}
+
+	// get gateway
+	gateway := DefaultGateway
+	if config.GatewayIPv4 != "" {
+		gateway = config.GatewayIPv4
+	} else {
+		routes, err := netlink.RouteList(br, netlink.FAMILY_V4)
+		if err != nil {
+			return errors.Wrap(err, "failed to get route list")
+		}
+		for _, route := range routes {
+			gw := route.Gw.String()
+			if gw != "" && gw != "<nil>" {
+				gateway = gw
+				break
+			}
+		}
+	}
+
+	ipamV4Conf := types.IPAMConfig{
 		AuxAddress: make(map[string]string),
-		Subnet:     DefaultSubnet,
-		Gateway:    DefaultGateway,
+		Subnet:     subnet,
+		IPRange:    ipRange,
+		Gateway:    gateway,
 	}
 
 	ipam := &types.IPAM{
 		Driver: "default",
-		Config: []types.IPAMConfig{*ipamV4Conf},
+		Config: []types.IPAMConfig{ipamV4Conf},
 	}
 
 	networkCreate := types.NetworkCreate{
@@ -52,12 +109,12 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		EnableIPV6: false,
 		Internal:   false,
 		Options: map[string]string{
-			bridge.BridgeName:         DefaultBridge,
+			bridge.BridgeName:         bridgeName,
 			bridge.DefaultBridge:      strconv.FormatBool(true),
-			netlabel.DriverMTU:        strconv.Itoa(1500),
+			netlabel.DriverMTU:        strconv.Itoa(config.Mtu),
 			bridge.EnableICC:          strconv.FormatBool(true),
 			bridge.DefaultBindingIP:   DefaultBindingIP,
-			bridge.EnableIPMasquerade: strconv.FormatBool(true),
+			bridge.EnableIPMasquerade: strconv.FormatBool(false),
 		},
 		IPAM: ipam,
 	}
@@ -67,14 +124,14 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		NetworkCreate: networkCreate,
 	}
 
-	_, err := manager.Create(ctx, create)
+	_, err = manager.Create(ctx, create)
 	return err
 }
 
-func initBridgeDevice() error {
-	_, err := netlink.LinkByName(DefaultBridge)
-	if err == nil {
-		return nil
+func initBridgeDevice(name string) (netlink.Link, error) {
+	br, err := netlink.LinkByName(name)
+	if err == nil && br != nil {
+		return br, nil
 	}
 
 	// generate mac address for bridge.
@@ -84,23 +141,22 @@ func initBridgeDevice() error {
 		ip = append(ip, tmp)
 	}
 	if len(ip) < 4 {
-		return fmt.Errorf("bridge ip is invalid")
+		return nil, fmt.Errorf("bridge ip is invalid")
 	}
 
 	macAddr := fmt.Sprintf("02:42:%02x:%02x:%02x:%02x", ip[0], ip[1], ip[2], ip[3])
-	logrus.Debugf("bridge mac address: %s", macAddr)
 
 	la := netlink.NewLinkAttrs()
 	la.HardwareAddr, err = net.ParseMAC(macAddr)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse mac address")
+		return nil, errors.Wrap(err, "failed to parse mac address")
 	}
 
-	la.Name = DefaultBridge
+	la.Name = name
 
 	b := &netlink.Bridge{LinkAttrs: la}
 	if err := netlink.LinkAdd(b); err != nil {
-		return errors.Wrap(err, "failed to add bridge device")
+		return nil, errors.Wrap(err, "failed to add bridge device")
 	}
 	defer func() {
 		if err != nil {
@@ -110,15 +166,20 @@ func initBridgeDevice() error {
 
 	addr, err := netlink.ParseAddr(DefaultSubnet)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse ip address")
+		return nil, errors.Wrap(err, "failed to parse ip address")
 	}
 	if err := netlink.AddrAdd(b, addr); err != nil {
-		return errors.Wrap(err, "failed to add ip address")
+		return nil, errors.Wrap(err, "failed to add ip address")
 	}
 
 	if err := netlink.LinkSetUp(b); err != nil {
-		return errors.Wrap(err, "failed to set bridge device up")
+		return nil, errors.Wrap(err, "failed to set bridge device up")
 	}
 
-	return nil
+	br, err = netlink.LinkByName(DefaultBridge)
+	if err != nil {
+		return nil, err
+	}
+
+	return br, nil
 }
