@@ -450,6 +450,8 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 }
 
 func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys string) error {
+	var err error
+
 	c.Lock()
 	if c.Config == nil || c.State == nil {
 		c.Unlock()
@@ -457,11 +459,39 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 	}
 	c.DetachKeys = detachKeys
 
+	// attach volume
+	attachedVolumes := map[string]struct{}{}
+	defer func() {
+		if err != nil {
+			for name := range attachedVolumes {
+				_, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID})
+				if err != nil {
+					logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback",
+						name, c.ID)
+				}
+			}
+		}
+	}()
+
+	for _, mp := range c.Mounts {
+		if mp.Name == "" {
+			continue
+		}
+
+		_, err = mgr.VolumeMgr.Attach(ctx, mp.Name, map[string]string{volumetypes.OptionRef: c.ID})
+		if err != nil {
+			c.Unlock()
+			return errors.Wrapf(err, "failed to attach volume(%s)", mp.Name)
+		}
+		attachedVolumes[mp.Name] = struct{}{}
+	}
+
 	// initialise container network mode
 	networkMode := c.HostConfig.NetworkMode
 
 	if IsContainer(networkMode) {
-		origContainer, err := mgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
+		var origContainer *Container
+		origContainer, err = mgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
 		if err != nil {
 			c.Unlock()
 			return err
@@ -475,7 +505,8 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 	} else {
 		// initialise host network mode
 		if IsHost(networkMode) {
-			hostname, err := os.Hostname()
+			var hostname string
+			hostname, err = os.Hostname()
 			if err != nil {
 				c.Unlock()
 				return err
@@ -484,7 +515,7 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		}
 
 		// build the network related path.
-		if err := mgr.buildNetworkRelatedPath(c); err != nil {
+		if err = mgr.buildNetworkRelatedPath(c); err != nil {
 			c.Unlock()
 			return err
 		}
@@ -495,7 +526,7 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 				endpoint := mgr.buildContainerEndpoint(c)
 				endpoint.Name = name
 				endpoint.EndpointConfig = endpointSetting
-				if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
+				if _, err = mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
 					logrus.Errorf("failed to create endpoint: %v", err)
 					c.Unlock()
 					return err
@@ -505,7 +536,11 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 	}
 	c.Unlock()
 
-	return mgr.createContainerdContainer(ctx, c)
+	if err = mgr.createContainerdContainer(ctx, c); err != nil {
+		return errors.Wrapf(err, "failed to create container(%s) on containerd", c.ID)
+	}
+
+	return nil
 }
 
 // buildNetworkRelatedPath builds the network related path.

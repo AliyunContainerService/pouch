@@ -164,7 +164,7 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 		ref := v.Option(types.OptionRef)
 		if ref == "" {
 			options[types.OptionRef] = cid
-		} else {
+		} else if !strings.Contains(ref, cid) {
 			options[types.OptionRef] = strings.Join([]string{ref, cid}, ",")
 		}
 	}
@@ -199,7 +199,6 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 			for i, id := range ids {
 				if id == cid {
 					ids = append(ids[:i], ids[i+1:]...)
-					break
 				}
 			}
 
