@@ -14,14 +14,14 @@ import (
 
 var proxy string
 
-// SetImageProxy sets value of image http proxy
+// SetImageProxy sets value of image proxy
 func SetImageProxy(p string) {
 	proxy = p
 }
 
-func proxyFromEnvironment(req *http.Request) (*url.URL, error) {
-	if proxy == "" || req.URL.Scheme == "https" {
-		return nil, nil
+func proxyFunc(req *http.Request) (*url.URL, error) {
+	if proxy == "" {
+		return http.ProxyFromEnvironment(req)
 	}
 	if !useProxy(canonicalAddr(req.URL)) {
 		return nil, nil

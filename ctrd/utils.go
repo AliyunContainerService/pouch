@@ -55,7 +55,7 @@ func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	}
 
 	tr := &http.Transport{
-		Proxy: proxyFromEnvironment,
+		Proxy: proxyFunc,
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,

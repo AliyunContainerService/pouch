@@ -92,7 +92,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.LxcfsHome, "lxcfs-home", "/var/lib/lxcfs", "Specify the mount dir of lxcfs")
 	flagSet.StringVar(&cfg.DefaultRegistry, "default-registry", "registry.hub.docker.com", "Default Image Registry")
 	flagSet.StringVar(&cfg.DefaultRegistryNS, "default-registry-namespace", "library", "Default Image Registry namespace")
-	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "", "Http proxy to pull image")
+	flagSet.StringVar(&cfg.ImageProxy, "image-proxy", "", "Set proxy to pull image. If not set, using HTTPS_PROXY, https_proxy, HTTP_PROXY, http_proxy by order")
 	flagSet.StringVar(&cfg.QuotaDriver, "quota-driver", "", "Set quota driver(grpquota/prjquota), if not set, it will set by kernel version")
 	flagSet.StringVar(&cfg.ConfigFile, "config-file", "/etc/pouch/config.json", "Configuration file of pouchd")
 
