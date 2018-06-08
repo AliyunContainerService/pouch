@@ -22,19 +22,11 @@ func Get() (NsHandle, error) {
 	return -1, ErrNotImplemented
 }
 
-func GetFromPath(path string) (NsHandle, error) {
-	return -1, ErrNotImplemented
-}
-
 func GetFromName(name string) (NsHandle, error) {
 	return -1, ErrNotImplemented
 }
 
 func GetFromPid(pid int) (NsHandle, error) {
-	return -1, ErrNotImplemented
-}
-
-func GetFromThread(pid, tid int) (NsHandle, error) {
 	return -1, ErrNotImplemented
 }
 
