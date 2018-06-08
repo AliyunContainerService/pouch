@@ -18,7 +18,7 @@ Pouch chooses version v1.0.8 to be the collaborate.
 
 ### Initialization
 
-It is really easy to utilize `govendor` to initialize vendor policy in a prject:
+It is really easy to utilize `govendor` to initialize vendor policy in a project:
 
 ```bash
 cd pouch
