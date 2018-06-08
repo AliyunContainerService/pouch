@@ -228,6 +228,8 @@ func parsePSOutput(output []byte, pids []int) (*types.ContainerProcessList, erro
 
 // validateConfig validates container config
 func validateConfig(config *types.ContainerCreateConfig) ([]string, error) {
+	amendResource(&config.HostConfig.Resources)
+
 	// validates container hostconfig
 	warnings := make([]string, 0)
 	warns, err := validateResource(&config.HostConfig.Resources)
@@ -261,6 +263,9 @@ func validateResource(r *types.Resources) ([]string, error) {
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.MemorySwap = 0
+		}
+		if r.Memory > 0 && r.MemorySwap > 0 && r.MemorySwap < 2*r.Memory {
+			warnings = append(warnings, "You should typically size your swap space to approximately 2x main memory for systems with less than 2GB of RAM")
 		}
 		if r.MemorySwappiness != nil && !cgroupInfo.Memory.MemorySwappiness {
 			warn := "Current Kernel does not support memory swappiness , discard --memory-swappiness"
@@ -361,4 +366,11 @@ func validateResource(r *types.Resources) ([]string, error) {
 	}
 
 	return warnings, nil
+}
+
+// amendResource modify resource to correct setting.
+func amendResource(r *types.Resources) {
+	if r.Memory > 0 && r.MemorySwap == 0 {
+		r.MemorySwap = 2 * r.Memory
+	}
 }

@@ -58,6 +58,30 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
 		containerID)
 	checkFileContains(c, path, "209715200")
+
+	// test memory swap should be 2x memory if not specify it.
+	cname = "TestRunWithMemoryswap2x"
+	res = command.PouchRun("run", "-d", "-m", "10m",
+		"--name", cname, busyboxImage, "sleep", "10000")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	res = command.PouchRun("inspect", cname)
+	res.Assert(c, icmd.Success)
+
+	result = []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(20971520))
+
+	// test if cgroup has record the real value
+	containerID = result[0].ID
+	path = fmt.Sprintf(
+		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
+		containerID)
+	checkFileContains(c, path, "20971520")
 }
 
 // TestRunWithMemoryswappiness is to verify the valid running container
