@@ -37,11 +37,12 @@ func (jf *jsonFile) Name() string {
 }
 
 func (jf *jsonFile) Init(opt *Option) error {
-	if _, err := os.Stat(opt.rootDir); err != nil {
+	rootDir := opt.info.ContainerRootDir
+	if _, err := os.Stat(rootDir); err != nil {
 		return err
 	}
 
-	logPath := filepath.Join(opt.rootDir, jsonFilePathName)
+	logPath := filepath.Join(rootDir, jsonFilePathName)
 	w, err := jsonfile.NewJSONLogFile(logPath, 0644)
 	if err != nil {
 		return err

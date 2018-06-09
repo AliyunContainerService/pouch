@@ -6,12 +6,16 @@ import (
 	"os"
 
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
+	"github.com/alibaba/pouch/daemon/logger"
 )
 
 // Option is used to pass some data into ContainerIO.
+//
+// FIXME(fuwei): use logger.Info to separate options and backends.
 type Option struct {
+	info logger.Info
+
 	id            string
-	rootDir       string
 	stdin         bool
 	muxDisabled   bool
 	backends      map[string]struct{}
@@ -41,10 +45,10 @@ func WithID(id string) func(*Option) {
 	}
 }
 
-// WithRootDir specified the container's root dir.
-func WithRootDir(dir string) func(*Option) {
+// WithLoggerInfo specified the container's logger information.
+func WithLoggerInfo(info logger.Info) func(*Option) {
 	return func(opt *Option) {
-		opt.rootDir = dir
+		opt.info = info
 	}
 }
 
