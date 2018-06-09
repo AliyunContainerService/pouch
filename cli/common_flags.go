@@ -42,6 +42,10 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.ipcMode, "ipc", "", "IPC namespace to use")
 	flagSet.StringSliceVarP(&c.labels, "label", "l", nil, "Set labels for a container")
 
+	// log driver and log options
+	flagSet.StringVar(&c.logDriver, "log-driver", "json-file", "Logging driver for the container")
+	flagSet.StringSliceVar(&c.logOpts, "log-opt", nil, "Log driver options")
+
 	// memory
 
 	flagSet.StringVarP(&c.memory, "memory", "m", "", "Memory limit")
