@@ -305,9 +305,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			LogDriver: types.LogConfigLogDriverJSONFile,
 		}
 	}
-	if err := validateLogConfig(config.HostConfig.LogConfig); err != nil {
-		return nil, err
-	}
 
 	container := &Container{
 		State: &types.ContainerState{
@@ -321,6 +318,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
+	}
+
+	// validate log config
+	if err := mgr.validateLogConfig(container); err != nil {
+		return nil, err
 	}
 
 	// parse volume config

@@ -86,6 +86,16 @@ func WithJSONFile() func(*Option) {
 	}
 }
 
+// WithSyslog specified the syslog backend.
+func WithSyslog() func(*Option) {
+	return func(opt *Option) {
+		if opt.backends == nil {
+			opt.backends = make(map[string]struct{})
+		}
+		opt.backends["syslog"] = struct{}{}
+	}
+}
+
 // WithHijack specified the hijack backend.
 func WithHijack(hi http.Hijacker, upgrade bool) func(*Option) {
 	return func(opt *Option) {

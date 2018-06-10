@@ -19,8 +19,10 @@ func optionsForContainerio(c *Container) []func(*containerio.Option) {
 	switch cfg.LogDriver {
 	case types.LogConfigLogDriverJSONFile:
 		optFuncs = append(optFuncs, containerio.WithJSONFile())
+	case types.LogConfigLogDriverSyslog:
+		optFuncs = append(optFuncs, containerio.WithSyslog())
 	default:
-		logrus.Warnf("not support %v log driver yet", cfg.LogDriver)
+		logrus.Warnf("not support (%v) log driver yet", cfg.LogDriver)
 	}
 	return optFuncs
 }
@@ -38,7 +40,10 @@ func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info
 	return logger.Info{
 		LogConfig:        logCfg,
 		ContainerID:      c.ID,
+		ContainerName:    c.Name,
+		ContainerImageID: c.Image,
 		ContainerLabels:  c.Config.Labels,
 		ContainerRootDir: mgr.Store.Path(c.ID),
+		DaemonName:       "pouchd",
 	}
 }
