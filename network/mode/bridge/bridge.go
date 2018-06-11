@@ -15,6 +15,7 @@ import (
 	"github.com/docker/libnetwork/drivers/bridge"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
@@ -41,30 +42,36 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		return err
 	}
 
+	var (
+		bridgeIPv4Address string
+	)
+	Addrs, err := netlink.AddrList(br, netlink.FAMILY_V4)
+	if err != nil {
+		return errors.Wrap(err, "failed to get bridge addr")
+	}
+	for _, addr := range Addrs {
+		cidr := addr.String()
+		if strings.Contains(cidr, ":") {
+			continue
+		}
+
+		parts := strings.Split(cidr, " ")
+		if len(parts) != 2 {
+			continue
+		}
+
+		bridgeIPv4Address = parts[0]
+		break
+	}
+
 	// get subnet
 	subnet := DefaultSubnet
 	if config.IP != "" {
 		subnet = config.IP
-	} else {
-		addrs, err := netlink.AddrList(br, netlink.FAMILY_V4)
-		if err != nil {
-			return errors.Wrap(err, "failed to get bridge addr")
-		}
-		for _, addr := range addrs {
-			cidr := addr.String()
-			if strings.Contains(cidr, ":") {
-				continue
-			}
-
-			parts := strings.Split(cidr, " ")
-			if len(parts) != 2 {
-				continue
-			}
-
-			subnet = parts[0]
-			break
-		}
+	} else if bridgeIPv4Address != "" {
+		subnet = bridgeIPv4Address
 	}
+	logrus.Debugf("initialize bridge network, subnet: %s", subnet)
 
 	// get ip range
 	ipRange := DefaultIPRange
@@ -73,12 +80,14 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 	} else {
 		ipRange = subnet
 	}
+	logrus.Debugf("initialize bridge network, bridge ip range in subnet: %s", ipRange)
 
 	// get gateway
 	gateway := DefaultGateway
 	if config.GatewayIPv4 != "" {
 		gateway = config.GatewayIPv4
 	} else {
+		// get the default route set as gateway.
 		routes, err := netlink.RouteList(br, netlink.FAMILY_V4)
 		if err != nil {
 			return errors.Wrap(err, "failed to get route list")
@@ -90,7 +99,13 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 				break
 			}
 		}
+
+		// nat mode bridge have no default route, so let the bridge ip as gateway.
+		if bridgeIPv4Address != "" {
+			gateway = strings.Split(bridgeIPv4Address, "/")[0]
+		}
 	}
+	logrus.Debugf("initialize bridge network, gateway: %s", gateway)
 
 	ipamV4Conf := types.IPAMConfig{
 		AuxAddress: make(map[string]string),

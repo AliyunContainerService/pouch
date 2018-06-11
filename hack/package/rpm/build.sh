@@ -39,6 +39,9 @@ function build_lxcfs ()
 {
     pushd "$LXC_DIR"
     git clone -b "$LXC_BRANCH" https://github.com/lxc/lxcfs.git && cd lxcfs
+    
+    # change liblxcfs.so to libpouchlxcfs.so
+    sed -i 's/liblxcfs/libpouchlxcfs/g' "$(grep -r "liblxcfs" . |awk -F':' '{print $1}'|uniq )"
     ./bootstrap.sh > /dev/null 2>&1
     ./configure > /dev/null 2>&1
     make install DESTDIR="$LXC_DIR" > /dev/null 2>&1
@@ -108,9 +111,8 @@ function build_rpm ()
           -d fuse \
           "$BINDIR/"=/usr/local/bin/ \
           "$SERVICEDIR/"=/usr/lib/systemd/system/ \
-          "$LXC_DIR/usr/local/bin/lxcfs"=/usr/bin/lxcfs \
-          "$LXC_DIR/usr/local/lib/lxcfs/liblxcfs.so"=/usr/lib64/liblxcfs.so \
-          "$LXC_DIR/usr/local/share/"=/usr/share
+          "$LXC_DIR/usr/local/bin/lxcfs"=/usr/bin/pouch-lxcfs \
+          "$LXC_DIR/usr/local/lib/lxcfs/libpouchlxcfs.so"=/usr/lib64/libpouchlxcfs.so \
 
 }
 

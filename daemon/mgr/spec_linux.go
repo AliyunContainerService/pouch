@@ -251,7 +251,7 @@ func setupCPU(ctx context.Context, r types.Resources, s *specs.Spec) {
 // setupResource creates linux memory resource spec.
 func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 	memory := &specs.LinuxMemory{}
-	if r.Memory != 0 {
+	if r.Memory > 0 {
 		v := r.Memory
 		memory.Limit = &v
 	}

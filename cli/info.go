@@ -68,13 +68,13 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	fmt.Fprintln(os.Stdout, "Logging Driver:", info.LoggingDriver)
 	fmt.Fprintln(os.Stdout, "Volume Drivers:", info.VolumeDrivers)
 	fmt.Fprintln(os.Stdout, "Cgroup Driver:", info.CgroupDriver)
+	fmt.Fprintln(os.Stdout, "Default Runtime:", info.DefaultRuntime)
 	if len(info.Runtimes) > 0 {
-		fmt.Fprintln(os.Stdout, "Runtimes:")
+		fmt.Fprintf(os.Stdout, "Runtimes:")
 		for name := range info.Runtimes {
-			fmt.Fprintf(os.Stdout, "%s", name)
+			fmt.Fprintf(os.Stdout, " %s", name)
 		}
 		fmt.Fprint(os.Stdout, "\n")
-		fmt.Fprintln(os.Stdout, "Default Runtime:", info.DefaultRuntime)
 	}
 	fmt.Fprintln(os.Stdout, "runc:", info.RuncCommit)
 	fmt.Fprintln(os.Stdout, "containerd:", info.ContainerdCommit)
