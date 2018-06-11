@@ -466,3 +466,19 @@ func (suite *PouchDaemonSuite) TestDaemonWithMultiRuntimes(c *check.C) {
 	c.Assert(err, check.NotNil)
 	dcfg2.KillDaemon()
 }
+
+func (suite *PouchDaemonSuite) TestUpdateDaemonWithLabels(c *check.C) {
+	cfg := daemon.NewConfig()
+	err := cfg.StartDaemon()
+	c.Assert(err, check.IsNil)
+
+	defer cfg.KillDaemon()
+
+	RunWithSpecifiedDaemon(&cfg, "updatedaemon", "--label", "aaa=bbb").Assert(c, icmd.Success)
+
+	ret := RunWithSpecifiedDaemon(&cfg, "info")
+	ret.Assert(c, icmd.Success)
+
+	updated := strings.Contains(ret.Stdout(), "aaa=bbb")
+	c.Assert(updated, check.Equals, true)
+}

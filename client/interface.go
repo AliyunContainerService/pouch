@@ -66,6 +66,7 @@ type SystemAPIClient interface {
 	SystemVersion(ctx context.Context) (*types.SystemVersion, error)
 	SystemInfo(ctx context.Context) (*types.SystemInfo, error)
 	RegistryLogin(ctx context.Context, auth *types.AuthConfig) (*types.AuthResponse, error)
+	DaemonUpdate(ctx context.Context, daemonConfig *types.DaemonUpdateConfig) error
 }
 
 // NetworkAPIClient defines methods of Network client.

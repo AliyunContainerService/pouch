@@ -1590,6 +1590,7 @@ definitions:
           > are in compliance with any terms that cover redistributing
           > nondistributable artifacts.
 
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
@@ -1616,6 +1617,7 @@ definitions:
           > feature to push artifacts to private registries and ensure that you
           > are in compliance with any terms that cover redistributing
           > nondistributable artifacts.
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
@@ -1645,11 +1647,13 @@ definitions:
           > should therefore ONLY be used for testing purposes. For increased
           > security, users should add their CA to their system's list of trusted
           > CAs instead of enabling this option.
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
         example: ["::1/128", "127.0.0.0/8"]
       IndexConfigs:
+        x-omitempty: true
         type: "object"
         additionalProperties:
           $ref: "#/definitions/IndexInfo"
@@ -1671,6 +1675,7 @@ definitions:
             Official: false
       Mirrors:
         description: "List of registry URLs that act as a mirror for the official registry."
+        x-omitempty: true
         type: "array"
         items:
           type: "string"

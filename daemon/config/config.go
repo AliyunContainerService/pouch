@@ -22,7 +22,7 @@ import (
 
 // Config refers to daemon's whole configurations.
 type Config struct {
-	sync.Mutex
+	sync.Mutex `json:"-"`
 
 	//Volume config
 	VolumeConfig volume.Config `json:"volume-config,omitempty"`
@@ -34,7 +34,7 @@ type Config struct {
 	IsCriEnabled bool `json:"enable-cri,omitempty"`
 
 	// CRI config.
-	CriConfig criconfig.Config
+	CriConfig criconfig.Config `json:"cri-config,omitempty"`
 
 	// Server listening address.
 	Listen []string `json:"listen,omitempty"`
@@ -59,10 +59,10 @@ type Config struct {
 
 	// ContainerdPath is the absolute path of containerd binary,
 	// /usr/local/bin is the default.
-	ContainerdPath string `json:"containerd-path"`
+	ContainerdPath string `json:"containerd-path,omitempty"`
 
 	// TLS configuration
-	TLS client.TLSConfig
+	TLS client.TLSConfig `json:"TLS,omitempty"`
 
 	// Default OCI Runtime
 	DefaultRuntime string `json:"default-runtime,omitempty"`
@@ -101,10 +101,10 @@ type Config struct {
 	Pidfile string `json:"pidfile,omitempty"`
 
 	// Default log configuration
-	DefaultLogConfig types.LogConfig `json:"default-log-config, omitempty"`
+	DefaultLogConfig types.LogConfig `json:"default-log-config,omitempty"`
 
 	// RegistryService
-	RegistryService types.RegistryServiceConfig `json:"registry-service, omitempty" `
+	RegistryService types.RegistryServiceConfig `json:"registry-service,omitempty" `
 
 	// oom_score_adj for the daemon
 	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`
@@ -156,16 +156,16 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 		return fmt.Errorf("failed to read contents from config file %s: %s", cfg.ConfigFile, err)
 	}
 
-	var fileFlags map[string]interface{}
-	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&fileFlags); err != nil {
+	var origin map[string]interface{}
+	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&origin); err != nil {
 		return fmt.Errorf("failed to decode json: %s", err)
 	}
-
-	if len(fileFlags) == 0 {
+	if len(origin) == 0 {
 		return nil
 	}
 
-	transferTLSConfig(fileFlags)
+	fileFlags := make(map[string]interface{}, 0)
+	iterateConfig(origin, fileFlags)
 
 	// check if invalid or unknown flag exist in config file
 	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
@@ -225,33 +225,10 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 	return cfg
 }
 
-// transferTLSConfig fetch key value from tls config
-// {
-//   "tlscert": "...",
-//   "tlscacert": "..."
-// }
-// add this transfer logic since no flag named TLS, but tlscert, tlscert...
-// we should fetch them to do unknown flags and conflict flags check
-func transferTLSConfig(config map[string]interface{}) {
-	v, exist := config["TLS"]
-	if !exist {
-		return
-	}
-
-	var tlscofig map[string]interface{}
-	iterateConfig(map[string]interface{}{
-		"TLS": v,
-	}, tlscofig)
-
-	for k, v := range tlscofig {
-		config[k] = v
-	}
-}
-
 // iterateConfig resolves key-value from config file iteratly.
 func iterateConfig(origin map[string]interface{}, config map[string]interface{}) {
 	for k, v := range origin {
-		if c, ok := v.(map[string]interface{}); ok {
+		if c, ok := v.(map[string]interface{}); ok && k != "add-runtime" {
 			iterateConfig(c, config)
 		} else {
 			config[k] = v

@@ -95,6 +95,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.VolumeConfig.DriverAlias, "volume-driver-alias", "", "Set volume driver alias, <name=alias>[;name1=alias1]")
 
 	// network config
+	flagSet.StringVar(&cfg.NetworkConfig.ExecRoot, "exec-root-dir", "", "Set exec root directory for network")
 	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.Name, "bridge-name", "", "Set default bridge name")
 	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.IP, "bip", "", "Set bridge IP")
 	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.GatewayIPv4, "default-gateway", "", "Set default bridge gateway")
