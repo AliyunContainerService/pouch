@@ -228,16 +228,28 @@ func (cio *ContainerIO) Write(data []byte) (int, error) {
 		return len(data), nil
 	}
 
+	// FIXME(fuwei): In case that the data slice is reused by the writer,
+	// we should copy the data before we push it into the ringbuffer.
+	// The previous data shares the same address with the coming data.
+	// If we don't copy the data and the previous data isn't consumed by
+	// ringbuf pop action, the incoming data will override the previous data
+	// in the ringbuf.
+	//
+	// However, copy data maybe impact the performance. We need to reconsider
+	// other better way to handle the IO.
+	copyData := make([]byte, len(data))
+	copy(copyData, data)
+
 	switch cio.typ {
 	case stdout:
 		for _, b := range cio.backends {
-			if cover := b.outRing.Push(data); cover {
+			if cover := b.outRing.Push(copyData); cover {
 				logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
 			}
 		}
 	case stderr:
 		for _, b := range cio.backends {
-			if cover := b.errRing.Push(data); cover {
+			if cover := b.errRing.Push(copyData); cover {
 				logrus.Warnf("cover data, backend: %s, id: %s", b.backend.Name(), cio.id)
 			}
 		}
