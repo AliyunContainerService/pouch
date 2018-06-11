@@ -90,6 +90,11 @@ type ContainerListOption struct {
 type Container struct {
 	sync.Mutex
 
+	ContainerMeta
+}
+
+// ContainerMeta is a new meta
+type ContainerMeta struct {
 	// app armor profile
 	AppArmorProfile string `json:"AppArmorProfile,omitempty"`
 
@@ -191,7 +196,7 @@ func (c *Container) Key() string {
 
 // Write writes container's meta data into meta store.
 func (c *Container) Write(store *meta.Store) error {
-	return store.Put(c)
+	return store.Put(c.ContainerMeta)
 }
 
 // StopTimeout returns the timeout (in seconds) used to stop the container.
