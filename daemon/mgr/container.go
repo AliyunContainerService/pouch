@@ -267,6 +267,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		config.HostConfig.Runtime = mgr.Config.DefaultRuntime
 	}
 
+	if _, exist := mgr.Config.Runtimes[config.HostConfig.Runtime]; !exist {
+		return nil, fmt.Errorf("unknown runtime %s", config.HostConfig.Runtime)
+	}
+
 	config.Image = primaryRef.String()
 	// create a snapshot with image.
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {

@@ -451,3 +451,18 @@ func (suite *PouchDaemonSuite) TestDaemonStartOverOneTimes(c *check.C) {
 	c.Assert(err, check.NotNil)
 
 }
+
+// TestDaemonWithMultiRuntimes tests start daemon with multiple runtimes
+func (suite *PouchDaemonSuite) TestDaemonWithMultiRuntimes(c *check.C) {
+	dcfg1, err := StartDefaultDaemonDebug(
+		"--add-runtime", "foo=bar")
+	c.Assert(err, check.IsNil)
+	dcfg1.KillDaemon()
+
+	// should fail if runtime name equal
+	dcfg2, err := StartDefaultDaemonDebug(
+		"--add-runtime", "runa=runa",
+		"--add-runtime", "runa=runa")
+	c.Assert(err, check.NotNil)
+	dcfg2.KillDaemon()
+}

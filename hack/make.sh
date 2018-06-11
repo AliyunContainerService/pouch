@@ -260,10 +260,10 @@ function target
 		# start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
-			$POUCHD --debug --enable-lxcfs=true \
+			$POUCHD --debug --enable-lxcfs=true --add-runtime runv=runv \
 				--lxcfs=/usr/bin/lxcfs > "$TMP/log" 2>&1 &
 		else
-			$POUCHD --debug > "$TMP/log" 2>&1 &
+			$POUCHD --debug --add-runtime runv=runv > "$TMP/log" 2>&1 &
 		fi
 
 		# wait until pouch daemon is ready
