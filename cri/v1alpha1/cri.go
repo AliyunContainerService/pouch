@@ -149,7 +149,7 @@ func (c *CriManager) Version(ctx context.Context, r *runtime.VersionRequest) (*r
 
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
 // the sandbox is in ready state.
-func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (*runtime.RunPodSandboxResponse, error) {
+func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (_ *runtime.RunPodSandboxResponse, retErr error) {
 	config := r.GetConfig()
 
 	// Step 1: Prepare image for the sandbox.
@@ -174,6 +174,12 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
 	}
 	id := createResp.ID
+	defer func() {
+		// If running sandbox failed, clean up the container.
+		if retErr != nil {
+			c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+		}
+	}()
 
 	// Step 3: Start the sandbox container.
 	err = c.ContainerMgr.Start(ctx, id, "")
@@ -186,6 +192,12 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sandbox root directory: %v", err)
 	}
+	defer func() {
+		// If running sandbox failed, clean up the sandbox directory.
+		if retErr != nil {
+			os.RemoveAll(sandboxRootDir)
+		}
+	}()
 
 	// Setup sandbox file /etc/resolv.conf.
 	err = setupSandboxFiles(sandboxRootDir, config)
