@@ -149,13 +149,8 @@ type Resources struct {
 	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
 	// Required: true
 	// Maximum: 100
-<<<<<<< HEAD
 	// Minimum: 0
-	MemorySwappiness *int64 `json:"MemorySwappiness,omitempty"`
-=======
-	// Minimum: -1
 	MemorySwappiness *int64 `json:"MemorySwappiness"`
->>>>>>> bugfix: rm omitempty in resource fields
 
 	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
 	// The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].
