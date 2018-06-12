@@ -17,15 +17,11 @@ read input
 case $input in
     1)
     KUBERNETES_VERSION="1.9"
-    KUBERNETES_VERSION_UBUNTU="1.9.4-00"
-    KUBERNETES_VERSION_CENTOS="1.9.4"
     CRI_VERSION="v1alpha1"
     RELEASE_UBUNTU="v1.9.4"
     RELEASE_CENTOS="1.9.4-0.x86_64";;
     2)
     KUBERNETES_VERSION="1.10"
-    KUBERNETES_VERSION_UBUNTU="1.10.2-00"
-    KUBERNETES_VERSION_CENTOS="1.10.2"
     CRI_VERSION="v1alpha2"
     RELEASE_UBUNTU="v1.10.2"
     RELEASE_CENTOS="1.10.2-0.x86_64";;
@@ -140,6 +136,8 @@ apiVersion: kubeadm.k8s.io/v1alpha1
 kind: MasterConfiguration
 imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
 kubernetes-version: stable-$KUBERNETES_VERSION
+networking:
+  podSubnet: $MASTER_CIDR
 EOF
 }
 
