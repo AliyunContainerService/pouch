@@ -25,7 +25,7 @@ var (
 	// ErrInvalidSyslogFormat represents the invalid format.
 	ErrInvalidSyslogFormat = errors.New("invalid syslog format")
 
-	// ErrFailedToLoadX509KeyPair is to used to indicate that it's failed to load x590 key pair.
+	// ErrFailedToLoadX509KeyPair is to used to indicate that it's failed to load x509 key pair.
 	ErrFailedToLoadX509KeyPair = errors.New("fail to load x509 key pair")
 
 	fmtErrInvalidAddressFormat = "syslog-address must be in form proto://address, but got %v"

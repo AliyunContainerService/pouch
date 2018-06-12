@@ -1475,7 +1475,7 @@ func (mgr *ContainerManager) openContainerIO(c *Container) (*containerio.IO, err
 		containerio.WithStdin(c.Config.OpenStdin),
 	}
 
-	options = append(options, optionsForContainerio(c)...)
+	options = append(options, logOptionsForContainerio(c)...)
 
 	io := containerio.NewIO(containerio.NewOption(options...))
 	mgr.IOs.Put(c.ID, io)
@@ -1612,7 +1612,7 @@ func (mgr *ContainerManager) openAttachIO(c *Container, attach *AttachConfig) (*
 		containerio.WithID(c.ID),
 		containerio.WithLoggerInfo(logInfo),
 	}
-	options = append(options, optionsForContainerio(c)...)
+	options = append(options, logOptionsForContainerio(c)...)
 
 	if attach != nil {
 		options = append(options, attachConfigToOptions(attach)...)

@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func optionsForContainerio(c *Container) []func(*containerio.Option) {
+func logOptionsForContainerio(c *Container) []func(*containerio.Option) {
 	optFuncs := make([]func(*containerio.Option), 0, 1)
 
 	cfg := c.HostConfig.LogConfig
