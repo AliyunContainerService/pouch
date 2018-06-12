@@ -752,6 +752,18 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		return err
 	}
 
+	restore := false
+	configBack := *c.Config
+	hostconfigBack := *c.HostConfig
+	defer func() {
+		if restore {
+			c.Lock()
+			c.Config = &configBack
+			c.HostConfig = &hostconfigBack
+			c.Unlock()
+		}
+	}()
+
 	if c.IsRunning() && config.Resources.KernelMemory != 0 {
 		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID)
 	}
@@ -799,6 +811,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 
 	// update Resources of a container.
 	if err := mgr.updateContainerResources(c, config.Resources); err != nil {
+		restore = true
 		return errors.Wrapf(err, "failed to update resource of container %s", c.ID)
 	}
 
@@ -860,17 +873,20 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// If container is not running, update container metadata struct is enough,
 	// resources will be updated when the container is started again,
 	// If container is running, we need to update configs to the real world.
-	var updateErr error
 	if c.IsRunning() {
-		updateErr = mgr.Client.UpdateResources(ctx, c.ID, c.HostConfig.Resources)
+		if err := mgr.Client.UpdateResources(ctx, c.ID, c.HostConfig.Resources); err != nil {
+			restore = true
+			return fmt.Errorf("failed to update resource: %s", err)
+		}
 	}
 
 	// store disk.
-	if updateErr == nil {
-		updateErr = c.Write(mgr.Store)
+	err = c.Write(mgr.Store)
+	if err != nil {
+		restore = true
 	}
 
-	return updateErr
+	return err
 }
 
 // Remove removes a container, it may be running or stopped and so on.
