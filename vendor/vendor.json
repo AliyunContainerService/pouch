@@ -806,268 +806,311 @@
 			"checksumSHA1": "9fs73UF7mj6VtGjZcpYvkfZTgH4=",
 			"origin": "github.com/alibaba/libnetwork",
 			"path": "github.com/docker/libnetwork",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z",
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z",
 			"version": "=master",
 			"versionExact": "master"
 		},
 		{
 			"checksumSHA1": "PjtJFUyEOokrmiBiHmfXrX/lAug=",
+			"origin": "github.com/alibaba/libnetwork/bitseq",
 			"path": "github.com/docker/libnetwork/bitseq",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "yg3AGtG4at2y028lOyXP4Bg8tzY=",
+			"origin": "github.com/alibaba/libnetwork/cluster",
 			"path": "github.com/docker/libnetwork/cluster",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "LlHAfwKsWUkgwQll2+4uEKsKa/s=",
+			"origin": "github.com/alibaba/libnetwork/common",
 			"path": "github.com/docker/libnetwork/common",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "uDZLDp22Qcm+1tQthY8dvAXDSqQ=",
+			"origin": "github.com/alibaba/libnetwork/config",
 			"path": "github.com/docker/libnetwork/config",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "vP99gKPvFnHkOKAPsWCvLx53JBo=",
+			"origin": "github.com/alibaba/libnetwork/datastore",
 			"path": "github.com/docker/libnetwork/datastore",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "1b0zFl30k4iDn12CT4mJJUr6e50=",
+			"origin": "github.com/alibaba/libnetwork/diagnostic",
 			"path": "github.com/docker/libnetwork/diagnostic",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "D3+HP6HHNGk97yygDnTMhq4sTQs=",
+			"origin": "github.com/alibaba/libnetwork/discoverapi",
 			"path": "github.com/docker/libnetwork/discoverapi",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "xppqpcSpzIc5PCctQr3f9ZnDKTg=",
+			"origin": "github.com/alibaba/libnetwork/driverapi",
 			"path": "github.com/docker/libnetwork/driverapi",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
-			"checksumSHA1": "x7BuDr7GGvtL+HaE1dMXXT4W5sQ=",
+			"checksumSHA1": "u7hPKiiA3JK5fqLpNJpGu2ECYCY=",
+			"origin": "github.com/alibaba/libnetwork/drivers/bridge",
 			"path": "github.com/docker/libnetwork/drivers/bridge",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "VPGgBaWxB+hMd5iq6L5h0X9OM/A=",
+			"origin": "github.com/alibaba/libnetwork/drivers/host",
 			"path": "github.com/docker/libnetwork/drivers/host",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "t/KTw0VBCPrDDzhL/gneCd54yG4=",
+			"origin": "github.com/alibaba/libnetwork/drivers/ipvlan",
 			"path": "github.com/docker/libnetwork/drivers/ipvlan",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "fdHf2nsozUgmT7GcjAsKpinBIko=",
+			"origin": "github.com/alibaba/libnetwork/drivers/macvlan",
 			"path": "github.com/docker/libnetwork/drivers/macvlan",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "UaRZRxYBmnL0m0sZVH+c3wJhuzM=",
+			"origin": "github.com/alibaba/libnetwork/drivers/null",
 			"path": "github.com/docker/libnetwork/drivers/null",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "2uNCCQ9LY4hNBHf+ZjFReKlwGLY=",
+			"origin": "github.com/alibaba/libnetwork/drivers/overlay",
 			"path": "github.com/docker/libnetwork/drivers/overlay",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "X4xI0nTOnar4Cimq00JcMev8Sx8=",
+			"origin": "github.com/alibaba/libnetwork/drivers/remote",
 			"path": "github.com/docker/libnetwork/drivers/remote",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "OIga1ospV/Yr9P7Bdb4kjLBOWsE=",
+			"origin": "github.com/alibaba/libnetwork/drivers/remote/api",
 			"path": "github.com/docker/libnetwork/drivers/remote/api",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "IztwCeIWMD5JXM3smxDEquZjzUE=",
+			"origin": "github.com/alibaba/libnetwork/drivers/windows",
 			"path": "github.com/docker/libnetwork/drivers/windows",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "dAMV4Vt6Hlc/agXccvnnIbUifPY=",
+			"origin": "github.com/alibaba/libnetwork/drivers/windows/overlay",
 			"path": "github.com/docker/libnetwork/drivers/windows/overlay",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "ETRu70M9nKe1JD00xCt2NBd+qQo=",
+			"origin": "github.com/alibaba/libnetwork/drvregistry",
 			"path": "github.com/docker/libnetwork/drvregistry",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "K8QnPJORs58GuDLXjXt3d2wCFOQ=",
+			"origin": "github.com/alibaba/libnetwork/etchosts",
 			"path": "github.com/docker/libnetwork/etchosts",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "tlXVdr0caEP6ssYrri5um6IR0J0=",
+			"origin": "github.com/alibaba/libnetwork/hostdiscovery",
 			"path": "github.com/docker/libnetwork/hostdiscovery",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "vs73JUhrgr9ud9PqNCc3vgOZXWw=",
+			"origin": "github.com/alibaba/libnetwork/idm",
 			"path": "github.com/docker/libnetwork/idm",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "7X4yE6brnqYRRybGtvq9RddGSus=",
+			"origin": "github.com/alibaba/libnetwork/ipam",
 			"path": "github.com/docker/libnetwork/ipam",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "B8tQZ+A/B6ibSjvhSbIzFYMlgFU=",
+			"origin": "github.com/alibaba/libnetwork/ipamapi",
 			"path": "github.com/docker/libnetwork/ipamapi",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "pVRfxRDsnZx79ex9+pIlJx668Mk=",
+			"origin": "github.com/alibaba/libnetwork/ipams/builtin",
 			"path": "github.com/docker/libnetwork/ipams/builtin",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "5LCKu3cJOCrBtzSUvXdylykHDtU=",
+			"origin": "github.com/alibaba/libnetwork/ipams/null",
 			"path": "github.com/docker/libnetwork/ipams/null",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "pivWswFtbxCjGIGcmzjTxI2I6Y4=",
+			"origin": "github.com/alibaba/libnetwork/ipams/remote",
 			"path": "github.com/docker/libnetwork/ipams/remote",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "g+B2PeEzDty3EnrD/IwaIHx/4ow=",
+			"origin": "github.com/alibaba/libnetwork/ipams/remote/api",
 			"path": "github.com/docker/libnetwork/ipams/remote/api",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "+s2m1cK21/ZIv22t0ojdOqNPHuY=",
+			"origin": "github.com/alibaba/libnetwork/ipams/windowsipam",
 			"path": "github.com/docker/libnetwork/ipams/windowsipam",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "vcP3kQNGWKHenrvQxfu4FZkB468=",
+			"origin": "github.com/alibaba/libnetwork/ipamutils",
 			"path": "github.com/docker/libnetwork/ipamutils",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "y18M6IH0eVl0/xr7Iro9O1yqErw=",
+			"origin": "github.com/alibaba/libnetwork/iptables",
 			"path": "github.com/docker/libnetwork/iptables",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "9rWAlHxmizP0pNcPKsFBczgT/os=",
+			"origin": "github.com/alibaba/libnetwork/ipvs",
 			"path": "github.com/docker/libnetwork/ipvs",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "dOklcNs6oi3YUEuq9KVUD7RSSq0=",
+			"origin": "github.com/alibaba/libnetwork/netlabel",
 			"path": "github.com/docker/libnetwork/netlabel",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "Xnjl5qnr3kBFaGqY7f/5RQmidCA=",
+			"origin": "github.com/alibaba/libnetwork/netutils",
 			"path": "github.com/docker/libnetwork/netutils",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "YYTX9IdHMGF+capnCygAeo/xdrQ=",
+			"origin": "github.com/alibaba/libnetwork/networkdb",
 			"path": "github.com/docker/libnetwork/networkdb",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "VN3Ijy6BouxG1OOq5h7qyRqMJhw=",
+			"origin": "github.com/alibaba/libnetwork/ns",
 			"path": "github.com/docker/libnetwork/ns",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "Ew/ROBkrqgUJtsfwcMcYGXujMbI=",
+			"origin": "github.com/alibaba/libnetwork/options",
 			"path": "github.com/docker/libnetwork/options",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "/d+ZFxc5uN6Zo0bmSYbfkZHguIE=",
+			"origin": "github.com/alibaba/libnetwork/osl",
 			"path": "github.com/docker/libnetwork/osl",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "45hwVTOSHJWe7/xzZ7cG4OfJGJY=",
+			"origin": "github.com/alibaba/libnetwork/portallocator",
 			"path": "github.com/docker/libnetwork/portallocator",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "0aJLTCysQwl0/9fVeAg/NPszdLs=",
+			"origin": "github.com/alibaba/libnetwork/portmapper",
 			"path": "github.com/docker/libnetwork/portmapper",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "BIJCIMQeXbw1jFTCOJfIEi5ii78=",
+			"origin": "github.com/alibaba/libnetwork/resolvconf",
 			"path": "github.com/docker/libnetwork/resolvconf",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "trPIMJU2ZUE4myk/9hZw1GYkqQo=",
+			"origin": "github.com/alibaba/libnetwork/resolvconf/dns",
 			"path": "github.com/docker/libnetwork/resolvconf/dns",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "ZAEYszDjYQcnRA6prPaZSVBwNzU=",
+			"origin": "github.com/alibaba/libnetwork/types",
 			"path": "github.com/docker/libnetwork/types",
-			"revision": "3931ba4d815e385ab97093c64477b82f14dadefb",
-			"revisionTime": "2018-05-31T20:31:20Z"
+			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
+			"revisionTime": "2018-06-11T16:09:43Z"
 		},
 		{
 			"checksumSHA1": "5Z0J6IIV39bPOf0NOVHLolGwcfo=",

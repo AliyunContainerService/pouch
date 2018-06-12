@@ -16,6 +16,11 @@ var (
 )
 
 func (n *bridgeNetwork) allocatePorts(ep *bridgeEndpoint, reqDefBindIP net.IP, ulPxyEnabled bool) ([]types.PortBinding, error) {
+	// endpoint address can't be nil when allocate ports.
+	if ep.addr == nil {
+		return nil, fmt.Errorf("allocatePorts addr is null.")
+	}
+
 	if ep.extConnConfig == nil || ep.extConnConfig.PortBindings == nil {
 		return nil, nil
 	}

@@ -21,13 +21,17 @@ func setupVerifyAndReconcile(config *networkConfiguration, i *bridgeInterface) e
 
 	// Verify that the bridge does have an IPv4 address.
 	if addrv4.IPNet == nil {
-		return &ErrNoIPAddr{}
+		// we set bridge ip address by other network tools,
+		// so don't return error when address is nil.
+		return nil
 	}
 
 	// Verify that the bridge IPv4 address matches the requested configuration.
-	if config.AddressIPv4 != nil && !addrv4.IP.Equal(config.AddressIPv4.IP) {
-		return &IPv4AddrNoMatchError{IP: addrv4.IP, CfgIP: config.AddressIPv4.IP}
-	}
+	// we set bridge ip address by other network tools, so don't to check address
+	// matches the requested configuration.
+	//if config.AddressIPv4 != nil && !addrv4.IP.Equal(config.AddressIPv4.IP) {
+	//	return &IPv4AddrNoMatchError{IP: addrv4.IP, CfgIP: config.AddressIPv4.IP}
+	//}
 
 	// Verify that one of the bridge IPv6 addresses matches the requested
 	// configuration.
