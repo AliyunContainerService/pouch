@@ -1,11 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"fmt"
+	"io"
+	"os"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/spf13/cobra"
 )
@@ -25,6 +26,7 @@ type LogsCommand struct {
 	follow     bool
 	since      string
 	tail       string
+	until      string
 	timestamps bool
 }
 
@@ -47,17 +49,17 @@ func (lc *LogsCommand) Init(c *Cli) {
 // addFlags adds flags for specific command.
 func (lc *LogsCommand) addFlags() {
 	flagSet := lc.cmd.Flags()
-	flagSet.BoolVarP(&lc.details, "details", "", false, "Show extra provided to logs")
 	flagSet.BoolVarP(&lc.follow, "follow", "f", false, "Follow log output")
-	flagSet.StringVarP(&lc.since, "since", "", "", "Show logs since timestamp")
+	flagSet.StringVarP(&lc.since, "since", "", "", "Show logs since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
+	flagSet.StringVarP(&lc.until, "until", "", "", "Show logs before timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
 	flagSet.StringVarP(&lc.tail, "tail", "", "all", "Number of lines to show from the end of the logs default \"all\"")
 	flagSet.BoolVarP(&lc.timestamps, "timestamps", "t", false, "Show timestamps")
+
+	// TODO(fuwei): support the detail functionality
 }
 
 // runLogs is the entry of LogsCommand command.
 func (lc *LogsCommand) runLogs(args []string) error {
-	// TODO
-
 	containerName := args[0]
 
 	ctx := context.Background()
@@ -67,25 +69,30 @@ func (lc *LogsCommand) runLogs(args []string) error {
 		ShowStdout: true,
 		ShowStderr: true,
 		Since:      lc.since,
+		Until:      lc.until,
 		Timestamps: lc.timestamps,
 		Follow:     lc.follow,
 		Tail:       lc.tail,
-		Details:    lc.details,
 	}
 
-	resp, err := apiClient.ContainerLogs(ctx, containerName, opts)
+	body, err := apiClient.ContainerLogs(ctx, containerName, opts)
 	if err != nil {
 		return err
 	}
 
-	defer resp.Close()
+	defer body.Close()
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp)
+	c, err := apiClient.ContainerGet(ctx, containerName)
+	if err != nil {
+		return err
+	}
 
-	fmt.Printf(buf.String())
-
-	return nil
+	if c.Config.Tty {
+		_, err = io.Copy(os.Stdout, body)
+	} else {
+		_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, body)
+	}
+	return err
 }
 
 // logsExample shows examples in logs command, and is used in auto-generated cli docs.
