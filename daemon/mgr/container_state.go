@@ -42,6 +42,13 @@ func (c *Container) IsPaused() bool {
 	return c.State.Status == types.StatusPaused
 }
 
+// IsRemoving returns container is removing or not.
+func (c *Container) IsRemoving() bool {
+	c.Lock()
+	defer c.Unlock()
+	return c.State.Status == types.StatusRemoving
+}
+
 // IsDead returns container is dead or not.
 func (c *Container) IsDead() bool {
 	c.Lock()

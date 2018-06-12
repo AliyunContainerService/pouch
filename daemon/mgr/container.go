@@ -817,7 +817,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 
 	c.Lock()
 	// TODO update restartpolicy when container is running.
-	if config.RestartPolicy.Name != "" {
+	if config.RestartPolicy != nil && config.RestartPolicy.Name != "" {
 		c.HostConfig.RestartPolicy = config.RestartPolicy
 	}
 	c.Unlock()
