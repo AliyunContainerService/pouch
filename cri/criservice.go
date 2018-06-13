@@ -48,28 +48,23 @@ func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 		return fmt.Errorf("failed to start CRI service with error: %v", err)
 	}
 
-	// TODO: Stop the whole CRI service if any of the critical service exits
-	grpcServerCloseCh := make(chan struct{})
+	errChan := make(chan error, 2)
 	go func() {
-		if err := service.Serve(); err != nil {
-			logrus.Errorf("failed to start grpc server: %v", err)
-		}
-		close(grpcServerCloseCh)
+		errChan <- service.Serve()
+		logrus.Infof("CRI GRPC server stopped")
 	}()
 
-	streamServerCloseCh := make(chan struct{})
 	go func() {
-		if err := criMgr.StreamServerStart(); err != nil {
-			logrus.Errorf("failed to start stream server: %v", err)
-		}
-		close(streamServerCloseCh)
+		errChan <- criMgr.StreamServerStart()
+		logrus.Infof("CRI Stream server stopped")
 	}()
 
-	// TODO: refactor it with select
-	<-streamServerCloseCh
-	logrus.Infof("CRI Stream server stopped")
-	<-grpcServerCloseCh
-	logrus.Infof("CRI GRPC server stopped")
+	// Check for error
+	for i := 0; i < cap(errChan); i++ {
+		if err := <-errChan; err != nil {
+			return err
+		}
+	}
 
 	logrus.Infof("CRI service stopped")
 	return nil
@@ -87,27 +82,24 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 	if err != nil {
 		return fmt.Errorf("failed to start CRI service with error: %v", err)
 	}
-	// TODO: Stop the whole CRI service if any of the critical service exits
-	grpcServerCloseCh := make(chan struct{})
+
+	errChan := make(chan error, 2)
 	go func() {
-		if err := service.Serve(); err != nil {
-			logrus.Errorf("failed to start grpc server: %v", err)
-		}
-		close(grpcServerCloseCh)
+		errChan <- service.Serve()
+		logrus.Infof("CRI GRPC server stopped")
 	}()
 
-	streamServerCloseCh := make(chan struct{})
 	go func() {
-		if err := criMgr.StreamServerStart(); err != nil {
-			logrus.Errorf("failed to start stream server: %v", err)
-		}
-		close(streamServerCloseCh)
+		errChan <- criMgr.StreamServerStart()
+		logrus.Infof("CRI Stream server stopped")
 	}()
-	// TODO: refactor it with select
-	<-streamServerCloseCh
-	logrus.Infof("CRI Stream server stopped")
-	<-grpcServerCloseCh
-	logrus.Infof("CRI GRPC server stopped")
+
+	// Check for error
+	for i := 0; i < cap(errChan); i++ {
+		if err := <-errChan; err != nil {
+			return err
+		}
+	}
 
 	logrus.Infof("CRI service stopped")
 	return nil
