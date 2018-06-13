@@ -13,11 +13,19 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/daemon/mgr"
+	pouchnet "github.com/alibaba/pouch/pkg/net"
 
 	"github.com/sirupsen/logrus"
 )
 
 func newStreamServer(ctrMgr mgr.ContainerMgr, address string, port string) (Server, error) {
+	if address == "" {
+		a, err := pouchnet.ChooseBindAddress(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get stream server address: %v", err)
+		}
+		address = a.String()
+	}
 	config := DefaultConfig
 	config.Address = net.JoinHostPort(address, port)
 	runtime := newStreamRuntime(ctrMgr)
