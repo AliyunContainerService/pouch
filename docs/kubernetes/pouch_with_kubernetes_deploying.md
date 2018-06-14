@@ -1,12 +1,12 @@
-# Deploy Kubernetes With Pouch
+# Deploy Kubernetes With PouchContainer
 
 Updated: 2018.6.1
 
-- [Pouch deploying](#pouch-with-kubernetes-deploying)
+- [PouchContainer deploying](#pouch-with-kubernetes-deploying)
   - [Overview](#overview)
   - [Restriction](#restriction)
   - [Install and Configure](#install-and-configure)
-    - [Install Pouch](#install-pouch)
+    - [Install PouchContainer](#install-pouch)
     - [Setup Repo](#setup-repo)
     - [Install Kubernetes Components](#install-kubernetes-components)
     - [Install CNI](#install-cni)
@@ -17,7 +17,7 @@ Updated: 2018.6.1
 
 ## Overview
 
-This document shows how to easily install a Kubernetes cluster with Pouch as the container runtime.For Chinese customer, it's might be faster and easier to download Kubernetes components and various kinds of container images from Aliyun [Kubernetes + Pouch + Aliyun](pouch_with_kubernetes_deploying_aliyun.md).
+This document shows how to easily install a Kubernetes cluster with PouchContainer as the container runtime.For Chinese customer, it's might be faster and easier to download Kubernetes components and various kinds of container images from Aliyun [Kubernetes + PouchContainer + Aliyun](pouch_with_kubernetes_deploying_aliyun.md).
 
 ![pouch_with_kubernetes](../static_files/pouch_with_kubernetes.png)
 
@@ -29,7 +29,7 @@ NOTE: PouchContainer version prior to 0.5.x (including version 0.5.0) did not su
 
 ## Install and Configure
 
-An all-in-one kubernetes cluster with pouch runtime could be deployed by running:
+An all-in-one kubernetes cluster with PouchContainer runtime could be deployed by running:
 
 ```
 hack/kubernetes/allinone.sh
@@ -37,11 +37,11 @@ hack/kubernetes/allinone.sh
 
 Please refer to [allinone](https://github.com/alibaba/pouch/blob/master/hack/kubernetes/allinone.sh) .
 
-### Install Pouch
+### Install PouchContainer
 
-You can easily setup a basic Pouch environment, see [INSTALLATION.md](../../INSTALLATION.md).
+You can easily setup a basic PouchContainer environment, see [INSTALLATION.md](../../INSTALLATION.md).
 
-### Configure Pouch
+### Configure PouchContainer
 
 On Ubuntu 16.04+:
 
@@ -109,7 +109,7 @@ RELEASE="1.9.4-0.x86_64"
 yum install -y kubelet-${RELEASE} kubeadm-${RELEASE} kubectl-${RELEASE}
 ```
 
-Configure kubelet with Pouch as its runtime:
+Configure kubelet with PouchContainer as its runtime:
 
 ```sh
 sed -i '2 i\Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
@@ -245,10 +245,10 @@ Commercial support is available at
 
 - Because `kubeadm` still assumes docker as the only container runtime which can be used with kubernetes. When you use `kubeadm` to initialize the master node or join the minion node to the cluster, you may encounter the following error message:`[ERROR SystemVerification]: failed to get docker info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?`. Use the flag `--ignore-preflight-errors=all` to skip the check, like `kubeadm init --ignore-preflight-errors=all`.
 
-- By default Pouch will support CRI v1alpha2,which means that using a version of Kubernetes prior to 1.10 will not work. As the NOTE mentioned above, we could start pouchd with the configuration like `pouchd --cri-version v1alpha1` to specify the version of CRI to support the version of Kubernetes below 1.10.
+- By default PouchContainer will support CRI v1alpha2,which means that using a version of Kubernetes prior to 1.10 will not work. As the NOTE mentioned above, we could start pouchd with the configuration like `pouchd --cri-version v1alpha1` to specify the version of CRI to support the version of Kubernetes below 1.10.
 
-- By default Pouch will not enable the CRI. If you'd like to deploy Kubernetes with Pouch, you should start pouchd with the configuration like `pouchd --enable-cri`.
+- By default PouchContainer will not enable the CRI. If you'd like to deploy Kubernetes with PouchContainer, you should start pouchd with the configuration like `pouchd --enable-cri`.
 
-- By default Pouch will use `registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0` as the image of infra container. If you'd like use image other than that, you could start pouchd with the configuration like `pouchd --enable-cri --sandbox-image XXX`.
+- By default PouchContainer will use `registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0` as the image of infra container. If you'd like use image other than that, you could start pouchd with the configuration like `pouchd --enable-cri --sandbox-image XXX`.
 
 - Any other troubles? Make an issue to connect with us!
