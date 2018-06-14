@@ -4,7 +4,7 @@ Code style is a set of rules or guidelines when writing source codes of a softwa
 
 ## Code Style Tools
 
-Project Pouch is written in Golang. And currently we use three tools to help conform code styles in this project. These three tools are:
+Project PouchContainer is written in Golang. And currently we use three tools to help conform code styles in this project. These three tools are:
 
 * [gofmt](https://golang.org/cmd/gofmt)
 * [golint](https://github.com/golang/lint)
@@ -14,7 +14,7 @@ And all these tools are used in [Makefile](../../Makefile).
 
 ## Code Review Comments
 
-When collaborating in Pouch project, we follow the style from [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments). Before contributing, we treat this as a must-read.
+When collaborating in PouchContainer project, we follow the style from [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments). Before contributing, we treat this as a must-read.
 
 ## Additional Style Rules
 
@@ -138,7 +138,7 @@ When an err could be thrown out, please remember to add it in the error construc
 
 ### RULE006 - Return fast to indent less
 
-Pouch encourages contributors to take advantages of `return fast` to simply source code and indent less. For example, the following codes are discouraged:
+PouchContainer encourages contributors to take advantages of `return fast` to simply source code and indent less. For example, the following codes are discouraged:
 
 ``` golang
 // wrong example
@@ -208,4 +208,4 @@ We should take `DRY(Don't Repeat Yourself)` into consideration when adding anyth
 
 ### RULE011 - Welcome to your addition
 
-If you think much more practical code styles should be introduced in Pouch. Please submit a pull request to make this better.
+If you think much more practical code styles should be introduced in PouchContainer. Please submit a pull request to make this better.
