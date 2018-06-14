@@ -159,7 +159,7 @@ As a developer, you may need to build and test PouchContainer binaries via sourc
 
 ### Prerequisites Installation
 
-Since pouchd is a kind of container engine, and pouch is a cli tool, if you hope to experience container management ability via pouch, there are several additional binaries needed:
+Since pouchd is a kind of container engine, and pouch is a CLI tool, if you hope to experience container management ability via pouch, there are several additional binaries needed:
 
 * [containerd](https://github.com/containerd/containerd): an industry-standard container runtime;
 * [runc](https://github.com/opencontainers/runc): a CLI tool for spawning and running containers according to the OCI specification;
