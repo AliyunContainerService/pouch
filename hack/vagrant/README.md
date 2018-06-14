@@ -1,6 +1,6 @@
-# Vagrant Setup to Test the Pouch
+# Vagrant Setup to Test the PouchContainer
 
-This documentation highlights how to use [Vagrant](https://www.vagrantup.com/) to setup node to test pouch.
+This documentation highlights how to use [Vagrant](https://www.vagrantup.com/) to setup node to test PouchContainer.
 
 ## Pre-requisites
 
@@ -19,7 +19,7 @@ Clone this repo, change to the `hack/vagrant` directory and let Vagrant do the w
 
     pouch-dev-node            running (virtualbox)
 
-You are now ready to SSH to `pouch-dev-node`, source code of pouch is mounted to /go/src/github.com/alibaba/pouch on `pouch-dev-node`.
+You are now ready to SSH to `pouch-dev-node`, source code of PouchContainer is mounted to /go/src/github.com/alibaba/pouch on `pouch-dev-node`.
 
     $ vagrant ssh pouch-dev-node
     vagrant@pouch-dev-node:~$ sudo su
