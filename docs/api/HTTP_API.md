@@ -1,9 +1,9 @@
-# Pouch Engine API
+# PouchContainer Engine API
 
 
 <a name="overview"></a>
 ## Overview
-API is an HTTP API served by Pouch Engine.
+API is an HTTP API served by PouchContainer Engine.
 
 
 ### Version information
@@ -233,7 +233,7 @@ Content-Type: application/vnd.raw-stream
 
 After the headers and two new lines, the TCP connection can now be used for raw, bidirectional communication between the client and server.
 
-To hint potential proxies about connection hijacking, the Pouch client can also optionally send connection upgrade headers.
+To hint potential proxies about connection hijacking, the PouchContainer client can also optionally send connection upgrade headers.
 
 For example, the client sends this request to upgrade the connection:
 
@@ -243,7 +243,7 @@ Upgrade: tcp
 Connection: Upgrade
 ```
 
-The Pouch daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
+The PouchContainer daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
 
 ```
 HTTP/1.1 101 UPGRADED
@@ -1475,7 +1475,7 @@ GET "/containers/json"
 |---|---|---|
 |**Command**  <br>*optional*||string|
 |**Created**  <br>*optional*|Created time of container in daemon.|integer (int64)|
-|**HostConfig**  <br>*optional*|In Moby's API, HostConfig field in Container struct has following type <br>struct { NetworkMode string `json:",omitempty"` }<br>In Pouch, we need to pick runtime field in HostConfig from daemon side to judge runtime type,<br>So Pouch changes this type to be the complete HostConfig.<br>Incompatibility exists, ATTENTION.|[HostConfig](#hostconfig)|
+|**HostConfig**  <br>*optional*|In Moby's API, HostConfig field in Container struct has following type <br>struct { NetworkMode string `json:",omitempty"` }<br>In PouchContainer, we need to pick runtime field in HostConfig from daemon side to judge runtime type,<br>So PouchContainer changes this type to be the complete HostConfig.<br>Incompatibility exists, ATTENTION.|[HostConfig](#hostconfig)|
 |**Id**  <br>*optional*|Container ID|string|
 |**Image**  <br>*optional*||string|
 |**ImageID**  <br>*optional*||string|
@@ -2344,10 +2344,10 @@ The status of the container. For example, "running" or "exited".
 |**Name**  <br>*optional*|Hostname of the host.  <br>**Example** : `"node5.corp.example.com"`|string|
 |**OSType**  <br>*optional*|Generic type of the operating system of the host, as returned by the<br>Go runtime (`GOOS`).<br><br>Currently returned value is "linux". A full list of<br>possible values can be found in the [Go documentation](https://golang.org/doc/install/source#environment).  <br>**Example** : `"linux"`|string|
 |**OperatingSystem**  <br>*optional*|Name of the host's operating system, for example: "Ubuntu 16.04.2 LTS".  <br>**Example** : `"Alpine Linux v3.5"`|string|
-|**PouchRootDir**  <br>*optional*|Root directory of persistent Pouch state.<br><br>Defaults to `/var/lib/pouch` on Linux.  <br>**Example** : `"/var/lib/pouch"`|string|
+|**PouchRootDir**  <br>*optional*|Root directory of persistent PouchContainer state.<br><br>Defaults to `/var/lib/pouch` on Linux.  <br>**Example** : `"/var/lib/pouch"`|string|
 |**RegistryConfig**  <br>*optional*||[RegistryServiceConfig](#registryserviceconfig)|
 |**RuncCommit**  <br>*optional*||[Commit](#commit)|
-|**Runtimes**  <br>*optional*|List of [OCI compliant](https://github.com/opencontainers/runtime-spec)<br>runtimes configured on the daemon. Keys hold the "name" used to<br>reference the runtime.<br><br>The Pouch daemon relies on an OCI compliant runtime (invoked via the<br>`containerd` daemon) as its interface to the Linux kernel namespaces,<br>cgroups, and SELinux.<br><br>The default runtime is `runc`, and automatically configured. Additional<br>runtimes can be configured by the user and will be listed here.  <br>**Example** : `{<br>  "runc" : {<br>    "path" : "pouch-runc"<br>  },<br>  "runc-master" : {<br>    "path" : "/go/bin/runc"<br>  },<br>  "custom" : {<br>    "path" : "/usr/local/bin/my-oci-runtime",<br>    "runtimeArgs" : [ "--debug", "--systemd-cgroup=false" ]<br>  }<br>}`|< string, [Runtime](#runtime) > map|
+|**Runtimes**  <br>*optional*|List of [OCI compliant](https://github.com/opencontainers/runtime-spec)<br>runtimes configured on the daemon. Keys hold the "name" used to<br>reference the runtime.<br><br>The PouchContainer daemon relies on an OCI compliant runtime (invoked via the<br>`containerd` daemon) as its interface to the Linux kernel namespaces,<br>cgroups, and SELinux.<br><br>The default runtime is `runc`, and automatically configured. Additional<br>runtimes can be configured by the user and will be listed here.  <br>**Example** : `{<br>  "runc" : {<br>    "path" : "pouch-runc"<br>  },<br>  "runc-master" : {<br>    "path" : "/go/bin/runc"<br>  },<br>  "custom" : {<br>    "path" : "/usr/local/bin/my-oci-runtime",<br>    "runtimeArgs" : [ "--debug", "--systemd-cgroup=false" ]<br>  }<br>}`|< string, [Runtime](#runtime) > map|
 |**SecurityOptions**  <br>*optional*|List of security features that are enabled on the daemon, such as<br>apparmor, seccomp, SELinux, and user-namespaces (userns).<br><br>Additional configuration options for each security feature may<br>be present, and are included as a comma-separated list of key/value<br>pairs.  <br>**Example** : `[ "name=apparmor", "name=seccomp,profile=default", "name=selinux", "name=userns" ]`|< string > array|
 |**ServerVersion**  <br>*optional*|Version string of the daemon.  <br>**Example** : `"17.06.0-ce"`|string|
 
@@ -2364,7 +2364,7 @@ The status of the container. For example, "running" or "exited".
 |**GoVersion**  <br>*optional*|version of Go runtime  <br>**Example** : `"1.8.3"`|string|
 |**KernelVersion**  <br>*optional*|Operating system kernel version  <br>**Example** : `"3.13.0-106-generic"`|string|
 |**Os**  <br>*optional*|Operating system type of underlying system  <br>**Example** : `"linux"`|string|
-|**Version**  <br>*optional*|version of Pouch Daemon  <br>**Example** : `"0.1.2"`|string|
+|**Version**  <br>*optional*|version of PouchContainer Daemon  <br>**Example** : `"0.1.2"`|string|
 
 
 <a name="throttledevice"></a>
@@ -2445,7 +2445,7 @@ config used to create a volume
 |**Driver**  <br>*optional*|Name of the volume driver to use.  <br>**Default** : `"local"`|string|
 |**DriverOpts**  <br>*optional*|A mapping of driver options and values. These options are passed directly to the driver and are driver specific.|< string, string > map|
 |**Labels**  <br>*optional*|User-defined key/value metadata.|< string, string > map|
-|**Name**  <br>*optional*|The new volume's name. If not specified, Pouch generates a name.|string|
+|**Name**  <br>*optional*|The new volume's name. If not specified, PouchContainer generates a name.|string|
 
 
 <a name="volumeinfo"></a>
