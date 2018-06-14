@@ -2,7 +2,7 @@
 
 ## What is Volume
 
-Volume is a universal module that used to provide container storage in pouch. It provides storage service for containers through the interface of file storage.
+Volume is a universal module that used to provide container storage in PouchContainer. It provides storage service for containers through the interface of file storage.
 
 ## What is the architecture of Volume
 
@@ -11,7 +11,7 @@ Volume includes these modules is as following:
 * VolumeManager: volume manager provides the basic volume interface functions for pouchd.
 * Core: volume's core module, it is used to associate with several modules, and it achieves a common process that volume operate functions.
 * Driver: it is used to abstract the basic functions of volume driver.
-* Modules: Different types of storage provides different modules, it achieves different storage unified access to the pouch volume.
+* Modules: Different types of storage provides different modules, it achieves different storage unified access to the PouchContainer volume.
 
 The relationship between each module is as following:
 
@@ -133,7 +133,7 @@ type Formator interface {
 
 ### Modules
 
-As of now, pouch volume supports the following types of storage: local, tmpfs, ceph. If you want to add a new driver, you can refer to the sample code: [demo](volume/examples/demo/demo.go)
+As of now, PouchContainer volume supports the following types of storage: local, tmpfs, ceph. If you want to add a new driver, you can refer to the sample code: [demo](volume/examples/demo/demo.go)
 
 ## How to use volume
 
@@ -141,4 +141,4 @@ As of now, volume supports the following operations: create/remove/list/inspect,
 
 ## Volume roadmap
 
-Pouch volume will implement the interface of [CSI(container storage interface)](https://github.com/container-storage-interface/spec), as a node-server integrating with control-server to achieve volume scheduling ability.
+PouchContainer volume will implement the interface of [CSI(container storage interface)](https://github.com/container-storage-interface/spec), as a node-server integrating with control-server to achieve volume scheduling ability.
