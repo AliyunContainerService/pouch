@@ -4,13 +4,13 @@ In order to provide high quality `pouch`, testing is an important part.
 
 This doc will give an introduction about the following three parts:
 
-* the organization of pouch test
-* the usage of pouch test
-* the development of pouch test
+* the organization of PouchContainer test
+* the usage of PouchContainer test
+* the development of PouchContainer test
 
 ## Organization of test
 
-Test in pouch could be divided into following parts:
+Test in PouchContainer could be divided into following parts:
 
 * [unit testing](https://en.wikipedia.org/wiki/Unit_testing#Description)
 * [integration testing](https://en.wikipedia.org/wiki/Integration_testing)
@@ -33,17 +33,17 @@ For other files, they are:
 * `command package`: package command is used to encapsulate CLI lib functions.
 * `request package`: package request is used to encapsulate http request lib functions.
 
-For pouch developer, if your code is only used in a single module, then the unit test is enough. While if your code is called by multiple modules, integration tests are required. In pouch, both of them are developed using go language. More details could be gotten in [Unit Testing](#unit-testing) and [Integration Testing](#integration-testing).
+For PouchContainer developer, if your code is only used in a single module, then the unit test is enough. While if your code is called by multiple modules, integration tests are required. In PouchContainer, both of them are developed using go language. More details could be gotten in [Unit Testing](#unit-testing) and [Integration Testing](#integration-testing).
 
 ## Run Tests
 
-Tests could be run through the target provided by `Makefile` in the root directory of pouch code. Also could be run manually.
+Tests could be run through the target provided by `Makefile` in the root directory of PouchContainer code. Also could be run manually.
 To run the test automatically, the following prerequisites are needed:
 
     * golang is installed and GOPATH and GOROOT is set correctly
     * docker is installed
 
-Then you could just clone the pouch source to GOPATH and run tests as following:
+Then you could just clone the PouchContainer source to GOPATH and run tests as following:
 
 ```
 # which docker
@@ -63,12 +63,12 @@ bash -c "env PATH=/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/X
 check build unit-test integration-test cri-test"
 ```
 
-`make test` calls the hack/make.sh script to check code format, build pouch daemon and client, run unit test, run integration test and run cri test.
+`make test` calls the hack/make.sh script to check code format, build PouchContainer daemon and client, run unit test, run integration test and run cri test.
 `hack/make.sh` needs `docker` installed on test machine, as it uses `docker build` to build a test image including tools needed to run `make test`. `go` is also needed to be installed and set `GOPATH` `GOROOT` `PATH` correctly. For more information, you could check the `hack/make.sh` script.
 
 ## Run Tests Manually
 
-As a pouch developer, you may need to run tests manually.
+As a PouchContainer developer, you may need to run tests manually.
 
 If you want to do code format check, you could run `make check` in your code directory, but please make sure the following tools are already installed:
 
@@ -88,7 +88,7 @@ GOROOT=/usr/local/go
 GOPATH=/go
 ```
 
-Then copy or clone pouch source code to the GOPATH：
+Then copy or clone PouchContainer source code to the GOPATH：
 
 ```
 # pwd
@@ -126,7 +126,7 @@ First you need to make sure `pouch` and `pouchd` binary is installed or built.
 
 Then you need to install containerd, runc, lxcfs and so on. You could refer to function `install_pouch` in `hack/make.sh`. There is also a quick way to install them, just install `pouch` package then replace pouch binary with yours.
 
-Next you need to start pouch daemon and pull a busybox image:
+Next you need to start PouchContainer daemon and pull a busybox image:
 
 ```
 # pouchd -D --enable-lxcfs=true --lxcfs=/usr/bin/lxcfs >/tmp/log 2>&1 &
