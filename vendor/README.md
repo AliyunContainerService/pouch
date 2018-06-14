@@ -2,7 +2,7 @@
 
 ## Tools
 
-Pouch uses tool [govendor](https://github.com/kardianos/govendor) to vendor packages in its own repository.
+PouchContainer uses tool [govendor](https://github.com/kardianos/govendor) to vendor packages in its own repository.
 
 ## Installation
 
@@ -12,7 +12,7 @@ You could use the common way to install `govendor`:
 go get -u github.com/kardianos/govendor
 ```
 
-Pouch chooses version v1.0.8 to be the collaborate. 
+PouchContainer chooses version v1.0.8 to be the collaborate. 
 
 ## Workflow
 
@@ -27,7 +27,7 @@ govendor init
 
 ### Vendor External Packages
 
-In pouch, when vendoring a package, we take the version of it very seriously. Therefore, almostly every time we use `govendor`, we explicitly pick the specified commit ID or tag.
+In PouchContainer, when vendoring a package, we take the version of it very seriously. Therefore, almostly every time we use `govendor`, we explicitly pick the specified commit ID or tag.
 
 As a result, we seldom use the command `govendor add github.com/a/b`. Instead, we always make use of `govendor add github.com/a/b@8ac97434144a8b58bd39576fc65be42d90257b04` or `govendor add github.com/a/b@v1.3.0`.
 
