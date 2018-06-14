@@ -1,13 +1,13 @@
 # Architecture
 
-To clarify standpoint of Pouch in container system, we construct it with explicit architecture. To ensure the clear separation of functionality, we have organized Pouch with components. Therefore, when mentioning architecture, we usually include two parts:
+To clarify standpoint of PouchContainer in container system, we construct it with explicit architecture. To ensure the clear separation of functionality, we have organized PouchContainer with components. Therefore, when mentioning architecture, we usually include two parts:
 
 * ecosystem architecture
 * component architecture
 
 ## Ecosystem Architecture
 
-In pouch's roadmap, we set ecosystem embracing as a big target. To upper orchestrating layer, pouch supports Kubernetes and Swarm. To underlying runtime layer, pouch is compatible with oci-compatible runtime, such as [runC](https://github.com/opencontainers/runc), [runV](https://github.com/hyperhq/runv), runlxc and so on. To make storage and network big supplements, [CNI](https://github.com/containernetworking/cni) and [CSI](https://github.com/container-storage-interface) are in scope right there.
+In PouchContainer's roadmap, we set ecosystem embracing as a big target. To upper orchestrating layer, PouchContainer supports Kubernetes and Swarm. To underlying runtime layer, PouchContainer is compatible with oci-compatible runtime, such as [runC](https://github.com/opencontainers/runc), [runV](https://github.com/hyperhq/runv), runlxc and so on. To make storage and network big supplements, [CNI](https://github.com/containernetworking/cni) and [CSI](https://github.com/container-storage-interface) are in scope right there.
 
 ![Ecosystem Architecture](static_files/pouch_ecosystem_architecture.png)
 
@@ -15,38 +15,38 @@ The ecosystem architecture may be a little bit complicated at first glance. Take
 
 ### Runtime Layer
 
-Runtime layer is located on right-top in the architecture picture. This dimension mainly focus on OCI-compatible runtimes supported in Pouch. These runtimes unify specifications for standards on operating system process and application containers. Currently, Pouch supports four kinds of OCI-compatible runtimes:
+Runtime layer is located on right-top in the architecture picture. This dimension mainly focus on OCI-compatible runtimes supported in PouchContainer. These runtimes unify specifications for standards on operating system process and application containers. Currently, PouchContainer supports four kinds of OCI-compatible runtimes:
 
 * runC
 * runlxc
 * runV
 * clear containers
 
-With runC, Pouch creates common containers like other container engine does, for example docker. With runlxc, Pouch creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variety of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. Pouch will support it with runV and clear container.
+With runC, PouchContainer creates common containers like other container engine does, for example docker. With runlxc, PouchContainer creates containers based on LXC. runlxc helps a lot when users need to run containers on a wide variety of Linux kernels with the ability to be compatible with kernel 2.6.32+. Hypervisor-based containers have many application scenarios as well. PouchContainer will support it with runV and clear container.
 
 All these four runtimes mentioned above are supported under containerd. Containerd takes over all detailed container management, including creation, start, stop, deletion and so on.
 
 ### Orchestration Layer
 
-Pouch is always active on supporting Kubernetes since the first day when it is designed. We illustrate this part on the top half of the architecture picture. First, Pouch will integrate cri-containerd inside, so Kubernetes can easily dominate Pouch to manage Pod. The workflow will pass cri-containerd, containerd client, containerd, runC/runV and pod. When configuring network of Pod, cri-containerd will take advantage of network plugins which implement CNI interface.
+PouchContainer is always active on supporting Kubernetes since the first day when it is designed. We illustrate this part on the top half of the architecture picture. First, PouchContainer will integrate cri-containerd inside, so Kubernetes can easily dominate PouchContainer to manage Pod. The workflow will pass cri-containerd, containerd client, containerd, runC/runV and pod. When configuring network of Pod, cri-containerd will take advantage of network plugins which implement CNI interface.
 
 ### Container Layer
 
-We support not only Pod in Kubernetes cluster, but also simple container management for users. This is especially useful for developers. In another word, Pouch supports single container API. In this way, workflow passes pouchd, containerd client, containerd, runC/runV and container. On the aspect of network, Pouch uses libnetwork to construct container's network. What's more, lxcfs is also used to guarantee the isolation between containers and between containers and host.
+We support not only Pod in Kubernetes cluster, but also simple container management for users. This is especially useful for developers. In another word, PouchContainer supports single container API. In this way, workflow passes pouchd, containerd client, containerd, runC/runV and container. On the aspect of network, PouchContainer uses libnetwork to construct container's network. What's more, lxcfs is also used to guarantee the isolation between containers and between containers and host.
 
 ## Component Architecture
 
-Ecosystem architecture of Pouch shows the location of itself in the container ecosystem. The following picture shows the component architecture of Pouch. In component architecture, we divide Pouch into two main parts: Pouch CLI and Pouchd.
+Ecosystem architecture of PouchContainer shows the location of itself in the container ecosystem. The following picture shows the component architecture of PouchContainer. In component architecture, we divide PouchContainer into two main parts: PouchContainer CLI and Pouchd.
 
 ![Component Architecture](static_files/pouch_component_architecture.png)
 
-### Pouch CLI
+### PouchContainer CLI
 
-There are lots of different commands encapsulated in Pouch CLI, like create, start, stop, exec and so on. Users can interact with Pouchd by Pouch CLI. When executing a command, Pouch CLI will translate it into Pouchd API calls to satisfy users' demand. Pouch Client API is a well-encapsulated package in Pouch CLI. It is very easy for others to integrate Pouch Client Package into third-party software. And this package currently only supports Golang language. When calling Pouchd via Pouch Client Package, the communication is over HTTP.
+There are lots of different commands encapsulated in PouchContainer CLI, like create, start, stop, exec and so on. Users can interact with Pouchd by PouchContainer CLI. When executing a command, PouchContainer CLI will translate it into Pouchd API calls to satisfy users' demand. PouchContainer Client API is a well-encapsulated package in PouchContainer CLI. It is very easy for others to integrate PouchContainer Client Package into third-party software. And this package currently only supports Golang language. When calling Pouchd via PouchContainer Client Package, the communication is over HTTP.
 
 ### Pouchd
 
-Pouchd is designed decoupled from the very beginning. It makes Pouchd quite easy to understand. And it helps a lot for us to hack on Pouch. In general, we treat that Pouchd can be split into the following pieces:
+Pouchd is designed decoupled from the very beginning. It makes Pouchd quite easy to understand. And it helps a lot for us to hack on PouchContainer. In general, we treat that Pouchd can be split into the following pieces:
 
 * HTTP server
 * bridge layer
