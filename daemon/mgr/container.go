@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/opts"
@@ -39,6 +40,8 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/docker/docker/pkg/signal"
 )
 
 // ContainerMgr as an interface defines all operations against container.
@@ -99,6 +102,9 @@ type ContainerMgr interface {
 
 	// Wait stops processing until the given container is stopped.
 	Wait(ctx context.Context, name string) (types.ContainerWaitOKBody, error)
+
+	// Kill sends signal to a container.
+	Kill(ctx context.Context, name string, sig int) error
 
 	// 2. The following five functions is related to container exec.
 
@@ -1324,6 +1330,33 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 	}
 
 	return procList, nil
+}
+
+// Kill sends signal to a container.
+func (mgr *ContainerManager) Kill(ctx context.Context, name string, sig int) error {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	if sig != 0 && !signal.ValidSignalForPlatform(syscall.Signal(sig)) {
+		return fmt.Errorf("signal %d is not suppoerted", sig)
+	}
+
+	if !c.IsRunning() {
+		return fmt.Errorf("container %s is not running, can not execute kill command", c.ID)
+	}
+
+	msg, err := mgr.Client.KillContainer(ctx, c.ID, sig)
+	if err != nil {
+		return err
+	}
+
+	// the container has been stopped by client signal, we should mark and clean up this container
+	if msg != nil {
+		return mgr.exitedAndRelease(c.ID, msg)
+	}
+	return nil
 }
 
 // Resize resizes the size of a container tty.

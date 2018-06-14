@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -18,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/docker/docker/pkg/signal"
 )
 
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -396,4 +399,25 @@ func (s *Server) waitContainer(ctx context.Context, rw http.ResponseWriter, req 
 	}
 
 	return EncodeResponse(rw, http.StatusOK, &waitStatus)
+}
+
+func (s *Server) killContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	var sig syscall.Signal
+
+	// parse client signal
+	if sigStr := req.FormValue("signal"); sigStr != "" {
+		var err error
+		if sig, err = signal.ParseSignal(sigStr); err != nil {
+			return httputils.NewHTTPError(err, http.StatusBadRequest)
+		}
+	}
+
+	if err := s.ContainerMgr.Kill(ctx, name, int(sig)); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusNoContent)
+	return nil
 }

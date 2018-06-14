@@ -532,3 +532,77 @@ func (c *Client) WaitContainer(ctx context.Context, id string) (types.ContainerW
 		StatusCode: int64(msg.ExitCode()),
 	}, nil
 }
+
+// KillContainer sends signal to a container.
+func (c *Client) KillContainer(ctx context.Context, id string, sig int) (*Message, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
+
+	if !c.lock.Trylock(id) {
+		return nil, errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	pack.skipStopHooks = true
+	defer func() {
+		pack.skipStopHooks = false
+	}()
+
+	// send signal to container
+	if err := pack.task.Kill(ctx, syscall.Signal(sig), containerd.WithKillAll); err != nil {
+		return nil, fmt.Errorf("failed to send signal %d to container %s: %v", sig, id, err)
+	}
+
+	// if container task has been stopped, we should wait container and task to be totally deleted
+	time.Sleep(10 * time.Millisecond)
+
+	lc, err := wrapperCli.client.LoadContainer(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		status  containerd.Status
+		deleted bool
+	)
+
+	task, err := lc.Task(ctx, nil)
+	// the container task has been deleted
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			deleted = true
+		} else {
+			return nil, err
+		}
+	} else {
+		// the container task isn't deleted, we could get task's status
+		status, err = task.Status(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	waitExit := func() *Message {
+		return c.ProbeContainer(ctx, id, time.Duration(10)*time.Second)
+	}
+
+	// if the container task has been deleted or container status is stopped, we could clean up this container
+	if deleted || status.Status == containerd.Stopped {
+		msg := waitExit()
+		if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
+			return nil, err
+		}
+		return msg, c.watch.remove(ctx, id)
+	}
+	// the container is still running after receiving signal
+	return nil, nil
+}
