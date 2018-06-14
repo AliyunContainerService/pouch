@@ -197,21 +197,45 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
 }
 
-// TestUpdateContainerInvalidValue is to verify the correctness of updating a container with invalid value.
-func (suite *PouchUpdateSuite) TestUpdateContainerInvalidValue(c *check.C) {
-	name := "update-container-with-invalid-value"
+// TestUpdateContainerCPUQuota is to verify the correctness of updating cpu-quota of container.
+func (suite *PouchUpdateSuite) TestUpdateContainerCPUQuota(c *check.C) {
+	name := "update-container-cpu-quota"
 
 	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	res = command.PouchRun("update", "--memory-swappiness", "-2", name)
-	c.Assert(res.Stderr(), check.NotNil)
+	// ensure update cpu-quota is ok
+	command.PouchRun("update", "--cpu-quota", "1100", name).Assert(c, icmd.Success)
 
-	expectString := "invalid memory swappiness: -2 (its range is -1 or 0-100)"
-	if out := res.Combined(); !strings.Contains(out, expectString) {
-		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
 	}
+	containerID := result[0].ID
+
+	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_quota_us"
+	if _, err := os.Stat(file); err != nil {
+		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+	}
+
+	out, err := exec.Command("cat", file).Output()
+	if err != nil {
+		c.Fatalf("execute cat command failed: %v", err)
+	}
+
+	if !strings.Contains(string(out), "1100") {
+		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
+	}
+
+	inspectInfo := command.PouchRun("inspect", name).Stdout()
+	metaJSON := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	c.Assert(metaJSON[0].HostConfig.CPUQuota, check.Equals, int64(1100))
 }
 
 // TestUpdateContainerWithoutFlag is to verify the correctness of updating a container without any flag.

@@ -1010,7 +1010,7 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	if resources.CPUPeriod != 0 {
 		cResources.CPUPeriod = resources.CPUPeriod
 	}
-	if resources.CPUQuota != 0 {
+	if resources.CPUQuota > -1 {
 		cResources.CPUQuota = resources.CPUQuota
 	}
 	if resources.CPUShares != 0 {
@@ -1030,10 +1030,6 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 		}
 		cResources.Memory = resources.Memory
 	}
-	if resources.MemorySwap != 0 {
-		cResources.MemorySwap = resources.MemorySwap
-	}
-
 	if resources.MemorySwap != 0 {
 		cResources.MemorySwap = resources.MemorySwap
 	}

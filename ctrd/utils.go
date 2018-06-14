@@ -156,14 +156,9 @@ func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) 
 	}
 
 	// toLinuxMemory
-	var swappiness uint64
-	if resources.MemorySwappiness != nil {
-		swappiness = uint64(*(resources.MemorySwappiness))
-	}
 	r.Memory = &specs.LinuxMemory{
 		Limit:       &resources.Memory,
 		Swap:        &resources.MemorySwap,
-		Swappiness:  &swappiness,
 		Reservation: &resources.MemoryReservation,
 	}
 
