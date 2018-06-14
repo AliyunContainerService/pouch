@@ -1,4 +1,4 @@
-# Pouch with runV
+# PouchContainer with runV
 
 Container technology develops rapidly recently. It provides much convenience for application packing and resource utilization improvement. At the same time it brings benefits, LXC-based container technology also loses the appropriate security. Specifically, containers share operating system kernel on one machine. Once one container attempts to attack kernel, all workload on this host would be influenced.
 
@@ -8,15 +8,15 @@ For some scenarios which are sensitive and strict to security, pure container te
 
 ## Architecture
 
-Supporting hypervisor-based OCI runtime is one of Pouch's goals. Pouch allows users to decide which kind of container to create. So with a unified entry of Pouch's API, users can create both hypervisor-based containers and LXC-based containers. With two kinds of carriers above, user's application can flexibly choose runtime on demand.
+Supporting hypervisor-based OCI runtime is one of PouchContainer's goals. PouchContainer allows users to decide which kind of container to create. So with a unified entry of PouchContainer's API, users can create both hypervisor-based containers and LXC-based containers. With two kinds of carriers above, user's application can flexibly choose runtime on demand.
 
-Here is the architecture of Pouch's supporting both runV and runC:
+Here is the architecture of PouchContainer's supporting both runV and runC:
 
 ![pouch_with_runv_architecture](../static_files/pouch_with_runv_architecture.png)
 
 ## Prerequisites Installation
 
-Before installing, We should remind one important thing: **Pouch with runv can only work on PHYSICAL MACHINE**. Nested VMs currently are not supported yet. In addition, we should make sure that `containerd` and `pouchd` are already installed on the physical machine which is described in [INSTALLATION.md](../../INSTALLATION.md).
+Before installing, We should remind one important thing: **PouchContainer with runv can only work on PHYSICAL MACHINE**. Nested VMs currently are not supported yet. In addition, we should make sure that `containerd` and `pouchd` are already installed on the physical machine which is described in [INSTALLATION.md](../../INSTALLATION.md).
 
 Make sure things above have been done. And then there are another three prerequisites to install before experiencing hypervisor-based containers:
 
@@ -89,7 +89,7 @@ cp build/{kernel,hyper-initrd.img} /var/lib/hyper/
 
 ## Start Hypervisor-based Container
 
-With runv related tools installed, we need to start Pouch daemon. Then we can create hypervisor-based container via command line tool `pouch`. The container created has an independent kernel isolated from host machine.
+With runv related tools installed, we need to start PouchContainer daemon. Then we can create hypervisor-based container via command line tool `pouch`. The container created has an independent kernel isolated from host machine.
 
 We can create hypervisor-based container by adding a flag `--runtime` in create command. And we can also use `pouch ps` to list containers including hypervisor-based containers whose runtime type is `runv` and runc-based containerd whose runtime type is `runc`.
 
@@ -136,6 +136,6 @@ However, PouchContainer figuires out one way to containerize application which m
 
 ## Conclusion
 
-Pouch brings a common way to provide hypervisor-based containers. With pouch, users can take advantages of both hypervisor-based containers and LXC-based containers according to specific scenario.
+PouchContainer brings a common way to provide hypervisor-based containers. With PouchContainer, users can take advantages of both hypervisor-based containers and LXC-based containers according to specific scenario.
 
 
