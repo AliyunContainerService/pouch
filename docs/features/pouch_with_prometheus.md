@@ -1,13 +1,13 @@
-# Pouch with Prometheus
+# PouchContainer with Prometheus
 
-Pouch supports various monitoring metrics via [Prometheus](https://prometheus.io/). Now we already have the basic golang runtime and some api latency metrics. We plan to add more in the future in below two main areas:
+PouchContainer supports various monitoring metrics via [Prometheus](https://prometheus.io/). Now we already have the basic golang runtime and some api latency metrics. We plan to add more in the future in below two main areas:
 
-* Important pouch daemon metrics
+* Important PouchContainer daemon metrics
 * Full list of important api duration metrics
 
 ## How to add new metrics
 
-We tend to use prometheus's [METRIC AND LABEL NAMING](https://prometheus.io/docs/practices/naming) best-practices in pouch. So when you are going to add a new metric, do follow the metric and label naming convention.
+We tend to use prometheus's [METRIC AND LABEL NAMING](https://prometheus.io/docs/practices/naming) best-practices in PouchContainer. So when you are going to add a new metric, do follow the metric and label naming convention.
 
 We use prometheus [go-sdk](https://github.com/prometheus/client_golang) to monitor pouchd. It supports counter, gauge and summary metric types. For more info, please refer to [METRIC TYPES](https://prometheus.io/docs/concepts/metric_types/).
 
