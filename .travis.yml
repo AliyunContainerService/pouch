@@ -10,7 +10,7 @@ go_import_path: github.com/alibaba/pouch
 notifications:
   webhooks:
     urls:
-      - http://121.201.63.16:6789/ci_notifications
+      - http://121.201.63.16:6788/travis_ci_notifications
     on_failure: always
     on_error: always
 
