@@ -124,15 +124,15 @@
 
 ### Test
 
-* Fix use `busybox:1.25` instead of `busybox:1.28` in `tag` command cli test [\#1406](https://github.com/alibaba/pouch/pull/1406) ([fuweid](https://github.com/fuweid))
+* Fix use `busybox:1.25` instead of `busybox:1.28` in `tag` command CLI test [\#1406](https://github.com/alibaba/pouch/pull/1406) ([fuweid](https://github.com/fuweid))
 * Fix use the stable image ID in test case [\#1397](https://github.com/alibaba/pouch/pull/1397) ([fuweid](https://github.com/fuweid))
 * Fix make the PullImage test util work [\#1386](https://github.com/alibaba/pouch/pull/1386) ([fuweid](https://github.com/fuweid))
 * Update split `run` command test file into several files [\#1385](https://github.com/alibaba/pouch/pull/1385) ([Letty5411](https://github.com/Letty5411))
 * Add test cases for `volume plugin` [\#1368](https://github.com/alibaba/pouch/pull/1368) ([shaloulcy](https://github.com/shaloulcy))
-* Add cli test for `pause` command and fix some tiny bugs [\#1360](https://github.com/alibaba/pouch/pull/1360) ([ZouRui89](https://github.com/ZouRui89))
+* Add CLI test for `pause` command and fix some tiny bugs [\#1360](https://github.com/alibaba/pouch/pull/1360) ([ZouRui89](https://github.com/ZouRui89))
 * Fix `TestRunWithPidsLimit` test case failed because no pids cgroup support [\#1353](https://github.com/alibaba/pouch/pull/1353) ([Ace-Tang](https://github.com/Ace-Tang))
-* Enhance cli related tests [\#1341](https://github.com/alibaba/pouch/pull/1341) ([Letty5411](https://github.com/Letty5411))
-* Fix `ps` command cli tests failed [\#1334](https://github.com/alibaba/pouch/pull/1334) ([HusterWan](https://github.com/HusterWan))
+* Enhance CLI related tests [\#1341](https://github.com/alibaba/pouch/pull/1341) ([Letty5411](https://github.com/Letty5411))
+* Fix `ps` command CLI tests failed [\#1334](https://github.com/alibaba/pouch/pull/1334) ([HusterWan](https://github.com/HusterWan))
 * Fix missing removal of container when test suit end [\#1327](https://github.com/alibaba/pouch/pull/1327) ([allencloud](https://github.com/allencloud))
 * Fix using existing image and fix shell format error [\#1313](https://github.com/alibaba/pouch/pull/1313) ([Letty5411](https://github.com/Letty5411))
 * Add `-race` flag to `go test` command to detect race [\#1294](https://github.com/alibaba/pouch/pull/1294) ([allencloud](https://github.com/allencloud))
