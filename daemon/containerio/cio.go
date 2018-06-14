@@ -116,7 +116,7 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 		}
 	}()
 
-	if fifos.In != "" {
+	if fifos.In != "" && ioset.in.(*ContainerIO) != nil {
 		if f, err = fifo.OpenFifo(ctx, fifos.In, syscall.O_WRONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
 			return nil, err
 		}
