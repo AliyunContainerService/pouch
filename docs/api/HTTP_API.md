@@ -243,7 +243,7 @@ Upgrade: tcp
 Connection: Upgrade
 ```
 
-The PouchContainer daemon will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
+The pouchd will respond with a `101 UPGRADED` response, and will similarly follow with the raw stream:
 
 ```
 HTTP/1.1 101 UPGRADED
@@ -2347,7 +2347,7 @@ The status of the container. For example, "running" or "exited".
 |**PouchRootDir**  <br>*optional*|Root directory of persistent PouchContainer state.<br><br>Defaults to `/var/lib/pouch` on Linux.  <br>**Example** : `"/var/lib/pouch"`|string|
 |**RegistryConfig**  <br>*optional*||[RegistryServiceConfig](#registryserviceconfig)|
 |**RuncCommit**  <br>*optional*||[Commit](#commit)|
-|**Runtimes**  <br>*optional*|List of [OCI compliant](https://github.com/opencontainers/runtime-spec)<br>runtimes configured on the daemon. Keys hold the "name" used to<br>reference the runtime.<br><br>The PouchContainer daemon relies on an OCI compliant runtime (invoked via the<br>`containerd` daemon) as its interface to the Linux kernel namespaces,<br>cgroups, and SELinux.<br><br>The default runtime is `runc`, and automatically configured. Additional<br>runtimes can be configured by the user and will be listed here.  <br>**Example** : `{<br>  "runc" : {<br>    "path" : "pouch-runc"<br>  },<br>  "runc-master" : {<br>    "path" : "/go/bin/runc"<br>  },<br>  "custom" : {<br>    "path" : "/usr/local/bin/my-oci-runtime",<br>    "runtimeArgs" : [ "--debug", "--systemd-cgroup=false" ]<br>  }<br>}`|< string, [Runtime](#runtime) > map|
+|**Runtimes**  <br>*optional*|List of [OCI compliant](https://github.com/opencontainers/runtime-spec)<br>runtimes configured on the daemon. Keys hold the "name" used to<br>reference the runtime.<br><br>The pouchd relies on an OCI compliant runtime (invoked via the<br>`containerd` daemon) as its interface to the Linux kernel namespaces,<br>cgroups, and SELinux.<br><br>The default runtime is `runc`, and automatically configured. Additional<br>runtimes can be configured by the user and will be listed here.  <br>**Example** : `{<br>  "runc" : {<br>    "path" : "pouch-runc"<br>  },<br>  "runc-master" : {<br>    "path" : "/go/bin/runc"<br>  },<br>  "custom" : {<br>    "path" : "/usr/local/bin/my-oci-runtime",<br>    "runtimeArgs" : [ "--debug", "--systemd-cgroup=false" ]<br>  }<br>}`|< string, [Runtime](#runtime) > map|
 |**SecurityOptions**  <br>*optional*|List of security features that are enabled on the daemon, such as<br>apparmor, seccomp, SELinux, and user-namespaces (userns).<br><br>Additional configuration options for each security feature may<br>be present, and are included as a comma-separated list of key/value<br>pairs.  <br>**Example** : `[ "name=apparmor", "name=seccomp,profile=default", "name=selinux", "name=userns" ]`|< string > array|
 |**ServerVersion**  <br>*optional*|Version string of the daemon.  <br>**Example** : `"17.06.0-ce"`|string|
 

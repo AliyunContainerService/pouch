@@ -10,7 +10,7 @@ Directory `/apis` mainly describes the second part **Pouchd's Raw API**. If taki
 
 * raw API definitions via [swagger.yml](swagger.yml);
 * API struct files in `/apis/types` which are used in restful API between PouchContainer Client and Server. 
-* API server implemented for PouchContainer daemon.
+* API server implemented for pouchd.
 
 ## Generated API Types
 
@@ -35,7 +35,7 @@ Let's us take an example:
 To finish this, we can simplify works to two parts:
 
 * define API path, including request method, request parameters, request content type and response status code, response body and so on;
-* define API structs used by both PouchContainer client and PouchContainer daemon.
+* define API structs used by both PouchContainer client and pouchd.
 
 For part one, we should add the following content in `paths`:
 
@@ -63,7 +63,7 @@ For part two, we need to add struct or object `SystemVersion` and `Error` in `de
     properties:
       Version:
         type: "string"
-        description: "version of PouchContainer Daemon"
+        description: "version of pouchd"
         example: "0.1.2"
       ApiVersion:
         type: "string"

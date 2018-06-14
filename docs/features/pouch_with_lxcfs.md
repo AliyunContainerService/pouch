@@ -52,7 +52,7 @@ Before experiencing LXCFS guaranteed resource view isolation, user needs to make
 
 With LXCFS mode enabled in pouchd, pouchd has extra ability to create containers which has isolated resource view. Besides this, pouchd is still capable to create general ones without resource view isolation.
 
-At last, `--enableLxcfs` flag in command `pouch run` is the only way to make LXCFS work for created containers under PouchContainer daemon which is already enabled LXCFS mode. Here we create a container with 200 MB memory limit on the host of 2 GB memory.
+At last, `--enableLxcfs` flag in command `pouch run` is the only way to make LXCFS work for created containers under pouchd which is already enabled LXCFS mode. Here we create a container with 200 MB memory limit on the host of 2 GB memory.
 
 ### Prerequisites
 

@@ -11,13 +11,13 @@ In order to run custom code provided by users which will be triggered at some po
 Above four points are organized by two Plugin interfaces, which are DaemonPlugin and ContainerPlugin, defined as follow:
 
 ```
-// DaemonPlugin defines in which place does pouch daemon support plugin
+// DaemonPlugin defines in which place does pouchd support plugin
 type DaemonPlugin interface {
-    // PreStartHook is invoked by pouch daemon before real start, in this hook user could start dfget proxy or other
+    // PreStartHook is invoked by pouchd before real start, in this hook user could start dfget proxy or other
     // standalone process plugins
     PreStartHook() error
 
-    // PreStopHook is invoked by pouch daemon before daemon process exit, not a promise if daemon is killed, in this
+    // PreStopHook is invoked by pouchd before daemon process exit, not a promise if daemon is killed, in this
     // hook user could stop the process or plugin started by PreStartHook
     PreStopHook() error
 }

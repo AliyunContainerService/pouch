@@ -2,7 +2,7 @@
 
 PouchContainer supports various monitoring metrics via [Prometheus](https://prometheus.io/). Now we already have the basic golang runtime and some api latency metrics. We plan to add more in the future in below two main areas:
 
-* Important PouchContainer daemon metrics
+* Important pouchd metrics
 * Full list of important api duration metrics
 
 ## How to add new metrics

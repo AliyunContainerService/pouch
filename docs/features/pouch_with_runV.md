@@ -89,7 +89,7 @@ cp build/{kernel,hyper-initrd.img} /var/lib/hyper/
 
 ## Start Hypervisor-based Container
 
-With runv related tools installed, we need to start PouchContainer daemon. Then we can create hypervisor-based container via command line tool `pouch`. The container created has an independent kernel isolated from host machine.
+With runv related tools installed, we need to start pouchd. Then we can create hypervisor-based container via command line tool `pouch`. The container created has an independent kernel isolated from host machine.
 
 We can create hypervisor-based container by adding a flag `--runtime` in create command. And we can also use `pouch ps` to list containers including hypervisor-based containers whose runtime type is `runv` and runc-based containerd whose runtime type is `runc`.
 

@@ -149,7 +149,7 @@ sudo rm -rf /var/lib/pouch
 ## Developer Quick-Start
 
 This guide provides step by step instructions to deploy PouchContainer on bare metal servers or virtual machines.
-As a developer, you may need to build and test PouchContainer binaries via source code. To build pouchd which is so-called "pouch daemon" and pouch which is so-called "pouch cli", the following build system dependencies are required:
+As a developer, you may need to build and test PouchContainer binaries via source code. To build pouchd which is so-called "PouchContainer Daemon" and pouch which is so-called "PouchContainer CLI", the following build system dependencies are required:
 
 * Linux Kernel 3.10+
 * Go 1.9.0+
@@ -186,7 +186,7 @@ More guide on experiencing PouchContainer with runV including runv Installation,
 
 ### PouchContainer Build and Installation
 
-With all prerequisites installed, you can build and install PouchContainer daemon and PouchContainer CLI. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
+With all prerequisites installed, you can build and install PouchContainer Daemon and PouchContainer CLI. Clone the repository and checkout whichever branch you like (in the following example, checkout branch master):
 
 ``` shell
 mkdir -p $GOPATH/src/github.com/alibaba/

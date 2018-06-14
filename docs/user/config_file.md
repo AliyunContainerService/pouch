@@ -1,13 +1,13 @@
 # Introducing
 
-Daemon config file is a entry for user to set flags for PouchContainer daemon. PouchContainer
-support two ways for users to pass flags to daemon, one is run PouchContainer daemon
+Daemon config file is a entry for user to set flags for pouchd. PouchContainer
+support two ways for users to pass flags to daemon, one is run pouchd
 directly with flags specified, like: `pouchd -c /var/run/containerd.sock`, the
 other one is using daemon config file, and of course, you can use them simultaneously.
 
 ## Support daemon flags
 
-We list some flags PouchContainer daemon supports, for the detail flags explanations, you
+We list some flags pouchd supports, for the detail flags explanations, you
 can find in [pouchd flags](https://github.com/alibaba/pouch/blob/master/docs/commandline/pouch.md).
 
 | Flag                  | Description                             |
@@ -15,7 +15,7 @@ can find in [pouchd flags](https://github.com/alibaba/pouch/blob/master/docs/com
 | `-c`, `--containerd`  | where does containerd listened on. |
 | `-l`, `--listen`      | which address to listen on.            |
 
-## Configuring PouchContainer daemon config file
+## Configuring pouchd config file
 
 We recommend users to set daemon flag through daemon config file, the default
 path to config file is `/etc/pouch/config.json`, you can change it by set
@@ -40,4 +40,4 @@ value of `--config-file`.
 }
 ```
 
-3. Start PouchContainer daemon.
+3. Start pouchd.
