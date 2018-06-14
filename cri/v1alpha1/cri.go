@@ -701,7 +701,34 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 
 // UpdateContainerResources updates ContainerConfig of the container.
 func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.UpdateContainerResourcesRequest) (*runtime.UpdateContainerResourcesResponse, error) {
-	return nil, fmt.Errorf("UpdateContainerResources Not Implemented Yet")
+	containerID := r.GetContainerId()
+	container, err := c.ContainerMgr.Get(ctx, containerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container %q: %v", containerID, err)
+	}
+
+	// cannot update container resource when it is in removing state
+	if container.IsRemoving() {
+		return nil, fmt.Errorf("cannot to update resource for container %q when it is in removing state", containerID)
+	}
+
+	resources := r.GetLinux()
+	updateConfig := &apitypes.UpdateConfig{
+		Resources: apitypes.Resources{
+			CPUPeriod:  resources.GetCpuPeriod(),
+			CPUQuota:   resources.GetCpuQuota(),
+			CPUShares:  resources.GetCpuShares(),
+			Memory:     resources.GetMemoryLimitInBytes(),
+			CpusetCpus: resources.GetCpusetCpus(),
+			CpusetMems: resources.GetCpusetMems(),
+		},
+	}
+	err = c.ContainerMgr.Update(ctx, containerID, updateConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update resource for container %q: %v", containerID, err)
+	}
+
+	return &runtime.UpdateContainerResourcesResponse{}, nil
 }
 
 // ExecSync executes a command in the container, and returns the stdout output.
