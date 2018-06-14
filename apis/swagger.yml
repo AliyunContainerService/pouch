@@ -551,6 +551,30 @@ paths:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
+  /containers/{id}/kill:
+    post:
+      summary: "Kill a container"
+      operationId: "ContainerKill"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "signal"
+          in: "query"
+          description: "signal to send to the container"
+          type: "string"
+          default: "SIGKILL"
+      responses:
+        204:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /containers/{id}/top:
     post:
       summary: "Display the running processes of a container"
