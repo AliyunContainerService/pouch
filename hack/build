@@ -38,7 +38,6 @@ function server()
     cd $BUILDPATH/src/github.com/alibaba/pouch
     echo "GOOS=linux $GOBUILD -o $BINARY_NAME"
     GOOS=linux $GOBUILD -ldflags "${GOLDFLAGS}" -o $BINARY_NAME -tags 'selinux'
-    [ -f $(which strip) ] && strip -s  $BINARY_NAME
 }
 
 function client()
@@ -46,7 +45,6 @@ function client()
     cd $BUILDPATH/src/github.com/alibaba/pouch
     echo "$GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli"
     $GOBUILD -o $CLI_BINARY_NAME github.com/alibaba/pouch/cli
-    [ -f $(which strip) ] && strip -s  $CLI_BINARY_NAME
 }
 
 #
