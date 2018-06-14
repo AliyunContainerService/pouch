@@ -1,8 +1,13 @@
 # Rich Container
 
-Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generalized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
+Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container. Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generalized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
 
 Rich container mode is not the default mode PouchContainer provides. It is an additional mode PouchContainer brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
+
+In a word, rich container can help enterprise to achieve the following two goals:
+
+* be compatible with legacy operating system;
+* still take advantanges of image concept to speed up application delivery.
 
 ## Scenario
 
@@ -11,6 +16,14 @@ Container technology and orchestration platforms have turned quite popular right
 Developers have their own programming style. Their work is to create useful applications, not to design absolute decoupled ones, so they usually take advantages of tools or system services to make it. When containerizing these applications, it is quite weak if only setting one application one process in container. Rich container mode finds out ways to make users configure the inner startup sequence of processes in container including application and system services around.
 
 Operators have a sacred duty to guard normal running of the applications. For the sake of business running in applications, technology must show enough respect for operator's tradition. Environment change is not a good message when debugging and solving issue online. Rich container mode can ensure that environment in rich container in totally the same as that in traditional VM or physical machine. If operator needs some system tools, they are located there still. If some pre and post hooks should take effect, just set them when starting rich containers. If some issues happen inside, system services started by rich container can fix them just like self-healing.
+
+## Architecture
+
+Rich container mode is compatible with the legacy operation ways for operation team. The following architecture graph shows how to achieve this:
+
+![pouch_with_rich_container](../static_files/pouch_with_rich_container.png)
+
+To be more detailed, rich container promises to be compatible with oci-compatible image. When running a rich container, pouchd would take image filesystem as the rootfs of rich container itself. In the runtime of inner container, besides inner applications and system servcies, there are also some hooks like prestart hook and poststop hook. The previous one focuses on how to prepare or intialize the environment before systemd and related process run. And the latter one is almost on cleanup work when container stops.
 
 ## Get started
 
@@ -32,25 +45,23 @@ Here is a simple example for rich container mode using dumb-init to init contain
 
 1. Install dumb-init as following:
 
-    ```shell
-    # wget -O /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64
-    # chmod +x /usr/bin/dumb-init
-
-    ```
+```shell
+# wget -O /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64
+# chmod +x /usr/bin/dumb-init
+```
 
 2. Run a container with rich mode:
 
-    ```shell
-    #pouch run -d --rich --rich-mode dumb-init registry.hub.docker.com/library/busybox:latest sleep 10000
-    f76ac1e49e9407caf5ad33c8988b44ff3690c12aa98f7faf690545b16f2a5cbd
+```shell
+#pouch run -d --rich --rich-mode dumb-init registry.hub.docker.com/library/busybox:latest sleep 10000
+f76ac1e49e9407caf5ad33c8988b44ff3690c12aa98f7faf690545b16f2a5cbd
 
-        #pouch exec f76ac1e49e9407caf5ad33c8988b44ff3690c12aa98f7faf690545b16f2a5cbd ps -ef
-        PID   USER     TIME  COMMAND
-        1 root      0:00 /usr/bin/dumb-init -- sleep 10000
-        7 root      0:00 sleep 10000
-        8 root      0:00 ps -ef
-
-    ```
+#pouch exec f76ac1e49e9407caf5ad33c8988b44ff3690c12aa98f7faf690545b16f2a5cbd ps -ef
+PID   USER     TIME  COMMAND
+1 root      0:00 /usr/bin/dumb-init -- sleep 10000
+7 root      0:00 sleep 10000
+8 root      0:00 ps -ef
+```
 
 ### Using systemd or sbin-init
 
@@ -59,42 +70,41 @@ As shown below, centos image has both of them.
 Also `--privileged` is required in this situation. An example of systemd and sbin-init is as following:
 
 ```
-    #cat /tmp/1.sh
-    #! /bin/sh
-    echo $(cat) >/tmp/xxx
+#cat /tmp/1.sh
+#! /bin/sh
+echo $(cat) >/tmp/xxx
 
-    #pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode systemd --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
-    3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63
+#pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode systemd --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
+3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63
 
-    #pouch exec 3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63 ps aux
-    USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root          1  7.4  0.0  42968  3264 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd
-    root         17  0.0  0.0  10752   756 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-readahead collect
-    root         18  3.2  0.0  32740  2908 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-journald
-    root         34  0.0  0.0  22084  1456 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-logind
-    root         36  0.0  0.0   7724   608 ?        Ss   05:29   0:00 /usr/bin/sleep 10000
-    dbus         37  0.0  0.0  24288  1604 ?        Ss   05:29   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
-    root         45  0.0  0.0  47452  1676 ?        Rs   05:29   0:00 ps aux
+#pouch exec 3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63 ps aux
+USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root          1  7.4  0.0  42968  3264 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd
+root         17  0.0  0.0  10752   756 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-readahead collect
+root         18  3.2  0.0  32740  2908 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-journald
+root         34  0.0  0.0  22084  1456 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-logind
+root         36  0.0  0.0   7724   608 ?        Ss   05:29   0:00 /usr/bin/sleep 10000
+dbus         37  0.0  0.0  24288  1604 ?        Ss   05:29   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+root         45  0.0  0.0  47452  1676 ?        Rs   05:29   0:00 ps aux
 
-    #cat /tmp/xxx
-    {"ociVersion":"1.0.0","id":"3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63","status":"","pid":125745,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63"}
+#cat /tmp/xxx
+{"ociVersion":"1.0.0","id":"3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63","status":"","pid":125745,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63"}
 
-    #pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode sbin-init --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
-    c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f
+#pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode sbin-init --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
+c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f
 
-    #pouch exec c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f ps aux
-    USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root          1  7.4  0.0  42968  3260 ?        Ss   05:30   0:00 /sbin/init
-    root         17  0.0  0.0  10752   752 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-readahead collect
-    root         20  3.2  0.0  32740  2952 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-journald
-    root         34  0.0  0.0  22084  1452 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-logind
-    root         35  0.0  0.0   7724   612 ?        Ss   05:30   0:00 /usr/bin/sleep 10000
-    dbus         36  0.0  0.0  24288  1608 ?        Ss   05:30   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
-    root         45  0.0  0.0  47452  1676 ?        Rs   05:30   0:00 ps aux
+#pouch exec c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f ps aux
+USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root          1  7.4  0.0  42968  3260 ?        Ss   05:30   0:00 /sbin/init
+root         17  0.0  0.0  10752   752 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-readahead collect
+root         20  3.2  0.0  32740  2952 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-journald
+root         34  0.0  0.0  22084  1452 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-logind
+root         35  0.0  0.0   7724   612 ?        Ss   05:30   0:00 /usr/bin/sleep 10000
+dbus         36  0.0  0.0  24288  1608 ?        Ss   05:30   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+root         45  0.0  0.0  47452  1676 ?        Rs   05:30   0:00 ps aux
 
-    #cat /tmp/xxx
-    {"ociVersion":"1.0.0","id":"c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f","status":"","pid":127183,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f"}
-
+#cat /tmp/xxx
+{"ociVersion":"1.0.0","id":"c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f","status":"","pid":127183,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f"}
 ```
 
 ## Underlying Implementation
