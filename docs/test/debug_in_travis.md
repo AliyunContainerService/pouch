@@ -1,6 +1,6 @@
 # Introduction
 
-Pouch uses [Travis](https://travis-ci.com/) as the Continuous Integration tool. Sometimes, tests may pass on local machine while fail on Travis environment. Debug in Travis is provided.
+PouchContainer uses [Travis](https://travis-ci.com/) as the Continuous Integration tool. Sometimes, tests may pass on local machine while fail on Travis environment. Debug in Travis is provided.
 This document will give a simple instruction about debugging in Travis.
 
 ## Turn on debug feature
