@@ -49,6 +49,7 @@ func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 	}
 
 	errChan := make(chan error, 2)
+	defer close(errChan)
 	go func() {
 		errChan <- service.Serve()
 		logrus.Infof("CRI GRPC server stopped")
@@ -84,6 +85,7 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 	}
 
 	errChan := make(chan error, 2)
+	defer close(errChan)
 	go func() {
 		errChan <- service.Serve()
 		logrus.Infof("CRI GRPC server stopped")
