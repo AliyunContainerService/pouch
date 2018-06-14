@@ -2,7 +2,7 @@
 
 Rich container is a very useful container mode when containerizing applications. This mode helps technical staff to complete packaging fat applications almost with no effort. It provides efficient ways to equip more basic software or system services except for target application in a single container . Then applications in containers could be running as smoothly as usual in VM or physical machine. This is a more generalized application-centric mode. This mode brings no invasiveness at all to both developers and operators. Especially for operators, they could have abilities to maintain applications in container with all essential tools or service processes they may need as usual.
 
-Rich container mode is not the default mode Pouch provides. It is an additional mode pouch brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
+Rich container mode is not the default mode PouchContainer provides. It is an additional mode PouchContainer brings to extend users' container experience. Users can still manage ordinary containers by switching rich container flag off.
 
 ## Scenario
 
@@ -14,15 +14,15 @@ Operators have a sacred duty to guard normal running of the applications. For th
 
 ## Get started
 
-Users can start rich container mode in Pouch quite easily. Provided that we need to running an ordinary image in rich container mode via Pouch, there are only two flags we may add: `--rich`,`--rich-mode`and `--initscript`. Here are more description about both flags:
+Users can start rich container mode in PouchContainer quite easily. Provided that we need to running an ordinary image in rich container mode via PouchContainer, there are only two flags we may add: `--rich`,`--rich-mode`and `--initscript`. Here are more description about both flags:
 
 * `--rich`: identifies whether to switch on rich container mode or not. This flag has a type of `boolean`, and the default value is `false`.
 * `--rich-mode`: select which manner to init container, currently systemd, /sbin/init and dumb-init are supported. By default, it is dumb-init.
-* `--initscript`: identifies initial script executed in container. The script will be executed before entrypoint or command. Sometimes, it is called prestart hook. Lots of work can be done in this prestart hook, such as environment checking, environment preparation, network routes preparation, all kinds of agent settings, security setting and so on. This initscript may fail and user gets an related error message, if pouch daemon cannot find this initscript in container's filesystem which is provided by the rootfs constructed from image and potential mount volumes actually outside the container. If initscript works fine, the control of container process would be taken over by process pid 1, mainly `/sbin/init` or `dumbinit`.
+* `--initscript`: identifies initial script executed in container. The script will be executed before entrypoint or command. Sometimes, it is called prestart hook. Lots of work can be done in this prestart hook, such as environment checking, environment preparation, network routes preparation, all kinds of agent settings, security setting and so on. This initscript may fail and user gets an related error message, if PouchContainer daemon cannot find this initscript in container's filesystem which is provided by the rootfs constructed from image and potential mount volumes actually outside the container. If initscript works fine, the control of container process would be taken over by process pid 1, mainly `/sbin/init` or `dumbinit`.
 
-In fact, pouch team plans to add another flag `--initcmd` to make users input prestart hook. Actually it is a simplified one of `--initscript`. Meanwhile it brings more convenience than `--initscript`. `--initcmd` can set any command as user's wish, and things do not need to be located in image in advance. We can say command is decoupled with image. But for `--initscript`, script file must be located in image first. It is some kind of coupling.
+In fact, PouchContainer team plans to add another flag `--initcmd` to make users input prestart hook. Actually it is a simplified one of `--initscript`. Meanwhile it brings more convenience than `--initscript`. `--initcmd` can set any command as user's wish, and things do not need to be located in image in advance. We can say command is decoupled with image. But for `--initscript`, script file must be located in image first. It is some kind of coupling.
 
-If user specifies `--rich` flag and no `--initscript` flag is provided, rich container mode will still be enabled, but no initscript will be executed. If `-rich` flag misses in command line, while `--initscript` is there, Pouch CLI or pouch daemon will return an error to show that `--initscipt` can only be used along with `--rich` flag.
+If user specifies `--rich` flag and no `--initscript` flag is provided, rich container mode will still be enabled, but no initscript will be executed. If `-rich` flag misses in command line, while `--initscript` is there, PouchContainer CLI or PouchContainer daemon will return an error to show that `--initscipt` can only be used along with `--rich` flag.
 
 If a container is running with `--rich` flag, then every start or restart of this container will trigger the corresponding initscipt if there is any.
 
