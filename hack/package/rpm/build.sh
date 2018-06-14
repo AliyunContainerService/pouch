@@ -41,7 +41,7 @@ function build_lxcfs ()
     git clone -b "$LXC_BRANCH" https://github.com/lxc/lxcfs.git && cd lxcfs
     
     # change liblxcfs.so to libpouchlxcfs.so
-    sed -i 's/liblxcfs/libpouchlxcfs/g' "$(grep -r "liblxcfs" . |awk -F':' '{print $1}'|uniq )"
+    grep -l -r "liblxcfs" . | xargs sed -i 's/liblxcfs/libpouchlxcfs/g'
     ./bootstrap.sh > /dev/null 2>&1
     ./configure > /dev/null 2>&1
     make install DESTDIR="$LXC_DIR" > /dev/null 2>&1
