@@ -52,7 +52,7 @@ func (suite *PouchKillSuite) TestKillWorks(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 
-	c.Assert(string(result[0].State.Status), check.Equals, "exited")
+	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
 }
 
 // TestKillContainerWithSignal is to verify the correctness of sending signal to a container.
