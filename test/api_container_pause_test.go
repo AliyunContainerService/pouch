@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -33,48 +32,26 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	// add state check
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	got := types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
-
-	c.Assert(string(got.State.Status), check.Equals, "paused")
+	// TODO: Add state check
 
 	resp, err = request.Post("/containers/" + cname + "/unpause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	// add state check
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	got = types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
-
-	c.Assert(string(got.State.Status), check.Equals, "running")
-
 	DelContainerForceMultyTime(c, cname)
 }
 
-// TestPauseNonExistingContainer tests pause a non-existing container return 404.
-func (suite *APIContainerPauseSuite) TestPauseNonExistingContainer(c *check.C) {
-	cname := "TestPauseNonExistingContainer"
+// TestNonExistingContainer tests pause a non-existing container return 404.
+func (suite *APIContainerPauseSuite) TestNonExistingContainer(c *check.C) {
+	cname := "TestNonExistingContainer"
 	resp, err := request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
 }
 
-// TestPauseUnpauseNotRunningContainer tests pausing/unpausing a non-running container will return error.
-func (suite *APIContainerPauseSuite) TestPauseUnpauseNotRunningContainer(c *check.C) {
-	cname := "TestPauseUnpauseNotRunningContainer"
+// TestNotRunningContainer tests pausing a non-running container will return error.
+func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
+	cname := "TestNotRunningContainer"
 	CreateBusyboxContainerOk(c, cname)
 
 	resp, err := request.Post("/containers/" + cname + "/pause")

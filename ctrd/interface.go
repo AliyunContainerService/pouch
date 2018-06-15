@@ -39,12 +39,10 @@ type ContainerAPIClient interface {
 	ContainerPID(ctx context.Context, id string) (int, error)
 	// ExecContainer executes a process in container.
 	ExecContainer(ctx context.Context, process *Process) error
-	// RecoverContainer reloads the container from metadata and watch it, if program be restarted.
+	// RecoverContainer reload the container from metadata and watch it, if program be restarted.
 	RecoverContainer(ctx context.Context, id string, io *containerio.IO) error
-	// PauseContainer pauses container.
+	// PauseContainer pause container.
 	PauseContainer(ctx context.Context, id string) error
-	// KillContainer sends signal to container.
-	KillContainer(ctx context.Context, id string, sig int) (*Message, error)
 	// UnpauseContainer unpauses a container.
 	UnpauseContainer(ctx context.Context, id string) error
 	// ResizeContainer changes the size of the TTY of the init process running
