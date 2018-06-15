@@ -34,7 +34,6 @@ type ContainerAPIClient interface {
 	ContainerRestart(ctx context.Context, name string, timeout string) error
 	ContainerPause(ctx context.Context, name string) error
 	ContainerUnpause(ctx context.Context, name string) error
-	ContainerKill(ctx context.Context, name, signal string) error
 	ContainerUpdate(ctx context.Context, name string, config *types.UpdateConfig) error
 	ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error
 	ContainerTop(ctx context.Context, name string, arguments []string) (types.ContainerProcessList, error)

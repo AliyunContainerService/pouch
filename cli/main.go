@@ -21,7 +21,6 @@ func main() {
 	cli.AddCommand(base, &PsCommand{})
 	cli.AddCommand(base, &RmCommand{})
 	cli.AddCommand(base, &RestartCommand{})
-	cli.AddCommand(base, &KillCommand{})
 	cli.AddCommand(base, &ExecCommand{})
 	cli.AddCommand(base, &VersionCommand{})
 	cli.AddCommand(base, &InfoCommand{})
