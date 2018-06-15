@@ -1354,7 +1354,7 @@ func (mgr *ContainerManager) Kill(ctx context.Context, name string, sig int) err
 
 	// the container has been stopped by client signal, we should mark and clean up this container
 	if msg != nil {
-		return mgr.exitedAndRelease(c.ID, msg)
+		return mgr.markStoppedAndRelease(c, msg)
 	}
 	return nil
 }

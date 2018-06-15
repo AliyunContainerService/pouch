@@ -562,47 +562,22 @@ func (c *Client) KillContainer(ctx context.Context, id string, sig int) (*Messag
 		return nil, fmt.Errorf("failed to send signal %d to container %s: %v", sig, id, err)
 	}
 
-	// if container task has been stopped, we should wait container and task to be totally deleted
-	time.Sleep(10 * time.Millisecond)
+	var msg *Message
+	waitExit := func() *Message {
+		// FIXME: This wait for timeout process consumes too much time
+		return c.ProbeContainer(ctx, id, time.Duration(1000)*time.Millisecond)
+	}
 
-	lc, err := wrapperCli.client.LoadContainer(ctx, id)
+	msg = waitExit()
+	err = msg.RawError()
 	if err != nil {
+		// the container task is still running after receiving client signal
+		if errtypes.IsTimeout(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	var (
-		status  containerd.Status
-		deleted bool
-	)
-
-	task, err := lc.Task(ctx, nil)
-	// the container task has been deleted
-	if err != nil {
-		if errdefs.IsNotFound(err) {
-			deleted = true
-		} else {
-			return nil, err
-		}
-	} else {
-		// the container task isn't deleted, we could get task's status
-		status, err = task.Status(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	waitExit := func() *Message {
-		return c.ProbeContainer(ctx, id, time.Duration(10)*time.Second)
-	}
-
-	// if the container task has been deleted or container status is stopped, we could clean up this container
-	if deleted || status.Status == containerd.Stopped {
-		msg := waitExit()
-		if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
-			return nil, err
-		}
-		return msg, c.watch.remove(ctx, id)
-	}
-	// the container is still running after receiving signal
-	return nil, nil
+	// the container task has been deleted after receiving client signal
+	return msg, c.watch.remove(ctx, id)
 }

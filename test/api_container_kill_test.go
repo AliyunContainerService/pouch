@@ -48,7 +48,7 @@ func (suite *APIContainerKillSuite) TestKillOk(c *check.C) {
 	err = request.DecodeBody(&got, resp.Body)
 	c.Assert(err, check.IsNil)
 
-	c.Assert(string(got.State.Status), check.Equals, "exited")
+	c.Assert(string(got.State.Status), check.Equals, "stopped")
 
 	DelContainerForceMultyTime(c, cname)
 }
