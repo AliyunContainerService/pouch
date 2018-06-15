@@ -44,11 +44,11 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.Uint16Var(&uc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Int64Var(&uc.cpuperiod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]")
 	flagSet.Int64Var(&uc.cpushare, "cpu-share", 0, "CPU shares (relative weight)")
+	flagSet.Int64Var(&uc.cpuquota, "cpu-quota", 0, "Limit CPU CFS (Completely Fair Scheduler) quota")
 	flagSet.StringVar(&uc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
 	flagSet.StringVar(&uc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")
 	flagSet.StringVarP(&uc.memory, "memory", "m", "", "Container memory limit")
 	flagSet.StringVar(&uc.memorySwap, "memory-swap", "", "Container swap limit")
-	flagSet.Int64Var(&uc.memorySwappiness, "memory-swappiness", -1, "Container memory swappiness [0, 100]")
 	flagSet.StringSliceVarP(&uc.env, "env", "e", nil, "Set environment variables for container")
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
@@ -59,16 +59,6 @@ func (uc *UpdateCommand) addFlags() {
 func (uc *UpdateCommand) updateRun(args []string) error {
 	container := args[0]
 	ctx := context.Background()
-
-	// UpdateConfig.Label's type change to []string
-	// labels, err := opts.ParseLabels(uc.labels)
-	// if err != nil {
-	// 	return err
-	// }
-
-	if err := opts.ValidateMemorySwappiness(uc.memorySwappiness); err != nil {
-		return err
-	}
 
 	memory, err := opts.ParseMemory(uc.memory)
 	if err != nil {
@@ -81,14 +71,14 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 	}
 
 	resource := types.Resources{
-		CPUPeriod:        uc.cpuperiod,
-		CPUShares:        uc.cpushare,
-		CpusetCpus:       uc.cpusetcpus,
-		CpusetMems:       uc.cpusetmems,
-		Memory:           memory,
-		MemorySwap:       memorySwap,
-		MemorySwappiness: &uc.memorySwappiness,
-		BlkioWeight:      uc.blkioWeight,
+		CPUPeriod:   uc.cpuperiod,
+		CPUShares:   uc.cpushare,
+		CPUQuota:    uc.cpuquota,
+		CpusetCpus:  uc.cpusetcpus,
+		CpusetMems:  uc.cpusetmems,
+		Memory:      memory,
+		MemorySwap:  memorySwap,
+		BlkioWeight: uc.blkioWeight,
 	}
 
 	restartPolicy, err := opts.ParseRestartPolicy(uc.restartPolicy)
