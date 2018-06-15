@@ -239,6 +239,11 @@ func validateConfig(config *types.ContainerConfig, hostConfig *types.HostConfig,
 	if hostConfig.OomScoreAdj < -1000 || hostConfig.OomScoreAdj > 1000 {
 		return warnings, fmt.Errorf("oom score should be in range [-1000, 1000]")
 	}
+
+	if hostConfig.ShmSize != nil && *hostConfig.ShmSize < 0 {
+		return warnings, fmt.Errorf("shm-size %d should greater than 0", *hostConfig.ShmSize)
+	}
+
 	// TODO: add more validate here
 	return warnings, nil
 }
