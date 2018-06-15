@@ -386,10 +386,13 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// validate container Config
-	warnings, err := validateConfig(config)
+	warnings, err := validateConfig(&config.ContainerConfig, config.HostConfig, false)
 	if err != nil {
 		return nil, err
 	}
+
+	// amendContainerSettings modify container config settings to wanted
+	amendContainerSettings(&config.ContainerConfig, config.HostConfig)
 
 	// store disk
 	if err := container.Write(mgr.Store); err != nil {
@@ -849,6 +852,14 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
+	}
+
+	warnings, err := validateResource(&config.Resources, true)
+	if err != nil {
+		return err
+	}
+	if len(warnings) != 0 {
+		logrus.Warnf("warnings update %s: %v", name, warnings)
 	}
 
 	restore := false

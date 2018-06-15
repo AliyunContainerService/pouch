@@ -20,6 +20,59 @@ var (
 	// GCExecProcessTick is the time interval to trigger gc unused exec config,
 	// time unit is minute.
 	GCExecProcessTick = 5
+
+	// MinMemory is minimal memory container should has
+	MinMemory int64 = 4194304
+)
+
+var (
+	// MemoryWarn is warning for flag --memory
+	MemoryWarn = "Current Kernel does not support memory limit, discard --memory"
+
+	// MemorySwapWarn is warning for flag --memory-swap
+	MemorySwapWarn = "Current Kernel does not support memory swap, discard --memory-swap"
+
+	// MemorySwappinessWarn is warning for flag --memory-swappiness
+	MemorySwappinessWarn = "Current Kernel does not support memory swappiness , discard --memory-swappiness"
+
+	//OOMKillWarn is warning for flag --oom-kill-disable
+	OOMKillWarn = "Current Kernel does not support disable oom kill, discard --oom-kill-disable"
+
+	// CpusetCpusWarn is warning for flag --cpuset-cpus
+	CpusetCpusWarn = "Current Kernel does not support cpuset cpus, discard --cpuset-cpus"
+
+	// CpusetMemsWarn is warning for flag --cpuset-mems
+	CpusetMemsWarn = "Current Kernel does not support cpuset mems, discard --cpuset-mems"
+
+	// CPUSharesWarn is warning for flag --cpu-shares
+	CPUSharesWarn = "Current Kernel does not support cpu shares, discard --cpu-shares"
+
+	// CPUQuotaWarn is warning for flag --cpu-quota
+	CPUQuotaWarn = "Current Kernel does not support cpu quota, discard --cpu-quota"
+
+	// CPUPeriodWarn is warning for flag --cpu-period
+	CPUPeriodWarn = "Current Kernel does not support cpu period, discard --cpu-period"
+
+	// BlkioWeightWarn is warning for flag --blkio-weight
+	BlkioWeightWarn = "Current Kernel does not support blkio weight, discard --blkio-weight"
+
+	// BlkioWeightDeviceWarn is warning for flag --blkio-weight-device
+	BlkioWeightDeviceWarn = "Current Kernel does not support blkio weight device, discard --blkio-weight-device"
+
+	// BlkioDeviceReadBpsWarn is warning for flag --device-read-bps
+	BlkioDeviceReadBpsWarn = "Current Kernel does not support blkio device throttle read bps, discard --device-read-bps"
+
+	// BlkioDeviceWriteBpsWarn is warning for flag --device-write-bps
+	BlkioDeviceWriteBpsWarn = "Current Kernel does not support blkio device throttle write bps, discard --device-write-bps"
+
+	// BlkioDeviceReadIOpsWarn is warning for flag --device-read-iops
+	BlkioDeviceReadIOpsWarn = "Current Kernel does not support blkio device throttle read iops, discard --device-read-iops"
+
+	// BlkioDeviceWriteIOpsWarn is warning for flag --device-write-iops
+	BlkioDeviceWriteIOpsWarn = "Current Kernel does not support blkio device throttle, discard --device-write-iops"
+
+	// PidsLimitWarn is warning for flag --pids-limit
+	PidsLimitWarn = "Current Kernel does not support pids cgroup, discard --pids-limit"
 )
 
 const (
