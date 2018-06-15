@@ -110,10 +110,14 @@ func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
 }
 
 // SetStatusExited sets a container to be status exited.
-func (c *Container) SetStatusExited() {
+func (c *Container) SetStatusExited(exitCode int64, errMsg string) {
 	c.Lock()
 	defer c.Unlock()
 	c.State.Status = types.StatusExited
+	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
+	c.State.Pid = -1
+	c.State.ExitCode = exitCode
+	c.State.Error = errMsg
 }
 
 // SetStatusPaused sets a container to be status paused.
