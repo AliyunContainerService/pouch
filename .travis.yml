@@ -5,7 +5,7 @@ language: go
 go:
   - 1.9.1
 
-go_import_path: github.com/alibaba/pouch
+go_import_path: github.com/ZouRui89/pouch
 
 notifications:
   webhooks:
