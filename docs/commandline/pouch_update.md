@@ -26,19 +26,19 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
 ### Options
 
 ```
-      --blkio-weight uint16     Block IO (relative weight), between 10 and 1000, or 0 to disable
-      --cpu-period int          Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
-      --cpu-share int           CPU shares (relative weight)
-      --cpuset-cpus string      CPUs in cpuset
-      --cpuset-mems string      MEMs in cpuset
-  -e, --env strings             Set environment variables for container
-  -h, --help                    help for update
-  -l, --label strings           Set label for container
-  -m, --memory string           Container memory limit
-      --memory-swap string      Container swap limit
-      --memory-swappiness int   Container memory swappiness [0, 100] (default -1)
-      --quota string            Update disk quota for container
-      --restart string          Restart policy to apply when container exits
+      --blkio-weight uint16   Block IO (relative weight), between 10 and 1000, or 0 to disable
+      --cpu-period int        Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
+      --cpu-quota int         Limit CPU CFS (Completely Fair Scheduler) quota
+      --cpu-share int         CPU shares (relative weight)
+      --cpuset-cpus string    CPUs in cpuset
+      --cpuset-mems string    MEMs in cpuset
+  -e, --env strings           Set environment variables for container
+  -h, --help                  help for update
+  -l, --label strings         Set label for container
+  -m, --memory string         Container memory limit
+      --memory-swap string    Container swap limit
+      --quota string          Update disk quota for container
+      --restart string        Restart policy to apply when container exits
 ```
 
 ### Options inherited from parent commands
