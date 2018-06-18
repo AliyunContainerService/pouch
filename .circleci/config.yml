@@ -57,8 +57,6 @@ jobs:
 notify:
     webhooks:
       - url: http://121.201.63.16:6788/circleci_notifications
-      - on_failure: always
-      - on_error: always
 
 workflows:
   version: 2
