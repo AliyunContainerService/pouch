@@ -191,11 +191,12 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APICli
 func (mgr *ContainerManager) Restore(ctx context.Context) error {
 	fn := func(obj meta.Object) error {
 		container, ok := obj.(*Container)
-		id := container.ID
 		if !ok {
 			// object has not type of Container
 			return nil
 		}
+
+		id := container.ID
 
 		// map container's name to id.
 		mgr.NameToID.Put(container.Name, id)
@@ -209,7 +210,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		}
 
 		// recover the running or paused container.
-		io, err := mgr.openContainerIO(id, container.Config.OpenStdin)
+		io, err := mgr.openContainerIO(container)
 		if err != nil {
 			logrus.Errorf("failed to recover container: %s,  %v", id, err)
 		}
@@ -304,9 +305,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		}
 	}
 
-	// FIXME(fuwei): only support LogConfig is json-file right now
-	config.HostConfig.LogConfig = &types.LogConfig{
-		LogDriver: types.LogConfigLogDriverJSONFile,
+	// set default log driver and validate for logger driver
+	if config.HostConfig.LogConfig == nil {
+		config.HostConfig.LogConfig = &types.LogConfig{
+			LogDriver: types.LogConfigLogDriverJSONFile,
+		}
 	}
 
 	container := &Container{
@@ -321,6 +324,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
+	}
+
+	// validate log config
+	if err := mgr.validateLogConfig(container); err != nil {
+		return nil, err
 	}
 
 	// parse volume config
@@ -592,7 +600,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 
 	// open container's stdio.
-	io, err := mgr.openContainerIO(c.ID, c.Config.OpenStdin)
+	io, err := mgr.openContainerIO(c)
 	if err != nil {
 		return errors.Wrap(err, "failed to open io")
 	}
@@ -801,7 +809,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 		return err
 	}
 
-	_, err = mgr.openAttachIO(c.ID, attach)
+	_, err = mgr.openAttachIO(c, attach)
 	if err != nil {
 		return err
 	}
@@ -1568,23 +1576,22 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	return nil
 }
 
-func (mgr *ContainerManager) openContainerIO(id string, stdin bool) (*containerio.IO, error) {
-	if io := mgr.IOs.Get(id); io != nil {
+func (mgr *ContainerManager) openContainerIO(c *Container) (*containerio.IO, error) {
+	if io := mgr.IOs.Get(c.ID); io != nil {
 		return io, nil
 	}
 
-	root := mgr.Store.Path(id)
+	logInfo := mgr.convContainerToLoggerInfo(c)
 	options := []func(*containerio.Option){
-		containerio.WithID(id),
-		containerio.WithRootDir(root),
-		containerio.WithJSONFile(),
-		containerio.WithStdin(stdin),
+		containerio.WithID(c.ID),
+		containerio.WithLoggerInfo(logInfo),
+		containerio.WithStdin(c.Config.OpenStdin),
 	}
 
+	options = append(options, logOptionsForContainerio(c)...)
+
 	io := containerio.NewIO(containerio.NewOption(options...))
-
-	mgr.IOs.Put(id, io)
-
+	mgr.IOs.Put(c.ID, io)
 	return io, nil
 }
 
@@ -1655,6 +1662,7 @@ func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *Co
 	return mgr.updateNetworkConfig(container, networkIDOrName, endpoint.EndpointConfig)
 }
 
+// FIXME: remove this useless functions
 func (mgr *ContainerManager) updateNetworkSettings(container *Container, n libnetwork.Network) error {
 	if container.NetworkSettings == nil {
 		container.NetworkSettings = &types.NetworkSettings{Networks: make(map[string]*types.EndpointSettings)}
@@ -1707,19 +1715,17 @@ func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*conta
 	}
 
 	io := containerio.NewIO(containerio.NewOption(options...))
-
 	mgr.IOs.Put(id, io)
-
 	return io, nil
 }
 
-func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*containerio.IO, error) {
-	rootDir := mgr.Store.Path(id)
+func (mgr *ContainerManager) openAttachIO(c *Container, attach *AttachConfig) (*containerio.IO, error) {
+	logInfo := mgr.convContainerToLoggerInfo(c)
 	options := []func(*containerio.Option){
-		containerio.WithID(id),
-		containerio.WithRootDir(rootDir),
-		containerio.WithJSONFile(),
+		containerio.WithID(c.ID),
+		containerio.WithLoggerInfo(logInfo),
 	}
+	options = append(options, logOptionsForContainerio(c)...)
 
 	if attach != nil {
 		options = append(options, attachConfigToOptions(attach)...)
@@ -1728,15 +1734,13 @@ func (mgr *ContainerManager) openAttachIO(id string, attach *AttachConfig) (*con
 		options = append(options, containerio.WithDiscard())
 	}
 
-	io := mgr.IOs.Get(id)
+	io := mgr.IOs.Get(c.ID)
 	if io != nil {
 		io.AddBackend(containerio.NewOption(options...))
 	} else {
 		io = containerio.NewIO(containerio.NewOption(options...))
 	}
-
-	mgr.IOs.Put(id, io)
-
+	mgr.IOs.Put(c.ID, io)
 	return io, nil
 }
 

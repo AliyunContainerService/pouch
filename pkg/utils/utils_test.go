@@ -517,3 +517,54 @@ func TestParseTimestamp(t *testing.T) {
 		}
 	}
 }
+
+func TestConvertKVStringsToMap(t *testing.T) {
+	type tCases struct {
+		input    []string
+		expected map[string]string
+		hasError bool
+	}
+
+	for idx, tc := range []tCases{
+		{
+			input:    nil,
+			expected: map[string]string{},
+			hasError: false,
+		}, {
+			input:    []string{"withoutValue"},
+			expected: nil,
+			hasError: true,
+		}, {
+			input: []string{"key=value"},
+			expected: map[string]string{
+				"key": "value",
+			},
+			hasError: false,
+		}, {
+			input: []string{"key=key=value"},
+			expected: map[string]string{
+				"key": "key=value",
+			},
+			hasError: false,
+		}, {
+			input: []string{"test=1", "flag=oops", "test=2"},
+			expected: map[string]string{
+				"test": "2",
+				"flag": "oops",
+			},
+			hasError: false,
+		},
+	} {
+		got, err := ConvertKVStringsToMap(tc.input)
+		if err == nil && tc.hasError {
+			t.Fatalf("[%d case] should have error here, but got nothing", idx)
+		}
+		if err != nil && !tc.hasError {
+			t.Fatalf("[%d case] should have no error here, but got error(%v)", idx, err)
+		}
+
+		if !reflect.DeepEqual(got, tc.expected) {
+			t.Fatalf("[%d case] should have (%v), but got (%v)", idx, tc.expected, got)
+		}
+	}
+}

@@ -47,6 +47,23 @@ func (suite *APIContainerLogsSuite) TestNoSuchContainer(c *check.C) {
 	CheckRespStatus(c, resp, http.StatusNotFound)
 }
 
+// TestOnlySupportForJSONFile tests for non-jsonfile log driver.
+func (suite *APIContainerLogsSuite) TestOnlySupportForJSONFile(c *check.C) {
+	name := "logs_with_none_driver"
+	command.PouchRun("run", "--log-driver", "none", "-d", "--name", name, busyboxImage, "ls").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	resp, err := request.Get(fmt.Sprintf("/containers/%s/logs", name),
+		request.WithQuery(
+			url.Values(map[string][]string{
+				"stdout": {"1"},
+			}),
+		),
+	)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, http.StatusBadRequest)
+}
+
 // TestNoShowStdoutAndShowStderr tests logs API without ShowStderr and
 // ShowStdout should return 401.
 func (suite *APIContainerLogsSuite) TestNoShowStdoutAndShowStderr(c *check.C) {

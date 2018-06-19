@@ -72,6 +72,10 @@ type container struct {
 	ulimit         Ulimit
 	pidsLimit      int64
 
+	// log driver and log option
+	logDriver string
+	logOpts   []string
+
 	//add for rich container mode
 	rich       bool
 	richMode   string
@@ -172,6 +176,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	logOpts, err := opts.ParseLogOptions(c.logDriver, c.logOpts)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
 			Tty:                 c.tty,
@@ -242,6 +251,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			CapDrop:       c.capDrop,
 			PortBindings:  portBindings,
 			OomScoreAdj:   c.oomScoreAdj,
+			LogConfig: &types.LogConfig{
+				LogDriver: c.logDriver,
+				LogOpts:   logOpts,
+			},
 		},
 
 		NetworkingConfig: networkingConfig,

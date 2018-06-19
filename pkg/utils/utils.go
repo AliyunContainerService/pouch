@@ -419,3 +419,17 @@ func SetOOMScore(pid, score int) error {
 	f.Close()
 	return err
 }
+
+// ConvertKVStringsToMap converts ["key=value"] into {"key":"value"}
+func ConvertKVStringsToMap(values []string) (map[string]string, error) {
+	kvs := make(map[string]string, len(values))
+
+	for _, value := range values {
+		terms := strings.SplitN(value, "=", 2)
+		if len(terms) != 2 {
+			return nil, errors.New("the format must be key=value")
+		}
+		kvs[terms[0]] = terms[1]
+	}
+	return kvs, nil
+}
