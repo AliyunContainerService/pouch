@@ -247,7 +247,7 @@ func (suite *PouchStartSuite) TestStartWithPrivilege(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithAnnotation(c *check.C) {
 	name := "start-annotation"
 
-	res := command.PouchRun("create", "--name", name, "--annotation", "a=b", busyboxImage)
+	res := command.PouchRun("create", "--name", name, "--annotation", "a=b", busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
@@ -279,7 +279,8 @@ func (suite *PouchStartSuite) TestStartWithExitCode(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
 	name := "start-ulimit"
 
-	res := command.PouchRun("create", "--name", name, "--ulimit", "nproc=256", busyboxImage)
+	res := command.PouchRun("create", "--name", name,
+		"--ulimit", "nproc=256", busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
@@ -290,7 +291,8 @@ func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithPidsLimit(c *check.C) {
 	name := "TestStartWithPidsLimit"
 	pidfile := "/sys/fs/cgroup/pids/pids.max"
-	res := command.PouchRun("create", "--pids-limit", "10", "--name", name, busyboxImage, "cat", pidfile)
+	res := command.PouchRun("create", "--pids-limit", "10",
+		"--name", name, busyboxImage, "cat", pidfile)
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 

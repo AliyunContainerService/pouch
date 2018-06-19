@@ -38,7 +38,7 @@ func (suite *PouchRunPidSuite) TestRunWithPIDMode(c *check.C) {
 	name := "test-run-with-pid-mode"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--pid", "host", busyboxImage)
+		"--pid", "host", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
