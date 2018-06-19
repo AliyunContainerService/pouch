@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -168,6 +170,55 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromWithDupclicate(c *check.
 	}
 
 	c.Assert(volumeFound, check.Equals, true)
+}
+
+// TestRunWithVolumesFromDifferentSources tests containers with volumes from different sources
+func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromDifferentSources(c *check.C) {
+	// TODO: build the image with volume
+	imageWithVolume := "registry.hub.docker.com/shaloulcy/busybox:with-volume"
+	containerName1 := "TestRunWithVolumesFromImage"
+	containerName2 := "TestRunWithVolumesFromContainerAndImage"
+
+	// pull the image with volume
+	command.PouchRun("pull", imageWithVolume).Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("rmi", "-f", imageWithVolume).Assert(c, icmd.Success)
+	}()
+
+	// start the container1 which has volume from image,
+	// and the volume destination is /data
+	command.PouchRun("run", "-d", "-t",
+		"--name", containerName1, imageWithVolume, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerName1)
+
+	out1 := command.PouchRun("inspect", containerName1).Assert(c, icmd.Success)
+	container1 := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(out1.Stdout()), &container1); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	c.Assert(len(container1[0].Mounts), check.Equals, 1)
+	volumeName1 := container1[0].Mounts[0].Name
+
+	// start the container2 which has volumes from container1,
+	// and has an extra volume whose desctination is /data
+	command.PouchRun("run", "-d", "-t",
+		"-v", "/data", "--volumes-from", containerName1,
+		"--name", containerName2, imageWithVolume, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerName2)
+
+	out2 := command.PouchRun("inspect", containerName2).Assert(c, icmd.Success)
+	container2 := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(out2.Stdout()), &container2); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	// only one Mount, as the volumes-from will overwrite the binds
+	c.Assert(len(container2[0].Mounts), check.Equals, 1)
+	volumeName2 := container2[0].Mounts[0].Name
+
+	// assert the two volumes is the same one
+	c.Assert(volumeName1, check.Equals, volumeName2)
 }
 
 // TestRunWithDiskQuotaRegular tests running container with --disk-quota.
