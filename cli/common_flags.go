@@ -21,7 +21,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVar(&c.capDrop, "cap-drop", nil, "Drop Linux capabilities")
 
 	// cpu
-	flagSet.Int64Var(&c.cpushare, "cpu-share", 0, "CPU shares (relative weight)")
+	flagSet.Int64Var(&c.cpushare, "cpu-shares", 0, "CPU shares (relative weight)")
 	flagSet.StringVar(&c.cpusetcpus, "cpuset-cpus", "", "CPUs in which to allow execution (0-3, 0,1)")
 	flagSet.StringVar(&c.cpusetmems, "cpuset-mems", "", "MEMs in which to allow execution (0-3, 0,1)")
 	flagSet.Int64Var(&c.cpuperiod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]")

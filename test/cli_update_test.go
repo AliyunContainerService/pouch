@@ -39,7 +39,7 @@ func (suite *PouchUpdateSuite) TearDownTest(c *check.C) {
 func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	name := "update-container-cpu"
 
-	res := command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage, "top")
+	res := command.PouchRun("run", "-d", "--cpu-shares", "20", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -55,7 +55,7 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
 	}
 
-	command.PouchRun("update", "--cpu-share", "40", name).Assert(c, icmd.Success)
+	command.PouchRun("update", "--cpu-shares", "40", name).Assert(c, icmd.Success)
 
 	out, err := exec.Command("cat", file).Output()
 	if err != nil {
