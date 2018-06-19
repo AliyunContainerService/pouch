@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
@@ -30,9 +31,9 @@ func (suite *PouchRestartSuite) SetUpSuite(c *check.C) {
 func (suite *PouchRestartSuite) TearDownTest(c *check.C) {
 }
 
-// TestPouchRestart is to verify the correctness of restarting a running container.
-func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
-	name := "TestPouchRestart"
+// TestPouchRestartRunningContainer is to verify the correctness of restarting a running container.
+func (suite *PouchRestartSuite) TestPouchRestartRunningContainer(c *check.C) {
+	name := "TestPouchRestartRunningContainer"
 
 	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
@@ -46,15 +47,45 @@ func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
 	}
 }
 
+// TestPouchRestartCreatedContainer is to verify the correctness of restarting a created container.
+// Pouch should be compatible with moby's API. Restarting a created container is allowed.
+func (suite *PouchRestartSuite) TestPouchRestartCreatedContainer(c *check.C) {
+	name := "TestPouchRestartCreatedContainer"
+
+	res := command.PouchRun("create", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
+
+	command.PouchRun("restart", "-t", "1", name).Assert(c, icmd.Success)
+}
+
+// TestPouchRestartExitedContainer is to verify the correctness of restarting an exited container.
+// Pouch should be compatible with moby's API. Restarting an exited container is allowed.
+func (suite *PouchRestartSuite) TestPouchRestartExitedContainer(c *check.C) {
+	name := "TestPouchRestartExitedContainer"
+
+	// run a container and make it exit within 0.01s, so the status is exited
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "0.01")
+	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
+	time.Sleep(1 * time.Second)
+
+	command.PouchRun("restart", "-t", "1", name).Assert(c, icmd.Success)
+}
+
 // TestPouchRestartStoppedContainer is to verify the correctness of restarting a stopped container.
 // Pouch should be compatible with moby's API. Restarting a stopped container is allowed.
 func (suite *PouchRestartSuite) TestPouchRestartStoppedContainer(c *check.C) {
 	name := "TestPouchRestartStoppedContainer"
 
-	res := command.PouchRun("create", "--name", name, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
+
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
 	command.PouchRun("restart", "-t", "1", name).Assert(c, icmd.Success)
 }
