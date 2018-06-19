@@ -38,7 +38,7 @@ func (suite *PouchRunCPUSuite) TestRunWithCPULimit(c *check.C) {
 	res := command.PouchRun("run", "-d",
 		"--cpuset-cpus", "0",
 		"--cpuset-mems", "0",
-		"--cpu-share", "1000",
+		"--cpu-shares", "1000",
 		"--cpu-period", "1000",
 		"--cpu-quota", "1000",
 		"--name", cname,

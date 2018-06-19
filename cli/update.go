@@ -43,7 +43,7 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.SetInterspersed(false)
 	flagSet.Uint16Var(&uc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
 	flagSet.Int64Var(&uc.cpuperiod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]")
-	flagSet.Int64Var(&uc.cpushare, "cpu-share", 0, "CPU shares (relative weight)")
+	flagSet.Int64Var(&uc.cpushare, "cpu-shares", 0, "CPU shares (relative weight)")
 	flagSet.Int64Var(&uc.cpuquota, "cpu-quota", 0, "Limit CPU CFS (Completely Fair Scheduler) quota")
 	flagSet.StringVar(&uc.cpusetcpus, "cpuset-cpus", "", "CPUs in cpuset")
 	flagSet.StringVar(&uc.cpusetmems, "cpuset-mems", "", "MEMs in cpuset")

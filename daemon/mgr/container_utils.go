@@ -296,7 +296,7 @@ func validateResource(r *types.Resources) ([]string, error) {
 			r.CpusetMems = ""
 		}
 		if r.CPUShares > 0 && !cgroupInfo.CPU.CPUShares {
-			warn := "Current Kernel does not support cpu shares, discard --cpu-share"
+			warn := "Current Kernel does not support cpu shares, discard --cpu-shares"
 			logrus.Warn(warn)
 			warnings = append(warnings, warn)
 			r.CPUShares = 0
