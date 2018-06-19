@@ -40,14 +40,16 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 
 	cname := "TestDaemonCgroupParent"
 	{
-		result := command.PouchRun("--host", daemon.Listen, "pull", busyboxImage)
+
+		result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("pull image failed, err:%v", result)
 		}
 	}
 	{
-		result := command.PouchRun("--host", daemon.Listen, "run", "-d", "--name", cname, busyboxImage)
+		result := RunWithSpecifiedDaemon(dcfg, "run",
+			"-d", "--name", cname, busyboxImage, "top")
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)
@@ -56,7 +58,7 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 	defer DelContainerForceMultyTime(c, cname)
 
 	// test if the value is in inspect result
-	output := command.PouchRun("inspect", "--host", daemon.Listen, cname).Stdout()
+	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)

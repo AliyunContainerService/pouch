@@ -34,7 +34,7 @@ func (suite *PouchRestartSuite) TearDownTest(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestart(c *check.C) {
 	name := "TestPouchRestart"
 
-	res := command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage)
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -76,7 +76,8 @@ func (suite *PouchRestartSuite) TestPouchRestartPausedContainer(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestartMultiContainers(c *check.C) {
 	containernames := []string{"TestPouchRestartMultiContainer-1", "TestPouchRestartMultiContainer-2"}
 	for _, name := range containernames {
-		res := command.PouchRun("run", "-d", "--cpu-share", "20", "--name", name, busyboxImage)
+		res := command.PouchRun("run", "-d",
+			"--name", name, busyboxImage, "top")
 		defer DelContainerForceMultyTime(c, name)
 		res.Assert(c, icmd.Success)
 	}

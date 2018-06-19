@@ -145,7 +145,7 @@ func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
 	name := "test-run-with-ipc-mode"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--ipc", "host", busyboxImage)
+		"--ipc", "host", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -156,7 +156,7 @@ func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
 	name := "test-run-with-uts-mode"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--uts", "host", busyboxImage)
+		"--uts", "host", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -186,7 +186,7 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	name := "run-apparmor"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--security-opt", appArmor, busyboxImage)
+		"--security-opt", appArmor, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -200,7 +200,7 @@ func (suite *PouchRunSuite) TestRunWithSeccomp(c *check.C) {
 	name := "run-seccomp"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--security-opt", seccomp, busyboxImage)
+		"--security-opt", seccomp, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -281,7 +281,7 @@ func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
 	cname := "TestRunWithAnnotation"
 	res := command.PouchRun("run", "-d", "--annotation", "a=b",
 		"--annotation", "foo=bar",
-		"--name", cname, busyboxImage).Assert(c, icmd.Success)
+		"--name", cname, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
