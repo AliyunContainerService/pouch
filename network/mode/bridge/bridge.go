@@ -119,6 +119,11 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		Config: []types.IPAMConfig{ipamV4Conf},
 	}
 
+	mtu := 1500
+	if config.Mtu != 0 {
+		mtu = config.Mtu
+	}
+
 	networkCreate := types.NetworkCreate{
 		Driver:     "bridge",
 		EnableIPV6: false,
@@ -126,7 +131,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		Options: map[string]string{
 			bridge.BridgeName:         bridgeName,
 			bridge.DefaultBridge:      strconv.FormatBool(true),
-			netlabel.DriverMTU:        strconv.Itoa(config.Mtu),
+			netlabel.DriverMTU:        strconv.Itoa(mtu),
 			bridge.EnableICC:          strconv.FormatBool(true),
 			bridge.DefaultBindingIP:   DefaultBindingIP,
 			bridge.EnableIPMasquerade: strconv.FormatBool(false),

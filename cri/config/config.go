@@ -3,13 +3,13 @@ package config
 // Config defines the CRI configuration.
 type Config struct {
 	// Listen is the listening address which servers CRI.
-	Listen string
+	Listen string `json:"listen,omitempty"`
 	// NetworkPluginBinDir is the directory in which the binaries for the plugin is kept.
-	NetworkPluginBinDir string
+	NetworkPluginBinDir string `json:"network-plugin-bin-dir,omitempty"`
 	// NetworkPluginConfDir is the directory in which the admin places a CNI conf.
-	NetworkPluginConfDir string
+	NetworkPluginConfDir string `json:"network-plugin-conf-dir,omitempty"`
 	// SandboxImage is the image used by sandbox container.
-	SandboxImage string
+	SandboxImage string `json:"sandbox-image,omitempty"`
 	// CriVersion is the cri version
-	CriVersion string
+	CriVersion string `json:"cri-version,omitempty"`
 }
