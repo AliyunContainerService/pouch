@@ -284,15 +284,21 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 
 	// Teardown network of the pod, if it is not in host network mode.
 	if !hostNet {
-		err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
-			Name:         metadata.GetName(),
-			Namespace:    metadata.GetNamespace(),
-			ID:           podSandboxID,
-			NetNS:        sandboxMeta.NetNSPath,
-			PortMappings: toCNIPortMappings(sandboxMeta.Config.GetPortMappings()),
-		})
-		if err != nil {
-			return nil, err
+		_, err = os.Stat(sandboxMeta.NetNSPath)
+		// If the sandbox has been stopped, the corresponding network namespace will not exist.
+		if err == nil {
+			err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
+				Name:         metadata.GetName(),
+				Namespace:    metadata.GetNamespace(),
+				ID:           podSandboxID,
+				NetNS:        sandboxMeta.NetNSPath,
+				PortMappings: toCNIPortMappings(sandboxMeta.Config.GetPortMappings()),
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to stat network namespace file %s of sandbox %s: %v", sandboxMeta.NetNSPath, podSandboxID, err)
 		}
 	}
 
