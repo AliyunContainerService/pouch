@@ -1876,24 +1876,28 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 		}
 	}()
 
-	err = mgr.getMountPointFromVolumes(ctx, c, volumeSet)
+	// 1. read MountPoints from other containers
+	err = mgr.getMountPointFromContainers(ctx, c, volumeSet)
 	if err != nil {
-		return errors.Wrap(err, "failed to get mount point from volumes")
+		return errors.Wrap(err, "failed to get mount point from containers")
 	}
 
-	err = mgr.getMountPointFromImage(ctx, c, volumeSet)
-	if err != nil {
-		return errors.Wrap(err, "failed to get mount point from image")
-	}
-
+	// 2. read MountPoints from binds
 	err = mgr.getMountPointFromBinds(ctx, c, volumeSet)
 	if err != nil {
 		return errors.Wrap(err, "failed to get mount point from binds")
 	}
 
-	err = mgr.getMountPointFromContainers(ctx, c, volumeSet)
+	// 3. read MountPoints from image
+	err = mgr.getMountPointFromImage(ctx, c, volumeSet)
 	if err != nil {
-		return errors.Wrap(err, "failed to get mount point from containers")
+		return errors.Wrap(err, "failed to get mount point from image")
+	}
+
+	// 4. read MountPoints from Config.Volumes
+	err = mgr.getMountPointFromVolumes(ctx, c, volumeSet)
+	if err != nil {
+		return errors.Wrap(err, "failed to get mount point from volumes")
 	}
 
 	return nil
