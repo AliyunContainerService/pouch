@@ -17,7 +17,6 @@ notifications:
 before_install:
   |
     git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)' || {
-      echo "travis doesn't run for document-only changed"
       exit
     }
 
