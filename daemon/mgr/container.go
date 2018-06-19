@@ -676,6 +676,7 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 
 	if c.IsRunningOrPaused() {
 		// stop container if it is running or paused.
+		logrus.Infof("stop container(id: %s, name: %s) when restarting", c.ID, c.Name)
 		if err := mgr.stop(ctx, c, timeout); err != nil {
 			ex := fmt.Errorf("failed to stop container %s when restarting: %v", c.ID, err)
 			logrus.Errorf(ex.Error())
@@ -946,6 +947,8 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 		}
 	}
 
+	c.SetStatusRemoving()
+
 	if err := mgr.detachVolumes(ctx, c, options.Volumes); err != nil {
 		logrus.Errorf("failed to detach volume: %v", err)
 	}
@@ -956,9 +959,18 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	c.Unlock()
 
 	// remove meta data
+	logrus.Infof("start to remove meta data of container %s", c.ID)
 	if err := mgr.Store.Remove(c.Key()); err != nil {
 		logrus.Errorf("failed to remove container %s from meta store: %v", c.ID, err)
 	}
+	// After removing container meta data from mgr.Store, nothing about container should exist
+	// Then assign the container object in memory to be nil to avoid other issues.
+
+	logrus.Infof("testing if we can get container %s after removing from meta store", c.ID)
+	if c, err := mgr.container(name); err != nil || c == nil {
+		logrus.Errorf("no this container")
+	}
+	logrus.Infof("bug ---------- container %s is still there")
 
 	// remove container cache
 	mgr.cache.Remove(c.ID)
@@ -1706,17 +1718,35 @@ func attachConfigToOptions(attach *AttachConfig) []func(*containerio.Option) {
 
 func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message) error {
 	var (
-		code   int64  // container exit code used for container state setting
-		errMsg string // container exit error message used for container state setting
+		exitCode int64  // container exit code used for container state setting
+		errMsg   string // container exit error message used for container state setting
 	)
 	if m != nil {
-		code = int64(m.ExitCode())
+		exitCode = int64(m.ExitCode())
 		if err := m.RawError(); err != nil {
 			errMsg = err.Error()
 		}
 	}
 
-	c.SetStatusStopped(code, errMsg)
+	c.Lock()
+	defer c.Unlock()
+
+	defer func() {
+		logrus.Infof("write to meta store when markStoppedAndRelease")
+		if c.IsRemoving() {
+			return
+		}
+		if err := c.Write(mgr.Store); err != nil {
+			logrus.Errorf("failed to update meta: %v", err)
+		}
+		logrus.Infof("finish to write meta store to disk")
+	}()
+
+	c.State.Status = types.StatusStopped
+	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
+	c.State.Pid = -1
+	c.State.ExitCode = exitCode
+	c.State.Error = errMsg
 
 	// unset Snapshot MergedDir. Stop a container will
 	// delete the containerd container, the merged dir
@@ -1736,13 +1766,6 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 		return nil
 	}
 
-	// Remove io and network config may occur error, so we should update
-	// container's status on disk as soon as possible.
-	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta: %v", err)
-		return err
-	}
-
 	// release resource
 	if io := mgr.IOs.Get(c.ID); io != nil {
 		io.Close()
@@ -1750,12 +1773,11 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 	}
 
 	// No network binded, just return
-	c.Lock()
 	if c.NetworkSettings == nil {
-		c.Unlock()
 		return nil
 	}
 
+	// when container exits, pouchd should automatically remove container network endpoints.
 	for name, epConfig := range c.NetworkSettings.Networks {
 		endpoint := mgr.buildContainerEndpoint(c)
 		endpoint.Name = name
@@ -1765,17 +1787,9 @@ func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message
 			// not found"" as an error type
 			if !strings.Contains(err.Error(), "not found") {
 				logrus.Errorf("failed to remove endpoint: %v", err)
-				c.Unlock()
 				return err
 			}
 		}
-	}
-	c.Unlock()
-
-	// update meta
-	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update meta of container %s: %v", c.ID, err)
-		return err
 	}
 
 	return nil

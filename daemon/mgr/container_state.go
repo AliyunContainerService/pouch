@@ -70,6 +70,13 @@ func (c *Container) IsRestarting() bool {
 	return c.State.Status == types.StatusRestarting
 }
 
+// IsRemoving returns container is removing or not.
+func (c *Container) IsRemoving() bool {
+	c.Lock()
+	defer c.Unlock()
+	return c.State.Status == types.StatusRemoving
+}
+
 // ExitCode returns container's ExitCode.
 func (c *Container) ExitCode() int64 {
 	c.Lock()
@@ -129,4 +136,11 @@ func (c *Container) SetStatusUnpaused() {
 	c.Lock()
 	defer c.Unlock()
 	c.State.Status = types.StatusRunning
+}
+
+// SetStatusRemoving sets a container to be status removing.
+func (c *Container) SetStatusRemoving() {
+	c.Lock()
+	defer c.Unlock()
+	c.State.Status = types.StatusRemoving
 }
