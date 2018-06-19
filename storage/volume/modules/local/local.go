@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	dataDir = "/var/lib/pouch/volume"
+	defaultDataPath = "/var/lib/pouch/volume"
 )
 
 func init() {
@@ -26,6 +26,7 @@ func init() {
 
 // Local represents local volume driver.
 type Local struct {
+	DataPath string
 }
 
 // Name returns local volume driver's name.
@@ -42,8 +43,13 @@ func (p *Local) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
 func (p *Local) Create(ctx driver.Context, id types.VolumeID) (*types.Volume, error) {
 	ctx.Log.Debugf("Local create volume: %s", id.Name)
 
+	dataPath := defaultDataPath
+	if p.DataPath != "" {
+		dataPath = p.DataPath
+	}
+
 	var (
-		mountPath = path.Join(dataDir, id.Name)
+		mountPath = path.Join(dataPath, id.Name)
 		size      string
 	)
 
@@ -91,7 +97,10 @@ func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
 
 	mountPath := v.Option("mount")
 	if mountPath == "" {
-		mountPath = dataDir
+		mountPath = defaultDataPath
+		if p.DataPath != "" {
+			mountPath = p.DataPath
+		}
 	}
 
 	return path.Join(mountPath, v.Name), nil
@@ -102,6 +111,13 @@ func (p *Local) Options() map[string]types.Option {
 	return map[string]types.Option{
 		"mount": {Value: "", Desc: "local directory"},
 	}
+}
+
+// Config is used to pass the daemon volume configure for local driver.
+func (p *Local) Config(ctx driver.Context, cfg map[string]interface{}) error {
+	p.DataPath = cfg["volume-meta-dir"].(string)
+
+	return nil
 }
 
 // Attach a local volume.

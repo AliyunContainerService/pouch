@@ -2,6 +2,7 @@ package volume
 
 import (
 	"fmt"
+	"path"
 	"reflect"
 	"strings"
 
@@ -24,6 +25,7 @@ type Core struct {
 func NewCore(cfg Config) (*Core, error) {
 	c := &Core{Config: cfg}
 
+	// initialize volume driver alias.
 	if cfg.DriverAlias != "" {
 		parts := strings.Split(cfg.DriverAlias, ";")
 		for _, p := range parts {
@@ -38,6 +40,7 @@ func NewCore(cfg Config) (*Core, error) {
 		}
 	}
 
+	// initialize volume metadata store.
 	volumeStore, err := metastore.NewStore(metastore.Config{
 		Driver:  "boltdb",
 		BaseDir: cfg.VolumeMetaPath,
@@ -52,8 +55,22 @@ func NewCore(cfg Config) (*Core, error) {
 		logrus.Errorf("failed to create volume meta store: %v", err)
 		return nil, err
 	}
-
 	c.store = volumeStore
+
+	// set configure into each driver
+	driverConfig := map[string]interface{}{
+		"volume-meta-dir": path.Dir(cfg.VolumeMetaPath),
+		"volume-timeout":  cfg.Timeout,
+	}
+	drivers, err := driver.GetAll()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get all volume driver")
+	}
+	for _, dv := range drivers {
+		if d, ok := dv.(driver.Conf); ok {
+			d.Config(driver.Contexts(), driverConfig)
+		}
+	}
 
 	return c, nil
 }
