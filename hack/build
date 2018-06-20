@@ -4,7 +4,7 @@ BUILDPATH=/tmp/pouchbuild
 
 DIR="$( cd "$( dirname "$0" )/.." && pwd )"
 cd $DIR/
-GOPATH=$BUILDPATH:$BUILDPATH/src/github.com/docker/libnetwork/Godeps/_workspace
+GOPATH=$BUILDPATH
 
 
 # Go parameters
@@ -23,10 +23,6 @@ CLI_BINARY_NAME=pouch
 function pre()
 {
     mkdir -p $BUILDPATH
-
-    mkdir -p $BUILDPATH/src/github.com/docker
-    [ -L $BUILDPATH/src/github.com/docker/libnetwork ] && rm -f $BUILDPATH/src/github.com/docker/libnetwork
-    ln -s $DIR/extra/libnetwork $BUILDPATH/src/github.com/docker/libnetwork
 
     mkdir -p $BUILDPATH/src/github.com/alibaba
     [ -L $BUILDPATH/src/github.com/alibaba/pouch ] && rm -f $BUILDPATH/src/github.com/alibaba/pouch
@@ -52,7 +48,6 @@ function client()
 #
 SKIP_PKGS=(\
     "github.com/alibaba/pouch/vendor" \
-    "github.com/alibaba/pouch/extra" \
     "github.com/alibaba/pouch/test" \
     "github.com/alibaba/pouch/apis/types" \
     "github.com/alibaba/pouch/cri/config" \
@@ -76,7 +71,7 @@ function testserver()
 function vet()
 {
     cd $BUILDPATH/src/github.com/alibaba/pouch
-    GOPACKAGES=`go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//'`
+    GOPACKAGES=`go list ./... | grep -v /vendor/ | sed 's/^_//'`
     go vet $GOPACKAGES 2>&1 | grep -v "unrecognized printf verb 'r'" | egrep -v "exit status 1" | tee /dev/stderr
 }
 

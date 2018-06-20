@@ -13,15 +13,15 @@ jobs:
       - run:
           name: use markdownlint v0.4.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
           command: |
-            find  ./ -name  "*.md" | grep -v vendor | grep -v extra |  grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
+            find  ./ -name  "*.md" | grep -v vendor | grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
       - run:
           name: use opensource tool client9/misspell to correct commonly misspelled English words 
           command: |
-            find  ./* -name  "*"  | grep -v extra | grep -v vendor | xargs misspell -error
+            find  ./* -name  "*"  | grep -v vendor | xargs misspell -error
       - run:
           name: use ShellCheck (https://github.com/koalaman/shellcheck) to check the validateness of shell scripts in pouch repo
           command: |
-            find ./ -name "*.sh" | grep -v vendor | grep -v extra | xargs shellcheck
+            find ./ -name "*.sh" | grep -v vendor | xargs shellcheck
 
   code-check:
     docker: 

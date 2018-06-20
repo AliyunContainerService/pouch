@@ -2,7 +2,7 @@
 GOBUILD=go build
 GOCLEAN=go clean
 GOTEST=go test
-GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /extra/ | sed 's/^_//')
+GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | sed 's/^_//')
 
 # Binary name of CLI and Daemon
 BINARY_NAME=pouchd
