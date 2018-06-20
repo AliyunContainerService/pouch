@@ -30,7 +30,7 @@ test1
       --cgroup-parent string         Optional parent cgroup for the container
       --cpu-period int               Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
       --cpu-quota int                Limit CPU CFS (Completely Fair Scheduler) quota, range is in [1000,∞)
-      --cpu-share int                CPU shares (relative weight)
+      --cpu-shares int               CPU shares (relative weight)
       --cpuset-cpus string           CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string           MEMs in which to allow execution (0-3, 0,1)
       --device strings               Add a host device to the container
@@ -51,6 +51,8 @@ test1
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
       --ipc string                   IPC namespace to use
   -l, --label strings                Set labels for a container
+      --log-driver string            Logging driver for the container (default "json-file")
+      --log-opt strings              Log driver options
   -m, --memory string                Memory limit
       --memory-extra int             Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int   Whether to reclaim page cache when deleting the cgroup of container
