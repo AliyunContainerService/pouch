@@ -71,6 +71,7 @@ type container struct {
 	cgroupParent   string
 	ulimit         Ulimit
 	pidsLimit      int64
+	shmSize        string
 
 	// log driver and log option
 	logDriver string
@@ -180,6 +181,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	shmSize, err := opts.ParseShmSize(c.shmSize)
+	if err != nil {
+		return nil, err
+	}
 
 	config := &types.ContainerCreateConfig{
 		ContainerConfig: types.ContainerConfig{
@@ -255,6 +260,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				LogDriver: c.logDriver,
 				LogOpts:   logOpts,
 			},
+			ShmSize: &shmSize,
 		},
 
 		NetworkingConfig: networkingConfig,

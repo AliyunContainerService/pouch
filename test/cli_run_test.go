@@ -375,3 +375,31 @@ func (suite *PouchRunSuite) TestRunWithDisableNetworkFiles(c *check.C) {
 		c.Fatal("expected /etc/resolv.conf, but the file does not exist")
 	}
 }
+
+// TestRunWithShm is to verify the valid running container
+// with shm-size
+func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
+	cname := "TestRunWithShm"
+	res := command.PouchRun("run", "-d", "--shm-size", "1g",
+		"--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	res = command.PouchRun("inspect", cname)
+	res.Assert(c, icmd.Success)
+
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(int64(*result[0].HostConfig.ShmSize),
+		check.Equals, int64(1073741824))
+
+	containerID := result[0].ID
+
+	res = command.PouchRun("exec", containerID, "df", "-k", "/dev/shm")
+	res.Assert(c, icmd.Success)
+
+	util.PartialEqual(res.Stdout(), "1048576")
+}

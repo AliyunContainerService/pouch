@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
 
@@ -36,6 +37,9 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		if dup {
 			continue
 		}
+		if sm.Destination == "/dev/shm" && c.HostConfig.ShmSize != nil {
+			sm.Options = append(sm.Options, fmt.Sprintf("size=%s", strconv.FormatInt(*c.HostConfig.ShmSize, 10)))
+		}
 		mounts = append(mounts, sm)
 	}
 	// TODO: we can suggest containerd to add the cgroup into the default spec.
@@ -49,6 +53,7 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 	if c.HostConfig == nil {
 		return nil
 	}
+	// user defined mount
 	for _, mp := range c.Mounts {
 		if trySetupNetworkMount(mp, c) {
 			// ignore the network mount, we will handle it later.
@@ -85,6 +90,10 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		}
 
 		// TODO: support copy data.
+
+		if mp.Destination == "/dev/shm" && c.HostConfig.ShmSize != nil {
+			opts = []string{fmt.Sprintf("size=%s", strconv.FormatInt(*c.HostConfig.ShmSize, 10))}
+		}
 
 		mounts = append(mounts, specs.Mount{
 			Source:      mp.Source,
