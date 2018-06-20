@@ -145,8 +145,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
 func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
 	name := "TestPouchUpgradeContainerLabels"
 
-	res := command.PouchRun("run", "-d", "--label", "test=foo",
-		"--name", name, busyboxImage)
+	res := command.PouchRun("run", "-d", "--label", "test=foo", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
