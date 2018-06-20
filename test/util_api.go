@@ -80,14 +80,12 @@ func DelContainerForceOk(c *check.C, cname string) {
 func DelContainerForce(c *check.C, cname string) (*http.Response, error) {
 	q := url.Values{}
 	q.Add("force", "true")
+	q.Add("v", "true")
 	return request.Delete("/containers/"+cname, request.WithQuery(q))
 }
 
 // DelContainerForceMultyTime forcely deletes the container multy times.
 func DelContainerForceMultyTime(c *check.C, cname string) {
-	q := url.Values{}
-	q.Add("force", "true")
-
 	done := make(chan bool, 1)
 
 	ticker := time.NewTicker(500 * time.Millisecond)
