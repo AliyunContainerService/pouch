@@ -2349,7 +2349,7 @@ definitions:
         description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
         type: "integer"
         format: "int64"
-        minimum: -1
+        minimum: 0
         maximum: 100
       NanoCPUs:
         description: "CPU quota in units of 10<sup>-9</sup> CPUs."

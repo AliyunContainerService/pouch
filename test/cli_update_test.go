@@ -115,6 +115,26 @@ func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
 	c.Assert(metaJSON[0].HostConfig.CPUPeriod, check.Equals, int64(2000))
 }
 
+// TestUpdateCpuMemoryFail is to verify the invalid value of updating container cpu and memory related flags will fail.
+func (suite *PouchUpdateSuite) TestUpdateCpuMemoryFail(c *check.C) {
+	name := "update-container-cpu-memory-period-fail"
+
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("update", "--cpu-period", "10", name)
+	c.Assert(res.Stderr(), check.NotNil)
+	res = command.PouchRun("update", "--cpu-period", "100000000", name)
+	c.Assert(res.Stderr(), check.NotNil)
+	res = command.PouchRun("update", "--cpu-period", "-1", name)
+	c.Assert(res.Stderr(), check.NotNil)
+	res = command.PouchRun("update", "--cpu-quota", "1", name)
+	c.Assert(res.Stderr(), check.NotNil)
+	res = command.PouchRun("update", "-m", "10000", name)
+	c.Assert(res.Stderr(), check.NotNil)
+}
+
 // TestUpdateRunningContainer is to verify the correctness of updating a running container.
 func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	name := "update-running-container"
