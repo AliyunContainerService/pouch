@@ -54,9 +54,6 @@ Core provides these functions is as following:
 // GetVolume return a volume's info with specified name, If not errors.
 func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error)
 
-// ExistVolume return 'true' if volume be found and not errors.
-func (c *Core) ExistVolume(id types.VolumeID) (bool, error)
-
 // CreateVolume use to create a volume, if failed, will return error info.
 func (c *Core) CreateVolume(id types.VolumeID) error
 
@@ -69,9 +66,6 @@ func (c *Core) RemoveVolume(id types.VolumeID) error
 
 // VolumePath return the path of volume on node host.
 func (c *Core) VolumePath(id types.VolumeID) (string, error)
-
-// GetVolumeDriver return the backend driver and volume with specified volume's id.
-func (c *Core) GetVolumeDriver(id types.VolumeID) (*types.Volume, driver.Driver, error)
 
 // AttachVolume to enable a volume on local host.
 func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error)
