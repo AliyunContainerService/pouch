@@ -53,6 +53,9 @@ jobs:
       - run:
           name: upload code coverage report
           command: bash <(curl -s https://codecov.io/bash)
+notify:
+  webhooks:
+    - url: http://121.201.63.16:6788/circleci_notifications
 
 workflows:
   version: 2
