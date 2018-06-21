@@ -9,7 +9,7 @@ To clarify standpoint of PouchContainer in container system, we construct it wit
 
 In PouchContainer's roadmap, we set ecosystem embracing as a big target. To upper orchestrating layer, PouchContainer supports Kubernetes and Swarm. To underlying runtime layer, PouchContainer is compatible with oci-compatible runtime, such as [runC](https://github.com/opencontainers/runc), [runV](https://github.com/hyperhq/runv), runlxc and so on. To make storage and network big supplements, [CNI](https://github.com/containernetworking/cni) and [CSI](https://github.com/container-storage-interface) are in scope right there.
 
-![Ecosystem Architecture](static_files/pouch_ecosystem_architecture.png)
+![Ecosystem Architecture](static_files/pouch_ecosystem_architecture_no_logo.png)
 
 The ecosystem architecture may be a little bit complicated at first glance. Take it easy. We can get a thorough understanding of it from the following three dimensions.
 
