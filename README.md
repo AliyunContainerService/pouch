@@ -19,6 +19,7 @@
 - User Manual
   - [CLI Manual](docs/commandline)
   - [API Manual](docs/api)
+  - [USER Manual](docs/user)
 - [Contributing](#contributing)
 
 ## Introduction
@@ -66,7 +67,7 @@ PouchContainer offers a more "application centric" approach for application deve
 
 ## Getting Started
 
-You can easily setup a basic PouchContainer environment, see [INSTALLATION.md](INSTALLATION.md). You'll need to install a few packages before starting `pouchd`, which starts a container management service. The service can be accessed through the `pouch` CLI or RPC calls. For more details, please refer to [CLI Manual](docs/commandline) and [API Manual](docs/api).
+You can easily setup a basic PouchContainer environment, see [INSTALLATION.md](INSTALLATION.md). You'll need to install a few packages before starting `pouchd`, which starts a container management service. The service can be accessed through the `pouch` CLI or RPC calls. For more details, please refer to [CLI Manual](docs/commandline), [API Manual](docs/api) and [USER Manual](docs/user).
 
 ## Deploying Kubernetes With PouchContainer
 
