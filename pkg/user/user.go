@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	passwdFile = "/etc/passwd"
-	groupFile  = "/etc/group"
+	// PasswdFile keeps user passwd information
+	PasswdFile = "/etc/passwd"
+	// GroupFile keeps group information
+	GroupFile = "/etc/group"
 
 	minID      = 0
 	maxID      = 1<<31 - 1 // compatible for 32-bit OS
@@ -60,12 +62,12 @@ func Get(path string, user string) (uint32, uint32, error) {
 		err            error
 	)
 
-	parseString(user, &uidStr, &gidStr)
+	ParseString(user, &uidStr, &gidStr)
 
 	// get uid from /etc/passwd
-	uid, err = parseID(filepath.Join(path, passwdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+	uid, err = ParseID(filepath.Join(path, PasswdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 		var up uidParser
-		parseString(line, &up.user, &up.placeholder, &up.uid)
+		ParseString(line, &up.user, &up.placeholder, &up.uid)
 		if (idErr == nil && idInt == up.uid) || str == up.user {
 			return uint32(up.uid), true
 		}
@@ -77,9 +79,9 @@ func Get(path string, user string) (uint32, uint32, error) {
 
 	// if gidStr is null, then get gid from /etc/passwd
 	if len(gidStr) == 0 {
-		gid, err = parseID(filepath.Join(path, passwdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+		gid, err = ParseID(filepath.Join(path, PasswdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 			var up uidParser
-			parseString(line, &up.user, &up.placeholder, &up.uid, &up.gid)
+			ParseString(line, &up.user, &up.placeholder, &up.uid, &up.gid)
 			if (idErr == nil && idInt == up.uid) || str == up.user {
 				return uint32(up.gid), true
 			}
@@ -89,9 +91,9 @@ func Get(path string, user string) (uint32, uint32, error) {
 			return 0, 0, err
 		}
 	} else {
-		gid, err = parseID(filepath.Join(path, groupFile), gidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+		gid, err = ParseID(filepath.Join(path, GroupFile), gidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 			var gp gidParser
-			parseString(line, &gp.group, &gp.placeholder, &gp.gid)
+			ParseString(line, &gp.group, &gp.placeholder, &gp.gid)
 			if (idErr == nil && idInt == gp.gid) || str == gp.group {
 				return uint32(gp.gid), true
 			}
@@ -115,7 +117,7 @@ func GetIntegerID(user string) (uint32, uint32) {
 
 	// if uid gid can not be parsed successfully, return default user root
 	var uid, gid int
-	parseString(user, &uid, &gid)
+	ParseString(user, &uid, &gid)
 	return uint32(uid), uint32(gid)
 }
 
@@ -135,13 +137,13 @@ func GetAdditionalGids(groups []string) []uint32 {
 	return additionalGids
 }
 
-// parseID parses uid from /etc/passwd.
-func parseID(file, str string, parserFilter filterFunc) (uint32, error) {
+// ParseID parses id or name from given file.
+func ParseID(file, str string, parserFilter filterFunc) (uint32, error) {
 	idInt, idErr := strconv.Atoi(str)
 
 	ba, err := ioutil.ReadFile(file)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read passwd file %s: %s", passwdFile, err)
+		return 0, fmt.Errorf("failed to read passwd file %s: %s", PasswdFile, err)
 	}
 
 	scanner := bufio.NewScanner(bytes.NewReader(ba))
@@ -180,8 +182,8 @@ func isUnknownUser(id int) (bool, error) {
 	return true, nil
 }
 
-// parseString parses line in format a:b:c.
-func parseString(line string, v ...interface{}) {
+// ParseString parses line in format a:b:c.
+func ParseString(line string, v ...interface{}) {
 	splits := strings.Split(line, ":")
 	for i, s := range splits {
 		if len(v) <= i {
