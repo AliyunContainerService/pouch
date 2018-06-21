@@ -5,11 +5,11 @@ import (
 	"os"
 	"syscall"
 
+	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	cri "github.com/alibaba/pouch/cri/v1alpha2"
 	"github.com/alibaba/pouch/daemon/config"
 
 	"google.golang.org/grpc"
-	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // Service serves the kubelet runtime grpc api which will be consumed by kubelet.
