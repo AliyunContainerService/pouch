@@ -138,7 +138,6 @@ func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 	checkFileContains(c, path, "104857600")
 }
 
-
 // TestRunMemoryOOM is to verify return value when a container is OOM.
 func (suite *PouchRunMemorySuite) TestRunMemoryOOM(c *check.C) {
 	cname := "TestRunMemoryOOM"

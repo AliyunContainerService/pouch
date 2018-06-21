@@ -353,7 +353,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		container.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	}
-	if container.NetworkSettings.Networks == nil && !IsContainer(config.HostConfig.NetworkMode) {
+
+	// For "container", "none" and "host" mode network, no need to configure it with libnetwork.
+	networkMode = config.HostConfig.NetworkMode
+	if container.NetworkSettings.Networks == nil && !IsContainer(networkMode) && !IsHost(networkMode) && !IsNone(networkMode) {
 		container.NetworkSettings.Networks = make(map[string]*types.EndpointSettings)
 		container.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
