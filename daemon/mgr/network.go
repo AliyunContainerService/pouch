@@ -284,6 +284,12 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	}
 
 	endpointName := containerID[:8]
+
+	// ensure the endpoint has been deleted before creating
+	if ep, _ := n.EndpointByName(endpointName); ep != nil {
+		ep.Delete(true)
+	}
+
 	ep, err := n.CreateEndpoint(endpointName, epOptions...)
 	if err != nil {
 		return "", err
