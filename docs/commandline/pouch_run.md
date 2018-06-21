@@ -40,7 +40,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --cgroup-parent string         Optional parent cgroup for the container
       --cpu-period int               Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
       --cpu-quota int                Limit CPU CFS (Completely Fair Scheduler) quota, range is in [1000,∞)
-      --cpu-share int                CPU shares (relative weight)
+      --cpu-shares int               CPU shares (relative weight)
       --cpuset-cpus string           CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string           MEMs in which to allow execution (0-3, 0,1)
   -d, --detach                       Run container in background and print container ID
@@ -64,11 +64,13 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -i, --interactive                  Attach container's STDIN
       --ipc string                   IPC namespace to use
   -l, --label strings                Set labels for a container
+      --log-driver string            Logging driver for the container (default "json-file")
+      --log-opt strings              Log driver options
   -m, --memory string                Memory limit
       --memory-extra int             Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int   Whether to reclaim page cache when deleting the cgroup of container
       --memory-swap string           Swap limit equal to memory + swap, '-1' to enable unlimited swap
-      --memory-swappiness int        Container memory swappiness [0, 100] (default -1)
+      --memory-swappiness int        Container memory swappiness [0, 100]
       --memory-wmark-ratio int       Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                  Specify name of container
       --net strings                  Set networks to container
@@ -86,6 +88,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --runtime string               OCI runtime to use for this container
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options
+      --shm-size string              Size of /dev/shm, default value is 64MB
       --sysctl strings               Sysctl options
   -t, --tty                          Allocate a pseudo-TTY
       --ulimit value                 Set container ulimit (default [])

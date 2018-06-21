@@ -47,6 +47,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch top](pouch_top.md)	 - Display the running processes of a container
 * [pouch unpause](pouch_unpause.md)	 - Unpause one or more paused container
 * [pouch update](pouch_update.md)	 - Update the configurations of a container
+* [pouch updatedaemon](pouch_updatedaemon.md)	 - Update the configurations of pouchd
 * [pouch upgrade](pouch_upgrade.md)	 - Upgrade a container with new image and args
 * [pouch version](pouch_version.md)	 - Print versions about Pouch CLI and Pouchd
 * [pouch volume](pouch_volume.md)	 - Manage pouch volumes
