@@ -809,13 +809,11 @@
 			"revisionTime": "2017-12-19T08:35:33Z"
 		},
 		{
-			"checksumSHA1": "9fs73UF7mj6VtGjZcpYvkfZTgH4=",
+			"checksumSHA1": "P6rfMC0ECx56UDSrnnb8InINEVc=",
 			"origin": "github.com/alibaba/libnetwork",
 			"path": "github.com/docker/libnetwork",
-			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
-			"revisionTime": "2018-06-11T16:09:43Z",
-			"version": "=master",
-			"versionExact": "master"
+			"revision": "7c0569783f2eea427d5c2ea032856e5d0edc38dd",
+			"revisionTime": "2018-06-21T03:37:56Z"
 		},
 		{
 			"checksumSHA1": "PjtJFUyEOokrmiBiHmfXrX/lAug=",
@@ -1912,7 +1910,6 @@
 		},
 		{
 			"checksumSHA1": "o+lVDhZsT+PFILKt5S6CgBmcrMs=",
-			"origin": "github.com/alibaba/pouch/vendor/k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
 			"path": "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
 			"revision": "86bd9771515c19a8df7128f53b1c1fa4f00d64ee",
 			"revisionTime": "2018-05-23T02:20:24Z"

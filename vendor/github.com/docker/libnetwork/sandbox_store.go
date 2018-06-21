@@ -217,6 +217,7 @@ func (c *controller) sandboxCleanup(activeSandboxes map[string]interface{}) {
 			endpoints:          []*endpoint{},
 			populatedEndpoints: map[string]struct{}{},
 			dbIndex:            sbs.dbIndex,
+			epPriority:         sbs.EpPriority,
 			isStub:             true,
 			dbExists:           true,
 		}
