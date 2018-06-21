@@ -878,6 +878,11 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID)
 	}
 
+	// update container disk quota
+	if err := mgr.updateContainerDiskQuota(ctx, c, config.DiskQuota); err != nil {
+		return errors.Wrapf(err, "failed to update diskquota of container %s", c.ID)
+	}
+
 	c.Lock()
 
 	// init Container Labels
@@ -906,18 +911,17 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// TODO(ziren): we should use meta.Config.DiskQuota to record container diskquota
 	// compatibility with alidocker, when set DiskQuota for container
 	// add a DiskQuota label
-	if config.DiskQuota != "" {
+	if config.DiskQuota != nil {
 		if _, ok := c.Config.Labels["DiskQuota"]; ok {
-			c.Config.Labels["DiskQuota"] = config.DiskQuota
+			labels := []string{}
+			for dir, quota := range c.Config.DiskQuota {
+				labels = append(labels, fmt.Sprintf("%s=%s", dir, quota))
+			}
+			c.Config.Labels["DiskQuota"] = strings.Join(labels, ";")
 		}
 	}
 
 	c.Unlock()
-
-	// update container disk quota
-	if err := mgr.updateContainerDiskQuota(ctx, c, config.DiskQuota); err != nil {
-		return errors.Wrapf(err, "failed to update diskquota of container %s", c.ID)
-	}
 
 	// update Resources of a container.
 	if err := mgr.updateContainerResources(c, config.Resources); err != nil {
@@ -1052,18 +1056,15 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	return nil
 }
 
-func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Container, diskQuota string) error {
-	if diskQuota == "" {
+func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Container, diskQuota map[string]string) error {
+	if diskQuota == nil {
 		return nil
 	}
 
-	quotaMap, err := opts.ParseDiskQuota([]string{diskQuota})
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse disk quota")
-	}
-
 	c.Lock()
-	c.Config.DiskQuota = quotaMap
+	for dir, quota := range diskQuota {
+		c.Config.DiskQuota[dir] = quota
+	}
 	c.Unlock()
 
 	// set mount point disk quota
@@ -1094,7 +1095,7 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 	c.Unlock()
 
 	// get rootfs quota
-	defaultQuota := quota.GetDefaultQuota(quotaMap)
+	defaultQuota := quota.GetDefaultQuota(c.Config.DiskQuota)
 	if qid > 0 && defaultQuota == "" {
 		return fmt.Errorf("set quota id but have no set default quota size")
 	}

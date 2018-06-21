@@ -2201,8 +2201,11 @@ definitions:
             items:
               type: "string"
           DiskQuota:
-            type: "string"
+            type: "object"
             description: "update disk quota for container"
+            x-nullable: true
+            additionalProperties:
+              type: "string"
 
   ContainerUpgradeConfig:
     description: |
