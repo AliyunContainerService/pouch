@@ -281,10 +281,6 @@ func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, re
 	if err := json.NewDecoder(reader).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-	// validate request body
-	if err := config.Validate(strfmt.NewFormats()); err != nil {
-		return httputils.NewHTTPError(err, http.StatusBadRequest)
-	}
 
 	name := mux.Vars(req)["name"]
 
