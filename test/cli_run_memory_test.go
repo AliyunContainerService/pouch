@@ -137,3 +137,12 @@ func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 
 	checkFileContains(c, path, "104857600")
 }
+
+
+// TestRunMemoryOOM is to verify return value when a container is OOM.
+func (suite *PouchRunMemorySuite) TestRunMemoryOOM(c *check.C) {
+	cname := "TestRunMemoryOOM"
+	ret := command.PouchRun("run", "-m", "20m", "--name", cname, busyboxImage, "sh", "-c", "x=a; while true; do x=$x$x$x$x; done")
+	defer DelContainerForceMultyTime(c, cname)
+	ret.Assert(c, icmd.Expected{ExitCode: 137})
+}
