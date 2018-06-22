@@ -25,9 +25,9 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	logCreateOptions("container exec", config)
-
 	name := mux.Vars(req)["name"]
+
+	logCreateOptions("container exec for "+name, config)
 
 	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
 	if err != nil {
