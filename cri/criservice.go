@@ -14,7 +14,7 @@ import (
 )
 
 // RunCriService start cri service if pouchd is specified with --enable-cri.
-func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, stopCh chan error) {
+func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, stopCh chan error, readyCh chan bool) {
 	var err error
 
 	defer func() {
@@ -22,29 +22,34 @@ func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, i
 		close(stopCh)
 	}()
 	if !daemonconfig.IsCriEnabled {
+		// the CriService has been disabled, so send Ready
+		readyCh <- true
 		return
 	}
 	switch daemonconfig.CriConfig.CriVersion {
 	case "v1alpha1":
-		err = runv1alpha1(daemonconfig, containerMgr, imageMgr)
+		err = runv1alpha1(daemonconfig, containerMgr, imageMgr, readyCh)
 	case "v1alpha2":
-		err = runv1alpha2(daemonconfig, containerMgr, imageMgr)
+		err = runv1alpha2(daemonconfig, containerMgr, imageMgr, readyCh)
 	default:
+		readyCh <- false
 		err = fmt.Errorf("invalid CRI version,failed to start CRI service")
 	}
 	return
 }
 
 // Start CRI service with CRI version: v1alpha1
-func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr) error {
+func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, readyCh chan bool) error {
 	logrus.Infof("Start CRI service with CRI version: v1alpha1")
 	criMgr, err := criv1alpha1.NewCriManager(daemonconfig, containerMgr, imageMgr)
 	if err != nil {
+		readyCh <- false
 		return fmt.Errorf("failed to get CriManager with error: %v", err)
 	}
 
 	service, err := servicev1alpha1.NewService(daemonconfig, criMgr)
 	if err != nil {
+		readyCh <- false
 		return fmt.Errorf("failed to start CRI service with error: %v", err)
 	}
 
@@ -58,6 +63,9 @@ func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 		errChan <- criMgr.StreamServerStart()
 		logrus.Infof("CRI Stream server stopped")
 	}()
+
+	// the criservice has set up, send Ready
+	readyCh <- true
 
 	// Check for error
 	for i := 0; i < cap(errChan); i++ {
@@ -71,15 +79,17 @@ func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 }
 
 // Start CRI service with CRI version: v1alpha2
-func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr) error {
+func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, readyCh chan bool) error {
 	logrus.Infof("Start CRI service with CRI version: v1alpha2")
 	criMgr, err := criv1alpha2.NewCriManager(daemonconfig, containerMgr, imageMgr)
 	if err != nil {
+		readyCh <- false
 		return fmt.Errorf("failed to get CriManager with error: %v", err)
 	}
 
 	service, err := servicev1alpha2.NewService(daemonconfig, criMgr)
 	if err != nil {
+		readyCh <- false
 		return fmt.Errorf("failed to start CRI service with error: %v", err)
 	}
 
@@ -93,6 +103,9 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 		errChan <- criMgr.StreamServerStart()
 		logrus.Infof("CRI Stream server stopped")
 	}()
+
+	// the criservice has set up, send Ready
+	readyCh <- true
 
 	// Check for error
 	for i := 0; i < cap(errChan); i++ {

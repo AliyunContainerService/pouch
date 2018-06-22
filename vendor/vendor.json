@@ -614,6 +614,24 @@
 			"revisionTime": "2018-01-08T23:09:05Z"
 		},
 		{
+			"checksumSHA1": "dPUClu2Gew2ddf1Y5rmgvxUUFeU=",
+			"path": "github.com/coreos/go-systemd/daemon",
+			"revision": "a4887aeaa186e68961d2d6af7d5fbac6bd6fa79b",
+			"revisionTime": "2018-05-25T14:22:39Z"
+		},
+		{
+			"checksumSHA1": "5GD2mlKEoDM+bU1PfSlx8rAz4oc=",
+			"path": "github.com/coreos/go-systemd/util",
+			"revision": "a4887aeaa186e68961d2d6af7d5fbac6bd6fa79b",
+			"revisionTime": "2018-05-25T14:22:39Z"
+		},
+		{
+			"checksumSHA1": "O8c/VKtW34XPJNNlyeb/im8vWSI=",
+			"path": "github.com/coreos/pkg/dlopen",
+			"revision": "97fdf19511ea361ae1c100dd393cc47f8dcfa1e1",
+			"revisionTime": "2018-01-08T23:06:52Z"
+		},
+		{
 			"checksumSHA1": "CCfIpyo6sGH8gnEdP/0vGSi4ywA=",
 			"path": "github.com/cpuguy83/go-md2man/md2man",
 			"revision": "1d903dcb749992f3741d744c0f8376b4bd7eb3e1",
