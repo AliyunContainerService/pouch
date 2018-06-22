@@ -392,3 +392,46 @@ func (suite *PouchUpdateSuite) TestUpdateContainerDeleteEnv(c *check.C) {
 		c.Errorf("foo=bar env should be deleted from container's env")
 	}
 }
+
+// TestUpdateContainerDiskQuota is to verify the correctness of delete env by update interface
+func (suite *PouchUpdateSuite) TestUpdateContainerDiskQuota(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+
+	// create container with disk quota
+	name := "update-container-diskquota"
+	command.PouchRun("run", "-d", "--disk-quota", "/=2000m", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	ret := command.PouchRun("exec", name, "df")
+	//ret.Assert(c, icmd.Success)
+	out := ret.Combined()
+
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "/") &&
+			strings.Contains(line, "2048000") {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, true)
+
+	// update diskquota
+	command.PouchRun("update", "--disk-quota", "/=1000m", name).Assert(c, icmd.Success)
+
+	ret = command.PouchRun("exec", name, "df")
+	//ret.Assert(c, icmd.Success)
+	out = ret.Combined()
+
+	found = false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "/") &&
+			strings.Contains(line, "1024000") {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, true)
+}

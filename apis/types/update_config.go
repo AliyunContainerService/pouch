@@ -19,7 +19,7 @@ type UpdateConfig struct {
 	Resources
 
 	// update disk quota for container
-	DiskQuota string `json:"DiskQuota,omitempty"`
+	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
 	//
@@ -42,7 +42,7 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	m.Resources = aO0
 
 	var data struct {
-		DiskQuota string `json:"DiskQuota,omitempty"`
+		DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 		Env []string `json:"Env,omitempty"`
 
@@ -76,7 +76,7 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	_parts = append(_parts, aO0)
 
 	var data struct {
-		DiskQuota string `json:"DiskQuota,omitempty"`
+		DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 		Env []string `json:"Env,omitempty"`
 

@@ -4,7 +4,7 @@ import "io"
 
 // ContainerPlugin defines places where a plugin will be triggered in container lifecycle
 type ContainerPlugin interface {
-	// PreCreate defines plugin point where receives an container create request, in this plugin point user
+	// PreCreate defines plugin point where receives a container create request, in this plugin point user
 	// could change the container create body passed-in by http request body
 	PreCreate(io.ReadCloser) (io.ReadCloser, error)
 
@@ -16,4 +16,8 @@ type ContainerPlugin interface {
 	// and if this endpoint should enable resolver and a map which will be used as generic params to create endpoints of
 	// this container
 	PreCreateEndpoint(string, []string) (priority int, disableResolver bool, genericParam map[string]interface{})
+
+	// PreUpdate defines plugin point where receives a container update request, in this plugin point user
+	// could change the container update body passed-in by http request body
+	PreUpdate(io.ReadCloser) (io.ReadCloser, error)
 }

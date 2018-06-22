@@ -266,8 +266,19 @@ func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, re
 
 func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	config := &types.UpdateConfig{}
+
+	// set pre update hook plugin
+	reader := req.Body
+	if s.ContainerPlugin != nil {
+		var err error
+		logrus.Infof("invoke container pre-update hook in plugin")
+		if reader, err = s.ContainerPlugin.PreUpdate(req.Body); err != nil {
+			return errors.Wrapf(err, "failed to execute pre-create plugin point")
+		}
+	}
+
 	// decode request body
-	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
+	if err := json.NewDecoder(reader).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 	// validate request body
