@@ -99,7 +99,7 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 	}
 
 	pctx, cancel := context.WithCancel(ctx)
-	stream := jsonstream.New(out)
+	stream := jsonstream.New(out, nil)
 	wait := make(chan struct{})
 
 	go func() {
