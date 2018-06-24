@@ -67,13 +67,6 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		return err
 	}
 
-	var netSettings *types.NetworkSettings
-	if c.NetworkSettings != nil {
-		netSettings = &types.NetworkSettings{
-			Networks: c.NetworkSettings.Networks,
-		}
-	}
-
 	mounts := []types.MountPoint{}
 	for _, mp := range c.Mounts {
 		mounts = append(mounts, *mp)
@@ -93,7 +86,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 			Data: c.Snapshotter.Data,
 		},
 		Mounts:          mounts,
-		NetworkSettings: netSettings,
+		NetworkSettings: c.NetworkSettings,
 	}
 
 	return EncodeResponse(rw, http.StatusOK, container)
