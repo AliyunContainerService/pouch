@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// updateDescription is used to describe updatedaemon command in detail and auto generate command doc.
+// daemonUpdateDescription is used to describe updatedaemon command in detail and auto generate command doc.
 var daemonUpdateDescription = "Update daemon's configurations, if daemon is stoped, it will just update config file. " +
 	"Online update just including: image proxy, label, offline update including: manager white list, debug level, " +
 	"execute root directory, bridge name, bridge IP, fixed CIDR, defaut gateway, iptables, ipforwark, userland proxy" +
@@ -108,6 +108,7 @@ func (udc *DaemonUpdateCommand) daemonUpdateRun(args []string) error {
 	return nil
 }
 
+// updateDaemonConfigFile is just used to update config file.
 func (udc *DaemonUpdateCommand) updateDaemonConfigFile() error {
 	// read config from file.
 	contents, err := ioutil.ReadFile(udc.configFile)
