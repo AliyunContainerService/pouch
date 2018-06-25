@@ -256,8 +256,9 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
+	opts.FilterFunc = filter
 
-	containers, err := c.ContainerMgr.List(ctx, filter, opts)
+	containers, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
 	}
@@ -320,8 +321,9 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
 	}
+	opts.FilterFunc = filter
 
-	containers, err := c.ContainerMgr.List(ctx, filter, opts)
+	containers, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
 	}
@@ -429,9 +431,10 @@ func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelSandbox
 	}
+	opts.FilterFunc = filter
 
 	// Filter *only* (sandbox) containers.
-	sandboxList, err := c.ContainerMgr.List(ctx, filter, opts)
+	sandboxList, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sandbox: %v", err)
 	}
@@ -558,9 +561,10 @@ func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContaine
 	filter := func(c *mgr.Container) bool {
 		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer
 	}
+	opts.FilterFunc = filter
 
 	// Filter *only* (non-sandbox) containers.
-	containerList, err := c.ContainerMgr.List(ctx, filter, opts)
+	containerList, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list container: %v", err)
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/pkg/utils/filters"
 
 	"github.com/spf13/cobra"
 )
@@ -26,6 +27,7 @@ type PsCommand struct {
 	flagAll     bool
 	flagQuiet   bool
 	flagNoTrunc bool
+	flagFilter  []string
 }
 
 // Init initializes PsCommand command.
@@ -50,6 +52,7 @@ func (p *PsCommand) addFlags() {
 	flagSet.BoolVarP(&p.flagAll, "all", "a", false, "Show all containers (default shows just running)")
 	flagSet.BoolVarP(&p.flagQuiet, "quiet", "q", false, "Only show numeric IDs")
 	flagSet.BoolVar(&p.flagNoTrunc, "no-trunc", false, "Do not truncate output")
+	flagSet.StringSliceVarP(&p.flagFilter, "filter", "f", nil, "Filter output based on given conditions, support filter key [ id label name status ]")
 }
 
 // runPs is the entry of PsCommand command.
@@ -57,8 +60,18 @@ func (p *PsCommand) runPs(args []string) error {
 	ctx := context.Background()
 	apiClient := p.cli.Client()
 
+	filter, err := filters.Parse(p.flagFilter)
+	if err != nil {
+		return err
+	}
+
 	var containers containerList
-	containers, err := apiClient.ContainerList(ctx, p.flagAll)
+
+	option := types.ContainerListOptions{
+		All:    p.flagAll,
+		Filter: filter,
+	}
+	containers, err = apiClient.ContainerList(ctx, option)
 	if err != nil {
 		return fmt.Errorf("failed to get container list: %v", err)
 	}

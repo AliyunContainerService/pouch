@@ -98,9 +98,11 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 		return err
 	}
 
-	containers, err := s.ContainerMgr.List(ctx, func(c *mgr.Container) bool {
-		return c.Image == image.ID
-	}, &mgr.ContainerListOption{All: true})
+	containers, err := s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
+		All: true,
+		FilterFunc: func(c *mgr.Container) bool {
+			return c.Image == image.ID
+		}})
 	if err != nil {
 		return err
 	}

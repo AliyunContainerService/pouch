@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -69,6 +70,139 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		c.Assert(kv[name].status[0], check.Equals, "Stopped")
 	}
 
+}
+
+// TestPsFilterInvalid tests "pouch ps -f" invalid
+func (suite *PouchPsSuite) TestPsFilterInvalid(c *check.C) {
+	result := command.PouchRun("ps", "-f", "foo")
+	err := util.PartialEqual(result.Stderr(), "Bad format of filter, expected name=value")
+	c.Assert(err, check.IsNil)
+
+	result = command.PouchRun("ps", "-f", "foo=bar")
+	err = util.PartialEqual(result.Stderr(), "Invalid filter")
+	c.Assert(err, check.IsNil)
+
+	result = command.PouchRun("ps", "-f", "id=null", "-f", "foo=bar")
+	err = util.PartialEqual(result.Stderr(), "Invalid filter")
+	c.Assert(err, check.IsNil)
+}
+
+// TestPsFilterEqual tests "pouch ps -f" filter equal condition work
+func (suite *PouchPsSuite) TestPsFilterEqual(c *check.C) {
+	labelA := "equal-label-a"
+	command.PouchRun("run", "-d", "--name", labelA, "-l", "a=b", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, labelA)
+	output := command.PouchRun("inspect", labelA).Assert(c, icmd.Success).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	labelAID := result[0].ID
+
+	labelB := "equal-label-b"
+	command.PouchRun("run", "-d", "--name", labelB, "-l", "b=c", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, labelB)
+
+	name := "non-running-lable-a"
+	command.PouchRun("create", "--name", name, "-l", "a=b", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	res := command.PouchRun("ps", "-f", "id="+labelAID).Assert(c, icmd.Success)
+	kv := psToKV(res.Combined())
+	_, exist1 := kv[labelA]
+	_, exist2 := kv[labelB]
+	_, exist3 := kv[name]
+	c.Assert(exist1, check.Equals, true)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+
+	res = command.PouchRun("ps", "-f", "label=a=b").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	c.Assert(exist1, check.Equals, true)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+
+	res = command.PouchRun("ps", "-f", "label=a=b", "-a").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	c.Assert(exist1, check.Equals, true)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, true)
+
+	res = command.PouchRun("ps", "-f", "status=running", "-f", "label=a!=c").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	c.Assert(exist1, check.Equals, true)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+
+	res = command.PouchRun("ps", "-f", "name="+labelA, "-f", "label=b=c", "-f", "status=running").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	c.Assert(exist1, check.Equals, false)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+}
+
+// TestPsFilterUnequal tests "pouch ps -f" filter unequal condition work
+func (suite *PouchPsSuite) TestPsFilterUnequal(c *check.C) {
+	labelA := "unequal-label-a"
+	command.PouchRun("run", "-d", "--name", labelA, "-l", "a=b", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, labelA)
+
+	labelB := "unequal-label-b"
+	command.PouchRun("run", "-d", "--name", labelB, "-l", "b=c", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, labelB)
+
+	labelC := "unequal-label-c"
+	command.PouchRun("run", "-d", "--name", labelC, "-l", "a=c", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, labelC)
+
+	name := "non-running-lable-a"
+	command.PouchRun("create", "--name", name, "-l", "a=c", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	res := command.PouchRun("ps", "-f", "label=b!=c").Assert(c, icmd.Success)
+	kv := psToKV(res.Combined())
+	_, exist1 := kv[labelA]
+	_, exist2 := kv[labelB]
+	_, exist3 := kv[name]
+	_, exist4 := kv[labelC]
+	c.Assert(exist1, check.Equals, false)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+	c.Assert(exist4, check.Equals, false)
+
+	res = command.PouchRun("ps", "-f", "label=a!=b").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	_, exist4 = kv[labelC]
+	c.Assert(exist1, check.Equals, false)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, false)
+	c.Assert(exist4, check.Equals, true)
+
+	res = command.PouchRun("ps", "-f", "label=a!=b", "-a").Assert(c, icmd.Success)
+	kv = psToKV(res.Combined())
+	_, exist1 = kv[labelA]
+	_, exist2 = kv[labelB]
+	_, exist3 = kv[name]
+	_, exist4 = kv[labelC]
+	c.Assert(exist1, check.Equals, false)
+	c.Assert(exist2, check.Equals, false)
+	c.Assert(exist3, check.Equals, true)
+	c.Assert(exist4, check.Equals, true)
 }
 
 // TestPsAll tests "pouch ps -a" work

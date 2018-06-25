@@ -30,7 +30,7 @@ func PruneAllImages(apiClient client.ImageAPIClient) error {
 // PruneAllContainers deletes all containers from pouchd.
 func PruneAllContainers(apiClient client.ContainerAPIClient) error {
 	ctx := context.Background()
-	containers, err := apiClient.ContainerList(ctx, true)
+	containers, err := apiClient.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
 		return errors.Wrap(err, "fail to list images")
 	}

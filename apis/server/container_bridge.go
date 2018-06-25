@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/pkg/utils/filters"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -104,9 +105,13 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 		All: httputils.BoolValue(req, "all"),
 	}
 
-	cons, err := s.ContainerMgr.List(ctx, func(c *mgr.Container) bool {
-		return true
-	}, option)
+	filters, err := filters.FromURLParam(req.FormValue("filters"))
+	if err != nil {
+		return err
+	}
+	option.Filter = filters
+
+	cons, err := s.ContainerMgr.List(ctx, option)
 	if err != nil {
 		return err
 	}
