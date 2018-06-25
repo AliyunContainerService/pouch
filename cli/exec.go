@@ -48,7 +48,9 @@ func (e *ExecCommand) addFlags() {
 	flagSet.SetInterspersed(false)
 	flagSet.BoolVarP(&e.Detach, "detach", "d", false, "Run the process in the background")
 	flagSet.BoolVarP(&e.Terminal, "tty", "t", false, "Allocate a tty device")
-	flagSet.BoolVarP(&e.Interactive, "interactive", "i", false, "Open container's STDIN")
+	// NOTE: set default interactive equal true for taking over running moby 1.12.6 container,
+	// since this version always need container open stdin/stdout/stderr fifo.
+	flagSet.BoolVarP(&e.Interactive, "interactive", "i", true, "Open container's STDIN")
 	flagSet.StringVarP(&e.User, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
 }
 

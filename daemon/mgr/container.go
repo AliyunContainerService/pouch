@@ -209,6 +209,10 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 			return nil
 		}
 
+		// NOTE: for taking over running moby 1.12.6 container, since this version
+		// always need container open stdin/stdout/stderr fifo.
+		container.Config.OpenStdin = true
+
 		// recover the running or paused container.
 		io, err := mgr.openContainerIO(container)
 		if err != nil {
