@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -43,8 +43,8 @@ func (u *Ulimit) Type() string {
 	return "value"
 }
 
-// value return ulimit values as type ResourcesUlimitsItems0
-func (u *Ulimit) value() []*types.Ulimit {
+// Value return ulimit values as type Ulimit
+func (u *Ulimit) Value() []*types.Ulimit {
 	var ulimit []*types.Ulimit
 	for _, ul := range u.values {
 		ulimit = append(ulimit, &types.Ulimit{

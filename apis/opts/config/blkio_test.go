@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"reflect"
@@ -239,7 +239,7 @@ func TestWeightDevice_value(t *testing.T) {
 			w := &WeightDevice{
 				values: tt.fields.values,
 			}
-			if got := w.value(); !reflect.DeepEqual(got, tt.want) {
+			if got := w.Value(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WeightDevice.value() = %v, want %v", got, tt.want)
 			}
 		})
@@ -462,7 +462,7 @@ func TestThrottleBpsDevice_value(t *testing.T) {
 			throttleBpsDevice := &ThrottleBpsDevice{
 				values: tt.fields.values,
 			}
-			if got := throttleBpsDevice.value(); !reflect.DeepEqual(got, tt.want) {
+			if got := throttleBpsDevice.Value(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ThrottleBpsDevice.value() = %v, want %v", got, tt.want)
 			}
 		})
@@ -685,7 +685,7 @@ func TestThrottleIOpsDevice_value(t *testing.T) {
 			throttleIOpsDevice := &ThrottleIOpsDevice{
 				values: tt.fields.values,
 			}
-			if got := throttleIOpsDevice.value(); !reflect.DeepEqual(got, tt.want) {
+			if got := throttleIOpsDevice.Value(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ThrottleIOpsDevice.value() = %v, want %v", got, tt.want)
 			}
 		})

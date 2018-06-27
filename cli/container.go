@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/opts"
+	"github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/apis/types"
 
 	strfmt "github.com/go-openapi/strfmt"
@@ -26,11 +27,11 @@ type container struct {
 	disableNetworkFiles bool
 
 	blkioWeight          uint16
-	blkioWeightDevice    WeightDevice
-	blkioDeviceReadBps   ThrottleBpsDevice
-	blkioDeviceWriteBps  ThrottleBpsDevice
-	blkioDeviceReadIOps  ThrottleIOpsDevice
-	blkioDeviceWriteIOps ThrottleIOpsDevice
+	blkioWeightDevice    config.WeightDevice
+	blkioDeviceReadBps   config.ThrottleBpsDevice
+	blkioDeviceWriteBps  config.ThrottleBpsDevice
+	blkioDeviceReadIOps  config.ThrottleIOpsDevice
+	blkioDeviceWriteIOps config.ThrottleIOpsDevice
 
 	cpushare   int64
 	cpusetcpus string
@@ -69,7 +70,7 @@ type container struct {
 	oomScoreAdj    int64
 	specAnnotation []string
 	cgroupParent   string
-	ulimit         Ulimit
+	ulimit         config.Ulimit
 	pidsLimit      int64
 	shmSize        string
 
@@ -230,16 +231,16 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 				// blkio
 				BlkioWeight:          c.blkioWeight,
-				BlkioWeightDevice:    c.blkioWeightDevice.value(),
-				BlkioDeviceReadBps:   c.blkioDeviceReadBps.value(),
-				BlkioDeviceReadIOps:  c.blkioDeviceReadIOps.value(),
-				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.value(),
-				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.value(),
+				BlkioWeightDevice:    c.blkioWeightDevice.Value(),
+				BlkioDeviceReadBps:   c.blkioDeviceReadBps.Value(),
+				BlkioDeviceReadIOps:  c.blkioDeviceReadIOps.Value(),
+				BlkioDeviceWriteBps:  c.blkioDeviceWriteBps.Value(),
+				BlkioDeviceWriteIOps: c.blkioDeviceWriteIOps.Value(),
 
 				Devices:       deviceMappings,
 				IntelRdtL3Cbm: intelRdtL3Cbm,
 				CgroupParent:  c.cgroupParent,
-				Ulimits:       c.ulimit.value(),
+				Ulimits:       c.ulimit.Value(),
 				PidsLimit:     c.pidsLimit,
 			},
 			EnableLxcfs:   c.enableLxcfs,

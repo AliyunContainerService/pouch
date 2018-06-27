@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -61,7 +61,8 @@ func (w *WeightDevice) Type() string {
 	return "value"
 }
 
-func (w *WeightDevice) value() []*types.WeightDevice {
+// Value returns all values as type WeightDevice
+func (w *WeightDevice) Value() []*types.WeightDevice {
 	var weightDevice []*types.WeightDevice
 	for _, v := range w.values {
 		weightDevice = append(weightDevice, v)
@@ -118,7 +119,8 @@ func (t *ThrottleBpsDevice) Type() string {
 	return "value"
 }
 
-func (t *ThrottleBpsDevice) value() []*types.ThrottleDevice {
+// Value returns all values as type ThrottleDevice
+func (t *ThrottleBpsDevice) Value() []*types.ThrottleDevice {
 	var throttleDevice []*types.ThrottleDevice
 	for _, v := range t.values {
 		throttleDevice = append(throttleDevice, v)
@@ -175,7 +177,8 @@ func (t *ThrottleIOpsDevice) Type() string {
 	return "value"
 }
 
-func (t *ThrottleIOpsDevice) value() []*types.ThrottleDevice {
+// Value returns all values
+func (t *ThrottleIOpsDevice) Value() []*types.ThrottleDevice {
 	var throttleDevice []*types.ThrottleDevice
 	for _, v := range t.values {
 		throttleDevice = append(throttleDevice, v)

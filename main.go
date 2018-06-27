@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alibaba/pouch/config/opt"
+	optscfg "github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
@@ -112,7 +112,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 	flagSet.IntVar(&cfg.OOMScoreAdjust, "oom-score-adj", -500, "Set the oom_score_adj for the daemon")
-	flagSet.Var(opt.NewRuntime(&cfg.Runtimes), "add-runtime", "register a OCI runtime to daemon")
+	flagSet.Var(optscfg.NewRuntime(&cfg.Runtimes), "add-runtime", "register a OCI runtime to daemon")
 
 }
 
