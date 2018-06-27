@@ -403,3 +403,22 @@ func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
 
 	util.PartialEqual(res.Stdout(), "1048576")
 }
+
+// TestRunSetRunningFlag is to verfy whether set Running Flag in ContainerState
+// when started a container
+func (suite *PouchRunSuite) TestRunSetRunningFlag(c *check.C) {
+	cname := "TestRunSetRunningFlag"
+	res := command.PouchRun("run", "-d", "--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	res = command.PouchRun("inspect", cname)
+	res.Assert(c, icmd.Success)
+
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Running, check.Equals, true)
+}

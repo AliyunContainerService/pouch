@@ -90,6 +90,7 @@ func (c *Container) SetStatusRunning(pid int64) {
 	c.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
 	c.State.Pid = pid
 	c.State.ExitCode = 0
+	c.setStatusFlags(types.StatusRunning)
 }
 
 // SetStatusStopped sets a container to be status stopped.
@@ -107,6 +108,7 @@ func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
 	c.State.Pid = -1
 	c.State.ExitCode = exitCode
 	c.State.Error = errMsg
+	c.setStatusFlags(types.StatusStopped)
 }
 
 // SetStatusExited sets a container to be status exited.
@@ -118,6 +120,7 @@ func (c *Container) SetStatusExited(exitCode int64, errMsg string) {
 	c.State.Pid = -1
 	c.State.ExitCode = exitCode
 	c.State.Error = errMsg
+	c.setStatusFlags(types.StatusExited)
 }
 
 // SetStatusPaused sets a container to be status paused.
@@ -125,6 +128,7 @@ func (c *Container) SetStatusPaused() {
 	c.Lock()
 	defer c.Unlock()
 	c.State.Status = types.StatusPaused
+	c.setStatusFlags(types.StatusPaused)
 }
 
 // SetStatusUnpaused sets a container to be status running.
@@ -133,4 +137,33 @@ func (c *Container) SetStatusUnpaused() {
 	c.Lock()
 	defer c.Unlock()
 	c.State.Status = types.StatusRunning
+	c.setStatusFlags(types.StatusRunning)
+}
+
+// Notes(ziren): i still feel uncomfortable for a function hasing no return
+// setStatusFlags set the specified status flag to true, and unset others
+func (c *Container) setStatusFlags(status types.Status) {
+	statusFlags := map[types.Status]bool{
+		types.StatusDead:       false,
+		types.StatusRunning:    false,
+		types.StatusPaused:     false,
+		types.StatusRestarting: false,
+	}
+
+	if _, exists := statusFlags[status]; exists {
+		statusFlags[status] = true
+	}
+
+	for k, v := range statusFlags {
+		switch k {
+		case types.StatusDead:
+			c.State.Dead = v
+		case types.StatusPaused:
+			c.State.Paused = v
+		case types.StatusRunning:
+			c.State.Running = v
+		case types.StatusRestarting:
+			c.State.Restarting = v
+		}
+	}
 }
