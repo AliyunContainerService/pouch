@@ -504,6 +504,10 @@ func setupNetworkNamespace(ctx context.Context, c *Container, specWrapper *SpecW
 	ns := specs.LinuxNamespace{Type: specs.NetworkNamespace}
 
 	networkMode := c.HostConfig.NetworkMode
+	if IsHost(networkMode) {
+		removeNamespace(s, specs.NetworkNamespace)
+		return nil
+	}
 	if IsContainer(networkMode) {
 		origContainer, err := specWrapper.ctrMgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
 		if err != nil {
@@ -516,10 +520,13 @@ func setupNetworkNamespace(ctx context.Context, c *Container, specWrapper *SpecW
 		}
 
 		ns.Path = fmt.Sprintf("/proc/%d/ns/net", origContainer.State.Pid)
-	} else if IsHost(networkMode) {
-		ns.Path = c.NetworkSettings.SandboxKey
 	}
+
 	setNamespace(s, ns)
+
+	if IsNone(networkMode) {
+		return nil
+	}
 
 	for _, ns := range s.Linux.Namespaces {
 		if ns.Type == "network" && ns.Path == "" && !c.Config.NetworkDisabled {
