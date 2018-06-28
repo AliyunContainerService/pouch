@@ -32,12 +32,12 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
       --cpu-shares int        CPU shares (relative weight)
       --cpuset-cpus string    CPUs in cpuset
       --cpuset-mems string    MEMs in cpuset
+      --disk-quota strings    Update disk quota for container(/=10g)
   -e, --env strings           Set environment variables for container
   -h, --help                  help for update
   -l, --label strings         Set label for container
   -m, --memory string         Container memory limit
       --memory-swap string    Container swap limit
-      --quota string          Update disk quota for container
       --restart string        Restart policy to apply when container exits
 ```
 
