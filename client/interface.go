@@ -24,7 +24,7 @@ type ContainerAPIClient interface {
 	ContainerStart(ctx context.Context, name, detachKeys string) error
 	ContainerStop(ctx context.Context, name, timeout string) error
 	ContainerRemove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error
-	ContainerList(ctx context.Context, all bool) ([]*types.Container, error)
+	ContainerList(ctx context.Context, option types.ContainerListOptions) ([]*types.Container, error)
 	ContainerAttach(ctx context.Context, name string, stdin bool) (net.Conn, *bufio.Reader, error)
 	ContainerCreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (*types.ExecCreateResp, error)
 	ContainerStartExec(ctx context.Context, execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error)

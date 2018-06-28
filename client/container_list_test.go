@@ -17,7 +17,9 @@ func TestContainerListError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerList(context.Background(), true)
+	_, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+		All: true,
+	})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -57,7 +59,9 @@ func TestContainerList(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: httpClient,
 	}
-	containers, err := client.ContainerList(context.Background(), true)
+	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+		All: true,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

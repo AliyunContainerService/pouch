@@ -3529,6 +3529,33 @@ definitions:
       Link:
         type: "boolean"
 
+  ContainerListOptions:
+    description: |
+      options of list container, filters (a `map[string][]string`) to process on the container list. Available filters:
+
+      - `id=container-id`
+      - `name=container-name`
+      - `status=running`
+      - `label=key` or `label=key=value`
+      - `network=container-network`
+      - `volume=volume-id`
+    type: "object"
+    properties:
+      All:
+        type: "boolean"
+      Since:
+        type: "string"
+      Before:
+        type: "string"
+      Limit:
+        type: "integer"
+      Filter:
+        type: "object"
+        additionalProperties:
+          type: "array"
+          items:
+            type: "string"
+
 parameters:
   id:
     name: id

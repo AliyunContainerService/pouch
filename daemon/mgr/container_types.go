@@ -136,7 +136,9 @@ type AttachConfig struct {
 
 // ContainerListOption wraps the container list interface params.
 type ContainerListOption struct {
-	All bool
+	All        bool
+	Filter     map[string][]string
+	FilterFunc ContainerFilter
 }
 
 // Container represents the container's meta data.

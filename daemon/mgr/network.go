@@ -75,9 +75,11 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 
 	// get active sandboxes
 	ctrs, err := ctrMgr.List(context.Background(),
-		func(c *Container) bool {
-			return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
-		}, &ContainerListOption{All: true})
+		&ContainerListOption{
+			All: true,
+			FilterFunc: func(c *Container) bool {
+				return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
+			}})
 	if err != nil {
 		logrus.Errorf("failed to new network manager, can not get container list")
 		return nil, errors.Wrap(err, "failed to get container list")

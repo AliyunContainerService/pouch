@@ -61,7 +61,7 @@ type ContainerMgr interface {
 	Get(ctx context.Context, name string) (*Container, error)
 
 	// List returns the list of containers.
-	List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*Container, error)
+	List(ctx context.Context, option *ContainerListOption) ([]*Container, error)
 
 	// Start a container.
 	Start(ctx context.Context, id, detachKeys string) error
@@ -419,33 +419,6 @@ func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, 
 	}
 
 	return c, nil
-}
-
-// List returns the container's list.
-func (mgr *ContainerManager) List(ctx context.Context, filter ContainerFilter, option *ContainerListOption) ([]*Container, error) {
-	cons := []*Container{}
-
-	list, err := mgr.Store.List()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, obj := range list {
-		c, ok := obj.(*Container)
-		if !ok {
-			return nil, fmt.Errorf("failed to get container list, invalid meta type")
-		}
-		// TODO: make func filter with no data race
-		if filter != nil && filter(c) {
-			if option.All {
-				cons = append(cons, c)
-			} else if c.IsRunningOrPaused() {
-				cons = append(cons, c)
-			}
-		}
-	}
-
-	return cons, nil
 }
 
 // Start a pre created Container.
