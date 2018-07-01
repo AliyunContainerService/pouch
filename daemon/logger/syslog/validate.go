@@ -104,6 +104,11 @@ func parseLogFormat(logFmt, proto string) (srslog.Formatter, srslog.Framer, erro
 			return rfc5424MicroFormatterWithTagAsAppName, srslog.RFC5425MessageLengthFramer, nil
 		}
 		return rfc5424MicroFormatterWithTagAsAppName, srslog.DefaultFramer, nil
+	case "rfc5424micro-seq":
+		if proto == secureProto {
+			return rfc5424MicroFormatterWithSequenceAndTagAsAppName, srslog.RFC5425MessageLengthFramer, nil
+		}
+		return rfc5424MicroFormatterWithSequenceAndTagAsAppName, srslog.DefaultFramer, nil
 	default:
 		return nil, nil, ErrInvalidSyslogFormat
 	}
