@@ -45,7 +45,7 @@ func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 		host = defaultHost
 	}
 
-	newURL, basePath, addr, err := httputils.ParseHost(host)
+	newURL, _, addr, err := httputils.ParseHost(host)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host %s: %v", host, err)
 	}
@@ -54,7 +54,7 @@ func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 
 	httpCli := httputils.NewHTTPClient(newURL, tlsConfig, defaultTimeout)
 
-	basePath = generateBaseURL(newURL, tls)
+	basePath := generateBaseURL(newURL, tls)
 
 	version := os.Getenv("POUCH_API_VERSION")
 	if version == "" {

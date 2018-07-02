@@ -58,11 +58,8 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 		return err
 	}
 
-	if err := setupAppArmor(ctx, c, s); err != nil {
-		return err
-	}
-
-	return nil
+	err := setupAppArmor(ctx, c, s)
+	return err
 }
 
 func createEnvironment(c *Container) []string {

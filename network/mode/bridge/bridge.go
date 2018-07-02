@@ -74,11 +74,9 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 	logrus.Debugf("initialize bridge network, subnet: %s", subnet)
 
 	// get ip range
-	ipRange := DefaultIPRange
+	ipRange := subnet
 	if config.FixedCIDR != "" {
 		ipRange = config.FixedCIDR
-	} else {
-		ipRange = subnet
 	}
 	logrus.Debugf("initialize bridge network, bridge ip range in subnet: %s", ipRange)
 
