@@ -55,7 +55,7 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// test if the value is in inspect result
 	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
@@ -87,6 +87,7 @@ func (suite *PouchDaemonSuite) TestDaemonListenTCP(c *check.C) {
 		dcfg := daemon.NewConfig()
 		dcfg.Listen = ""
 		dcfg.NewArgs("--listen=" + addr)
+		dcfg.Debug = true
 		err := dcfg.StartDaemon()
 		c.Assert(err, check.IsNil)
 
@@ -255,7 +256,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// restart daemon
 	err = RestartDaemon(dcfg)
@@ -303,7 +304,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) 
 			c.Fatalf("pause container failed, err: %v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// restart daemon
 	err = RestartDaemon(dcfg)
