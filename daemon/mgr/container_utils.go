@@ -268,6 +268,14 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			warnings = append(warnings, MemorySwapWarn)
 			r.MemorySwap = 0
 		}
+		// cgroup not allow memory-swap less than memory limit
+		if r.Memory > 0 && r.MemorySwap > 0 && r.MemorySwap < r.Memory {
+			return warnings, fmt.Errorf("Minimum memoryswap limit should be larger than memory limit")
+		}
+		// cgroup not allow set memory-swap without set memory
+		if r.Memory == 0 && r.MemorySwap > 0 && !update {
+			return warnings, fmt.Errorf("You should always set the Memory limit when using Memoryswap limit")
+		}
 		if r.Memory != 0 && r.Memory < MinMemory {
 			return warnings, fmt.Errorf("Minimal memory should greater than 4M")
 		}
@@ -280,7 +288,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			r.MemorySwappiness = nil
 		}
 		if r.MemorySwappiness != nil && (*r.MemorySwappiness < 0 || *r.MemorySwappiness > 100) {
-			return warnings, fmt.Errorf("MemorySwappiness should in range [-1, 100]")
+			return warnings, fmt.Errorf("MemorySwappiness should in range [0, 100]")
 		}
 		if r.OomKillDisable != nil && !cgroupInfo.Memory.OOMKillDisable {
 			logrus.Warn(OOMKillWarn)

@@ -401,7 +401,7 @@ func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
 	res = command.PouchRun("exec", containerID, "df", "-k", "/dev/shm")
 	res.Assert(c, icmd.Success)
 
-	util.PartialEqual(res.Stdout(), "1048576")
+	c.Assert(util.PartialEqual(res.Stdout(), "1048576"), check.IsNil)
 }
 
 // TestRunSetRunningFlag is to verfy whether set Running Flag in ContainerState
