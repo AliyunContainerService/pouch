@@ -140,16 +140,14 @@ func (t *driverTable) GetAll() ([]Driver, error) {
 	}
 
 	for _, p := range pluginList {
-		d, ok := t.drivers[p.Name]
+		_, ok := t.drivers[p.Name]
 		if ok {
 			// the driver has existed, ignore it.
 			continue
 		}
 
-		d = NewRemoteDriverWrapper(p.Name, p)
-
-		t.drivers[p.Name] = d
-		driverList = append(driverList, d)
+		t.drivers[p.Name] = NewRemoteDriverWrapper(p.Name, p)
+		driverList = append(driverList, t.drivers[p.Name])
 	}
 
 	return driverList, nil
