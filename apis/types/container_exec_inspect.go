@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ContainerExecInspect holds information about a running process started.
@@ -18,34 +19,44 @@ import (
 type ContainerExecInspect struct {
 
 	// can remove
-	CanRemove bool `json:"CanRemove,omitempty"`
+	// Required: true
+	CanRemove bool `json:"CanRemove"`
 
 	// The ID of this container
-	ContainerID string `json:"ContainerID,omitempty"`
+	// Required: true
+	ContainerID string `json:"ContainerID"`
 
 	// detach keys
-	DetachKeys string `json:"DetachKeys,omitempty"`
+	// Required: true
+	DetachKeys string `json:"DetachKeys"`
 
 	// The last exit code of this container
-	ExitCode int64 `json:"ExitCode,omitempty"`
+	// Required: true
+	ExitCode int64 `json:"ExitCode"`
 
 	// The ID of this exec
-	ID string `json:"ID,omitempty"`
+	// Required: true
+	ID string `json:"ID"`
 
 	// open stderr
-	OpenStderr bool `json:"OpenStderr,omitempty"`
+	// Required: true
+	OpenStderr bool `json:"OpenStderr"`
 
 	// open stdin
-	OpenStdin bool `json:"OpenStdin,omitempty"`
+	// Required: true
+	OpenStdin bool `json:"OpenStdin"`
 
 	// open stdout
-	OpenStdout bool `json:"OpenStdout,omitempty"`
+	// Required: true
+	OpenStdout bool `json:"OpenStdout"`
 
 	// process config
-	ProcessConfig *ProcessConfig `json:"ProcessConfig,omitempty"`
+	// Required: true
+	ProcessConfig *ProcessConfig `json:"ProcessConfig"`
 
 	// running
-	Running bool `json:"Running,omitempty"`
+	// Required: true
+	Running bool `json:"Running"`
 }
 
 /* polymorph ContainerExecInspect CanRemove false */
@@ -72,7 +83,52 @@ type ContainerExecInspect struct {
 func (m *ContainerExecInspect) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateCanRemove(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateContainerID(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateDetachKeys(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateExitCode(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateID(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateOpenStderr(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateOpenStdin(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateOpenStdout(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateProcessConfig(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRunning(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -83,10 +139,82 @@ func (m *ContainerExecInspect) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *ContainerExecInspect) validateCanRemove(formats strfmt.Registry) error {
+
+	if err := validate.Required("CanRemove", "body", bool(m.CanRemove)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateContainerID(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("ContainerID", "body", string(m.ContainerID)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateDetachKeys(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("DetachKeys", "body", string(m.DetachKeys)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateExitCode(formats strfmt.Registry) error {
+
+	if err := validate.Required("ExitCode", "body", int64(m.ExitCode)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateID(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("ID", "body", string(m.ID)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateOpenStderr(formats strfmt.Registry) error {
+
+	if err := validate.Required("OpenStderr", "body", bool(m.OpenStderr)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateOpenStdin(formats strfmt.Registry) error {
+
+	if err := validate.Required("OpenStdin", "body", bool(m.OpenStdin)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateOpenStdout(formats strfmt.Registry) error {
+
+	if err := validate.Required("OpenStdout", "body", bool(m.OpenStdout)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *ContainerExecInspect) validateProcessConfig(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.ProcessConfig) { // not required
-		return nil
+	if err := validate.Required("ProcessConfig", "body", m.ProcessConfig); err != nil {
+		return err
 	}
 
 	if m.ProcessConfig != nil {
@@ -97,6 +225,15 @@ func (m *ContainerExecInspect) validateProcessConfig(formats strfmt.Registry) er
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *ContainerExecInspect) validateRunning(formats strfmt.Registry) error {
+
+	if err := validate.Required("Running", "body", bool(m.Running)); err != nil {
+		return err
 	}
 
 	return nil
