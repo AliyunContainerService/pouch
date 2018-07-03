@@ -385,14 +385,14 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		container.Snapshotter.Data["UpperDir"] = upperDir
 	}
 
+	// amendContainerSettings modify container config settings to wanted
+	amendContainerSettings(&config.ContainerConfig, config.HostConfig)
+
 	// validate container Config
 	warnings, err := validateConfig(&config.ContainerConfig, config.HostConfig, false)
 	if err != nil {
 		return nil, err
 	}
-
-	// amendContainerSettings modify container config settings to wanted
-	amendContainerSettings(&config.ContainerConfig, config.HostConfig)
 
 	// store disk
 	if err := container.Write(mgr.Store); err != nil {
