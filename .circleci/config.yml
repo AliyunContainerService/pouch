@@ -55,7 +55,7 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash)
 notify:
   webhooks:
-    - url: http://121.201.63.16:6788/circleci_notifications
+    - url: http://47.96.190.121:6788/circleci_notifications
 
 workflows:
   version: 2
