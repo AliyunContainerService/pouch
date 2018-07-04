@@ -555,6 +555,15 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		prioArr []int
 		argsArr [][]string
 	)
+
+	// if creating the container by specified the rootfs, we must check
+	// whether the rootfs is mounted before creation
+	if c.RootFSProvided {
+		if err := mgr.ensureRootFSMounted(c.BaseFS, c.Snapshotter.Data); err != nil {
+			return fmt.Errorf("failed to mount container rootfs: %v", err)
+		}
+	}
+
 	if mgr.containerPlugin != nil {
 		// TODO: make func PreStart with no data race
 		prioArr, argsArr, err = mgr.containerPlugin.PreStart(c)
@@ -592,14 +601,6 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		BaseFS:         c.BaseFS,
 	}
 	c.Unlock()
-
-	// if creating the container by specified the rootfs, we must check
-	// whether the rootfs is mounted before creation
-	if c.RootFSProvided {
-		if err := mgr.ensureRootFSMounted(c.BaseFS, c.Snapshotter.Data); err != nil {
-			return fmt.Errorf("failed to mount container rootfs: %v", err)
-		}
-	}
 
 	if err := mgr.Client.CreateContainer(ctx, ctrdContainer); err != nil {
 		logrus.Errorf("failed to create new containerd container: %v", err)
