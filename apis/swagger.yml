@@ -2929,50 +2929,67 @@ definitions:
   ContainerExecInspect:
     type: "object"
     description: holds information about a running process started.
+    required: [ID, Running, ExitCode, ProcessConfig, OpenStdin, OpenStderr, OpenStdout, CanRemove, ContainerID, DetachKeys]
     properties:
       ID:
+        x-nullable: false
         type: "string"
         description: "The ID of this exec"
       Running:
+        x-nullable: false
         type: "boolean"
       ExitCode:
+        x-nullable: false
         type: "integer"
         description: "The last exit code of this container"
       ProcessConfig:
+        x-nullable: false
         $ref: "#/definitions/ProcessConfig"
       OpenStdin:
+        x-nullable: false
         type: "boolean"
       OpenStderr:
+        x-nullable: false
         type: "boolean"
       OpenStdout:
+        x-nullable: false
         type: "boolean"
       CanRemove:
+        x-nullable: false
         type: "boolean"
       ContainerID:
+        x-nullable: false
         type: "string"
         description: "The ID of this container"
       DetachKeys:
+        x-nullable: false
         type: "string"
 
   ProcessConfig:
     type: "object"
     description: ExecProcessConfig holds information about the exec process.
+    required: [privileged, user, tty, entrypoint, arguments]
     properties:
       privileged:
+        x-nullable: false
         type: "boolean"
       user:
+        x-nullable: false
         type: "string"
       tty:
+        x-nullable: false
         type: "boolean"
       entrypoint:
+        x-nullable: false
         type: "string"
       arguments:
+        x-nullable: false
         type: "array"
         items:
           type: "string"
 
   ContainerJSON:
-    description: | 
+    description: |
       ContainerJSON contains response of Engine API:
       GET "/containers/{id}/json"
     type: "object"

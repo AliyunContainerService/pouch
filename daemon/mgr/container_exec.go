@@ -112,12 +112,22 @@ func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*t
 		return nil, err
 	}
 
+	entrypoint, args := mgr.getEntrypointAndArgs(execConfig.Cmd)
+	processConfig := &types.ProcessConfig{
+		Privileged: execConfig.Privileged,
+		Tty:        execConfig.Tty,
+		User:       execConfig.User,
+		Arguments:  args,
+		Entrypoint: entrypoint,
+	}
+
 	return &types.ContainerExecInspect{
 		ID: execConfig.ExecID,
 		// FIXME: try to use the correct running status of exec
-		Running:     execConfig.Running,
-		ExitCode:    execConfig.ExitCode,
-		ContainerID: execConfig.ContainerID,
+		Running:       execConfig.Running,
+		ExitCode:      execConfig.ExitCode,
+		ContainerID:   execConfig.ContainerID,
+		ProcessConfig: processConfig,
 	}, nil
 }
 
@@ -132,4 +142,12 @@ func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (
 		return nil, fmt.Errorf("invalid exec config type")
 	}
 	return execConfig, nil
+}
+
+func (mgr *ContainerManager) getEntrypointAndArgs(cmd []string) (string, []string) {
+	if len(cmd) == 0 {
+		return "", []string{}
+	}
+
+	return cmd[0], cmd[1:]
 }
