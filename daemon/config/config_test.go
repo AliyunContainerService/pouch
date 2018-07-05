@@ -48,7 +48,7 @@ func TestConfigValidate(t *testing.T) {
 	// TODO: baiji
 }
 
-func TestGetConflictConfigurations(t *testing.T)  {
+func TestGetConflictConfigurations(t *testing.T) {
 	// TODO: baiji
 }
 
