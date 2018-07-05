@@ -36,6 +36,10 @@ type containerPack struct {
 	// client is to record which stream client the container connect with
 	client        *WrapperClient
 	skipStopHooks bool
+
+	// done used when contianerd get accident and dead, task info is connect
+	// to the dead containerd, so the task should be restored.
+	done bool
 }
 
 // ExecContainer executes a process in container.

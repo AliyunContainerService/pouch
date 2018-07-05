@@ -66,52 +66,39 @@ func (w *watch) add(pack *containerPack) {
 
 	w.containers[pack.id] = pack
 
-	go func(w *watch, pack *containerPack) {
-		status := <-pack.sch
-
-		// if containerd is dead, the task.Wait channel return is not because
-		// container' task quit, but the channel has broken.
-		// so we just return.
-		if w.isContainerdDead() {
-			return
-		}
-
-		logrus.Infof("the task has quit, id: %s, err: %v, exitcode: %d, time: %v",
-			pack.id, status.Error(), status.ExitCode(), status.ExitTime())
-
-		// Also should release quota when the container destroyed
-		// We should release quota of client that the pack is in using,
-		// not the grpc client executing this parts of code.
-		pack.client.Produce(1)
-
-		if _, err := pack.task.Delete(context.Background()); err != nil {
-			logrus.Errorf("failed to delete task, container id: %s: %v", pack.id, err)
-		}
-
-		if err := pack.container.Delete(context.Background()); err != nil {
-			logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
-		}
-
-		msg := &Message{
-			err:      status.Error(),
-			exitCode: status.ExitCode(),
-			exitTime: status.ExitTime(),
-		}
-
-		if !pack.skipStopHooks {
-			for _, hook := range w.hooks {
-				if err := hook(pack.id, msg); err != nil {
-					logrus.Errorf("failed to execute the exit hooks: %v", err)
-					break
-				}
-			}
-		}
-
-		pack.ch <- msg
-
-	}(w, pack)
+	go waitTask(w, pack)
 
 	logrus.Infof("success to add container, id: %s", pack.id)
+}
+
+func (w *watch) restoreTask() {
+	logrus.Infof("begin to restore task")
+	tasks := make([]string, 0)
+	for id, pack := range w.containers {
+		if !pack.done {
+			continue
+		}
+		logrus.Infof("restore task for container %s", id)
+		tasks = append(tasks, id)
+	}
+
+	w.Lock()
+	defer w.Unlock()
+
+	for _, id := range tasks {
+		pack := w.containers[id]
+
+		statusCh, err := pack.task.Wait(context.TODO())
+		if err != nil {
+			logrus.Errorf("failed to wait task: %s", err)
+			continue
+		}
+
+		pack.sch = statusCh
+		pack.done = false
+
+		go waitTask(w, pack)
+	}
 }
 
 func (w *watch) remove(ctx context.Context, id string) error {
@@ -146,4 +133,48 @@ func (w *watch) notify(id string) chan *Message {
 		return ch
 	}
 	return pack.ch
+}
+
+func waitTask(w *watch, pack *containerPack) {
+	status := <-pack.sch
+
+	// zero exit time means the exit channel is unused
+	if status.ExitTime().IsZero() {
+		pack.done = true
+		return
+	}
+
+	logrus.Infof("the task has quit, id: %s, err: %v, exitcode: %d, time: %v",
+		pack.id, status.Error(), status.ExitCode(), status.ExitTime())
+
+	// Also should release quota when the container destroyed
+	// We should release quota of client that the pack is in using,
+	// not the grpc client executing this parts of code.
+	pack.client.Produce(1)
+
+	if _, err := pack.task.Delete(context.Background()); err != nil {
+		logrus.Errorf("failed to delete task, container id: %s: %v", pack.id, err)
+	}
+
+	if err := pack.container.Delete(context.Background()); err != nil {
+		logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
+	}
+
+	msg := &Message{
+		err:      status.Error(),
+		exitCode: status.ExitCode(),
+		exitTime: status.ExitTime(),
+	}
+
+	if !pack.skipStopHooks {
+		for _, hook := range w.hooks {
+			if err := hook(pack.id, msg); err != nil {
+				logrus.Errorf("failed to execute the exit hooks: %v", err)
+				break
+			}
+		}
+	}
+
+	pack.ch <- msg
+
 }
