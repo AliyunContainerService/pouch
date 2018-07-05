@@ -150,7 +150,8 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter ...string) ([]ty
 	for _, img := range imgs {
 		imgCfg, err := img.Config(ctx)
 		if err != nil {
-			return nil, err
+			logrus.Warnf("failed to get image config info during list images: %v", err)
+			continue
 		}
 
 		if _, ok := imgInfosIndexByID[imgCfg.Digest.String()]; ok {
@@ -159,10 +160,10 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter ...string) ([]ty
 
 		imgInfo, err := mgr.containerdImageToImageInfo(ctx, img)
 		if err != nil {
-			return nil, err
+			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.Name(), err)
+			continue
 		}
 		imgInfosIndexByID[imgInfo.ID] = imgInfo
-
 	}
 
 	imgInfos := make([]types.ImageInfo, 0, len(imgInfosIndexByID))
