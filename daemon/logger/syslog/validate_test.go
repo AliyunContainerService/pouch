@@ -148,6 +148,16 @@ func TestParseLogFormat(t *testing.T) {
 			formatter: rfc5424MicroFormatterWithTagAsAppName,
 			framer:    srslog.DefaultFramer,
 		}, {
+			fmtTyp:    "rfc5424micro-seq",
+			proto:     "tcp",
+			formatter: rfc5424MicroFormatterWithSequenceAndTagAsAppName,
+			framer:    srslog.DefaultFramer,
+		}, {
+			fmtTyp:    "rfc5424micro-seq",
+			proto:     "tcp+tls",
+			formatter: rfc5424MicroFormatterWithSequenceAndTagAsAppName,
+			framer:    srslog.RFC5425MessageLengthFramer,
+		}, {
 			fmtTyp:   "not support yet",
 			hasError: true,
 		},
