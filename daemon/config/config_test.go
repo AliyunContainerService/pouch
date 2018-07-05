@@ -43,3 +43,15 @@ func TestIterateConfig(t *testing.T) {
 	iterateConfig(nil, config)
 	assert.Equal(config, map[string]interface{}{})
 }
+
+func TestConfigValidate(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestGetConflictConfigurations(t *testing.T)  {
+	// TODO: baiji
+}
+
+func TestGetUnknownFlags(t *testing.T) {
+	// TODO: baiji
+}

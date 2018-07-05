@@ -53,3 +53,31 @@ func TestCreateVolume(t *testing.T) {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}
 }
+
+func TestGetVolume(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestListVolumes(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestListVolumeName(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestRemoveVolume(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestVolumePath(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestAttachVolume(t *testing.T) {
+	// TODO: baiji
+}
+
+func TestDetachVolume(t *testing.T) {
+	// TODO: baiji
+}
