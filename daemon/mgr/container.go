@@ -108,13 +108,16 @@ type ContainerMgr interface {
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
 
 	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
+	StartExec(ctx context.Context, execid string, attach *AttachConfig) error
 
 	// InspectExec returns low-level information about exec command.
 	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
 
 	// GetExecConfig returns execonfig of a exec process inside container.
 	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
+
+	// CheckExecExist check if exec process `name` exist
+	CheckExecExist(ctx context.Context, name string) error
 
 	// 3. The following two function is related to network management.
 	// TODO: inconsistency, Connect/Disconnect operation is in newtork_bridge.go in upper API layer.

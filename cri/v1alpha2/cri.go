@@ -787,9 +787,7 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		MuxDisabled: true,
 	}
 
-	startConfig := &apitypes.ExecStartConfig{}
-
-	err = c.ContainerMgr.StartExec(ctx, execid, startConfig, attachConfig)
+	err = c.ContainerMgr.StartExec(ctx, execid, attachConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
