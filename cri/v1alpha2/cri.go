@@ -12,6 +12,7 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	anno "github.com/alibaba/pouch/cri/annotations"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -236,6 +237,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		ID:        id,
 		Config:    config,
 		NetNSPath: netnsPath,
+		Runtime:   config.Annotations[anno.KubernetesRuntime],
 	}
 	c.SandboxStore.Put(sandboxMeta)
 
@@ -470,6 +472,11 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	if iSpec := config.GetImage(); iSpec != nil {
 		image = iSpec.Image
 	}
+
+	specAnnotation := make(map[string]string)
+	specAnnotation[anno.ContainerType] = anno.ContainerTypeContainer
+	specAnnotation[anno.SandboxName] = podSandboxID
+
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
 			Entrypoint: config.Command,
@@ -479,9 +486,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			WorkingDir: config.WorkingDir,
 			Labels:     labels,
 			// Interactive containers:
-			OpenStdin: config.Stdin,
-			StdinOnce: config.StdinOnce,
-			Tty:       config.Tty,
+			OpenStdin:      config.Stdin,
+			StdinOnce:      config.StdinOnce,
+			Tty:            config.Tty,
+			SpecAnnotation: specAnnotation,
 		},
 		HostConfig: &apitypes.HostConfig{
 			Binds: generateMountBindings(config.GetMounts()),

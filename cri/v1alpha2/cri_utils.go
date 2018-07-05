@@ -12,6 +12,7 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	anno "github.com/alibaba/pouch/cri/annotations"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -240,8 +241,13 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
-
 	hc := &apitypes.HostConfig{}
+
+	// Apply runtime options.
+	if annotations := config.GetAnnotations(); annotations != nil {
+		hc.Runtime = annotations[anno.KubernetesRuntime]
+	}
+
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
 			Hostname: strfmt.Hostname(config.Hostname),
@@ -610,6 +616,16 @@ func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxI
 
 // Apply Linux-specific options if applicable.
 func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, podSandboxID string) error {
+	// Apply runtime options.
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*SandboxMeta)
+	if sandboxMeta.Runtime != "" {
+		createConfig.HostConfig.Runtime = sandboxMeta.Runtime
+	}
+
 	if lc := config.GetLinux(); lc != nil {
 		// TODO: resource restriction.
 
