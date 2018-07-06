@@ -309,11 +309,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// set default log driver and validate for logger driver
-	if config.HostConfig.LogConfig == nil {
-		config.HostConfig.LogConfig = &types.LogConfig{
-			LogDriver: types.LogConfigLogDriverJSONFile,
-		}
-	}
+	config.HostConfig.LogConfig = mgr.getDefaultLogConfigIfMissing(config.HostConfig.LogConfig)
 
 	container := &Container{
 		State: &types.ContainerState{
@@ -412,6 +408,29 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Name:     name,
 		Warnings: warnings,
 	}, nil
+}
+
+func (mgr *ContainerManager) getDefaultLogConfigIfMissing(logConfig *types.LogConfig) *types.LogConfig {
+	defaultLogOpts := make(map[string]string)
+	for k, v := range mgr.Config.DefaultLogConfig.LogOpts {
+		defaultLogOpts[k] = v
+	}
+
+	if logConfig == nil {
+		defaultConfig := mgr.Config.DefaultLogConfig
+		defaultConfig.LogOpts = defaultLogOpts
+		return &defaultConfig
+	}
+
+	if logConfig.LogDriver == "" {
+		logConfig.LogDriver = mgr.Config.DefaultLogConfig.LogDriver
+	}
+
+	if len(logConfig.LogOpts) == 0 {
+		logConfig.LogOpts = defaultLogOpts
+	}
+
+	return logConfig
 }
 
 // Get the detailed information of container.
