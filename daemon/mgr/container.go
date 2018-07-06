@@ -447,6 +447,14 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		if err == nil {
 			return
 		}
+
+		// release the container resources(network and containerio)
+		err = mgr.releaseContainerResources(c)
+		if err != nil {
+			logrus.Errorf("failed to release container(%s) resources: %v", c.ID, err)
+		}
+
+		// detach the volumes
 		for name := range attachedVolumes {
 			if _, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
 				logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback: %v", name, c.ID, err)
