@@ -6,14 +6,14 @@ import (
 
 func TestValidateOOMScore(t *testing.T) {
 
-	err_less := ValidateOOMScore(-1100)
-	test_between := ValidateOOMScore(500)
-	err_more := ValidateOOMScore(1100)
+	errLess := ValidateOOMScore(-1100)
+	testBetween := ValidateOOMScore(500)
+	errMore := ValidateOOMScore(1100)
 
-	if err_less == nil || err_more == nil {
+	if errLess == nil || errMore == nil {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}
-	if test_between != nil {
+	if testBetween != nil {
 		t.Fatal("validate OOM score error")
 	}
 
