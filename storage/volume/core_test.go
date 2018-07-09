@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
 )
 
@@ -55,7 +56,84 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func TestGetVolume(t *testing.T) {
-	// TODO
+
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// create volume core
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// add one volume and get
+	driverName1 := "fake1"
+	volumeName1 := "test1"
+	vID1 := types.VolumeID{Name: volumeName1, Driver: driverName1}
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	v0, err0 := core.GetVolume(vID1)
+	if v0 != nil {
+		t.Fatalf("expect get volume nil, but got a volume with name %s", v0.Name)
+	}
+	if err0 != volerr.ErrVolumeNotFound {
+		if err0 == nil {
+			t.Fatal("expect get volume not found error, but err is nil")
+		} else {
+			t.Fatalf("expect get volume not found error, but got %v", err0)
+		}
+	}
+
+	core.CreateVolume(vID1)
+
+	v1, err1 := core.GetVolume(vID1)
+	if err1 != nil {
+		t.Fatalf("get volume error: %v", err1)
+	}
+
+	if v1.Name != volumeName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volumeName1, v1.Name)
+	}
+	if v1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
+	}
+
+	// add two volumes and get
+	driverName2 := "fake1"
+	volumeName2 := "test1"
+	vID2 := types.VolumeID{Name: volumeName2, Driver: driverName2}
+	driver.Register(driver.NewFakeDriver(driverName2))
+	defer driver.Unregister(driverName2)
+
+	core.CreateVolume(vID2)
+
+	v2, err2 := core.GetVolume(vID2)
+	if err2 != nil {
+		t.Fatalf("get volume error: %v", err2)
+	}
+
+	if v2.Name != volumeName2 {
+		t.Fatalf("expect volume name is %s, but got %s", volumeName2, v2.Name)
+	}
+	if v2.Driver() != driverName2 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName2, v2.Driver())
+	}
+
+	v2_1, err2_1 := core.GetVolume(vID1)
+	if err2_1 != nil {
+		t.Fatalf("get volume error: %v", err2_1)
+	}
+
+	if v2_1.Name != volumeName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volumeName1, v2_1.Name)
+	}
+	if v2_1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v2_1.Driver())
+	}
 }
 
 func TestListVolumes(t *testing.T) {
