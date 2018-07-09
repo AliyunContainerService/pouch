@@ -41,12 +41,13 @@ func TestCanonicalAddr(t *testing.T) {
 			expected: "host:port",
 		},
 	}
-}
 
-func TestUseProxy(t *testing.T) {
-	// TODO
 	for _, testCase := range testCases {
 		output := canonicalAddr(testCase.input)
 		assert.Equal(t, testCase.expected, output)
 	}
+}
+
+func TestUseProxy(t *testing.T) {
+	// TODO
 }
