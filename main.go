@@ -21,6 +21,7 @@ import (
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
 
+	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/google/gops/agent"
 	"github.com/sirupsen/logrus"
@@ -120,7 +121,6 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 	flagSet.IntVar(&cfg.OOMScoreAdjust, "oom-score-adj", -500, "Set the oom_score_adj for the daemon")
 	flagSet.Var(optscfg.NewRuntime(&cfg.Runtimes), "add-runtime", "register a OCI runtime to daemon")
-
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
@@ -128,6 +128,9 @@ func runDaemon(cmd *cobra.Command) error {
 	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
 		return fmt.Errorf("failed to load daemon file: %s", err)
 	}
+
+	// set containerd namespace, we use containerd default namespace as pouch namespaces
+	cfg.Namespace = namespaces.Default
 
 	// parse log driver config
 	logOptMap, err := opts.ParseLogOptions(cfg.DefaultLogConfig.LogDriver, logOpts)
