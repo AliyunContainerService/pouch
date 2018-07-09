@@ -55,29 +55,29 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func TestGetVolume(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestListVolumes(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestRemoveVolume(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestAttachVolume(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestDetachVolume(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }

@@ -3,13 +3,13 @@ package ctrd
 import "testing"
 
 func TestHasPort(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestCanonicalAddr(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestUseProxy(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }

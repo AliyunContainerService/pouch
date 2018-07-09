@@ -5,9 +5,9 @@ import (
 )
 
 func TestValidateCPUPeriod(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestValidateCPUQuota(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }

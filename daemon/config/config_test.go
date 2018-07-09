@@ -45,13 +45,13 @@ func TestIterateConfig(t *testing.T) {
 }
 
 func TestConfigValidate(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO: baiji
+	// TODO
 }
