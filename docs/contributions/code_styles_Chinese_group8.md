@@ -1,32 +1,3 @@
-
-骆又鸣
-💬百技培训ing
-骆又鸣(阿里健康科技（中国）有限公司-引擎&算法-医疗大数据)
-今天 09:20
-过来扫码
-速来速来 不然整租表演lol
-教室怎么走最快
-已读
-都挺快的 就在六的后面
-我说进了7号后
-已读
-二楼就能看到
-就那个开着门的教师
-电梯口
-等电梯中
-已读
-今天 10:12
-你配好了么
-mei
-已读
-是不是要垮
-不慌
-已读
-今天 17:24
-https://github.com/alibaba/pouch/blob/master/docs/contributions/code_styles.md
-已读
-https://jbt.github.io/markdown-editor/
-37分钟前
 # Code Style 编码规范
  
 Code style is a set of rules or guidelines when writing source codes of a software project. Following particular code style will definitely help contributors to read and understand source codes very well. In addition, it will help to avoid introducing errors as well.
