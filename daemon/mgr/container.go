@@ -31,6 +31,7 @@ import (
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
@@ -77,6 +78,9 @@ type ContainerMgr interface {
 
 	// Unpause a container.
 	Unpause(ctx context.Context, name string) error
+
+	// Stats of a container.
+	Stats(ctx context.Context, name string) (*containerdtypes.Metric, error)
 
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
@@ -132,6 +136,9 @@ type ContainerMgr interface {
 
 	// Logs is used to return log created by the container.
 	Logs(ctx context.Context, name string, logsOpt *types.ContainerLogsOptions) (<-chan *logger.LogMessage, bool, error)
+
+	// NewSnapshotsSyncer creates a snapshot syncer.
+	NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -605,6 +612,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	ctrdContainer := &ctrd.Container{
 		ID:             c.ID,
 		Image:          c.Config.Image,
+		Labels:         c.Config.Labels,
 		Runtime:        c.HostConfig.Runtime,
 		Spec:           sw.s,
 		IO:             io,
@@ -788,6 +796,23 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+// Stats gets the stat of a container.
+func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*containerdtypes.Metric, error) {
+	var (
+		err error
+		c   *Container
+	)
+
+	if c, err = mgr.container(name); err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return mgr.Client.ContainerStats(ctx, c.ID)
 }
 
 // Attach attachs a container's io.
@@ -2473,4 +2498,9 @@ func (mgr *ContainerManager) execProcessGC() {
 			logrus.Debugf("clean %d unused exec process", cleaned)
 		}
 	}
+}
+
+// NewSnapshotsSyncer creates a snapshot syncer.
+func (mgr *ContainerManager) NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer {
+	return newSnapshotsSyncer(snapshotStore, mgr.Client, duration)
 }
