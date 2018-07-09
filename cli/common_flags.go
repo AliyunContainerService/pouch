@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/pflag"
 )
 
@@ -43,7 +45,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVarP(&c.labels, "label", "l", nil, "Set labels for a container")
 
 	// log driver and log options
-	flagSet.StringVar(&c.logDriver, "log-driver", "json-file", "Logging driver for the container")
+	flagSet.StringVar(&c.logDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Logging driver for the container")
 	flagSet.StringSliceVar(&c.logOpts, "log-opt", nil, "Log driver options")
 
 	// memory
