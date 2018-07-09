@@ -4,7 +4,7 @@ import "os"
 
 // Spec is the base configuration for the container.
 type Spec struct {
-	// Version of the Open Container Runtime Specification with which the bundle complies.
+	// Version of the Open Container Initiative Runtime Specification with which the bundle complies.
 	Version string `json:"ociVersion"`
 	// Process configures the container process.
 	Process *Process `json:"process,omitempty"`
@@ -25,6 +25,8 @@ type Spec struct {
 	Solaris *Solaris `json:"solaris,omitempty" platform:"solaris"`
 	// Windows is platform-specific configuration for Windows based containers.
 	Windows *Windows `json:"windows,omitempty" platform:"windows"`
+	// VM specifies configuration for virtual-machine-based containers.
+	VM *VM `json:"vm,omitempty" platform:"vm"`
 }
 
 // Process contains information to start a specific application inside the container.
@@ -194,10 +196,10 @@ const (
 
 // LinuxIDMapping specifies UID/GID mappings
 type LinuxIDMapping struct {
-	// HostID is the starting UID/GID on the host to be mapped to 'ContainerID'
-	HostID uint32 `json:"hostID"`
 	// ContainerID is the starting UID/GID in the container
 	ContainerID uint32 `json:"containerID"`
+	// HostID is the starting UID/GID on the host to be mapped to 'ContainerID'
+	HostID uint32 `json:"hostID"`
 	// Size is the number of IDs to be mapped
 	Size uint32 `json:"size"`
 }
@@ -320,6 +322,14 @@ type LinuxNetwork struct {
 	Priorities []LinuxInterfacePriority `json:"priorities,omitempty"`
 }
 
+// LinuxRdma for Linux cgroup 'rdma' resource management (Linux 4.11)
+type LinuxRdma struct {
+	// Maximum number of HCA handles that can be opened. Default is "no limit".
+	HcaHandles *uint32 `json:"hcaHandles,omitempty"`
+	// Maximum number of HCA objects that can be created. Default is "no limit".
+	HcaObjects *uint32 `json:"hcaObjects,omitempty"`
+}
+
 // LinuxResources has container runtime resource constraints
 type LinuxResources struct {
 	// Devices configures the device whitelist.
@@ -336,6 +346,10 @@ type LinuxResources struct {
 	HugepageLimits []LinuxHugepageLimit `json:"hugepageLimits,omitempty"`
 	// Network restriction configuration
 	Network *LinuxNetwork `json:"network,omitempty"`
+	// Rdma resource restriction configuration.
+	// Limits are a set of key value pairs that define RDMA resource limits,
+	// where the key is device name and value is resource limits.
+	Rdma map[string]LinuxRdma `json:"rdma,omitempty"`
 }
 
 // LinuxDevice represents the mknod information for a Linux special device file
@@ -485,6 +499,42 @@ type WindowsNetwork struct {
 type WindowsHyperV struct {
 	// UtilityVMPath is an optional path to the image used for the Utility VM.
 	UtilityVMPath string `json:"utilityVMPath,omitempty"`
+}
+
+// VM contains information for virtual-machine-based containers.
+type VM struct {
+	// Hypervisor specifies hypervisor-related configuration for virtual-machine-based containers.
+	Hypervisor VMHypervisor `json:"hypervisor,omitempty"`
+	// Kernel specifies kernel-related configuration for virtual-machine-based containers.
+	Kernel VMKernel `json:"kernel"`
+	// Image specifies guest image related configuration for virtual-machine-based containers.
+	Image VMImage `json:"image,omitempty"`
+}
+
+// VMHypervisor contains information about the hypervisor to use for a virtual machine.
+type VMHypervisor struct {
+	// Path is the host path to the hypervisor used to manage the virtual machine.
+	Path string `json:"path"`
+	// Parameters specifies parameters to pass to the hypervisor.
+	Parameters string `json:"parameters,omitempty"`
+}
+
+// VMKernel contains information about the kernel to use for a virtual machine.
+type VMKernel struct {
+	// Path is the host path to the kernel used to boot the virtual machine.
+	Path string `json:"path"`
+	// Parameters specifies parameters to pass to the kernel.
+	Parameters string `json:"parameters,omitempty"`
+	// InitRD is the host path to an initial ramdisk to be used by the kernel.
+	InitRD string `json:"initrd,omitempty"`
+}
+
+// VMImage contains information about the virtual machine root image.
+type VMImage struct {
+	// Path is the host path to the root image that the VM kernel would boot into.
+	Path string `json:"path"`
+	// Format is the root image format type (e.g. "qcow2", "raw", "vhd", etc).
+	Format string `json:"format"`
 }
 
 // LinuxSeccomp represents syscall restrictions
