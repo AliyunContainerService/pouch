@@ -97,6 +97,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
 	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
 	flagSet.StringVar(&c.shmSize, "shm-size", "", "Size of /dev/shm, default value is 64MB")
+	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
 
 	// cgroup
 	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "", "Optional parent cgroup for the container")

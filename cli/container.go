@@ -73,6 +73,7 @@ type container struct {
 	ulimit         config.Ulimit
 	pidsLimit      int64
 	shmSize        string
+	netPriority    int64
 
 	// log driver and log option
 	logDriver string
@@ -204,6 +205,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			DiskQuota:           diskQuota,
 			QuotaID:             c.quotaID,
 			SpecAnnotation:      specAnnotation,
+			NetPriority:         c.netPriority,
 		},
 
 		HostConfig: &types.HostConfig{
