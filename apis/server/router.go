@@ -186,6 +186,7 @@ func filter(handler handler, s *Server) http.HandlerFunc {
 			return
 		}
 		// Handle error if request handling fails.
+		logrus.Errorf("Handler for %s %s, client %s returns error: %s", req.Method, req.URL.RequestURI(), clientInfo, err)
 		HandleErrorResponse(w, err)
 	}
 }
