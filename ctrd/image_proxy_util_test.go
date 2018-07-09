@@ -34,11 +34,11 @@ func TestCanonicalAddr(t *testing.T) {
 	testCases := []TestCase{
 		{
 			input:    u1,
-			expected: "host:port",
+			expected: "host.com:5432",
 		},
 		{
 			input:    u2,
-			expected: "host:port",
+			expected: "host.com:5432",
 		},
 	}
 
