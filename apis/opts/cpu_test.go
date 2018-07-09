@@ -11,7 +11,6 @@ func TestValidateCPUPeriod(t *testing.T) {
 }
 
 func TestValidateCPUQuota(t *testing.T) {
-	// TODO
 	type TestCase struct {
 		input    int64
 		expected error
