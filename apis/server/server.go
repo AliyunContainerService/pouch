@@ -34,7 +34,7 @@ type Server struct {
 }
 
 // Start setup route table and listen to specified address which currently only supports unix socket and tcp address.
-func (s *Server) Start() (err error) {
+func (s *Server) Start(readyCh chan bool) (err error) {
 	router := initRoute(s)
 	errCh := make(chan error)
 
@@ -50,6 +50,7 @@ func (s *Server) Start() (err error) {
 	if s.Config.TLS.Key != "" && s.Config.TLS.Cert != "" {
 		tlsConfig, err = httputils.GenTLSConfig(s.Config.TLS.Key, s.Config.TLS.Cert, s.Config.TLS.CA)
 		if err != nil {
+			readyCh <- false
 			return err
 		}
 		if s.Config.TLS.VerifyRemote {
@@ -61,6 +62,7 @@ func (s *Server) Start() (err error) {
 	for _, one := range s.Config.Listen {
 		l, err := getListener(one, tlsConfig)
 		if err != nil {
+			readyCh <- false
 			return err
 		}
 		logrus.Infof("start to listen to: %s", one)
@@ -70,6 +72,9 @@ func (s *Server) Start() (err error) {
 			errCh <- http.Serve(l, router)
 		}(l)
 	}
+
+	// the http server has set up, send Ready
+	readyCh <- true
 
 	// not error, will block and run forever.
 	return <-errCh

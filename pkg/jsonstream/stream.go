@@ -17,10 +17,10 @@ type JSONStream struct {
 }
 
 // New creates a 'JSONStream' instance and use a goroutine to recv/send data.
-func New(out io.Writer, f ...Formater) *JSONStream {
-	format := newDefaultFormat()
-	if len(f) != 0 {
-		format = f[0]
+func New(out io.Writer, f Formater) *JSONStream {
+	format := f
+	if format == nil {
+		format = newDefaultFormat()
 	}
 
 	stream := &JSONStream{
