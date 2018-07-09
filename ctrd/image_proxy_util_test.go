@@ -14,7 +14,7 @@ func TestHasPort(t *testing.T) {
 	if has_port != true {
 		t.Fatalf("expect [ipv6::address]:port %s has port, but return false", s)
 	}
-	
+
 	s = "127.0.0.1"
 	has_port = hasPort(s)
 	if has_port == true {
