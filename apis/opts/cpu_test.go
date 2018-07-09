@@ -16,7 +16,7 @@ func TestValidateCPUPeriod(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		p := rand.Int63n(10000000)
-		p -= 1000
+		p -= 10000
 		if 1000 <= p && p <= 1000000 {
 			err = ValidateCPUPeriod(p)
 			if err != nil {
