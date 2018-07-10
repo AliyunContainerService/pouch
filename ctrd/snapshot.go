@@ -77,3 +77,30 @@ func (c *Client) GetMounts(ctx context.Context, id string) ([]mount.Mount, error
 
 	return service.Mounts(ctx, id)
 }
+
+// GetSnapshotUsage returns the resource usage of an active or committed snapshot
+// excluding the usage of parent snapshots.
+func (c *Client) GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return snapshots.Usage{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	defer service.Close()
+
+	return service.Usage(ctx, id)
+}
+
+// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
+func (c *Client) WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	defer service.Close()
+
+	return service.Walk(ctx, fn)
+}
