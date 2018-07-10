@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
@@ -281,26 +280,14 @@ func PullImage(c *check.C, image string) {
 
 func fetchPullStatus(r io.ReadCloser) error {
 	dec := json.NewDecoder(r)
-	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("failed to read the opening token: %v", err)
-	}
-
-	for dec.More() {
-		var infos []ctrd.ProgressInfo
-
-		if err := dec.Decode(&infos); err != nil {
-			return fmt.Errorf("failed to decode: %v", err)
-		}
-
-		for _, info := range infos {
-			if info.ErrorMessage != "" {
-				return fmt.Errorf(info.ErrorMessage)
+	for {
+		var msg jsonstream.JSONMessage
+		if err := dec.Decode(&msg); err != nil {
+			if err == io.EOF {
+				break
 			}
+			return err
 		}
-	}
-
-	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("failed to read the closing token: %v", err)
 	}
 	return nil
 }

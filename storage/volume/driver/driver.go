@@ -199,6 +199,21 @@ func Register(d Driver) error {
 	return nil
 }
 
+// Unregister deletes a driver from driverTable
+func Unregister(name string) bool {
+	backendDrivers.Lock()
+	defer backendDrivers.Unlock()
+
+	_, exist := backendDrivers.drivers[name]
+	if !exist {
+		return false
+	}
+
+	delete(backendDrivers.drivers, name)
+
+	return true
+}
+
 // Get returns one backend driver with specified name.
 func Get(name string) (Driver, error) {
 	return backendDrivers.Get(name)

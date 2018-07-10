@@ -11,6 +11,7 @@ type clientOpts struct {
 	grpcClientPoolCapacity int
 	maxStreamsClient       int
 	oomScoreAdjust         int
+	defaultns              string
 }
 
 // ClientOpt allows caller to set options for containerd client.
@@ -104,6 +105,17 @@ func WithOOMScoreAdjust(oomScore int) ClientOpt {
 		}
 
 		c.oomScoreAdjust = oomScore
+		return nil
+	}
+}
+
+// WithDefaultNamespace sets the default namespace on the client
+//
+// Any operation that does not have a namespace set on the context will
+// be provided the default namespace
+func WithDefaultNamespace(ns string) ClientOpt {
+	return func(c *clientOpts) error {
+		c.defaultns = ns
 		return nil
 	}
 }

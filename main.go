@@ -9,7 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/apis/opts"
 	optscfg "github.com/alibaba/pouch/apis/opts/config"
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
@@ -29,6 +31,7 @@ import (
 var (
 	sigHandles   []func() error
 	printVersion bool
+	logOpts      []string
 )
 
 var cfg = &config.Config{}
@@ -105,6 +108,10 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.IPForward, "ipforward", true, "Enable ipforward")
 	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.UserlandProxy, "userland-proxy", false, "Enable userland proxy")
 
+	// log config
+	flagSet.StringVar(&cfg.DefaultLogConfig.LogDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Set default log driver")
+	flagSet.StringSliceVar(&logOpts, "log-opt", nil, "Set default log driver options")
+
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
@@ -121,6 +128,13 @@ func runDaemon(cmd *cobra.Command) error {
 	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
 		return fmt.Errorf("failed to load daemon file: %s", err)
 	}
+
+	// parse log driver config
+	logOptMap, err := opts.ParseLogOptions(cfg.DefaultLogConfig.LogDriver, logOpts)
+	if err != nil {
+		return err
+	}
+	cfg.DefaultLogConfig.LogOpts = logOptMap
 
 	//user specifies --version or -v, print version and return.
 	if printVersion {
