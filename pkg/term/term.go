@@ -3,7 +3,8 @@ package term
 import (
 	"os"
 	"syscall"
-	"unsafe"
+
+	"github.com/pkg/term/termios"
 )
 
 // StdinEcho enable or disable echoing standard terminal input.
@@ -24,7 +25,7 @@ func TerminalRestore(fd uintptr, termios *syscall.Termios) error {
 // TerminalEcho enable or disable echoing terminal put which connected to the given file descriptor.
 func TerminalEcho(fd uintptr, echo bool) error {
 	termios := &syscall.Termios{}
-	if err := tcget(fd, termios); err != 0 {
+	if err := tcget(fd, termios); err != nil {
 		return err
 	}
 
@@ -37,12 +38,10 @@ func TerminalEcho(fd uintptr, echo bool) error {
 	return tcset(fd, termios)
 }
 
-func tcget(fd uintptr, termios *syscall.Termios) syscall.Errno {
-	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TCGETS, uintptr(unsafe.Pointer(termios)))
-	return err
+func tcget(fd uintptr, t *syscall.Termios) error {
+	return termios.Tcgetattr(fd, t)
 }
 
-func tcset(fd uintptr, termios *syscall.Termios) syscall.Errno {
-	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TCSETS, uintptr(unsafe.Pointer(termios)))
-	return err
+func tcset(fd uintptr, t *syscall.Termios) error {
+	return termios.Tcsetattr(fd, termios.TCSANOW, t)
 }

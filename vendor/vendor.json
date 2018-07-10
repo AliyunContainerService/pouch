@@ -1569,6 +1569,12 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "L7dFEYzHkAatKpLgN5g0zvcuPwo=",
+			"path": "github.com/pkg/term/termios",
+			"revision": "cda20d4ac917ad418d86e151eff439648b06185b",
+			"revisionTime": "2018-04-23T04:39:32Z"
+		},
+		{
 			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
 			"path": "github.com/pmezard/go-difflib/difflib",
