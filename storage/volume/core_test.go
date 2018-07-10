@@ -72,7 +72,8 @@ func TestGetVolume(t *testing.T) {
 	driver.Register(driver.NewFakeDriver(volumeDriverName))
 	defer driver.Unregister(volumeDriverName)
 
-	v, err := core.GetVolume(types.VolumeID{Name: "testGetVolume", Driver: volumeDriverName})
+	v1, err := core.CreateVolume(types.VolumeID{Name: "test1", Driver: volumeDriverName})
+	v, err := core.GetVolume(types.VolumeID{Name: v1.GetName(), Driver: volumeDriverName})
 	if err != nil {
 		t.Fatalf("get volume error: %v", err)
 	}
