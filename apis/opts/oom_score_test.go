@@ -29,7 +29,7 @@ func TestValidateOOMScore(t *testing.T) {
 		},
 		{
 			input:    -2000,
-			expected: nil,
+			expected: fmt.Errorf("oom-score-adj should be in range [-1000, 1000]"),
 		},
 		{
 			input:    2000,
@@ -37,7 +37,7 @@ func TestValidateOOMScore(t *testing.T) {
 		},
 		{
 			input:    200,
-			expected: fmt.Errorf("oom-score-adj should be in range [-1000, 1000]"),
+			expected: nil,
 		},
 	}
 
