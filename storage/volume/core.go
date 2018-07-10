@@ -357,6 +357,10 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 
 	ctx := driver.Contexts()
 
+	if v.Spec.Extra == nil {
+		v.Spec.Extra = map[string]string{}
+	}
+
 	// merge extra to volume spec extra.
 	for key, value := range extra {
 		v.Spec.Extra[key] = value
