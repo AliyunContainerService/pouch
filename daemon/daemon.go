@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
 	criservice "github.com/alibaba/pouch/cri"
+	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -18,6 +19,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 
+	"github.com/containerd/containerd/namespaces"
 	systemddaemon "github.com/coreos/go-systemd/daemon"
 	systemdutil "github.com/coreos/go-systemd/util"
 	"github.com/gorilla/mux"
@@ -68,12 +70,20 @@ func NewDaemon(cfg *config.Config) *Daemon {
 	if cfg.ContainerdPath != "" {
 		containerdBinaryFile = cfg.ContainerdPath
 	}
+
+	defaultns := namespaces.Default
+	// the default unix socket path to the containerd socket
+	if cfg.IsCriEnabled {
+		defaultns = criconfig.K8sNamespace
+	}
+
 	containerd, err := ctrd.NewClient(cfg.HomeDir,
 		ctrd.WithDebugLog(cfg.Debug),
 		ctrd.WithStartDaemon(true),
 		ctrd.WithContainerdBinary(containerdBinaryFile),
 		ctrd.WithRPCAddr(cfg.ContainerdAddr),
 		ctrd.WithOOMScoreAdjust(cfg.OOMScoreAdjust),
+		ctrd.WithDefaultNamespace(defaultns),
 	)
 	if err != nil {
 		logrus.Errorf("failed to new containerd's client: %v", err)

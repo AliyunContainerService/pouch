@@ -1,7 +1,6 @@
 package jsonstream
 
 import (
-	"bytes"
 	"encoding/json"
 )
 
@@ -17,52 +16,21 @@ type Formater interface {
 	Write(o interface{}) ([]byte, error)
 }
 
-var (
-	jsonBeginDelim = []byte("[")
-	jsonEndDelim   = []byte("]")
-	jsonSep        = []byte(",")
-)
-
-// defaultFormat define the pouch's pull progress, is not compatible with docker's pull.
-type defaultFormat struct {
-	beginDelim []byte
-	endDelim   []byte
-	sep        []byte
-	isFirst    bool
-}
+// defaultFormat define the pouch's pull progress.
+type defaultFormat struct{}
 
 func newDefaultFormat() Formater {
-	return &defaultFormat{
-		beginDelim: jsonBeginDelim,
-		endDelim:   jsonEndDelim,
-		sep:        jsonSep,
-		isFirst:    true,
-	}
+	return &defaultFormat{}
 }
 
 func (f *defaultFormat) BeginWrite() ([]byte, error) {
-	return f.beginDelim, nil
+	return nil, nil
 }
 
 func (f *defaultFormat) EndWrite() ([]byte, error) {
-	return f.endDelim, nil
+	return nil, nil
 }
 
 func (f *defaultFormat) Write(o interface{}) ([]byte, error) {
-	b, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-
-	if !f.isFirst {
-		buf := bytes.NewBuffer(f.sep)
-		if _, err := buf.Write(b); err != nil {
-			return nil, err
-		}
-		return buf.Bytes(), nil
-	}
-
-	f.isFirst = false
-
-	return b, nil
+	return json.Marshal(o)
 }

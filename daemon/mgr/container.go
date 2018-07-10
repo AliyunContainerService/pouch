@@ -31,6 +31,7 @@ import (
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
@@ -78,6 +79,9 @@ type ContainerMgr interface {
 	// Unpause a container.
 	Unpause(ctx context.Context, name string) error
 
+	// Stats of a container.
+	Stats(ctx context.Context, name string) (*containerdtypes.Metric, error)
+
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
 
@@ -108,13 +112,16 @@ type ContainerMgr interface {
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
 
 	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, config *types.ExecStartConfig, attach *AttachConfig) error
+	StartExec(ctx context.Context, execid string, attach *AttachConfig) error
 
 	// InspectExec returns low-level information about exec command.
 	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
 
 	// GetExecConfig returns execonfig of a exec process inside container.
 	GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error)
+
+	// CheckExecExist check if exec process `name` exist
+	CheckExecExist(ctx context.Context, name string) error
 
 	// 3. The following two function is related to network management.
 	// TODO: inconsistency, Connect/Disconnect operation is in newtork_bridge.go in upper API layer.
@@ -129,6 +136,9 @@ type ContainerMgr interface {
 
 	// Logs is used to return log created by the container.
 	Logs(ctx context.Context, name string, logsOpt *types.ContainerLogsOptions) (<-chan *logger.LogMessage, bool, error)
+
+	// NewSnapshotsSyncer creates a snapshot syncer.
+	NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -306,11 +316,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	// set default log driver and validate for logger driver
-	if config.HostConfig.LogConfig == nil {
-		config.HostConfig.LogConfig = &types.LogConfig{
-			LogDriver: types.LogConfigLogDriverJSONFile,
-		}
-	}
+	config.HostConfig.LogConfig = mgr.getDefaultLogConfigIfMissing(config.HostConfig.LogConfig)
 
 	container := &Container{
 		State: &types.ContainerState{
@@ -411,6 +417,29 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}, nil
 }
 
+func (mgr *ContainerManager) getDefaultLogConfigIfMissing(logConfig *types.LogConfig) *types.LogConfig {
+	defaultLogOpts := make(map[string]string)
+	for k, v := range mgr.Config.DefaultLogConfig.LogOpts {
+		defaultLogOpts[k] = v
+	}
+
+	if logConfig == nil {
+		defaultConfig := mgr.Config.DefaultLogConfig
+		defaultConfig.LogOpts = defaultLogOpts
+		return &defaultConfig
+	}
+
+	if logConfig.LogDriver == "" {
+		logConfig.LogDriver = mgr.Config.DefaultLogConfig.LogDriver
+	}
+
+	if len(logConfig.LogOpts) == 0 {
+		logConfig.LogOpts = defaultLogOpts
+	}
+
+	return logConfig
+}
+
 // Get the detailed information of container.
 func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, error) {
 	c, err := mgr.container(name)
@@ -444,6 +473,14 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		if err == nil {
 			return
 		}
+
+		// release the container resources(network and containerio)
+		err = mgr.releaseContainerResources(c)
+		if err != nil {
+			logrus.Errorf("failed to release container(%s) resources: %v", c.ID, err)
+		}
+
+		// detach the volumes
 		for name := range attachedVolumes {
 			if _, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
 				logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback: %v", name, c.ID, err)
@@ -594,6 +631,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	ctrdContainer := &ctrd.Container{
 		ID:             c.ID,
 		Image:          c.Config.Image,
+		Labels:         c.Config.Labels,
 		Runtime:        c.HostConfig.Runtime,
 		Spec:           sw.s,
 		IO:             io,
@@ -777,6 +815,23 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+// Stats gets the stat of a container.
+func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*containerdtypes.Metric, error) {
+	var (
+		err error
+		c   *Container
+	)
+
+	if c, err = mgr.container(name); err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	return mgr.Client.ContainerStats(ctx, c.ID)
 }
 
 // Attach attachs a container's io.
@@ -2462,4 +2517,9 @@ func (mgr *ContainerManager) execProcessGC() {
 			logrus.Debugf("clean %d unused exec process", cleaned)
 		}
 	}
+}
+
+// NewSnapshotsSyncer creates a snapshot syncer.
+func (mgr *ContainerManager) NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer {
+	return newSnapshotsSyncer(snapshotStore, mgr.Client, duration)
 }

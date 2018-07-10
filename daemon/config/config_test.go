@@ -57,7 +57,6 @@ func TestConfigValidate(t *testing.T) {
 	config = Config{Labels: []string{"a="}}
 	origin = config.Validate()
 	assert.Equal(origin, fmt.Errorf("key and value in daemon label a= cannot be empty"))
-
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
