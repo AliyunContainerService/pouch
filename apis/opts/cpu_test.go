@@ -47,3 +47,8 @@ func TestValidateCPUQuota(t *testing.T) {
 		})
 	}
 }
+}
+
+func TestValidateCPUQuota(t *testing.T) {
+	// TODO
+}
