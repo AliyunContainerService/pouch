@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/pflag"
 )
 
@@ -43,7 +45,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVarP(&c.labels, "label", "l", nil, "Set labels for a container")
 
 	// log driver and log options
-	flagSet.StringVar(&c.logDriver, "log-driver", "json-file", "Logging driver for the container")
+	flagSet.StringVar(&c.logDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Logging driver for the container")
 	flagSet.StringSliceVar(&c.logOpts, "log-opt", nil, "Log driver options")
 
 	// memory
@@ -95,6 +97,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
 	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
 	flagSet.StringVar(&c.shmSize, "shm-size", "", "Size of /dev/shm, default value is 64MB")
+	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
 
 	// cgroup
 	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "", "Optional parent cgroup for the container")

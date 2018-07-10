@@ -138,6 +138,12 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "x+DNAKbGY8vVsK50KF91CWsCzEg=",
+			"path": "github.com/containerd/cgroups",
+			"revision": "5e610833b72089b37d0e615de9a92dfc043757c2",
+			"revisionTime": "2018-05-15T17:50:38Z"
+		},
+		{
 			"checksumSHA1": "gg9tZUQP2LP6DmGl0L+JWl1jzXk=",
 			"path": "github.com/containerd/console",
 			"revision": "84eeaae905fa414d03e07bcd6c8d3f19e7cf180e",
@@ -612,6 +618,12 @@
 			"path": "github.com/coreos/go-semver/semver",
 			"revision": "e214231b295a8ea9479f11b70b35d5acf3556d9b",
 			"revisionTime": "2018-01-08T23:09:05Z"
+		},
+		{
+			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
+			"path": "github.com/coreos/go-systemd/dbus",
+			"revision": "39ca1b05acc7ad1220e09f133283b8859a8b71ab",
+			"revisionTime": "2018-05-11T13:34:05Z"
 		},
 		{
 			"checksumSHA1": "dPUClu2Gew2ddf1Y5rmgvxUUFeU=",
@@ -1527,10 +1539,10 @@
 			"revisionTime": "2017-12-15T16:47:07Z"
 		},
 		{
-			"checksumSHA1": "AMYc2X2O/IL6EGrq6lTl5vEhLiY=",
+			"checksumSHA1": "qkicEw7CJnqm2Yr5OHJ6PmBxIvg=",
 			"path": "github.com/opencontainers/runtime-spec/specs-go",
-			"revision": "2b8ed96d2a422bf205adcdfa05272dc12c81613b",
-			"revisionTime": "2017-11-08T19:22:26Z"
+			"revision": "7c4c8f63a63693f75cfa0f3f397151fb8d9732ad",
+			"revisionTime": "2018-06-15T10:29:12Z"
 		},
 		{
 			"checksumSHA1": "dZco6VUDLAAr8bpGJibQONFCblQ=",
