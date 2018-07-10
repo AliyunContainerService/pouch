@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +61,15 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	flagSet := pflag.NewFlagSet("d", 1)
+
+	fileFlags := map[string]interface{}{
+		"c": "d",
+		"e": "a",
+	}
+	origin := getConflictConfigurations(flagSet, fileFlags)
+	assert.Nil(origin)
 }
 
 func TestGetUnknownFlags(t *testing.T) {
