@@ -48,37 +48,23 @@ func TestCanonicalAddr(t *testing.T) {
 	for _, testCase := range testCases {
 		addr := canonicalAddr(testCase.url)
 		assert.Equal(t, testCase.expected, addr)
-	}
-}
 
-func TestHasPort(t *testing.T) {
-	type TestCase struct {
-		input    string
-		expected bool
+    func TestHasPort(t *testing.T) {
+	type args struct {
+		str string
 	}
-
-	testCases := []TestCase{
-		{
-			input:    "www.alibaba.com:80",
-			expected: true,
-		},
-		{
-			input:    "www.alibaba.com",
-			expected: false,
-		},
-		{
-			input:    "[www.alibab.com::80]:80",
-			expected: true,
-		},
-		{
-			input:    "[www.alibab.com::80]",
-			expected: false,
-		},
-	}
-
-	for _, testCase := range testCases {
-		outputbool := hasPort(testCase.input)
-		assert.Equal(t, testCase.expected, outputbool)
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{name: "test1", args: args{str: string("localhost:8000")}, want: true},
+		{name: "test2", args: args{str: string("[ipv6::localhost]:8000")}, want: true},
+		{name: "test3", args: args{str: string(":8000")}, want: true},
+		{name: "test4", args: args{str: string("[ipv6::127.0.0.1]::8000")}, want: true},
+		{name: "test5", args: args{str: string("localhost")}, want: false},
+		{name: "test6", args: args{str: string("[ipv6::localhost]")}, want: false},
+		{name: "test7", args: args{str: string("[ipv6::localhost]8000")}, want: false},
 	}
 }
 
