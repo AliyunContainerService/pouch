@@ -72,5 +72,22 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	fileFlags := map[string]interface{}{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+	}
+
+	expect := fmt.Errorf("unknown flags: a, b, c")
+
+	flagSet := pflag.NewFlagSet("test", 0)
+	flagSet.String("d", "d", "d")
+	// test if it works,can not found
+	assert.Equal(expect, getUnknownFlags(flagSet, fileFlags))
+
+	flagSet1 := pflag.NewFlagSet("test1", 0)
+	flagSet1.String("a", "a", "a")
+	expect = fmt.Errorf("unknown flags: b, c")
+	assert.Equal(expect, getUnknownFlags(flagSet1, fileFlags))
 }
