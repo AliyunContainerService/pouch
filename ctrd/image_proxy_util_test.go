@@ -9,7 +9,7 @@ func TestHasPort(t *testing.T) {
 		s    string
 		want bool
 	}{
-		//测试用例
+		// 测试用例
 		{name: "test1", s: "fdafd", want: false},
 		{name: "test2", s: "fdafd:3333", want: true},
 		{name: "test3", s: "[12:21:34:13]:1000", want: true},
