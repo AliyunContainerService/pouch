@@ -1,6 +1,7 @@
 package opts
 
 import (
+	"math/rand"
 	"testing"
 )
 
