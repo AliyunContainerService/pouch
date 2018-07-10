@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,4 +43,18 @@ func TestIterateConfig(t *testing.T) {
 	config = make(map[string]interface{})
 	iterateConfig(nil, config)
 	assert.Equal(config, map[string]interface{}{})
+}
+
+func TestValidate(t *testing.T) {
+	assert := assert.New(t)
+	config := Config{Labels: []string{"a=b", "c=d"}}
+	origin := config.Validate()
+	assert.Nil(origin)
+	config = Config{Labels: []string{"a=b", "cd"}}
+	origin = config.Validate()
+	assert.Equal(origin, fmt.Errorf("daemon label cd must be in format of key=value"))
+	config = Config{Labels: []string{"a="}}
+	origin = config.Validate()
+	assert.Equal(origin, fmt.Errorf("key and value in daemon label a= cannot be empty"))
+
 }
