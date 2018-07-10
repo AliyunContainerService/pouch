@@ -1964,6 +1964,10 @@ definitions:
       QuotaID:
         type: "string"
         description: "set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id"
+      NetPriority:
+        description: "net priority."
+        type: "integer"
+        default: 0
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"

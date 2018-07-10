@@ -1,8 +1,6 @@
 package opts
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestValidateCPUPeriod(t *testing.T) {
 	//TODO
@@ -24,3 +22,4 @@ func TestValidateCPUQuota(t *testing.T) {
 		t.Fatalf("Wrong return:expected nil,actual %v", result)
 	}
 }
+
