@@ -22,4 +22,3 @@ func TestValidateCPUQuota(t *testing.T) {
 		t.Fatalf("Wrong return:expected nil,actual %v", result)
 	}
 }
-
