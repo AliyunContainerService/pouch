@@ -27,7 +27,7 @@ func TestValidateOOMScore(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			got := ValidateOOMScore(c.score)
 			if got != nil && (got != nil) != c.want {
-				t.Error("test failed")
+				t.Errorf("error = %q wantErr = %q", got, c.want)
 			}
 		})
 	}
