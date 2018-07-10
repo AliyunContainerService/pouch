@@ -1,8 +1,8 @@
 package ctrd
 
 import (
-	"testing"
 	"net/url"
+	"testing"
 )
 
 func TestHasPort(t *testing.T) {
@@ -20,7 +20,6 @@ func TestCanonicalAddr(t *testing.T) {
 		{url: url.URL{Scheme: string("http"), Host: string("192.168.1.1")}, want: true},
 		{url: url.URL{Scheme: string("http"), Host: string("127.0.0.1")}, want: true},
 		{url: url.URL{Scheme: string("https"), Host: string("127.0.0.1")}, want: true},
-		{url: url.URL{Scheme: string("x"), Host: string("127.0.0.1:8081")}, want: true},
 	}
 	portMap = map[string]string{
 		"http":   "80",
@@ -45,24 +44,3 @@ func TestCanonicalAddr(t *testing.T) {
 
 }
 
-func TestUseProxy(t *testing.T) {
-	tests := []struct {
-		name string
-		addr string
-		want bool
-	}{
-		{addr: string("192.168.1.1:80"), want: true},
-		{addr: string("192.168.1.2:80"), want: true},
-		{addr: string("192.168.1.3:80"), want: true},
-		{addr: string("192.168.1.4:80"), want: true},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := useProxy(test.addr)
-			if got == false {
-				t.Errorf("useProxy(%v) = %v, want %v", test.addr, got, test.want)
-				return
-			}
-		})
-	}
-}
