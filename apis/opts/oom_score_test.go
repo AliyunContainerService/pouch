@@ -1,8 +1,6 @@
 package opts
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestValidateOOMScore(t *testing.T) {
 
@@ -16,5 +14,4 @@ func TestValidateOOMScore(t *testing.T) {
 	if testBetween != nil {
 		t.Fatal("validate OOM score error")
 	}
-
 }
