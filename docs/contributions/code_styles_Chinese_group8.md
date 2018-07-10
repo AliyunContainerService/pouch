@@ -81,7 +81,6 @@ type ContainerMgr interface {
 
 但是，缺失的形式参数名会让接口不可读，因为我们不会知道参数的真正含义，除非我们实现这个接口。以下是一个错误事例：
 
-
 ``` golang
 // wrong example
 type ContainerMgr interface {
@@ -94,6 +93,7 @@ type ContainerMgr interface {
 }
 
 ```
+
 除此之外，在不同方法（function）的注释之间应该留一个空行以增强可读性。
 
 ### 规则003 - 倒入包
@@ -153,7 +153,6 @@ if retry {
 return nil
 ```
 
-
 以上代码中有一些可以避免的缩进。我们鼓励以下的编写方式：
 
 ``` golang
@@ -180,7 +179,6 @@ return retryLoad()
 ### 规则008 - 嵌套错误
 
 嵌套错误建议使用`github.com/pkg/errors`包处理。
-
 
 ### 规则009 - 用正确的标注格式
 
