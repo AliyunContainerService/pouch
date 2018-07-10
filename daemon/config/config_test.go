@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIterateConfig(t *testing.T) {
+func TestConfigValidate(t *testing.T) (t *testing.T) {
 	assert := assert.New(t)
 	origin := map[string]interface{}{
 		"a": "a",
@@ -45,7 +45,7 @@ func TestIterateConfig(t *testing.T) {
 	assert.Equal(config, map[string]interface{}{})
 }
 
-func TestValidate(t *testing.T) {
+func TestConfigValidate(t *testing.T) {
 	assert := assert.New(t)
 	config := Config{Labels: []string{"a=b", "c=d"}}
 	origin := config.Validate()
@@ -57,4 +57,12 @@ func TestValidate(t *testing.T) {
 	origin = config.Validate()
 	assert.Equal(origin, fmt.Errorf("key and value in daemon label a= cannot be empty"))
 
+}
+
+func TestGetConflictConfigurations(t *testing.T) {
+	// TODO
+}
+
+func TestGetUnknownFlags(t *testing.T) {
+	// TODO
 }
