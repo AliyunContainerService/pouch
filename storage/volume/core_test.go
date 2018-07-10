@@ -55,6 +55,7 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func TestGetVolume(t *testing.T) {
+
 	volumeDriverName := "fake1"
 
 	dir, err := ioutil.TempDir("", "TestGetVolume")
@@ -89,4 +90,28 @@ func TestGetVolume(t *testing.T) {
 	if err == nil {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}
+}
+
+func TestListVolumes(t *testing.T) {
+	// TODO
+}
+
+func TestListVolumeName(t *testing.T) {
+	// TODO
+}
+
+func TestRemoveVolume(t *testing.T) {
+	// TODO
+}
+
+func TestVolumePath(t *testing.T) {
+	// TODO
+}
+
+func TestAttachVolume(t *testing.T) {
+	// TODO
+}
+
+func TestDetachVolume(t *testing.T) {
+	// TODO
 }

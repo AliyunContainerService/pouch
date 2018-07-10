@@ -84,7 +84,7 @@ func NewClient(homeDir string, opts ...ClientOpt) (APIClient, error) {
 	}
 
 	for i := 0; i < copts.grpcClientPoolCapacity; i++ {
-		cli, err := newWrapperClient(copts.rpcAddr, copts.maxStreamsClient)
+		cli, err := newWrapperClient(copts.rpcAddr, copts.defaultns, copts.maxStreamsClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create containerd client: %v", err)
 		}
