@@ -61,4 +61,3 @@ func TestCanonicalAddr(t *testing.T) {
 	}
 
 }
-
