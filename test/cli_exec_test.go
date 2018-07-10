@@ -143,3 +143,11 @@ func (suite *PouchExecSuite) TestExecExitCode(c *check.C) {
 	command.PouchRun("exec", name, "sh", "-c", "exit 101").Assert(c, icmd.Expected{ExitCode: 101})
 	command.PouchRun("exec", name, "sh", "-c", "exit 0").Assert(c, icmd.Success)
 }
+
+// TestExecFail test exec fail should not hang.
+func (suite *PouchExecSuite) TestExecFail(c *check.C) {
+	name := "TestExecFail"
+	res := command.PouchRun("run", "-d", "--name", name, "-u", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	c.Assert(res.Stderr(), check.NotNil)
+}

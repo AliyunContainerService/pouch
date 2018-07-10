@@ -57,13 +57,12 @@ func (s *streamRuntime) Exec(containerID string, cmd []string, streamOpts *remot
 		return 0, fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
 	}
 
-	startConfig := &apitypes.ExecStartConfig{}
 	attachConfig := &mgr.AttachConfig{
 		Streams:     streams,
 		MuxDisabled: true,
 	}
 
-	err = s.containerMgr.StartExec(ctx, execid, startConfig, attachConfig)
+	err = s.containerMgr.StartExec(ctx, execid, attachConfig)
 	if err != nil {
 		return 0, fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
 	}

@@ -14,6 +14,9 @@ type SandboxMeta struct {
 
 	// NetNSPath is the network namespace used by the sandbox.
 	NetNSPath string
+
+	// Runtime is the runtime of sandbox
+	Runtime string
 }
 
 // Key returns sandbox's id.

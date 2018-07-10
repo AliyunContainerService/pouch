@@ -73,6 +73,9 @@ type ContainerConfig struct {
 	// MAC address of the container.
 	MacAddress string `json:"MacAddress,omitempty"`
 
+	// net priority.
+	NetPriority int64 `json:"NetPriority,omitempty"`
+
 	// Disable networking for the container.
 	NetworkDisabled bool `json:"NetworkDisabled,omitempty"`
 
@@ -150,6 +153,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig Labels false */
 
 /* polymorph ContainerConfig MacAddress false */
+
+/* polymorph ContainerConfig NetPriority false */
 
 /* polymorph ContainerConfig NetworkDisabled false */
 

@@ -469,9 +469,7 @@ var networkDisconnectDescription = "Disconnect a container from a network"
 // NetworkDisconnectCommand use to implement 'network disconnect' command, it disconnects given container from given network.
 type NetworkDisconnectCommand struct {
 	baseCommand
-	network   string
-	container string
-	force     bool
+	force bool
 }
 
 // Init initializes 'network disconnect' command.
@@ -497,17 +495,30 @@ func (nd *NetworkDisconnectCommand) addFlags() {
 
 // runNetworkDisconnect is the entry of 'disconnect' command.
 func (nd *NetworkDisconnectCommand) runNetworkDisconnect(args []string) error {
-	nd.network = args[0]
-	nd.container = args[1]
+	network := args[0]
+	container := args[1]
+
+	if network == "" {
+		return fmt.Errorf("network name cannot be empty")
+	}
+	if container == "" {
+		return fmt.Errorf("container name cannot be empty")
+	}
 
 	ctx := context.Background()
 	apiClient := nd.cli.Client()
 
-	return apiClient.NetworkDisconnect(ctx, nd.network, nd.container, nd.force)
+	err := apiClient.NetworkDisconnect(ctx, network, container, nd.force)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("container %s is disconnected from network %s\n successfully", container, network)
+
+	return nil
 }
 
 // networkDisconnectExample shows examples in 'disconnect' command, and is used in auto-generated cli docs.
 func (nd *NetworkDisconnectCommand) networkDisconnectExample() string {
 	return `$ pouch network disconnect bridge test
-	`
+container test is disconnected from network bridge successfully`
 }
