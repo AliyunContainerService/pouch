@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -72,19 +72,19 @@ func TestGetConflictConfigurations(t *testing.T) {
 	flagSetEmpty := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
 	fileFlags1 := map[string]interface{}{
-		"a":    "a",
-		"b":    "b",
-		"c":    "c",
+		"a": "a",
+		"b": "b",
+		"c": "c",
 	}
 	fileFlags2 := map[string]interface{}{
-		"d":    "d",
-		"e":    "f",
-		"h":    "h",
+		"d": "d",
+		"e": "f",
+		"h": "h",
 	}
 
 	type args struct {
-		fileFlags	map[string]interface{}
-		fs 			*pflag.FlagSet
+		fileFlags map[string]interface{}
+		fs        *pflag.FlagSet
 	}
 	tests := []struct {
 		name    string
@@ -97,7 +97,7 @@ func TestGetConflictConfigurations(t *testing.T) {
 		{name: "test4", args: args{fileFlags: nil, fs: flagSetSlice}, wantErr: false},
 		{name: "test5", args: args{fileFlags: fileFlags1, fs: flagSetEmpty}, wantErr: false},
 	}
-		
+
 	//run all test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -112,23 +112,22 @@ func TestGetConflictConfigurations(t *testing.T) {
 
 func TestGetUnknownFlags(t *testing.T) {
 	fileFlags1 := map[string]interface{}{
-		"a":    "a",
-		"b":    "b",
-		"c":    "c",
+		"a": "a",
+		"b": "b",
+		"c": "c",
 	}
 	fileFlags2 := map[string]interface{}{
-		"a":    "a",
-		"b":    "b",
-		"d":    "d",
+		"a": "a",
+		"b": "b",
+		"d": "d",
 	}
 	fileFlags3 := map[string]interface{}{
-		"a":    "a",
-		"b":    "b",
-		"c":    "c",
-		"d":    "d",
+		"a": "a",
+		"b": "b",
+		"c": "c",
+		"d": "d",
 	}
-	fileFlagsEmpty := map[string]interface{}{
-	}
+	fileFlagsEmpty := map[string]interface{}{}
 
 	names := []string{"a", "b", "d"}
 
@@ -145,10 +144,10 @@ func TestGetUnknownFlags(t *testing.T) {
 
 	//init empty flagSet
 	flagSetEmpty := pflag.NewFlagSet("test", pflag.ContinueOnError)
-	
+
 	type args struct {
-		fileFlags	map[string]interface{}
-		fs 			*pflag.FlagSet
+		fileFlags map[string]interface{}
+		fs        *pflag.FlagSet
 	}
 	tests := []struct {
 		name    string
@@ -163,7 +162,7 @@ func TestGetUnknownFlags(t *testing.T) {
 		{name: "test6", args: args{fileFlags: fileFlags2, fs: flagSetEmpty}, wantErr: true},
 		{name: "test7", args: args{fileFlags: fileFlags3, fs: flagSetEmpty}, wantErr: true},
 	}
-		
+
 	//run all test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
