@@ -14,7 +14,7 @@ func TestCanonicalAddr(t *testing.T) {
 		want string
 	}
 
-	test1 := Test{name: "test1", wwwant: "www.example.com:8080"}
+	test1 := Test{name: "test1", want: "www.example.com:8080"}
 	test1.url, _ = url.Parse("http://www.example.com:8080")
 
 	test2 := Test{name: "test2", want: ":"}
