@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,5 +54,20 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	flagSet := new(pflag.FlagSet)
+	nname := f.normalizeFlagName("name")
+	flagSet.formal[nname] = "macs"
+
+	var tmp map[string]interface{} = map[string]interface{}{"name": "macs", "resources": chxd}
+	result := getUnknownFlags(flagSet, tmp)
+	if result != nil {
+		t.Fatalf("wrong return:expected nil ,actual %v", result)
+	}
+
+	tmp = map[string]interface{}{"resources": chxd}
+
+	result := getUnknownFlags(flagSet, tmp)
+	if result == nil {
+		t.Fatalf("wrong return:expected errmessage,actual nil")
+	}
 }
