@@ -7,6 +7,7 @@ It is warmly welcomed if you have interest to hack on PouchContainer. First, we 
 * [Reporting security issues](#reporting-security-issues)
 * [Reporting general issues](#reporting-general-issues)
 * [Code and doc contribution](#code-and-doc-contribution)
+* [Test case contribution](#test-case-contribution)
 * [Engage to help anything](#engage-to-help-anything)
 
 ## Reporting security issues
@@ -21,7 +22,7 @@ Since we collaborate project PouchContainer in a distributed way, we appreciate 
 
 To make the issue details as standard as possible, we setup an [ISSUE TEMPLATE](./.github/ISSUE_TEMPLATE.md) for issue reporters. Please **BE SURE** to follow the instructions to fill fields in template.
 
-There are lot of cases when you could open an issue:
+There are a lot of cases when you could open an issue:
 
 * bug report
 * feature request
@@ -34,7 +35,7 @@ There are lot of cases when you could open an issue:
 * any questions on project
 * and so on
 
-Also we must remind that when filing a new issue, please remember to remove the sensitive data from your post. Sensitive data could be password, secret key, network locations, private business data and so on.
+Also we must remind that when filling a new issue, please remember to remove the sensitive data from your post. Sensitive data could be password, secret key, network locations, private business data and so on.
 
 ## Code and doc contribution
 
@@ -93,9 +94,9 @@ Adding this, we can easily synchronize local branches with upstream branches.
 
 Right now we assume every contribution via pull request is for [branch master](https://github.com/alibaba/pouch/tree/master) in PouchContainer. Before contributing, be aware of branch definition would help a lot.
 
-As a contributor, keep in mind again that every contribution via pull request is for branch master. While in project PouchContainer, there are several other branches, we generally call them rc branches, release branches and backport branches.
+As a contributor, keep in mind again that every contribution via pull request is for branch master. While in project PouchContainer, there are several other branches, we generally call them rc (release candidate) branches, release branches and backport branches.
 
-Before officially releasing a version, we will checkout a rc(release candidate) branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commits to this branch.
+Before officially releasing a version, we will checkout a rc branch. In this branch, we will test more than branch master, and will [cherry-pick](https://git-scm.com/docs/git-cherry-pick) some new severe fix commits to this branch.
 
 When officially releasing a version, there will be a release branch before tagging. After tagging, we will delete the release branch.
 
@@ -140,7 +141,7 @@ No matter commit message, or commit content, we do take more emphasis on code re
 
 PR is the only way to make change to PouchContainer project files. To help reviewers better get your purpose, PR description could not be too detailed. We encourage contributors to follow the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
 
-### Test case contribution
+## Test case contribution
 
 Any test case would be welcomed. Currently, PouchContainer function test cases are high priority.
 
