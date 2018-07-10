@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"testing"
 	"unsafe"
-
 	"github.com/stretchr/testify/assert"
 )
 
