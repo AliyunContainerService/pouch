@@ -1,6 +1,7 @@
 package ctrd
 
 import "testing"
+import "net/url"
 
 func TestHasPort(t *testing.T) {
 	tests := []struct {
