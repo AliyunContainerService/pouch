@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
 	criservice "github.com/alibaba/pouch/cri"
+	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -18,6 +19,9 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 
+	"github.com/containerd/containerd/namespaces"
+	systemddaemon "github.com/coreos/go-systemd/daemon"
+	systemdutil "github.com/coreos/go-systemd/util"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -66,12 +70,20 @@ func NewDaemon(cfg *config.Config) *Daemon {
 	if cfg.ContainerdPath != "" {
 		containerdBinaryFile = cfg.ContainerdPath
 	}
+
+	defaultns := namespaces.Default
+	// the default unix socket path to the containerd socket
+	if cfg.IsCriEnabled {
+		defaultns = criconfig.K8sNamespace
+	}
+
 	containerd, err := ctrd.NewClient(cfg.HomeDir,
 		ctrd.WithDebugLog(cfg.Debug),
 		ctrd.WithStartDaemon(true),
 		ctrd.WithContainerdBinary(containerdBinaryFile),
 		ctrd.WithRPCAddr(cfg.ContainerdAddr),
 		ctrd.WithOOMScoreAdjust(cfg.OOMScoreAdjust),
+		ctrd.WithDefaultNamespace(defaultns),
 	)
 	if err != nil {
 		logrus.Errorf("failed to new containerd's client: %v", err)
@@ -203,16 +215,30 @@ func (d *Daemon) Run() error {
 	// set image proxy
 	ctrd.SetImageProxy(d.config.ImageProxy)
 
+	httpReadyCh := make(chan bool)
+	criReadyCh := make(chan bool)
+
 	httpServerCloseCh := make(chan struct{})
 	go func() {
-		if err := d.server.Start(); err != nil {
+		if err := d.server.Start(httpReadyCh); err != nil {
 			logrus.Errorf("failed to start http server: %v", err)
 		}
 		close(httpServerCloseCh)
 	}()
 
 	criStopCh := make(chan error)
-	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh)
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh, criReadyCh)
+
+	httpReady := <-httpReadyCh
+	criReady := <-criReadyCh
+
+	if httpReady && criReady {
+		notifySystemd()
+	}
+
+	// close the ready channel
+	close(httpReadyCh)
+	close(criReadyCh)
 
 	err = <-criStopCh
 	if err != nil {
@@ -321,4 +347,19 @@ func (d *Daemon) addSystemLabels() error {
 	d.config.Labels = append(d.config.Labels, fmt.Sprintf("SN=%s", serialNo))
 
 	return nil
+}
+
+func notifySystemd() {
+	if !systemdutil.IsRunningSystemd() {
+		return
+	}
+
+	sent, err := systemddaemon.SdNotify(false, "READY=1")
+	if err != nil {
+		logrus.Errorf("failed to notify systemd for readiness: %v", err)
+	}
+
+	if !sent {
+		logrus.Errorf("forgot to set Type=notify in systemd service file?")
+	}
 }

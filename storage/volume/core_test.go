@@ -55,6 +55,7 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func TestGetVolume(t *testing.T) {
+<<<<<<< HEAD
 	dir, err := ioutil.TempDir("", "TestGetVolume")
 	if err != nil {
 		t.Fatal(err)
@@ -94,6 +95,9 @@ func TestGetVolume(t *testing.T) {
 	if v.Driver() != "fake" {
 		t.Fatalf("expect volume driver is %s, but got %s", "fake", v.Driver())
 	}
+=======
+	// TODO
+>>>>>>> 73685589807a15a2c4aa8b615fa0a5e5adfbbe65
 }
 
 func TestListVolumes(t *testing.T) {
