@@ -6,9 +6,9 @@ import (
 
 func TestValidateOOMScore(t *testing.T) {
 	cases := []struct {
-		name string
+		name  string
 		score int64
-		want bool
+		want  bool
 	}{
 		{"test1", 0, false},
 		{"test2", 10, false},
@@ -26,7 +26,7 @@ func TestValidateOOMScore(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := ValidateOOMScore(c.score)
-			if got != nil && (got != nil) != c.want{
+			if got != nil && (got != nil) != c.want {
 				t.Error("test failed")
 			}
 		})
