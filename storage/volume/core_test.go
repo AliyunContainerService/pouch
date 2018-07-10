@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/alibaba/pouch/storage/volume/driver"
@@ -105,14 +106,19 @@ func TestVolumePath(t *testing.T) {
 		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
 	}
 
-	_, err3 := core.GetVolume(volid1)
+	v2, err3 := core.GetVolume(volid1)
 	if err3 != nil {
 		t.Fatalf("get volume id %v error: %v", volid1, err3)
 	}
 
-	_, err4 := core.VolumePath(volid1)
+	vpath4, err4 := core.VolumePath(volid1)
 	if err4 != nil {
 		t.Fatalf("volume id %v path error: %v", volid1, err4)
+	}
+
+	hasSuffix := strings.HasSuffix(vpath4, "/"+v2.Name)
+	if hasSuffix == false {
+		t.Fatalf("volume %v path %s has not suffix %s", v2, vpath4, v2.Name)
 	}
 }
 
