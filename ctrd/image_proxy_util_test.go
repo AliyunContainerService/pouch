@@ -1,8 +1,8 @@
 package ctrd
 
 import (
-	"net/url"
 	"testing"
+	"net/url"
 )
 
 func TestHasPort(t *testing.T) {
