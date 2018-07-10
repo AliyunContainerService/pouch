@@ -7,7 +7,7 @@ import (
 func TestValidateCPUPeriod(t *testing.T) {
 	result := ValidateCPUPeriod(0)
 	if result != nil {
-		t.Fatal("Wrong return:expected nil,actual " ，result)
+		t.Fatalf("Wrong return:expected nil,actual %v", result)
 	}
 
 	result := ValidateCPUPeriod(1)
@@ -21,8 +21,8 @@ func TestValidateCPUPeriod(t *testing.T) {
 	}
 
 	result := ValidateCPUPeriod(1001)
-	if result ！= nil {
-		t.Fatal("Wrong return:expected nil,actual " ，result)
+	if result != nil {
+		t.Fatalf("Wrong return:expected nil,actual %v", result)
 	}
 }
 
