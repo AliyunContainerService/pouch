@@ -10,7 +10,7 @@ func TestValidateCPUPeriod(t *testing.T) {
 		period  int64
 		wantErr bool
 	}{
-		{name: "test1", period: 0, wantErr: true},
+		{name: "test1", period: 0, wantErr: false},
 		{name: "test2", period: 999, wantErr: true},
 		{name: "test3", period: 1001, wantErr: false},
 		{name: "test4", period: 1000001, wantErr: true},
