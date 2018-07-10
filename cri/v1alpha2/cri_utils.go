@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,8 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/containerd/cgroups"
+	"github.com/containerd/typeurl"
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
@@ -263,6 +266,10 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	if err != nil {
 		return nil, err
 	}
+	// Apply resource options.
+	if lc := config.GetLinux(); lc != nil {
+		hc.CgroupParent = lc.CgroupParent
+	}
 
 	return createConfig, nil
 }
@@ -283,11 +290,17 @@ func toCriSandbox(c *mgr.Container) (*runtime.PodSandbox, error) {
 		return nil, err
 	}
 	labels, annotations := extractLabels(c.Config.Labels)
+
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.PodSandbox{
-		Id:       c.ID,
-		Metadata: metadata,
-		State:    state,
-		// TODO: fill "CreatedAt" when it is appropriate.
+		Id:          c.ID,
+		Metadata:    metadata,
+		State:       state,
+		CreatedAt:   createdAt,
 		Labels:      labels,
 		Annotations: annotations,
 	}, nil
@@ -627,7 +640,15 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 	}
 
 	if lc := config.GetLinux(); lc != nil {
-		// TODO: resource restriction.
+		resources := lc.GetResources()
+		if resources != nil {
+			createConfig.HostConfig.Resources.CPUPeriod = resources.GetCpuPeriod()
+			createConfig.HostConfig.Resources.CPUQuota = resources.GetCpuQuota()
+			createConfig.HostConfig.Resources.CPUShares = resources.GetCpuShares()
+			createConfig.HostConfig.Resources.Memory = resources.GetMemoryLimitInBytes()
+			createConfig.HostConfig.Resources.CpusetCpus = resources.GetCpusetCpus()
+			createConfig.HostConfig.Resources.CpusetMems = resources.GetCpusetMems()
+		}
 
 		// Apply security context.
 		if err := applyContainerSecurityContext(lc, podSandboxID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
@@ -635,7 +656,11 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		}
 	}
 
-	// TODO: apply cgroupParent derived from the sandbox config.
+	// Apply cgroupsParent derived from the sandbox config.
+	if lc := sandboxConfig.GetLinux(); lc != nil {
+		// Apply Cgroup options.
+		createConfig.HostConfig.CgroupParent = lc.CgroupParent
+	}
 
 	return nil
 }
@@ -662,6 +687,11 @@ func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
 	labels, annotations := extractLabels(c.Config.Labels)
 	sandboxID := c.Config.Labels[sandboxIDLabelKey]
 
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.Container{
 		Id:           c.ID,
 		PodSandboxId: sandboxID,
@@ -669,9 +699,9 @@ func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
 		Image:        &runtime.ImageSpec{Image: c.Config.Image},
 		ImageRef:     c.Image,
 		State:        state,
-		// TODO: fill "CreatedAt" when it is appropriate.
-		Labels:      labels,
-		Annotations: annotations,
+		CreatedAt:    createdAt,
+		Labels:       labels,
+		Annotations:  annotations,
 	}, nil
 }
 
@@ -806,4 +836,70 @@ func (c *CriManager) attachLog(logPath string, containerID string) error {
 		return fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
 	}
 	return nil
+}
+
+func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Container) (*runtime.ContainerStats, error) {
+	var usedBytes, inodesUsed uint64
+
+	stats, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
+	}
+
+	sn, err := c.SnapshotStore.Get(meta.ID)
+	if err == nil {
+		usedBytes = sn.Size
+		inodesUsed = sn.Inodes
+	}
+
+	cs := &runtime.ContainerStats{}
+	cs.WritableLayer = &runtime.FilesystemUsage{
+		Timestamp: sn.Timestamp,
+		FsId: &runtime.FilesystemIdentifier{
+			Mountpoint: c.imageFSPath,
+		},
+		UsedBytes:  &runtime.UInt64Value{usedBytes},
+		InodesUsed: &runtime.UInt64Value{inodesUsed},
+	}
+
+	metadata, err := parseContainerName(meta.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of container %q: %v", meta.ID, err)
+	}
+
+	labels, annotations := extractLabels(meta.Config.Labels)
+
+	cs.Attributes = &runtime.ContainerAttributes{
+		Id:          meta.ID,
+		Metadata:    metadata,
+		Labels:      labels,
+		Annotations: annotations,
+	}
+
+	if stats != nil {
+		s, err := typeurl.UnmarshalAny(stats.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract container metrics: %v", err)
+		}
+		metrics := s.(*cgroups.Metrics)
+		if metrics.CPU != nil && metrics.CPU.Usage != nil {
+			cs.Cpu = &runtime.CpuUsage{
+				Timestamp:            stats.Timestamp.UnixNano(),
+				UsageCoreNanoSeconds: &runtime.UInt64Value{metrics.CPU.Usage.Total},
+			}
+		}
+		if metrics.Memory != nil && metrics.Memory.Usage != nil {
+			cs.Memory = &runtime.MemoryUsage{
+				Timestamp:       stats.Timestamp.UnixNano(),
+				WorkingSetBytes: &runtime.UInt64Value{metrics.Memory.Usage.Usage},
+			}
+		}
+	}
+
+	return cs, nil
+}
+
+// imageFSPath returns containerd image filesystem path.
+func imageFSPath(rootDir, snapshotter string) string {
+	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", snapshotPlugin, snapshotter))
 }
