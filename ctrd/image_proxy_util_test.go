@@ -4,7 +4,25 @@ import "testing"
 import "net/url"
 
 func TestHasPort(t *testing.T) {
-	// TODO
+	tests := []struct {
+		name string
+		s    string
+		want bool
+	}{
+		//测试用例
+		{name: "test1", s: "fdafd", want: false},
+		{name: "test2", s: "fdafd:3333", want: true},
+		{name: "test3", s: "[12:21:34:13]:1000", want: true},
+		{name: "test4", s: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := hasPort(tt.s)
+			if err != tt.want {
+				t.Errorf("HasPort() error = %v", err) //若不符合预期则报错
+			}
+		})
+	}
 }
 
 func TestCanonicalAddr(t *testing.T) {
