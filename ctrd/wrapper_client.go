@@ -25,9 +25,9 @@ type WrapperClient struct {
 	streamQuota int
 }
 
-func newWrapperClient(rpcAddr string, maxStreamsClient int) (*WrapperClient, error) {
+func newWrapperClient(rpcAddr string, defaultns string, maxStreamsClient int) (*WrapperClient, error) {
 	options := []containerd.ClientOpt{
-		containerd.WithDefaultNamespace("default"),
+		containerd.WithDefaultNamespace(defaultns),
 	}
 	cli, err := containerd.New(rpcAddr, options...)
 	if err != nil {

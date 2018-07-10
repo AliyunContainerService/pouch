@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
@@ -36,6 +37,21 @@ type containerPack struct {
 	// client is to record which stream client the container connect with
 	client        *WrapperClient
 	skipStopHooks bool
+}
+
+// ContainerStats returns stats of the container.
+func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
+	if !c.lock.Trylock(id) {
+		return nil, errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return pack.task.Metrics(ctx)
 }
 
 // ExecContainer executes a process in container.
@@ -361,6 +377,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 
 	// create container
 	options := []containerd.NewContainerOpts{
+		containerd.WithContainerLabels(container.Labels),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
 			Runtime:     container.Runtime,
 			RuntimeRoot: runtimeRoot,

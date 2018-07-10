@@ -5,7 +5,6 @@ import (
 )
 
 func TestValidateCPUPeriod(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		period  int64
@@ -25,4 +24,7 @@ func TestValidateCPUPeriod(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateCPUQuota(t *testing.T) {
 }
