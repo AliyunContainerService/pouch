@@ -93,6 +93,13 @@ func TestGetVolume(t *testing.T) {
 	if err2 != nil {
 		t.Fatalf("get volume %v error: %v", v2, err2)
 	}
+
+	if v1.Name != v2.Name {
+		t.Fatalf("expect volume name is %s, but got %s", v1.Name, v2.Name)
+	}
+	if v1.Driver() != v2.Driver() {
+		t.Fatalf("expect volume driver is %s, but got %s", v1.Driver(), v2.Driver())
+	}
 }
 
 func TestListVolumes(t *testing.T) {
