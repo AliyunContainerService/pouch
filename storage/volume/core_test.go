@@ -60,7 +60,7 @@ func TestGetVolume(t *testing.T) {
 }
 
 func TestListVolumes(t *testing.T) {
-    driverName := "fake_driver4"
+	driverName := "fake_driver4"
 	dir, err := ioutil.TempDir("", "TestGetVolume")
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestListVolumes(t *testing.T) {
 
 	var i int64
 	volmap := map[string]*types.Volume{}
-    for i = 0; i < 6; i++ {
+	for i = 0; i < 6; i++ {
 		volName := strconv.FormatInt(i, 10)
 		volid := types.VolumeID{Name: volName, Driver: driverName}
 		v, err := core.CreateVolume(volid)
@@ -86,8 +86,8 @@ func TestListVolumes(t *testing.T) {
 		}
 		volmap[volName] = v
 	}
-	
-	volarray, err := core.ListVolumes(nil);
+
+	volarray, err := core.ListVolumes(nil)
 	for k := 0; k < len(volarray); k++ {
 		vol := volarray[k]
 		_, found := volmap[vol.Name]
