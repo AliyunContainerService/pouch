@@ -12,12 +12,22 @@ func TestGenerateLogTag(t *testing.T) {
 		ContainerID:      "pouchcontainer-20180610",
 		ContainerName:    "created_by_$(whois)",
 		ContainerImageID: "8c811b4aec35",
-		DaemonName:       "pouch daemon",
+		ContainerEnvs: []string{
+			"APP=pouchcontainer", "VERSION=unknown-oops",
+		},
+		ContainerLabels: map[string]string{
+			"from": "open-source",
+			"to":   "all",
+		},
+		DaemonName: "pouch daemon",
 	}
 
 	defaultTemplate := "{{.ID}}"
 	for idx, tc := range []struct {
 		tag      string
+		labels   string
+		env      string
+		envRegex string
 		expected string
 		hasError bool
 	}{
@@ -42,8 +52,44 @@ func TestGenerateLogTag(t *testing.T) {
 			expected: "",
 			hasError: true,
 		},
+
+		{
+			tag:      "{{with .ExtraAttributes nil}}this line should not show up{{end}}",
+			expected: "",
+			hasError: false,
+		},
+
+		// use labels config
+		{
+			tag:      "{{with .ExtraAttributes nil}}label from is {{.from}}{{end}}",
+			labels:   "from,to",
+			expected: "label from is open-source",
+			hasError: false,
+		},
+
+		// use env or env-regex config
+		{
+			tag:      "{{with .ExtraAttributes nil}}APP is {{.APP}}{{end}}",
+			env:      "APP",
+			expected: "APP is pouchcontainer",
+			hasError: false,
+		}, {
+			tag:      "{{with .ExtraAttributes nil}}APP is {{.APP}}{{end}}",
+			env:      "VERSION",
+			expected: "APP is <no value>",
+			hasError: false,
+		}, {
+			tag:      "{{with .ExtraAttributes nil}}Version is {{.VERSION}}{{end}}",
+			envRegex: "^[A-Z]+$",
+			expected: "Version is unknown-oops",
+			hasError: false,
+		},
 	} {
 		info.LogConfig["tag"] = tc.tag
+		info.LogConfig["labels"] = tc.labels
+		info.LogConfig["env"] = tc.env
+		info.LogConfig["env-regex"] = tc.envRegex
+
 		got, err := GenerateLogTag(info, defaultTemplate)
 
 		if err != nil && !tc.hasError {
