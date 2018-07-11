@@ -70,13 +70,9 @@ paths:
           schema:
             $ref: "#/definitions/AuthResponse"
         401:
-          description: "Login unauthorized"
-          schema:
-            $ref: "#/responses/401ErrorResponse"
+          $ref: "#/responses/401ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "authConfig"
           in: "body"
@@ -163,9 +159,7 @@ paths:
         200:
           description: "no error"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "imageTarStream"
           in: "body"
@@ -786,13 +780,9 @@ paths:
           schema:
             $ref: "#/definitions/ContainerExecInspect"
         404:
-          description: "No such exec instance"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
@@ -1184,13 +1174,9 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         404:
-          description: "Network or container not found"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
@@ -1218,13 +1204,9 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         404:
-          description: "Network or container not found"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
