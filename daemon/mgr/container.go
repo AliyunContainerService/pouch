@@ -37,7 +37,6 @@ import (
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
-	"github.com/magiconair/properties"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -969,7 +968,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// is overlayfs
 	if c.IsRunningOrPaused() && len(config.Env) > 0 && c.Snapshotter != nil {
 		if mergedDir, exists := c.Snapshotter.Data["MergedDir"]; exists {
-			if err := mgr.updateContainerEnv(c.Config.Env, mergedDir); err != nil {
+			if err := updateContainerEnv(c.Config.Env, mergedDir); err != nil {
 				return errors.Wrapf(err, "failed to update env of running container")
 			}
 		}
@@ -1184,126 +1183,6 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	}
 	if resources.KernelMemory != 0 {
 		cResources.KernelMemory = resources.KernelMemory
-	}
-
-	return nil
-}
-
-// updateContainerEnv update the container's envs in /etc/instanceInfo and /etc/profile.d/pouchenv.sh
-// Env used by rich container.
-func (mgr *ContainerManager) updateContainerEnv(containerEnvs []string, baseFs string) error {
-	var (
-		envPropertiesPath = path.Join(baseFs, "/etc/instanceInfo")
-		envShPath         = path.Join(baseFs, "/etc/profile.d/pouchenv.sh")
-	)
-
-	// if dir of pouch.sh is not exist, it's unnecessary to update that files.
-	if _, ex := os.Stat(path.Join(baseFs, "/etc/profile.d")); ex != nil {
-		return nil
-	}
-
-	newEnvs := containerEnvs
-	kv := map[string]string{}
-	for _, env := range newEnvs {
-		arr := strings.SplitN(env, "=", 2)
-		if len(arr) == 2 {
-			kv[arr[0]] = arr[1]
-		}
-	}
-
-	// load container's env file if exist
-	if _, err := os.Stat(envShPath); err != nil {
-		return fmt.Errorf("failed to state container's env file /etc/profile.d/pouchenv.sh: %v", err)
-	}
-	// update /etc/profile.d/pouchnv.sh
-	b, err := ioutil.ReadFile(envShPath)
-	if err != nil {
-		return fmt.Errorf("failed to read container's environment variable file(/etc/profile.d/pouchenv.sh): %v", err)
-	}
-	envsh := string(b)
-	envsh = strings.Trim(envsh, "\n")
-	envs := strings.Split(envsh, "\n")
-	envMap := make(map[string]string)
-	for _, e := range envs {
-		e = strings.TrimLeft(e, "export ")
-		arr := strings.SplitN(e, "=", 2)
-		val := strings.Trim(arr[1], "\"")
-		envMap[arr[0]] = val
-	}
-
-	var str string
-	for key, val := range envMap {
-		if v, ok := kv[key]; ok {
-			s := strings.Replace(v, "\"", "\\\"", -1)
-			s = strings.Replace(s, "$", "\\$", -1)
-			v = s
-			if key == "PATH" {
-				v = v + ":$PATH"
-			}
-			if v == val {
-				continue
-			} else {
-				envMap[key] = v
-				logrus.Infof("the env is exist and the value is not same, key=%s, old value=%s, new value=%s", key, val, v)
-			}
-		}
-	}
-	// append the new envs
-	for k, v := range kv {
-		if _, ok := envMap[k]; !ok {
-			envMap[k] = v
-			logrus.Infof("the env is not exist, set new key value pair, new key=%s, new value=%s", k, v)
-		}
-	}
-
-	for k, v := range envMap {
-		str += fmt.Sprintf("export %s=\"%s\"\n", k, v)
-	}
-	ioutil.WriteFile(envShPath, []byte(str), 0755)
-
-	// properties load container's env file if exist
-	if _, err := os.Stat(envPropertiesPath); err != nil {
-		//if etc/instanceInfo is not exist, it's unnecessary to update that file.
-		return nil
-	}
-
-	p, err := properties.LoadFile(envPropertiesPath, properties.ISO_8859_1)
-	if err != nil {
-		return fmt.Errorf("failed to properties load container's environment variable file(/etc/instanceInfo): %v", err)
-	}
-
-	for key, val := range kv {
-		if v, ok := p.Get("env_" + key); ok {
-			if key == "PATH" {
-				// refer to https://aone.alipay.com/project/532482/task/9745028
-				val = val + ":$PATH"
-			}
-			if v == val {
-				continue
-			} else {
-				_, _, err := p.Set("env_"+key, val)
-				if err != nil {
-					return fmt.Errorf("failed to properties set value key=%s, value=%s: %v", "env_"+key, val, err)
-				}
-				logrus.Infof("the environment variable exist and the value is not same, key=%s, old value=%s, new value=%s", "env_"+key, v, val)
-			}
-		} else {
-			_, _, err := p.Set("env_"+key, val)
-			if err != nil {
-				return fmt.Errorf("failed to properties set value key=%s, value=%s: %v", "env_"+key, val, err)
-			}
-			logrus.Infof("the environment variable not exist and set the new key value pair, key=%s, value=%s", "env_"+key, val)
-		}
-	}
-	f, err := os.Create(envPropertiesPath)
-	if err != nil {
-		return fmt.Errorf("failed to create container's environment variable file(properties): %v", err)
-	}
-	defer f.Close()
-
-	_, err = p.Write(f, properties.ISO_8859_1)
-	if err != nil {
-		return fmt.Errorf("failed to write to container's environment variable file(properties): %v", err)
 	}
 
 	return nil

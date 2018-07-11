@@ -568,3 +568,102 @@ func TestConvertKVStringsToMap(t *testing.T) {
 		}
 	}
 }
+
+func TestConvertKVStrToMapWithNoErr(t *testing.T) {
+	type args struct {
+		values []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "normal case",
+			args: args{[]string{"a=b", "c=d"}},
+			want: map[string]string{"a": "b", "c": "d"},
+		},
+		{
+			name: "normal case with empty string",
+			args: args{[]string{"a=b", ""}},
+			want: map[string]string{"a": "b"},
+		},
+		{
+			name: "normal case with duplicated key but with different value",
+			args: args{[]string{"a=b", "a==bb"}},
+			want: map[string]string{"a": "=bb"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ConvertKVStrToMapWithNoErr(tt.args.values); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConvertKVStrToMapWithNoErr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConvertStrToKV(t *testing.T) {
+	type args struct {
+		input string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		want1   string
+		wantErr bool
+	}{
+		{
+			name: "normal case",
+			args: args{
+				input: "a=b",
+			},
+			want:    "a",
+			want1:   "b",
+			wantErr: false,
+		},
+		{
+			name: "normal case",
+			args: args{
+				input: "a=b===",
+			},
+			want:    "a",
+			want1:   "b===",
+			wantErr: false,
+		},
+		{
+			name: "empty failure case",
+			args: args{
+				input: "",
+			},
+			want:    "",
+			want1:   "",
+			wantErr: true,
+		},
+		{
+			name: "no equal mark failure case",
+			args: args{
+				input: "asdfghjk",
+			},
+			want:    "",
+			want1:   "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := ConvertStrToKV(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConvertStrToKV() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ConvertStrToKV() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("ConvertStrToKV() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}

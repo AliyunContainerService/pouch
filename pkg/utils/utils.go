@@ -11,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Common durations that is .
@@ -427,9 +429,34 @@ func ConvertKVStringsToMap(values []string) (map[string]string, error) {
 	for _, value := range values {
 		terms := strings.SplitN(value, "=", 2)
 		if len(terms) != 2 {
-			return nil, errors.New("the format must be key=value")
+			return nil, fmt.Errorf("input %s must have format of key=value", value)
 		}
 		kvs[terms[0]] = terms[1]
 	}
 	return kvs, nil
+}
+
+// ConvertKVStrToMapWithNoErr converts input strings and converts them all in a map,
+// When there is invalid input, the dealing procedure ignores the error and log a warning message.
+func ConvertKVStrToMapWithNoErr(values []string) map[string]string {
+	kvs := make(map[string]string, len(values))
+	for _, value := range values {
+		k, v, err := ConvertStrToKV(value)
+		if err != nil {
+			logrus.Warnf("input %s should have a format of key=value", value)
+			continue
+		}
+		kvs[k] = v
+	}
+	return kvs
+}
+
+// ConvertStrToKV converts an string into key and value string without returning an error.
+// For example, for input "a=b", it should return "a", "b".
+func ConvertStrToKV(input string) (string, string, error) {
+	results := strings.SplitN(input, "=", 2)
+	if len(results) != 2 {
+		return "", "", fmt.Errorf("input string %s must have format key=value", input)
+	}
+	return results[0], results[1], nil
 }
