@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/containerd/containerd/mount"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -350,6 +353,46 @@ func (c *Container) UnsetMergedDir() {
 		return
 	}
 	c.Snapshotter.Data["MergedDir"] = ""
+}
+
+// SetSnapshotterMeta sets snapshotter for container
+func (c *Container) SetSnapshotterMeta(mounts []mount.Mount) {
+	// TODO(ziren): now we only support overlayfs
+	data := make(map[string]string, 0)
+	for _, opt := range mounts[0].Options {
+		if strings.HasPrefix(opt, "upperdir=") {
+			data["UpperDir"] = strings.TrimPrefix(opt, "upperdir=")
+		}
+		if strings.HasPrefix(opt, "lowerdir=") {
+			data["LowerDir"] = strings.TrimPrefix(opt, "lowerdir=")
+		}
+		if strings.HasPrefix(opt, "workdir=") {
+			data["WorkDir"] = strings.TrimPrefix(opt, "workdir=")
+		}
+	}
+
+	c.Snapshotter = &types.SnapshotterData{
+		Name: "overlayfs",
+		Data: data,
+	}
+}
+
+// GetSpecificBasePath accepts a given path, look for whether the path is exist
+// within container, if has, returns container base path like BaseFS, if not, return empty string
+func (c *Container) GetSpecificBasePath(path string) string {
+	// first try container BaseFS, it is a general view,
+	if utils.IsFileExist(filepath.Join(c.BaseFS, path)) {
+		return c.BaseFS
+	}
+
+	// then try lower and upper directory, since overlay filesystem support only.
+	for _, prefixPath := range c.Snapshotter.Data {
+		if utils.IsFileExist(filepath.Join(prefixPath, path)) {
+			return prefixPath
+		}
+	}
+
+	return ""
 }
 
 // ContainerRestartPolicy represents the policy is used to manage container.

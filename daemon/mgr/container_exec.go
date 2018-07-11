@@ -84,7 +84,8 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		execConfig.User = c.Config.User
 	}
 
-	uid, gid, err := user.Get(c.BaseFS, execConfig.User)
+	uid, gid, additionalGids, err := user.Get(c.GetSpecificBasePath(user.PasswdFile),
+		c.GetSpecificBasePath(user.GroupFile), execConfig.User, c.HostConfig.GroupAdd)
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		User: specs.User{
 			UID:            uid,
 			GID:            gid,
-			AdditionalGids: user.GetAdditionalGids(c.HostConfig.GroupAdd),
+			AdditionalGids: additionalGids,
 		},
 	}
 

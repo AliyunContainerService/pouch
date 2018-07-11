@@ -460,3 +460,12 @@ func ConvertStrToKV(input string) (string, string, error) {
 	}
 	return results[0], results[1], nil
 }
+
+// IsFileExist checks if file is exits on host.
+func IsFileExist(file string) bool {
+	if _, err := os.Stat(file); err == nil {
+		return true
+	}
+
+	return false
+}

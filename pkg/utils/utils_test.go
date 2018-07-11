@@ -667,3 +667,58 @@ func TestConvertStrToKV(t *testing.T) {
 		})
 	}
 }
+
+func TestIsFileExist(t *testing.T) {
+	assert := assert.New(t)
+	tempDir, err := ioutil.TempDir("/tmp", "")
+	assert.NoError(err)
+	defer os.RemoveAll(tempDir)
+	existPath := make([]string, 0)
+	for _, v := range []string{
+		"a", "b", "c", "d", "e",
+	} {
+		path := filepath.Join(tempDir, v)
+		existPath = append(existPath, path)
+		os.Create(path)
+	}
+
+	for _, t := range []struct {
+		path  string
+		exist bool
+	}{
+		{
+			path:  existPath[0],
+			exist: true,
+		},
+		{
+			path:  existPath[1],
+			exist: true,
+		},
+		{
+			path:  existPath[2],
+			exist: true,
+		},
+		{
+			path:  existPath[3],
+			exist: true,
+		},
+		{
+			path:  existPath[4],
+			exist: true,
+		},
+		{
+			path:  filepath.Join(tempDir, "foo"),
+			exist: false,
+		},
+		{
+			path:  filepath.Join(tempDir, "bar"),
+			exist: false,
+		},
+		{
+			path:  filepath.Join(tempDir, "foo/bar"),
+			exist: false,
+		},
+	} {
+		assert.Equal(IsFileExist(t.path), t.exist)
+	}
+}

@@ -288,20 +288,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 
-	// Get snapshot UpperDir
-	var upperDir string
-	mounts, err := mgr.Client.GetMounts(ctx, id)
-	if err != nil {
-		return nil, err
-	} else if len(mounts) != 1 {
-		return nil, fmt.Errorf("failed to get snapshot %s mounts: not equals one", id)
-	}
-	for _, opt := range mounts[0].Options {
-		if strings.HasPrefix(opt, "upperdir=") {
-			upperDir = strings.TrimPrefix(opt, "upperdir=")
-		}
-	}
-
 	// set lxcfs binds
 	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
 		config.HostConfig.Binds = append(config.HostConfig.Binds, lxcfs.LxcfsParentDir+":/var/lib/lxc:shared")
@@ -379,16 +365,14 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 
-	// set snapshotter for container
-	// TODO(ziren): now we only support overlayfs
-	container.Snapshotter = &types.SnapshotterData{
-		Name: "overlayfs",
-		Data: map[string]string{},
+	// Get snapshot UpperDir
+	mounts, err := mgr.Client.GetMounts(ctx, id)
+	if err != nil {
+		return nil, err
+	} else if len(mounts) != 1 {
+		return nil, fmt.Errorf("failed to get snapshot %s mounts: not equals one", id)
 	}
-
-	if upperDir != "" {
-		container.Snapshotter.Data["UpperDir"] = upperDir
-	}
+	container.SetSnapshotterMeta(mounts)
 
 	// amendContainerSettings modify container config settings to wanted
 	amendContainerSettings(&config.ContainerConfig, config.HostConfig)
