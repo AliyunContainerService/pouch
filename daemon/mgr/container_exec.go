@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/user"
 
 	"github.com/docker/docker/pkg/stdcopy"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -78,29 +79,32 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		return err
 	}
 
-	c.Lock()
+	// set exec process user, user decided by exec config
+	if execConfig.User == "" {
+		execConfig.User = c.Config.User
+	}
+
+	uid, gid, err := user.Get(c.BaseFS, execConfig.User)
+	if err != nil {
+		return err
+	}
+
 	process := &specs.Process{
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
 		Cwd:      "/",
 		Env:      c.Config.Env,
+		User: specs.User{
+			UID:            uid,
+			GID:            gid,
+			AdditionalGids: user.GetAdditionalGids(c.HostConfig.GroupAdd),
+		},
 	}
 
-	if execConfig.User != "" {
-		c.Config.User = execConfig.User
-	}
-
-	if err = setupUser(ctx, c, &specs.Spec{Process: process}); err != nil {
-		c.Unlock()
-		return err
-	}
-
-	// set exec process ulimit
+	// set exec process ulimit, ulimit not decided by exec config
 	if err := setupRlimits(ctx, c.HostConfig, &specs.Spec{Process: process}); err != nil {
-		c.Unlock()
 		return err
 	}
-	c.Unlock()
 
 	execConfig.Running = true
 

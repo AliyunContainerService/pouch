@@ -113,6 +113,9 @@ type Config struct {
 	// TODO(Ace-Tang): runtime args is not support, since containerd is not support,
 	// add a resolution later if it needed.
 	Runtimes map[string]types.Runtime `json:"add-runtime,omitempty"`
+
+	// Namespace is passed to containerd
+	Namespace string
 }
 
 // Validate validates the user input config.

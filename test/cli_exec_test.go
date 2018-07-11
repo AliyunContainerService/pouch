@@ -151,3 +151,30 @@ func (suite *PouchExecSuite) TestExecFail(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	c.Assert(res.Stderr(), check.NotNil)
 }
+
+// TestExecUser test exec with user.
+func (suite *PouchExecSuite) TestExecUser(c *check.C) {
+	name := "TestExecUser"
+	res := command.PouchRun("run", "-d", "-u=1001", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1001") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1001", res.Stdout())
+	}
+
+	res = command.PouchRun("exec", "-u=1002", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1002") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1002", res.Stdout())
+	}
+
+	// test user should not changed by exec process
+	res = command.PouchRun("exec", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1001") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1001", res.Stdout())
+	}
+}

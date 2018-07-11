@@ -34,7 +34,6 @@ import (
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
@@ -347,7 +346,8 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrap(err, "failed to set mount point disk quota")
 	}
 
-	// set container basefs
+	// set container basefs, basefs is not created in pouchd, it will created
+	// after create options passed to containerd.
 	mgr.setBaseFS(ctx, container, id)
 
 	// set network settings
@@ -2486,7 +2486,7 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container, id str
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	c.Lock()
-	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", namespaces.Default, info.Name, "rootfs")
+	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.Namespace, info.Name, "rootfs")
 	c.Unlock()
 }
 
