@@ -126,6 +126,34 @@ sudo systemctl start pouch
 
 Afterwards, you can pull an image and run PouchContainer containers.
 
+## Run pouch command with non-root users
+
+To enable users other than root can run pouch command directly without `sudo`, pouchd creates a unix socket owned by pouch group. Users just need to have pouch group on the machine and add user to pouch group.
+
+**1. create the pouch group**
+
+If you want the unix socket to be owned by pouch group, make sure it exists or you need to create it.
+
+```bash
+groupadd pouch
+```
+
+**2. start pouchd**
+
+```bash
+service pouch restart
+```
+
+**3. add user to group**
+
+Add user who wants to have access to the pouch group.
+
+```bash
+gpasswd -a $user pouch
+```
+
+Remind that you should relogin to make /etc/group take effect, check it by typing groups to see if your shell gets pouch group.
+
 ## Uninstall pouch
 
 On Ubuntu
