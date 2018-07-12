@@ -14,6 +14,7 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
+	cni "github.com/alibaba/pouch/cri/ocicni"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -93,7 +94,7 @@ type CriMgr interface {
 type CriManager struct {
 	ContainerMgr mgr.ContainerMgr
 	ImageMgr     mgr.ImageMgr
-	CniMgr       CniMgr
+	CniMgr       cni.CniMgr
 
 	// StreamServer is the stream server of CRI serves container streaming request.
 	StreamServer Server
@@ -124,7 +125,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 	c := &CriManager{
 		ContainerMgr:   ctrMgr,
 		ImageMgr:       imgMgr,
-		CniMgr:         NewCniManager(&config.CriConfig),
+		CniMgr:         cni.NewCniManager(&config.CriConfig),
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 		SandboxImage:   config.CriConfig.SandboxImage,

@@ -20,6 +20,7 @@ import (
 
 	"github.com/containerd/cgroups"
 	"github.com/containerd/typeurl"
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 )
@@ -1038,4 +1039,23 @@ func parseVolumesFromPouch(containerVolumes map[string]interface{}) map[string]*
 		volumes[k] = &runtime.Volume{}
 	}
 	return volumes
+}
+
+// CNI Network related tool functions.
+
+// toCNIPortMappings converts CRI port mappings to CNI.
+func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapping {
+	var portMappings []ocicni.PortMapping
+	for _, mapping := range criPortMappings {
+		if mapping.HostPort <= 0 {
+			continue
+		}
+		portMappings = append(portMappings, ocicni.PortMapping{
+			HostPort:      mapping.HostPort,
+			ContainerPort: mapping.ContainerPort,
+			Protocol:      strings.ToLower(mapping.Protocol.String()),
+			HostIP:        mapping.HostIp,
+		})
+	}
+	return portMappings
 }

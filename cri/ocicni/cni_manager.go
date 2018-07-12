@@ -1,37 +1,14 @@
-package v1alpha1
+package ocicni
 
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/alibaba/pouch/cri/config"
 
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
-
-// CniMgr as an interface defines all operations against CNI.
-type CniMgr interface {
-	// Name returns the plugin's name. This will be used when searching
-	// for a plugin by name, e.g.
-	Name() string
-
-	// SetUpPodNetwork is the method called after the sandbox container of the
-	// pod has been created but before the other containers of the pod
-	// are launched.
-	SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error
-
-	// TearDownPodNetwork is the method called before a pod's sandbox container will be deleted.
-	TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error
-
-	// GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the pod sandbox.
-	GetPodNetworkStatus(netnsPath string) (string, error)
-
-	// Status returns error if the network plugin is in error state.
-	Status() error
-}
 
 // CniManager is an implementation of interface CniMgr.
 type CniManager struct {
@@ -84,7 +61,7 @@ func (c *CniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
 			// Teardown network if an error returned.
 			err := c.plugin.TearDownPod(*podNetwork)
 			if err != nil {
-				logrus.Errorf("failed to detroy network for sandbox %q: %v", podNetwork.ID, err)
+				logrus.Errorf("failed to destroy network for sandbox %q: %v", podNetwork.ID, err)
 			}
 		}
 	}()
@@ -123,50 +100,4 @@ func (c *CniManager) GetPodNetworkStatus(netnsPath string) (string, error) {
 // Status returns error if the network plugin is in error state.
 func (c *CniManager) Status() error {
 	return c.plugin.Status()
-}
-
-// toCNIPortMappings converts CRI port mappings to CNI.
-func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapping {
-	var portMappings []ocicni.PortMapping
-	for _, mapping := range criPortMappings {
-		if mapping.HostPort <= 0 {
-			continue
-		}
-		portMappings = append(portMappings, ocicni.PortMapping{
-			HostPort:      mapping.HostPort,
-			ContainerPort: mapping.ContainerPort,
-			Protocol:      strings.ToLower(mapping.Protocol.String()),
-			HostIP:        mapping.HostIp,
-		})
-	}
-	return portMappings
-}
-
-// NoopCniManager is an implementation of interface CniMgr, but makes no operation.
-type NoopCniManager struct {
-}
-
-// Name of NoopCniManager return the name of plugin as "none".
-func (n *NoopCniManager) Name() string {
-	return "noop"
-}
-
-// SetUpPodNetwork of NoopCniManager makes no operation.
-func (n *NoopCniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
-	return nil
-}
-
-// TearDownPodNetwork of NoopCniManager makes no operation.
-func (n *NoopCniManager) TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error {
-	return nil
-}
-
-// GetPodNetworkStatus of NoopCniManager makes no operation.
-func (n *NoopCniManager) GetPodNetworkStatus(netnsPath string) (string, error) {
-	return "", nil
-}
-
-// Status of NoopCniManager makes no operation.
-func (n *NoopCniManager) Status() error {
-	return nil
 }

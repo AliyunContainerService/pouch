@@ -21,6 +21,7 @@ import (
 	"github.com/containerd/cgroups"
 	containerdmount "github.com/containerd/containerd/mount"
 	"github.com/containerd/typeurl"
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
@@ -953,4 +954,23 @@ func parseResourcesFromCRI(runtimeResources *runtime.LinuxContainerResources) ap
 		CpusetCpus: runtimeResources.GetCpusetCpus(),
 		CpusetMems: runtimeResources.GetCpusetMems(),
 	}
+}
+
+// CNI Network related tool functions.
+
+// toCNIPortMappings converts CRI port mappings to CNI.
+func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapping {
+	var portMappings []ocicni.PortMapping
+	for _, mapping := range criPortMappings {
+		if mapping.HostPort <= 0 {
+			continue
+		}
+		portMappings = append(portMappings, ocicni.PortMapping{
+			HostPort:      mapping.HostPort,
+			ContainerPort: mapping.ContainerPort,
+			Protocol:      strings.ToLower(mapping.Protocol.String()),
+			HostIP:        mapping.HostIp,
+		})
+	}
+	return portMappings
 }
