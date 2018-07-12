@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/storage/quota"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -98,7 +99,7 @@ func setMountTab(ctx context.Context, c *Container, spec *SpecWrapper) error {
 
 	// set rootfs mount tab
 	context := "/ / ext4 rw 0 0\n"
-	if rootID, e := quota.GetDevID(c.BaseFS); e == nil {
+	if rootID, e := system.GetDevID(c.BaseFS); e == nil {
 		_, _, rootFsType := quota.CheckMountpoint(rootID)
 		if len(rootFsType) > 0 {
 			context = fmt.Sprintf("/ / %s rw 0 0\n", rootFsType)
@@ -118,7 +119,7 @@ func setMountTab(ctx context.Context, c *Container, spec *SpecWrapper) error {
 		}
 
 		tempLine := fmt.Sprintf("/dev/v%02dd %s ext4 rw 0 0\n", i, m.Destination)
-		if tmpID, e := quota.GetDevID(m.Source); e == nil {
+		if tmpID, e := system.GetDevID(m.Source); e == nil {
 			_, _, fsType := quota.CheckMountpoint(tmpID)
 			if len(fsType) > 0 {
 				tempLine = fmt.Sprintf("/dev/v%02dd %s %s rw 0 0\n", i, m.Destination, fsType)
