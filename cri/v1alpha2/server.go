@@ -1,14 +1,11 @@
 package v1alpha2
 
 import (
-	"io"
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"github.com/alibaba/pouch/cri/stream"
-	"github.com/alibaba/pouch/cri/stream/constant"
 	"github.com/alibaba/pouch/cri/stream/portforward"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 
@@ -17,24 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
-
-// Keep these constants consistent with the peers in official package:
-// k8s.io/kubernetes/pkg/kubelet/server.
-const (
-	// DefaultStreamIdleTimeout is the timeout for idle stream.
-	DefaultStreamIdleTimeout = 4 * time.Hour
-
-	// DefaultStreamCreationTimeout is the timeout for stream creation.
-	DefaultStreamCreationTimeout = 30 * time.Second
-)
-
-// TODO: StreamProtocolV2Name, StreamProtocolV3Name, StreamProtocolV4Name support.
-
-// SupportedStreamingProtocols is the streaming protocols which server supports.
-var SupportedStreamingProtocols = []string{constant.StreamProtocolV1Name, constant.StreamProtocolV2Name}
-
-// SupportedPortForwardProtocols is the portforward protocols which server supports.
-var SupportedPortForwardProtocols = []string{constant.PortForwardProtocolV1Name}
 
 // Server as an interface defines all operations against stream server.
 type Server interface {
@@ -51,54 +30,15 @@ type Server interface {
 	Start() error
 }
 
-// Runtime is the interface to execute the commands and provide the streams.
-type Runtime interface {
-	// Exec executes the command in pod.
-	Exec(containerID string, cmd []string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) (uint32, error)
-
-	// Attach attaches to pod.
-	Attach(containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error
-
-	// PortForward forward port to pod.
-	PortForward(name string, port int32, stream io.ReadWriteCloser) error
-}
-
-// Config defines the options used for running the stream server.
-type Config struct {
-	// Address is the addr:port address the server will listen on.
-	Address string
-
-	// BaseURL is the optional base URL for constructing streaming URLs. If empty, the baseURL will be constructed from the serve address.
-	BaseURL *url.URL
-
-	// StreamIdleTimeout is how long to leave idle connections open for.
-	StreamIdleTimeout time.Duration
-	// StreamCreationTimeout is how long to wait for clients to create streams. Only used for SPDY streaming.
-	StreamCreationTimeout time.Duration
-
-	// SupportedStreamingProtocols is the streaming protocols which server supports.
-	SupportedRemoteCommandProtocols []string
-	// SupportedPortForwardProtocol is the portforward protocols which server supports.
-	SupportedPortForwardProtocols []string
-}
-
-// DefaultConfig provides default values for server Config.
-var DefaultConfig = Config{
-	StreamIdleTimeout:               4 * time.Hour,
-	StreamCreationTimeout:           DefaultStreamCreationTimeout,
-	SupportedRemoteCommandProtocols: SupportedStreamingProtocols,
-	SupportedPortForwardProtocols:   SupportedPortForwardProtocols,
-}
-
 type server struct {
-	config  Config
-	runtime Runtime
+	config  stream.Config
+	runtime stream.Runtime
 	cache   *stream.RequestCache
 	server  *http.Server
 }
 
 // NewServer creates a new stream server.
-func NewServer(config Config, runtime Runtime) (Server, error) {
+func NewServer(config stream.Config, runtime stream.Runtime) (Server, error) {
 	s := &server{
 		config:  config,
 		runtime: runtime,
@@ -142,6 +82,8 @@ func (s *server) Start() error {
 }
 
 func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	token := mux.Vars(r)["token"]
 	cachedRequest, ok := s.cache.Consume(token)
 	if !ok {
@@ -162,6 +104,7 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 		TTY:    exec.Tty,
 	}
 	remotecommand.ServeExec(
+		ctx,
 		w,
 		r,
 		s.runtime,
@@ -175,6 +118,8 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	token := mux.Vars(r)["token"]
 	cachedRequest, ok := s.cache.Consume(token)
 	if !ok {
@@ -194,6 +139,7 @@ func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
 		TTY:    attach.Tty,
 	}
 	remotecommand.ServeAttach(
+		ctx,
 		w,
 		r,
 		s.runtime,
@@ -206,6 +152,8 @@ func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	token := mux.Vars(r)["token"]
 	cachedRequest, ok := s.cache.Consume(token)
 	if !ok {
@@ -219,6 +167,7 @@ func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
 	}
 
 	portforward.ServePortForward(
+		ctx,
 		w,
 		r,
 		s.runtime,
