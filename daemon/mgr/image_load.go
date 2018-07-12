@@ -41,7 +41,7 @@ func (mgr *ImageManager) LoadImage(ctx context.Context, imageName string, tarstr
 	}
 
 	// FIXME(fuwei): if the store fails to update reference cache, the daemon
-	// may fails to load after restart.
+	// may fail to load after restart.
 	merrs := new(multierror.Multierrors)
 	for _, img := range imgs {
 		if err := mgr.storeImageReference(ctx, img); err != nil {

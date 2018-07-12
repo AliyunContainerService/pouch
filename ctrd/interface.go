@@ -75,6 +75,8 @@ type ImageAPIClient interface {
 	RemoveImage(ctx context.Context, ref string) error
 	// ImportImage creates a set of images by tarstream.
 	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
+	// SaveImage saves image to tarstream
+	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features

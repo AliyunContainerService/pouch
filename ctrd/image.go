@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
@@ -63,6 +64,42 @@ func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 		return errors.Wrap(err, "failed to remove image")
 	}
 	return nil
+}
+
+// SaveImage saves image to tarstream
+func (c *Client) SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	image, err := c.GetImage(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	desc := image.Target()
+	// add annotations in image description
+	if desc.Annotations == nil {
+		desc.Annotations = make(map[string]string)
+	}
+	if s, exist := desc.Annotations[ocispec.AnnotationRefName]; !exist || s == "" {
+		namedRef, err := reference.Parse(ref)
+		if err != nil {
+			return nil, err
+		}
+
+		if reference.IsNameTagged(namedRef) {
+			desc.Annotations[ocispec.AnnotationRefName] = namedRef.(reference.Tagged).Tag()
+		}
+	}
+
+	exportedStream, err := wrapperCli.client.Export(ctx, exporter, desc)
+	if err != nil {
+		return nil, err
+	}
+
+	return exportedStream, nil
 }
 
 // ImportImage creates a set of images by tarstream.

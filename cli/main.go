@@ -31,6 +31,7 @@ func main() {
 	cli.AddCommand(base, &NetworkCommand{})
 	cli.AddCommand(base, &TagCommand{})
 	cli.AddCommand(base, &LoadCommand{})
+	cli.AddCommand(base, &SaveCommand{})
 
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
