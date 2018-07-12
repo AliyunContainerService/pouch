@@ -10,7 +10,7 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
-	"github.com/go-openapi/strfmt"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
 )
 
