@@ -43,6 +43,7 @@ func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info
 		ContainerName:    c.Name,
 		ContainerImageID: c.Image,
 		ContainerLabels:  c.Config.Labels,
+		ContainerEnvs:    c.Config.Env,
 		ContainerRootDir: mgr.Store.Path(c.ID),
 		DaemonName:       "pouchd",
 	}
