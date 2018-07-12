@@ -96,7 +96,7 @@ func FromURLParam(param string) (map[string][]string, error) {
 func Validate(filter map[string][]string) error {
 	for name := range filter {
 		if _, exist := acceptedFilters[name]; !exist {
-			return fmt.Errorf("Invalid filter %s", name)
+			return fmt.Errorf("invalid filter %s", name)
 		}
 	}
 

@@ -50,3 +50,51 @@ func TestParseFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestValidate(t *testing.T) {
+	type args struct {
+		filter map[string][]string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal successful case",
+			args: args{
+				filter: map[string][]string{
+					"id": {"a"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failure case with nonexistence",
+			args: args{
+				filter: map[string][]string{
+					"id":           {"a"},
+					"nonexistence": {"b"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure case with future filter name",
+			args: args{
+				filter: map[string][]string{
+					"id":     {"a"},
+					"before": {"b"}, // this will be implemented in the future.
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := Validate(tt.args.filter); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
