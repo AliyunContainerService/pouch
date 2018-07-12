@@ -49,6 +49,9 @@ type ImageMgr interface {
 
 	// LoadImage creates a set of images by tarstream.
 	LoadImage(ctx context.Context, imageName string, tarstream io.ReadCloser) error
+
+	// SaveImage saves image to tarstream.
+	SaveImage(ctx context.Context, idOrRef string) (io.ReadCloser, error)
 }
 
 // ImageManager is an implementation of interface ImageMgr.

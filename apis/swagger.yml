@@ -172,6 +172,29 @@ paths:
           description: "set the image name for the tar stream, default unknown/unknown"
           type: "string"
 
+  /images/save:
+    get:
+      summary: "Save image"
+      description: |
+        Save an image by oci.v1 format tar stream.
+      produces:
+        - application/x-tar
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "string"
+            format: "binary"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "name"
+          in: "query"
+          description: "Image name which is to be saved"
+          type: "string"
+
   /images/{imageid}/json:
     get:
       summary: "Inspect a image"
