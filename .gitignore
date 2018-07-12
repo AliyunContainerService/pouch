@@ -8,3 +8,4 @@ coverage.txt
 .editorconfig
 .bashrc
 .idea
+.DS_Store
