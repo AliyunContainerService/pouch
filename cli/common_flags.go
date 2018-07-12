@@ -46,7 +46,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	// log driver and log options
 	flagSet.StringVar(&c.logDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Logging driver for the container")
-	flagSet.StringSliceVar(&c.logOpts, "log-opt", nil, "Log driver options")
+	flagSet.StringArrayVar(&c.logOpts, "log-opt", nil, "Log driver options")
 
 	// memory
 

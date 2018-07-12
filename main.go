@@ -111,7 +111,7 @@ func setupFlags(cmd *cobra.Command) {
 
 	// log config
 	flagSet.StringVar(&cfg.DefaultLogConfig.LogDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Set default log driver")
-	flagSet.StringSliceVar(&logOpts, "log-opt", nil, "Set default log driver options")
+	flagSet.StringArrayVar(&logOpts, "log-opt", nil, "Set default log driver options")
 
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
