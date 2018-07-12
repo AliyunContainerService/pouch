@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -149,5 +150,25 @@ func (s *Server) loadImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	}
 
 	rw.WriteHeader(http.StatusOK)
+	return nil
+}
+
+// saveImage saves an image by http tar stream.
+func (s *Server) saveImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	imageName := req.FormValue("name")
+
+	rw.Header().Set("Content-Type", "application/x-tar")
+
+	r, err := s.ImageMgr.SaveImage(ctx, imageName)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	output := newWriteFlusher(rw)
+	if _, err := io.Copy(output, r); err != nil {
+		return err
+	}
+
 	return nil
 }
