@@ -63,7 +63,45 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+
+	type TestCase struct {
+		lable    map[string]string
+		expected []string
+	}
+
+	lables := map[string]string{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+		"d": "d",
+	}
+	lables1 := lables[:2]
+	lables2 := lables[:3]
+
+	expect := []string{
+		"a",
+		"b",
+		"c",
+		"d",
+	}
+	expect1 := expect[:2]
+	expect1 := expect[:3]
+
+	testCases := []TestCase{
+		{
+			lable:    lables1,
+			expected: expect1, nil,
+		},
+		{
+			lable:    lables2,
+			expected: expect2, nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		expect := ListVolumeName(testCase.lable)
+		assert.Equal(t, testCase.expected, expect)
+	}
 }
 
 func TestRemoveVolume(t *testing.T) {
