@@ -18,7 +18,7 @@ PouchContainer is conflict with Docker, so you must uninstall Docker before inst
 
 **Prerequisites**
 
-PouchContainer supports lxcfs to provide strong isolation, so you should install lxcfs firstly. By default, lxcfs is enabled.
+PouchContainer supports LXCFS to provide strong isolation, so you should install LXCFS firstly. By default, LXCFS is enabled.
 
 ``` bash
 sudo apt-get install lxcfs
