@@ -1,13 +1,11 @@
 package opts
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestValidateCPUPeriod(t *testing.T) {
-	// TODO
+	//TODO
 }
 
 func TestValidateCPUQuota(t *testing.T) {
-	// TODO
+	//TODO
 }
