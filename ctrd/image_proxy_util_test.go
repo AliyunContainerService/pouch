@@ -1,8 +1,55 @@
 package ctrd
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+	"unsafe"
+	"github.com/stretchr/testify/assert"
+)
 
-func TestHasPort(t *testing.T) {
+func buildURL(inputUrl string) *url.URL {
+	url, _ := url.Parse(inputUrl)
+	return url
+}
+
+func TestCanonicalAddr(t *testing.T) {
+	type TestCase struct {
+		url      *url.URL
+		expected string
+	}
+
+	testCases := []TestCase{
+		{
+			url:      buildURL("http://www.alibaba-inc.com"),
+			expected: "www.alibaba-inc.com:80",
+		},
+		{
+			url:      buildURL("https://www.alibaba-inc.com"),
+			expected: "www.alibaba-inc.com:443",
+		},
+		{
+			url:      buildURL("socks5://www.alibaba-inc.com"),
+			expected: "www.alibaba-inc.com:1080",
+		},
+		{
+			url:      buildURL("http://www.alibaba-inc.com:2333"),
+			expected: "www.alibaba-inc.com:2333",
+		},
+		{
+			url:      buildURL("https://www.alibaba-inc.com:2333"),
+			expected: "www.alibaba-inc.com:2333",
+		},
+		{
+			url:      buildURL("socks5://www.alibaba-inc.com:2333"),
+			expected: "www.alibaba-inc.com:2333",
+		},
+	}
+
+	for _, testCase := range testCases {
+		addr := canonicalAddr(testCase.url)
+		assert.Equal(t, testCase.expected, addr)
+
+    func TestHasPort(t *testing.T) {
 	type args struct {
 		str string
 	}
@@ -11,7 +58,6 @@ func TestHasPort(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
 		{name: "test1", args: args{str: string("localhost:8000")}, want: true},
 		{name: "test2", args: args{str: string("[ipv6::localhost]:8000")}, want: true},
 		{name: "test3", args: args{str: string(":8000")}, want: true},
@@ -20,22 +66,103 @@ func TestHasPort(t *testing.T) {
 		{name: "test6", args: args{str: string("[ipv6::localhost]")}, want: false},
 		{name: "test7", args: args{str: string("[ipv6::localhost]8000")}, want: false},
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := hasPort(tt.args.str)
-			if got != tt.want {
-				t.Errorf("hasPort() = %v, want %v", got, tt.want)
-				return
-			}
-		})
+var noproxy string
+
+type mockNoProxyEnvGet struct {
+	eo *envOnce
+}
+
+func newMockNoProxyEnvGet(e *envOnce, nopro string) *envOnce {
+	noproxy = nopro
+	return (*envOnce)(unsafe.Pointer(&mockNoProxyEnvGet{e}))
+}
+
+func (m *mockNoProxyEnvGet) Get() string {
+	return noproxy
+}
+
+func TestuseProxy(t *testing.T) {
+	type TestCase struct {
+		input    string
+		expected bool
+		noProxy  string
 	}
-}
 
-func TestCanonicalAddr(t *testing.T) {
-	// TODO
-}
+	testCases := []TestCase{
+		{
+			input:    "",
+			expected: true,
+			noProxy:  ".foo.com,foo.com",
+		},
+		{
+			input:    "http://www.localhost.com",
+			expected: false,
+			noProxy:  "",
+		},
+		{
+			input:    "http://www.localhost.com:8000",
+			expected: false,
+			noProxy:  "",
+		},
+		{
+			input:    "http://www.127.0.0.1.com",
+			expected: false,
+			noProxy:  "",
+		},
+		{
+			input:    "http://www.127.0.0.1.com:2333",
+			expected: false,
+			noProxy:  "",
+		},
+		{
+			input:    "http://www.alibaba-inc.com:2333",
+			expected: false,
+			noProxy:  "*",
+		},
+		{
+			input:    "http://www.alibaba-inc.com",
+			expected: false,
+			noProxy:  "*",
+		},
+		{
+			input:    "http://www.alibaba-inc.com",
+			expected: true,
+			noProxy:  "   ,   ",
+		},
+		{
+			input:    "http://www.alibaba-inc.com:2333",
+			expected: false,
+			noProxy:  "alibaba-inc.com",
+		},
+		{
+			input:    "http://www.alibaba-inc.com:2333",
+			expected: true,
+			noProxy:  ":2333,:8000",
+		},
+		{
+			input:    "http://bar.foo.com",
+			expected: false,
+			noProxy:  ".foo.com",
+		},
+		{
+			input:    "http://bar.foo.com",
+			expected: false,
+			noProxy:  "foo.com",
+		},
+		{
+			input:    "http://bar.bar.com",
+			expected: true,
+			noProxy:  "foo.com",
+		},
+	}
 
-func TestUseProxy(t *testing.T) {
-	// TODO
+	for _, testCase := range testCases {
+		noProxyEnv = newMockNoProxyEnvGet(&envOnce{
+			names: []string{"NO_PROXY", "no_proxy"},
+		}, testCase.noProxy)
+		outputbool := useProxy(testCase.input)
+		assert.Equal(t, testCase.expected, outputbool)
+	}
 }

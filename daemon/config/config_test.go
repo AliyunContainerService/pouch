@@ -1,12 +1,14 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIterateConfig(t *testing.T) {
+func TestConfigValidate(t *testing.T) (t *testing.T) {
 	assert := assert.New(t)
 	origin := map[string]interface{}{
 		"a": "a",
@@ -45,13 +47,47 @@ func TestIterateConfig(t *testing.T) {
 }
 
 func TestConfigValidate(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	config := Config{Labels: []string{"a=b", "c=d"}}
+	origin := config.Validate()
+	assert.Nil(origin)
+	config = Config{Labels: []string{"a=b", "cd"}}
+	origin = config.Validate()
+	assert.Equal(origin, fmt.Errorf("daemon label cd must be in format of key=value"))
+	config = Config{Labels: []string{"a="}}
+	origin = config.Validate()
+	assert.Equal(origin, fmt.Errorf("key and value in daemon label a= cannot be empty"))
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	flagSet := pflag.NewFlagSet("d", 1)
+
+	fileFlags := map[string]interface{}{
+		"c": "d",
+		"e": "a",
+	}
+	origin := getConflictConfigurations(flagSet, fileFlags)
+	assert.Nil(origin)
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	fileFlags := map[string]interface{}{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+	}
+
+	expect := fmt.Errorf("unknown flags: a, b, c")
+
+	flagSet := pflag.NewFlagSet("test", 0)
+	flagSet.String("d", "d", "d")
+	// test if it works,can not found
+	assert.Equal(expect, getUnknownFlags(flagSet, fileFlags))
+
+	flagSet1 := pflag.NewFlagSet("test1", 0)
+	flagSet1.String("a", "a", "a")
+	expect = fmt.Errorf("unknown flags: b, c")
+	assert.Equal(expect, getUnknownFlags(flagSet1, fileFlags))
 }
