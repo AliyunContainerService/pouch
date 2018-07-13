@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/alibaba/pouch/storage/volume/driver"
@@ -137,7 +138,41 @@ func TestGetVolume(t *testing.T) {
 }
 
 func TestListVolumes(t *testing.T) {
-	// TODO
+	driverName := "fake_driver4"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	volarray, err := core.ListVolumes(nil)
+	for k := 0; k < len(volarray); k++ {
+		vol := volarray[k]
+		_, found := volmap[vol.Name]
+		if found == false {
+			t.Fatalf("list volumes %v not found", vol)
+		}
+	}
 }
 
 func TestListVolumeName(t *testing.T) {
