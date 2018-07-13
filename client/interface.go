@@ -40,6 +40,9 @@ type ContainerAPIClient interface {
 	ContainerLogs(ctx context.Context, name string, options types.ContainerLogsOptions) (io.ReadCloser, error)
 	ContainerResize(ctx context.Context, name, height, width string) error
 	ContainerWait(ctx context.Context, name string) (types.ContainerWaitOKBody, error)
+	ContainerCheckpointCreate(ctx context.Context, name string, options types.CheckpointCreateOptions) error
+	ContainerCheckpointList(ctx context.Context, name string, options types.CheckpointListOptions) ([]string, error)
+	ContainerCheckpointDelete(ctx context.Context, name string, options types.CheckpointDeleteOptions) error
 }
 
 // ImageAPIClient defines methods of Image client.

@@ -98,4 +98,6 @@ type SnapshotAPIClient interface {
 	GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error)
 	// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
 	WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error
+	// CreateCheckpoint creates a checkpoint from a running container
+	CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error
 }

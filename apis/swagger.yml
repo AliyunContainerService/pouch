@@ -3652,6 +3652,32 @@ definitions:
     type: "string"
     enum: ["container", "daemon", "image", "network", "plugin", "volume"]
 
+  CheckpointCreateOptions:
+    description: "options of creating a checkpoint from a running container, checkpoint is used to restore a container with current state later"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+      Exit:
+        type: "boolean"
+
+  CheckpointListOptions:
+    description: "options of listing all checkpoints of a container"
+    type: "object"
+    properties:
+      CheckpointDir:
+        type: "string"
+
+  CheckpointDeleteOptions:
+    description: "options of deleting a checkpoint from a container"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
 
 parameters:
   id:

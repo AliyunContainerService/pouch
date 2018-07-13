@@ -41,7 +41,7 @@ type RegistryServiceConfig struct {
 	// > are in compliance with any terms that cover redistributing
 	// > nondistributable artifacts.
 	//
-	AllowNondistributableArtifactsCIDRs []string `json:"AllowNondistributableArtifactsCIDRs,omitempty"`
+	AllowNondistributableArtifactsCIDRs []string `json:"AllowNondistributableArtifactsCIDRs"`
 
 	// List of registry hostnames to which nondistributable artifacts can be
 	// pushed, using the format `<hostname>[:<port>]` or `<IP address>[:<port>]`.
@@ -64,7 +64,7 @@ type RegistryServiceConfig struct {
 	// > are in compliance with any terms that cover redistributing
 	// > nondistributable artifacts.
 	//
-	AllowNondistributableArtifactsHostnames []string `json:"AllowNondistributableArtifactsHostnames,omitempty"`
+	AllowNondistributableArtifactsHostnames []string `json:"AllowNondistributableArtifactsHostnames"`
 
 	// index configs
 	IndexConfigs map[string]IndexInfo `json:"IndexConfigs,omitempty"`
@@ -93,10 +93,10 @@ type RegistryServiceConfig struct {
 	// > security, users should add their CA to their system's list of trusted
 	// > CAs instead of enabling this option.
 	//
-	InsecureRegistryCIDRs []string `json:"InsecureRegistryCIDRs,omitempty"`
+	InsecureRegistryCIDRs []string `json:"InsecureRegistryCIDRs"`
 
 	// List of registry URLs that act as a mirror for the official registry.
-	Mirrors []string `json:"Mirrors,omitempty"`
+	Mirrors []string `json:"Mirrors"`
 }
 
 /* polymorph RegistryServiceConfig AllowNondistributableArtifactsCIDRs false */

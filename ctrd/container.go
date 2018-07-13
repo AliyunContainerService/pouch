@@ -2,6 +2,7 @@ package ctrd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"runtime"
@@ -14,11 +15,15 @@ import (
 
 	"github.com/containerd/containerd"
 	containerdtypes "github.com/containerd/containerd/api/types"
+	"github.com/containerd/containerd/archive"
+	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
 	"github.com/docker/docker/pkg/stdcopy"
+	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -651,4 +656,62 @@ func (c *Client) waitContainer(ctx context.Context, id string) (types.ContainerW
 		Error:      errMsg,
 		StatusCode: int64(msg.ExitCode()),
 	}, nil
+}
+
+// CreateCheckpoint create a checkpoint from a running container
+func (c *Client) CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+	client := wrapperCli.client
+
+	var opts []containerd.CheckpointTaskOpts
+	if exit {
+		opts = append(opts, containerd.WithExit)
+	}
+	checkpoint, err := pack.task.Checkpoint(ctx, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to checkpoint: %s", err)
+	}
+	// delete image since it is a checkpoint-format image, can not
+	// distinguished when load images.
+	defer client.ImageService().Delete(ctx, checkpoint.Name())
+
+	b, err := content.ReadBlob(ctx, client.ContentStore(), checkpoint.Target().Digest)
+	if err != nil {
+		return errors.Wrapf(err, "failed to retrieve checkpoint data")
+	}
+	var index imagespec.Index
+	if err := json.Unmarshal(b, &index); err != nil {
+		return errors.Wrapf(err, "failed to decode checkpoint data")
+	}
+
+	var cpDesc *imagespec.Descriptor
+	for _, m := range index.Manifests {
+		if m.MediaType == images.MediaTypeContainerd1Checkpoint {
+			cpDesc = &m
+			break
+		}
+	}
+	if cpDesc == nil {
+		return errors.Wrapf(err, "invalid checkpoint")
+	}
+
+	rat, err := client.ContentStore().ReaderAt(ctx, cpDesc.Digest)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get checkpoint reader")
+	}
+	defer rat.Close()
+	_, err = archive.Apply(ctx, checkpointDir, content.NewReader(rat))
+	if err != nil {
+		return errors.Wrapf(err, "failed to read checkpoint reader")
+	}
+
+	return nil
 }

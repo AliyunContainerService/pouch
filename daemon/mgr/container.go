@@ -138,6 +138,15 @@ type ContainerMgr interface {
 
 	// NewSnapshotsSyncer creates a snapshot syncer.
 	NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer
+
+	// CreateCheckpoint creates a checkpoint from a running container
+	CreateCheckpoint(ctx context.Context, name string, options *types.CheckpointCreateOptions) error
+
+	// ListCheckpoint lists checkpoints from a container
+	ListCheckpoint(ctx context.Context, name string, options *types.CheckpointListOptions) ([]string, error)
+
+	// DeleteCheckpoint deletes a checkpoint from a container
+	DeleteCheckpoint(ctx context.Context, name string, options *types.CheckpointDeleteOptions) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.

@@ -92,6 +92,19 @@ func CheckContainerStatus(c *check.C, cname string, state string) {
 	c.Assert(string(got.State.Status), check.Equals, state)
 }
 
+// CheckContainerRunning checks if container is running.
+func CheckContainerRunning(c *check.C, cname string, isRunning bool) {
+	resp, err := request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+	defer resp.Body.Close()
+	gotRunning := (string(got.State.Status) == "running")
+	c.Assert(gotRunning, check.Equals, isRunning)
+}
+
 // DelContainerForceOk forcely deletes the container and asserts success.
 func DelContainerForceOk(c *check.C, cname string) {
 	resp, err := delContainerForce(cname)

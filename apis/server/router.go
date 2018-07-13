@@ -33,6 +33,9 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)
 
 	// container
+	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/checkpoints", withCancelHandler(s.createContainerCheckpoint))
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/checkpoints", withCancelHandler(s.listContainerCheckpoint))
+	s.addRoute(r, http.MethodDelete, "/containers/{name}/checkpoints/{id}", withCancelHandler(s.deleteContainerCheckpoint))
 	s.addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/start", s.startContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/stop", s.stopContainer)
