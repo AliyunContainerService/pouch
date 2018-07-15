@@ -14,7 +14,6 @@ import (
 
 // EndpointSettings Configuration for a network endpoint.
 // swagger:model EndpointSettings
-
 type EndpointSettings struct {
 
 	// aliases
@@ -68,63 +67,17 @@ type EndpointSettings struct {
 	NetworkID string `json:"NetworkID,omitempty"`
 }
 
-/* polymorph EndpointSettings Aliases false */
-
-/* polymorph EndpointSettings DriverOpts false */
-
-/* polymorph EndpointSettings EndpointID false */
-
-/* polymorph EndpointSettings Gateway false */
-
-/* polymorph EndpointSettings GlobalIPv6Address false */
-
-/* polymorph EndpointSettings GlobalIPv6PrefixLen false */
-
-/* polymorph EndpointSettings IPAMConfig false */
-
-/* polymorph EndpointSettings IPAddress false */
-
-/* polymorph EndpointSettings IPPrefixLen false */
-
-/* polymorph EndpointSettings IPv6Gateway false */
-
-/* polymorph EndpointSettings Links false */
-
-/* polymorph EndpointSettings MacAddress false */
-
-/* polymorph EndpointSettings NetworkID false */
-
 // Validate validates this endpoint settings
 func (m *EndpointSettings) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAliases(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateIPAMConfig(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateLinks(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *EndpointSettings) validateAliases(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Aliases) { // not required
-		return nil
-	}
-
 	return nil
 }
 
@@ -135,22 +88,12 @@ func (m *EndpointSettings) validateIPAMConfig(formats strfmt.Registry) error {
 	}
 
 	if m.IPAMConfig != nil {
-
 		if err := m.IPAMConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("IPAMConfig")
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *EndpointSettings) validateLinks(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Links) { // not required
-		return nil
 	}
 
 	return nil

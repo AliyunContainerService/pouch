@@ -15,7 +15,6 @@ import (
 
 // GraphDriverData Information about a container's graph driver.
 // swagger:model GraphDriverData
-
 type GraphDriverData struct {
 
 	// data
@@ -27,21 +26,15 @@ type GraphDriverData struct {
 	Name string `json:"Name"`
 }
 
-/* polymorph GraphDriverData Data false */
-
-/* polymorph GraphDriverData Name false */
-
 // Validate validates this graph driver data
 func (m *GraphDriverData) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateData(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateName(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -52,10 +45,6 @@ func (m *GraphDriverData) Validate(formats strfmt.Registry) error {
 }
 
 func (m *GraphDriverData) validateData(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Data) { // not required
-		return nil
-	}
 
 	return nil
 }

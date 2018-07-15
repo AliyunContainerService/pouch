@@ -6,6 +6,8 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -14,7 +16,6 @@ import (
 
 // IPAM represents IP Address Management
 // swagger:model IPAM
-
 type IPAM struct {
 
 	// config
@@ -27,18 +28,11 @@ type IPAM struct {
 	Options map[string]string `json:"Options,omitempty"`
 }
 
-/* polymorph IPAM Config false */
-
-/* polymorph IPAM Driver false */
-
-/* polymorph IPAM Options false */
-
 // Validate validates this IP a m
 func (m *IPAM) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateConfig(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -52,6 +46,17 @@ func (m *IPAM) validateConfig(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Config) { // not required
 		return nil
+	}
+
+	for i := 0; i < len(m.Config); i++ {
+
+		if err := m.Config[i].Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("Config" + "." + strconv.Itoa(i))
+			}
+			return err
+		}
+
 	}
 
 	return nil

@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // SearchResultItem search result item in search results.
 // swagger:model SearchResultItem
-
 type SearchResultItem struct {
 
 	// description just shows the description of this image
@@ -33,23 +31,8 @@ type SearchResultItem struct {
 	StarCount int64 `json:"star_count,omitempty"`
 }
 
-/* polymorph SearchResultItem description false */
-
-/* polymorph SearchResultItem is_automated false */
-
-/* polymorph SearchResultItem is_official false */
-
-/* polymorph SearchResultItem name false */
-
-/* polymorph SearchResultItem star_count false */
-
 // Validate validates this search result item
 func (m *SearchResultItem) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

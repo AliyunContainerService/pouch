@@ -17,7 +17,6 @@ import (
 
 // VolumeListResp volume list resp
 // swagger:model VolumeListResp
-
 type VolumeListResp struct {
 
 	// List of volumes
@@ -29,21 +28,15 @@ type VolumeListResp struct {
 	Warnings []string `json:"Warnings"`
 }
 
-/* polymorph VolumeListResp Volumes false */
-
-/* polymorph VolumeListResp Warnings false */
-
 // Validate validates this volume list resp
 func (m *VolumeListResp) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateVolumes(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateWarnings(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -60,13 +53,11 @@ func (m *VolumeListResp) validateVolumes(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.Volumes); i++ {
-
 		if swag.IsZero(m.Volumes[i]) { // not required
 			continue
 		}
 
 		if m.Volumes[i] != nil {
-
 			if err := m.Volumes[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("Volumes" + "." + strconv.Itoa(i))

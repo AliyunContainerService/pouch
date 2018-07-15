@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // IPAMConfig represents IPAM configurations
 // swagger:model IPAMConfig
-
 type IPAMConfig struct {
 
 	// aux address in sub-network
@@ -30,21 +28,8 @@ type IPAMConfig struct {
 	Subnet string `json:"Subnet,omitempty"`
 }
 
-/* polymorph IPAMConfig AuxAddress false */
-
-/* polymorph IPAMConfig Gateway false */
-
-/* polymorph IPAMConfig IPRange false */
-
-/* polymorph IPAMConfig Subnet false */
-
 // Validate validates this IP a m config
 func (m *IPAMConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

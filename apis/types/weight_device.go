@@ -15,7 +15,6 @@ import (
 
 // WeightDevice Weight for BlockIO Device
 // swagger:model WeightDevice
-
 type WeightDevice struct {
 
 	// Weight Device
@@ -26,16 +25,11 @@ type WeightDevice struct {
 	Weight uint16 `json:"Weight,omitempty"`
 }
 
-/* polymorph WeightDevice Path false */
-
-/* polymorph WeightDevice Weight false */
-
 // Validate validates this weight device
 func (m *WeightDevice) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateWeight(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

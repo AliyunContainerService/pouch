@@ -14,7 +14,6 @@ import (
 
 // NetworkCreateConfig contains the request for the remote API: POST /networks/create
 // swagger:model NetworkCreateConfig
-
 type NetworkCreateConfig struct {
 
 	// Name is the name of the network.
@@ -25,16 +24,17 @@ type NetworkCreateConfig struct {
 
 // UnmarshalJSON unmarshals this object from a JSON structure
 func (m *NetworkCreateConfig) UnmarshalJSON(raw []byte) error {
-
-	var data struct {
+	// AO0
+	var dataAO0 struct {
 		Name string `json:"Name,omitempty"`
 	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
+	if err := swag.ReadJSON(raw, &dataAO0); err != nil {
 		return err
 	}
 
-	m.Name = data.Name
+	m.Name = dataAO0.Name
 
+	// AO1
 	var aO1 NetworkCreate
 	if err := swag.ReadJSON(raw, &aO1); err != nil {
 		return err
@@ -46,19 +46,19 @@ func (m *NetworkCreateConfig) UnmarshalJSON(raw []byte) error {
 
 // MarshalJSON marshals this object to a JSON structure
 func (m NetworkCreateConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
+	_parts := make([][]byte, 0, 2)
 
-	var data struct {
+	var dataAO0 struct {
 		Name string `json:"Name,omitempty"`
 	}
 
-	data.Name = m.Name
+	dataAO0.Name = m.Name
 
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
+	jsonDataAO0, errAO0 := swag.WriteJSON(dataAO0)
+	if errAO0 != nil {
+		return nil, errAO0
 	}
-	_parts = append(_parts, jsonData)
+	_parts = append(_parts, jsonDataAO0)
 
 	aO1, err := swag.WriteJSON(m.NetworkCreate)
 	if err != nil {
@@ -73,6 +73,7 @@ func (m NetworkCreateConfig) MarshalJSON() ([]byte, error) {
 func (m *NetworkCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	// validation for a type composition with NetworkCreate
 	if err := m.NetworkCreate.Validate(formats); err != nil {
 		res = append(res, err)
 	}

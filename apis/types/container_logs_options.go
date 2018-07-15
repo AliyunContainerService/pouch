@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerLogsOptions The parameters to filter the log.
 // swagger:model ContainerLogsOptions
-
 type ContainerLogsOptions struct {
 
 	// Show extra details provided to logs
@@ -42,29 +40,8 @@ type ContainerLogsOptions struct {
 	Until string `json:"Until,omitempty"`
 }
 
-/* polymorph ContainerLogsOptions Details false */
-
-/* polymorph ContainerLogsOptions Follow false */
-
-/* polymorph ContainerLogsOptions ShowStderr false */
-
-/* polymorph ContainerLogsOptions ShowStdout false */
-
-/* polymorph ContainerLogsOptions Since false */
-
-/* polymorph ContainerLogsOptions Tail false */
-
-/* polymorph ContainerLogsOptions Timestamps false */
-
-/* polymorph ContainerLogsOptions Until false */
-
 // Validate validates this container logs options
 func (m *ContainerLogsOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

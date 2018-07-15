@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // VolumeCreateConfig config used to create a volume
 // swagger:model VolumeCreateConfig
-
 type VolumeCreateConfig struct {
 
 	// Name of the volume driver to use.
@@ -30,21 +28,8 @@ type VolumeCreateConfig struct {
 	Name string `json:"Name,omitempty"`
 }
 
-/* polymorph VolumeCreateConfig Driver false */
-
-/* polymorph VolumeCreateConfig DriverOpts false */
-
-/* polymorph VolumeCreateConfig Labels false */
-
-/* polymorph VolumeCreateConfig Name false */
-
 // Validate validates this volume create config
 func (m *VolumeCreateConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

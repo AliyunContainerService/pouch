@@ -14,7 +14,6 @@ import (
 
 // UpdateConfig UpdateConfig holds the mutable attributes of a Container. Those attributes can be updated at runtime.
 // swagger:model UpdateConfig
-
 type UpdateConfig struct {
 	Resources
 
@@ -34,14 +33,15 @@ type UpdateConfig struct {
 
 // UnmarshalJSON unmarshals this object from a JSON structure
 func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
-
+	// AO0
 	var aO0 Resources
 	if err := swag.ReadJSON(raw, &aO0); err != nil {
 		return err
 	}
 	m.Resources = aO0
 
-	var data struct {
+	// AO1
+	var dataAO1 struct {
 		DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 		Env []string `json:"Env,omitempty"`
@@ -50,24 +50,24 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
 	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
+	if err := swag.ReadJSON(raw, &dataAO1); err != nil {
 		return err
 	}
 
-	m.DiskQuota = data.DiskQuota
+	m.DiskQuota = dataAO1.DiskQuota
 
-	m.Env = data.Env
+	m.Env = dataAO1.Env
 
-	m.Label = data.Label
+	m.Label = dataAO1.Label
 
-	m.RestartPolicy = data.RestartPolicy
+	m.RestartPolicy = dataAO1.RestartPolicy
 
 	return nil
 }
 
 // MarshalJSON marshals this object to a JSON structure
 func (m UpdateConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
+	_parts := make([][]byte, 0, 2)
 
 	aO0, err := swag.WriteJSON(m.Resources)
 	if err != nil {
@@ -75,7 +75,7 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	}
 	_parts = append(_parts, aO0)
 
-	var data struct {
+	var dataAO1 struct {
 		DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 		Env []string `json:"Env,omitempty"`
@@ -85,19 +85,19 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
 	}
 
-	data.DiskQuota = m.DiskQuota
+	dataAO1.DiskQuota = m.DiskQuota
 
-	data.Env = m.Env
+	dataAO1.Env = m.Env
 
-	data.Label = m.Label
+	dataAO1.Label = m.Label
 
-	data.RestartPolicy = m.RestartPolicy
+	dataAO1.RestartPolicy = m.RestartPolicy
 
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
+	jsonDataAO1, errAO1 := swag.WriteJSON(dataAO1)
+	if errAO1 != nil {
+		return nil, errAO1
 	}
-	_parts = append(_parts, jsonData)
+	_parts = append(_parts, jsonDataAO1)
 
 	return swag.ConcatJSON(_parts...), nil
 }
@@ -106,15 +106,8 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 func (m *UpdateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	// validation for a type composition with Resources
 	if err := m.Resources.Validate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateEnv(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateLabel(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -128,24 +121,6 @@ func (m *UpdateConfig) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *UpdateConfig) validateEnv(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Env) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *UpdateConfig) validateLabel(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Label) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 func (m *UpdateConfig) validateRestartPolicy(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.RestartPolicy) { // not required
@@ -153,7 +128,6 @@ func (m *UpdateConfig) validateRestartPolicy(formats strfmt.Registry) error {
 	}
 
 	if m.RestartPolicy != nil {
-
 		if err := m.RestartPolicy.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("RestartPolicy")

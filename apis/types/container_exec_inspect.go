@@ -15,7 +15,6 @@ import (
 
 // ContainerExecInspect holds information about a running process started.
 // swagger:model ContainerExecInspect
-
 type ContainerExecInspect struct {
 
 	// can remove
@@ -59,77 +58,47 @@ type ContainerExecInspect struct {
 	Running bool `json:"Running"`
 }
 
-/* polymorph ContainerExecInspect CanRemove false */
-
-/* polymorph ContainerExecInspect ContainerID false */
-
-/* polymorph ContainerExecInspect DetachKeys false */
-
-/* polymorph ContainerExecInspect ExitCode false */
-
-/* polymorph ContainerExecInspect ID false */
-
-/* polymorph ContainerExecInspect OpenStderr false */
-
-/* polymorph ContainerExecInspect OpenStdin false */
-
-/* polymorph ContainerExecInspect OpenStdout false */
-
-/* polymorph ContainerExecInspect ProcessConfig false */
-
-/* polymorph ContainerExecInspect Running false */
-
 // Validate validates this container exec inspect
 func (m *ContainerExecInspect) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCanRemove(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateContainerID(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateDetachKeys(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateExitCode(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateID(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateOpenStderr(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateOpenStdin(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateOpenStdout(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateProcessConfig(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRunning(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -218,7 +187,6 @@ func (m *ContainerExecInspect) validateProcessConfig(formats strfmt.Registry) er
 	}
 
 	if m.ProcessConfig != nil {
-
 		if err := m.ProcessConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ProcessConfig")

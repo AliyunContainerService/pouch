@@ -14,7 +14,6 @@ import (
 
 // NetworkInspectResp is the expected body of the 'GET networks/{id}'' http request message
 // swagger:model NetworkInspectResp
-
 type NetworkInspectResp struct {
 
 	// Driver means the network's driver.
@@ -45,30 +44,11 @@ type NetworkInspectResp struct {
 	Scope string `json:"Scope,omitempty"`
 }
 
-/* polymorph NetworkInspectResp Driver false */
-
-/* polymorph NetworkInspectResp EnableIPv6 false */
-
-/* polymorph NetworkInspectResp IPAM false */
-
-/* polymorph NetworkInspectResp Id false */
-
-/* polymorph NetworkInspectResp Internal false */
-
-/* polymorph NetworkInspectResp Labels false */
-
-/* polymorph NetworkInspectResp Name false */
-
-/* polymorph NetworkInspectResp Options false */
-
-/* polymorph NetworkInspectResp Scope false */
-
 // Validate validates this network inspect resp
 func (m *NetworkInspectResp) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateIPAM(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -85,7 +65,6 @@ func (m *NetworkInspectResp) validateIPAM(formats strfmt.Registry) error {
 	}
 
 	if m.IPAM != nil {
-
 		if err := m.IPAM.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("IPAM")

@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ExecStartConfig ExecStartConfig is a temp struct used by execStart.
 // swagger:model ExecStartConfig
-
 type ExecStartConfig struct {
 
 	// ExecStart will first check if it's detached
@@ -24,17 +22,8 @@ type ExecStartConfig struct {
 	Tty bool `json:"Tty,omitempty"`
 }
 
-/* polymorph ExecStartConfig Detach false */
-
-/* polymorph ExecStartConfig Tty false */
-
 // Validate validates this exec start config
 func (m *ExecStartConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

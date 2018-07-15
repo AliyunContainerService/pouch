@@ -33,8 +33,8 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 # install golint. currently golint has no released version.
 RUN go get -u golang.org/x/lint/golint
 
-# install swagger 0.12.0
-RUN wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_linux_amd64 \
+# install swagger 0.15.0
+RUN wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.15.0/swagger_linux_amd64 \
     && chmod +x /bin/swagger
 
 # install markdownlint tool

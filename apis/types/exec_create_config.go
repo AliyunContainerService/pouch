@@ -15,7 +15,6 @@ import (
 
 // ExecCreateConfig is a small subset of the Config struct that holds the configuration.
 // swagger:model ExecCreateConfig
-
 type ExecCreateConfig struct {
 
 	// Attach the standard error
@@ -47,30 +46,11 @@ type ExecCreateConfig struct {
 	User string `json:"User,omitempty"`
 }
 
-/* polymorph ExecCreateConfig AttachStderr false */
-
-/* polymorph ExecCreateConfig AttachStdin false */
-
-/* polymorph ExecCreateConfig AttachStdout false */
-
-/* polymorph ExecCreateConfig Cmd false */
-
-/* polymorph ExecCreateConfig Detach false */
-
-/* polymorph ExecCreateConfig DetachKeys false */
-
-/* polymorph ExecCreateConfig Privileged false */
-
-/* polymorph ExecCreateConfig Tty false */
-
-/* polymorph ExecCreateConfig User false */
-
 // Validate validates this exec create config
 func (m *ExecCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCmd(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

@@ -8,28 +8,19 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ExecCreateResp contains response of Remote API POST "/containers/{name:.*}/exec".
 // swagger:model ExecCreateResp
-
 type ExecCreateResp struct {
 
 	// ID is the exec ID
 	ID string `json:"Id,omitempty"`
 }
 
-/* polymorph ExecCreateResp Id false */
-
 // Validate validates this exec create resp
 func (m *ExecCreateResp) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

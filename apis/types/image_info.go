@@ -15,7 +15,6 @@ import (
 
 // ImageInfo An object containing all details of an image at API side
 // swagger:model ImageInfo
-
 type ImageInfo struct {
 
 	// the CPU architecture.
@@ -46,45 +45,15 @@ type ImageInfo struct {
 	Size int64 `json:"Size,omitempty"`
 }
 
-/* polymorph ImageInfo Architecture false */
-
-/* polymorph ImageInfo Config false */
-
-/* polymorph ImageInfo CreatedAt false */
-
-/* polymorph ImageInfo Id false */
-
-/* polymorph ImageInfo Os false */
-
-/* polymorph ImageInfo RepoDigests false */
-
-/* polymorph ImageInfo RepoTags false */
-
-/* polymorph ImageInfo RootFS false */
-
-/* polymorph ImageInfo Size false */
-
 // Validate validates this image info
 func (m *ImageInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateConfig(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateRepoDigests(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateRepoTags(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRootFS(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -101,31 +70,12 @@ func (m *ImageInfo) validateConfig(formats strfmt.Registry) error {
 	}
 
 	if m.Config != nil {
-
 		if err := m.Config.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("Config")
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *ImageInfo) validateRepoDigests(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.RepoDigests) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *ImageInfo) validateRepoTags(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.RepoTags) { // not required
-		return nil
 	}
 
 	return nil
@@ -138,7 +88,6 @@ func (m *ImageInfo) validateRootFS(formats strfmt.Registry) error {
 	}
 
 	if m.RootFS != nil {
-
 		if err := m.RootFS.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("RootFS")
@@ -170,7 +119,6 @@ func (m *ImageInfo) UnmarshalBinary(b []byte) error {
 
 // ImageInfoRootFS the rootfs key references the layer content addresses used by the image.
 // swagger:model ImageInfoRootFS
-
 type ImageInfoRootFS struct {
 
 	// the base layer content hash.
@@ -184,38 +132,17 @@ type ImageInfoRootFS struct {
 	Type string `json:"Type"`
 }
 
-/* polymorph ImageInfoRootFS BaseLayer false */
-
-/* polymorph ImageInfoRootFS Layers false */
-
-/* polymorph ImageInfoRootFS Type false */
-
 // Validate validates this image info root f s
 func (m *ImageInfoRootFS) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateLayers(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateType(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *ImageInfoRootFS) validateLayers(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Layers) { // not required
-		return nil
-	}
-
 	return nil
 }
 
