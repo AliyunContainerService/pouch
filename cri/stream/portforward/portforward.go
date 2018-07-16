@@ -1,7 +1,7 @@
 package portforward
 
 import (
-	gocontext "context"
+	"context"
 	"io"
 	"net/http"
 	"time"
@@ -13,7 +13,7 @@ import (
 // in a pod.
 type PortForwarder interface {
 	// PortForwarder copies data between a data stream and a port in a pod.
-	PortForward(goctx gocontext.Context, name string, port int32, stream io.ReadWriteCloser) error
+	PortForward(ctx context.Context, name string, port int32, stream io.ReadWriteCloser) error
 }
 
 // ServePortForward handles a port forwarding request. A single request is
@@ -21,9 +21,9 @@ type PortForwarder interface {
 // been timed out due to idleness. This function handles multiple forwarded
 // connections; i.e., multiple `curl http://localhost:8888/` requests will be
 // handled by a single invocation of ServePortForward.
-func ServePortForward(goctx gocontext.Context, w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout time.Duration, streamCreationTimeout time.Duration, supportedProtocols []string) {
+func ServePortForward(ctx context.Context, w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout time.Duration, streamCreationTimeout time.Duration, supportedProtocols []string) {
 	// TODO: support web socket stream.
-	err := handleHTTPStreams(goctx, w, req, portForwarder, podName, idleTimeout, streamCreationTimeout, supportedProtocols)
+	err := handleHTTPStreams(ctx, w, req, portForwarder, podName, idleTimeout, streamCreationTimeout, supportedProtocols)
 	if err != nil {
 		logrus.Errorf("failed to serve port forward: %v", err)
 		return
