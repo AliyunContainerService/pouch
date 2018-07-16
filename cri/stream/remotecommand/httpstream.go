@@ -36,7 +36,7 @@ type Streams struct {
 
 // context contains the connection and streams used when
 // forwarding an attach or execute session into a container.
-type context struct {
+type streamContext struct {
 	conn         io.Closer
 	stdinStream  io.ReadCloser
 	stdoutStream io.WriteCloser
@@ -55,8 +55,8 @@ type streamAndReply struct {
 	replySent <-chan struct{}
 }
 
-func createStreams(w http.ResponseWriter, req *http.Request, opts *Options, supportedStreamProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) (*context, bool) {
-	var ctx *context
+func createStreams(w http.ResponseWriter, req *http.Request, opts *Options, supportedStreamProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) (*streamContext, bool) {
+	var ctx *streamContext
 	var ok bool
 	if wsstream.IsWebSocketRequest(req) {
 		ctx, ok = createWebSocketStreams(w, req, opts, idleTimeout)
@@ -72,7 +72,7 @@ func createStreams(w http.ResponseWriter, req *http.Request, opts *Options, supp
 	return ctx, true
 }
 
-func createHTTPStreamStreams(w http.ResponseWriter, req *http.Request, opts *Options, supportedStreamProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) (*context, bool) {
+func createHTTPStreamStreams(w http.ResponseWriter, req *http.Request, opts *Options, supportedStreamProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) (*streamContext, bool) {
 	protocol, err := httpstream.Handshake(w, req, supportedStreamProtocols)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -148,14 +148,14 @@ func waitStreamReply(replySent <-chan struct{}, notify chan<- struct{}, stop <-c
 type protocolHandler interface {
 	// waitForStreams waits for the expected streams or a timeout, returning a
 	// remoteCommandContext if all the streams were received, or an error if not.
-	waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*context, error)
+	waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*streamContext, error)
 }
 
 // v2ProtocolHandler implements the V2 protocol version for streaming command execution.
 type v2ProtocolHandler struct{}
 
-func (*v2ProtocolHandler) waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*context, error) {
-	ctx := &context{}
+func (*v2ProtocolHandler) waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*streamContext, error) {
+	ctx := &streamContext{}
 	receivedStreams := 0
 	replyChan := make(chan struct{})
 	stop := make(chan struct{})
@@ -199,8 +199,8 @@ WaitForStreams:
 // v1ProtocolHandler implements the V1 protocol version for streaming command execution.
 type v1ProtocolHandler struct{}
 
-func (*v1ProtocolHandler) waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*context, error) {
-	ctx := &context{}
+func (*v1ProtocolHandler) waitForStreams(streams <-chan streamAndReply, expectedStreams int, expired <-chan time.Time) (*streamContext, error) {
+	ctx := &streamContext{}
 	receivedStreams := 0
 	replyChan := make(chan struct{})
 	stop := make(chan struct{})
