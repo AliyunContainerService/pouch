@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"path"
 
+	runtimeapi "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/cri/stream/portforward"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
@@ -12,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // Server as an interface defines all operations against stream server.

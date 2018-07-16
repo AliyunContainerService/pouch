@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
+	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/cri/config"
 
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
-	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 // CniMgr as an interface defines all operations against CNI.

@@ -14,6 +14,7 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
+	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/go-openapi/strfmt"
 	"golang.org/x/net/context"
-	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 func parseUint32(s string) (uint32, error) {
@@ -244,6 +244,7 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
+
 	hc := &apitypes.HostConfig{}
 
 	// Apply runtime options.
@@ -770,6 +771,7 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 		Size_:       size,
 		Uid:         uid,
 		Username:    username,
+		Volumes:     parseVolumesFromPouch(image.Config.Volumes),
 	}, nil
 }
 
@@ -902,4 +904,138 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 // imageFSPath returns containerd image filesystem path.
 func imageFSPath(rootDir, snapshotter string) string {
 	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", snapshotPlugin, snapshotter))
+}
+
+// CRI extension related tool functions.
+
+// parseResourceFromCRI parse Resources from runtime.LinuxContainerResources to apitypes.Resources
+func parseResourcesFromCRI(runtimeResources *runtime.LinuxContainerResources) apitypes.Resources {
+	var memorySwappiness *int64
+	if runtimeResources.GetMemorySwappiness() != nil {
+		memorySwappiness = &runtimeResources.GetMemorySwappiness().Value
+	}
+
+	return apitypes.Resources{
+		CPUPeriod:            runtimeResources.GetCpuPeriod(),
+		CPUQuota:             runtimeResources.GetCpuQuota(),
+		CPUShares:            runtimeResources.GetCpuShares(),
+		Memory:               runtimeResources.GetMemoryLimitInBytes(),
+		CpusetCpus:           runtimeResources.GetCpusetCpus(),
+		CpusetMems:           runtimeResources.GetCpusetMems(),
+		BlkioWeight:          uint16(runtimeResources.GetBlkioWeight()),
+		BlkioWeightDevice:    parseWeightDeviceFromCRI(runtimeResources.GetBlkioWeightDevice()),
+		BlkioDeviceReadBps:   parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceReadBps()),
+		BlkioDeviceWriteBps:  parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceWriteBps()),
+		BlkioDeviceReadIOps:  parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceRead_IOps()),
+		BlkioDeviceWriteIOps: parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceWrite_IOps()),
+		KernelMemory:         runtimeResources.GetKernelMemory(),
+		MemoryReservation:    runtimeResources.GetMemoryReservation(),
+		MemorySwappiness:     memorySwappiness,
+		Ulimits:              parseUlimitFromCRI(runtimeResources.GetUlimits()),
+	}
+}
+
+// parseResourceFromPouch parse Resources from apitypes.Resources to runtime.LinuxContainerResources
+func parseResourcesFromPouch(apitypesResources apitypes.Resources, diskQuota map[string]string) *runtime.LinuxContainerResources {
+	var memorySwappiness *runtime.Int64Value
+	if apitypesResources.MemorySwappiness != nil {
+		memorySwappiness = &runtime.Int64Value{Value: *apitypesResources.MemorySwappiness}
+	}
+
+	return &runtime.LinuxContainerResources{
+		CpuPeriod:             apitypesResources.CPUPeriod,
+		CpuQuota:              apitypesResources.CPUQuota,
+		CpuShares:             apitypesResources.CPUShares,
+		MemoryLimitInBytes:    apitypesResources.Memory,
+		CpusetCpus:            apitypesResources.CpusetCpus,
+		CpusetMems:            apitypesResources.CpusetMems,
+		BlkioWeight:           uint32(apitypesResources.BlkioWeight),
+		BlkioWeightDevice:     parseWeightDeviceFromPouch(apitypesResources.BlkioWeightDevice),
+		BlkioDeviceReadBps:    parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceReadBps),
+		BlkioDeviceWriteBps:   parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceWriteBps),
+		BlkioDeviceRead_IOps:  parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceReadIOps),
+		BlkioDeviceWrite_IOps: parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceWriteIOps),
+		KernelMemory:          apitypesResources.KernelMemory,
+		MemoryReservation:     apitypesResources.MemoryReservation,
+		MemorySwappiness:      memorySwappiness,
+		Ulimits:               parseUlimitFromPouch(apitypesResources.Ulimits),
+		DiskQuota:             diskQuota,
+	}
+}
+
+// parseWeightDeviceFromCRI parse WeightDevice from runtime.WeightDevice to apitypes.WeightDevice
+func parseWeightDeviceFromCRI(runtimeWeightDevices []*runtime.WeightDevice) (weightDevices []*apitypes.WeightDevice) {
+	for _, v := range runtimeWeightDevices {
+		weightDevices = append(weightDevices, &apitypes.WeightDevice{
+			Path:   v.GetPath(),
+			Weight: uint16(v.GetWeight()),
+		})
+	}
+	return
+}
+
+// parseWeightDeviceFromPouch parse WeightDevice from apitypes.WeightDevice to runtime.WeightDevice
+func parseWeightDeviceFromPouch(apitypesWeightDevices []*apitypes.WeightDevice) (weightDevices []*runtime.WeightDevice) {
+	for _, v := range apitypesWeightDevices {
+		weightDevices = append(weightDevices, &runtime.WeightDevice{
+			Path:   v.Path,
+			Weight: uint32(v.Weight),
+		})
+	}
+	return
+}
+
+// parseThrottleDeviceFromCRI parse ThrottleDevice from runtime.ThrottleDevice to apitypes.ThrottleDevice
+func parseThrottleDeviceFromCRI(runtimeThrottleDevices []*runtime.ThrottleDevice) (throttleDevices []*apitypes.ThrottleDevice) {
+	for _, v := range runtimeThrottleDevices {
+		throttleDevices = append(throttleDevices, &apitypes.ThrottleDevice{
+			Path: v.GetPath(),
+			Rate: v.GetRate(),
+		})
+	}
+	return
+}
+
+// parseThrottleDeviceFromPouch parse ThrottleDevice from apitypes.ThrottleDevice to runtime.ThrottleDevice
+func parseThrottleDeviceFromPouch(apitypesThrottleDevices []*apitypes.ThrottleDevice) (throttleDevices []*runtime.ThrottleDevice) {
+	for _, v := range apitypesThrottleDevices {
+		throttleDevices = append(throttleDevices, &runtime.ThrottleDevice{
+			Path: v.Path,
+			Rate: v.Rate,
+		})
+	}
+	return
+}
+
+// parseUlimitFromCRI parse Ulimit from runtime.Ulimit to apitypes.Ulimit
+func parseUlimitFromCRI(runtimeUlimits []*runtime.Ulimit) (ulimits []*apitypes.Ulimit) {
+	for _, v := range runtimeUlimits {
+		ulimits = append(ulimits, &apitypes.Ulimit{
+			Hard: v.GetHard(),
+			Name: v.GetName(),
+			Soft: v.GetSoft(),
+		})
+	}
+	return
+}
+
+// parseUlimitFromPouch parse Ulimit from apitypes.Ulimit to runtime.Ulimit
+func parseUlimitFromPouch(apitypesUlimits []*apitypes.Ulimit) (ulimits []*runtime.Ulimit) {
+	for _, v := range apitypesUlimits {
+		ulimits = append(ulimits, &runtime.Ulimit{
+			Hard: v.Hard,
+			Name: v.Name,
+			Soft: v.Soft,
+		})
+	}
+	return
+}
+
+// parseVolumesFromPouch parse Volumes from map[string]interface{} to map[string]*runtime.Volume
+func parseVolumesFromPouch(containerVolumes map[string]interface{}) map[string]*runtime.Volume {
+	volumes := make(map[string]*runtime.Volume)
+	for k := range containerVolumes {
+		volumes[k] = &runtime.Volume{}
+	}
+	return volumes
 }
