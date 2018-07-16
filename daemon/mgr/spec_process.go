@@ -11,7 +11,6 @@ import (
 
 	"github.com/docker/docker/daemon/caps"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 )
 
 // setupProcess setups spec process.
@@ -73,24 +72,11 @@ func createEnvironment(c *Container) []string {
 }
 
 func setupUser(ctx context.Context, c *Container, s *specs.Spec) (err error) {
-	// container rootfs is created by containerd, pouch just creates a snapshot
-	// id and keeps it in memory. If container is in start process, we can not
-	// find if user if exist in container image, so we do some simple check.
-	var uid, gid uint32
-
-	if c.Config.User != "" {
-		if _, err := os.Stat(c.BaseFS); err != nil {
-			logrus.Infof("snapshot %s is not exist, maybe in start process.", c.BaseFS)
-			uid, gid = user.GetIntegerID(c.Config.User)
-		} else {
-			uid, gid, err = user.Get(c.BaseFS, c.Config.User)
-			if err != nil {
-				return err
-			}
-		}
+	uid, gid, additionalGids, err := user.Get(c.GetSpecificBasePath(user.PasswdFile),
+		c.GetSpecificBasePath(user.GroupFile), c.Config.User, c.HostConfig.GroupAdd)
+	if err != nil {
+		return err
 	}
-
-	additionalGids := user.GetAdditionalGids(c.HostConfig.GroupAdd)
 
 	s.Process.User = specs.User{
 		UID:            uid,
