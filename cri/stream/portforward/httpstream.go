@@ -1,6 +1,7 @@
 package portforward
 
 import (
+	gocontext "context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -48,7 +49,7 @@ func httpStreamReceived(streams chan httpstream.Stream) func(httpstream.Stream, 
 	}
 }
 
-func handleHTTPStreams(w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout, streamCreationTimeout time.Duration, supportedPortForwardProtocols []string) error {
+func handleHTTPStreams(goctx gocontext.Context, w http.ResponseWriter, req *http.Request, portForwarder PortForwarder, podName string, idleTimeout, streamCreationTimeout time.Duration, supportedPortForwardProtocols []string) error {
 	_, err := httpstream.Handshake(w, req, supportedPortForwardProtocols)
 	// Negotiated protocol isn't currently used server side, but could be in the future.
 	if err != nil {
@@ -76,7 +77,7 @@ func handleHTTPStreams(w http.ResponseWriter, req *http.Request, portForwarder P
 		pod:       podName,
 		forwarder: portForwarder,
 	}
-	h.run()
+	h.run(goctx)
 
 	return nil
 }
@@ -150,7 +151,7 @@ func (h *httpStreamHandler) requestID(stream httpstream.Stream) string {
 // run is the main loop for the httpStreamHandler. It process new streams,
 // invoking portForward for each complete stream pair. The loop exits
 // when the httpstream.Connection is closed.
-func (h *httpStreamHandler) run() {
+func (h *httpStreamHandler) run(goctx gocontext.Context) {
 	logrus.Infof("(conn=%p) waiting for port forward streams", h.conn)
 
 	for {
@@ -171,7 +172,7 @@ func (h *httpStreamHandler) run() {
 				msg := fmt.Sprintf("error processing stream for request %s: %v", requestID, err)
 				p.printError(msg)
 			} else if complete {
-				go h.portForward(p)
+				go h.portForward(goctx, p)
 			}
 		}
 	}
@@ -179,7 +180,7 @@ func (h *httpStreamHandler) run() {
 
 // portForward invokes the httpStreamHandler's forwarder.PortForward
 // function for the given stream pair.
-func (h *httpStreamHandler) portForward(p *httpStreamPair) {
+func (h *httpStreamHandler) portForward(goctx gocontext.Context, p *httpStreamPair) {
 	defer p.dataStream.Close()
 	defer p.errorStream.Close()
 
@@ -187,7 +188,7 @@ func (h *httpStreamHandler) portForward(p *httpStreamPair) {
 	port, _ := strconv.ParseInt(portString, 10, 32)
 
 	logrus.Infof("(conn=%p, request=%s) invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
-	err := h.forwarder.PortForward(h.pod, int32(port), p.dataStream)
+	err := h.forwarder.PortForward(goctx, h.pod, int32(port), p.dataStream)
 	logrus.Infof("(conn=%p, request=%s) done invoking forwarder.PortForward for port %s", h.conn, p.requestID, portString)
 
 	if err != nil {

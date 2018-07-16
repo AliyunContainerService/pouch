@@ -1,6 +1,7 @@
 package remotecommand
 
 import (
+	gocontext "context"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,13 +10,13 @@ import (
 // Executor knows how to execute a command in a container of the pod.
 type Executor interface {
 	// Exec executes a command in a container of the pod.
-	Exec(containerID string, cmd []string, streamOpts *Options, streams *Streams) (uint32, error)
+	Exec(goctx gocontext.Context, containerID string, cmd []string, streamOpts *Options, streams *Streams) (uint32, error)
 }
 
 // ServeExec handles requests to execute a command in a container. After
 // creating/receiving the required streams, it delegates the actual execution
 // to the executor.
-func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, container string, cmd []string, streamOpts *Options, supportedProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) {
+func ServeExec(goctx gocontext.Context, w http.ResponseWriter, req *http.Request, executor Executor, container string, cmd []string, streamOpts *Options, supportedProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) {
 	ctx, ok := createStreams(w, req, streamOpts, supportedProtocols, idleTimeout, streamCreationTimeout)
 	if !ok {
 		// Error is handled by createStreams.
@@ -23,7 +24,7 @@ func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, cont
 	}
 	defer ctx.conn.Close()
 
-	exitCode, err := executor.Exec(container, cmd, streamOpts, &Streams{
+	exitCode, err := executor.Exec(goctx, container, cmd, streamOpts, &Streams{
 		StdinStream:  ctx.stdinStream,
 		StdoutStream: ctx.stdoutStream,
 		StderrStream: ctx.stderrStream,
