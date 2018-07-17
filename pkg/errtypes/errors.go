@@ -33,10 +33,10 @@ var (
 	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
 
 	// ErrVolumeInUse represents that volume in use.
-	ErrVolumeInUse = errorType{codeVolumeInUse, "volume is in use"}
+	ErrVolumeInUse = errorType{codeInUse, "volume is in use"}
 
-	// ErrNoVolume represents that no such volume.
-	ErrNoVolume = errorType{codeNoVolume, "no such volume"}
+	// ErrVolumeNotFound represents that no such volume.
+	ErrVolumeNotFound = errorType{codeNotfound, "no such volume"}
 )
 
 const (
@@ -49,8 +49,6 @@ const (
 	codeLockfailed
 	codeNotImplemented
 	codeInUse
-	codeVolumeInUse
-	codeNoVolume
 )
 
 type errorType struct {

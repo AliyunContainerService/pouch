@@ -90,7 +90,7 @@ func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, e
 	vol, err := vm.core.GetVolume(id)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return nil, errors.Wrap(errtypes.ErrNoVolume, err.Error())
+			return nil, errors.Wrap(errtypes.ErrVolumeNotFound, err.Error())
 		}
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	}
 	if err := vm.core.RemoveVolume(id); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return errors.Wrap(errtypes.ErrNoVolume, err.Error())
+			return errors.Wrap(errtypes.ErrVolumeNotFound, err.Error())
 		}
 		return err
 	}
