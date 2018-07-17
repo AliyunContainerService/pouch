@@ -29,8 +29,14 @@ var (
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 
-	// ErrUsingbyContainers represents that object is used by containers
+	// ErrUsingbyContainers represents that object is used by containers.
 	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
+
+	// ErrVolumeInUse represents that volume in use.
+	ErrVolumeInUse = errorType{codeVolumeInUse, "volume is in use"}
+
+	// ErrNoVolume represents that no such volume.
+	ErrNoVolume = errorType{codeNoVolume, "no such volume"}
 )
 
 const (
@@ -43,6 +49,8 @@ const (
 	codeLockfailed
 	codeNotImplemented
 	codeInUse
+	codeVolumeInUse
+	codeNoVolume
 )
 
 type errorType struct {
