@@ -1950,6 +1950,12 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 		return errors.Wrap(err, "failed to get mount point from volumes")
 	}
 
+	// 5. populate the volumes
+	err = mgr.populateVolumes(ctx, c)
+	if err != nil {
+		return errors.Wrap(err, "failed to populate volumes")
+	}
+
 	return nil
 }
 
@@ -1993,11 +1999,6 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 
 		if mp.Source == "" {
 			mp.Source = randomid.Generate()
-
-			// Source is empty, anonymouse volume
-			if _, exist := c.Config.Volumes[mp.Destination]; !exist {
-				c.Config.Volumes[mp.Destination] = struct{}{}
-			}
 		}
 
 		err = opts.ParseBindMode(mp, mode)
@@ -2104,10 +2105,6 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, c *Cont
 		return errors.Wrapf(err, "failed to get image: %s", c.Image)
 	}
 	for dest := range image.Config.Volumes {
-		if _, exist := c.Config.Volumes[dest]; !exist {
-			c.Config.Volumes[dest] = struct{}{}
-		}
-
 		// check if volume has been created
 		name := randomid.Generate()
 		if _, exist := volumeSet[name]; exist {
@@ -2182,7 +2179,6 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 					return errors.Wrap(err, "failed to bind volume")
 				}
 
-				container.Config.Volumes[mp.Destination] = struct{}{}
 				volumeSet[mp.Name] = struct{}{}
 			}
 
@@ -2192,7 +2188,41 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				return err
 			}
 
+			// the volumes from VolumeFrom is not allowed to CopyData
+			mp.CopyData = false
+
 			container.Mounts = append(container.Mounts, mp)
+		}
+	}
+
+	return nil
+}
+
+func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container) error {
+	err := mgr.Mount(ctx, c)
+	if err != nil {
+		return err
+	}
+	defer mgr.Unmount(ctx, c)
+
+	for _, mnt := range c.Mounts {
+		if mnt.Driver == "tmpfs" {
+			continue
+		}
+
+		if !mnt.CopyData {
+			continue
+		}
+
+		logrus.Debugf("copying image data from %s:%s, to %s, path: %s",
+			c.ID, mnt.Destination, mnt.Name, mnt.Source)
+
+		imagePath := path.Join(mgr.Store.Path(c.ID), "rootfs", mnt.Destination)
+
+		err := copyImageContent(imagePath, mnt.Source)
+		if err != nil {
+			logrus.Errorf("failed to populate volume[name: %s, source: %s] err: %v", mnt.Name, mnt.Source, err)
+			return err
 		}
 	}
 
@@ -2385,4 +2415,91 @@ func (mgr *ContainerManager) execProcessGC() {
 // NewSnapshotsSyncer creates a snapshot syncer.
 func (mgr *ContainerManager) NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer {
 	return newSnapshotsSyncer(snapshotStore, mgr.Client, duration)
+}
+
+// Mount sets the container rootfs
+func (mgr *ContainerManager) Mount(ctx context.Context, c *Container) error {
+	mounts, err := mgr.Client.GetMounts(ctx, c.ID)
+	if err != nil {
+		return err
+	} else if len(mounts) != 1 {
+		return fmt.Errorf("failed to get snapshot %s mounts: not equals 1", c.ID)
+	}
+
+	mountPath := path.Join(mgr.Store.Path(c.ID), "rootfs")
+
+	err = os.MkdirAll(mountPath, 0755)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+
+	return mounts[0].Mount(mountPath)
+}
+
+// Unmount unsets the container rootfs
+func (mgr *ContainerManager) Unmount(ctx context.Context, c *Container) error {
+	mountPath := path.Join(mgr.Store.Path(c.ID), "rootfs")
+
+	err := mount.Unmount(mountPath, 0)
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(mountPath)
+}
+
+func copyImageContent(source, destination string) error {
+	fi, err := os.Stat(source)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	} else if !fi.IsDir() {
+		return nil
+	}
+
+	volList, err := ioutil.ReadDir(source)
+	if err != nil {
+		return err
+	}
+
+	if len(volList) > 0 {
+		fi, err := os.Stat(destination)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		} else if !fi.IsDir() {
+			return nil
+		}
+
+		dstList, err := ioutil.ReadDir(destination)
+		if err != nil {
+			return err
+		}
+		if len(dstList) == 0 {
+			// TODO: refactor
+
+			// If the source volume is empty, copies files from the root into the volume
+			commandLine := fmt.Sprintf("cp -r %s/* %s", source, destination)
+
+			cmd := exec.Command("sh", "-c", commandLine)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				logrus.Errorf("copyImageContent: %s, %v", string(out), err)
+				return err
+			}
+		}
+	}
+	return copyOwnership(source, destination)
+}
+
+func copyOwnership(source, destination string) error {
+	fi, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(destination, os.FileMode(fi.Mode()))
 }
