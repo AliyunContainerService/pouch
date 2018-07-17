@@ -34,7 +34,7 @@ func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info
 		logCfg = cfg.LogOpts
 	}
 
-	// TODO:
+	// TODO(fuwei):
 	// 1. add more fields into logger.Info
 	// 2. separate the logic about retrieving container root dir from mgr.
 	return logger.Info{
