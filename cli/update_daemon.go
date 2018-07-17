@@ -117,8 +117,9 @@ func (udc *DaemonUpdateCommand) updateDaemonConfigFile() error {
 	}
 
 	daemonConfig := &config.Config{}
-	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(daemonConfig); err != nil {
-		return errors.Wrap(err, "failed to decode json: %s")
+	// do not return error if config file is empty
+	if err := json.NewDecoder(bytes.NewReader(contents)).Decode(daemonConfig); err != nil && err != io.EOF {
+		return errors.Wrapf(err, "failed to decode json: %s", udc.configFile)
 	}
 
 	flagSet := udc.cmd.Flags()
