@@ -114,8 +114,9 @@ type Config struct {
 	// add a resolution later if it needed.
 	Runtimes map[string]types.Runtime `json:"add-runtime,omitempty"`
 
-	// Namespace is passed to containerd
-	Namespace string
+	// Namespace is passed to containerd, Namespace is not a daemon flag,
+	// do not marshal this field to config file.
+	Namespace string `json:"-"`
 }
 
 // Validate validates the user input config.
