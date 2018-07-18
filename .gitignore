@@ -9,3 +9,5 @@ coverage.txt
 .bashrc
 .idea
 .DS_Store
+bin/
+coverage/

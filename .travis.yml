@@ -14,22 +14,34 @@ notifications:
     on_failure: always
     on_error: always
 
-before_install:
-  |
-    git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)' || {
-      echo travis doesn\'t run for document-only changed
-      exit
-    }
-
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq autoconf automake
-
 env:
-  - TEST_SUITE=integration-test
-  - TEST_SUITE=cri-test
+  - TEST_SUITE=unittest
+  - TEST_SUITE=integrationtest
+  - TEST_SUITE=critest
 
-script:
-  - sudo make -e ${TEST_SUITE}
+script: |
+  if [[ "${TEST_SUITE}" = "unittest" ]]; then
+    hack/install/install_ci_related.sh
+    make unit-test
+    make coverage
+  elif [[ "${TEST_SUITE}" = "integrationtest" ]]; then
+    make build
+    make build-daemon-integration
+    TEST_FLAGS= make build-integration-test
+    sudo env "PATH=$PATH" make install
 
+    sudo env "PATH=$PATH" make download_dependencies
+    sudo env "PATH=$PATH" make integration-test
+    make coverage
+  else
+    make build
+    TEST_FLAGS= make build-daemon-integration
+    sudo env "PATH=$PATH" make install
+
+    sudo env "PATH=$PATH" make download_dependencies
+    sudo env "PATH=$PATH" make cri-test
+    make coverage
+  fi
+  
 after_success:
-- bash <(curl -s https://codecov.io/bash) || echo Codecov_Did_Not_Collect_Coverage_Reports
+  - bash <(curl -s https://codecov.io/bash) -cF ${TEST_SUITE} -y .codecov.yml

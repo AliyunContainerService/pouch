@@ -30,29 +30,12 @@ jobs:
     steps:
       - checkout
       - run: 
-          name: install golint
-          command: go get -u golang.org/x/lint/golint
-      - run: 
-          name: install swagger-0.12.0
-          command: |
-            wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_linux_amd64
-            chmod +x /bin/swagger
+          name: install gometalinter linters tools
+          command: hack/install/install_ci_related.sh
       - run: 
           name: use check target in Makefile to check code
           command: make check
-  
-  unit-test:
-    docker:
-      - image: golang:1.9.1
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
-    steps:
-      - checkout
-      - run:
-          name: unit test
-          command: make unit-test
-      - run:
-          name: upload code coverage report
-          command: bash <(curl -s https://codecov.io/bash)
+
 notify:
   webhooks:
     - url: http://47.96.190.121:6788/circleci_notifications
@@ -63,4 +46,3 @@ workflows:
     jobs:
       - markdownlint-misspell-shellcheck
       - code-check
-      - unit-test
