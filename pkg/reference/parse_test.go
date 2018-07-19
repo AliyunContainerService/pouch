@@ -126,6 +126,11 @@ func TestParse(t *testing.T) {
 				tag:   "1669a6aa7350e1cdd28f972ddad5aceba2912f589f19a090ac",
 			},
 			err: nil,
+		}, {
+			name:     "Contains space input",
+			input:    "  ",
+			expected: nil,
+			err:      ErrInvalid,
 		},
 	} {
 		ref, err := Parse(tc.input)
