@@ -204,7 +204,10 @@ func pullMissingImage(ctx context.Context, apiClient client.CommonAPIClient, ima
 		}
 	}
 
-	namedRef, _ := reference.Parse(image)
+	namedRef, err := reference.Parse(image)
+	if err != nil {
+		return err
+	}
 	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
 	var name, tag string
