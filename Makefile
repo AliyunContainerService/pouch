@@ -1,115 +1,160 @@
-# Go parameters
-GOBUILD=go build
-GOCLEAN=go clean
-GOTEST=go test
-GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | sed 's/^_//')
+# TEST_FLAGS used as flags of go test.
+TEST_FLAGS ?= -v --race
 
-# Binary name of CLI and Daemon
-BINARY_NAME=pouchd
+# DAEMON_BINARY_NAME is the name of binary of daemon.
+DAEMON_BINARY_NAME=pouchd
+
+# CLI_BINARY_NAME is the name of binary of pouch client.
 CLI_BINARY_NAME=pouch
 
-# Base path used to install pouch & pouchd
-DESTDIR=/usr/local
+# DAEMON_INTEGRATION_BINARY_NAME is the name of test binary of daemon.
+DAEMON_INTEGRATION_BINARY_NAME=pouchd-integration
 
-.PHONY: build
-build: server client
+# INTEGRATION_TESTCASE_BINARY_NAME is the name of binary of integration cases.
+INTEGRATION_TESTCASE_BINARY_NAME=pouchd-integration-test
 
-.PHONY: pre
-pre:
-	@./hack/build pre
+# DEST_DIR is base path used to install pouch & pouchd
+DEST_DIR=/usr/local
 
-.PHONY: server
-server: pre modules
-	@./hack/build server
+# the following variables used for the daemon build
 
-.PHONY: client
-client: pre
-	@./hack/build client
+# API_VERSION is used for Daemon API Version in go build.
+API_VERSION="1.24"
 
-.PHONY: testserver
-testserver: pre modules
-	@./hack/build testserver
+# VERSION is used for Daemon Release Version in go build.
+VERSION ?= "1.0.0-rc1"
 
-.PHONY: clean
-clean:
-	$(GOCLEAN)
-	rm -f $(BINARY_NAME)
-	rm -f $(CLI_BINARY_NAME)
-	./hack/build clean
-	./hack/module --clean
+# GIT_COMMIT is used for Daemon GitCommit in go build.
+GIT_COMMIT=$(shell git describe --dirty --always --tags 2> /dev/null || true)
 
-.PHONY: check
-check: pre fmt lint vet validate-swagger
+# BUILD_TIME is used for Daemon BuildTime in go build.
+BUILD_TIME=$(shell date --rfc-3339 s 2> /dev/null | sed -e 's/ /T/')
 
-.PHONY: fmt
-fmt: ## run go fmt
+VERSION_PKG=github.com/alibaba/pouch
+DEFAULT_LDFLAGS="-X ${VERSION_PKG}/version.GitCommit=${GIT_COMMIT} \
+		  -X ${VERSION_PKG}/version.Version=${VERSION} \
+		  -X ${VERSION_PKG}/version.ApiVersion=${API_VERSION} \
+		  -X ${VERSION_PKG}/version.BuildTime=${BUILD_TIME}"
+
+# COVERAGE_PACKAGES is the coverage we care about.
+COVERAGE_PACKAGES=$(shell go list ./... | \
+				  grep -v github.com/alibaba/pouch$$ | \
+				  grep -v github.com/alibaba/pouch/storage/volume/examples/demo | \
+				  grep -v github.com/alibaba/pouch/test | \
+				  grep -v github.com/alibaba/pouch/cli | \
+				  grep -v github.com/alibaba/pouch/cri/apis | \
+				  grep -v github.com/alibaba/pouch/apis/types )
+
+COVERAGE_PACKAGES_LIST=$(shell echo $(COVERAGE_PACKAGES) | tr " " ",")
+
+build: build-daemon build-cli ## build PouchContainer both daemon and cli binaries
+
+build-daemon: modules ## build PouchContainer daemon binary
 	@echo $@
-	@which gofmt
-	@test -z "$$(gofmt -s -l . 2>/dev/null | grep -Fv 'vendor/' | grep -v ".pb.go$$" | tee /dev/stderr)" || \
-		(echo "please format Go code with 'gofmt -s -w'" && false)
-	@test -z "$$(find . -path ./vendor -prune -o ! -name timestamp.proto ! -name duration.proto -name '*.proto' -type f -exec grep -Hn -e "^ " {} \; | tee /dev/stderr)" || \
-		(echo "please indent proto files with tabs only" && false)
-	@test -z "$$(find . -path ./vendor -prune -o -name '*.proto' -type f -exec grep -Hn "Meta meta = " {} \; | grep -v '(gogoproto.nullable) = false' | tee /dev/stderr)" || \
-		(echo "meta fields in proto files must have option (gogoproto.nullable) = false" && false)
+	@mkdir -p bin
+	GOOS=linux go build -ldflags ${DEFAULT_LDFLAGS} -o bin/${DAEMON_BINARY_NAME} -tags 'selinux' 
 
-.PHONY: lint
-lint: ## run go lint
+build-cli: ## build PouchContainer cli binary
 	@echo $@
-	@which golint
-	@test -z "$$(golint ./... | grep -Fv 'vendor/' | grep -v ".pb.go:" | tee /dev/stderr)"
+	@mkdir -p bin
+	go build -o bin/${CLI_BINARY_NAME} github.com/alibaba/pouch/cli
 
-.PHONY: vet
-vet: ## run go vet
+build-daemon-integration: modules ## build PouchContainer Daemon Integration Testing binary
 	@echo $@
-	@test -z "$$(./hack/build vet)"
+	@mkdir -p bin
+	go test -c ${TEST_FLAGS} \
+		-cover -covermode=atomic -coverpkg ${COVERAGE_PACKAGES_LIST} \
+		-o bin/${DAEMON_INTEGRATION_BINARY_NAME}
 
-.PHONY: unit-test
-unit-test: pre modules ## run go test
+build-integration-test: modules ## build PouchContainer Integration test-case binary
 	@echo $@
-	@./hack/build unit-test
+	@mkdir -p bin
+	go test -c \
+		-o bin/${INTEGRATION_TESTCASE_BINARY_NAME} github.com/alibaba/pouch/test
 
-.PHONY: validate-swagger
-validate-swagger: ## run swagger validate
+modules: ## run modules to generate volume related code
 	@echo $@
-	@swagger validate apis/swagger.yml
-
-.PHONY: modules
-modules:
 	@./hack/module --clean
 	@./hack/module --add-volume=github.com/alibaba/pouch/storage/volume/modules/tmpfs
 	@./hack/module --add-volume=github.com/alibaba/pouch/storage/volume/modules/local
 
-# build binaries
-# install them to /usr/local/bin/
-# remove binaries
-.PHONY: install
-install: build ## build and install binary into /usr/local/bin
+install: ## install pouch and pouchd binary into /usr/local/bin
 	@echo $@
-	@echo "installing $(BINARY_NAME) and $(CLI_BINARY_NAME) to $(DESTDIR)/bin"
-	@mkdir -p $(DESTDIR)/bin
-	@install $(BINARY_NAME) $(DESTDIR)/bin
-	@install $(CLI_BINARY_NAME) $(DESTDIR)/bin
+	@mkdir -p $(DEST_DIR)/bin
+	install bin/$(CLI_BINARY_NAME) $(DEST_DIR)/bin
+	install bin/$(DAEMON_BINARY_NAME) $(DEST_DIR)/bin
 
-.PHONY: uninstall
 uninstall: ## uninstall pouchd and pouch binary
 	@echo $@
-	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(BINARY_NAME)))
-	@rm -f $(addprefix $(DESTDIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
+	@rm -f $(addprefix $(DEST_DIR)/bin/,$(notdir $(DAEMON_BINARY_NAME)))
+	@rm -f $(addprefix $(DEST_DIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
 
-# For integration-test and test, PATH is not set under sudo, then we set up path mannually.
-# Ref https://unix.stackexchange.com/questions/83191/how-to-make-sudo-preserve-path
+.PHONY: download_dependencies
+download_dependencies:
+	@echo $@
+	hack/install/install_ci_related.sh
+	hack/install/install_containerd.sh
+	hack/install/install_dumb_init.sh
+	hack/install/install_local_persist.sh
+	hack/install/install_lxcfs.sh
+	hack/install/install_nsenter.sh
+	hack/install/install_runc.sh
+
+.PHONY: clean
+clean: ## clean to remove bin/* and files created by module
+	@go clean
+	@rm -f bin/*
+	@rm -rf coverage/*
+	@./hack/module --clean
+
+
+.PHONY: check
+check: gometalinter validate-swagger ## run all linters
+
+.PHONY: validate-swagger
+validate-swagger: ## run swagger validate
+	@echo $@
+	./hack/validate_swagger.sh
+
+# gometalinter consumes .gometalinter.json as config.
+.PHONY: gometalinter
+gometalinter: ## run gometalinter for go source code
+	@echo $@
+	gometalinter --config .gometalinter.json ./...
+
+
+.PHONY: unit-test
+unit-test: modules ## run go unit-test
+	@echo $@
+	@mkdir -p coverage
+	@( for pkg in ${COVERAGE_PACKAGES}; do \
+		go test ${TEST_FLAGS} \
+			-cover -covermode=atomic \
+			-coverprofile=coverage/unit-test-`echo $$pkg | tr "/" "_"`.out \
+			$$pkg || exit; \
+	done )
+
 .PHONY: integration-test
-integration-test: ## build binary and run integration-test
-	@bash -c "env PATH=$(PATH) hack/make.sh build integration-test"
+integration-test: ## run daemon integration-test
+	@echo $@
+	@mkdir -p coverage
+	./hack/testing/run_daemon_integration.sh
 
 .PHONY: cri-test
-cri-test: ## build binary and run cri-test
-	@bash -c "env PATH=$(PATH) hack/make.sh build cri-test"
+cri-test: ## run v1 alpha2 cri-test
+	@echo $@
+	@mkdir -p coverage
+	./hack/testing/run_daemon_cri_integration.sh
 
 .PHONY: test
-test: ## run the build integration-test cri-test
-	@bash -c "env PATH=$(PATH) hack/make.sh build integration-test cri-test"
+test: unit-test integration-test cri-test ## run the unit-test, integration-test and cri-test
+
+.PHONY: coverage
+coverage: ## combine coverage after test
+	@echo $@
+	@gocovmerge coverage/* > coverage.txt
+
 
 .PHONY: help
 help: ## this help
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-28s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
