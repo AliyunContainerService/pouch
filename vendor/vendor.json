@@ -1943,6 +1943,12 @@
 			"path": "k8s.io/apiserver/pkg/util/wsstream",
 			"revision": "d3f753a815b5b1a7f4ecc1d2fdf497dc715c98c7",
 			"revisionTime": "2017-10-18T16:57:59Z"
+		},
+		{
+			"checksumSHA1": "oRQMrak6qTTdEUnRUMtVpzO9T/A=",
+			"path": "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime",
+			"revision": "18758f502c4a249bf999f34e4a115ec9881cd9f2",
+			"revisionTime": "2017-12-26T11:59:59Z"
 		}
 	],
 	"rootPath": "github.com/alibaba/pouch"

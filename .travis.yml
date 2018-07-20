@@ -17,7 +17,8 @@ notifications:
 env:
   - TEST_SUITE=unittest
   - TEST_SUITE=integrationtest
-  - TEST_SUITE=critest
+  - TEST_SUITE=criv1alpha1test
+  - TEST_SUITE=criv1alpha2test
 
 script: |
   if [[ "${TEST_SUITE}" = "unittest" ]]; then
@@ -33,13 +34,21 @@ script: |
     sudo env "PATH=$PATH" make download_dependencies
     sudo env "PATH=$PATH" make integration-test
     make coverage
+  elif [[ "${TEST_SUITE}" = "criv1alpha1test" ]]; then
+    make build
+    TEST_FLAGS= make build-daemon-integration
+    sudo env "PATH=$PATH" make install
+
+    sudo env "PATH=$PATH" make download_dependencies
+    sudo env "PATH=$PATH" make cri-v1alpha1-test
+    make coverage
   else
     make build
     TEST_FLAGS= make build-daemon-integration
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download_dependencies
-    sudo env "PATH=$PATH" make cri-test
+    sudo env "PATH=$PATH" make cri-v1alpha2-test
     make coverage
   fi
   
