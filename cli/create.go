@@ -60,6 +60,10 @@ func (cc *CreateCommand) runCreate(args []string) error {
 
 	ctx := context.Background()
 	apiClient := cc.cli.Client()
+	if err := pullMissingImage(ctx, apiClient, config.Image, false); err != nil {
+		return err
+	}
+
 	result, err := apiClient.ContainerCreate(ctx, config.ContainerConfig, config.HostConfig, config.NetworkingConfig, containerName)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)

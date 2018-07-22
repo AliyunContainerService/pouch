@@ -489,3 +489,12 @@ func (suite *PouchRunSuite) TestCreateWithPidsLimit(c *check.C) {
 	pl := result[0].HostConfig.PidsLimit
 	c.Assert(int(pl), check.Equals, 10)
 }
+
+// TestCreateWithNonExistImage tests running container with image not exist.
+func (suite *PouchRunSuite) TestCreateWithNonExistImage(c *check.C) {
+	cname := "TestCreateWithNonExistImage"
+	// we should use a non-used image, since containerd not remove image immediately.
+	image := "docker.io/library/alpine"
+	res := command.PouchRun("create", cname, image)
+	res.Assert(c, icmd.Success)
+}
