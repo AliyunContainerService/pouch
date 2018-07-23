@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -176,7 +177,40 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	driverName := "fake_driver23"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	volNameArray, err := core.ListVolumeName(nil)
+	if err != nil {
+		t.Fatalf("create volume error: %v", err)
+	}
+	assert.Equal(len(volNameArray), len(volmap))
 }
 
 func TestRemoveVolume(t *testing.T) {
