@@ -1,14 +1,14 @@
 package volume
 
 import (
+	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
+	"github.com/alibaba/pouch/storage/volume/types"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"testing"
-	"github.com/alibaba/pouch/storage/volume/driver"
-	volerr "github.com/alibaba/pouch/storage/volume/error"
-	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -295,7 +295,7 @@ func TestDetachVolume(t *testing.T) {
 
 	v3, err3 := core.DetachVolume(volid1, make(map[string]string))
 	if err3 != nil {
-		t.Fatalf("Detach error" )
+		t.Fatalf("Detach error")
 	}
 	if v3.Name != v1.Name {
 		t.Fatalf("expect volume name is %s, but got %s", v1.Name, v3.Name)
@@ -303,7 +303,7 @@ func TestDetachVolume(t *testing.T) {
 
 	v2, err2 := core.AttachVolume(volid1, make(map[string]string))
 	if err2 != nil {
-		t.Fatalf("attach error" )
+		t.Fatalf("attach error")
 	}
 	if v2.Name != v1.Name {
 		t.Fatalf("expect volume name is %s, but got %s", v1.Name, v2.Name)
