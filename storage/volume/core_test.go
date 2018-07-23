@@ -1,15 +1,14 @@
 package volume
 
 import (
+	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
+	"github.com/alibaba/pouch/storage/volume/types"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"testing"
-
-	"github.com/alibaba/pouch/storage/volume/driver"
-	volerr "github.com/alibaba/pouch/storage/volume/error"
-	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -177,11 +176,46 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
+	driverName := "fake_driver23"
+	dir, err := ioutil.TempDir("", "TestGetVolume23")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	volarray, err := core.ListVolumeName(nil)
+	for k := 0; k < len(volarray); k++ {
+		vol := volarray[k]
+		_, found := volmap[vol]
+		if found == false {
+			t.Fatalf("list volumes %v not found", vol)
+		}
+	}
 }
 
 func TestRemoveVolume(t *testing.T) {
-	volName1 := "vol2"
-	driverName1 := "fake_driver12"
+	volName1 := "vol3"
+	driverName1 := "fake_driver13"
 	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
 
 	dir, err := ioutil.TempDir("", "TestGetVolume")
@@ -230,4 +264,54 @@ func TestAttachVolume(t *testing.T) {
 
 func TestDetachVolume(t *testing.T) {
 	// TODO
+	volName1 := "vol2"
+	driverName1 := "fake_driver12"
+	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	v1, err1 := core.CreateVolume(volid1)
+	if err != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+	if v1.Name != volName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volName1, v1.Name)
+	}
+	if v1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
+	}
+
+	v3, err3 := core.DetachVolume(volid1, make(map[string]string))
+	if err3 != nil {
+		t.Fatalf("Detach error")
+	}
+	if v3.Name != v1.Name {
+		t.Fatalf("expect volume name is %s, but got %s", v1.Name, v3.Name)
+	}
+
+	v2, err2 := core.AttachVolume(volid1, make(map[string]string))
+	if err2 != nil {
+		t.Fatalf("attach error")
+	}
+	if v2.Name != v1.Name {
+		t.Fatalf("expect volume name is %s, but got %s", v1.Name, v2.Name)
+	}
+
+	err5 := core.RemoveVolume(volid1)
+	if err5 != nil {
+		t.Fatalf("detach fail")
+	}
+
 }
