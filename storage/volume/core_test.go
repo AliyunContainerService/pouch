@@ -1,15 +1,16 @@
 package volume
 
 import (
-	"fmt"
-	"github.com/alibaba/pouch/storage/volume/driver"
-	volerr "github.com/alibaba/pouch/storage/volume/error"
-	"github.com/alibaba/pouch/storage/volume/types"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"testing"
+
+	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
+	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -176,6 +177,8 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
+	assert := assert.New(t)
+
 	driverName := "fake_driver23"
 	dir, err := ioutil.TempDir("", "TestGetVolume")
 	if err != nil {
@@ -207,7 +210,7 @@ func TestListVolumeName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create volume error: %v", err)
 	}
-	fmt.Println(volNameArray)
+	assert.Equal(len(volNameArray), len(volmap))
 }
 
 func TestRemoveVolume(t *testing.T) {
