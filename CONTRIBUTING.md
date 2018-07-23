@@ -78,7 +78,7 @@ git remote add upstream https://github.com/alibaba/pouch.git
 git remote set-url --push upstream no-pushing
 ```
 
-With this remote setting, you can check you git remote configuration like this:
+With this remote setting, you can check your git remote configuration like this:
 
 ```
 $ git remote -v
