@@ -2,7 +2,7 @@ package ctrd
 
 import (
 	"testing"
-	assert2 "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHasPort(t *testing.T) {
@@ -42,7 +42,7 @@ func TestCanonicalAddr(t *testing.T) {
 
 func TestUseProxy(t *testing.T) {
 	// TODO
-	assert := assert2.New(t)
+	assert := assert.New(t)
 	type args struct {
 		str string
 	}
