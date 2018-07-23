@@ -6,11 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/spf13/pflag"
-
 	// "fmt"
-
 	// "strings"
-
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -67,7 +64,7 @@ func TestGetConflictConfigurations(t *testing.T) {
 
 	// Config File
 	configFileFlags := map[string]interface{}{
-		// "f1" : "2",
+	// "f1" : "2",
 	}
 
 	// commandLineFlags.Visit(func(f *pflag.Flag) {
@@ -90,21 +87,21 @@ func TestGetConflictConfigurations(t *testing.T) {
 	/* 1. With Same Flag name(Same Value), Conflict */
 	assert.Error(getConflictConfigurations(commandLineFlags, configFileFlags))
 	assert.Equal(getConflictConfigurations(commandLineFlags, configFileFlags).Error(),
-	"found conflict flags in command line and config file: from flag: 2 and from config file: 2")
+		"found conflict flags in command line and config file: from flag: 2 and from config file: 2")
 
 	/* 2. With Same Flag name(Different Value), Conflict */
 	commandLineFlags.Set("f1", "1")
 	assert.Error(getConflictConfigurations(commandLineFlags, configFileFlags))
 	assert.Equal(getConflictConfigurations(commandLineFlags, configFileFlags).Error(),
-	"found conflict flags in command line and config file: from flag: 1 and from config file: 2")
+		"found conflict flags in command line and config file: from flag: 1 and from config file: 2")
 
 	/* 3. Two Configs's flag Intersects */
 	commandLineFlags.Set("f2", "0")
 	configFileFlags["f4"] = "3"
 	assert.Error(getConflictConfigurations(commandLineFlags, configFileFlags))
 	assert.Equal(getConflictConfigurations(commandLineFlags, configFileFlags).Error(),
-	"found conflict flags in command line and config file: from flag: 1 and from config file: 2")
-	
+		"found conflict flags in command line and config file: from flag: 1 and from config file: 2")
+
 }
 
 func TestGetUnknownFlags(t *testing.T) {
