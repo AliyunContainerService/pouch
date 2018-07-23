@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/alibaba/pouch/storage/volume/driver"
@@ -221,7 +222,80 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+	volName1 := "vol1"
+	driverName1 := "fake_driver1"
+	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+
+	dir, err := ioutil.TempDir("", "TestVolumePath")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// create volume core
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	// get volume path without create volume
+	v0Path, err := core.VolumePath(volid1)
+	if v0Path != "" {
+		t.Fatalf("expect get volume path '', but got a volume path %s", v0Path)
+	}
+	if err == nil {
+		t.Fatalf("expect error, but err is nil")
+	} else {
+		isVolumeNotFoundErr := strings.Contains(err.Error(), "path: volume not found")
+		if !isVolumeNotFoundErr {
+			t.Fatalf("expect error: 'path: volume not found', but err is %v", err)
+		}
+	}
+
+	// create volume
+	_, err1 := core.CreateVolume(volid1)
+	if err1 != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+
+	// find volume path
+	v1Path, err := core.VolumePath(volid1)
+	if v1Path == "" {
+		t.Fatalf("expect get volume path %s, but got a volume path ''", v1Path)
+	}
+	if err != nil {
+		t.Fatalf("expect get volume path not found error, but found err")
+	}
+
+	// find volume path with a not exist VolumeID
+	volidNotExist := types.VolumeID{Name: "none", Driver: "none"}
+	v2Path, err := core.VolumePath(volidNotExist)
+	if v2Path != "" {
+		t.Fatalf("expect get volume path '', but got a volume path %s", v2Path)
+	} else {
+		isVolumeNotFoundErr := strings.Contains(err.Error(), "path: volume not found")
+		if !isVolumeNotFoundErr {
+			t.Fatalf("expect error: 'path: volume not found', but err is %v", err)
+		}
+	}
+
+	// delete volume
+	err = core.RemoveVolume(volid1)
+	if err != nil {
+		t.Fatalf("remove volume id %v error: %v", volid1, err)
+	}
+	v3Path, err := core.VolumePath(volid1)
+	if v3Path != "" {
+		t.Fatalf("expect get volume path '', but got a volume path %s", v3Path)
+	} else {
+		isVolumeNotFoundErr := strings.Contains(err.Error(), "path: volume not found")
+		if !isVolumeNotFoundErr {
+			t.Fatalf("expect error: 'path: volume not found', but err is %v", err)
+		}
+	}
 }
 
 func TestAttachVolume(t *testing.T) {
