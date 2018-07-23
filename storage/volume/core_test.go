@@ -249,19 +249,19 @@ func TestAttachVolume(t *testing.T) {
 		if err0 == nil{
 			t.Fatal("want not found, err is null")
 		}else {
-			t.Fatal("want not found error, but got %v", err0)
+			t.Fatal("want not found error")
 		}
 	}
 	core.CreateVolume(types.VolumeID{Name:"test",Driver:volumeName})
 	v1,err1 := core.AttachVolume(vID1,extra)
 	if err1 != nil{
-		t.Fatal("attach volume error: %v", err1)
+		t.Fatal("attach volume error")
 	}
 	if v1.Name != vn {
-		t.Fatalf("want volume name is %s, but want is %s", vn, v1.Name)
+		t.Fatalf("want volume name is not wanted")
 	}
 	if v1.Driver() != dn {
-		t.Fatal("want driver is %s, but want is %s",dn,v1.Driver())
+		t.Fatal("want driver is not wanted")
 	}
 
 }
