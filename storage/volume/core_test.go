@@ -221,7 +221,37 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+	volName1 := "vol2"
+	driverName1 := "fake_driver12"
+	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	v1, err1 := core.CreateVolume(volid1)
+	if err1 != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+	if v1.Name != volName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volName1, v1.Name)
+	}
+
+	v2, err2 := core.VolumePath(volid1)
+	if err2 != nil {
+		t.Fatalf("Get volume: %s path", v2)
+	}
+
 }
 
 func TestAttachVolume(t *testing.T) {
