@@ -18,16 +18,16 @@ DEST_DIR=/usr/local
 
 # the following variables used for the daemon build
 
-# API_VERSION is used for Daemon API Version in go build.
+# API_VERSION is used for daemon API Version in go build.
 API_VERSION="1.24"
 
-# VERSION is used for Daemon Release Version in go build.
+# VERSION is used for daemon Release Version in go build.
 VERSION ?= "1.0.0-rc1"
 
-# GIT_COMMIT is used for Daemon GitCommit in go build.
+# GIT_COMMIT is used for daemon GitCommit in go build.
 GIT_COMMIT=$(shell git describe --dirty --always --tags 2> /dev/null || true)
 
-# BUILD_TIME is used for Daemon BuildTime in go build.
+# BUILD_TIME is used for daemon BuildTime in go build.
 BUILD_TIME=$(shell date --rfc-3339 s 2> /dev/null | sed -e 's/ /T/')
 
 VERSION_PKG=github.com/alibaba/pouch
@@ -59,14 +59,14 @@ build-cli: ## build PouchContainer cli binary
 	@mkdir -p bin
 	go build -o bin/${CLI_BINARY_NAME} github.com/alibaba/pouch/cli
 
-build-daemon-integration: modules ## build PouchContainer Daemon Integration Testing binary
+build-daemon-integration: modules ## build PouchContainer daemon integration testing binary
 	@echo $@
 	@mkdir -p bin
 	go test -c ${TEST_FLAGS} \
 		-cover -covermode=atomic -coverpkg ${COVERAGE_PACKAGES_LIST} \
 		-o bin/${DAEMON_INTEGRATION_BINARY_NAME}
 
-build-integration-test: modules ## build PouchContainer Integration test-case binary
+build-integration-test: modules ## build PouchContainer integration test-case binary
 	@echo $@
 	@mkdir -p bin
 	go test -c \
@@ -90,7 +90,7 @@ uninstall: ## uninstall pouchd and pouch binary
 	@rm -f $(addprefix $(DEST_DIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
 
 .PHONY: download_dependencies
-download_dependencies:
+download_dependencies: ## download related dependencies, such as dumb_init
 	@echo $@
 	hack/install/install_ci_related.sh
 	hack/install/install_containerd.sh
