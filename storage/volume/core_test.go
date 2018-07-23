@@ -221,7 +221,43 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+	volName1 := "vol3"
+	driverName1 := "fake_driver"
+	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	
+	expectPath := path.Join("/fake/", volName1) //keep consist with the path API in fake_driver.go
+	dir, err := ioutil.TempDir("", "TestVolumePath")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	path1, err := core.VolumePath(volid1)
+	if err == nil {
+		t.Fatalf("expect volume not found err when get volume path from empty volume, but get path: %s", path1)
+	}
+
+	_, err1 := core.CreateVolume(volid1)
+	if err1 != nil {
+		t.Fatal(err1)
+	}
+
+	path2, err := core.VolumePath(volid1)
+	if  err != nil {
+		t.Fatalf("get volume path error: %v", err)
+	}
+
+	if path2 != expectPath {
+		t.Fatalf("expect volume path is %s, but got %s", expectPath, path2)
+	}
 }
 
 func TestAttachVolume(t *testing.T) {
