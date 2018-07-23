@@ -239,22 +239,17 @@ func TestAttachVolume(t *testing.T) {
 	vn := "test1"
 	vID1 := types.VolumeID{Name: vn, Driver: dn}
 	driver.Register(driver.NewFakeDriver(volumeName))
-
 	defer driver.Unregister(volumeName)
-
 	extra := map[string]string{}
-
 	v0,err0 := core.AttachVolume(vID1,extra)
-
 	if v0 != nil {
 		t.Fatalf("want volume is nil, but real is %s", v0.Name)
 	}
-
 	if err0 != volerr.ErrVolumeNotFound{
 		if err0 == nil{
-			t.Fatal("nil")
+			t.Fatal("want not found, err is null")
 		}else {
-			t.Fatal("")
+			t.Fatal("want not found error, but got %v", err0)
 		}
 	}
 	core.CreateVolume(types.VolumeID{Name:"test",Driver:volumeName})
