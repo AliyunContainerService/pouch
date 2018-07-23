@@ -195,7 +195,7 @@ func TestListVolumeName(t *testing.T) {
 	defer driver.Unregister(driverName)
 
 	var i int64
-	volumeCreateList := list.New()
+	volCreateList := list.New()
 	for i = 0; i < 5; i++ {
 		volumeName := strconv.FormatInt(i, 10)
 		volumeId := types.VolumeID{Name: volumeName, Driver: driverName}
@@ -203,14 +203,14 @@ func TestListVolumeName(t *testing.T) {
 		if err != nil {
 			t.Fatalf("volumes createerror: %v", err)
 		}
-		volumeCreateList.PushBack(volumeName)
+		volCreateList.PushBack(volumeName)
 	}
 
 	volumeNameArray, err := core.ListVolumeName(nil)
 	for k := 0; k < len(volumeNameArray); k++ {
 		vol := volumeNameArray[k]
 		has := false
-		for e := volumeCreateList.Front(); e != nil; e = e.Next() {
+		for e := volCreateList.Front(); e != nil; e = e.Next() {
 			if e.Value == vol {
 				has = true
 			}
