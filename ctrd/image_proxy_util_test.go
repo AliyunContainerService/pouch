@@ -60,5 +60,36 @@ func TestCanonicalAddr(t *testing.T) {
 }
 
 func TestUseProxy(t *testing.T) {
-	// TODO
+	tests := []struct {
+		name    string
+		addr    string
+		noProxy string
+		want    bool
+	}{
+		{name: "test1", addr: "", want: true},
+		{name: "test2", addr: "google.com", want: false},
+		{name: "test3", addr: "localhost:80", want: false},
+		{name: "test4", addr: "127.0.0.1:80", want: false},
+		{name: "test5", addr: "10.0.0.1:80", want: true},
+		{name: "test6", addr: "golang.org:80", noProxy: "*", want: false},
+		{name: "test7", addr: "maps.google.com:443", noProxy: ".google.com", want: false},
+		{name: "test8", addr: "google.com:443", noProxy: ".google.com", want: false},
+		{name: "test9", addr: "maps.google.com:443", noProxy: "google.com", want: false},
+		{name: "test10", addr: "google.com:443", noProxy: "google.com", want: false},
+		{name: "test11", addr: "maps.google.com:443", want: true},
+	}
+
+	// simulate the fetch of environmental variable no_proxy
+	noProxyEnv.once.Do(func() {})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			noProxyEnv.val = tt.noProxy
+			got := useProxy(tt.addr)
+
+			if got != tt.want {
+				t.Errorf("useProxy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
