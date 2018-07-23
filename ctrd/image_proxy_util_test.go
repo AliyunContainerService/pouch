@@ -1,6 +1,9 @@
 package ctrd
 
-import "testing"
+import (
+	"testing"
+	"net/url"
+)
 
 func TestHasPort(t *testing.T) {
 	type args struct {
@@ -33,7 +36,19 @@ func TestHasPort(t *testing.T) {
 }
 
 func TestCanonicalAddr(t *testing.T) {
-	// TODO
+	//var userinfo *Userinfo
+	//userinfo = &Userinfo{"username","password",true}
+
+	var testUrl *url.URL
+	testUrl = &url.URL{"Scheme","Opaque",nil,
+		"127.0.0.1:8080","/usr/twc","RawPath",true,"RawQuery","Fragment"};
+
+	var result = canonicalAddr(testUrl)
+
+	if result != testUrl.Host {
+		t.Fatal("the result is error!")
+	}
+	return ;
 }
 
 func TestUseProxy(t *testing.T) {
