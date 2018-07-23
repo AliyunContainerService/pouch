@@ -53,12 +53,12 @@ func TestConfigValidate(t *testing.T) {
 func TestGetConflictConfigurations(t *testing.T) {
 	assert := assert.New(t)
 
-	fileFlags = map[string]interface{}{
+	fileFlags := map[string]interface{}{
 		"flag1": "1",
 		"flag2": "2",
 	}
 
-	flagSet = pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
+	flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
 	flagSet.String("flag1", "1", "flag1")
 	flagSet.String("flag2", "2", "flag2")
 	flagSet.String("flag3", "3", "flag3")
