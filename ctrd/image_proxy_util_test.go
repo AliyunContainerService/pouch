@@ -1,6 +1,9 @@
 package ctrd
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 func TestHasPort(t *testing.T) {
 	type args struct {
@@ -33,7 +36,31 @@ func TestHasPort(t *testing.T) {
 }
 
 func TestCanonicalAddr(t *testing.T) {
-	// TODO
+	var str = "://alibaba-inc@host.com"
+
+	methods := []string{
+		"http",
+		"https",
+		"socks5",
+		"other",
+	}
+
+	for i := 0; i < len(methods); i++ {
+
+		test_url := methods[i] + str
+
+		parse_url, err := url.Parse(test_url)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		addr := canonicalAddr(parse_url)
+
+		if hasPort(addr) == false {
+			t.Fatalf("no port!!")
+		}
+	}
 }
 
 func TestUseProxy(t *testing.T) {
