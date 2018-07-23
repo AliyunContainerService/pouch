@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"testing"
-
+	"github.com/spf13/pflag"
+	
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,13 +46,39 @@ func TestIterateConfig(t *testing.T) {
 	assert.Equal(config, map[string]interface{}{})
 }
 
+
 func TestConfigValidate(t *testing.T) {
 	// TODO
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	fileFlags := map[string]interface{} {
+		"flag1": "1",
+		"flag2": "2",
+	}
+
+	flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
+	flagSet.String("flag1", "1", "flag1")
+	flagSet.String("flag2", "2", "flag2")
+	flagSet.String("flag3", "3", "flag3")
+	flagSet.IntSlice("slice", []int{1, 2, 3}, "slice data")
+
+	fmt.Println(getConflictConfigurations(flagSet, fileFlags))
+	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
+
+	flagSet.Set("flag1", "2")
+	fmt.Println(getConflictConfigurations(flagSet, fileFlags))
+	assert.Equal("found conflict flags in command line and config file: from flag: 2 and from config file: 1",
+		getConflictConfigurations(flagSet, fileFlags).Error())
+
+	flagSet.Set("flag2", "1")
+	fmt.Println(getConflictConfigurations(flagSet, fileFlags))
+	assert.Equal("found conflict flags in command line and config file: from flag: 2 and from config file: 1, from flag: 1 and from config file: 2",
+		getConflictConfigurations(flagSet, fileFlags).Error())
 }
+
 
 func TestGetUnknownFlags(t *testing.T) {
 	// TODO
