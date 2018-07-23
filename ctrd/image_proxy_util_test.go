@@ -2,6 +2,7 @@ package ctrd
 
 import (
 	"testing"
+	"os"
 )
 
 func TestHasPort(t *testing.T) {
@@ -63,11 +64,13 @@ func TestUseProxy(t *testing.T) {
 		{name: "test11", args: args{str: string("localhost:8080")}, want: false},
 		{name: "test12", args: args{str: string("localhost:8080")}, want: false},
 		{name: "test13", args: args{str: string("127.0.1.1:8080")}, want: false},
-		{name: "test14", args: args{str: string("baidu.com:8080")}, want: true},
+		{name: "test14", args: args{str: string("www.baidu.com:8080")}, want: false},
 		{name: "test15", args: args{str: string("220.123.123.1:8080")}, want: true},
-
-
 	}
+
+	os.Setenv("no_proxy",",baidu.com,.baidu.com")
+	noProxy := noProxyEnv.Get()
+	t.Errorf("noProxy = %v",noProxy)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := useProxy(tt.args.str)
