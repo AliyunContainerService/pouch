@@ -59,17 +59,21 @@ func TestGetUnknownFlags(t *testing.T) {
 	var fileFlags map[string]interface{}
 	var flagSet *pflag.FlagSet
 	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
 	flagSet = pflag.NewFlagSet("flagSet", pflag.ContinueOnError)
 	flagSet.String("a", "a", "")
 	flagSet.String("b", "b", "")
 	flagSet.String("c", "c", "")
+	flagSet.Parse([]string{"--a=a", "--b=b", "--c=c"})
 	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
 	fileFlags = map[string]interface{}{
 		"a": "a",
 		"b": "b",
 		"c": "c",
 	}
 	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
 	fileFlags = map[string]interface{}{
 		"a": "a",
 		"b": "b",
