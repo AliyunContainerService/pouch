@@ -1,8 +1,8 @@
 package ctrd
 
 import (
+	"os"
 	"testing"
-	"fmt"
 )
 
 func TestHasPort(t *testing.T) {
@@ -39,12 +39,6 @@ func TestCanonicalAddr(t *testing.T) {
 	// TODO
 }
 
-var (
-	noProxyEnv = &envOnce{
-		names: []string{"NO_PROXY", "no_proxy"},
-	}
-)
-
 func TestUseProxy(t *testing.T) {
 	// TODO
 	type args struct {
@@ -66,13 +60,14 @@ func TestUseProxy(t *testing.T) {
 		{name: "test8", args: args{str: string("[[127.0.0.1]:8080")}, want: false},
 		{name: "test9", args: args{str: string("[127.0.0.1]]:8080")}, want: false},
 		{name: "test10", args: args{str: string("localhost:8080")}, want: false},
-		{name: "test11", args: args{str: string("localhost:8080")}, want: false},
-		{name: "test12", args: args{str: string("localhost:8080")}, want: false},
+		{name: "test11", args: args{str: string("127.0.1.1:8080")}, want: false},
+		{name: "test12", args: args{str: string("www.baidu.com:8080")}, want: false},
+		{name: "test13", args: args{str: string("220.123.123.1:8080")}, want: true},
+		{name: "test14", args: args{str: string("alibaba.com:8080")}, want: true},
+		{name: "test15", args: args{str: string("baidu.com:8080")}, want: false},
 	}
 
-	noProxy := noProxyEnv.Get()
-
-	fmt.Println(noProxy)
+	os.Setenv("no_proxy", ",:80,baidu.com:80,.baidu.com,baidu.")
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
