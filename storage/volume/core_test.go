@@ -235,6 +235,7 @@ func TestAttachVolume(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	dn := "fake1"
 	vn := "test1"
 	vID1 := types.VolumeID{Name: vn, Driver: dn}
