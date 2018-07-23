@@ -64,8 +64,8 @@ func TestUseProxy(t *testing.T) {
 		{name: "test12", args: args{str: string("localhost:8080")}, want: false},
 
 	}
-
-	t.Errorf("noProxy = %v",noProxyEnv.Get())
+	noProxy := noProxyEnv.Get()
+	t.Errorf("noProxy = %s", noProxy)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := useProxy(tt.args.str)
