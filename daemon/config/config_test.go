@@ -3,6 +3,8 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,5 +55,65 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	// test1. name in flagset
+	unknowns := map[string]interface{}{
+		"name": "Anthony",
+	}
+	f := pflag.NewFlagSet("test0", pflag.ContinueOnError)
+	f.String("name", "Anthony", "String Test")
+
+	res := getUnknownFlags(f, unknowns)
+
+	check := 0
+	if res != nil {
+		check = 1
+	}
+	assert.Equal(check, 0)
+
+	// test2. sex not in flagset
+
+	unknowns = map[string]interface{}{
+		"name": "Anthony",
+	}
+	f = pflag.NewFlagSet("test1", pflag.ContinueOnError)
+	f.String("sex", "Female", "Female")
+
+	res = getUnknownFlags(f, unknowns)
+
+	check = 0
+	if res != nil {
+		check = 1
+	}
+	assert.Equal(check, 1)
+
+	// test3. one in flagset,another not in
+	unknowns = map[string]interface{}{
+		"name": "jachin",
+		"sex":  "Male",
+	}
+
+	f = pflag.NewFlagSet("test2", pflag.ContinueOnError)
+	f.String("name", "jachin", "jachin")
+
+	res = getUnknownFlags(f, unknowns)
+	check = 0
+	if res != nil {
+		check = 1
+	}
+	assert.Equal(check, 1)
+	// test4. noone in flagset
+	unknowns = map[string]interface{}{}
+
+	f = pflag.NewFlagSet("test3", pflag.ContinueOnError)
+	f.String("name", "jachin", "jachin")
+
+	res = getUnknownFlags(f, unknowns)
+
+	check = 0
+	if res != nil {
+		check = 1
+	}
+	assert.Equal(check, 0)
 }
