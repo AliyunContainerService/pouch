@@ -1,8 +1,8 @@
 package httpstream
 
 import (
-	"net/http/httptest"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -28,15 +28,15 @@ func TestIsUpgradeRequest(t *testing.T) {
 
 func TestNegotiateProtocol(t *testing.T) {
 	clientProtocols1 := []string{
-	"1", "2", "3", "4"}
+		"1", "2", "3", "4"}
 	serverProtocols1 := []string{
-	"2", "4"}
+		"2", "4"}
 	if code := negotiateProtocol(clientProtocols1, serverProtocols1); code != "2" {
 		t.Fatalf("expect return 2, for 2 is the first matching protocol, but get %s", code)
 	}
 
 	clientProtocols2 := []string{
-	"1", "2", "3", "4"}
+		"1", "2", "3", "4"}
 	serverProtocols2 := []string{}
 
 	if code := negotiateProtocol(clientProtocols2, serverProtocols2); code != "" {
@@ -45,7 +45,7 @@ func TestNegotiateProtocol(t *testing.T) {
 
 	clientProtocols3 := []string{}
 	serverProtocols3 := []string{
-	"1", "2", "3", "4"}
+		"1", "2", "3", "4"}
 
 	if code := negotiateProtocol(clientProtocols3, serverProtocols3); code != "" {
 		t.Fatalf("expect return nil, for client protocols are empty, but get %s", code)
@@ -54,15 +54,15 @@ func TestNegotiateProtocol(t *testing.T) {
 
 type fakeResponse struct {
 	header http.Header
-	code int
+	code   int
 }
 
 func TestHandshake(t *testing.T) {
 	// Normal case
 	clientProtocols1 := []string{
-	"1", "2"}
+		"1", "2"}
 	serverProtocols1 := []string{
-	"2", "4"}
+		"2", "4"}
 	request1, err := http.NewRequest("GET", "www.123.com", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -79,9 +79,9 @@ func TestHandshake(t *testing.T) {
 	}
 	//404 Not Found
 	clientProtocols2 := []string{
-	"1", "2", "3", "4"}
+		"1", "2", "3", "4"}
 	serverProtocols2 := []string{
-	"5", "6", "7", "8"}
+		"5", "6", "7", "8"}
 	request2, err := http.NewRequest("GET", "www.123.com", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -105,7 +105,7 @@ func TestHandshake(t *testing.T) {
 	}
 	//client list is nil
 	serverProtocols3 := []string{
-	"2", "4"}
+		"2", "4"}
 	request3, err := http.NewRequest("GET", "www.123.com", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -120,7 +120,7 @@ func TestHandshake(t *testing.T) {
 	}
 	//server list is nil
 	clientProtocols4 := []string{
-	"2", "4"}
+		"2", "4"}
 	serverProtocols4 := []string{}
 	request4, err := http.NewRequest("GET", "www.123.com", nil)
 	if err != nil {
