@@ -2,7 +2,6 @@ package ctrd
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestHasPort(t *testing.T) {
@@ -42,7 +41,6 @@ func TestCanonicalAddr(t *testing.T) {
 
 func TestUseProxy(t *testing.T) {
 	// TODO
-	assert := assert.New(t)
 	type args struct {
 		str string
 	}
@@ -66,9 +64,6 @@ func TestUseProxy(t *testing.T) {
 		{name: "test12", args: args{str: string("localhost:8080")}, want: false},
 	}
 
-	noProxy := noProxyEnv.Get()
-
-	assert.Equal(noProxy,"test")
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
