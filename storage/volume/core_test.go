@@ -176,8 +176,8 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
-	driverName := "fake_driver4"
-	dir, err := ioutil.TempDir("", "TestGetVolume")
+	driverName := "fake_driver23"
+	dir, err := ioutil.TempDir("", "TestGetVolume23")
 	if err != nil {
 		t.Fatal(err)
 	}
