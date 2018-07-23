@@ -1,8 +1,8 @@
 package ctrd
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestHasPort(t *testing.T) {
@@ -39,7 +39,6 @@ func TestCanonicalAddr(t *testing.T) {
 	// TODO
 }
 
-
 func TestUseProxy(t *testing.T) {
 	// TODO
 	type args struct {
@@ -68,7 +67,7 @@ func TestUseProxy(t *testing.T) {
 		{name: "test15", args: args{str: string("baidu.com:8080")}, want: false},
 	}
 
-	os.Setenv("no_proxy",",:80,baidu.com:80,.baidu.com,baidu.")
+	os.Setenv("no_proxy", ",:80,baidu.com:80,.baidu.com,baidu.")
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
