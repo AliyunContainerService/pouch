@@ -176,7 +176,52 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	// prepare temp folder
+	driverName := "fake_driver5"
+	dir, err := ioutil.TempDir("", "TestListVolumeName")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// prepare core instance for testing
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// prepare fake driver
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	// prepare a map of fake volumes
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	// main test part for testing the feature
+	namearray, err := core.ListVolumeName(nil)
+	if err != nil {
+		t.Fatalf("get volume names failed: %v", err)
+	}
+	for k := 0; k < len(namearray); k++ {
+		name := namearray[k]
+		if name == "" {
+			t.Fatalf("empty name occurs in volume name")
+		}
+		_, found := volmap[name]
+		if found == false {
+			t.Fatalf("list volume names %v not found", name)
+		}
+	}
 }
 
 func TestRemoveVolume(t *testing.T) {
