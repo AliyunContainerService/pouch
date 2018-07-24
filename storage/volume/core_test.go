@@ -221,7 +221,55 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+
+	dir, err := ioutil.TempDir("", "TestVolumePath")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// create createVolumeCore
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// add test data
+	driverName1 := "fake_8"
+	volumeName1 := "test_path_volume"
+	vID1 := types.VolumeID{Name: volumeName1, Driver: driverName1}
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	//test CreateVolume
+	v1, err1 := core.CreateVolume(vID1)
+	if err != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+	if v1.Name != volumeName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volumeName1, v1.Name)
+	}
+	if v1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
+	}
+
+	//get v,dv of volumeDriver
+	v2, _, err2 := core.getVolumeDriver(vID1)
+	if err2 != nil {
+		t.Fatal(err2)
+	}
+
+	//get path from test method
+	path, err3 := core.VolumePath(vID1)
+	if err3 != nil {
+		t.Fatal(err2)
+	}
+
+	//case 1: path of method is different from real path
+	if v2.Status.MountPoint != path {
+		t.Fatalf("expect a right path but got a wrong path")
+	}
+
 }
 
 func TestAttachVolume(t *testing.T) {
