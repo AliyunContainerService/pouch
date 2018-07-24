@@ -47,15 +47,15 @@ func TestCanonicalAddr(t *testing.T) {
 
 	for i := 0; i < len(methods); i++ {
 
-		testUrl := methods[i] + str
+		testURL := methods[i] + str
 
-		parseUrl, err := url.Parse(testUrl)
+		parseURL, err := url.Parse(testURL)
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		addr := canonicalAddr(parseUrl)
+		addr := canonicalAddr(parseURL)
 
 		if hasPort(addr) == false {
 			t.Fatalf("no port!!")
