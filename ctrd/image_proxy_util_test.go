@@ -1,8 +1,8 @@
 package ctrd
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestHasPort(t *testing.T) {
