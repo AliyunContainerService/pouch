@@ -316,5 +316,38 @@ func TestAttachVolume(t *testing.T) {
 }
 
 func TestDetachVolume(t *testing.T) {
-	// TODO
+	// Create A Volume For Test
+	volName0 := "vol0"
+	driverName := "fake_dirver"
+	volid0 := types.VolumeID{Name: volName0, Driver: driverName}
+	dir, err := ioutil.TempDir("", "TestVolumePath")
+	if err != nil {
+			t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+			t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	v, err1 := core.CreateVolume(volid0)
+	if err1 != nil {
+		t.Fatal(err1)
+	}
+
+	/* 1. Reference Not Null */
+	v.Spec.Extra = map[string]string{}
+	v.SetOption(types.OptionRef, "withRef")
+
+	v_ret, err := core.DetachVolume(volid0, nil)
+	if err != nil {
+			t.Fatal(err)
+	}
+	if v_ret.Name != volName0 {
+		t.Fatalf("Expect the returned volume name %s equals the input volume name %s", v_ret.Name, volName0)
+	}
 }
