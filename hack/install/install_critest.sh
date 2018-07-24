@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly CRITEST_VERSION=1.0.0-beta.0
+CRITEST_VERSION=1.0.0-beta.0
 
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
@@ -60,7 +60,15 @@ critest::install_ginkgo() {
 main() {
   critest::install_ginkgo
 
-  local has_installed
+  local cri_runtime has_installed
+  cri_runtime=$1
+
+  if [[ "${cri_runtime}" == "v1alpha1" ]]; then
+      CRITEST_VERSION="1.0.0-alpha.0"
+  else
+      CRITEST_VERSION="1.0.0-beta.0"
+  fi
+
   has_installed="$(critest::check_version)"
   if [[ "${has_installed}" = "true" ]]; then
     echo "critest-${CRITEST_VERSION} has been installed."
@@ -74,4 +82,4 @@ main() {
   command -v ginkgo > /dev/null
 }
 
-main
+main "$@"

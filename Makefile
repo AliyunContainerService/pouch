@@ -140,14 +140,20 @@ integration-test: ## run daemon integration-test
 	@mkdir -p coverage
 	./hack/testing/run_daemon_integration.sh
 
-.PHONY: cri-test
-cri-test: ## run v1 alpha2 cri-test
+.PHONY: cri-v1alpha1-test
+cri-v1alpha1-test: ## run v1 alpha1 cri-v1alpha1-test
 	@echo $@
 	@mkdir -p coverage
-	./hack/testing/run_daemon_cri_integration.sh
+	./hack/testing/run_daemon_cri_integration.sh v1alpha1
+
+.PHONY: cri-v1alpha2-test
+cri-v1alpha2-test: ## run v1 alpha2 cri-v1alpha2-test
+	@echo $@
+	@mkdir -p coverage
+	./hack/testing/run_daemon_cri_integration.sh v1alpha2
 
 .PHONY: test
-test: unit-test integration-test cri-test ## run the unit-test, integration-test and cri-test
+test: unit-test integration-test cri-v1alpha1-test cri-v1alpha2-test ## run the unit-test, integration-test , cri-v1alpha1-test and cri-v1alpha2-test
 
 .PHONY: coverage
 coverage: ## combine coverage after test

@@ -13,7 +13,6 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
-	runtime "github.com/alibaba/pouch/cri/apis/v1alpha1"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -25,6 +24,7 @@ import (
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
+	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 const (
@@ -497,7 +497,6 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	specAnnotation[anno.ContainerType] = anno.ContainerTypeContainer
 	specAnnotation[anno.SandboxName] = podSandboxID
 
-	resources := r.GetConfig().GetLinux().GetResources()
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
 			Entrypoint: config.Command,
@@ -511,12 +510,9 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			StdinOnce:      config.StdinOnce,
 			Tty:            config.Tty,
 			SpecAnnotation: specAnnotation,
-			NetPriority:    config.NetPriority,
-			DiskQuota:      resources.GetDiskQuota(),
 		},
 		HostConfig: &apitypes.HostConfig{
-			Binds:     generateMountBindings(config.GetMounts()),
-			Resources: parseResourcesFromCRI(resources),
+			Binds: generateMountBindings(config.GetMounts()),
 		},
 		NetworkingConfig: &apitypes.NetworkingConfig{},
 	}
@@ -717,8 +713,6 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		imageRef = imageInfo.RepoDigests[0]
 	}
 
-	resources := container.HostConfig.Resources
-	diskQuota := container.Config.DiskQuota
 	status := &runtime.ContainerStatus{
 		Id:          container.ID,
 		Metadata:    metadata,
@@ -735,8 +729,6 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Labels:      labels,
 		Annotations: annotations,
 		// TODO: LogPath.
-		Volumes:   parseVolumesFromPouch(container.Config.Volumes),
-		Resources: parseResourcesFromPouch(resources, diskQuota),
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil
@@ -803,7 +795,6 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 	resources := r.GetLinux()
 	updateConfig := &apitypes.UpdateConfig{
 		Resources: parseResourcesFromCRI(resources),
-		DiskQuota: resources.GetDiskQuota(),
 	}
 	err = c.ContainerMgr.Update(ctx, containerID, updateConfig)
 	if err != nil {

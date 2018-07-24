@@ -7,74 +7,11 @@ import (
 	"testing"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
-	runtime "github.com/alibaba/pouch/cri/apis/v1alpha1"
 	"github.com/alibaba/pouch/daemon/mgr"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-)
-
-var (
-	memorySwappiness int64 = 1000
-	resources              = apitypes.Resources{
-		CPUPeriod:   1000,
-		CPUQuota:    1000,
-		CPUShares:   1000,
-		Memory:      1000,
-		CpusetCpus:  "0",
-		CpusetMems:  "0",
-		BlkioWeight: uint16(100),
-		BlkioWeightDevice: []*apitypes.WeightDevice{
-			{
-				Path:   "foo",
-				Weight: uint16(1),
-			},
-		},
-		BlkioDeviceReadBps: []*apitypes.ThrottleDevice{
-			{
-				Path: "foo",
-				Rate: uint64(1000),
-			},
-		},
-		MemorySwappiness: &memorySwappiness,
-		Ulimits: []*apitypes.Ulimit{
-			{
-				Name: "foo",
-				Hard: 1,
-				Soft: 1,
-			},
-		},
-	}
-	linuxContainerResources = runtime.LinuxContainerResources{
-		CpuPeriod:          1000,
-		CpuQuota:           1000,
-		CpuShares:          1000,
-		MemoryLimitInBytes: 1000,
-		CpusetCpus:         "0",
-		CpusetMems:         "0",
-		BlkioWeight:        uint32(100),
-		DiskQuota:          map[string]string{"foo": "foo"},
-		BlkioWeightDevice: []*runtime.WeightDevice{
-			{
-				Path:   "foo",
-				Weight: uint32(1),
-			},
-		},
-		BlkioDeviceReadBps: []*runtime.ThrottleDevice{
-			{
-				Path: "foo",
-				Rate: uint64(1000),
-			},
-		},
-		MemorySwappiness: &runtime.Int64Value{Value: 1000},
-		Ulimits: []*runtime.Ulimit{
-			{
-				Name: "foo",
-				Hard: 1,
-				Soft: 1,
-			},
-		},
-	}
+	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 func Test_parseUint32(t *testing.T) {
@@ -835,6 +772,24 @@ func Test_parseUserFromImageUser(t *testing.T) {
 }
 
 func Test_parseResourcesFromCRI(t *testing.T) {
+	var (
+		resources = apitypes.Resources{
+			CPUPeriod:  1000,
+			CPUQuota:   1000,
+			CPUShares:  1000,
+			Memory:     1000,
+			CpusetCpus: "0",
+			CpusetMems: "0",
+		}
+		linuxContainerResources = runtime.LinuxContainerResources{
+			CpuPeriod:          1000,
+			CpuQuota:           1000,
+			CpuShares:          1000,
+			MemoryLimitInBytes: 1000,
+			CpusetCpus:         "0",
+			CpusetMems:         "0",
+		}
+	)
 	type args struct {
 		runtimeResources *runtime.LinuxContainerResources
 	}
@@ -862,75 +817,6 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseResourcesFromCRI(tt.args.runtimeResources); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseResourcesFromCRI() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_parseResourcesFromPouch(t *testing.T) {
-	type args struct {
-		apitypesResources apitypes.Resources
-		diskQuota         map[string]string
-	}
-	tests := []struct {
-		name string
-		args args
-		want *runtime.LinuxContainerResources
-	}{
-		{
-			name: "normal test",
-			args: args{
-				apitypesResources: resources,
-				diskQuota:         map[string]string{"foo": "foo"},
-			},
-			want: &linuxContainerResources,
-		},
-		{
-			name: "nil test",
-			args: args{
-				apitypesResources: apitypes.Resources{},
-				diskQuota:         nil,
-			},
-			want: &runtime.LinuxContainerResources{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := parseResourcesFromPouch(tt.args.apitypesResources, tt.args.diskQuota); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseResourcesFromPouch() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_parseVolumesFromPouch(t *testing.T) {
-	type args struct {
-		containerVolumes map[string]interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want map[string]*runtime.Volume
-	}{
-		{
-			name: "normal test",
-			args: args{
-				containerVolumes: map[string]interface{}{"foo": "foo"},
-			},
-			want: map[string]*runtime.Volume{"foo": {}},
-		},
-		{
-			name: "nil test",
-			args: args{
-				containerVolumes: make(map[string]interface{}),
-			},
-			want: make(map[string]*runtime.Volume),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := parseVolumesFromPouch(tt.args.containerVolumes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseVolumesFromPouch() = %v, want %v", got, tt.want)
 			}
 		})
 	}
