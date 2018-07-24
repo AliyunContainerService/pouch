@@ -263,8 +263,8 @@ func TestVolumePath(t *testing.T) {
 
 	// find volume path
 	v1Path, err := core.VolumePath(volid1)
-	if v1Path == "" {
-		t.Fatalf("expect get volume path %s, but got a volume path ''", v1Path)
+	if v1Path != "/fake/vol1" {
+		t.Fatalf("expect get volume path '/fake/vol1', but got a volume path %s", v1Path)
 	}
 	if err != nil {
 		t.Fatalf("expect get volume path not found error, but found err")
