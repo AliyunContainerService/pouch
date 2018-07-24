@@ -50,29 +50,40 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
-}
-
-func TestGetUnknownFlags(t *testing.T) {
-
-	//without unknown flags
-	flagSet := pflag.NewFlagSet("flagset1", 0)
-	flagSet.String("a", "1", "test")
-	flagSet.String("b", "2", "test")
-	//with unknown flags
+	//without  conflict
+	flagSet0 := pflag.NewFlagSet("flagset1", 0)
+	flagSet0.String("a", "1", "test")
+	s0 := []string{"--a", "31111"}
+	flagSet0.Parse(s0)
+	//with slice conflict
+	flagSet1 := pflag.NewFlagSet("flagset1", 0)
+	flagSet1.StringSlice("slice", []string{"111", "222", "333"}, "test")
+	s1 := []string{"--slice=aaa,bbb,ccc"}
+	flagSet1.Parse(s1)
+	//with conflict
 	flagSet2 := pflag.NewFlagSet("flagset2", 0)
-	flagSet2.String("a", "1", "test")
-	flagSet2.String("c", "2", "test")
+	flagSet2.String("b", "3", "test")
+	s2 := []string{"--b", "222"}
+	flagSet2.Parse(s2)
 	fileFlags := map[string]interface{}{
-		"a": "1",
-		"b": "2",
+		"b":     "2",
+		"slice": []string{"111", "222", "333"},
 	}
-	error := getUnknownFlags(flagSet, fileFlags)
+	error := getConflictConfigurations(flagSet0, fileFlags)
 	if error != nil {
 		t.Fatal(error)
 	}
-	error = getUnknownFlags(flagSet2, fileFlags)
+	error = getConflictConfigurations(flagSet1, fileFlags)
+	if error != nil {
+		t.Fatal(error)
+	}
+	error = getConflictConfigurations(flagSet2, fileFlags)
 	if error == nil {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}
+
+}
+
+func TestGetUnknownFlags(t *testing.T) {
+	//todo
 }
