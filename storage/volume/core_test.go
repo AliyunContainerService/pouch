@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -222,6 +223,37 @@ func TestRemoveVolume(t *testing.T) {
 
 func TestVolumePath(t *testing.T) {
 	// TODO
+	assert := assert.New(t)
+
+	volumeName := "test13"
+	driverName := "fake_driver13"
+	dir, err := ioutil.TempDir("", "TestGetVolume13")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	volid := types.VolumeID{Name: volumeName, Driver: driverName}
+	v1, err2 := core.CreateVolume(volid)
+	_ = v1
+	if err2 != nil {
+		t.Fatalf("create volume error: %v", err2)
+	}
+
+	path, err3 := core.VolumePath(volid)
+	if err3 != nil {
+		t.Fatal(err3)
+	}
+
+	assert.Equal(path, "/fake/test13")
 }
 
 func TestAttachVolume(t *testing.T) {
@@ -230,4 +262,51 @@ func TestAttachVolume(t *testing.T) {
 
 func TestDetachVolume(t *testing.T) {
 	// TODO
+	volumeDriverName := "fake12"
+
+	dir, err := ioutil.TempDir("", "TestCreateVolume2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// create volume core
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driverName1 := "fake12"
+	volumeName1 := "test12"
+	vID1 := types.VolumeID{Name: volumeName1, Driver: driverName1}
+	driver.Register(driver.NewFakeDriver(volumeDriverName))
+	defer driver.Unregister(volumeDriverName)
+
+	extra := map[string]string{}
+
+	v0, err0 := core.DetachVolume(vID1, extra)
+	if v0 != nil {
+		t.Fatalf("expect get volume nil, but got a volume with name %s", v0.Name)
+	}
+	if err0 != volerr.ErrVolumeNotFound {
+		if err0 == nil {
+			t.Fatal("expect get volume not found error, but err is nil")
+		} else {
+			t.Fatalf("expect get volume not found error, but got %v", err0)
+		}
+	}
+
+	core.CreateVolume(types.VolumeID{Name: "test12", Driver: volumeDriverName})
+
+	v1, err1 := core.DetachVolume(vID1, extra)
+	if err1 != nil {
+		t.Fatalf("attach volume error: %v", err1)
+	}
+
+	if v1.Name != volumeName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volumeName1, v1.Name)
+	}
+	if v1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
+	}
 }
