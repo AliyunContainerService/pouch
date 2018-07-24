@@ -177,6 +177,53 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
+	driverName := "fake_driver4"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	//prepare some volumes
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	//in class found that labels never be used
+	names, err := core.ListVolumeName(nil)
+
+	if err != nil {
+		t.Fatalf("list volume name error: %v", err)
+	}
+
+	if len(names) != len(volmap) {
+		t.Fatalf("the result size of listVolumeName not equal to the real volume count!")
+	}
+
+	//all name should in the real volumes
+	j := 0
+	for j = 0; j < len(names); j++ {
+		if volmap[names[j]] == nil {
+			t.Fatalf("the volume name %v can not find in the real volumes!", names[j])
+		}
+	}
+
 }
 
 func TestRemoveVolume(t *testing.T) {
