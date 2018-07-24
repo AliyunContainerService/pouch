@@ -176,28 +176,11 @@ func TestListVolumes(t *testing.T) {
 }
 
 
-//5
 func TestListVolumeName(t *testing.T) {
-	// TODO
-	dir, err := ioutil.TempDir("", "TestGetVolume")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	// create volume core
-	core, err := createVolumeCore(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-
-	//in class found that labels never be used
-	core.ListVolumeName(map[string]string{})
+	//TODO
 }
 
 
-//6
 func TestRemoveVolume(t *testing.T) {
 	volName1 := "vol2"
 	driverName1 := "fake_driver12"
@@ -240,13 +223,11 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 
-//7
 func TestVolumePath(t *testing.T) {
 	// TODO
 }
 
 
-//8
 func TestAttachVolume(t *testing.T) {
 	// TODO
 }
@@ -254,10 +235,14 @@ func TestAttachVolume(t *testing.T) {
 
 
 
-//注意到detachVolume方法的第二个参数， 貌似怎么传也不会出问题···
+/**
+ *	@Author: lzp
+ *	total test case: two
+ *  case1 : detach a not exist volume
+ *  case2 : detach a attached volume
+ */
 func TestDetachVolume(t *testing.T) {
-	// TODO
-	//创建卷、绑定卷逻辑由上面TestCreateVolume、 TestAttachVolume做正确性保证
+	//prepare
 	volName := "fake_9"
 	driverName := "fake_driver9"
 	dir, err := ioutil.TempDir("", "TestDetachVolume")
@@ -273,20 +258,19 @@ func TestDetachVolume(t *testing.T) {
 
 	vid := types.VolumeID{Name: volName, Driver: driverName}
 
-	volume, err := core.DetachVolume(vid, map[string]string{})
+	vol, err := core.DetachVolume(vid, map[string]string{})
 
-	//can not detach volume before attach it
-	if err == nil {
+	//case 1 : can not detach volume which never be attached
+	if err == nil || vol != nil && vol.Name == volName {
 		t.Fatalf("expect detach a never attach volume error, but get a no error result!")
 	}
-
 
 	driver.Register(driver.NewFakeDriver(driverName))
 	defer driver.Unregister(driverName)
 
 	//create volume and attach volume
 	v1, err1 := core.CreateVolume(vid)
-	if err != nil {
+	if err1 != nil {
 		t.Fatalf("create volume error: %v", err1)
 	}
 	if v1.Name != volName {
@@ -295,7 +279,6 @@ func TestDetachVolume(t *testing.T) {
 	if v1.Driver() != driverName {
 		t.Fatalf("expect volume driver is %s, but got %s", driverName, v1.Driver())
 	}
-
 
 	v2, err2 := core.AttachVolume(vid, map[string]string{})
 	if err2 != nil {
@@ -308,8 +291,7 @@ func TestDetachVolume(t *testing.T) {
 		t.Fatalf("expect volume driver is %s, but got %s", driverName, v2.Driver())
 	}
 
-
-	//test detach volume
+	//case 2: detach a attached volume
 	v3, err3 := core.DetachVolume(vid, map[string]string{})
 	if err3 != nil {
 		t.Fatalf("detach volume error: %v", err3)
