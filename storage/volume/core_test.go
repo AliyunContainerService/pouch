@@ -1,15 +1,16 @@
 package volume
 
 import (
-	"github.com/alibaba/pouch/storage/volume/driver"
-	volerr "github.com/alibaba/pouch/storage/volume/error"
-	"github.com/alibaba/pouch/storage/volume/types"
 	"io/ioutil"
 	"os"
 	"path"
 	"sort"
 	"strconv"
 	"testing"
+
+	"github.com/alibaba/pouch/storage/volume/driver"
+	volerr "github.com/alibaba/pouch/storage/volume/error"
+	"github.com/alibaba/pouch/storage/volume/types"
 )
 
 func createVolumeCore(root string) (*Core, error) {
