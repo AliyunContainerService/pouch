@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"errors"
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -50,28 +50,26 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	assert := assert.New(t)
+        assert := assert.New(t)
 
-	fileFlags := map[string]interface{}{
-		"flag1": "1",
-		"flag2": "2",
-	}
+        fileFlags := map[string]interface{}{
+                "flag1": "1",
+                "flag2": "2",
+        }
 
-	flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
-	flagSet.String("flag1", "1", "flag1")
-	flagSet.String("flag2", "2", "flag2")
-	flagSet.String("flag3", "3", "flag3")
-	flagSet.IntSlice("slice", []int{1, 2, 3}, "slice data")
+        flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
+        flagSet.String("flag1", "1", "flag1")
+        flagSet.String("flag2", "2", "flag2")
+        flagSet.String("flag3", "3", "flag3")
+        flagSet.IntSlice("slice", []int{1, 2, 3}, "slice data")
 
-	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
+        assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
 
-	flagSet.Set("flag1", "2")
-	assert.Equal(fmt.Errorf("found conflict flags in command line and config file: from flag: 2 and from config file: 1"),
-		getConflictConfigurations(flagSet, fileFlags))
+        flagSet.Set("flag1", "2")
+        assert.Equal(getConflictConfigurations(flagSet, fileFlags), errors.New("found conflict flags in command line and config file: from flag: 2 and from config file: 1"))
 
-	flagSet.Set("flag2", "1")
-	assert.Equal(fmt.Errorf("found conflict flags in command line and config file: from flag: 2 and from config file: 1, from flag: 1 and from config file: 2"),
-		getConflictConfigurations(flagSet, fileFlags))
+        flagSet.Set("flag2", "1")
+        assert.Equal(getConflictConfigurations(flagSet, fileFlags), errors.New("found conflict flags in command line and config file: from flag: 2 and from config file: 1, from flag: 1 and from config file: 2"))
 }
 
 func TestGetUnknownFlags(t *testing.T) {
