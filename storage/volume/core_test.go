@@ -176,7 +176,39 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	volName1 := "vol2"
+	driverName1 := "fake_driver12"
+	volId1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	dir, err := ioutil.TempDir("", "TestListVolumeName")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	v, err :=core.CreateVolume(volId1)
+	if(err != nil || v.Name != volName1){
+		t.Fatal(" fail to create the wanted volume. ")
+	}
+	label := make(map[string]string)
+	nameList,err := core.ListVolumeName(label)
+	if err != nil{
+		t.Fatal(err)
+	}
+	if len(nameList) != 1 {
+		t.Fatal(" expect only 1 volume. ")
+	}
+	name := nameList[0]
+	if( name != volName1){
+		t.Fatalf( "expect listname : %s, bu get %s", volName1, name )
+	}
 }
 
 func TestRemoveVolume(t *testing.T) {
