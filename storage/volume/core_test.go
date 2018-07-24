@@ -175,9 +175,11 @@ func TestListVolumes(t *testing.T) {
 	}
 }
 
+
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	//TODO
 }
+
 
 func TestRemoveVolume(t *testing.T) {
 	volName1 := "vol2"
@@ -220,14 +222,84 @@ func TestRemoveVolume(t *testing.T) {
 	}
 }
 
+
 func TestVolumePath(t *testing.T) {
 	// TODO
 }
+
 
 func TestAttachVolume(t *testing.T) {
 	// TODO
 }
 
+
+
+
+/**
+ *	@Author: lzp
+ *	total test case: two
+ *  case1 : detach a not exist volume
+ *  case2 : detach a attached volume
+ */
 func TestDetachVolume(t *testing.T) {
-	// TODO
+	//prepare
+	volName := "fake_9"
+	driverName := "fake_driver9"
+	dir, err := ioutil.TempDir("", "TestDetachVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	vid := types.VolumeID{Name: volName, Driver: driverName}
+
+	vol, err := core.DetachVolume(vid, map[string]string{})
+
+	//case 1 : can not detach volume which never be attached
+	if err == nil || vol != nil && vol.Name == volName {
+		t.Fatalf("expect detach a never attach volume error, but get a no error result!")
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	//create volume and attach volume
+	v1, err1 := core.CreateVolume(vid)
+	if err1 != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+	if v1.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v1.Name)
+	}
+	if v1.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v1.Driver())
+	}
+
+	v2, err2 := core.AttachVolume(vid, map[string]string{})
+	if err2 != nil {
+		t.Fatalf("attach volume error: %v", err2)
+	}
+	if v2.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v2.Name)
+	}
+	if v2.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v2.Driver())
+	}
+
+	//case 2: detach a attached volume
+	v3, err3 := core.DetachVolume(vid, map[string]string{})
+	if err3 != nil {
+		t.Fatalf("detach volume error: %v", err3)
+	}
+	if v3.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v3.Name)
+	}
+	if v3.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v3.Driver())
+	}
 }
