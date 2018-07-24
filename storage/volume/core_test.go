@@ -199,7 +199,7 @@ func TestRemoveVolume(t *testing.T) {
 	defer driver.Unregister(driverName1)
 
 	v1, err1 := core.CreateVolume(volid1)
-	if err != nil {
+	if err1 != nil {
 		t.Fatalf("create volume error: %v", err1)
 	}
 	if v1.Name != volName1 {
