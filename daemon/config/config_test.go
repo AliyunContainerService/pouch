@@ -53,5 +53,25 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+
+	//without unknown flags
+	flagSet := pflag.NewFlagSet("flagset1", 0)
+	flagSet.String("a", "1", "test")
+	flagSet.String("b", "2", "test")
+	//with unknown flags
+	flagSet2 := pflag.NewFlagSet("flagset2", 0)
+	flagSet2.String("a", "1", "test")
+	flagSet2.String("c", "2", "test")
+	fileFlags := map[string]interface{}{
+		"a": "1",
+		"b": "2",
+	}
+	error := getUnknownFlags(flagSet, fileFlags)
+	if error != nil {
+		t.Fatal(error)
+	}
+	error = getUnknownFlags(flagSet2, fileFlags)
+	if error == nil {
+		t.Fatal("expect get driver not found error, but err is nil")
+	}
 }
