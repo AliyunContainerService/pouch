@@ -179,7 +179,7 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
-	driverName := "test_driver"
+	driverName := "fake_driver4"
 	dir, err := ioutil.TempDir("", "TestGetListVolume")
 	if err != nil {
 		t.Fatal(err)
@@ -196,19 +196,19 @@ func TestListVolumeName(t *testing.T) {
 
 	var i int64
 	volCreateList := list.New()
-	for i = 0; i < 5; i++ {
+	for i = 0; i < 6; i++ {
 		volumeName := strconv.FormatInt(i, 10)
 		volumeId := types.VolumeID{Name: volumeName, Driver: driverName}
 		_, err := core.CreateVolume(volumeId)
 		if err != nil {
-			t.Fatalf("volumes createerror: %v", err)
+			t.Fatalf("create volume error: %v", err)
 		}
 		volCreateList.PushBack(volumeName)
 	}
 
-	volumeNameArray, err := core.ListVolumeName(nil)
-	for k := 0; k < len(volumeNameArray); k++ {
-		vol := volumeNameArray[k]
+	volNameArray, err := core.ListVolumeName(nil)
+	for k := 0; k < len(volNameArray); k++ {
+		vol := volNameArray[k]
 		has := false
 		for e := volCreateList.Front(); e != nil; e = e.Next() {
 			if e.Value == vol {
@@ -217,7 +217,7 @@ func TestListVolumeName(t *testing.T) {
 		}
 
 		if has == false {
-			t.Fatalf("volumes list error", vol)
+			t.Fatalf("list volumes %s not found", vol)
 		}
 	}
 }
