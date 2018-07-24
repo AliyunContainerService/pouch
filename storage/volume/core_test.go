@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -221,7 +222,37 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	volumeName := "test24"
+	driverName := "fake_driver24"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	volid := types.VolumeID{Name: volumeName, Driver: driverName}
+	v1, err2 := core.CreateVolume(volid)
+	_ = v1
+	if err2 != nil {
+		t.Fatalf("create volume error: %v", err2)
+	}
+
+	path, err3 := core.VolumePath(volid)
+	if err3 != nil {
+		t.Fatal(err3)
+	}
+
+	assert.Equal(path, "/fake/test24")
 }
 
 func TestAttachVolume(t *testing.T) {
