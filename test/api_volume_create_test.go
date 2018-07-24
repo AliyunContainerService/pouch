@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
-
 	"github.com/go-check/check"
 )
 
@@ -43,7 +42,6 @@ func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 // TestPluginVolumeCreateOk tests creating a volume which created by volume plugin
 func (suite *APIVolumeCreateSuite) TestPluginVolumeCreateOk(c *check.C) {
 	vol := "TestPluginVolumeCreateOk"
-
 	obj := map[string]interface{}{
 		"Driver":     "local-persist",
 		"Name":       vol,
