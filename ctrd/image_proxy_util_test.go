@@ -1,6 +1,8 @@
 package ctrd
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestHasPort(t *testing.T) {
 	type args struct {
@@ -37,5 +39,27 @@ func TestCanonicalAddr(t *testing.T) {
 }
 
 func TestUseProxy(t *testing.T) {
-	// TODO
+	type args struct {
+		addr string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		{name: "test1", args: args{addr: ""}, want: true},
+		{name: "test2", args: args{addr: "localhost"}, want: false},
+		{name: "test3", args: args{addr: "localhost:8080"}, want: false},
+		{name: "test4", args: args{addr: "127.0.0.1:8080"}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := useProxy(tt.args.addr)
+			if got != tt.want {
+				t.Errorf("useProxy() = %v, want %v", got, tt.want)
+				return
+			}
+		})
+	}
 }
