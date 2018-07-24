@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,5 +54,30 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	flags := pflag.NewFlagSet("case0", pflag.ContinueOnError)
+	flags.String("a", "b", "c")
+	type args struct {
+		flagSet   *pflag.FlagSet
+		fileFlags map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want error
+	}{
+		{name: "test0", args: args{flagSet: flags, fileFlags: map[string]interface{}{"a": "a"}}, want: nil},
+		{name: "test1", args: args{flagSet: flags, fileFlags: map[string]interface{}{"a": "b"}}, want: nil},
+		{name: "test2", args: args{flagSet: flags, fileFlags: map[string]interface{}{"a": "c"}}, want: nil},
+		{name: "test3", args: args{flagSet: flags, fileFlags: map[string]interface{}{"a": "d"}}, want: nil},
+		{name: "test4", args: args{flagSet: flags, fileFlags: map[string]interface{}{"b": "a"}}, want: nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getUnknownFlags(tt.args.flagSet, tt.args.fileFlags)
+			if got != tt.want {
+				t.Errorf("!getUnknownFlags = %v, want %v", got, tt.want)
+				return
+			}
+		})
+	}
 }
