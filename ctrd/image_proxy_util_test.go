@@ -40,7 +40,7 @@ func TestCanonicalAddr(t *testing.T) {
 
 func TestUseProxy(t *testing.T) {
 	type args struct {
-		str string
+		str     string
 		noProxy string
 	}
 	tests := []struct {
