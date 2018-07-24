@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +50,53 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
+
+	assert := assert.New(t)
+
+	flagSet := new(pflag.FlagSet)
+	flagSet.String("normal", "", "normal flag")
+	flagSet.Set("normal", "normal")
+
+	flagSet.Bool("conflict", false, "conflict flag")
+	flagSet.Set("conflict", "true")
+
+	flagSet.String("notSet", "notSet", "flag not set")
+
+	flagSet.IntSlice("intSlice", []int{1, 2, 3}, "skip int slice")
+	flagSet.Set("intSlice", "[1,2,3]")
+
+	noConflictFlagMap := map[string]interface{}{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+	}
+
+	conflictFlagMap := map[string]interface{}{
+		"a":        "a",
+		"conflict": false,
+	}
+
+	skipUnsetFlagMap := map[string]interface{}{
+		"a":      "a",
+		"notSet": "notSet",
+	}
+
+	skipSliceFlagMap := map[string]interface{}{
+		"a":        100,
+		"intSlice": []int{1, 2, 3},
+	}
+
+	error := getConflictConfigurations(flagSet, noConflictFlagMap)
+	assert.Equal(error, nil)
+
+	error = getConflictConfigurations(flagSet, conflictFlagMap)
+	assert.NotNil(error)
+
+	error = getConflictConfigurations(flagSet, skipUnsetFlagMap)
+	assert.Equal(error, nil)
+
+	error = getConflictConfigurations(flagSet, skipSliceFlagMap)
+	assert.Equal(error, nil)
 }
 
 func TestGetUnknownFlags(t *testing.T) {
