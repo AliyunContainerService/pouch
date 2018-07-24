@@ -123,6 +123,9 @@ func useProxy(addr string) bool {
 		addr = addr[:strings.LastIndex(addr, ":")]
 	}
 
+	// There is no standard way of pattern matching for environmental variable no_proxy.
+	// The implementation below is similar to curl's.
+	// Here is a discussion of the syntax of no_proxy: https://github.com/curl/curl/issues/1208
 	for _, p := range strings.Split(noProxy, ",") {
 		p = strings.ToLower(strings.TrimSpace(p))
 		if len(p) == 0 {
