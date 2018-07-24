@@ -1,9 +1,10 @@
 package config
 
 import (
-	"testing"
-
+	"fmt"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -53,5 +54,31 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+	var fileFlags map[string]interface{}
+	var flagSet *pflag.FlagSet
+	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
+	flagSet = pflag.NewFlagSet("flagSet", pflag.ContinueOnError)
+	flagSet.String("a", "a", "")
+	flagSet.String("b", "b", "")
+	flagSet.String("c", "c", "")
+	flagSet.Parse([]string{"--a=a", "--b=b", "--c=c"})
+	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
+	fileFlags = map[string]interface{}{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+	}
+	assert.Equal(nil, getUnknownFlags(flagSet, fileFlags))
+
+	fileFlags = map[string]interface{}{
+		"a": "a",
+		"b": "b",
+		"c": "c",
+		"d": "d",
+		"e": "e",
+	}
+	assert.Equal(fmt.Errorf("unknown flags: d, e"), getUnknownFlags(flagSet, fileFlags))
 }
