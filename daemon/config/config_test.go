@@ -1,9 +1,9 @@
 package config
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIterateConfig(t *testing.T) {
