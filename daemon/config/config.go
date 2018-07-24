@@ -240,7 +240,7 @@ func iterateConfig(origin map[string]interface{}, config map[string]interface{})
 	}
 }
 
-// find unknown flag in config file
+// find unknown flag in pconfig file
 func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
 	var unknownFlags []string
 

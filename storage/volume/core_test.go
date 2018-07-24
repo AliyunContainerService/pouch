@@ -221,7 +221,21 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestVolumePath(t *testing.T) {
-	// TODO
+	p := types.VolumeID{
+		Name:      "kevin",
+		Driver:    "ykw",
+		Options:   map[string]string{"foo": "bar"},
+		Labels:    map[string]string{"foo": "bar"},
+		Selectors: map[string]string{"foo": "bar"},
+	}
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	// create volume core
+	core, err := createVolumeCore(dir)
+	core.VolumePath(p)
 }
 
 func TestAttachVolume(t *testing.T) {
