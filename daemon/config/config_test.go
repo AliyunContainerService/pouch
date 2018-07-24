@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,5 +54,38 @@ func TestGetConflictConfigurations(t *testing.T) {
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	// no error
+	unknowns := map[string]interface{}{
+		"name_a": "value_a",
+	}
+	flags := pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns), nil)
+
+	// name_b not in flagSet
+	unknowns = map[string]interface{}{
+		"name_a": "value_a",
+	}
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_b", "value_b", "help_b")
+	assert.Equal(getUnknownFlags(flags, unknowns).Error(), "unknown flags: name_a")
+
+	// name_a in flagset, name_b not in flagset
+	unknowns = map[string]interface{}{
+		"name_a": "value_a",
+		"name_b": "value_b",
+	}
+
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns).Error(), "unknown flags: name_b")
+
+	// unknowns is none
+	unknowns = map[string]interface{}{}
+
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns), nil)
 }
