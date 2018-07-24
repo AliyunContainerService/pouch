@@ -1,9 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 
-    "github.com/spf13/pflag"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,38 +51,39 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
+	// TODO
+
 	assert := assert.New(t)
 
-	fileflags := map[string]interface{}{
-		"name_a": "value_a",
-		"name_b": "value_b",
-		"name_s": []string{"value_s1", "value_s2"},
+	fileFlags := map[string]interface{}{
+		"fileFlagsName1": "fileFlagsValue1",
+		"fileFlagsName2": "fileFlagsValue2",
+		"slice":          "sliceData",
+		"commonName":     "fileFlagsCommonValue",
 	}
 
-	flags := pflag.NewFlagSet("testflags", pflag.ExitOnError)
-	flags.String("name_c", "value_c", "help_c")
+	flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
+	flagSet.String("flagSetName1", "", "flagSetName1")
+	flagSet.String("flagSetName2", "", "flagSetName2")
+	flagSet.String("commonName", "", "commonName")
+	flagSet.IntSlice("slice", []int{1, 2, 3}, "sliceData")
 
-	// While flags is not set
-	assert.Equal(nil, getConflictConfigurations(flags, fileflags))
+	/* test for slice type. even if there is common key, it will return nil */
+	flagSet.Parse([]string{"--slice=1,2,3"})
+	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
 
-	// While no conflict
-	flags.Parse([]string{"--name_c=value_c"})
-	assert.Equal(nil, getConflictConfigurations(flags, fileflags))
+	/* test for different key, it will return nil */
+	flagSet.Set("flagSetName1", "flagSetValue1")
+	flagSet.Set("flagSetName2", "flagSetValue2")
+	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
 
-	// Create conflict
-	flags.String("name_a", "value_a", "help_a")
-	flags.String("name_b", "value_b", "help_b")
-	flags.Parse([]string{"--name_a=value_a", "--name_b=value_b"})
-	assert.Equal("found conflict flags in command line and config file: from flag: value_a and from config file: value_a, from flag: value_b and from config file: value_b",
-		getConflictConfigurations(flags, fileflags).Error())
-
-	// Add slice conflict, it should be ignored
-	flags.StringSlice("name_s", []string{"value_s1", "value_s2"}, "help_s")
-	flags.Parse([]string{"--name_s=value_s1,value_s2"})
-	assert.Equal("found conflict flags in command line and config file: from flag: value_a and from config file: value_a, from flag: value_b and from config file: value_b",
-		getConflictConfigurations(flags, fileflags).Error())
+	/* test for common key, it will return string that has conflict key */
+	flagSet.Set("commonName", "flagSetCommonValue")
+	assert.Equal(fmt.Errorf("found conflict flags in command line and config file: from flag: flagSetCommonValue and from config file: fileFlagsCommonValue"),
+		getConflictConfigurations(flagSet, fileFlags))
 }
 
 func TestGetUnknownFlags(t *testing.T) {
+	// TODO
 
 }
