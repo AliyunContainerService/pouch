@@ -259,7 +259,7 @@ func TestDetachVolume(t *testing.T) {
 		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
 	}
 
-	v2, err2 := core.DetachVolume(volid1, nil);
+	v2, err2 := core.DetachVolume(volid1, nil)
 	if err2 != nil {
 		t.Fatalf("detach volume id %v error: %v", volid1, err2)
 	}
