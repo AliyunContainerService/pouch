@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -52,45 +51,41 @@ func TestConfigValidate(t *testing.T) {
 
 func TestGetConflictConfigurations(t *testing.T) {
 	// TODO
-
-	assert := assert.New(t)
-
-	fileFlags := map[string]interface{}{
-		"fileFlagsName1": "fileFlagsValue1",
-		"fileFlagsName2": "fileFlagsValue2",
-		"slice":          "sliceData",
-		"commonName1":    "fileFlagsCommonValue1",
-		"commonName2":    "fileFlagsCommonValue2",
-	}
-
-	flagSet := pflag.NewFlagSet("FlagConfig", pflag.ContinueOnError)
-	flagSet.String("flagSetName1", "", "flagSetName1")
-	flagSet.String("flagSetName2", "", "flagSetName2")
-	flagSet.String("commonName1", "", "commonName1")
-	flagSet.String("commonName2", "", "commonName2")
-	flagSet.IntSlice("slice", []int{1, 2, 3}, "sliceData")
-
-	/* test for slice type. even if there is common key, it will return nil */
-	flagSet.Parse([]string{"--slice=1,2,3"})
-	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
-
-	/* test for different key, it will return nil */
-	flagSet.Set("flagSetName1", "flagSetValue1")
-	flagSet.Set("flagSetName2", "flagSetValue2")
-	assert.Equal(nil, getConflictConfigurations(flagSet, fileFlags))
-
-	/* test for common key, it will return string that has conflict key */
-	flagSet.Set("commonName1", "flagSetCommonValue1")
-	assert.Equal(fmt.Errorf("found conflict flags in command line and config file: from flag: flagSetCommonValue1 and from config file: fileFlagsCommonValue1"),
-		getConflictConfigurations(flagSet, fileFlags))
-
-	/* test for multiple common key, it will return string that has each conflict key */
-	flagSet.Set("commonName2", "flagSetCommonValue2")
-	assert.Equal(fmt.Errorf("found conflict flags in command line and config file: from flag: flagSetCommonValue1 and from config file: fileFlagsCommonValue1, from flag: flagSetCommonValue2 and from config file: fileFlagsCommonValue2"),
-		getConflictConfigurations(flagSet, fileFlags))
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
 
+	// no error
+	unknowns := map[string]interface{}{
+		"name_a": "value_a",
+	}
+	flags := pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns), nil)
+
+	// name_b not in flagSet
+	unknowns = map[string]interface{}{
+		"name_a": "value_a",
+	}
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_b", "value_b", "help_b")
+	assert.Equal(getUnknownFlags(flags, unknowns).Error(), "unknown flags: name_a")
+
+	// name_a in flagset, name_b not in flagset
+	unknowns = map[string]interface{}{
+		"name_a": "value_a",
+		"name_b": "value_b",
+	}
+
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns).Error(), "unknown flags: name_b")
+
+	// unknowns is none
+	unknowns = map[string]interface{}{}
+
+	flags = pflag.NewFlagSet("testflags", pflag.ExitOnError)
+	flags.String("name_a", "value_a", "help_a")
+	assert.Equal(getUnknownFlags(flags, unknowns), nil)
 }
