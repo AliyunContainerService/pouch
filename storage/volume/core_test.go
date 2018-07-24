@@ -225,7 +225,45 @@ func TestVolumePath(t *testing.T) {
 }
 
 func TestAttachVolume(t *testing.T) {
-	// TODO
+	volumeName := "fake"
+	dir, err := ioutil.TempDir("", "TestCreateVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dn := "fake1"
+	vn := "test1"
+	vID1 := types.VolumeID{Name: vn, Driver: dn}
+	driver.Register(driver.NewFakeDriver(volumeName))
+	defer driver.Unregister(volumeName)
+	extra := map[string]string{}
+	v0, err0 := core.AttachVolume(vID1, extra)
+	if v0 != nil {
+		t.Fatalf("want volume is nil, but real is %s", v0.Name)
+	}
+	if err0 != volerr.ErrVolumeNotFound {
+		if err0 == nil {
+			t.Fatal("want not found, err is null")
+		} else {
+			t.Fatal("want not found error")
+		}
+	}
+	core.CreateVolume(types.VolumeID{Name: "test", Driver: volumeName})
+	v1, err1 := core.AttachVolume(vID1, extra)
+	if err1 != nil {
+		t.Fatal("attach volume error")
+	}
+	if v1.Name != vn {
+		t.Fatalf("want volume name is not wanted")
+	}
+	if v1.Driver() != dn {
+		t.Fatal("want driver is not wanted")
+	}
+
 }
 
 func TestDetachVolume(t *testing.T) {
