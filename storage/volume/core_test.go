@@ -177,6 +177,53 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
+	driverName := "fake_driver4"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	//prepare some volumes
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	//in class found that labels never be used
+	names, err := core.ListVolumeName(nil)
+
+	if err != nil {
+		t.Fatalf("list volume name error: %v", err)
+	}
+
+	if len(names) != len(volmap) {
+		t.Fatalf("the result size of listVolumeName not equal to the real volume count!")
+	}
+
+	//all name should in the real volumes
+	j := 0
+	for j = 0; j < len(names); j++ {
+		if volmap[names[j]] == nil {
+			t.Fatalf("the volume name %v can not find in the real volumes!", names[j])
+		}
+	}
+
 }
 
 func TestRemoveVolume(t *testing.T) {
@@ -227,7 +274,65 @@ func TestVolumePath(t *testing.T) {
 func TestAttachVolume(t *testing.T) {
 	// TODO
 }
-
 func TestDetachVolume(t *testing.T) {
-	// TODO
+	//prepare
+	volName := "fake_9"
+	driverName := "fake_driver9"
+	dir, err := ioutil.TempDir("", "TestDetachVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	vid := types.VolumeID{Name: volName, Driver: driverName}
+
+	vol, err := core.DetachVolume(vid, map[string]string{})
+
+	//case 1 : can not detach volume which never be attached
+	if err == nil || vol != nil && vol.Name == volName {
+		t.Fatalf("expect detach a never attach volume error, but get a no error result!")
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	//create volume and attach volume
+	v1, err1 := core.CreateVolume(vid)
+	if err1 != nil {
+		t.Fatalf("create volume error: %v", err1)
+	}
+	if v1.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v1.Name)
+	}
+	if v1.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v1.Driver())
+	}
+
+	v2, err2 := core.AttachVolume(vid, map[string]string{})
+	if err2 != nil {
+		t.Fatalf("attach volume error: %v", err2)
+	}
+	if v2.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v2.Name)
+	}
+	if v2.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v2.Driver())
+	}
+
+	//case 2: detach a attached volume
+	v3, err3 := core.DetachVolume(vid, map[string]string{})
+	if err3 != nil {
+		t.Fatalf("detach volume error: %v", err3)
+	}
+	if v3.Name != volName {
+		t.Fatalf("expect volume name is %s, but got %s", volName, v3.Name)
+	}
+	if v3.Driver() != driverName {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName, v3.Driver())
+	}
 }

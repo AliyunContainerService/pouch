@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,9 +50,40 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
-	// TODO
+	//without  conflict
+	flagSet0 := pflag.NewFlagSet("flagset1", 0)
+	flagSet0.String("a", "1", "test")
+	s0 := []string{"--a", "31111"}
+	flagSet0.Parse(s0)
+	//with slice conflict
+	flagSet1 := pflag.NewFlagSet("flagset1", 0)
+	flagSet1.StringSlice("slice", []string{"111", "222", "333"}, "test")
+	s1 := []string{"--slice=aaa,bbb,ccc"}
+	flagSet1.Parse(s1)
+	//with conflict
+	flagSet2 := pflag.NewFlagSet("flagset2", 0)
+	flagSet2.String("b", "3", "test")
+	s2 := []string{"--b", "222"}
+	flagSet2.Parse(s2)
+	fileFlags := map[string]interface{}{
+		"b":     "2",
+		"slice": []string{"111", "222", "333"},
+	}
+	error := getConflictConfigurations(flagSet0, fileFlags)
+	if error != nil {
+		t.Fatal(error)
+	}
+	error = getConflictConfigurations(flagSet1, fileFlags)
+	if error != nil {
+		t.Fatal(error)
+	}
+	error = getConflictConfigurations(flagSet2, fileFlags)
+	if error == nil {
+		t.Fatal("expect get driver not found error, but err is nil")
+	}
+
 }
 
 func TestGetUnknownFlags(t *testing.T) {
-	// TODO
+	//todo
 }
