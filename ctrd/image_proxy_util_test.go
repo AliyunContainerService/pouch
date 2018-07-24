@@ -2,7 +2,6 @@ package ctrd
 
 import (
 	"testing"
-	"net/url"
 )
 
 func TestHasPort(t *testing.T) {
@@ -36,21 +35,34 @@ func TestHasPort(t *testing.T) {
 }
 
 func TestCanonicalAddr(t *testing.T) {
-	//var userinfo *Userinfo
-	//userinfo = &Userinfo{"username","password",true}
-
-	var testUrl *url.URL
-	testUrl = &url.URL{"Scheme","Opaque",nil,
-		"127.0.0.1:8080","/usr/twc","RawPath",true,"RawQuery","Fragment"};
-
-	var result = canonicalAddr(testUrl)
-
-	if result != testUrl.Host {
-		t.Fatal("the result is error!")
-	}
-	return ;
+	// TODO
 }
 
 func TestUseProxy(t *testing.T) {
-	// TODO
+	type args struct {
+		str string
+	}
+	param := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		{name: "test1", args: args{str: string("localhost:8000")}, want: false},
+		{name: "test2", args: args{str: string("[ipv6::localhost]:8000")}, want: true},
+		{name: "test3", args: args{str: string(":8000")}, want: true},
+		{name: "test4", args: args{str: string("[ipv6::127.0.0.1]::8000")}, want: false},
+		{name: "test5", args: args{str: string("localhost")}, want: false},
+		{name: "test6", args: args{str: string("[ipv6::localhost]")}, want: false},
+		{name: "test7", args: args{str: string("[ipv6::localhost]8000")}, want: false},
+	}
+	for _, tt := range param {
+		t.Run(tt.name, func(t *testing.T) {
+			got := useProxy(tt.args.str)
+			if got != tt.want {
+				t.Errorf("useProxy() = %v, want %v", got, tt.want)
+				return
+			}
+		})
+	}
 }
