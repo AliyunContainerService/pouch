@@ -176,7 +176,41 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	driverName := "fake_driver4"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	volnamearray,err := core.ListVolumeName(nil)
+	for k := 0; k < len(volnamearray); k++ {
+		vol := volnamearray[k]
+		_, found := volmap[vol]
+		if found == false {
+			t.Fatalf("list volumes %s not found", vol)
+		}
+	}
 }
 
 func TestRemoveVolume(t *testing.T) {
