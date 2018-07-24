@@ -316,5 +316,45 @@ func TestAttachVolume(t *testing.T) {
 }
 
 func TestDetachVolume(t *testing.T) {
-	// TODO
+	volName1 := "vol2"
+	driverName1 := "fake_driver12"
+	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	extra1 := map[string]string{}
+
+	dir, err := ioutil.TempDir("", "TestDetachVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	//create volume core
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	core.CreateVolume(volid1)
+
+	//attach a volume and detach it
+	v1, err1 := core.AttachVolume(volid1, extra1)
+	if err1 != nil {
+		t.Fatalf("attach volume error: %v", err1)
+	}
+
+	if v1.Name != volName1 {
+		t.Fatalf("expect volume name is %s, but got %s", volName1, v1.Name)
+	}
+	if v1.Driver() != driverName1 {
+		t.Fatalf("expect volume driver is %s, but got %s", driverName1, v1.Driver())
+	}
+
+	//detach a null volume
+	_, err = core.DetachVolume(types.VolumeID{Name: "none", Driver: "none"}, nil)
+	if err == nil {
+		t.Fatal("expect get driver not found error, but err is nil")
+	}
 }
