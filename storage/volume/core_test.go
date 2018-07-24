@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -176,7 +177,66 @@ func TestListVolumes(t *testing.T) {
 }
 
 func TestListVolumeName(t *testing.T) {
-	// TODO
+	driverName := "fake_driver5"
+	dir, err := ioutil.TempDir("", "TestGetVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	volmap := map[string]*types.Volume{}
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName}
+		v, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+		volmap[volName] = v
+	}
+
+	var names []string
+	var names2 []string
+	volarray, err := core.ListVolumes(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, v := range volarray {
+		names = append(names, v.Name)
+	}
+
+	names2, err2 := core.ListVolumeName(nil)
+	if err2 != nil {
+		t.Fatal(err2)
+	}
+
+	sort.Strings(names)
+	sort.Strings(names2)
+
+	if len(names) != len(names2) {
+		t.Fatalf("There is no volume's names you want")
+	}
+
+	if (names == nil) != (names2 == nil) {
+		t.Fatalf("There is no volume's names you want")
+	}
+
+	for i, name := range names {
+		if name != names2[i] {
+			t.Fatalf("There is no volume's names you want")
+		}
+	}
+
 }
 
 func TestRemoveVolume(t *testing.T) {
