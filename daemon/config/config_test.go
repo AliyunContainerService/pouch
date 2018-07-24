@@ -45,7 +45,33 @@ func TestIterateConfig(t *testing.T) {
 }
 
 func TestConfigValidate(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	fileflags := map[string]interface{}{
+		"a": "a1",
+		"b": []string{"b1", "b2"},
+	}
+
+	flags := pflag.NewFlagSet("cmflags", pflag.ContinueOnError)
+
+	// Test No Flags
+	assert.Equal(nil, getConflictConfigurations(flags, fileflags))
+
+	flags.String("c", "c1", "c")
+	// Test No Conflicts
+	flags.Parse([]string{"--c=c1"})
+	assert.Equal(nil, getConflictConfigurations(flags, fileflags))
+
+	// Test Ignore Conflict of Type "Slice"
+	flags.StringSlice("b", []string{"b1", "b2"}, "b")
+	flags.Parse([]string{"--b=b1,b2"})
+	assert.Equal(nil, getConflictConfigurations(flags, fileflags))
+
+	// Test Conflict
+	flags.String("a", "a1", "a")
+	flags.Parse([]string{"--a=a1"})
+	assert.Equal("found conflict flags in command line and config file: from flag: a1 and from config file: a1",
+		getConflictConfigurations(flags, fileflags).Error())
 }
 
 func TestGetConflictConfigurations(t *testing.T) {
