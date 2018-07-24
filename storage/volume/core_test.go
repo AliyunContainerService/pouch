@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
+	"container/list"
 )
 
 func createVolumeCore(root string) (*Core, error) {
@@ -177,6 +178,46 @@ func TestListVolumes(t *testing.T) {
 
 func TestListVolumeName(t *testing.T) {
 	// TODO
+ 	driverName := "test_driver"
+ 	dir, err := ioutil.TempDir("", "TestGetListVolume")
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	defer os.RemoveAll(dir)
+
+ 	core, err := createVolumeCore(dir)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+
+ 	driver.Register(driver.NewFakeDriver(driverName))
+ 	defer driver.Unregister(driverName)
+
+ 	var i int64
+	volumeCreateList := list.New()
+ 	for i = 0; i < 5; i++ {
+ 		volumeName := strconv.FormatInt(i, 10)
+ 		volumeId := types.VolumeID{Name: volumeName, Driver: driverName}
+ 		_, err := core.CreateVolume(volumeId)
+ 		if err != nil {
+ 			t.Fatalf("volumes createerror: %v", err)
+ 		}
+		volumeCreateList.PushBack(volumeName)
+ 	}
+
+ 	volumeNameArray, err := core.ListVolumeName(nil)
+ 	for k := 0; k < len(volumeNameArray); k++ {
+ 		vol := volumeNameArray[k]
+ 		has := false
+		for e := volumeCreateList.Front(); e != nil; e = e.Next() {
+			if (e.Value == vol) {
+				has = true
+			}
+		}
+ 		if has == false {
+ 			t.Fatalf("volumes list error", vol)
+ 		}
+ 	}
 }
 
 func TestRemoveVolume(t *testing.T) {
