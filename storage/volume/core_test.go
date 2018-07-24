@@ -229,5 +229,42 @@ func TestAttachVolume(t *testing.T) {
 }
 
 func TestDetachVolume(t *testing.T) {
-	// TODO
+	var volumeName = "testDetachVolume"
+	volumeDriverName := "fakeTestDetachVolume"
+	dir, err := ioutil.TempDir("", "TestDetachVolume")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, errCvc := createVolumeCore(dir)
+	if errCvc != nil {
+		t.Fatal("create volume core fail")
+	}
+
+	driver.Register(driver.NewFakeDriver(volumeDriverName))
+	defer driver.Unregister(volumeDriverName)
+
+	volid := types.VolumeID{Name: volumeName, Driver: volumeDriverName}
+	_, errCv := core.CreateVolume(volid)
+	if errCv != nil {
+		t.Fatalf("create volume %v fail, error %v", volid, errCv)
+	}
+
+	var extra map[string]string
+	_, errAv := core.AttachVolume(volid, extra)
+	if errAv != nil {
+		t.Fatalf("attatch volume fail, error %v", errAv)
+	}
+	v, errDv := core.DetachVolume(volid, extra)
+	if errDv != nil {
+		t.Fatalf("detach volume fail, error %v", errDv)
+	}
+
+	if v.Name != volumeName {
+		t.Fatalf("volume name should be %s, but it is %s", volumeName, v.Name)
+	}
+	if v.Driver() != volumeDriverName {
+		t.Fatalf("volume driver should be %s, but it is %s", volumeDriverName, v.Driver())
+	}
 }
