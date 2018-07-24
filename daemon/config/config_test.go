@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/spf13/pflag"
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -50,7 +51,29 @@ func TestConfigValidate(t *testing.T) {
 
 func TestGetConflictConfigurations(t *testing.T) {
 
+	Testflag := pflag.NewFlagSet("ArgsForTest", pflag.ContinueOnError)
+	Testflag.String("input1", "1e9", "flag1")
+	Testflag.String("input2", "2e9", "flag2")
+	Testflag.IntSlice("numberarray1", []int{2, 2}, "caiji test")
+
+	Flags:= map[string]interface{}{
+		"input1": "1e9",
+		"input2": "2e9",
+		"numberarray":[]int{1, 2},
+	}
+
+
+	assert := assert.New(t)
+
+	assert.Equal(nil, getConflictConfigurations(Testflag, Flags))
+
+	Testflag.Set("input1", "2")
+	assert.Error(getConflictConfigurations(Testflag, Flags))
+	assert.Equal("found conflict flags in command line and config file: from flag: 2 and from config file: 1e9",
+		getConflictConfigurations(Testflag, Flags).Error())
+
 }
+
 
 func TestGetUnknownFlags(t *testing.T) {
 	// TODO

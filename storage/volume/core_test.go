@@ -239,8 +239,40 @@ func TestVolumePath(t *testing.T) {
 }
 
 func TestAttachVolume(t *testing.T) {
-	// TODO
+	volName1 := "vol2"
+	driverName1 := "fake_driver12"
+	volId1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	dir, err1 := ioutil.TempDir("", "TestAttachVolume")
+	if err1 != nil {
+		t.Fatal(" fail to create tmp dir. ")
+	}
+	defer os.RemoveAll(dir)
+	// create volume core
+	core, err2 := createVolumeCore(dir)
+	if err2 != nil {
+		t.Fatal(" fail to create volume core. ")
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName1))
+	defer driver.Unregister(driverName1)
+
+	v1, err := core.CreateVolume(volId1)
+	if volName1 != v1.Name{
+		t.Fatalf("expect Volume Name: %s , but get %s , attach failed.", volName1, v1.Name)
+	}
+	if err != nil{
+		t.Fatal(" fail to create volume .")
+	}
+	options := make(map[string]string)
+	attachedVolume,err3 := core.AttachVolume(volId1, options)
+	if err3 != nil {
+		t.Fatalf("failed to attach Volume.")
+	}
+	if volName1 != attachedVolume.Name{
+		t.Fatalf("expect Volume Name: %s , but get %s , attach failed.", volName1, attachedVolume.Name)
+	}
 }
+
 
 func TestDetachVolume(t *testing.T) {
 	// TODO
