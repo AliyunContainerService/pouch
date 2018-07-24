@@ -37,5 +37,34 @@ func TestCanonicalAddr(t *testing.T) {
 }
 
 func TestUseProxy(t *testing.T) {
-	// TODO
+	var tests = []struct {
+		name    string
+		addr    string
+		noProxy string
+		want    bool
+	}{
+		{name: "test1", addr: "127.0.0.1:8000", want: false},
+		{name: "test2", addr: "10.0.0.1:8000", want: true},
+		{name: "test3", addr: "30.45.23.52:77", want: true},
+		{name: "test4", addr: "localhost:80", want: false},
+		{name: "test5", addr: "[3ffe:ffff:7654:feda:1234:ba98:2312:2134]:80", want: true},
+		{name: "test6", addr: "", want: true},
+		{name: "test7", addr: "123:123", want: true},
+		{name: "test8", addr: "44.45.23.52", want: false},
+		{name: "test9", addr: "baidu.com", want: false},
+		{name: "test10", addr: "baidu.com", noProxy: "baidu.com", want: false},
+		{name: "test11", addr: "30.45.23.51:77", noProxy: "foo.com", want: true},
+		{name: "test12", addr: "30.45.23.51:77", noProxy: "*", want: false},
+	}
+
+	noProxyEnv.once.Do(func() {})
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			noProxyEnv.val = testCase.noProxy
+			got := useProxy(testCase.addr)
+			if got != testCase.want {
+				t.Errorf("useProxy() = %v, want %v", got, testCase.want)
+			}
+		})
+	}
 }
