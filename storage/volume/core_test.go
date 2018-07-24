@@ -257,22 +257,21 @@ func TestAttachVolume(t *testing.T) {
 	defer driver.Unregister(driverName1)
 
 	v1, err := core.CreateVolume(volId1)
-	if volName1 != v1.Name{
+	if volName1 != v1.Name {
 		t.Fatalf("expect Volume Name: %s , but get %s , attach failed.", volName1, v1.Name)
 	}
-	if err != nil{
+	if err != nil {
 		t.Fatal(" fail to create volume .")
 	}
 	options := make(map[string]string)
-	attachedVolume,err3 := core.AttachVolume(volId1, options)
+	attachedVolume, err3 := core.AttachVolume(volId1, options)
 	if err3 != nil {
 		t.Fatalf("failed to attach Volume.")
 	}
-	if volName1 != attachedVolume.Name{
+	if volName1 != attachedVolume.Name {
 		t.Fatalf("expect Volume Name: %s , but get %s , attach failed.", volName1, attachedVolume.Name)
 	}
 }
-
 
 func TestDetachVolume(t *testing.T) {
 	// TODO

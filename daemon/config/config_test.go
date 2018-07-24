@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIterateConfig(t *testing.T) {
@@ -56,12 +56,11 @@ func TestGetConflictConfigurations(t *testing.T) {
 	Testflag.String("input2", "2e9", "flag2")
 	Testflag.IntSlice("numberarray1", []int{2, 2}, "caiji test")
 
-	Flags:= map[string]interface{}{
-		"input1": "1e9",
-		"input2": "2e9",
-		"numberarray":[]int{1, 2},
+	Flags := map[string]interface{}{
+		"input1":      "1e9",
+		"input2":      "2e9",
+		"numberarray": []int{1, 2},
 	}
-
 
 	assert := assert.New(t)
 
@@ -73,7 +72,6 @@ func TestGetConflictConfigurations(t *testing.T) {
 		getConflictConfigurations(Testflag, Flags).Error())
 
 }
-
 
 func TestGetUnknownFlags(t *testing.T) {
 	// TODO
