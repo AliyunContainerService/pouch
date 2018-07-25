@@ -2,13 +2,16 @@ package v1alpha1
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/meta"
 
+	containerdmount "github.com/containerd/containerd/mount"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -817,6 +820,492 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseResourcesFromCRI(tt.args.runtimeResources); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseResourcesFromCRI() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_generateContainerMounts(t *testing.T) {
+	type args struct {
+		sandboxRootDir string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateContainerMounts(tt.args.sandboxRootDir); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateContainerMounts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_generateMountBindings(t *testing.T) {
+	type args struct {
+		mounts []*runtime.Mount
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateMountBindings(tt.args.mounts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateMountBindings() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifySandboxNamespaceOptions(t *testing.T) {
+	type args struct {
+		nsOpts     *runtime.NamespaceOption
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifySandboxNamespaceOptions(tt.args.nsOpts, tt.args.hostConfig)
+		})
+	}
+}
+
+func Test_applySandboxSecurityContext(t *testing.T) {
+	type args struct {
+		lc     *runtime.LinuxPodSandboxConfig
+		config *apitypes.ContainerConfig
+		hc     *apitypes.HostConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := applySandboxSecurityContext(tt.args.lc, tt.args.config, tt.args.hc); (err != nil) != tt.wantErr {
+				t.Errorf("applySandboxSecurityContext() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_applySandboxLinuxOptions(t *testing.T) {
+	type args struct {
+		hc           *apitypes.HostConfig
+		lc           *runtime.LinuxPodSandboxConfig
+		createConfig *apitypes.ContainerCreateConfig
+		image        string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := applySandboxLinuxOptions(tt.args.hc, tt.args.lc, tt.args.createConfig, tt.args.image); (err != nil) != tt.wantErr {
+				t.Errorf("applySandboxLinuxOptions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_parseDNSOptions(t *testing.T) {
+	type args struct {
+		servers  []string
+		searches []string
+		options  []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseDNSOptions(tt.args.servers, tt.args.searches, tt.args.options)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseDNSOptions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("parseDNSOptions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_copyFile(t *testing.T) {
+	type args struct {
+		src  string
+		dest string
+		perm os.FileMode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := copyFile(tt.args.src, tt.args.dest, tt.args.perm); (err != nil) != tt.wantErr {
+				t.Errorf("copyFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_setupSandboxFiles(t *testing.T) {
+	type args struct {
+		sandboxRootDir string
+		config         *runtime.PodSandboxConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := setupSandboxFiles(tt.args.sandboxRootDir, tt.args.config); (err != nil) != tt.wantErr {
+				t.Errorf("setupSandboxFiles() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSELinuxSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSeccompSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSeccompSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSeccompSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifyHostConfig(t *testing.T) {
+	type args struct {
+		sc         *runtime.LinuxContainerSecurityContext
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := modifyHostConfig(tt.args.sc, tt.args.hostConfig); (err != nil) != tt.wantErr {
+				t.Errorf("modifyHostConfig() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_modifyContainerConfig(t *testing.T) {
+	type args struct {
+		sc     *runtime.LinuxContainerSecurityContext
+		config *apitypes.ContainerConfig
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifyContainerConfig(tt.args.sc, tt.args.config)
+		})
+	}
+}
+
+func Test_containerNetns(t *testing.T) {
+	type args struct {
+		container *mgr.Container
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := containerNetns(tt.args.container); got != tt.want {
+				t.Errorf("containerNetns() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCriManager_getContainerMetrics(t *testing.T) {
+	type fields struct {
+		ContainerMgr   mgr.ContainerMgr
+		ImageMgr       mgr.ImageMgr
+		CniMgr         CniMgr
+		StreamServer   Server
+		SandboxBaseDir string
+		SandboxImage   string
+		SandboxStore   *meta.Store
+		SnapshotStore  *mgr.SnapshotStore
+		ImageFSUUID    string
+	}
+	type args struct {
+		ctx  context.Context
+		meta *mgr.Container
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *runtime.ContainerStats
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &CriManager{
+				ContainerMgr:   tt.fields.ContainerMgr,
+				ImageMgr:       tt.fields.ImageMgr,
+				CniMgr:         tt.fields.CniMgr,
+				StreamServer:   tt.fields.StreamServer,
+				SandboxBaseDir: tt.fields.SandboxBaseDir,
+				SandboxImage:   tt.fields.SandboxImage,
+				SandboxStore:   tt.fields.SandboxStore,
+				SnapshotStore:  tt.fields.SnapshotStore,
+				ImageFSUUID:    tt.fields.ImageFSUUID,
+			}
+			got, err := c.getContainerMetrics(tt.args.ctx, tt.args.meta)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CriManager.getContainerMetrics() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CriManager.getContainerMetrics() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_imageFSPath(t *testing.T) {
+	type args struct {
+		rootDir     string
+		snapshotter string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := imageFSPath(tt.args.rootDir, tt.args.snapshotter); got != tt.want {
+				t.Errorf("imageFSPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getDeviceUUID(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getDeviceUUID(tt.args.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getDeviceUUID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getDeviceUUID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_lookupMount(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    containerdmount.Info
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := lookupMount(tt.args.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("lookupMount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("lookupMount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_deviceUUID(t *testing.T) {
+	type args struct {
+		rdev uint64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := deviceUUID(tt.args.rdev)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("deviceUUID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("deviceUUID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_blkrdev(t *testing.T) {
+	type args struct {
+		device string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    uint64
+		wantErr bool
+	}{
+	// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := blkrdev(tt.args.device)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("blkrdev() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("blkrdev() = %v, want %v", got, tt.want)
 			}
 		})
 	}
