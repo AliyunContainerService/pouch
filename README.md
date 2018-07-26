@@ -6,6 +6,7 @@
 [![Build Status](https://travis-ci.org/alibaba/pouch.svg?branch=master)](https://travis-ci.org/alibaba/pouch)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Falibaba%2Fpouch?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alibaba/pouch)](https://goreportcard.com/report/github.com/alibaba/pouch)
+[![codecov](https://codecov.io/gh/alibaba/pouch/branch/master/graph/badge.svg)](https://codecov.io/gh/alibaba/pouch)
 
 ![pouchcontainer-logo-800](https://user-images.githubusercontent.com/6755791/39180769-55f3b742-47ea-11e8-8762-78aeedcbba78.png)
 
