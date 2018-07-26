@@ -76,6 +76,13 @@ func (w *watch) add(pack *containerPack) {
 			return
 		}
 
+		// isContainerdDead only take effect when contained stop normal, if containerd
+		// stop unexpected, judge exit time is zero, zero exit time means grpc connection
+		// is broken.
+		if status.ExitTime().IsZero() {
+			return
+		}
+
 		logrus.Infof("the task has quit, id: %s, err: %v, exitcode: %d, time: %v",
 			pack.id, status.Error(), status.ExitCode(), status.ExitTime())
 
