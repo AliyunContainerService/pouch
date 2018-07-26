@@ -125,6 +125,25 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesFrom(c *check.C) {
 	c.Assert(volumeFound, check.Equals, true)
 }
 
+// TestRunWithVolumesDestinationNotEmpty tests running container with a volume whose
+// destination path in the image is not empty, we should populate the volume with
+// corresponding content in the image.
+func (suite *PouchRunVolumeSuite) TestRunWithVolumesDestinationNotEmpty(c *check.C) {
+	// The image `calico/cni:v3.1.3` has an anonymous volume whose destination path
+	// is `/opt/cni` which is not empty in the image. We should still be able to see
+	// the data in the image's `/opt/cni` when the volume is mounted.
+	// Details refer to: https://github.com/alibaba/pouch/issues/1739
+	image := "calico/cni:v3.1.3"
+	containerName := "volumesDestinationNotEmpty"
+
+	// For the workdir of image `calico/cni:v3.1.3` is `/opt/cni/bin`,
+	// it is enough to prove this feature works fine if we could run
+	// the container with default workdir successfully.
+	res := command.PouchRun("run", "--name", containerName, image, "ls")
+	defer DelContainerForceMultyTime(c, containerName)
+	res.Assert(c, icmd.Success)
+}
+
 // TestRunWithVolumesFromWithDupclicate tests running container with --volumes-from.
 func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromWithDupclicate(c *check.C) {
 	volumeName := "volumesfromDupclicate-test-volume"
