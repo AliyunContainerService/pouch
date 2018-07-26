@@ -3,12 +3,14 @@ package v1alpha1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+	goruntime "runtime"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -70,6 +72,9 @@ const (
 
 	// snapshotPlugin implements a snapshotter.
 	snapshotPlugin = "io.containerd.snapshotter.v1"
+
+	// networkNotReadyReason is the reason reported when network is not ready.
+	networkNotReadyReason = "NetworkPluginNotReady"
 )
 
 var (
@@ -906,14 +911,32 @@ func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 		Status: true,
 	}
 
-	// TODO: check network status of CRI when it is ready.
+	// Check the status of the cni initialization
+	if err := c.CniMgr.Status(); err != nil {
+		networkCondition.Status = false
+		networkCondition.Reason = networkNotReadyReason
+		networkCondition.Message = fmt.Sprintf("Network plugin returns error: %v", err)
+	}
 
-	return &runtime.StatusResponse{
+	resp := &runtime.StatusResponse{
 		Status: &runtime.RuntimeStatus{Conditions: []*runtime.RuntimeCondition{
 			runtimeCondition,
 			networkCondition,
 		}},
-	}, nil
+	}
+
+	if r.Verbose {
+		resp.Info = make(map[string]string)
+		versionByt, err := json.Marshal(goruntime.Version())
+		if err != nil {
+			return nil, err
+		}
+		resp.Info["golang"] = string(versionByt)
+
+		// TODO return more info
+	}
+
+	return resp, nil
 }
 
 // ListImages lists existing images.
