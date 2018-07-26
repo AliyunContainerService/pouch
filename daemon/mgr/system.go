@@ -132,6 +132,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		LoggingDriver:      mgr.config.DefaultLogConfig.LogDriver,
 		VolumeDrivers:      volumeDrivers,
 		LxcfsEnabled:       mgr.config.IsLxcfsEnabled,
+		CriEnabled:         mgr.config.IsCriEnabled,
 		MemTotal:           totalMem,
 		Name:               hostname,
 		NCPU:               int64(runtime.NumCPU()),

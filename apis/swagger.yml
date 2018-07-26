@@ -1524,6 +1524,13 @@ definitions:
         x-nullable: false
         default: false
         example: false
+      CriEnabled:
+        description: |
+          Indicates if pouchd has accepted flag --enable-cri and enables cri part.
+        type: "boolean"
+        x-nullable: false
+        default: false
+        example: false
       ContainerdCommit:
         $ref: "#/definitions/Commit"
       RuncCommit:

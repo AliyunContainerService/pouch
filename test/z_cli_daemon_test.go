@@ -389,6 +389,19 @@ func (suite *PouchDaemonSuite) TestDaemonDefaultRegistry(c *check.C) {
 	defer dcfg.KillDaemon()
 }
 
+// TestDaemonCriEnbaled tests enabling cri part in pouchd.
+func (suite *PouchDaemonSuite) TestDaemonCriEnbaled(c *check.C) {
+	dcfg, err := StartDefaultDaemonDebug(
+		"--enable-cri")
+	c.Assert(err, check.IsNil)
+
+	result := RunWithSpecifiedDaemon(dcfg, "info")
+	err = util.PartialEqual(result.Combined(), "CriEnabled: true")
+	c.Assert(err, check.IsNil)
+
+	defer dcfg.KillDaemon()
+}
+
 // TestDaemonTlsVerify tests start daemon with TLS verification enabled.
 func (suite *PouchDaemonSuite) TestDaemonTlsVerify(c *check.C) {
 	SkipIfFalse(c, IsTLSExist)
