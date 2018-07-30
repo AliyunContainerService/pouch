@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerProcessList OK Response to ContainerTop operation
 // swagger:model ContainerProcessList
-
 type ContainerProcessList struct {
 
 	// Each process running in the container, where each is process is an array of values corresponding to the titles
@@ -24,45 +22,8 @@ type ContainerProcessList struct {
 	Titles []string `json:"Titles"`
 }
 
-/* polymorph ContainerProcessList Processes false */
-
-/* polymorph ContainerProcessList Titles false */
-
 // Validate validates this container process list
 func (m *ContainerProcessList) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateProcesses(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateTitles(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ContainerProcessList) validateProcesses(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Processes) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *ContainerProcessList) validateTitles(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Titles) { // not required
-		return nil
-	}
-
 	return nil
 }
 

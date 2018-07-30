@@ -14,7 +14,6 @@ import (
 
 // NetworkCreate is the expected body of the "create network" http request message
 // swagger:model NetworkCreate
-
 type NetworkCreate struct {
 
 	// CheckDuplicate is used to check the network is duplicate or not.
@@ -39,26 +38,11 @@ type NetworkCreate struct {
 	Options map[string]string `json:"Options,omitempty"`
 }
 
-/* polymorph NetworkCreate CheckDuplicate false */
-
-/* polymorph NetworkCreate Driver false */
-
-/* polymorph NetworkCreate EnableIPv6 false */
-
-/* polymorph NetworkCreate IPAM false */
-
-/* polymorph NetworkCreate Internal false */
-
-/* polymorph NetworkCreate Labels false */
-
-/* polymorph NetworkCreate Options false */
-
 // Validate validates this network create
 func (m *NetworkCreate) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateIPAM(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -75,7 +59,6 @@ func (m *NetworkCreate) validateIPAM(formats strfmt.Registry) error {
 	}
 
 	if m.IPAM != nil {
-
 		if err := m.IPAM.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("IPAM")

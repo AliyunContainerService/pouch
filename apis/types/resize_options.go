@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ResizeOptions options of resizing container tty size
 // swagger:model ResizeOptions
-
 type ResizeOptions struct {
 
 	// height
@@ -24,17 +22,8 @@ type ResizeOptions struct {
 	Width int64 `json:"Width,omitempty"`
 }
 
-/* polymorph ResizeOptions Height false */
-
-/* polymorph ResizeOptions Width false */
-
 // Validate validates this resize options
 func (m *ResizeOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

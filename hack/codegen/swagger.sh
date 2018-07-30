@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly SWAGGER_VERSION=0.12.0
+readonly SWAGGER_VERSION=0.15.0
 
 # swagger::check_version checks the command and the version.
 swagger::check_version() {

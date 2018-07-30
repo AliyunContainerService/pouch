@@ -15,7 +15,6 @@ import (
 
 // AuthResponse The response returned by login to a registry
 // swagger:model AuthResponse
-
 type AuthResponse struct {
 
 	// An opaque token used to authenticate a user after a successful login
@@ -26,16 +25,11 @@ type AuthResponse struct {
 	Status string `json:"Status"`
 }
 
-/* polymorph AuthResponse IdentityToken false */
-
-/* polymorph AuthResponse Status false */
-
 // Validate validates this auth response
 func (m *AuthResponse) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateStatus(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

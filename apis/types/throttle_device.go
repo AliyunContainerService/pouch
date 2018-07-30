@@ -15,7 +15,6 @@ import (
 
 // ThrottleDevice throttle device
 // swagger:model ThrottleDevice
-
 type ThrottleDevice struct {
 
 	// Device path
@@ -26,16 +25,11 @@ type ThrottleDevice struct {
 	Rate uint64 `json:"Rate,omitempty"`
 }
 
-/* polymorph ThrottleDevice Path false */
-
-/* polymorph ThrottleDevice Rate false */
-
 // Validate validates this throttle device
 func (m *ThrottleDevice) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateRate(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

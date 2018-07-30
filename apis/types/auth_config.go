@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // AuthConfig auth config
 // swagger:model AuthConfig
-
 type AuthConfig struct {
 
 	// auth
@@ -36,25 +34,8 @@ type AuthConfig struct {
 	Username string `json:"Username,omitempty"`
 }
 
-/* polymorph AuthConfig Auth false */
-
-/* polymorph AuthConfig IdentityToken false */
-
-/* polymorph AuthConfig Password false */
-
-/* polymorph AuthConfig RegistryToken false */
-
-/* polymorph AuthConfig ServerAddress false */
-
-/* polymorph AuthConfig Username false */
-
 // Validate validates this auth config
 func (m *AuthConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

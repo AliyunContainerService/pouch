@@ -7,6 +7,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
+
+	"github.com/go-openapi/strfmt"
 )
 
 func (s *Server) ping(context context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
@@ -33,18 +35,28 @@ func (s *Server) version(ctx context.Context, rw http.ResponseWriter, req *http.
 
 func (s *Server) updateDaemon(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	cfg := &types.DaemonUpdateConfig{}
+
+	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(cfg); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-
-	// TODO: validate cfg in details
+	// validate request body
+	if err := cfg.Validate(strfmt.NewFormats()); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
 	return s.SystemMgr.UpdateDaemon(cfg)
 }
 
 func (s *Server) auth(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
 	auth := types.AuthConfig{}
+
+	// decode request body
 	if err := json.NewDecoder(req.Body).Decode(&auth); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+	// validate request body
+	if err := auth.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 

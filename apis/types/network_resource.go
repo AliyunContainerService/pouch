@@ -15,7 +15,6 @@ import (
 
 // NetworkResource NetworkResource is the body of the "get network" http response message
 // swagger:model NetworkResource
-
 type NetworkResource struct {
 
 	// Containers contains endpoints belonging to the network
@@ -52,39 +51,15 @@ type NetworkResource struct {
 	Scope string `json:"Scope,omitempty"`
 }
 
-/* polymorph NetworkResource Containers false */
-
-/* polymorph NetworkResource Driver false */
-
-/* polymorph NetworkResource EnableIPv6 false */
-
-/* polymorph NetworkResource IPAM false */
-
-/* polymorph NetworkResource Id false */
-
-/* polymorph NetworkResource IndexConfigs false */
-
-/* polymorph NetworkResource Internal false */
-
-/* polymorph NetworkResource Labels false */
-
-/* polymorph NetworkResource Name false */
-
-/* polymorph NetworkResource Options false */
-
-/* polymorph NetworkResource Scope false */
-
 // Validate validates this network resource
 func (m *NetworkResource) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateIPAM(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIndexConfigs(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -101,7 +76,6 @@ func (m *NetworkResource) validateIPAM(formats strfmt.Registry) error {
 	}
 
 	if m.IPAM != nil {
-
 		if err := m.IPAM.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("IPAM")
@@ -119,8 +93,17 @@ func (m *NetworkResource) validateIndexConfigs(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.Required("IndexConfigs", "body", m.IndexConfigs); err != nil {
-		return err
+	for k := range m.IndexConfigs {
+
+		if err := validate.Required("IndexConfigs"+"."+k, "body", m.IndexConfigs[k]); err != nil {
+			return err
+		}
+		if val, ok := m.IndexConfigs[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil

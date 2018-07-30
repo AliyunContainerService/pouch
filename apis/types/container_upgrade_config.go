@@ -17,7 +17,6 @@ import (
 // It can be used to encode client params in client and unmarshal request body in daemon side.
 //
 // swagger:model ContainerUpgradeConfig
-
 type ContainerUpgradeConfig struct {
 	ContainerConfig
 
@@ -27,28 +26,29 @@ type ContainerUpgradeConfig struct {
 
 // UnmarshalJSON unmarshals this object from a JSON structure
 func (m *ContainerUpgradeConfig) UnmarshalJSON(raw []byte) error {
-
+	// AO0
 	var aO0 ContainerConfig
 	if err := swag.ReadJSON(raw, &aO0); err != nil {
 		return err
 	}
 	m.ContainerConfig = aO0
 
-	var data struct {
+	// AO1
+	var dataAO1 struct {
 		HostConfig *HostConfig `json:"HostConfig,omitempty"`
 	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
+	if err := swag.ReadJSON(raw, &dataAO1); err != nil {
 		return err
 	}
 
-	m.HostConfig = data.HostConfig
+	m.HostConfig = dataAO1.HostConfig
 
 	return nil
 }
 
 // MarshalJSON marshals this object to a JSON structure
 func (m ContainerUpgradeConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
+	_parts := make([][]byte, 0, 2)
 
 	aO0, err := swag.WriteJSON(m.ContainerConfig)
 	if err != nil {
@@ -56,17 +56,17 @@ func (m ContainerUpgradeConfig) MarshalJSON() ([]byte, error) {
 	}
 	_parts = append(_parts, aO0)
 
-	var data struct {
+	var dataAO1 struct {
 		HostConfig *HostConfig `json:"HostConfig,omitempty"`
 	}
 
-	data.HostConfig = m.HostConfig
+	dataAO1.HostConfig = m.HostConfig
 
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
+	jsonDataAO1, errAO1 := swag.WriteJSON(dataAO1)
+	if errAO1 != nil {
+		return nil, errAO1
 	}
-	_parts = append(_parts, jsonData)
+	_parts = append(_parts, jsonDataAO1)
 
 	return swag.ConcatJSON(_parts...), nil
 }
@@ -75,13 +75,36 @@ func (m ContainerUpgradeConfig) MarshalJSON() ([]byte, error) {
 func (m *ContainerUpgradeConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	// validation for a type composition with ContainerConfig
 	if err := m.ContainerConfig.Validate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateHostConfig(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ContainerUpgradeConfig) validateHostConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.HostConfig) { // not required
+		return nil
+	}
+
+	if m.HostConfig != nil {
+		if err := m.HostConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("HostConfig")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

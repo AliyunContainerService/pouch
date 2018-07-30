@@ -8,7 +8,6 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
@@ -17,7 +16,6 @@ import (
 // or `runC`.
 //
 // swagger:model Commit
-
 type Commit struct {
 
 	// Commit ID of external tool expected by pouchd as set at build time.
@@ -28,17 +26,8 @@ type Commit struct {
 	ID string `json:"ID,omitempty"`
 }
 
-/* polymorph Commit Expected false */
-
-/* polymorph Commit ID false */
-
 // Validate validates this commit
 func (m *Commit) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

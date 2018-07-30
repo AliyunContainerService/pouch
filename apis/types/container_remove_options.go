@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerRemoveOptions options of remove container
 // swagger:model ContainerRemoveOptions
-
 type ContainerRemoveOptions struct {
 
 	// force
@@ -27,19 +25,8 @@ type ContainerRemoveOptions struct {
 	Volumes bool `json:"Volumes,omitempty"`
 }
 
-/* polymorph ContainerRemoveOptions Force false */
-
-/* polymorph ContainerRemoveOptions Link false */
-
-/* polymorph ContainerRemoveOptions Volumes false */
-
 // Validate validates this container remove options
 func (m *ContainerRemoveOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

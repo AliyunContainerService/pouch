@@ -29,10 +29,10 @@ jobs:
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
-      - run: 
+      - run:
           name: install gometalinter linters tools
           command: hack/install/install_ci_related.sh
-      - run: 
+      - run:
           name: use check target in Makefile to check code
           command: make check
 

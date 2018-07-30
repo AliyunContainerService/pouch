@@ -17,26 +17,21 @@ import (
 
 // LogConfig The logging configuration for this container
 // swagger:model LogConfig
-
 type LogConfig struct {
 
 	// log driver
+	// Enum: [json-file syslog journald gelf fluentd awslogs splunk etwlogs none]
 	LogDriver string `json:"Type,omitempty"`
 
 	// log opts
 	LogOpts map[string]string `json:"Config,omitempty"`
 }
 
-/* polymorph LogConfig LogDriver false */
-
-/* polymorph LogConfig LogOpts false */
-
 // Validate validates this log config
 func (m *LogConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateLogDriver(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -59,22 +54,31 @@ func init() {
 }
 
 const (
+
 	// LogConfigLogDriverJSONFile captures enum value "json-file"
 	LogConfigLogDriverJSONFile string = "json-file"
+
 	// LogConfigLogDriverSyslog captures enum value "syslog"
 	LogConfigLogDriverSyslog string = "syslog"
+
 	// LogConfigLogDriverJournald captures enum value "journald"
 	LogConfigLogDriverJournald string = "journald"
+
 	// LogConfigLogDriverGelf captures enum value "gelf"
 	LogConfigLogDriverGelf string = "gelf"
+
 	// LogConfigLogDriverFluentd captures enum value "fluentd"
 	LogConfigLogDriverFluentd string = "fluentd"
+
 	// LogConfigLogDriverAwslogs captures enum value "awslogs"
 	LogConfigLogDriverAwslogs string = "awslogs"
+
 	// LogConfigLogDriverSplunk captures enum value "splunk"
 	LogConfigLogDriverSplunk string = "splunk"
+
 	// LogConfigLogDriverEtwlogs captures enum value "etwlogs"
 	LogConfigLogDriverEtwlogs string = "etwlogs"
+
 	// LogConfigLogDriverNone captures enum value "none"
 	LogConfigLogDriverNone string = "none"
 )

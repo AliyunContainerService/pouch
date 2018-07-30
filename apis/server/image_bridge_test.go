@@ -8,6 +8,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // MountPoint A mount point inside a container
 // swagger:model MountPoint
-
 type MountPoint struct {
 
 	// copy data
@@ -54,37 +52,8 @@ type MountPoint struct {
 	Type string `json:"Type,omitempty"`
 }
 
-/* polymorph MountPoint CopyData false */
-
-/* polymorph MountPoint Destination false */
-
-/* polymorph MountPoint Driver false */
-
-/* polymorph MountPoint ID false */
-
-/* polymorph MountPoint Mode false */
-
-/* polymorph MountPoint Name false */
-
-/* polymorph MountPoint Named false */
-
-/* polymorph MountPoint Propagation false */
-
-/* polymorph MountPoint RW false */
-
-/* polymorph MountPoint Replace false */
-
-/* polymorph MountPoint Source false */
-
-/* polymorph MountPoint Type false */
-
 // Validate validates this mount point
 func (m *MountPoint) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

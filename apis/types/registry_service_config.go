@@ -16,7 +16,6 @@ import (
 // RegistryServiceConfig RegistryServiceConfig stores daemon registry services configuration.
 //
 // swagger:model RegistryServiceConfig
-
 type RegistryServiceConfig struct {
 
 	// List of IP ranges to which nondistributable artifacts can be pushed,
@@ -41,7 +40,7 @@ type RegistryServiceConfig struct {
 	// > are in compliance with any terms that cover redistributing
 	// > nondistributable artifacts.
 	//
-	AllowNondistributableArtifactsCIDRs []string `json:"AllowNondistributableArtifactsCIDRs"`
+	AllowNondistributableArtifactsCIDRs []string `json:"AllowNondistributableArtifactsCIDRs,omitempty"`
 
 	// List of registry hostnames to which nondistributable artifacts can be
 	// pushed, using the format `<hostname>[:<port>]` or `<IP address>[:<port>]`.
@@ -64,7 +63,7 @@ type RegistryServiceConfig struct {
 	// > are in compliance with any terms that cover redistributing
 	// > nondistributable artifacts.
 	//
-	AllowNondistributableArtifactsHostnames []string `json:"AllowNondistributableArtifactsHostnames"`
+	AllowNondistributableArtifactsHostnames []string `json:"AllowNondistributableArtifactsHostnames,omitempty"`
 
 	// index configs
 	IndexConfigs map[string]IndexInfo `json:"IndexConfigs,omitempty"`
@@ -93,48 +92,17 @@ type RegistryServiceConfig struct {
 	// > security, users should add their CA to their system's list of trusted
 	// > CAs instead of enabling this option.
 	//
-	InsecureRegistryCIDRs []string `json:"InsecureRegistryCIDRs"`
+	InsecureRegistryCIDRs []string `json:"InsecureRegistryCIDRs,omitempty"`
 
 	// List of registry URLs that act as a mirror for the official registry.
-	Mirrors []string `json:"Mirrors"`
+	Mirrors []string `json:"Mirrors,omitempty"`
 }
-
-/* polymorph RegistryServiceConfig AllowNondistributableArtifactsCIDRs false */
-
-/* polymorph RegistryServiceConfig AllowNondistributableArtifactsHostnames false */
-
-/* polymorph RegistryServiceConfig IndexConfigs false */
-
-/* polymorph RegistryServiceConfig InsecureRegistryCIDRs false */
-
-/* polymorph RegistryServiceConfig Mirrors false */
 
 // Validate validates this registry service config
 func (m *RegistryServiceConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAllowNondistributableArtifactsCIDRs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateAllowNondistributableArtifactsHostnames(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateIndexConfigs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateInsecureRegistryCIDRs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMirrors(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -144,50 +112,23 @@ func (m *RegistryServiceConfig) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *RegistryServiceConfig) validateAllowNondistributableArtifactsCIDRs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.AllowNondistributableArtifactsCIDRs) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *RegistryServiceConfig) validateAllowNondistributableArtifactsHostnames(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.AllowNondistributableArtifactsHostnames) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 func (m *RegistryServiceConfig) validateIndexConfigs(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.IndexConfigs) { // not required
 		return nil
 	}
 
-	if err := validate.Required("IndexConfigs", "body", m.IndexConfigs); err != nil {
-		return err
-	}
+	for k := range m.IndexConfigs {
 
-	return nil
-}
+		if err := validate.Required("IndexConfigs"+"."+k, "body", m.IndexConfigs[k]); err != nil {
+			return err
+		}
+		if val, ok := m.IndexConfigs[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
 
-func (m *RegistryServiceConfig) validateInsecureRegistryCIDRs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.InsecureRegistryCIDRs) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *RegistryServiceConfig) validateMirrors(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Mirrors) { // not required
-		return nil
 	}
 
 	return nil

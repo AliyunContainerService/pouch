@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // DaemonUpdateConfig daemon update config
 // swagger:model DaemonUpdateConfig
-
 type DaemonUpdateConfig struct {
 
 	// Image proxy used to pull image.
@@ -24,31 +22,8 @@ type DaemonUpdateConfig struct {
 	Labels []string `json:"Labels"`
 }
 
-/* polymorph DaemonUpdateConfig ImageProxy false */
-
-/* polymorph DaemonUpdateConfig Labels false */
-
 // Validate validates this daemon update config
 func (m *DaemonUpdateConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateLabels(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DaemonUpdateConfig) validateLabels(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Labels) { // not required
-		return nil
-	}
-
 	return nil
 }
 

@@ -8,13 +8,11 @@ package types
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // PortBinding PortBinding represents a binding between a host IP address and a host port
 // swagger:model PortBinding
-
 type PortBinding struct {
 
 	// Host IP address that the container's port is mapped to.
@@ -24,17 +22,8 @@ type PortBinding struct {
 	HostPort string `json:"HostPort,omitempty"`
 }
 
-/* polymorph PortBinding HostIp false */
-
-/* polymorph PortBinding HostPort false */
-
 // Validate validates this port binding
 func (m *PortBinding) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 
