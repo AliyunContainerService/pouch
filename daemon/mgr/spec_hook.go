@@ -55,6 +55,19 @@ func setupHook(ctx context.Context, c *Container, specWrapper *SpecWrapper) erro
 	}
 
 	// setup diskquota hook, if rootFSQuota not set skip this part.
+	if err := setRootfsDiskQuota(ctx, c, specWrapper); err != nil {
+		return errors.Wrap(err, "failed to set rootfs disk")
+	}
+
+	// set volume mount tab
+	if err := setMountTab(ctx, c, specWrapper); err != nil {
+		return errors.Wrap(err, "failed to set volume mount tab prestart hook")
+	}
+
+	return nil
+}
+
+func setRootfsDiskQuota(ctx context.Context, c *Container, spec *SpecWrapper) error {
 	rootFSQuota := quota.GetDefaultQuota(c.Config.DiskQuota)
 	if rootFSQuota == "" {
 		return nil
@@ -70,15 +83,10 @@ func setupHook(ctx context.Context, c *Container, specWrapper *SpecWrapper) erro
 		return err
 	}
 
-	s.Hooks.Prestart = append(s.Hooks.Prestart, specs.Hook{
+	spec.s.Hooks.Prestart = append(spec.s.Hooks.Prestart, specs.Hook{
 		Path: target,
 		Args: []string{"set-diskquota", c.BaseFS, rootFSQuota, qid},
 	})
-
-	// set volume mount tab
-	if err := setMountTab(ctx, c, specWrapper); err != nil {
-		return errors.Wrap(err, "failed to set volume mount tab prestart hook")
-	}
 
 	return nil
 }
