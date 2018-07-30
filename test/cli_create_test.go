@@ -495,6 +495,6 @@ func (suite *PouchRunSuite) TestCreateWithNonExistImage(c *check.C) {
 	cname := "TestCreateWithNonExistImage"
 	// we should use a non-used image, since containerd not remove image immediately.
 	image := "docker.io/library/alpine"
-	res := command.PouchRun("create", cname, image)
+	res := command.PouchRun("create", "--name", cname, image)
 	res.Assert(c, icmd.Success)
 }
