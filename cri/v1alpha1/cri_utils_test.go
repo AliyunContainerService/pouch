@@ -821,3 +821,206 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		})
 	}
 }
+
+// common result structure
+type result struct {
+	// returned result of target func
+	res []string
+
+	// returned error of target func
+	err error
+}
+
+// Test_getAppArmorSecurityOpts executes a test for func getAppArmorSecurityOpts
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	// special values in conditions
+	var runtimeDefault = mgr.ProfileRuntimeDefault
+	var namePrefix = mgr.ProfileNamePrefix
+	var nameUnconfined = mgr.ProfileNameUnconfined
+
+	// conditional coverage
+	var (
+		// test input of empty profile in condition
+		emptyProfile1 = runtime.LinuxContainerSecurityContext{
+			ApparmorProfile: "",
+		}
+
+		// test input of runtime default profile in condition
+		emptyProfile2 = runtime.LinuxContainerSecurityContext{
+			ApparmorProfile: runtimeDefault,
+		}
+
+		// test input of un-confined profile in condition
+		unConfinedProfile = runtime.LinuxContainerSecurityContext{
+			ApparmorProfile: nameUnconfined,
+		}
+
+		// test input of profile without expected prefix
+		unPrefixProfile = runtime.LinuxContainerSecurityContext{
+			ApparmorProfile: "alibaba-inc.com/test",
+		}
+
+		// test input of profile with expected prefix
+		prefixProfile = runtime.LinuxContainerSecurityContext{
+			ApparmorProfile: namePrefix + "test",
+		}
+	)
+
+	// args of function
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+
+	tests := []struct {
+		// name of test case
+		name string
+
+		// args required by func
+		args args
+
+		// expected return result
+		want result
+	}{
+		{
+			name: "condition test 1 -> 2(1)",
+			args: args{
+				sc: &emptyProfile1,
+			},
+			want: result{nil, nil},
+		},
+		{
+			name: "condition test 1 -> 2(2)",
+			args: args{
+				sc: &emptyProfile2,
+			},
+			want: result{nil, nil},
+		},
+		{
+			name: "condition test 1->4",
+			args: args{
+				sc: &unConfinedProfile,
+			},
+			want: result{[]string{fmt.Sprintf("apparmor=%s", unConfinedProfile.ApparmorProfile)}, nil},
+		},
+		{
+			name: "condition test 1->6",
+			args: args{
+				sc: &unPrefixProfile,
+			},
+			want: result{nil, fmt.Errorf("undefault profile name should prefix with %q", namePrefix)},
+		},
+
+		{
+			name: "condition test",
+			args: args{
+				sc: &prefixProfile,
+			},
+			want: result{[]string{fmt.Sprintf("apparmor=%s", strings.TrimPrefix(prefixProfile.ApparmorProfile, namePrefix))}, nil},
+		},
+
+	}
+
+	// executes test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if !reflect.DeepEqual(result{got, err}, tt.want) {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", result{got, err}, tt.want)
+			}
+		})
+	}
+}
+
+// Test_getSeccompSecurityOpts executes a test for func getSeccompSecurityOpts
+func Test_getSeccompSecurityOpts(t *testing.T) {
+	// special values in conditions
+	var dockerDefault = mgr.ProfileDockerDefault
+	var namePrefix = mgr.ProfileNamePrefix
+	var nameUnconfined = mgr.ProfileNameUnconfined
+
+	// conditional coverage
+	var (
+		// test input of empty profile in condition
+		emptyProfile1 = runtime.LinuxContainerSecurityContext{
+			SeccompProfilePath: "",
+		}
+
+		// test input of runtime default profile in condition
+		emptyProfile2 = runtime.LinuxContainerSecurityContext{
+			SeccompProfilePath: nameUnconfined,
+		}
+
+		// test input of un-confined profile in condition
+		defaultProfile = runtime.LinuxContainerSecurityContext{
+			SeccompProfilePath: dockerDefault,
+		}
+
+		// test input of profile without expected prefix
+		unPrefixProfile = runtime.LinuxContainerSecurityContext{
+			SeccompProfilePath: "alibaba-inc.com/test",
+		}
+
+		// test input of profile with expected prefix
+		prefixProfile = runtime.LinuxContainerSecurityContext{
+			SeccompProfilePath: namePrefix + "test",
+		}
+	)
+
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want result
+	}{
+		{
+			name: "condition test 1 -> 2(1)",
+			args: args{
+				sc: &emptyProfile1,
+			},
+			want: result{[]string{fmt.Sprintf("seccomp=%s", nameUnconfined)}, nil},
+		},
+		{
+			name: "condition test 1 -> 2(2)",
+			args: args{
+				sc: &emptyProfile2,
+			},
+			want: result{[]string{fmt.Sprintf("seccomp=%s", nameUnconfined)}, nil},
+		},
+		{
+			name: "condition test 1->4",
+			args: args{
+				sc: &defaultProfile,
+			},
+			want: result{nil, nil},
+		},
+		{
+			name: "condition test 1->6",
+			args: args{
+				sc: &unPrefixProfile,
+			},
+			want: result{nil, fmt.Errorf("undefault profile %q should prefix with %q", unPrefixProfile.SeccompProfilePath, namePrefix)},
+		},
+
+		{
+			name: "normal test",
+			args: args{
+				sc: &prefixProfile,
+			},
+			want: result{[]string{fmt.Sprintf("seccomp=%s", strings.TrimPrefix(prefixProfile.SeccompProfilePath, namePrefix))}, nil},
+		},
+
+	}
+
+	// executes test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := getSeccompSecurityOpts(tt.args.sc); !reflect.DeepEqual(result{got, err}, tt.want) {
+				t.Errorf("getSeccompSecurityOpts() = %v, want %v", result{got, err}, tt.want)
+			}
+		})
+	}
+
+}
