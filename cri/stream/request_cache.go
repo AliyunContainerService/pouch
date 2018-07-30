@@ -59,7 +59,7 @@ func (c *RequestCache) Insert(req Request) (token string, err error) {
 	if c.ll.Len() == MaxInFlight {
 		return "", ErrorTooManyInFlight()
 	}
-	token, err = c.uniqueToken()
+	token, err = c.generateUniqueToken()
 	if err != nil {
 		return "", err
 	}
@@ -88,8 +88,8 @@ func (c *RequestCache) Consume(token string) (req Request, found bool) {
 	return entry.req, true
 }
 
-// uniqueToken generates a random URL-safe token and ensures uniqueness.
-func (c *RequestCache) uniqueToken() (string, error) {
+// generateUniqueToken generates a random URL-safe token and ensures uniqueness.
+func (c *RequestCache) generateUniqueToken() (string, error) {
 	const maxTries = 10
 	// Number of bytes to be TokenLen when base64 encoded.
 	tokenSize := math.Ceil(float64(TokenLen) * 6 / 8)
