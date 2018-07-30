@@ -29,10 +29,10 @@ func (suite *PouchSaveLoadSuite) SetUpSuite(c *check.C) {
 
 // TestSaveLoadWorks tests "pouch save" and "pouch load" work.
 func (suite *PouchSaveLoadSuite) TestSaveLoadWorks(c *check.C) {
-	res := command.PouchRun("pull", busyboxImage)
+	res := command.PouchRun("pull", helloworldImage)
 	res.Assert(c, icmd.Success)
 
-	res = command.PouchRun("image", "inspect", busyboxImage)
+	res = command.PouchRun("image", "inspect", helloworldImage)
 	res.Assert(c, icmd.Success)
 
 	before := []types.ImageInfo{}
@@ -46,14 +46,15 @@ func (suite *PouchSaveLoadSuite) TestSaveLoadWorks(c *check.C) {
 	}
 	defer os.RemoveAll(dir)
 
-	res = command.PouchRun("save", "-o", filepath.Join(dir, "busybox.tar"), busyboxImage)
+	res = command.PouchRun("save", "-o", filepath.Join(dir, "helloworld.tar"), helloworldImage)
 	res.Assert(c, icmd.Success)
 
-	loadImageName := "load-busybox"
-	res = command.PouchRun("load", "-i", filepath.Join(dir, "busybox.tar"), loadImageName)
+	loadImageName := "load-helloworld"
+	res = command.PouchRun("load", "-i", filepath.Join(dir, "helloworld.tar"), loadImageName)
 	res.Assert(c, icmd.Success)
+	defer command.PouchRun("rmi", loadImageName+":"+environment.HelloworldTag)
 
-	res = command.PouchRun("image", "inspect", loadImageName+":"+environment.BusyboxTag)
+	res = command.PouchRun("image", "inspect", loadImageName+":"+environment.HelloworldTag)
 	res.Assert(c, icmd.Success)
 
 	after := []types.ImageInfo{}
