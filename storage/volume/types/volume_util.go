@@ -107,6 +107,16 @@ func buildVolumeConfig(options map[string]string) (*VolumeConfig, error) {
 
 // NewVolumeFromID will create an Volume using mountPath, size and VolumeID.
 func NewVolumeFromID(mountPath, size string, id VolumeID) *Volume {
+	if id.Options == nil {
+		id.Options = map[string]string{}
+	}
+	if id.Labels == nil {
+		id.Labels = map[string]string{}
+	}
+	if id.Selectors == nil {
+		id.Selectors = map[string]string{}
+	}
+
 	now := time.Now()
 	v := &Volume{
 		ObjectMeta: meta.ObjectMeta{
