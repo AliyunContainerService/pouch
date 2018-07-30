@@ -917,7 +917,6 @@ func Test_getAppArmorSecurityOpts(t *testing.T) {
 			},
 			want: result{[]string{fmt.Sprintf("apparmor=%s", strings.TrimPrefix(prefixProfile.ApparmorProfile, namePrefix))}, nil},
 		},
-
 	}
 
 	// executes test
@@ -1011,7 +1010,6 @@ func Test_getSeccompSecurityOpts(t *testing.T) {
 			},
 			want: result{[]string{fmt.Sprintf("seccomp=%s", strings.TrimPrefix(prefixProfile.SeccompProfilePath, namePrefix))}, nil},
 		},
-
 	}
 
 	// executes test
