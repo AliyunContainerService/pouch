@@ -8,6 +8,7 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -660,9 +661,28 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 }
 
 func TestCriManager_updateCreateConfig(t *testing.T) {
+	var (
+		normal, _ = meta.NewStore(meta.Config{
+			Driver:  "local",
+			BaseDir: "/tmp/containers",
+			Buckets: []meta.Bucket{
+				{meta.MetaJSONFile, reflect.TypeOf(SandboxMeta{})},
+				{"test.json", reflect.TypeOf(SandboxMeta{})},
+			},
+		})
+	)
+	normal.Put(&SandboxMeta{
+		ID:      "test",
+		Runtime: "test_run",
+	})
+
+	normal.Put(&SandboxMeta{
+		ID:      "emp",
+		Runtime: "",
+	})
+
 	type fields struct {
-		ContainerMgr mgr.ContainerMgr
-		ImageMgr     mgr.ImageMgr
+		SandboxStore *meta.Store
 	}
 	type args struct {
 		createConfig  *apitypes.ContainerCreateConfig
@@ -676,14 +696,177 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "condition test 1-2",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				podSandboxID: "testout",
+			},
+			wantErr: true,
+		},
+		{
+			name: "condition test 1-3-4-6-8-14-16-17",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				config: &runtime.ContainerConfig{
+					Linux: nil,
+				},
+				sandboxConfig: &runtime.PodSandboxConfig{
+					Linux: &runtime.LinuxPodSandboxConfig{
+						CgroupParent: "",
+					},
+				},
+				podSandboxID: "test",
+			},
+			wantErr: false,
+		},
+		{
+			name: "condition test 1-3-5-6-7-9-11-13-14-15",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				config: &runtime.ContainerConfig{
+					Linux: &runtime.LinuxContainerConfig{
+						Resources: &runtime.LinuxContainerResources{
+							CpuPeriod:          1000,
+							CpuQuota:           1000,
+							CpuShares:          1000,
+							MemoryLimitInBytes: 1000,
+							CpusetCpus:         "",
+							CpusetMems:         "",
+						},
+					},
+				},
+				sandboxConfig: &runtime.PodSandboxConfig{
+					Linux: &runtime.LinuxPodSandboxConfig{
+						CgroupParent: "test",
+					},
+				},
+				podSandboxID: "emp",
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal test0",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				config: &runtime.ContainerConfig{
+					Linux: &runtime.LinuxContainerConfig{
+						Resources: &runtime.LinuxContainerResources{
+							CpuPeriod:          1000,
+							CpuQuota:           1000,
+							CpuShares:          1000,
+							MemoryLimitInBytes: 1000,
+							CpusetCpus:         "",
+							CpusetMems:         "",
+						},
+					},
+				},
+				sandboxConfig: &runtime.PodSandboxConfig{
+					Linux: &runtime.LinuxPodSandboxConfig{
+						CgroupParent: "test",
+					},
+				},
+				podSandboxID: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "normal test1",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				config: &runtime.ContainerConfig{
+					Linux: &runtime.LinuxContainerConfig{
+						Resources: &runtime.LinuxContainerResources{
+							CpuPeriod:          1000,
+							CpuQuota:           1000,
+							CpuShares:          1000,
+							MemoryLimitInBytes: 1000,
+							CpusetCpus:         "",
+							CpusetMems:         "",
+						},
+					},
+				},
+				sandboxConfig: &runtime.PodSandboxConfig{
+					Linux: &runtime.LinuxPodSandboxConfig{
+						CgroupParent: "",
+					},
+				},
+				podSandboxID: "test",
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal test2",
+			fields: fields{
+				SandboxStore: normal,
+			},
+			args: args{
+				createConfig: &apitypes.ContainerCreateConfig{
+					HostConfig: &apitypes.HostConfig{
+						Resources: apitypes.Resources{},
+					},
+				},
+				config: &runtime.ContainerConfig{
+					Linux: &runtime.LinuxContainerConfig{
+						Resources: &runtime.LinuxContainerResources{
+							CpuPeriod:          1000,
+							CpuQuota:           1000,
+							CpuShares:          1000,
+							MemoryLimitInBytes: 1000,
+							CpusetCpus:         "",
+							CpusetMems:         "",
+						},
+					},
+				},
+				sandboxConfig: &runtime.PodSandboxConfig{
+					Linux: &runtime.LinuxPodSandboxConfig{
+						CgroupParent: "test",
+					},
+				},
+				podSandboxID: "test",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &CriManager{
-				ContainerMgr: tt.fields.ContainerMgr,
-				ImageMgr:     tt.fields.ImageMgr,
-			}
+			c := &CriManager{}
+			c.SandboxStore = tt.fields.SandboxStore
 			if err := c.updateCreateConfig(tt.args.createConfig, tt.args.config, tt.args.sandboxConfig, tt.args.podSandboxID); (err != nil) != tt.wantErr {
 				t.Errorf("CriManager.updateCreateConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
