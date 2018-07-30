@@ -51,6 +51,7 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 	c.Assert(got.ServerVersion, check.Equals, version.Version)
 	c.Assert(got.Driver, check.Equals, "overlayfs")
 	c.Assert(got.NCPU, check.Equals, int64(runtime.NumCPU()))
+	c.Assert(got.CriEnabled, check.Equals, false)
 
 	// Check the volume drivers
 	c.Assert(len(got.VolumeDrivers), check.Equals, 3)
