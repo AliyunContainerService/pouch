@@ -728,7 +728,125 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "test_username_1",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test_username_2",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: ":",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test_username_3",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "eeeeeeeeee",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "eeeeeeeeee",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test_username_4",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "22222222222222222222",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "22222222222222222222",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test_uid_1",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "222",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 222},
+				Username:    "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test_uid_2",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "222:",
+					},
+					Size: 11,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       11,
+				Uid:         &runtime.Int64Value{Value: 222},
+				Username:    "",
+			}, wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
