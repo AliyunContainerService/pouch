@@ -32,7 +32,7 @@ func TestParseExposedPorts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ParseExposedPorts(tt.args.portList, tt.args.expose)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseExposedPorts() error = %v, wantErr %v", got, tt.wantErr)
+				t.Errorf("ParseExposedPorts() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
