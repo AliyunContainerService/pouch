@@ -185,6 +185,7 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 				Code:    http.StatusInternalServerError,
 				Message: err.Error(),
 			},
+			ErrorMessage: err.Error(),
 		}
 		stream.WriteObject(message)
 		return nil, err
