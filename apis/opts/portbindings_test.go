@@ -18,6 +18,7 @@ func TestParsePortBinding(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
+<<<<<<< HEAD
 
 		{
 			name: "normal test",
