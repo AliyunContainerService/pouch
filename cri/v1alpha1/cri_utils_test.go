@@ -680,7 +680,99 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			"test1",
+			args{
+				&apitypes.ImageInfo{
+					"x86",
+					&apitypes.ContainerConfig{ //容器配置
+						true,
+						true,
+						true,
+						true,
+						[]string{"test1"},
+						false,
+						map[string]string{"/dev/sda1": "300M"},
+						"localhost",
+						[]string{""},
+						[]string{"1.0.0-daily"},
+						map[string]interface{}{
+							"8080/tcp":  struct{}{},
+							"15629/udp": struct{}{},
+						},
+						"test.a",
+						"imageTest",
+						"",
+						map[string]string{"owner": "Linda"},
+						"08:00:27:17:77:34",
+						1,
+						false,
+						[]string{"build"},
+						true,
+						"123456",
+						true,
+						"rich",
+						[]string{"RUN", "CMD", "ENTRYPOINT"},
+						map[string]string{"time": "1500"},
+						true,
+						"stop",
+						nil,
+						true,
+						"Li",
+						map[string]interface{}{
+							"/path/to": struct{}{},
+						},
+						"/usr/local/bin",
+					},
+					"20180730",
+					"201800001",
+					"Linux",
+					[]string{"Repo1-1"},
+					[]string{"1-1"},
+					&apitypes.ImageInfoRootFS{
+						"oneLayer",
+						[]string{"layer1", "layer2"},
+						"ext4",
+					},
+					1200,
+				},
+			},
+			&runtime.Image{
+				Id:          "20180101",
+				RepoTags:    []string{"1-1"},
+				RepoDigests: []string{"Repo1-1"},
+				Size_:       1200,
+				Uid:         nil,
+				Username:    "imageTest",
+			},
+			true,
+		},
+		{
+			name: "test2",
+			args: args{
+				image: &apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "test2",
+						Volumes: map[string]interface{}{
+							"/usr/local/bin": struct{}{},
+						},
+					},
+					ID:          "20180001",
+					RepoDigests: generateContainerMounts("/usr/local/bin"),
+					RepoTags:    []string{"1-1"},
+					Size:        1200,
+				},
+			},
+			want: &runtime.Image{
+				Id:          "20180101",
+				RepoTags:    []string{"1-1"},
+				RepoDigests: []string{"Repo1-1"},
+				Size_:       1200,
+				Uid:         nil,
+				Username:    "imageTest",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
