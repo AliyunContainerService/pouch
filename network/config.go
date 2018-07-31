@@ -1,7 +1,11 @@
 package network
 
-// DefaultExecRoot defines the default network execute root directory.
-var DefaultExecRoot = "/var/run/pouch"
+var (
+	// DefaultExecRoot defines the default network execute root directory.
+	DefaultExecRoot = "/var/run/pouch"
+	// DefaultNetworkMtu is the default value for network MTU
+	DefaultNetworkMtu = 1500
+)
 
 // Config defines the network configuration.
 type Config struct {
