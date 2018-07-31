@@ -138,7 +138,6 @@ func TestParseExposedPorts(t *testing.T) {
 				t.Errorf("ParseExposedPorts() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseExposedPorts() = %v, want %v", got, tt.want)
 			}
