@@ -583,33 +583,9 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		{
 			name: "modifyContainerNamespaceOptions test1",
 			args: args{
-				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: true},
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: false},
 				podSandboxID: "podSandboxID",
 				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
-			},
-		},
-		{
-			name: "modifyContainerNamespaceOptions test2",
-			args: args{
-				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: true},
-				podSandboxID: "podSandboxID",
-				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "shareable", NetworkMode: "bridge"},
-			},
-		},
-		{
-			name: "modifyContainerNamespaceOptions test3",
-			args: args{
-				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: false, HostIpc: false},
-				podSandboxID: "podSandboxID",
-				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "private", NetworkMode: "none"},
-			},
-		},
-		{
-			name: "modifyContainerNamespaceOptions test4",
-			args: args{
-				nsOpts:       &runtime.NamespaceOption{HostNetwork: false, HostPid: false, HostIpc: false},
-				podSandboxID: "podSandboxID",
-				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "none", NetworkMode: "host"},
 			},
 		},
 		{
