@@ -17,7 +17,56 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal successful cases",
+			args: args{
+				ports: []string{
+					"10.3.8.211:211:212/tcp",
+					"[fe80::1464:8a92:d6a:a73b]:211:212/tcp",
+				},
+			},
+			want: map[string][]types.PortBinding{
+				"212/tcp": []types.PortBinding{
+					{
+						HostIP:   "10.3.8.211",
+						HostPort: "211",
+					},
+					{
+						HostIP:   "fe80::1464:8a92:d6a:a73b",
+						HostPort: "211",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal case with empty string",
+			args: args{
+				ports: []string{},
+			},
+			want:    map[string][]types.PortBinding{},
+			wantErr: false,
+		},
+		{
+			name: "failure case with Invalid ip address",
+			args: args{
+				ports: []string{
+					"10.3.8.256:211:212/tcp",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "failure case with wrong proto",
+			args: args{
+				ports: []string{
+					"10.3.8.256:211:212/ftp",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,7 +91,41 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+
+		{
+			name: "successful cases",
+			args: args{portBindings: types.PortMap{
+				"23232/tcp": []types.PortBinding{
+					{HostIP: "10.3.8.211", HostPort: "212"}},
+				"23232": []types.PortBinding{
+					{HostIP: "10.3.8.211", HostPort: "212"}},
+			}},
+			wantErr: false,
+		},
+		{
+			name: "invalidSplitCharacter",
+			args: args{portBindings: types.PortMap{
+				"23232:tcp": []types.PortBinding{
+					{HostIP: "10.3.8.211", HostPort: "212"}},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalidPort",
+			args: args{portBindings: types.PortMap{
+				"65536/tcp": []types.PortBinding{
+					{HostIP: "10.3.8.211", HostPort: "212"}},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalidHostPort",
+			args: args{portBindings: types.PortMap{
+				"23232/tcp": []types.PortBinding{
+					{HostIP: "10.3.8.211", HostPort: "fd"}},
+			}},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
