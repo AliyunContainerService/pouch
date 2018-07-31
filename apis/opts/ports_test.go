@@ -16,7 +16,6 @@ func TestParseExposedPorts(t *testing.T) {
 		want    map[string]interface{}
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name:    "wrongcase",
 			args:    args{portList: []string{"2222"}, expose: []string{"4444"}},
