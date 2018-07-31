@@ -588,6 +588,116 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	}
 }
 
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "getAppArmorSecurityOptsRuntimeDefault",
+			args:    args{&runtime.LinuxContainerSecurityContext{ApparmorProfile: "runtime/default"}},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:    "getAppArmorSecurityOptsNil",
+			args:    args{&runtime.LinuxContainerSecurityContext{ApparmorProfile: ""}},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:    "getAppArmorSecurityOptsUnconfine",
+			args:    args{&runtime.LinuxContainerSecurityContext{ApparmorProfile: "unconfined"}},
+			want:    []string{"apparmor=unconfined"},
+			wantErr: false,
+		},
+		{
+			name:    "getAppArmorSecurityOptsLocalhost",
+			args:    args{&runtime.LinuxContainerSecurityContext{ApparmorProfile: "localhost"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "getAppArmorSecurityOptsOK",
+			args:    args{&runtime.LinuxContainerSecurityContext{ApparmorProfile: "localhost/api/1.0"}},
+			want:    []string{"apparmor=api/1.0"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSeccompSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "test1",
+			args:    args{&runtime.LinuxContainerSecurityContext{SeccompProfilePath: "docker/default"}},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:    "test2",
+			args:    args{&runtime.LinuxContainerSecurityContext{SeccompProfilePath: ""}},
+			want:    []string{fmt.Sprintf("seccomp=%s", "unconfined")},
+			wantErr: false,
+		},
+		{
+			name:    "test3",
+			args:    args{&runtime.LinuxContainerSecurityContext{SeccompProfilePath: "unconfined"}},
+			want:    []string{fmt.Sprintf("seccomp=%s", "unconfined")},
+			wantErr: false,
+		},
+		{
+			name:    "test4",
+			args:    args{&runtime.LinuxContainerSecurityContext{SeccompProfilePath: "localhost"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "test5",
+			args:    args{&runtime.LinuxContainerSecurityContext{SeccompProfilePath: "localhost/api/1.0"}},
+			want:    []string{fmt.Sprintf("seccomp=%s", "api/1.0")},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSeccompSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSeccompSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_applyContainerSecurityContext(t *testing.T) {
 	type args struct {
 		lc           *runtime.LinuxContainerConfig
