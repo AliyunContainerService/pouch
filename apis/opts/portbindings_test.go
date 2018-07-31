@@ -17,19 +17,19 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 		//good case
-		{	name:	"case 1",
-			args:	args{ports:	[]string{"192.168.1.1:8888:20/tcp", "192.168.1.1:9999:30/tcp"}},
-			want:	types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}, "30/tcp": {{"192.168.1.1", "9999"}},},
-			wantErr:	false,
+		{name: "case 1",
+			args:    args{ports: []string{"192.168.1.1:8888:20/tcp", "192.168.1.1:9999:30/tcp"}},
+			want:    types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}, "30/tcp": {{"192.168.1.1", "9999"}}},
+			wantErr: false,
 		},
 		//bad case: ip
 		{
-			name:	"case bad 1",
-			args:	args{ports:	[]string{"badIp:8888:20/tcp"}},
-			want:	nil,
-			wantErr:	true,
+			name:    "case bad 1",
+			args:    args{ports: []string{"badIp:8888:20/tcp"}},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -55,24 +55,24 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 		//good case
 		{
-			name:	"case verify 1",
-			args:	args{portBindings:	types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}},},
-			wantErr:	false,
+			name:    "case verify 1",
+			args:    args{portBindings: types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}}},
+			wantErr: false,
 		},
 		//bad case: bad cantainer port
 		{
-			name:	"bad case verify 1",
-			args:	args{portBindings:	types.PortMap{"badPort/tcp": {{"192.168.1.1", "8888"}}},},
-			wantErr:	true,
+			name:    "bad case verify 1",
+			args:    args{portBindings: types.PortMap{"badPort/tcp": {{"192.168.1.1", "8888"}}}},
+			wantErr: true,
 		},
 		//bad case: bad host port
 		{
-			name:	"bad case verify 2",
-			args:	args{portBindings:      types.PortMap{"20/tcp": {{"192.168.1.1", "badPort"}}},},
-			wantErr:	true,
+			name:    "bad case verify 2",
+			args:    args{portBindings: types.PortMap{"20/tcp": {{"192.168.1.1", "badPort"}}}},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
