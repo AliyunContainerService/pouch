@@ -1,7 +1,6 @@
 package opts
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -135,7 +134,6 @@ func TestParseExposedPorts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ParseExposedPorts(tt.args.portList, tt.args.expose)
-			fmt.Printf("%+v\n", got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseExposedPorts() error = %v, wantErr %v", err, tt.wantErr)
 				return
