@@ -23,24 +23,24 @@ func TestParsePortBinding(t *testing.T) {
 			want: types.PortMap{
 				"1301/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1201",
+						HostIP:   "112.126.1.1",
+						HostPort: "1201",
 					},
 				},
 				"1302/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1202",
+						HostIP:   "112.126.1.1",
+						HostPort: "1202",
 					},
 				},
 				"1303/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1203",
+						HostIP:   "112.126.1.1",
+						HostPort: "1203",
 					},
 				},
 			},
-			wantErr:false,
+			wantErr: false,
 		},
 
 		{
@@ -49,21 +49,19 @@ func TestParsePortBinding(t *testing.T) {
 			want: types.PortMap{
 				"1301/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1201",
+						HostIP:   "112.126.1.1",
+						HostPort: "1201",
 					},
 				},
 			},
-			wantErr:false,
+			wantErr: false,
 		},
 		{
-			name:"fail test",
-			args:args{ports:[]string{"112.126.1.1:1201:/tcp"}},
-			want:nil,
-			wantErr:true,
+			name:    "fail test",
+			args:    args{ports: []string{"112.126.1.1:1201:/tcp"}},
+			want:    nil,
+			wantErr: true,
 		},
-
-
 	}
 
 	for _, tt := range tests {
@@ -90,46 +88,46 @@ func TestVerifyPortBinding(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:"normal test",
-			args:args{types.PortMap{
+			name: "normal test",
+			args: args{types.PortMap{
 				"1301/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1205/udp",
+						HostIP:   "112.126.1.1",
+						HostPort: "1205/udp",
 					},
 				},
 				"1302/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1202",
+						HostIP:   "112.126.1.1",
+						HostPort: "1202",
 					},
 				},
 				"1303/tcp": []types.PortBinding{
 					types.PortBinding{
-						HostIP:"112.126.1.1",
-						HostPort:"1203",
+						HostIP:   "112.126.1.1",
+						HostPort: "1203",
 					},
 				},
 			}},
-			wantErr:false,
+			wantErr: false,
 		},
 		{
-			name:"normal test",
-			args:args{types.PortMap{
-				 "1301": []types.PortBinding{
-					 types.PortBinding{
-						 HostIP:   "112.126.1.1",
-						 HostPort: "1205-1207",
-					 },
-				 },
-				 "1302": []types.PortBinding{
-				 	  types.PortBinding{
-				 	  	 HostIP:"112.126.1.1",
-				 	  	 HostPort:"1202",
-					  },
-				 } ,
+			name: "normal test",
+			args: args{types.PortMap{
+				"1301": []types.PortBinding{
+					types.PortBinding{
+						HostIP:   "112.126.1.1",
+						HostPort: "1205-1207",
+					},
+				},
+				"1302": []types.PortBinding{
+					types.PortBinding{
+						HostIP:   "112.126.1.1",
+						HostPort: "1202",
+					},
+				},
 			}},
-			wantErr:false,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
