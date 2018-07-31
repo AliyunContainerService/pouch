@@ -282,7 +282,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,7 +342,7 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -558,7 +558,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -579,7 +579,47 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+		{
+			name: "modifyContainerNamespaceOptions test1",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: true},
+				podSandboxID: "podSandboxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+		},
+		{
+			name: "modifyContainerNamespaceOptions test2",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: true},
+				podSandboxID: "podSandboxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "shareable", NetworkMode: "bridge"},
+			},
+		},
+		{
+			name: "modifyContainerNamespaceOptions test3",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: false, HostIpc: false},
+				podSandboxID: "podSandboxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "private", NetworkMode: "none"},
+			},
+		},
+		{
+			name: "modifyContainerNamespaceOptions test4",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: false, HostPid: false, HostIpc: false},
+				podSandboxID: "podSandboxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "none", NetworkMode: "host"},
+			},
+		},
+		{
+			name: "modifyContainerNamespaceOptions test 5",
+			args: args{
+				nsOpts:       nil,
+				podSandboxID: "podSandboxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -600,7 +640,8 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -628,7 +669,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,7 +694,7 @@ func Test_toCriContainer(t *testing.T) {
 		want    *runtime.Container
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -680,7 +721,7 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,7 +752,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -736,7 +777,7 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -760,7 +801,7 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
