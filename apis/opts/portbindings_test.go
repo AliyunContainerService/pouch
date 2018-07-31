@@ -31,6 +31,17 @@ func TestParsePortBinding(t *testing.T) {
 		},
 
 		{
+			name: "protocol test",
+			args: args{ports: []string{"192.168.0.1:8080:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/udp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
+
+		{
 			name: "test small ip",
 			args: args{ports: []string{"0.0.0.0.:8080:1010"}},
 			want: types.PortMap(map[string][]types.PortBinding{
