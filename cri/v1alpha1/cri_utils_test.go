@@ -570,23 +570,40 @@ func Test_makeContainerName(t *testing.T) {
 }
 
 func Test_modifyContainerNamespaceOptions(t *testing.T) {
-	type args struct {
+	var (
+		nsopts = runtime.NamespaceOption{
+			HostNetwork: false,
+			HostPid:     false,
+			HostIpc:     false,
+		}
+ 		hostConfig = apitypes.HostConfig{}
+	)
+ 	type args struct {
 		nsOpts       *runtime.NamespaceOption
 		podSandboxID string
 		hostConfig   *apitypes.HostConfig
 	}
-	tests := []struct {
+ 	tests := []struct {
 		name string
 		args args
 	}{
 	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				podSandboxID: "testID",
+				hostConfig:   &hostConfig,
+				nsOpts:       &nsopts,
+			},
+			//   wantErr: false,
+		},
 	}
-	for _, tt := range tests {
+ 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
 		})
 	}
-}
+ }
 
 func Test_applyContainerSecurityContext(t *testing.T) {
 	type args struct {
