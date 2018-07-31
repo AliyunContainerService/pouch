@@ -578,8 +578,36 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+                want apitypes.HostConfig
 	}{
-	// TODO: Add test cases.
+	// TODO: Add test cases
+                {
+                      name:"test 1",
+                      args:args{
+                                nsOpts: &runtime.NamespaceOption{true,true,false},
+                                podSandboxID:"podSandBoxID",
+                                hostConfig:  &apitypes.HostConfig{PidMode:"test",IpcMode:"test",NetworkMode:"test"},
+                     },
+                      want:apitypes.HostConfig{PidMode:"test",IpcMode:"container:podSandBoxID",NetworkMode:"test"},
+                },
+                {
+                      name:"test 2",
+                      args:args{
+                                nsOpts:&runtime.NamespaceOption{true,true,true},
+                                podSandboxID:"podSandboxID",
+                                hostConfig: &apitypes.HostConfig{PidMode:"test",IpcMode:"test",NetworkMode:"test"},
+                     },
+                      want:apitypes.HostConfig{PidMode:"test",IpcMode:"test",NetworkMode:"test"},
+                },
+                {
+                      name:"test 3",
+                      args:args{
+                                nsOpts:nil,
+                                podSandboxID:"podSandBoxID",
+                                hostConfig:&apitypes.HostConfig{PidMode:"test",IpcMode:"test",NetworkMode:"test"},
+                      },
+                      want:apitypes.HostConfig{PidMode:"container:podSandBoxID",IpcMode:"container:podSandBoxID",NetworkMode:"container:podSandBoxID"},
+               },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
