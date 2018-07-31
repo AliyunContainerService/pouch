@@ -149,8 +149,12 @@ func GetDefaultQuota(quotas map[string]string) string {
 // SetRootfsDiskQuota is to set container rootfs dir disk quota.
 func SetRootfsDiskQuota(basefs, size string, quotaID uint32) error {
 	overlayfs, err := getOverlay(basefs)
-	if err != nil || overlayfs == nil {
+	if err != nil {
 		return fmt.Errorf("failed to get lowerdir: %v", err)
+	}
+	if overlayfs == nil || (*overlayfs) == (OverlayMount{}) ||
+		overlayfs.Upper == "" || overlayfs.Work == "" {
+		return fmt.Errorf("failed to get overlay mount for %s: %+v", basefs, overlayfs)
 	}
 
 	for _, dir := range []string{overlayfs.Upper, overlayfs.Work} {
