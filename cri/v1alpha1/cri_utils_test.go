@@ -570,16 +570,258 @@ func Test_makeContainerName(t *testing.T) {
 }
 
 func Test_modifyContainerNamespaceOptions(t *testing.T) {
+
 	type args struct {
 		nsOpts       *runtime.NamespaceOption
 		podSandboxID string
 		hostConfig   *apitypes.HostConfig
 	}
+	st := int64(1000)
 	tests := []struct {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+		{name: "test1",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{""},
+				},
+			},
+		},
+		{name: "test2",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test3",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: true,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test4",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     true,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test5",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     true},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test6",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: true,
+					HostPid:     true,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test7",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     true,
+					HostIpc:     true},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test8",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: true,
+					HostPid:     false,
+					HostIpc:     true},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test9",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: true,
+					HostPid:     true,
+					HostIpc:     true},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test10",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "aaa",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test11",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: true,
+					Binds:      []string{""},
+				},
+			},
+		},
+		{name: "test12",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{"aaa"},
+				},
+			},
+		},
+		{name: "test13",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{},
+				},
+			},
+		},
+
+		{name: "test14",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostNetwork: false,
+					HostPid:     false,
+					HostIpc:     false},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove:      false,
+					Binds:           []string{},
+					CapAdd:          []string{},
+					CapDrop:         []string{},
+					Cgroup:          "",
+					ConsoleSize:     []*int64{},
+					ContainerIDFile: "",
+					DNS:             []string{},
+					DNSOptions:      []string{},
+					DNSSearch:       []string{},
+					EnableLxcfs:     false,
+					ExtraHosts:      []string{},
+					GroupAdd:        []string{},
+					InitScript:      "",
+					IpcMode:         "",
+					Isolation:       "",
+					Links:           []string{},
+					LogConfig: &apitypes.LogConfig{
+						LogDriver: "",
+						LogOpts:   map[string]string{"a": "b"},
+					},
+					NetworkMode: "",
+					OomScoreAdj: 1,
+					PidMode:     "",
+					PortBindings: apitypes.PortMap(map[string][]apitypes.PortBinding{
+						"101/tcp": []apitypes.PortBinding{
+							apitypes.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+						},
+					}),
+					Privileged:      false,
+					PublishAllPorts: false,
+					ReadonlyRootfs:  false,
+					RestartPolicy: &apitypes.RestartPolicy{
+						MaximumRetryCount: 1,
+						Name:              "",
+					},
+					Rich:         false,
+					RichMode:     "",
+					Runtime:      "",
+					SecurityOpt:  []string{},
+					ShmSize:      &st,
+					StorageOpt:   map[string]string{"a": "b"},
+					Sysctls:      map[string]string{"a": "b"},
+					Tmpfs:        map[string]string{"a": "b"},
+					UTSMode:      "",
+					UsernsMode:   "",
+					VolumeDriver: "",
+					VolumesFrom:  []string{},
+					Resources:    apitypes.Resources{},
+				},
+			},
+		},
+		{name: "test15",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{},
+				podSandboxID: "",
+				hostConfig: &apitypes.HostConfig{
+					AutoRemove: false,
+					Binds:      []string{""},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
