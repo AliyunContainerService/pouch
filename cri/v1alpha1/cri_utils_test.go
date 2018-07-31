@@ -570,6 +570,14 @@ func Test_makeContainerName(t *testing.T) {
 }
 
 func Test_modifyContainerNamespaceOptions(t *testing.T) {
+	var (
+		nsopts = runtime.NamespaceOption{
+			HostNetwork: false,
+			HostPid:     false,
+			HostIpc:     false,
+		}
+		hostConfig = apitypes.HostConfig{}
+	)
 	type args struct {
 		nsOpts       *runtime.NamespaceOption
 		podSandboxID string
@@ -579,7 +587,16 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				podSandboxID: "testID",
+				hostConfig:   &hostConfig,
+				nsOpts:       &nsopts,
+			},
+			//   wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
