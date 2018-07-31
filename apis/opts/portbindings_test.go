@@ -17,7 +17,80 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{ports: []string{"192.168.0.1:8080:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
+
+		{
+			name: "test small ip",
+			args: args{ports: []string{"0.0.0.0.:8080:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "0.0.0.0", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
+
+		{
+			name: "test big ip",
+			args: args{ports: []string{"256.256.256.256:8080:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "256.256.256.256", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
+		{
+			name: "test host small port",
+			args: args{ports: []string{"192.168.0.1:0:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "0"},
+				},
+			}),
+			wantErr: false,
+		},
+		{
+			name: "test host big port",
+			args: args{ports: []string{"192.168.0.1:65536:1010"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"1010/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "65535"},
+				},
+			}),
+			wantErr: false,
+		},
+
+		{
+			name: "test container small port",
+			args: args{ports: []string{"192.168.0.1:8080:0"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"0/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
+
+		{
+			name: "test container big port",
+			args: args{ports: []string{"192.168.0.1:8080:65536"}},
+			want: types.PortMap(map[string][]types.PortBinding{
+				"65536/tcp": []types.PortBinding{
+					types.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+				},
+			}),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,7 +115,65 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "test normal port",
+			args: args{
+				types.PortMap(map[string][]types.PortBinding{
+					"1010/tcp": []types.PortBinding{
+						types.PortBinding{HostIP: "192.168.0.1", HostPort: "8080"},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "test small ip",
+			args: args{
+				types.PortMap(map[string][]types.PortBinding{
+					"1010/tcp": []types.PortBinding{
+						types.PortBinding{HostIP: "0.0.0.0", HostPort: "8080"},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "test big ip",
+			args: args{
+				types.PortMap(map[string][]types.PortBinding{
+					"1010/tcp": []types.PortBinding{
+						types.PortBinding{HostIP: "65536.65536.65536.65536", HostPort: "8080"},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "test small port",
+			args: args{
+				types.PortMap(map[string][]types.PortBinding{
+					"1010/tcp": []types.PortBinding{
+						types.PortBinding{HostIP: "192.168.0.1", HostPort: "0"},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "test big port",
+			args: args{
+				types.PortMap(map[string][]types.PortBinding{
+					"1010/tcp": []types.PortBinding{
+						types.PortBinding{HostIP: "192.168.0.1", HostPort: "65536"},
+					},
+				}),
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
