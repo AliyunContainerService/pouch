@@ -674,13 +674,31 @@ func Test_imageToCriImage(t *testing.T) {
 	type args struct {
 		image *apitypes.ImageInfo
 	}
+
 	tests := []struct {
 		name    string
 		args    args
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{image: &apitypes.ImageInfo {Config : &apitypes.ContainerConfig{User : "ww"}}},
+			want: &runtime.Image {Uid: &runtime.Int64Value{0}, Username : "ww"},
+			wantErr: false,
+		},
+		{
+			name: "test2",
+			args: args{image: &apitypes.ImageInfo {Config : &apitypes.ContainerConfig{User : "123"}}},
+			want: &runtime.Image {Uid: &runtime.Int64Value{123}, Username : ""},
+			wantErr: false,
+		},
+		{
+			name: "test3",
+			args: args{image: &apitypes.ImageInfo {Config : &apitypes.ContainerConfig{User : "123:22"}}},
+			want: &runtime.Image {Uid: &runtime.Int64Value{123}, Username : ""},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
