@@ -14,6 +14,42 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+func Test_toCriSandbox(t *testing.T) {
+	type args struct {
+		c *mgr.Container
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *runtime.PodSandbox
+		wantErr bool
+	}{
+		{
+			name: "nil test",
+			args: args{
+				c: &mgr.Container{
+					State: &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:  "",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toCriSandbox(tt.args.c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toCriSandbox() error = %v, wantErr%v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCriSandbox() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_parseUint32(t *testing.T) {
 	type args struct {
 		s string
