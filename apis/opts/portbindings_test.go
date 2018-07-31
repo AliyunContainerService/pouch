@@ -91,7 +91,6 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-
 		{
 			name: "successful cases",
 			args: args{portBindings: types.PortMap{
