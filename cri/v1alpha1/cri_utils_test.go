@@ -9,9 +9,16 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 
+	"github.com/alibaba/pouch/daemon"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	"path"
+
+	"github.com/alibaba/pouch/apis/plugins"
+	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/meta"
 )
 
 func Test_parseUint32(t *testing.T) {
@@ -282,7 +289,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,7 +349,7 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -558,7 +565,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -579,7 +586,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -600,7 +607,7 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -616,6 +623,13 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		ContainerMgr mgr.ContainerMgr
 		ImageMgr     mgr.ImageMgr
 	}
+
+	cfg := &config.Config{}
+	d := daemon.NewDaemon(cfg)
+	imageMgr, _ := GenImageMgr(d.Config(), d)
+	ctx, _ := context.WithCancel(context.Background())
+	containerMgr, _ := GenContainerMgr(ctx, d)
+
 	type args struct {
 		createConfig  *apitypes.ContainerCreateConfig
 		config        *runtime.ContainerConfig
@@ -628,7 +642,22 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+		{name: "test1",
+			fields: fields{
+				containerMgr,
+				imageMgr}, //使用实例
+
+			args: args{&apitypes.ContainerCreateConfig{},
+				&runtime.ContainerConfig{},
+				&runtime.PodSandboxConfig{},
+				"123"},
+			wantErr: false},
+
+		{name: "test2",
+			fields:  fields{},
+			args:    args{},
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -643,6 +672,44 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 	}
 }
 
+type DaemonProvider interface {
+	Config() *config.Config
+	Containerd() ctrd.APIClient
+	CtrMgr() mgr.ContainerMgr
+	ImgMgr() mgr.ImageMgr
+	VolMgr() mgr.VolumeMgr
+	NetMgr() mgr.NetworkMgr
+	MetaStore() *meta.Store
+	ContainerPlugin() plugins.ContainerPlugin
+}
+
+// GenContainerMgr generates a ContainerMgr instance according to config cfg.
+func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
+	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.Config(), d.ContainerPlugin())
+}
+
+// GenSystemMgr generates a SystemMgr instance according to config cfg.
+func GenSystemMgr(cfg *config.Config, d DaemonProvider) (mgr.SystemMgr, error) {
+	return mgr.NewSystemManager(cfg, d.MetaStore(), d.ImgMgr())
+}
+
+// GenImageMgr generates a ImageMgr instance according to config cfg.
+func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
+	return mgr.NewImageManager(cfg, d.Containerd())
+}
+
+// GenVolumeMgr generates a VolumeMgr instance according to config cfg.
+func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
+	cfg.VolumeConfig.VolumeMetaPath = path.Join(cfg.HomeDir, "volume", "volume.db")
+
+	return mgr.NewVolumeManager(cfg.VolumeConfig)
+}
+
+// GenNetworkMgr generates a NetworkMgr instance according to config cfg.
+func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error) {
+	return mgr.NewNetworkManager(cfg, d.MetaStore(), d.CtrMgr())
+}
+
 func Test_toCriContainer(t *testing.T) {
 	type args struct {
 		c *mgr.Container
@@ -653,7 +720,7 @@ func Test_toCriContainer(t *testing.T) {
 		want    *runtime.Container
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -680,7 +747,7 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,7 +778,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -736,7 +803,7 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -760,7 +827,7 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
