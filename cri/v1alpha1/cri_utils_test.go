@@ -52,7 +52,7 @@ func Test_parseUint32(t *testing.T) {
 }
 
 func Test_getSELinuxSecurityOpts(t *testing.T) {
- 	var (
+	var (
 		// test input of empty profile in condition
 		emptyProfile1 = runtime.LinuxContainerSecurityContext{
 			SelinuxOptions: &runtime.SELinuxOption{
@@ -62,7 +62,7 @@ func Test_getSELinuxSecurityOpts(t *testing.T) {
 				Level: "",
 			},
 		}
- 		emptyProfile2 = runtime.LinuxContainerSecurityContext{
+		emptyProfile2 = runtime.LinuxContainerSecurityContext{
 			SelinuxOptions: &runtime.SELinuxOption{
 				User:  "05",
 				Role:  "player",
@@ -71,10 +71,10 @@ func Test_getSELinuxSecurityOpts(t *testing.T) {
 			},
 		}
 	)
- 	type args struct {
+	type args struct {
 		sc *runtime.LinuxContainerSecurityContext
 	}
- 	tests := []struct {
+	tests := []struct {
 		name    string
 		args    args
 		want    []string
@@ -109,7 +109,7 @@ func Test_getSELinuxSecurityOpts(t *testing.T) {
 			}
 		})
 	}
- }
+}
 
 func Test_toCriTimestamp(t *testing.T) {
 	type args struct {
