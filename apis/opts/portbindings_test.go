@@ -17,19 +17,18 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-
 		{
 			name: "normal successful cases",
 			args: args{
 				ports: []string{
-					"10.3.8.211:211:212/tcp",
+					"10.3.8.211:211:21/tcp",
 					"[fe80::1464:8a92:d6a:a73b]:211:212/tcp",
 				},
 			},
 			want: map[string][]types.PortBinding{
 				"212/tcp": []types.PortBinding{
 					{
-						HostIP:   "10.3.8.211",
+						HostIP:   "10.3.8.21",
 						HostPort: "211",
 					},
 					{
