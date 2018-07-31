@@ -821,3 +821,43 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		})
 	}
 }
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{name: "test1", args: args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: nil}}, want: nil, wantErr: false},
+		{name: "test2", args: args{&runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{"", "work", "only", "2"}}},
+			want: nil, wantErr: false},
+
+		{name: "test3", args: args{&runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{"a", "", "only", "2"}}},
+			want: nil, wantErr: false},
+		{name: "test4", args: args{&runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{"a", "work", "only", "2"}}},
+			want: []string{"label=user:b", "label=role:work", "label=type:only", "label=level:2"}, wantErr: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSELinuxSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+}
