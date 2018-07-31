@@ -32,8 +32,8 @@ sudo yum install -y qemu qemu-kvm
 
 3. install kata-runtime
 
-In this step, we need three binary to install, [kata-runtime](https://github.com/kata-containers/runtime), [kata-proxy](https://github.com/kata-containers/proxy) and [kata-shim](https://github.com/kata-containers/shim), kata-proxy and kata-shim will called by kata-runtime in running a kata container.
-It is quite easy to get the binary from the source code, let's take kata runtime for example, clone code from github, then make.
+In this step, we need three binary libraries to install, [kata-runtime](https://github.com/kata-containers/runtime), [kata-proxy](https://github.com/kata-containers/proxy) and [kata-shim](https://github.com/kata-containers/shim), kata-proxy and kata-shim will called by kata-runtime in running a kata container.
+It is quite easy to get the binary libraries from the source code, let's take kata runtime for example, clone code from github, then make.
 
 ```shell
 git clone https://github.com/kata-containers/runtime.git
@@ -58,7 +58,7 @@ File will be generated in `cli/config/configuration.toml`, copy the file into de
 cp cli/config/configuration.toml /etc/kata-containers/configuration.toml
 ```
 
-You might need to modify this file, make sure that all binaries have right path in system.
+You might need to modify this file, make sure that all binary libraries have right path in system.
 
 ### Start kata container
 
