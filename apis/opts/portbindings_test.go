@@ -17,8 +17,6 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-
 		{
 			name: "normal test",
 			args: args{ports: []string{"192.168.0.1:8080:1010"}},
@@ -117,7 +115,6 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "test normal port",
 			args: args{
