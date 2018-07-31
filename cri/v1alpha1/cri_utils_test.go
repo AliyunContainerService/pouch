@@ -579,7 +579,99 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					true,
+					true,
+					true,
+				},
+				podSandboxID: "test1sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "host",
+					IpcMode:     "none",
+					NetworkMode: "bridge",
+				},
+			},
+		},
+		{
+			name: "test2",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					false,
+					false,
+					false,
+				},
+				podSandboxID: "test2sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "container:123456",
+					IpcMode:     "private",
+					NetworkMode: "host",
+				},
+			},
+		},
+		{
+			name: "test3",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					true,
+					false,
+					true,
+				},
+				podSandboxID: "test3sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "host",
+					IpcMode:     "shareable",
+					NetworkMode: "none",
+				},
+			},
+		},
+		{name: "test4",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					false,
+					true,
+					true,
+				},
+				podSandboxID: "test4sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "host",
+					IpcMode:     "container:1234567",
+					NetworkMode: "container:1234",
+				},
+			},
+		},
+		{
+			name: "test5",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					true,
+					true,
+					false,
+				},
+				podSandboxID: "test5sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "host",
+					IpcMode:     "host",
+					NetworkMode: "container:123",
+				},
+			},
+		},
+
+		{
+			name: "test6",
+			args: args{
+				nsOpts:       nil,
+				podSandboxID: "test6sandboxID",
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     "host",
+					IpcMode:     "host",
+					NetworkMode: "container:123",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
