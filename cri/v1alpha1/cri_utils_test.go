@@ -282,7 +282,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,7 +342,7 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -558,7 +558,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -579,7 +579,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -600,7 +600,7 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -628,7 +628,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,7 +653,7 @@ func Test_toCriContainer(t *testing.T) {
 		want    *runtime.Container
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -680,7 +680,7 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,7 +711,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -736,7 +736,7 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -760,7 +760,7 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -817,6 +817,51 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseResourcesFromCRI(tt.args.runtimeResources); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseResourcesFromCRI() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Image related unit tests.
+func Test_imageToCriImage(t *testing.T) {
+	type args struct {
+		image *apitypes.ImageInfo
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    *runtime.Image
+		wantErr bool
+	}{
+		{
+			name:    "case_1",
+			args:    args{image: &apitypes.ImageInfo{Config: &apitypes.ContainerConfig{User: "User1"}, Size: 10, ID: "aaa", RepoTags: nil, RepoDigests: nil}},
+			want:    &runtime.Image{Id: "", RepoTags: nil, RepoDigests: nil, Size_: 10, Uid: &runtime.Int64Value{0}, Username: "User1"},
+			wantErr: false,
+		},
+		{
+			name:    "case_2",
+			args:    args{image: &apitypes.ImageInfo{Config: &apitypes.ContainerConfig{User: "User2:group2"}, Size: 11}},
+			want:    &runtime.Image{Id: "", RepoTags: []string{"test"}, RepoDigests: nil, Size_: 11, Uid: &runtime.Int64Value{11}, Username: "User1"},
+			wantErr: false,
+		},
+		{
+			name:    "case_3",
+			args:    args{image: &apitypes.ImageInfo{Config: &apitypes.ContainerConfig{User: "User3:group1"}, Size: -1}},
+			want:    &runtime.Image{Id: "", RepoTags: nil, RepoDigests: []string{"test"}, Size_: 0, Uid: &runtime.Int64Value{0}, Username: ""},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := imageToCriImage(tt.args.image)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("imageToCriImage() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("imageToCriImage() = %v, want %v", got, tt.want)
 			}
 		})
 	}
