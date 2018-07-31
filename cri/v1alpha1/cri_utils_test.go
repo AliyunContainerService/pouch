@@ -343,6 +343,58 @@ func Test_toCriSandbox(t *testing.T) {
 		wantErr bool
 	}{
 	// TODO: Add test cases.
+		{ 
+		name: "condition test 1to2", 
+		args: args{ 
+			c: &mgr.Container{ 
+				State: &apitypes.ContainerState{Status: apitypes.StatusRunning}, 
+				Name:  "1_2_3_4_5", 
+			}, 
+		}, 
+		want:    nil, 
+		wantErr: true, 
+	}, 
+	{ 
+		name: "condition test 1to3to4", 
+		args: args{ 
+			c: &mgr.Container{ 
+				State:   &apitypes.ContainerState{Status: apitypes.StatusRunning}, 
+				Name:    "k8s_2_3_4_5_6", 
+				Config:  &apitypes.ContainerConfig{Labels: make(map[string]string)}, 
+				Created: "-1", 
+			}, 
+		}, 
+		want:    nil, 
+		wantErr: true, 
+	}, 
+	{ 
+		name: "normal test", 
+		args: args{ 
+			c: &mgr.Container{ 
+				ID:      "test_id", 
+				State:   &apitypes.ContainerState{Status: apitypes.StatusRunning}, 
+				Name:    "k8s_2_3_4_5_6", 
+				Config:  &apitypes.ContainerConfig{Labels: make(map[string]string)}, 
+				Created: "2017-07-20T15:04:05.999999999Z", 
+			}, 
+		}, 
+		want: &runtime.PodSandbox{ 
+			Id: "test_id", 
+			Metadata: &runtime.PodSandboxMetadata{ 
+				Name:      "3", 
+				Namespace: "4", 
+				Uid:       "5", 
+				Attempt:   6, 
+			}, 
+			State:       runtime.PodSandboxState_SANDBOX_READY, 
+			CreatedAt:   1500563045999999999, 
+			Labels:      make(map[string]string), 
+			Annotations: make(map[string]string), 
+		}, 
+		wantErr: false, 
+	}, 
+
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
