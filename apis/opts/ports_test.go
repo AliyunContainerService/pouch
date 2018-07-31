@@ -21,10 +21,8 @@ func TestParseExposedPorts(t *testing.T) {
 	w["1/tcp"] = struct{}{}
 	w["65535/tcp"] = struct{}{}
 	w["80/tcp"] = struct{}{}
-
 	w3 := make(map[string]interface{})
 	w3["53/tcp"] = struct{}{}
-
 	w5 := make(map[string]interface{})
 	w5["53/tcp"] = struct{}{}
 	w5["20/tcp"] = struct{}{}
