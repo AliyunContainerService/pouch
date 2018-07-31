@@ -282,7 +282,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,7 +342,7 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -558,7 +558,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -579,7 +579,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -600,7 +600,7 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -628,7 +628,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,7 +653,7 @@ func Test_toCriContainer(t *testing.T) {
 		want    *runtime.Container
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -680,7 +680,7 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,7 +711,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -736,7 +736,7 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -760,7 +760,7 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -817,6 +817,54 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseResourcesFromCRI(tt.args.runtimeResources); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseResourcesFromCRI() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "normal",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SelinuxOptions: &runtime.SELinuxOption{User: "user", Role: "role", Type: "type", Level: "level"},
+				},
+			},
+			want: []string{"label=user:user", "label=role:role", "label=type:type", "label=level:level"},
+		},
+		{
+			name: "emptyParam",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SelinuxOptions: &runtime.SELinuxOption{User: "user", Role: "", Type: "type", Level: ""},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "emptyParam2",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					nil
+				},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := getSELinuxSecurityOpts(tt.args.sc); err != nil {
+				t.Errorf("getSELinuxSecurityOpts() error = %v", err)
+			} else if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
 			}
 		})
 	}
