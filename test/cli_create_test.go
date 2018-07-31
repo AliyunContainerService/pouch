@@ -498,3 +498,36 @@ func (suite *PouchRunSuite) TestCreateWithNonExistImage(c *check.C) {
 	res := command.PouchRun("create", "--name", cname, image)
 	res.Assert(c, icmd.Success)
 }
+
+// TestCreateWithNonExistImage tests running container with image not exist.
+func (suite *PouchRunSuite) TestCreateWithNvidiaConfig(c *check.C) {
+	cname := "TestCreateWithNvidiaConfig"
+	image := "docker.io/library/alpine"
+	res := command.PouchRun("create", "--name", cname, "--nvidia-capabilities", "all", "--nvidia-visible-devs", "none", image)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	cap := result[0].HostConfig.Resources.NvidiaConfig.NvidiaDriverCapabilities
+	drv := result[0].HostConfig.Resources.NvidiaConfig.NvidiaVisibleDevices
+	c.Assert(cap, check.Equals, "all")
+	c.Assert(drv, check.Equals, "none")
+}
+
+// TestCreateWithNonExistImage tests running container with image not exist.
+func (suite *PouchRunSuite) TestCreateWithoutNvidiaConfig(c *check.C) {
+	cname := "TestCreateWithoutNvidiaConfig"
+	image := "docker.io/library/alpine"
+	res := command.PouchRun("create", "--name", cname, image)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", cname).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].HostConfig.Resources.NvidiaConfig, check.IsNil)
+}

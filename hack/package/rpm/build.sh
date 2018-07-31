@@ -16,6 +16,8 @@ POUCHDIR=$TMP/source
 [ -d "$POUCHDIR" ] || mkdir -p "$POUCHDIR"
 BINDIR=$POUCHDIR/bin
 [ -d "$BINDIR" ] || mkdir -p "$BINDIR"
+LIBDIR=$POUCHDIR/lib
+[ -d "$LIBDIR" ] || mkdir -p "$LIBDIR"
 LXC_DIR=$TMP/lxc
 [ -d "$LXC_DIR" ] || mkdir -p "$LXC_DIR"
 
@@ -33,6 +35,9 @@ CATEGORY='Tools/Pouch'
 # The maintainer of this package.
 MAINTAINER='Pouch pouch-dev@list.alibaba-inc.com'
 VENDOR='Pouch'
+
+LIB_NVIDIA_VERSION="1.0.0-rc.2"
+NVIDIA_RUNTIME_VERSION="1.4.0-1"
 
 # build lxcfs
 function build_lxcfs ()
@@ -67,6 +72,24 @@ function build_pouch()
     pushd $BASEDIR/pouch
     make install DESTDIR="$POUCHDIR"
     popd
+}
+
+# install nvidia-container-runtime
+function build_nvidia_runtime(){
+    echo "Downloading libnvidia-container."
+    wget --quiet "https://github.com/NVIDIA/libnvidia-container/releases/download/v${LIB_NVIDIA_VERSION}/libnvidia-container_${LIB_NVIDIA_VERSION}_x86_64.tar.xz" -P "${TMP}"
+    tar -xf "${TMP}/libnvidia-container_${LIB_NVIDIA_VERSION}_x86_64.tar.xz" -C "${TMP}"
+    cp "${TMP}/libnvidia-container_${LIB_NVIDIA_VERSION}/usr/local/bin/nvidia-container-cli" "${BINDIR}/"
+    cp "${TMP}/libnvidia-container_${LIB_NVIDIA_VERSION}/usr/local/lib/libnvidia-container.so" "${LIBDIR}/"
+    cp "${TMP}/libnvidia-container_${LIB_NVIDIA_VERSION}/usr/local/lib/libnvidia-container.so.1" "${LIBDIR}/"
+    cp "${TMP}/libnvidia-container_${LIB_NVIDIA_VERSION}/usr/local/lib/libnvidia-container.so.1.0.0" "${LIBDIR}/"
+
+    echo "Downloading nvidia-container-runtime."
+    wget --quiet "https://github.com/NVIDIA/nvidia-container-runtime/archive/v${NVIDIA_RUNTIME_VERSION}.tar.gz" -P "${TMP}"
+    mkdir -p "${GOPATH}/src/github.com/NVIDIA"
+    tar -xzf "${TMP}/v${NVIDIA_RUNTIME_VERSION}.tar.gz" -C "${GOPATH}/src/github.com/NVIDIA"
+    mv "${GOPATH}/src/github.com/NVIDIA/nvidia-container-runtime-${NVIDIA_RUNTIME_VERSION}" "${GOPATH}/src/github.com/NVIDIA/nvidia-container-runtime"
+    go build -o "${BINDIR}/nvidia-container-runtime-hook" "github.com/NVIDIA/nvidia-container-runtime/hook/nvidia-container-runtime-hook"
 }
 
 function build_rpm ()
@@ -110,6 +133,7 @@ function build_rpm ()
           -d fuse-libs \
           -d fuse \
           "$BINDIR/"=/usr/local/bin/ \
+          "$LIBDIR/"=/usr/lib64/ \
           "$SERVICEDIR/"=/usr/lib/systemd/system/ \
           "$LXC_DIR/usr/local/bin/lxcfs"=/usr/bin/pouch-lxcfs \
           "$LXC_DIR/usr/local/lib/lxcfs/libpouchlxcfs.so"=/usr/lib64/libpouchlxcfs.so \
@@ -121,6 +145,7 @@ function main()
 	echo "Building rpm package."
 	build_pouch
 	build_lxcfs
+	build_nvidia_runtime
 	build_rpm
 }
 

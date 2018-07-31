@@ -83,6 +83,10 @@ type container struct {
 	rich       bool
 	richMode   string
 	initScript string
+
+	// nvidia container
+	nvidiaVisibleDevices     string
+	nvidiaDriverCapabilities string
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
@@ -267,6 +271,13 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		},
 
 		NetworkingConfig: networkingConfig,
+	}
+
+	if c.nvidiaDriverCapabilities != "" || c.nvidiaVisibleDevices != "" {
+		config.HostConfig.Resources.NvidiaConfig = &types.NvidiaConfig{
+			NvidiaDriverCapabilities: c.nvidiaDriverCapabilities,
+			NvidiaVisibleDevices:     c.nvidiaVisibleDevices,
+		}
 	}
 
 	return config, nil

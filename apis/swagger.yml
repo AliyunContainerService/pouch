@@ -2483,6 +2483,29 @@ definitions:
         x-nullable: false
         minimum: 0
         maximum: 1
+      NvidiaConfig:
+        $ref: "#/definitions/NvidiaConfig"
+
+  NvidiaConfig:
+    type: "object"
+    properties:
+      NvidiaVisibleDevices:
+        description: "NvidiaVisibleDevices controls which GPUs will be made accessible inside the container"
+        type: "string"
+        example: |
+                  Possible values.
+                  0,1,2, GPU-fef8089b …: a comma-separated list of GPU UUID(s) or index(es).
+                  all: all GPUs will be accessible, this is the default value in our container images.
+                  none: no GPU will be accessible, but driver capabilities will be enabled.
+        x-nullable: false
+      NvidiaDriverCapabilities:
+        description: "NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container"
+        type: "string"
+        example: |
+                  Possible values
+                  compute,video, graphics,utility …: a comma-separated list of driver features the container needs.
+                  all: enable all available driver capabilities.
+        x-nullable: false
 
   ThrottleDevice:
     type: "object"

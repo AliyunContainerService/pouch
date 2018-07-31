@@ -164,6 +164,9 @@ type Resources struct {
 	// Required: true
 	NanoCpus int64 `json:"NanoCpus"`
 
+	// nvidia config
+	NvidiaConfig *NvidiaConfig `json:"NvidiaConfig,omitempty"`
+
 	// Disable OOM Killer for the container.
 	// Required: true
 	OomKillDisable *bool `json:"OomKillDisable"`
@@ -243,6 +246,8 @@ type Resources struct {
 /* polymorph Resources MemoryWmarkRatio false */
 
 /* polymorph Resources NanoCpus false */
+
+/* polymorph Resources NvidiaConfig false */
 
 /* polymorph Resources OomKillDisable false */
 
@@ -402,6 +407,11 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateNanoCpus(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateNvidiaConfig(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -857,6 +867,25 @@ func (m *Resources) validateNanoCpus(formats strfmt.Registry) error {
 
 	if err := validate.Required("NanoCpus", "body", int64(m.NanoCpus)); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Resources) validateNvidiaConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.NvidiaConfig) { // not required
+		return nil
+	}
+
+	if m.NvidiaConfig != nil {
+
+		if err := m.NvidiaConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("NvidiaConfig")
+			}
+			return err
+		}
 	}
 
 	return nil
