@@ -29,7 +29,7 @@ func TestParseExposedPorts(t *testing.T) {
 	w5["21/tcp"] = struct{}{}
 	w5["22/tcp"] = struct{}{}
 	tests := []TestCase{
-		TestCase{
+		{
 			name: "test1",
 			args: args{
 				portList: []string{
@@ -42,7 +42,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    w,
 			wantErr: false,
 		},
-		TestCase{
+		{
 			name: "test2",
 			args: args{
 				portList: []string{
@@ -53,7 +53,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		TestCase{
+		{
 			name: "test21",
 			args: args{
 				portList: []string{},
@@ -64,7 +64,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		TestCase{
+		{
 			name: "test3",
 			args: args{
 				portList: []string{
@@ -75,7 +75,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    w3,
 			wantErr: false,
 		},
-		TestCase{
+		{
 			name: "test4",
 			args: args{
 				portList: nil,
@@ -84,7 +84,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    make(map[string]interface{}),
 			wantErr: false,
 		},
-		TestCase{
+		{
 			name: "test5",
 			args: args{
 				portList: []string{
@@ -97,7 +97,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    w5,
 			wantErr: false,
 		},
-		TestCase{
+		{
 			name: "test6",
 			args: args{
 				portList: []string{},
@@ -108,7 +108,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		TestCase{
+		{
 			name: "test7",
 			args: args{
 				portList: []string{},
@@ -119,7 +119,7 @@ func TestParseExposedPorts(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		TestCase{
+		{
 			name: "test8",
 			args: args{
 				portList: []string{},
