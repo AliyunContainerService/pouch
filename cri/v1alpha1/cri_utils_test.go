@@ -582,12 +582,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		args args
 	}{
 		// TODO: Add test cases.
-		{name: "test1",
+		{
+			name: "test1",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -595,12 +597,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				},
 			},
 		},
-		{name: "test2",
+		{
+			name: "test2",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -608,12 +612,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				},
 			},
 		},
-		{name: "test3",
+		{
+			name: "test3",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: true,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -621,12 +627,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				},
 			},
 		},
-		{name: "test4",
+		{
+			name: "test4",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     true,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -634,12 +642,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				},
 			},
 		},
-		{name: "test5",
+		{
+			name: "test5",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     true},
+					HostIpc:     true,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -647,12 +657,14 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				},
 			},
 		},
-		{name: "test6",
+		{
+			name: "test6",
 			args: args{
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: true,
 					HostPid:     true,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -666,7 +678,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     true,
-					HostIpc:     true},
+					HostIpc:     true,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -680,7 +693,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: true,
 					HostPid:     false,
-					HostIpc:     true},
+					HostIpc:     true,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -694,7 +708,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: true,
 					HostPid:     true,
-					HostIpc:     true},
+					HostIpc:     true,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -708,7 +723,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "aaa",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -722,7 +738,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: true,
@@ -736,7 +753,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -750,7 +768,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove: false,
@@ -764,7 +783,8 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 				nsOpts: &runtime.NamespaceOption{
 					HostNetwork: false,
 					HostPid:     false,
-					HostIpc:     false},
+					HostIpc:     false,
+				},
 				podSandboxID: "",
 				hostConfig: &apitypes.HostConfig{
 					AutoRemove:      false,
