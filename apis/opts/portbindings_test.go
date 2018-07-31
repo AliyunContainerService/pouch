@@ -11,13 +11,25 @@ func TestParsePortBinding(t *testing.T) {
 	type args struct {
 		ports []string
 	}
+
 	tests := []struct {
 		name    string
 		args    args
 		want    types.PortMap
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{name: "case 1",
+			args:    args{ports: []string{"192.168.1.1:8888:20/tcp", "192.168.1.1:9999:30/tcp"}},
+			want:    types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}, "30/tcp": {{"192.168.1.1", "9999"}}},
+			wantErr: false},
+		{name: "test1",
+			args:    args{ports: []string{"127.0.0.1:1111:1234", "127.0.0.2:2222:1234", "127.0.0.2:5555:8080"}},
+			want:    types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "1111"}, {"127.0.0.2", "2222"}}, "8080/tcp": []types.PortBinding{{"127.0.0.2", "5555"}}},
+			wantErr: false},
+		{name: "test2",
+			args:    args{[]string{"127.0.0.1:1234", "127.0.0.2:2222:1234"}},
+			want:    nil,
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -26,6 +38,7 @@ func TestParsePortBinding(t *testing.T) {
 				t.Errorf("ParsePortBinding() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParsePortBinding() = %v, want %v", got, tt.want)
 			}
@@ -37,12 +50,21 @@ func TestVerifyPortBinding(t *testing.T) {
 	type args struct {
 		portBindings types.PortMap
 	}
+
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{name: "test1",
+			args:    args{types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "1111"}, {"127.0.0.2", "2222"}}, "8080/tcp": []types.PortBinding{{"127.0.0.1", "5555"}}}},
+			wantErr: false},
+		{name: "test2",
+			args:    args{types.PortMap{"1234tcp": []types.PortBinding{}}},
+			wantErr: true},
+		{name: "test3",
+			args:    args{types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "abc/1111"}}}},
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
