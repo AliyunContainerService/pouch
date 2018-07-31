@@ -22,8 +22,14 @@ func TestParsePortBinding(t *testing.T) {
 			args:    args{ports: []string{"192.168.1.1:8888:20/tcp", "192.168.1.1:9999:30/tcp"}},
 			want:    types.PortMap{"20/tcp": {{"192.168.1.1", "8888"}}, "30/tcp": {{"192.168.1.1", "9999"}}},
 			wantErr: false},
-		{"test1", args{[]string{"127.0.0.1:1111:1234", "127.0.0.2:2222:1234", "127.0.0.2:5555:8080"}}, types.PortMap{"1234/tcp": []types.PortBinding{types.PortBinding{HostIP: "127.0.0.1", HostPort: "1111"}, types.PortBinding{HostIP: "127.0.0.2", HostPort: "2222"}}, "8080/tcp": []types.PortBinding{types.PortBinding{HostIP: "127.0.0.2", HostPort: "5555"}}}, false},
-		{"test2", args{[]string{"127.0.0.1:1234", "127.0.0.2:2222:1234"}}, nil, true},
+		{name: "test1",
+			args:    args{ports: []string{"127.0.0.1:1111:1234", "127.0.0.2:2222:1234", "127.0.0.2:5555:8080"}},
+			want:    types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "1111"}, {"127.0.0.2", "2222"}}, "8080/tcp": []types.PortBinding{{"127.0.0.2", "5555"}}},
+			wantErr: false},
+		{name: "test2",
+			args:    args{[]string{"127.0.0.1:1234", "127.0.0.2:2222:1234"}},
+			want:    nil,
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
