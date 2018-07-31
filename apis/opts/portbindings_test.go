@@ -17,6 +17,7 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
+
 		{
 			name: "normal successful cases",
 			args: args{
