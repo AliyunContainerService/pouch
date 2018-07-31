@@ -570,22 +570,43 @@ func Test_makeContainerName(t *testing.T) {
 }
 
 func Test_modifyContainerNamespaceOptions(t *testing.T) {
+	var (
+		nsopts = runtime.NamespaceOption{
+			HostNetwork: false,
+			HostPid:     false,
+			HostIpc:     false,
+		}
+
+		hostConfig = apitypes.HostConfig{}
+	)
+
 	type args struct {
 		nsOpts       *runtime.NamespaceOption
 		podSandboxID string
 		hostConfig   *apitypes.HostConfig
 	}
+
 	tests := []struct {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				podSandboxID: "testID",
+				hostConfig:   &hostConfig,
+				nsOpts:       &nsopts,
+			},
+			//   wantErr: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
 		})
 	}
+
 }
 
 func Test_applyContainerSecurityContext(t *testing.T) {
@@ -667,6 +688,71 @@ func Test_toCriContainer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+
+	var (
+		// test input of empty profile in condition
+		emptyProfile1 = runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{
+				User:  "",
+				Role:  "",
+				Type:  "",
+				Level: "",
+			},
+		}
+
+		emptyProfile2 = runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{
+				User:  "05",
+				Role:  "player",
+				Type:  "person",
+				Level: "high",
+			},
+		}
+	)
+
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "emptyProfile1",
+			args: args{
+				sc: &emptyProfile1,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "emptyProfile2",
+			args: args{
+				sc: &emptyProfile2,
+			},
+			want:    []string{"label=user:05", "label=role:player", "label=type:person", "label=level:high"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSELinuxSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
 }
 
 // Image related unit tests.
