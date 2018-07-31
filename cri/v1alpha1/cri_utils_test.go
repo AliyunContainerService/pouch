@@ -11,10 +11,14 @@ import (
 
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
-	"github.com/alibaba/pouch/internal"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	"path"
+
+	"github.com/alibaba/pouch/apis/plugins"
+	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/meta"
 )
 
 func Test_parseUint32(t *testing.T) {
@@ -622,9 +626,9 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 
 	cfg := &config.Config{}
 	d := daemon.NewDaemon(cfg)
-	imageMgr, _ := internal.GenImageMgr(d.Config(), d)
+	imageMgr, _ := GenImageMgr(d.Config(), d)
 	ctx, _ := context.WithCancel(context.Background())
-	containerMgr, _ := internal.GenContainerMgr(ctx, d)
+	containerMgr, _ := GenContainerMgr(ctx, d)
 
 	type args struct {
 		createConfig  *apitypes.ContainerCreateConfig
@@ -666,6 +670,44 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+type DaemonProvider interface {
+	Config() *config.Config
+	Containerd() ctrd.APIClient
+	CtrMgr() mgr.ContainerMgr
+	ImgMgr() mgr.ImageMgr
+	VolMgr() mgr.VolumeMgr
+	NetMgr() mgr.NetworkMgr
+	MetaStore() *meta.Store
+	ContainerPlugin() plugins.ContainerPlugin
+}
+
+// GenContainerMgr generates a ContainerMgr instance according to config cfg.
+func GenContainerMgr(ctx context.Context, d DaemonProvider) (mgr.ContainerMgr, error) {
+	return mgr.NewContainerManager(ctx, d.MetaStore(), d.Containerd(), d.ImgMgr(), d.VolMgr(), d.Config(), d.ContainerPlugin())
+}
+
+// GenSystemMgr generates a SystemMgr instance according to config cfg.
+func GenSystemMgr(cfg *config.Config, d DaemonProvider) (mgr.SystemMgr, error) {
+	return mgr.NewSystemManager(cfg, d.MetaStore(), d.ImgMgr())
+}
+
+// GenImageMgr generates a ImageMgr instance according to config cfg.
+func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
+	return mgr.NewImageManager(cfg, d.Containerd())
+}
+
+// GenVolumeMgr generates a VolumeMgr instance according to config cfg.
+func GenVolumeMgr(cfg *config.Config, d DaemonProvider) (mgr.VolumeMgr, error) {
+	cfg.VolumeConfig.VolumeMetaPath = path.Join(cfg.HomeDir, "volume", "volume.db")
+
+	return mgr.NewVolumeManager(cfg.VolumeConfig)
+}
+
+// GenNetworkMgr generates a NetworkMgr instance according to config cfg.
+func GenNetworkMgr(cfg *config.Config, d DaemonProvider) (mgr.NetworkMgr, error) {
+	return mgr.NewNetworkManager(cfg, d.MetaStore(), d.CtrMgr())
 }
 
 func Test_toCriContainer(t *testing.T) {
