@@ -30,6 +30,7 @@ func Test_parseUint32(t *testing.T) {
 			want:    uint32(123456),
 			wantErr: false,
 		},
+
 		{
 			name:    "parseTestWrong",
 			args:    args{s: "abc"},
