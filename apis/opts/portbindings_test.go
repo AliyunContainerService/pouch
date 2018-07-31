@@ -56,9 +56,15 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"test1", args{types.PortMap{"1234/tcp": []types.PortBinding{types.PortBinding{HostIP: "127.0.0.1", HostPort: "1111"}, types.PortBinding{HostIP: "127.0.0.2", HostPort: "2222"}}, "8080/tcp": []types.PortBinding{types.PortBinding{HostIP: "127.0.0.1", HostPort: "5555"}}}}, false},
-		{"test2", args{types.PortMap{"1234tcp": []types.PortBinding{}}}, true},
-		{"test3", args{types.PortMap{"1234/tcp": []types.PortBinding{types.PortBinding{HostIP: "127.0.0.1", HostPort: "abc/1111"}}}}, true},
+		{name: "test1",
+			args:    args{types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "1111"}, {"127.0.0.2", "2222"}}, "8080/tcp": []types.PortBinding{{"127.0.0.1", "5555"}}}},
+			wantErr: false},
+		{name: "test2",
+			args:    args{types.PortMap{"1234tcp": []types.PortBinding{}}},
+			wantErr: true},
+		{name: "test3",
+			args:    args{types.PortMap{"1234/tcp": []types.PortBinding{{"127.0.0.1", "abc/1111"}}}},
+			wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
