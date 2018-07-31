@@ -18,8 +18,6 @@ func TestParsePortBinding(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-<<<<<<< HEAD
-
 		{
 			name: "normal test",
 			args: args{ports: []string{"192.168.0.1:8080:1010"}},
