@@ -743,7 +743,54 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			"test_only_user_name",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "test_name",
+					},
+					ID:          "1",
+					RepoDigests: []string{"test"},
+					RepoTags:    []string{"test"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"test"},
+				RepoDigests: []string{"test"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "test_name",
+			},
+			false,
+		},
+		{
+			name: "test_uid",
+			args: args{image: &apitypes.ImageInfo{
+				Config: &apitypes.ContainerConfig{
+					User: "100000:",
+				},
+				Size: 100}},
+			want: &runtime.Image{
+				Id:          "",
+				RepoTags:    nil,
+				RepoDigests: nil,
+				Size_:       100,
+				Uid:         &runtime.Int64Value{Value: 100000},
+				Username:    "",
+			}, wantErr: false,
+		},
+		{
+			name: "test_user_id_and_name",
+			args: args{image: &apitypes.ImageInfo{
+				Config: &apitypes.ContainerConfig{User: "123:22"}}},
+			want: &runtime.Image{
+				Uid:      &runtime.Int64Value{123},
+				Username: ""},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
