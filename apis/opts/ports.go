@@ -54,7 +54,7 @@ func ValidateExposedPorts(ports map[string]interface{}) error {
 	protos["tcp"] = ""
 	protos["udp"] = ""
 	protos["sctp"] = ""
-	for k,_ :=range ports {
+	for k := range ports {
 		if len(k) == 0 {
 			return fmt.Errorf("the len of key is 0")
 		}
