@@ -14,6 +14,109 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult []string
+		wantErr    bool
+	}{
+		{
+			name:       "nullProfile",
+			args:       args{sc: runtime.LinuxContainerSecurityContext{ApparmorProfile: ""}},
+			wantResult: nil,
+			wantErr:    false,
+		},
+		{
+			name:       "defaultProfile",
+			args:       args{sc: runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileRuntimeDefault}},
+			wantResult: nil,
+			wantErr:    false,
+		},
+		{
+			name:       "unconfinedProfile",
+			args:       args{sc: runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileNameUnconfined + ""}},
+			wantResult: []string{fmt.Sprintf("apparmor=%s", runtime.LinuxContainerSecurityContext.ApparmorProfile)},
+			wantErr:    false,
+		},
+		{
+			name:       "noPrefix",
+			args:       args{sc: runtime.LinuxContainerSecurityContext{ApparmorProfile: "1"}},
+			wantResult: nil,
+			wantErr:    true,
+		},
+	}
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.ports)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.wantResult {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", got, tt.wantResult)
+			}
+		})
+	}
+}
+
+// func Test_getSeccompSecurityOpts(t *testing.T) {
+// 	type args struct {
+// 		sc *runtime.LinuxContainerSecurityContext
+// 	}
+// 	tests := []struct {
+// 		name       string
+// 		args       args
+// 		wantResult []string
+// 		wantErr    bool
+// 	}{
+// 		{
+// 			name:       "nullProfile",
+// 			args:       args{sc: runtime.LinuxContainerSecurityContext{SeccompProfilePath: ""}},
+// 			wantResult: []string{fmt.Sprintf("seccomp=%s", mgr.ProfileNameUnconfined)},
+// 			wantErr:    false,
+// 		},
+// 		{
+// 			name:       "unconfinedProfile",
+// 			args:       args{sc: runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileNameUnconfined}},
+// 			wantResult: []string{fmt.Sprintf("seccomp=%s", mgr.ProfileNameUnconfined)},
+// 			wantErr:    false,
+// 		},
+// 		{
+// 			name:       "defaultProfile",
+// 			args:       args{sc: runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileDockerDefault}},
+// 			wantResult: nil,
+// 			wantErr:    false,
+// 		},
+// 		{
+// 			name:       "noPrefix",
+// 			args:       args{sc: runtime.LinuxContainerSecurityContext{SeccompProfilePath: "1"}},
+// 			wantResult: nil,
+// 			wantErr:    true,
+// 		},
+// 		{
+// 			name:       "hasPrefix",
+// 			args:       args{sc: runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileNamePrefix}},
+// 			wantResult: "",
+// 			wantErr:    false,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			got, err := getSeccompSecurityOpts(tt.args.sc)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if got != tt.wantResult {
+// 				t.Errorf("getSeccompSecurityOpts() = %v, want %v", got, tt.wantResult)
+// 			}
+// 		})
+// 	}
+// }
 func Test_parseUint32(t *testing.T) {
 	type args struct {
 		s string
@@ -282,7 +385,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,7 +445,7 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -558,7 +661,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -579,7 +682,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		name string
 		args args
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -600,7 +703,7 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -628,7 +731,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,7 +756,7 @@ func Test_toCriContainer(t *testing.T) {
 		want    *runtime.Container
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -680,7 +783,7 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,7 +814,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -736,7 +839,7 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -760,7 +863,7 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
