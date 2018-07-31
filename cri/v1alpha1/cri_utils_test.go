@@ -578,12 +578,33 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+		want apitypes.HostConfig
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{true, true, false},
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "host", IpcMode: "container:fakeSandBoxID", NetworkMode: "host"},
+		},
+		{
+			name: "nil test",
+			args: args{
+				nsOpts:       nil,
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "container:fakeSandBoxID", IpcMode: "container:fakeSandBoxID", NetworkMode: "container:fakeSandBoxID"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
+			if !reflect.DeepEqual(*tt.args.hostConfig, tt.want) {
+				t.Errorf("modifyContainerNamespaceOptions() = %v, want %v", *tt.args.hostConfig, tt.want)
+			}
 		})
 	}
 }
