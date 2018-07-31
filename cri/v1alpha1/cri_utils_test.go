@@ -14,6 +14,80 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+	var (
+		nilContext = runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{
+				User:  "",
+				Role:  "",
+				Type:  "",
+				Level: "",
+			},
+		}
+		halfContext = runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{
+				User:  "zs",
+				Role:  "user",
+			},
+		}
+		normalContext = runtime.LinuxContainerSecurityContext{
+			SelinuxOptions: &runtime.SELinuxOption{
+				User:  "zs",
+				Role:  "user",
+				Type:  "type1",
+				Level: "1",
+			},
+		}
+	)
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "nil test",
+			args: args{
+				sc: &nilContext,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "harf test",
+			args: args{
+				sc: &halfContext,
+			},
+			want:    []string{"label=user:zs", "label=role:user"},
+			wantErr: false,
+		},
+		{
+			name: "normal content",
+			args: args{
+				sc: &normalContext,
+			},
+			want:    []string{"label=user:zs", "label=role:user", "label=type:type1", "label=level:1"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSELinuxSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_parseUint32(t *testing.T) {
 	type args struct {
 		s string
