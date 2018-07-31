@@ -50,7 +50,22 @@ func ParseExposedPorts(portList, expose []string) (map[string]interface{}, error
 
 // ValidateExposedPorts verify the correction of exposed ports.
 func ValidateExposedPorts(ports map[string]interface{}) error {
-	// TODO
+	protos := make(map[string]string)
+	protos["tcp"] = ""
+	protos["udp"] = ""
+	protos["sctp"] = ""
+	for k,_ :=range ports {
+		if len(k) == 0 {
+			return fmt.Errorf("the len of key is 0")
+		}
+		if strings.Contains(k, "/") || len(strings.Split(k, "/")) != 2 {
+			return fmt.Errorf("error format")
+		}
+		proto := strings.Split(k, "/")[1]
+		if _, exists := protos[proto]; !exists {
+			return fmt.Errorf("error proto")
+		}
+	}
 
 	return nil
 }
