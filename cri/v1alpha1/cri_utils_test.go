@@ -343,6 +343,21 @@ func Test_toCriSandbox(t *testing.T) {
 		wantErr bool
 	}{
 	// TODO: Add test cases.
+        {name: "test1",
+            args: args{&mgr.Container{
+                State: &apitypes.ContainerState{
+                    Status: "OK",
+                },
+                Name: "k8s_POD_hhh_ddd_aaa_ccc",
+                Config: &apitypes.ContainerConfig{
+                    Labels: map[string]string{"foo": "bar"},
+                },
+                Created: "2018-01-12T07:38:32.245589846Z",
+                ID:      "12345",
+            }},
+            want:    &runtime.PodSandbox{Id: "shunan", Metadata: &runtime.PodSandboxMetadata{Name: "hello", Uid: "123", Namespace: "namespace", Attempt: 123}, State: 16, CreatedAt: 1515742712245589846, Labels: map[string]string{"foo": "bar"}, Annotations: map[string]string{"foo": "bar"}},
+            wantErr: false},
+    }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
