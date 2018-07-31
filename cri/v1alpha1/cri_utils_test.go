@@ -8,10 +8,13 @@ import (
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+
+	// "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	// "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alph/a1/runtime"
 )
 
 func Test_parseUint32(t *testing.T) {
@@ -343,6 +346,7 @@ func Test_toCriSandbox(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
+		// {name:"test1",args:nil,want:nil,wantErr:true}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -638,35 +642,6 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 			}
 			if err := c.updateCreateConfig(tt.args.createConfig, tt.args.config, tt.args.sandboxConfig, tt.args.podSandboxID); (err != nil) != tt.wantErr {
 				t.Errorf("CriManager.updateCreateConfig() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-func Test_getSELinuxSecurityOpts(t *testing.T) {
-	type args struct {
-		sc *runtime.LinuxContainerSecurityContext
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []string
-		wantErr bool
-	}{
-		{"test1", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "", Role: "", Type: "", Level: ""}}}, nil, false},
-		{"test2", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "xzx", Role: "", Type: "", Level: ""}}}, nil, false},
-		{"test3", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "xzx", Role: "xzx", Type: "", Level: ""}}}, nil, false},
-		{"test4", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "xzx", Role: "xzx", Type: "xzx", Level: ""}}}, nil, false},
-		{"test5", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "xzx", Role: "xzx", Type: "xzx", Level: "xzx"}}}, []string{"label=user:xzx", "label=role:xzx", "label=type:xzx", "label=level:xzx"}, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := getSELinuxSecurityOpts(tt.args.sc)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
 			}
 		})
 	}
