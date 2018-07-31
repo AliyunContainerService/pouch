@@ -579,23 +579,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-	}{
-		{
-			name: "test1",
-			args: args{
-				nsOpts: &runtime.NamespaceOption{
-					HostNetwork: false,
-					HostPid:     false,
-					HostIpc:     false,
-				},
-				podSandboxID: "",
-				hostConfig: &apitypes.HostConfig{
-					AutoRemove: false,
-					Binds:      []string{""},
-				},
-			},
-		},
-	}
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
