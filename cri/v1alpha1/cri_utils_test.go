@@ -342,7 +342,92 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				c: &mgr.Container{
+					ID:    "fakeID",
+					State: &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:  "k8s_fakeID_fakeSandbox_ns_uid_7",
+					Config: &apitypes.ContainerConfig{Labels: map[string]string{
+						containerTypeLabelKey: "internal_type",
+						"annotation.ann":      "ann",
+						"testLabel":           "test",
+					}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want: &runtime.PodSandbox{
+				Id: "fakeID",
+				Metadata: &runtime.PodSandboxMetadata{
+					Name:      "fakeSandbox",
+					Namespace: "ns",
+					Uid:       "uid",
+					Attempt:   7,
+				},
+				State:       runtime.PodSandboxState_SANDBOX_READY,
+				CreatedAt:   1532977506000000000,
+				Labels:      map[string]string{"testLabel": "test"},
+				Annotations: map[string]string{"ann": "ann"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "illegal part num test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "fake_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal prefix test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "pouch_fakeID_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal format test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "k8s_fakeID_fakeSandbox_ns_uid_ss",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal timestamp test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "k8s_fakeID_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-3019:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
