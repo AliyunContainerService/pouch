@@ -1242,6 +1242,10 @@ func Test_containerNetns(t *testing.T) {
 
 // Image related unit tests.
 func Test_imageToCriImage(t *testing.T) {
+	repoDigests := []string{"lastest", "dev", "v1.0"}
+	imageUserInt := "1"
+	uid, _ := strconv.ParseInt(imageUserInt, 10, 64)
+
 	type args struct {
 		image *apitypes.ImageInfo
 	}
@@ -1249,243 +1253,59 @@ func Test_imageToCriImage(t *testing.T) {
 		name    string
 		args    args
 		want    *runtime.Image
-		wantErr bool
+		wantErr error
 	}{
 		{
-			"case1",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "xiaoming",
-					},
-					ID:          "1",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
+			name: "Normal Test",
+			args: args{
+				image: &apitypes.ImageInfo{
+					ID:          "image-id",
+					RepoTags:    repoDigests,
+					RepoDigests: repoDigests,
 					Size:        1024,
+					Config: &apitypes.ContainerConfig{
+						User: imageUserInt,
+					},
 				},
 			},
-			&runtime.Image{
-				Id:          "1",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       1024,
-				Uid:         &runtime.Int64Value{Value: 0},
-				Username:    "xiaoming",
+			want: &runtime.Image{
+				Id:          "image-id",
+				RepoTags:    repoDigests,
+				RepoDigests: repoDigests,
+				Size_:       uint64(1024),
+				Uid:         &runtime.Int64Value{uid},
+				Username:    "",
 			},
-			false,
+			wantErr: nil,
 		},
 		{
-			"case2",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456",
-					},
-					ID:          "1",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
+			name: "ImageUID Nil Test",
+			args: args{
+				image: &apitypes.ImageInfo{
+					ID:          "image-id",
+					RepoTags:    repoDigests,
+					RepoDigests: repoDigests,
 					Size:        1024,
-				},
-			},
-			&runtime.Image{
-				Id:          "1",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       1024,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case3",
-			args{
-				&apitypes.ImageInfo{
 					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
+						User: "foo",
 					},
-					ID:          "1",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        1024,
 				},
 			},
-			&runtime.Image{
-				Id:          "1",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       1024,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
+			want: &runtime.Image{
+				Id:          "image-id",
+				RepoTags:    repoDigests,
+				RepoDigests: repoDigests,
+				Size_:       uint64(1024),
+				Uid:         &runtime.Int64Value{},
+				Username:    "foo",
 			},
-			false,
-		},
-		{
-			"case4",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
-					},
-					ID:          "1",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        1024,
-				},
-			},
-			&runtime.Image{
-				Id:          "1",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       1024,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case5",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
-					},
-					ID:          "1",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "1",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       2048,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case6",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
-					},
-					ID:          "abc",
-					RepoDigests: []string{"asdlkfej", "vwoeifo"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "abc",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"asdlkfej", "vwoeifo"},
-				Size_:       2048,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case7",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
-					},
-					ID:          "abc",
-					RepoDigests: []string{"1238", "4820940"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "abc",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"1238", "4820940"},
-				Size_:       2048,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case8",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "123456:dev",
-					},
-					ID:          "abc",
-					RepoDigests: []string{"1238", "4820940"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        -2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "abc",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"1238", "4820940"},
-				Size_:       18446744073709549568,
-				Uid:         &runtime.Int64Value{Value: int64(123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case9",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "-123456:dev",
-					},
-					ID:          "abc",
-					RepoDigests: []string{"1238", "4820940"},
-					RepoTags:    []string{"sldkfeio", "civlme"},
-					Size:        2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "abc",
-				RepoTags:    []string{"sldkfeio", "civlme"},
-				RepoDigests: []string{"1238", "4820940"},
-				Size_:       2048,
-				Uid:         &runtime.Int64Value{Value: int64(-123456)},
-				Username:    "",
-			},
-			false,
-		},
-		{
-			"case10",
-			args{
-				&apitypes.ImageInfo{
-					Config: &apitypes.ContainerConfig{
-						User: "",
-					},
-					ID:          "abc",
-					RepoDigests: []string{"1238", "4820940"},
-					RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
-					Size:        2048,
-				},
-			},
-			&runtime.Image{
-				Id:          "abc",
-				RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
-				RepoDigests: []string{"1238", "4820940"},
-				Size_:       2048,
-				Uid:         &runtime.Int64Value{Value: int64(0)},
-				Username:    "",
-			},
-			false,
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := imageToCriImage(tt.args.image)
-			if (err != nil) != tt.wantErr {
+			if err != tt.wantErr {
 				t.Errorf("imageToCriImage() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -1527,25 +1347,55 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 }
 
 func Test_getUserFromImageUser(t *testing.T) {
+	imageUserInt := "1"
+	uid, _ := strconv.ParseInt(imageUserInt, 10, 64)
 	type args struct {
 		imageUser string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		want  *int64
-		want1 string
+		name         string
+		args         args
+		wantUID      *int64
+		wantUserName string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Empty Test",
+			args: args{
+				imageUser: "",
+			},
+			wantUID:      nil,
+			wantUserName: "",
+		},
+		{
+			name: "ParseInt Success Test",
+			args: args{
+				imageUser: imageUserInt,
+			},
+			wantUID:      &uid,
+			wantUserName: "",
+		},
+		{
+			name: "ParseInt Fail Test",
+			args: args{
+				imageUser: "foo",
+			},
+			wantUID:      nil,
+			wantUserName: "foo",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := getUserFromImageUser(tt.args.imageUser)
-			if got != tt.want {
-				t.Errorf("getUserFromImageUser() got = %v, want %v", got, tt.want)
+			gotUID, gotUsername := getUserFromImageUser(tt.args.imageUser)
+			if (gotUID == nil && tt.wantUID != nil) || (gotUID != nil && tt.wantUID == nil) {
+				t.Errorf("getUserFromImageUser() gotUID = %v, wantUID %v", gotUID, tt.wantUID)
 			}
-			if got1 != tt.want1 {
-				t.Errorf("getUserFromImageUser() got1 = %v, want %v", got1, tt.want1)
+			if gotUID != nil && tt.wantUID != nil {
+				if (*gotUID) != (*tt.wantUID) {
+					t.Errorf("getUserFromImageUser() gotUID = %v, wantUID %v", gotUID, tt.wantUID)
+				}
+			}
+			if gotUsername != tt.wantUserName {
+				t.Errorf("getUserFromImageUser() gotUsername = %v, wantUserName %v", gotUsername, tt.wantUserName)
 			}
 		})
 	}
@@ -1560,7 +1410,27 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Empty Test",
+			args: args{
+				id: "",
+			},
+			want: "",
+		},
+		{
+			name: "user:group Test",
+			args: args{
+				id: "user:group",
+			},
+			want: "user",
+		},
+		{
+			name: "No Group Test",
+			args: args{
+				id: "user",
+			},
+			want: "user",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

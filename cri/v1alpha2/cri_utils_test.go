@@ -1229,6 +1229,12 @@ func Test_containerNetns(t *testing.T) {
 
 // Image related unit tests.
 func Test_imageToCriImage(t *testing.T) {
+	repoDigests := []string{"lastest", "dev", "v1.0"}
+	imageUserInt := "1"
+	uid, _ := strconv.ParseInt(imageUserInt, 10, 64)
+	containerVolumes := map[string]interface{}{"foo": "foo"}
+	runtimeVolumes := parseVolumesFromPouch(containerVolumes)
+
 	type args struct {
 		image *apitypes.ImageInfo
 	}
@@ -1236,14 +1242,63 @@ func Test_imageToCriImage(t *testing.T) {
 		name    string
 		args    args
 		want    *runtime.Image
-		wantErr bool
+		wantErr error
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Normal Test",
+			args: args{
+				image: &apitypes.ImageInfo{
+					ID:          "image-id",
+					RepoTags:    repoDigests,
+					RepoDigests: repoDigests,
+					Size:        1024,
+					Config: &apitypes.ContainerConfig{
+						User:    imageUserInt,
+						Volumes: containerVolumes,
+					},
+				},
+			},
+			want: &runtime.Image{
+				Id:          "image-id",
+				RepoTags:    repoDigests,
+				RepoDigests: repoDigests,
+				Size_:       uint64(1024),
+				Uid:         &runtime.Int64Value{uid},
+				Username:    "",
+				Volumes:     runtimeVolumes,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ImageUID Nil Test",
+			args: args{
+				image: &apitypes.ImageInfo{
+					ID:          "image-id",
+					RepoTags:    repoDigests,
+					RepoDigests: repoDigests,
+					Size:        1024,
+					Config: &apitypes.ContainerConfig{
+						User:    "foo",
+						Volumes: containerVolumes,
+					},
+				},
+			},
+			want: &runtime.Image{
+				Id:          "image-id",
+				RepoTags:    repoDigests,
+				RepoDigests: repoDigests,
+				Size_:       uint64(1024),
+				Uid:         &runtime.Int64Value{},
+				Username:    "foo",
+				Volumes:     runtimeVolumes,
+			},
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := imageToCriImage(tt.args.image)
-			if (err != nil) != tt.wantErr {
+			if err != tt.wantErr {
 				t.Errorf("imageToCriImage() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -1285,25 +1340,55 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 }
 
 func Test_getUserFromImageUser(t *testing.T) {
+	imageUserInt := "1"
+	uid, _ := strconv.ParseInt(imageUserInt, 10, 64)
 	type args struct {
 		imageUser string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		want  *int64
-		want1 string
+		name         string
+		args         args
+		wantUID      *int64
+		wantUserName string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Empty Test",
+			args: args{
+				imageUser: "",
+			},
+			wantUID:      nil,
+			wantUserName: "",
+		},
+		{
+			name: "ParseInt Success Test",
+			args: args{
+				imageUser: imageUserInt,
+			},
+			wantUID:      &uid,
+			wantUserName: "",
+		},
+		{
+			name: "ParseInt Fail Test",
+			args: args{
+				imageUser: "foo",
+			},
+			wantUID:      nil,
+			wantUserName: "foo",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := getUserFromImageUser(tt.args.imageUser)
-			if got != tt.want {
-				t.Errorf("getUserFromImageUser() got = %v, want %v", got, tt.want)
+			gotUID, gotUsername := getUserFromImageUser(tt.args.imageUser)
+			if (gotUID == nil && tt.wantUID != nil) || (gotUID != nil && tt.wantUID == nil) {
+				t.Errorf("getUserFromImageUser() gotUID = %v, wantUID %v", gotUID, tt.wantUID)
 			}
-			if got1 != tt.want1 {
-				t.Errorf("getUserFromImageUser() got1 = %v, want %v", got1, tt.want1)
+			if gotUID != nil && tt.wantUID != nil {
+				if (*gotUID) != (*tt.wantUID) {
+					t.Errorf("getUserFromImageUser() gotUID = %v, wantUID %v", gotUID, tt.wantUID)
+				}
+			}
+			if gotUsername != tt.wantUserName {
+				t.Errorf("getUserFromImageUser() gotUsername = %v, wantUserName %v", gotUsername, tt.wantUserName)
 			}
 		})
 	}
@@ -1318,7 +1403,27 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Empty Test",
+			args: args{
+				id: "",
+			},
+			want: "",
+		},
+		{
+			name: "user:group Test",
+			args: args{
+				id: "user:group",
+			},
+			want: "user",
+		},
+		{
+			name: "No Group Test",
+			args: args{
+				id: "user",
+			},
+			want: "user",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
