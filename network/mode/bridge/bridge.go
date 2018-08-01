@@ -119,7 +119,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		Config: []types.IPAMConfig{ipamV4Conf},
 	}
 
-	mtu := 1500
+	mtu := network.DefaultNetworkMtu
 	if config.Mtu != 0 {
 		mtu = config.Mtu
 	}
@@ -134,7 +134,7 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 			netlabel.DriverMTU:        strconv.Itoa(mtu),
 			bridge.EnableICC:          strconv.FormatBool(true),
 			bridge.DefaultBindingIP:   DefaultBindingIP,
-			bridge.EnableIPMasquerade: strconv.FormatBool(false),
+			bridge.EnableIPMasquerade: strconv.FormatBool(true),
 		},
 		IPAM: ipam,
 	}
@@ -196,7 +196,7 @@ func initBridgeDevice(name string) (netlink.Link, error) {
 		return nil, errors.Wrap(err, "failed to set bridge device up")
 	}
 
-	br, err = netlink.LinkByName(DefaultBridge)
+	br, err = netlink.LinkByName(name)
 	if err != nil {
 		return nil, err
 	}

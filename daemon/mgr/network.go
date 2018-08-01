@@ -456,6 +456,8 @@ func controllerOptions(cfg network.Config) ([]nwconfig.Option, error) {
 
 	options = append(options, nwconfig.OptionDefaultDriver("bridge"))
 	options = append(options, nwconfig.OptionDefaultNetwork("bridge"))
+	options = append(options, nwconfig.OptionNetworkControlPlaneMTU(cfg.BridgeConfig.Mtu))
+	options = append(options, nwconfig.OptionExperimental(false))
 
 	// set bridge options
 	options = append(options, bridgeDriverOptions(cfg.BridgeConfig))
