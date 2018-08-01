@@ -701,7 +701,236 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			"case1",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "xiaoming",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "xiaoming",
+			},
+			false,
+		},
+		{
+			"case2",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case3",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case4",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case5",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case6",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case7",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case8",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        -2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       18446744073709549568,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case9",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "-123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(-123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case10",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(0)},
+				Username:    "",
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
