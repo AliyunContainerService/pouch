@@ -117,7 +117,132 @@ func Test_generateEnvList(t *testing.T) {
 		})
 	}
 }
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult []string
+		wantErr bool
+	}{
+		{
+			name:       "nullProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: ""}},
+			wantResult: nil,
+			wantErr:	false,
+		},
+		{
+			name:       "defaultProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileRuntimeDefault}},
+			wantResult: nil,
+			wantErr:	false,
+		},
+		{
+			name:       "unconfinedProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileNameUnconfined}},
+			wantResult: []string{"apparmor="+mgr.ProfileNameUnconfined},
+			wantErr:	false,
+		},
+		{
+			name:       "noPrefix",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: "1234"}},
+			wantResult: nil,
+			wantErr:	true,
+		},
+		{
+			name:       "hasPrefix1",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileNamePrefix}},
+			wantResult: []string{"apparmor="},
+			wantErr:	false,
+		},
+		{
+			name:       "hasPrefix2",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{ApparmorProfile: mgr.ProfileNamePrefix+"12345"}},
+			wantResult: []string{"apparmor="+"12345"},
+			wantErr:	false,
+		},
+		
+		
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.wantResult) {
+				t.Errorf("getAppArmorSecurityOpts() got = %v, want %v", got, tt.wantResult)
+			}
+		})
+	}
+	
+} 
+func Test_getSeccompSecurityOpts(t *testing.T){
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult []string
+		wantErr bool
+	}{
+		{
+			name:       "nullProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: ""}},
+			wantResult: []string{"seccomp="+mgr.ProfileNameUnconfined},
+			wantErr:	false,
+		},
+		{
+			name:       "unconfinedProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileNameUnconfined}},
+			wantResult: []string{"seccomp="+mgr.ProfileNameUnconfined},
+			wantErr:	false,
+		},
+		{
+			name:       "defaultProfile",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileDockerDefault}},
+			wantResult: nil,
+			wantErr:	false,
+		},
+		{
+			name:       "noPrefix",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: "12345"}},
+			wantResult: nil,
+			wantErr:	true,
+		},
+		{
+			name:       "hasPrefix1",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileNamePrefix}},
+			wantResult: []string{"seccomp="},
+			wantErr:	false,
+		},
+		{
+			name:       "hasPrefix2",
+			args:       args{sc: &runtime.LinuxContainerSecurityContext{SeccompProfilePath: mgr.ProfileNamePrefix+"12345"}},
+			wantResult: []string{"seccomp="+"12345"},
+			wantErr:	false,
+		},
+		
+		
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSeccompSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.wantResult) {
+				t.Errorf("getSeccompSecurityOpts() got = %v, want %v", got, tt.wantResult)
+			}
+		})
+	}
 
+}
 func Test_makeLabels(t *testing.T) {
 	type args struct {
 		labels      map[string]string
