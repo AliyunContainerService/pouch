@@ -980,3 +980,51 @@ func Test_parseResourcesFromCRI(t *testing.T) {
 		})
 	}
 }
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "normal",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SelinuxOptions: &runtime.SELinuxOption{User: "user", Role: "role", Type: "type", Level: "level"},
+				},
+			},
+			want: []string{"label=user:user", "label=role:role", "label=type:type", "label=level:level"},
+		},
+		{
+			name: "emptyParam",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SelinuxOptions: &runtime.SELinuxOption{User: "user", Role: "", Type: "type", Level: ""},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "emptyParam2",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					nil,
+				},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := getSELinuxSecurityOpts(tt.args.sc); err != nil {
+				t.Errorf("getSELinuxSecurityOpts() error = %v", err)
+			} else if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
