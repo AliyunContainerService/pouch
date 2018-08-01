@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -32,11 +33,33 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	// TODO: Add state check
+	// add state check
+	resp, err = request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	c.Assert(string(got.State.Status), check.Equals, "paused")
 
 	resp, err = request.Post("/containers/" + cname + "/unpause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
+
+	// add state check
+	resp, err = request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got = types.ContainerJSON{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	c.Assert(string(got.State.Status), check.Equals, "running")
 
 	DelContainerForceMultyTime(c, cname)
 }
