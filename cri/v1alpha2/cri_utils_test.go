@@ -15,35 +15,93 @@ import (
 )
 
 var (
-	memorySwappiness int64 = 1000
-	resources              = apitypes.Resources{
-		CPUPeriod:   1000,
-		CPUQuota:    1000,
-		CPUShares:   1000,
-		Memory:      1000,
-		CpusetCpus:  "0",
-		CpusetMems:  "0",
-		BlkioWeight: uint16(100),
-		BlkioWeightDevice: []*apitypes.WeightDevice{
-			{
-				Path:   "foo",
-				Weight: uint16(1),
-			},
+	memorySwappiness           int64 = 1000
+	apitypesWeightDevicesSlice       = []*apitypes.WeightDevice{
+		{
+			Path:   "foo",
+			Weight: uint16(1),
 		},
-		BlkioDeviceReadBps: []*apitypes.ThrottleDevice{
-			{
-				Path: "foo",
-				Rate: uint64(1000),
-			},
+		{
+			Path:   "foo2",
+			Weight: uint16(2),
 		},
-		MemorySwappiness: &memorySwappiness,
-		Ulimits: []*apitypes.Ulimit{
-			{
-				Name: "foo",
-				Hard: 1,
-				Soft: 1,
-			},
+	}
+	apitypesThrottleDevicesSlice = []*apitypes.ThrottleDevice{
+		{
+			Path: "foo",
+			Rate: uint64(1000),
 		},
+		{
+			Path: "foo2",
+			Rate: uint64(2000),
+		},
+	}
+	apitypesUlimitsSlice = []*apitypes.Ulimit{
+		{
+			Name: "foo",
+			Hard: 1,
+			Soft: 1,
+		},
+		{
+			Name: "foo2",
+			Hard: 2,
+			Soft: 2,
+		},
+		{
+			Name: "foo3",
+			Hard: -1,
+			Soft: -1,
+		},
+	}
+	runtimeWeightDevicesSlice = []*runtime.WeightDevice{
+		{
+			Path:   "foo",
+			Weight: uint32(1),
+		},
+		{
+			Path:   "foo2",
+			Weight: uint32(2),
+		},
+	}
+	runtimeThrottleDevicesSlice = []*runtime.ThrottleDevice{
+		{
+			Path: "foo",
+			Rate: uint64(1000),
+		},
+		{
+			Path: "foo2",
+			Rate: uint64(2000),
+		},
+	}
+	runtimeUlimitsSlice = []*runtime.Ulimit{
+		{
+			Name: "foo",
+			Hard: 1,
+			Soft: 1,
+		},
+		{
+			Name: "foo2",
+			Hard: 2,
+			Soft: 2,
+		},
+		{
+			Name: "foo3",
+			Hard: -1,
+			Soft: -1,
+		},
+	}
+	resources = apitypes.Resources{
+		CPUPeriod:          1000,
+		CPUQuota:           1000,
+		CPUShares:          1000,
+		Memory:             1000,
+		CpusetCpus:         "0",
+		CpusetMems:         "0",
+		BlkioWeight:        uint16(100),
+		BlkioWeightDevice:  apitypesWeightDevicesSlice,
+		BlkioDeviceReadBps: apitypesThrottleDevicesSlice,
+		MemorySwappiness:   &memorySwappiness,
+		Ulimits:            apitypesUlimitsSlice,
 	}
 	linuxContainerResources = runtime.LinuxContainerResources{
 		CpuPeriod:          1000,
@@ -54,26 +112,10 @@ var (
 		CpusetMems:         "0",
 		BlkioWeight:        uint32(100),
 		DiskQuota:          map[string]string{"foo": "foo"},
-		BlkioWeightDevice: []*runtime.WeightDevice{
-			{
-				Path:   "foo",
-				Weight: uint32(1),
-			},
-		},
-		BlkioDeviceReadBps: []*runtime.ThrottleDevice{
-			{
-				Path: "foo",
-				Rate: uint64(1000),
-			},
-		},
-		MemorySwappiness: &runtime.Int64Value{Value: 1000},
-		Ulimits: []*runtime.Ulimit{
-			{
-				Name: "foo",
-				Hard: 1,
-				Soft: 1,
-			},
-		},
+		BlkioWeightDevice:  runtimeWeightDevicesSlice,
+		BlkioDeviceReadBps: runtimeThrottleDevicesSlice,
+		MemorySwappiness:   &runtime.Int64Value{Value: 1000},
+		Ulimits:            runtimeUlimitsSlice,
 	}
 )
 
@@ -834,6 +876,8 @@ func Test_parseUserFromImageUser(t *testing.T) {
 	}
 }
 
+// CRI extension related tool functions tests.
+
 func Test_parseResourcesFromCRI(t *testing.T) {
 	type args struct {
 		runtimeResources *runtime.LinuxContainerResources
@@ -898,6 +942,204 @@ func Test_parseResourcesFromPouch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseResourcesFromPouch(tt.args.apitypesResources, tt.args.diskQuota); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseResourcesFromPouch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseWeightDeviceFromCRI(t *testing.T) {
+	type args struct {
+		runtimeWeightDevices []*runtime.WeightDevice
+	}
+	tests := []struct {
+		name              string
+		args              args
+		wantWeightDevices []*apitypes.WeightDevice
+	}{
+		{
+			name: "normal test",
+			args: args{
+				runtimeWeightDevices: runtimeWeightDevicesSlice,
+			},
+			wantWeightDevices: apitypesWeightDevicesSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				runtimeWeightDevices: nil,
+			},
+			wantWeightDevices: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotWeightDevices := parseWeightDeviceFromCRI(tt.args.runtimeWeightDevices); !reflect.DeepEqual(gotWeightDevices, tt.wantWeightDevices) {
+				t.Errorf("parseWeightDeviceFromCRI() = %v, want %v", gotWeightDevices, tt.wantWeightDevices)
+			}
+		})
+	}
+}
+
+func Test_parseWeightDeviceFromPouch(t *testing.T) {
+	type args struct {
+		apitypesWeightDevices []*apitypes.WeightDevice
+	}
+	tests := []struct {
+		name              string
+		args              args
+		wantWeightDevices []*runtime.WeightDevice
+	}{
+		{
+			name: "normal test",
+			args: args{
+				apitypesWeightDevices: apitypesWeightDevicesSlice,
+			},
+			wantWeightDevices: runtimeWeightDevicesSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				apitypesWeightDevices: nil,
+			},
+			wantWeightDevices: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotWeightDevices := parseWeightDeviceFromPouch(tt.args.apitypesWeightDevices); !reflect.DeepEqual(gotWeightDevices, tt.wantWeightDevices) {
+				t.Errorf("parseWeightDeviceFromPouch() = %v, want %v", gotWeightDevices, tt.wantWeightDevices)
+			}
+		})
+	}
+}
+
+func Test_parseThrottleDeviceFromCRI(t *testing.T) {
+	type args struct {
+		runtimeThrottleDevices []*runtime.ThrottleDevice
+	}
+	tests := []struct {
+		name                string
+		args                args
+		wantThrottleDevices []*apitypes.ThrottleDevice
+	}{
+		{
+			name: "normal test",
+			args: args{
+				runtimeThrottleDevices: runtimeThrottleDevicesSlice,
+			},
+			wantThrottleDevices: apitypesThrottleDevicesSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				runtimeThrottleDevices: nil,
+			},
+			wantThrottleDevices: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotThrottleDevices := parseThrottleDeviceFromCRI(tt.args.runtimeThrottleDevices); !reflect.DeepEqual(gotThrottleDevices, tt.wantThrottleDevices) {
+				t.Errorf("parseThrottleDeviceFromCRI() = %v, want %v", gotThrottleDevices, tt.wantThrottleDevices)
+			}
+		})
+	}
+}
+
+func Test_parseThrottleDeviceFromPouch(t *testing.T) {
+	type args struct {
+		apitypesThrottleDevices []*apitypes.ThrottleDevice
+	}
+	tests := []struct {
+		name                string
+		args                args
+		wantThrottleDevices []*runtime.ThrottleDevice
+	}{
+		{
+			name: "normal test",
+			args: args{
+				apitypesThrottleDevices: apitypesThrottleDevicesSlice,
+			},
+			wantThrottleDevices: runtimeThrottleDevicesSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				apitypesThrottleDevices: nil,
+			},
+			wantThrottleDevices: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotThrottleDevices := parseThrottleDeviceFromPouch(tt.args.apitypesThrottleDevices); !reflect.DeepEqual(gotThrottleDevices, tt.wantThrottleDevices) {
+				t.Errorf("parseThrottleDeviceFromPouch() = %v, want %v", gotThrottleDevices, tt.wantThrottleDevices)
+			}
+		})
+	}
+}
+
+func Test_parseUlimitFromCRI(t *testing.T) {
+	type args struct {
+		runtimeUlimits []*runtime.Ulimit
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantUlimits []*apitypes.Ulimit
+	}{
+		{
+			name: "normal test",
+			args: args{
+				runtimeUlimits: runtimeUlimitsSlice,
+			},
+			wantUlimits: apitypesUlimitsSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				runtimeUlimits: nil,
+			},
+			wantUlimits: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotUlimits := parseUlimitFromCRI(tt.args.runtimeUlimits); !reflect.DeepEqual(gotUlimits, tt.wantUlimits) {
+				t.Errorf("parseUlimitFromCRI() = %v, want %v", gotUlimits, tt.wantUlimits)
+			}
+		})
+	}
+}
+
+func Test_parseUlimitFromPouch(t *testing.T) {
+	type args struct {
+		apitypesUlimits []*apitypes.Ulimit
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantUlimits []*runtime.Ulimit
+	}{
+		{
+			name: "normal test",
+			args: args{
+				apitypesUlimits: apitypesUlimitsSlice,
+			},
+			wantUlimits: runtimeUlimitsSlice,
+		},
+		{
+			name: "nil test",
+			args: args{
+				apitypesUlimits: nil,
+			},
+			wantUlimits: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotUlimits := parseUlimitFromPouch(tt.args.apitypesUlimits); !reflect.DeepEqual(gotUlimits, tt.wantUlimits) {
+				t.Errorf("parseUlimitFromPouch() = %v, want %v", gotUlimits, tt.wantUlimits)
 			}
 		})
 	}
