@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -692,6 +693,8 @@ func Test_toCriContainer(t *testing.T) {
 
 // Image related unit tests.
 func Test_imageToCriImage(t *testing.T) {
+	repoDigests := []string{"lastest", "dev", "v1.0"}
+
 	type args struct {
 		image *apitypes.ImageInfo
 	}
@@ -701,7 +704,39 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				image: &apitypes.ImageInfo{
+					ID:          "image-id",
+					RepoTags:    repoDigests,
+					RepoDigests: repoDigests,
+					Size:        1024,
+					Config: &apitypes.ContainerConfig{
+						User:    "foo",
+						Volumes: map[string]interface{}{"foo": "foo"},
+					},
+				},
+			},
+			want: &runtime.Image{
+				Id:          "image-id",
+				RepoTags:    repoDigests,
+				RepoDigests: repoDigests,
+				Size_:       uint64(1024),
+				Uid:         &runtime.Int64Value{},
+				Username:    "foo",
+				Volumes:     parseVolumesFromPouch(map[string]interface{}{"foo": "foo"}),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "nil test",
+			args: args{
+				image: &apitypes.ImageInfo{},
+			},
+			want:    &runtime.Image{},
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -748,6 +783,10 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 }
 
 func Test_getUserFromImageUser(t *testing.T) {
+	imageUserNumeric := "123"
+	imageUserNonNumeric := "foo"
+	uid, _ := strconv.ParseInt(imageUserNumeric, 10, 64)
+
 	type args struct {
 		imageUser string
 	}
@@ -757,7 +796,30 @@ func Test_getUserFromImageUser(t *testing.T) {
 		want  *int64
 		want1 string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal numeric test",
+			args: args{
+				imageUser: imageUserNumeric,
+			},
+			want:  &uid,
+			want1: "",
+		},
+		{
+			name: "normal non numeric test",
+			args: args{
+				imageUser: imageUserNonNumeric,
+			},
+			want:  nil,
+			want1: imageUserNonNumeric,
+		},
+		{
+			name: "nil test",
+			args: args{
+				imageUser: "",
+			},
+			want:  nil,
+			want1: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -781,7 +843,27 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test no group",
+			args: args{
+				id: "foo",
+			},
+			want: "foo",
+		},
+		{
+			name: "normal test contain user:group",
+			args: args{
+				id: "foo:group",
+			},
+			want: "foo",
+		},
+		{
+			name: "nil test",
+			args: args{
+				id: "",
+			},
+			want: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
