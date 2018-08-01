@@ -792,6 +792,144 @@ func Test_parseUserFromImageUser(t *testing.T) {
 	}
 }
 
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr error
+	}{
+		{
+			name: "AppArmorSecurityOptsDefault",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileRuntimeDefault,
+				},
+			},
+			want:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "AppArmorSecurityOptsUnconfined",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileNameUnconfined,
+				},
+			},
+			want: []string{
+				fmt.Sprintf("apparmor=%s", mgr.ProfileNameUnconfined),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "AppArmorSecurityOptsWithoutPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: "abcd",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("undefault profile name should prefix with %q", mgr.ProfileNamePrefix),
+		},
+		{
+			name: "AppArmorSecurityOptsWithPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileNamePrefix + "abcd",
+				},
+			},
+			want: []string{
+				"apparmor=abcd",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSeccompSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr error
+	}{
+		{
+			name: "getSeccompSecurityOptsUnconfined",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileNameUnconfined,
+				},
+			},
+			want: []string{
+				fmt.Sprintf("seccomp=%s", mgr.ProfileNameUnconfined),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "getSeccompSecurityOptsDefault",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+				},
+			},
+			want:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "getSeccompSecurityOptsWithoutPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: "abcd",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("undefault profile %q should prefix with %q", "abcd", mgr.ProfileNamePrefix),
+		},
+		{
+			name: "getSeccompSecurityOptsWithPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileNamePrefix + "abcd",
+				},
+			},
+			want: []string{
+				"seccomp=abcd",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSeccompSecurityOpts(tt.args.sc)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSeccompSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_parseResourcesFromCRI(t *testing.T) {
 	var (
 		resources = apitypes.Resources{
