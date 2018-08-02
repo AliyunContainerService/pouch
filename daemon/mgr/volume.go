@@ -115,12 +115,12 @@ func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]
 func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	vol, err := vm.Get(ctx, name)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get volume: %s", name)
+		return errors.Wrapf(err, "failed to get volume(%s)", name)
 	}
 
 	ref := vol.Option(types.OptionRef)
 	if ref != "" {
-		return errors.Wrapf(errtypes.ErrVolumeInUse, "failed to remove volume: %s", name)
+		return errors.Wrapf(errtypes.ErrVolumeInUse, "failed to remove volume(%s)", name)
 	}
 
 	id := types.VolumeID{
@@ -154,7 +154,7 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 
 	v, err := vm.Get(ctx, name)
 	if err != nil {
-		return nil, errors.Errorf("failed to get volume: %s", name)
+		return nil, errors.Errorf("failed to get volume(%s): %v", name, err)
 	}
 
 	if options == nil {
@@ -182,7 +182,7 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 
 	v, err := vm.Get(ctx, name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get volume: %s", name)
+		return nil, errors.Wrapf(err, "failed to get volume(%s)", name)
 	}
 
 	if options == nil {

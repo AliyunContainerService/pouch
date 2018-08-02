@@ -417,11 +417,8 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 		}
 
 		primaryRef = refs[0]
-	} else {
-		primaryRef, err = mgr.localStore.GetPrimaryReference(actualRef)
-		if err != nil {
-			return
-		}
+	} else if primaryRef, err = mgr.localStore.GetPrimaryReference(actualRef); err != nil {
+		return
 	}
 	return
 }
@@ -551,14 +548,12 @@ func (mgr *ImageManager) validateTagReference(ref reference.Named) error {
 	// NOTE: we don't allow to use tag to override the existing primary reference.
 	pRef, err := mgr.localStore.GetPrimaryReference(ref)
 	if err != nil {
+		// @fuweid: we should return nil instead of err.
 		return nil
 	}
 
 	if pRef.String() == ref.String() {
-		return pkgerrors.Wrap(
-			errtypes.ErrInvalidParam,
-			fmt.Sprintf("the tag reference (%s) has been used as reference", ref.String()),
-		)
+		return pkgerrors.Wrapf(errtypes.ErrInvalidParam, "the tag reference (%s) has been used as reference", ref.String())
 	}
 	return nil
 }

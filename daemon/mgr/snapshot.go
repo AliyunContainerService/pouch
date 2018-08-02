@@ -55,7 +55,7 @@ func (s *SnapshotStore) Get(key string) (Snapshot, error) {
 	if sn, ok := s.snapshots[key]; ok {
 		return sn, nil
 	}
-	return Snapshot{}, errors.Wrap(errtypes.ErrNotfound, "snapshot")
+	return Snapshot{}, errors.Wrapf(errtypes.ErrNotfound, "snapshot %s", key)
 }
 
 // List lists all snapshots.

@@ -109,14 +109,14 @@ func (suite *PouchInspectSuite) TestMultiInspectErrors(c *check.C) {
 		{
 			containers: []string{},
 			args:       []string{"multi-inspect-print-1", "multi-inspect-print-2"},
-			expectedOutput: "\nError: Fetch object error: {\"message\":\"container: multi-inspect-print-1: not found\"}\n" +
-				"Error: Fetch object error: {\"message\":\"container: multi-inspect-print-2: not found\"}\n",
+			expectedOutput: "\nError: Fetch object error: {\"message\":\"container multi-inspect-print-1: not found\"}\n" +
+				"Error: Fetch object error: {\"message\":\"container multi-inspect-print-2: not found\"}\n",
 		},
 		{
 			containers: []string{"multi-inspect-print-1"},
 			args:       []string{"multi-inspect-print-1", "multi-inspect-print-2"},
 			expectedOutput: "multi-inspect-print-1\n" +
-				"Error: Fetch object error: {\"message\":\"container: multi-inspect-print-2: not found\"}\n",
+				"Error: Fetch object error: {\"message\":\"container multi-inspect-print-2: not found\"}\n",
 		},
 	}
 

@@ -32,7 +32,7 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *C
 			"backend": driver,
 		}
 		if _, err := mgr.VolumeMgr.Create(ctx, name, c.HostConfig.VolumeDriver, opts, nil); err != nil {
-			logrus.Errorf("failed to create volume: %s, err: %v", name, err)
+			logrus.Errorf("failed to create volume(%s): %v", name, err)
 			return "", "", errors.Wrap(err, "failed to create volume")
 		}
 	} else {
@@ -40,13 +40,13 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *C
 	}
 
 	if _, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
-		logrus.Errorf("failed to attach volume: %s, err: %v", name, err)
+		logrus.Errorf("failed to attach volume(%s):: %v", name, err)
 		return "", "", errors.Wrap(err, "failed to attach volume")
 	}
 
 	mountPath, err := mgr.VolumeMgr.Path(ctx, name)
 	if err != nil {
-		logrus.Errorf("failed to get the mount path of volume: %s, err: %v", name, err)
+		logrus.Errorf("failed to get the mount path of volume(%s): %v", name, err)
 		return "", "", errors.Wrap(err, "failed to get volume mount path")
 	}
 
@@ -70,7 +70,7 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 	defer func() {
 		if err != nil {
 			if err := mgr.detachVolumes(ctx, c, false); err != nil {
-				logrus.Errorf("failed to detach volume, err: %v", err)
+				logrus.Errorf("failed to detach volume: %v", err)
 			}
 		}
 	}()
@@ -165,7 +165,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 
 		err = opts.ParseBindMode(mp, mode)
 		if err != nil {
-			logrus.Errorf("failed to parse bind mode: %s, err: %v", mode, err)
+			logrus.Errorf("failed to parse bind mode(%s): %v", mode, err)
 			return err
 		}
 
@@ -176,7 +176,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 				mp.Name = name
 				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, name, c)
 				if err != nil {
-					logrus.Errorf("failed to bind volume: %s, err: %v", name, err)
+					logrus.Errorf("failed to bind volume(%s): %v", name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
 
@@ -241,13 +241,13 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, c *Co
 
 		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
-			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
+			logrus.Errorf("failed to bind volume(%s): %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
 		}
 
 		err = opts.ParseBindMode(mp, "")
 		if err != nil {
-			logrus.Errorf("failed to parse mode, err: %v", err)
+			logrus.Errorf("failed to parse mode: %v", err)
 			return err
 		}
 
@@ -284,13 +284,13 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, c *Cont
 
 		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
-			logrus.Errorf("failed to bind volume: %s, err: %v", mp.Name, err)
+			logrus.Errorf("failed to bind volume(%s): %v", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
 		}
 
 		err = opts.ParseBindMode(mp, "")
 		if err != nil {
-			logrus.Errorf("failed to parse mode, err: %v", err)
+			logrus.Errorf("failed to parse mode: %v", err)
 			return err
 		}
 
@@ -337,7 +337,7 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				mp.Name = oldMountPoint.Name
 				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, oldMountPoint.Name, container)
 				if err != nil {
-					logrus.Errorf("failed to bind volume: %s, err: %v", oldMountPoint.Name, err)
+					logrus.Errorf("failed to bind volume(%s): %v", oldMountPoint.Name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
 
@@ -377,7 +377,7 @@ func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container) 
 
 		err := copyImageContent(imagePath, mnt.Source)
 		if err != nil {
-			logrus.Errorf("failed to populate volume[name: %s, source: %s] err: %v", mnt.Name, mnt.Source, err)
+			logrus.Errorf("failed to populate volume[name: %s, source: %s]: %v", mnt.Name, mnt.Source, err)
 			return err
 		}
 	}

@@ -164,7 +164,7 @@ func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*t
 func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (*ContainerExecConfig, error) {
 	v, ok := mgr.ExecProcesses.Get(execid).Result()
 	if !ok {
-		return nil, errors.Wrap(errtypes.ErrNotfound, "exec process "+execid)
+		return nil, errors.Wrapf(errtypes.ErrNotfound, "exec process %s", execid)
 	}
 	execConfig, ok := v.(*ContainerExecConfig)
 	if !ok {

@@ -5,20 +5,20 @@ import (
 )
 
 var (
+	// ErrInvalidParam represents the parameters are invalid.
+	ErrInvalidParam = errorType{codeInvalidParam, "invalid param"}
+
 	// ErrNotfound represents the object is not found, not exist.
-	ErrNotfound = errorType{codeNotfound, "not found"}
+	ErrNotfound = errorType{codeNotFound, "not found"}
 
 	// ErrAlreadyExisted represents the object has already existed.
 	ErrAlreadyExisted = errorType{codeAlreadyExisted, "already existed"}
 
-	// ErrInvalidParam represents the parameters are invalid.
-	ErrInvalidParam = errorType{codeInvalidParam, "invalid param"}
+	// ErrConflict represents the parameters are invalid.
+	ErrConflict = errorType{codeConflict, "conflict"}
 
 	// ErrTooMany reprensents the objects are too many.
 	ErrTooMany = errorType{codeTooMany, "too many"}
-
-	// ErrInvalidType represents the object's type is invalid.
-	ErrInvalidType = errorType{codeInvalidType, "invalid type"}
 
 	// ErrTimeout represents the operation is time out.
 	ErrTimeout = errorType{codeTimeout, "time out"}
@@ -29,22 +29,19 @@ var (
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 
-	// ErrUsingbyContainers represents that object is used by containers.
-	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
-
 	// ErrVolumeInUse represents that volume in use.
 	ErrVolumeInUse = errorType{codeInUse, "volume is in use"}
 
 	// ErrVolumeNotFound represents that no such volume.
-	ErrVolumeNotFound = errorType{codeNotfound, "no such volume"}
+	ErrVolumeNotFound = errorType{codeNotFound, "no such volume"}
 )
 
 const (
-	codeNotfound = iota
+	codeInvalidParam = iota
+	codeNotFound
 	codeAlreadyExisted
-	codeInvalidParam
+	codeConflict
 	codeTooMany
-	codeInvalidType
 	codeTimeout
 	codeLockfailed
 	codeNotImplemented
@@ -62,7 +59,7 @@ func (e errorType) Error() string {
 
 // IsNotfound checks the error is object Notfound or not.
 func IsNotfound(err error) bool {
-	return checkError(err, codeNotfound)
+	return checkError(err, codeNotFound)
 }
 
 // IsAlreadyExisted checks the error is object AlreadyExisted or not.
