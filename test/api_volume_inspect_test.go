@@ -23,27 +23,18 @@ func (suite *APIVolumeInspectSuite) SetUpTest(c *check.C) {
 func (suite *APIVolumeInspectSuite) TestVolumeInspectOk(c *check.C) {
 	// Create a volume with the name "TestVolume".
 	vol := "TestVolume"
-	obj := map[string]interface{}{
-		"Driver": "local",
-		"Name":   vol,
-	}
-	path := "/volumes/create"
-	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, body)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
+	CreateVolumeOK(c, vol, "local", nil)
+	defer RemoveVolumeOK(c, vol)
 
 	// Test volume inspect feature.
-	path = "/volumes/" + vol
-	resp, err = request.Get(path)
+	path := "/volumes/" + vol
+	resp, err := request.Get(path)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	// Delete the volume.
-	path = "/volumes/" + vol
-	resp, err = request.Delete(path)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	// TODO: missing case
+	//
+	//	add field check
 }
 
 // TestVolumeInspectNotFound tests if inspecting a nonexistent volume returns error.
@@ -54,5 +45,4 @@ func (suite *APIVolumeInspectSuite) TestVolumeInspectNotFound(c *check.C) {
 	resp, err := request.Get(path)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
-
 }

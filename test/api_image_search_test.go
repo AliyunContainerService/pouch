@@ -16,10 +16,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIImageSearchSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-}
 
-// TestImageSearchOk tests searching images is OK.
-func (suite *APIImageSearchSuite) TestImageSearchOk(c *check.C) {
-	// TODO
-	// path := "/images/search"
+	// TODO: missing case
+	helpwantedForMissingCase(c, "image api search cases")
 }

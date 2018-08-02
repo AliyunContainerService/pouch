@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/alibaba/pouch/test/environment"
-	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
 )
@@ -23,41 +22,14 @@ func (suite *APIVolumeCreateSuite) SetUpTest(c *check.C) {
 func (suite *APIVolumeCreateSuite) TestVolumeCreateOk(c *check.C) {
 	vol := "TestVolumeCreateOk"
 
-	obj := map[string]interface{}{
-		"Driver": "local",
-		"Name":   vol,
-	}
-
-	path := "/volumes/create"
-	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, body)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
-
-	path = "/volumes/" + vol
-	resp, err = request.Delete(path)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	CreateVolumeOK(c, vol, "local", nil)
+	RemoveVolumeOK(c, vol)
 }
 
 // TestPluginVolumeCreateOk tests creating a volume which created by volume plugin
 func (suite *APIVolumeCreateSuite) TestPluginVolumeCreateOk(c *check.C) {
 	vol := "TestPluginVolumeCreateOk"
 
-	obj := map[string]interface{}{
-		"Driver":     "local-persist",
-		"Name":       vol,
-		"DriverOpts": map[string]string{"mountpoint": "/data/images"},
-	}
-
-	path := "/volumes/create"
-	body := request.WithJSONBody(obj)
-	resp, err := request.Post(path, body)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
-
-	path = "/volumes/" + vol
-	resp, err = request.Delete(path)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	CreateVolumeOK(c, vol, "local-persist", map[string]string{"mountpoint": "/data/images"})
+	RemoveVolumeOK(c, vol)
 }

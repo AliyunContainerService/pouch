@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -34,7 +35,7 @@ func (suite *APIImageTagSuite) TestImageTagCreateWithTagOK(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
-	defer forceDeleteImage(c, tagRef)
+	defer DelImageForceOk(c, tagRef)
 	suite.checkTagReferenceExisting(c, tagRef, true)
 }
 
@@ -46,7 +47,7 @@ func (suite *APIImageTagSuite) TestImageTagCreateUsingDefaultTagOK(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
-	defer forceDeleteImage(c, tagRef)
+	defer DelImageForceOk(c, tagRef)
 	suite.checkTagReferenceExisting(c, tagRef, true)
 }
 
@@ -63,7 +64,7 @@ func (suite *APIImageTagSuite) TestImageTagFailToOverrideExistingPrimaryReferenc
 	repo, tag := "registry.hub.docker.com/library/busybox", "1.25"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 	command.PouchRun("pull", tagRef).Assert(c, icmd.Success)
-	defer forceDeleteImage(c, tagRef)
+	defer DelImageForceOk(c, tagRef)
 
 	resp, err := suite.sendRequest(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
@@ -75,7 +76,7 @@ func (suite *APIImageTagSuite) TestImageTagFailToOverrideExistingTag(c *check.C)
 	repo, tag := "registry.hub.docker.com/library/busybox", "1.25"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 	command.PouchRun("pull", tagRef).Assert(c, icmd.Success)
-	defer forceDeleteImage(c, tagRef)
+	defer DelImageForceOk(c, tagRef)
 
 	resp, err := suite.sendRequest(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
@@ -108,14 +109,4 @@ func (suite *APIImageTagSuite) checkTagReferenceExisting(c *check.C, tagRef stri
 		status = http.StatusNotFound
 	}
 	CheckRespStatus(c, resp, status)
-}
-
-func forceDeleteImage(c *check.C, idOrRef string) {
-	q := url.Values{}
-	q.Set("force", "1")
-
-	resp, err := request.Delete(fmt.Sprintf("/images/%s", idOrRef), request.WithQuery(q))
-	c.Assert(err, check.IsNil)
-
-	CheckRespStatus(c, resp, 204)
 }

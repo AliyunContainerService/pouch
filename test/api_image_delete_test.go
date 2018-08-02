@@ -43,11 +43,10 @@ func (suite *APIImageDeleteSuite) TestDeleteImageOk(c *check.C) {
 func (suite *APIImageDeleteSuite) TestDeleteUsingImage(c *check.C) {
 	cname := "TestDeleteUsingImage"
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 	StartContainerOk(c, cname)
 
 	resp, err := request.Delete("/images/" + busyboxImage)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
-
-	DelContainerForceMultyTime(c, cname)
 }

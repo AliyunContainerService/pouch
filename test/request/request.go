@@ -76,7 +76,6 @@ func WithJSONBody(obj interface{}) Option {
 
 // DecodeBody decodes body to obj.
 func DecodeBody(obj interface{}, body io.ReadCloser) error {
-	// TODO: this fuction could only be called once
 	defer body.Close()
 	return json.NewDecoder(body).Decode(obj)
 }

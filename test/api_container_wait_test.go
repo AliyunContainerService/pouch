@@ -20,6 +20,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerWaitSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -28,14 +29,14 @@ func (suite *APIContainerWaitSuite) TestWaitOk(c *check.C) {
 	cname := "TestWaitOk"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
 	StartContainerOk(c, cname)
 	StopContainerOk(c, cname)
 
 	resp, err := request.Post("/containers/" + cname + "/wait")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
 // TestWaitRunningContainer tests waiting a running container to stop, then returns 200.
@@ -43,6 +44,7 @@ func (suite *APIContainerWaitSuite) TestWaitRunningContainer(c *check.C) {
 	cname := "TestWaitRunningContainer"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 	StartContainerOk(c, cname)
 
 	var (
@@ -67,7 +69,6 @@ func (suite *APIContainerWaitSuite) TestWaitRunningContainer(c *check.C) {
 	case <-time.After(2 * time.Second):
 		c.Errorf("timeout waiting for `pouch wait` API to exit")
 	}
-	DelContainerForceMultyTime(c, cname)
 }
 
 // TestWaitNonExistingContainer tests waiting a non-existing container return 404.

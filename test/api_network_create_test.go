@@ -69,7 +69,7 @@ func (suite *APINetworkCreateSuite) TestNetworkCreateExistentName(c *check.C) {
 	CheckRespStatus(c, resp, 409)
 
 	// delete network TestNetworkCreateExistentName
-	resp, err = request.Delete("/networks/" + "TestNetworkCreateExistentName")
+	resp, err = request.Delete("/networks/" + nname)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 }

@@ -44,7 +44,10 @@ func (suite *APISystemSuite) TestInfo(c *check.C) {
 	if Info, err := kernel.GetKernelVersion(); err == nil {
 		kernelInfo = Info.String()
 	}
-	// TODO more variables are to be checked.
+	// TODO: missing case
+	//
+	//	more variables are to be checked.
+
 	c.Assert(got.IndexServerAddress, check.Equals, "https://index.docker.io/v1/")
 	c.Assert(got.KernelVersion, check.Equals, kernelInfo)
 	c.Assert(got.OSType, check.Equals, runtime.GOOS)

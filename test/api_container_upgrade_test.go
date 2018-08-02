@@ -16,4 +16,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerUpgradeSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
+	// TODO: missing case
+	helpwantedForMissingCase(c, "container api upgrade cases")
 }

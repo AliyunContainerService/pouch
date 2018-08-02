@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/alibaba/pouch/test/environment"
@@ -49,6 +50,15 @@ func init() {
 	GateWay = environment.GateWay
 	Subnet = environment.Subnet
 
+}
+
+type testingTB interface {
+	Fatalf(format string, args ...interface{})
+	Skip(string)
+}
+
+func helpwantedForMissingCase(t testingTB, name string) {
+	t.Skip(fmt.Sprintf("help wanted: %s", name))
 }
 
 // VerifyCondition is used to check the condition value.
