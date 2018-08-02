@@ -23,7 +23,7 @@ env:
 script: |
   if [[ "${TEST_SUITE}" = "unittest" ]]; then
     hack/install/install_ci_related.sh
-    make unit-test
+    make unit-test || travis_terminate 1
     make coverage
   elif [[ "${TEST_SUITE}" = "integrationtest" ]]; then
     make build
@@ -32,7 +32,7 @@ script: |
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download_dependencies
-    sudo env "PATH=$PATH" make integration-test
+    sudo env "PATH=$PATH" make integration-test || travis_terminate 1
     make coverage
   elif [[ "${TEST_SUITE}" = "criv1alpha1test" ]]; then
     make build
@@ -40,7 +40,7 @@ script: |
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download_dependencies
-    sudo env "PATH=$PATH" make cri-v1alpha1-test
+    sudo env "PATH=$PATH" make cri-v1alpha1-test || travis_terminate 1
     make coverage
   else
     make build
@@ -48,7 +48,7 @@ script: |
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download_dependencies
-    sudo env "PATH=$PATH" make cri-v1alpha2-test
+    sudo env "PATH=$PATH" make cri-v1alpha2-test || travis_terminate 1
     make coverage
   fi
   
