@@ -1,12 +1,9 @@
 package service
 
 import (
-	"net"
-	"os"
-	"syscall"
-
 	cri "github.com/alibaba/pouch/cri/v1alpha1"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/pkg/netutils"
 
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -27,8 +24,6 @@ func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 		criMgr: criMgr,
 	}
 
-	// TODO: Prepare streaming server.
-
 	runtime.RegisterRuntimeServiceServer(s.server, s.criMgr)
 	runtime.RegisterImageServiceServer(s.server, s.criMgr)
 
@@ -37,12 +32,7 @@ func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 
 // Serve starts grpc server.
 func (s *Service) Serve() error {
-	// Unlink to cleanup the previous socket file.
-	if err := syscall.Unlink(s.config.CriConfig.Listen); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	l, err := net.Listen("unix", s.config.CriConfig.Listen)
+	l, err := netutils.GetListener(s.config.CriConfig.Listen, nil)
 	if err != nil {
 		return err
 	}
