@@ -222,10 +222,10 @@ cd $GOPATH/src/github.com/alibaba/; git clone https://github.com/alibaba/pouch.g
 cd pouch; git checkout master
 ```
 
-Makefile target named `build` will compile the pouch and pouchd binaries in current work directory. Or you can just execute `make install` to build binaries and install them in destination directory (`/usr/local/bin` by default).
+Makefile target named `build` will compile the pouch and pouchd binaries into current `bin` directory. You can execute `make build && make install` to build binaries and install them in destination directory (`/usr/local/bin` by default).
 
 ``` shell
-make install
+make build && make install
 ```
 
 ### Start PouchContainer
