@@ -36,6 +36,8 @@ func (suite *PouchRunMemorySuite) TearDownTest(c *check.C) {
 // TestRunWithMemoryswap is to verify the valid running container
 // with --memory-swap
 func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
+	SkipIfFalse(c, environment.IsMemorySwapSupport)
+
 	cname := "TestRunWithMemoryswap"
 	res := command.PouchRun("run", "-d", "-m", "100m",
 		"--memory-swap", "200m",
@@ -149,6 +151,8 @@ func (suite *PouchRunMemorySuite) TestRunMemoryOOM(c *check.C) {
 
 // TestRunWithMemoryFlag test pouch run with memory flags
 func (suite *PouchRunSuite) TestRunWithMemoryFlag(c *check.C) {
+	SkipIfFalse(c, environment.IsMemorySwapSupport)
+
 	cname := "RunWithOnlyMemorySwap"
 	res := command.PouchRun("run", "-d", "--name", cname, "--memory-swap=1g", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, cname)
