@@ -37,10 +37,9 @@ type Resources struct {
 	BlkioDeviceWriteIOps []*ThrottleDevice `json:"BlkioDeviceWriteIOps"`
 
 	// Block IO weight (relative weight), need CFQ IO Scheduler enable.
-	// Required: true
 	// Maximum: 1000
 	// Minimum: 0
-	BlkioWeight uint16 `json:"BlkioWeight"`
+	BlkioWeight uint16 `json:"BlkioWeight,omitempty"`
 
 	// Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.
 	//
@@ -49,135 +48,109 @@ type Resources struct {
 	// CPU CFS (Completely Fair Scheduler) period.
 	// The length of a CPU period in microseconds.
 	//
-	// Required: true
 	// Maximum: 1e+06
 	// Minimum: 1000
-	CPUPeriod int64 `json:"CPUPeriod"`
+	CPUPeriod int64 `json:"CPUPeriod,omitempty"`
 
 	// CPU CFS (Completely Fair Scheduler) quota.
 	// Microseconds of CPU time that the container can get in a CPU period."
 	//
-	// Required: true
 	// Minimum: 1000
-	CPUQuota int64 `json:"CPUQuota"`
+	CPUQuota int64 `json:"CPUQuota,omitempty"`
 
 	// An integer value representing this container's relative CPU weight versus other containers.
-	// Required: true
-	CPUShares int64 `json:"CPUShares"`
+	CPUShares int64 `json:"CPUShares,omitempty"`
 
 	// Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.
-	// Required: true
-	CgroupParent string `json:"CgroupParent"`
+	CgroupParent string `json:"CgroupParent,omitempty"`
 
 	// The number of usable CPUs (Windows only).
 	// On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
 	//
-	// Required: true
-	CPUCount int64 `json:"CpuCount"`
+	CPUCount int64 `json:"CpuCount,omitempty"`
 
 	// The usable percentage of the available CPUs (Windows only).
 	// On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
 	//
-	// Required: true
-	CPUPercent int64 `json:"CpuPercent"`
+	CPUPercent int64 `json:"CpuPercent,omitempty"`
 
 	// The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
-	// Required: true
-	CPURealtimePeriod int64 `json:"CpuRealtimePeriod"`
+	CPURealtimePeriod int64 `json:"CpuRealtimePeriod,omitempty"`
 
 	// The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
-	// Required: true
-	CPURealtimeRuntime int64 `json:"CpuRealtimeRuntime"`
+	CPURealtimeRuntime int64 `json:"CpuRealtimeRuntime,omitempty"`
 
 	// CPUs in which to allow execution (e.g., `0-3`, `0,1`)
-	// Required: true
-	CpusetCpus string `json:"CpusetCpus"`
+	CpusetCpus string `json:"CpusetCpus,omitempty"`
 
 	// Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.
-	// Required: true
-	CpusetMems string `json:"CpusetMems"`
+	CpusetMems string `json:"CpusetMems,omitempty"`
 
 	// a list of cgroup rules to apply to the container
-	// Required: true
 	DeviceCgroupRules []string `json:"DeviceCgroupRules"`
 
 	// A list of devices to add to the container.
 	Devices []*DeviceMapping `json:"Devices"`
 
 	// Maximum IO in bytes per second for the container system drive (Windows only)
-	// Required: true
-	IOMaximumBandwidth uint64 `json:"IOMaximumBandwidth"`
+	IOMaximumBandwidth uint64 `json:"IOMaximumBandwidth,omitempty"`
 
 	// Maximum IOps for the container system drive (Windows only)
-	// Required: true
-	IOMaximumIOps uint64 `json:"IOMaximumIOps"`
+	IOMaximumIOps uint64 `json:"IOMaximumIOps,omitempty"`
 
 	// IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.
-	// Required: true
-	IntelRdtL3Cbm string `json:"IntelRdtL3Cbm"`
+	IntelRdtL3Cbm string `json:"IntelRdtL3Cbm,omitempty"`
 
 	// Kernel memory limit in bytes.
-	// Required: true
-	KernelMemory int64 `json:"KernelMemory"`
+	KernelMemory int64 `json:"KernelMemory,omitempty"`
 
 	// Memory limit in bytes.
-	// Required: true
-	Memory int64 `json:"Memory"`
+	Memory int64 `json:"Memory,omitempty"`
 
 	// MemoryExtra is an integer value representing this container's memory high water mark percentage.
 	// The range is in [0, 100].
 	//
-	// Required: true
 	// Maximum: 100
 	// Minimum: 0
-	MemoryExtra *int64 `json:"MemoryExtra"`
+	MemoryExtra *int64 `json:"MemoryExtra,omitempty"`
 
 	// MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.
-	// Required: true
 	// Maximum: 1
 	// Minimum: 0
-	MemoryForceEmptyCtl int64 `json:"MemoryForceEmptyCtl"`
+	MemoryForceEmptyCtl int64 `json:"MemoryForceEmptyCtl,omitempty"`
 
 	// Memory soft limit in bytes.
-	// Required: true
-	MemoryReservation int64 `json:"MemoryReservation"`
+	MemoryReservation int64 `json:"MemoryReservation,omitempty"`
 
 	// Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.
-	// Required: true
-	MemorySwap int64 `json:"MemorySwap"`
+	MemorySwap int64 `json:"MemorySwap,omitempty"`
 
 	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
-	// Required: true
 	// Maximum: 100
 	// Minimum: 0
-	MemorySwappiness *int64 `json:"MemorySwappiness"`
+	MemorySwappiness *int64 `json:"MemorySwappiness,omitempty"`
 
 	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
 	// The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].
 	//
-	// Required: true
 	// Maximum: 100
 	// Minimum: 0
-	MemoryWmarkRatio *int64 `json:"MemoryWmarkRatio"`
+	MemoryWmarkRatio *int64 `json:"MemoryWmarkRatio,omitempty"`
 
 	// CPU quota in units of 10<sup>-9</sup> CPUs.
-	// Required: true
-	NanoCpus int64 `json:"NanoCPUs"`
+	NanoCpus int64 `json:"NanoCPUs,omitempty"`
 
 	// Disable OOM Killer for the container.
-	// Required: true
-	OomKillDisable *bool `json:"OomKillDisable"`
+	OomKillDisable *bool `json:"OomKillDisable,omitempty"`
 
 	// Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.
 	//
-	// Required: true
-	PidsLimit int64 `json:"PidsLimit"`
+	PidsLimit int64 `json:"PidsLimit,omitempty"`
 
 	// ScheLatSwitch enables scheduler latency count in cpuacct
-	// Required: true
 	// Maximum: 1
 	// Minimum: 0
-	ScheLatSwitch int64 `json:"ScheLatSwitch"`
+	ScheLatSwitch int64 `json:"ScheLatSwitch,omitempty"`
 
 	// A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
 	//
@@ -296,77 +269,12 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateCPUShares(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCgroupParent(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPUCount(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPUPercent(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPURealtimePeriod(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPURealtimeRuntime(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCpusetCpus(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCpusetMems(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateDeviceCgroupRules(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateDevices(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateIOMaximumBandwidth(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateIOMaximumIOps(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateIntelRdtL3Cbm(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateKernelMemory(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMemory(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -381,37 +289,12 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateMemoryReservation(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMemorySwap(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateMemorySwappiness(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateMemoryWmarkRatio(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateNanoCpus(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateOomKillDisable(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validatePidsLimit(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -542,8 +425,8 @@ func (m *Resources) validateBlkioDeviceWriteIOps(formats strfmt.Registry) error 
 
 func (m *Resources) validateBlkioWeight(formats strfmt.Registry) error {
 
-	if err := validate.Required("BlkioWeight", "body", uint16(m.BlkioWeight)); err != nil {
-		return err
+	if swag.IsZero(m.BlkioWeight) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("BlkioWeight", "body", int64(m.BlkioWeight), 0, false); err != nil {
@@ -586,8 +469,8 @@ func (m *Resources) validateBlkioWeightDevice(formats strfmt.Registry) error {
 
 func (m *Resources) validateCPUPeriod(formats strfmt.Registry) error {
 
-	if err := validate.Required("CPUPeriod", "body", int64(m.CPUPeriod)); err != nil {
-		return err
+	if swag.IsZero(m.CPUPeriod) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("CPUPeriod", "body", int64(m.CPUPeriod), 1000, false); err != nil {
@@ -603,8 +486,8 @@ func (m *Resources) validateCPUPeriod(formats strfmt.Registry) error {
 
 func (m *Resources) validateCPUQuota(formats strfmt.Registry) error {
 
-	if err := validate.Required("CPUQuota", "body", int64(m.CPUQuota)); err != nil {
-		return err
+	if swag.IsZero(m.CPUQuota) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("CPUQuota", "body", int64(m.CPUQuota), 1000, false); err != nil {
@@ -614,82 +497,10 @@ func (m *Resources) validateCPUQuota(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateCPUShares(formats strfmt.Registry) error {
-
-	if err := validate.Required("CPUShares", "body", int64(m.CPUShares)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCgroupParent(formats strfmt.Registry) error {
-
-	if err := validate.RequiredString("CgroupParent", "body", string(m.CgroupParent)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPUCount(formats strfmt.Registry) error {
-
-	if err := validate.Required("CpuCount", "body", int64(m.CPUCount)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPUPercent(formats strfmt.Registry) error {
-
-	if err := validate.Required("CpuPercent", "body", int64(m.CPUPercent)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPURealtimePeriod(formats strfmt.Registry) error {
-
-	if err := validate.Required("CpuRealtimePeriod", "body", int64(m.CPURealtimePeriod)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPURealtimeRuntime(formats strfmt.Registry) error {
-
-	if err := validate.Required("CpuRealtimeRuntime", "body", int64(m.CPURealtimeRuntime)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCpusetCpus(formats strfmt.Registry) error {
-
-	if err := validate.RequiredString("CpusetCpus", "body", string(m.CpusetCpus)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCpusetMems(formats strfmt.Registry) error {
-
-	if err := validate.RequiredString("CpusetMems", "body", string(m.CpusetMems)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateDeviceCgroupRules(formats strfmt.Registry) error {
 
-	if err := validate.Required("DeviceCgroupRules", "body", m.DeviceCgroupRules); err != nil {
-		return err
+	if swag.IsZero(m.DeviceCgroupRules) { // not required
+		return nil
 	}
 
 	return nil
@@ -722,55 +533,10 @@ func (m *Resources) validateDevices(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateIOMaximumBandwidth(formats strfmt.Registry) error {
-
-	if err := validate.Required("IOMaximumBandwidth", "body", uint64(m.IOMaximumBandwidth)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateIOMaximumIOps(formats strfmt.Registry) error {
-
-	if err := validate.Required("IOMaximumIOps", "body", uint64(m.IOMaximumIOps)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateIntelRdtL3Cbm(formats strfmt.Registry) error {
-
-	if err := validate.RequiredString("IntelRdtL3Cbm", "body", string(m.IntelRdtL3Cbm)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateKernelMemory(formats strfmt.Registry) error {
-
-	if err := validate.Required("KernelMemory", "body", int64(m.KernelMemory)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateMemory(formats strfmt.Registry) error {
-
-	if err := validate.Required("Memory", "body", int64(m.Memory)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateMemoryExtra(formats strfmt.Registry) error {
 
-	if err := validate.Required("MemoryExtra", "body", m.MemoryExtra); err != nil {
-		return err
+	if swag.IsZero(m.MemoryExtra) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("MemoryExtra", "body", int64(*m.MemoryExtra), 0, false); err != nil {
@@ -786,8 +552,8 @@ func (m *Resources) validateMemoryExtra(formats strfmt.Registry) error {
 
 func (m *Resources) validateMemoryForceEmptyCtl(formats strfmt.Registry) error {
 
-	if err := validate.Required("MemoryForceEmptyCtl", "body", int64(m.MemoryForceEmptyCtl)); err != nil {
-		return err
+	if swag.IsZero(m.MemoryForceEmptyCtl) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("MemoryForceEmptyCtl", "body", int64(m.MemoryForceEmptyCtl), 0, false); err != nil {
@@ -801,28 +567,10 @@ func (m *Resources) validateMemoryForceEmptyCtl(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateMemoryReservation(formats strfmt.Registry) error {
-
-	if err := validate.Required("MemoryReservation", "body", int64(m.MemoryReservation)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateMemorySwap(formats strfmt.Registry) error {
-
-	if err := validate.Required("MemorySwap", "body", int64(m.MemorySwap)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 
-	if err := validate.Required("MemorySwappiness", "body", m.MemorySwappiness); err != nil {
-		return err
+	if swag.IsZero(m.MemorySwappiness) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), 0, false); err != nil {
@@ -838,8 +586,8 @@ func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 
 func (m *Resources) validateMemoryWmarkRatio(formats strfmt.Registry) error {
 
-	if err := validate.Required("MemoryWmarkRatio", "body", m.MemoryWmarkRatio); err != nil {
-		return err
+	if swag.IsZero(m.MemoryWmarkRatio) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("MemoryWmarkRatio", "body", int64(*m.MemoryWmarkRatio), 0, false); err != nil {
@@ -853,37 +601,10 @@ func (m *Resources) validateMemoryWmarkRatio(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateNanoCpus(formats strfmt.Registry) error {
-
-	if err := validate.Required("NanoCPUs", "body", int64(m.NanoCpus)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateOomKillDisable(formats strfmt.Registry) error {
-
-	if err := validate.Required("OomKillDisable", "body", m.OomKillDisable); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validatePidsLimit(formats strfmt.Registry) error {
-
-	if err := validate.Required("PidsLimit", "body", int64(m.PidsLimit)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateScheLatSwitch(formats strfmt.Registry) error {
 
-	if err := validate.Required("ScheLatSwitch", "body", int64(m.ScheLatSwitch)); err != nil {
-		return err
+	if swag.IsZero(m.ScheLatSwitch) { // not required
+		return nil
 	}
 
 	if err := validate.MinimumInt("ScheLatSwitch", "body", int64(m.ScheLatSwitch), 0, false); err != nil {
