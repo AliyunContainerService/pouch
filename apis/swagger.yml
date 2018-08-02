@@ -2261,9 +2261,9 @@ definitions:
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"
     type: "object"
-    required: [CPUShares, Memory, CgroupParent, BlkioWeight, CPUPeriod, CPUQuota, CpuRealtimePeriod, 
+    required: [CpuShares, Memory, CgroupParent, BlkioWeight, CpuPeriod, CpuQuota, CpuRealtimePeriod, 
     CpuRealtimeRuntime, CpusetCpus, CpusetMems, DeviceCgroupRules, KernelMemory, MemoryReservation, 
-    MemorySwap, MemorySwappiness, NanoCPUs, OomKillDisable, PidsLimit, CpuCount, CpuPercent, 
+    MemorySwap, MemorySwappiness, NanoCpus, OomKillDisable, PidsLimit, CpuCount, CpuPercent, 
     IOMaximumIOps, IOMaximumBandwidth, IntelRdtL3Cbm, ScheLatSwitch, MemoryWmarkRatio, MemoryExtra, 
     MemoryForceEmptyCtl]
     properties:
@@ -2309,11 +2309,11 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/ThrottleDevice"
-      CPUShares:
+      CpuShares:
         description: "An integer value representing this container's relative CPU weight versus other containers."
         type: "integer"
         x-nullable: false
-      CPUPeriod:
+      CpuPeriod:
         description: |
           CPU CFS (Completely Fair Scheduler) period.
           The length of a CPU period in microseconds.
@@ -2322,7 +2322,7 @@ definitions:
         minimum: 1000
         maximum: 1000000
         x-nullable: false
-      CPUQuota:
+      CpuQuota:
         description: |
           CPU CFS (Completely Fair Scheduler) quota.
           Microseconds of CPU time that the container can get in a CPU period."
@@ -2386,7 +2386,7 @@ definitions:
         format: "int64"
         minimum: 0
         maximum: 100
-      NanoCPUs:
+      NanoCpus:
         description: "CPU quota in units of 10<sup>-9</sup> CPUs."
         type: "integer"
         format: "int64"

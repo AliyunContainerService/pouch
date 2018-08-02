@@ -46,25 +46,6 @@ type Resources struct {
 	//
 	BlkioWeightDevice []*WeightDevice `json:"BlkioWeightDevice"`
 
-	// CPU CFS (Completely Fair Scheduler) period.
-	// The length of a CPU period in microseconds.
-	//
-	// Required: true
-	// Maximum: 1e+06
-	// Minimum: 1000
-	CPUPeriod int64 `json:"CPUPeriod"`
-
-	// CPU CFS (Completely Fair Scheduler) quota.
-	// Microseconds of CPU time that the container can get in a CPU period."
-	//
-	// Required: true
-	// Minimum: 1000
-	CPUQuota int64 `json:"CPUQuota"`
-
-	// An integer value representing this container's relative CPU weight versus other containers.
-	// Required: true
-	CPUShares int64 `json:"CPUShares"`
-
 	// Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.
 	// Required: true
 	CgroupParent string `json:"CgroupParent"`
@@ -81,6 +62,21 @@ type Resources struct {
 	// Required: true
 	CPUPercent int64 `json:"CpuPercent"`
 
+	// CPU CFS (Completely Fair Scheduler) period.
+	// The length of a CPU period in microseconds.
+	//
+	// Required: true
+	// Maximum: 1e+06
+	// Minimum: 1000
+	CPUPeriod int64 `json:"CpuPeriod"`
+
+	// CPU CFS (Completely Fair Scheduler) quota.
+	// Microseconds of CPU time that the container can get in a CPU period."
+	//
+	// Required: true
+	// Minimum: 1000
+	CPUQuota int64 `json:"CpuQuota"`
+
 	// The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
 	// Required: true
 	CPURealtimePeriod int64 `json:"CpuRealtimePeriod"`
@@ -88,6 +84,10 @@ type Resources struct {
 	// The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
 	// Required: true
 	CPURealtimeRuntime int64 `json:"CpuRealtimeRuntime"`
+
+	// An integer value representing this container's relative CPU weight versus other containers.
+	// Required: true
+	CPUShares int64 `json:"CpuShares"`
 
 	// CPUs in which to allow execution (e.g., `0-3`, `0,1`)
 	// Required: true
@@ -162,7 +162,7 @@ type Resources struct {
 
 	// CPU quota in units of 10<sup>-9</sup> CPUs.
 	// Required: true
-	NanoCpus int64 `json:"NanoCPUs"`
+	NanoCpus int64 `json:"NanoCpus"`
 
 	// Disable OOM Killer for the container.
 	// Required: true
@@ -196,21 +196,21 @@ type Resources struct {
 
 /* polymorph Resources BlkioWeightDevice false */
 
-/* polymorph Resources CPUPeriod false */
-
-/* polymorph Resources CPUQuota false */
-
-/* polymorph Resources CPUShares false */
-
 /* polymorph Resources CgroupParent false */
 
 /* polymorph Resources CpuCount false */
 
 /* polymorph Resources CpuPercent false */
 
+/* polymorph Resources CpuPeriod false */
+
+/* polymorph Resources CpuQuota false */
+
 /* polymorph Resources CpuRealtimePeriod false */
 
 /* polymorph Resources CpuRealtimeRuntime false */
+
+/* polymorph Resources CpuShares false */
 
 /* polymorph Resources CpusetCpus false */
 
@@ -242,7 +242,7 @@ type Resources struct {
 
 /* polymorph Resources MemoryWmarkRatio false */
 
-/* polymorph Resources NanoCPUs false */
+/* polymorph Resources NanoCpus false */
 
 /* polymorph Resources OomKillDisable false */
 
@@ -286,21 +286,6 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateCPUPeriod(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPUQuota(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateCPUShares(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateCgroupParent(formats); err != nil {
 		// prop
 		res = append(res, err)
@@ -316,12 +301,27 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateCPUPeriod(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateCPUQuota(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateCPURealtimePeriod(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateCPURealtimeRuntime(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateCPUShares(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -584,45 +584,6 @@ func (m *Resources) validateBlkioWeightDevice(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateCPUPeriod(formats strfmt.Registry) error {
-
-	if err := validate.Required("CPUPeriod", "body", int64(m.CPUPeriod)); err != nil {
-		return err
-	}
-
-	if err := validate.MinimumInt("CPUPeriod", "body", int64(m.CPUPeriod), 1000, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("CPUPeriod", "body", int64(m.CPUPeriod), 1e+06, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPUQuota(formats strfmt.Registry) error {
-
-	if err := validate.Required("CPUQuota", "body", int64(m.CPUQuota)); err != nil {
-		return err
-	}
-
-	if err := validate.MinimumInt("CPUQuota", "body", int64(m.CPUQuota), 1000, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateCPUShares(formats strfmt.Registry) error {
-
-	if err := validate.Required("CPUShares", "body", int64(m.CPUShares)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateCgroupParent(formats strfmt.Registry) error {
 
 	if err := validate.RequiredString("CgroupParent", "body", string(m.CgroupParent)); err != nil {
@@ -650,6 +611,36 @@ func (m *Resources) validateCPUPercent(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Resources) validateCPUPeriod(formats strfmt.Registry) error {
+
+	if err := validate.Required("CpuPeriod", "body", int64(m.CPUPeriod)); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("CpuPeriod", "body", int64(m.CPUPeriod), 1000, false); err != nil {
+		return err
+	}
+
+	if err := validate.MaximumInt("CpuPeriod", "body", int64(m.CPUPeriod), 1e+06, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Resources) validateCPUQuota(formats strfmt.Registry) error {
+
+	if err := validate.Required("CpuQuota", "body", int64(m.CPUQuota)); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("CpuQuota", "body", int64(m.CPUQuota), 1000, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Resources) validateCPURealtimePeriod(formats strfmt.Registry) error {
 
 	if err := validate.Required("CpuRealtimePeriod", "body", int64(m.CPURealtimePeriod)); err != nil {
@@ -662,6 +653,15 @@ func (m *Resources) validateCPURealtimePeriod(formats strfmt.Registry) error {
 func (m *Resources) validateCPURealtimeRuntime(formats strfmt.Registry) error {
 
 	if err := validate.Required("CpuRealtimeRuntime", "body", int64(m.CPURealtimeRuntime)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Resources) validateCPUShares(formats strfmt.Registry) error {
+
+	if err := validate.Required("CpuShares", "body", int64(m.CPUShares)); err != nil {
 		return err
 	}
 
@@ -855,7 +855,7 @@ func (m *Resources) validateMemoryWmarkRatio(formats strfmt.Registry) error {
 
 func (m *Resources) validateNanoCpus(formats strfmt.Registry) error {
 
-	if err := validate.Required("NanoCPUs", "body", int64(m.NanoCpus)); err != nil {
+	if err := validate.Required("NanoCpus", "body", int64(m.NanoCpus)); err != nil {
 		return err
 	}
 
