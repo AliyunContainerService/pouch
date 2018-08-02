@@ -64,7 +64,7 @@ func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
 
 	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 500)
+	CheckRespStatus(c, resp, 409)
 }
 
 // TestStartDetachKeyWork test detatch-keys works.

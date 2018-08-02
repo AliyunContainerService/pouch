@@ -41,6 +41,15 @@ type containerPack struct {
 
 // ContainerStats returns stats of the container.
 func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
+	metric, err := c.containerStats(ctx, id)
+	if err != nil {
+		return metric, convertCtrdErr(err)
+	}
+	return metric, nil
+}
+
+// containerStats returns stats of the container.
+func (c *Client) containerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}
@@ -56,6 +65,14 @@ func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtype
 
 // ExecContainer executes a process in container.
 func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
+	if err := c.execContainer(ctx, process); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// execContainer executes a process in container.
+func (c *Client) execContainer(ctx context.Context, process *Process) error {
 	pack, err := c.watch.get(process.ContainerID)
 	if err != nil {
 		return err
@@ -123,6 +140,15 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 
 // ContainerPID returns the container's init process id.
 func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
+	pid, err := c.containerPID(ctx, id)
+	if err != nil {
+		return pid, convertCtrdErr(err)
+	}
+	return pid, nil
+}
+
+// containerPID returns the container's init process id.
+func (c *Client) containerPID(ctx context.Context, id string) (int, error) {
 	pack, err := c.watch.get(id)
 	if err != nil {
 		return -1, err
@@ -132,6 +158,15 @@ func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
 
 // ContainerPIDs returns the all processes's ids inside the container.
 func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
+	pids, err := c.containerPIDs(ctx, id)
+	if err != nil {
+		return pids, convertCtrdErr(err)
+	}
+	return pids, nil
+}
+
+// containerPIDs returns the all processes's ids inside the container.
+func (c *Client) containerPIDs(ctx context.Context, id string) ([]int, error) {
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}
@@ -178,6 +213,14 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 
 // RecoverContainer reload the container from metadata and watch it, if program be restarted.
 func (c *Client) RecoverContainer(ctx context.Context, id string, io *containerio.IO) error {
+	if err := c.recoverContainer(ctx, id, io); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// recoverContainer reload the container from metadata and watch it, if program be restarted.
+func (c *Client) recoverContainer(ctx context.Context, id string, io *containerio.IO) error {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -226,6 +269,15 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 
 // DestroyContainer kill container and delete it.
 func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
+	msg, err := c.destroyContainer(ctx, id, timeout)
+	if err != nil {
+		return msg, convertCtrdErr(err)
+	}
+	return msg, nil
+}
+
+// DestroyContainer kill container and delete it.
+func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
 	// TODO(ziren): if we just want to stop a container,
 	// we may need lease to lock the snapshot of container,
 	// in case, it be deleted by gc.
@@ -294,8 +346,16 @@ clean:
 	return msg, c.watch.remove(ctx, id)
 }
 
-// PauseContainer pause container.
+// PauseContainer pauses container.
 func (c *Client) PauseContainer(ctx context.Context, id string) error {
+	if err := c.pauseContainer(ctx, id); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// pauseContainer pause container.
+func (c *Client) pauseContainer(ctx context.Context, id string) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -317,8 +377,16 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-// UnpauseContainer unpauses a container.
+// UnpauseContainer unpauses container.
 func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
+	if err := c.unpauseContainer(ctx, id); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// unpauseContainer unpauses a container.
+func (c *Client) unpauseContainer(ctx context.Context, id string) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -352,7 +420,10 @@ func (c *Client) CreateContainer(ctx context.Context, container *Container) erro
 	}
 	defer c.lock.Unlock(id)
 
-	return c.createContainer(ctx, ref, id, container)
+	if err := c.createContainer(ctx, ref, id, container); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
 }
 
 func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (err0 error) {
@@ -472,28 +543,16 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 	return pack, nil
 }
 
-func (c *Client) listContainerStore(ctx context.Context) ([]string, error) {
-	wrapperCli, err := c.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
-	}
-
-	containers, err := wrapperCli.client.ContainerService().List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var cs []string
-
-	for _, c := range containers {
-		cs = append(cs, c.ID)
-	}
-
-	return cs, nil
-}
-
 // UpdateResources updates the configurations of a container.
 func (c *Client) UpdateResources(ctx context.Context, id string, resources types.Resources) error {
+	if err := c.updateResources(ctx, id, resources); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// updateResources updates the configurations of a container.
+func (c *Client) updateResources(ctx context.Context, id string, resources types.Resources) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -515,6 +574,15 @@ func (c *Client) UpdateResources(ctx context.Context, id string, resources types
 // ResizeContainer changes the size of the TTY of the init process running
 // in the container to the given height and width.
 func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
+	if err := c.resizeContainer(ctx, id, opts); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// resizeContainer changes the size of the TTY of the init process running
+// in the container to the given height and width.
+func (c *Client) resizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -530,6 +598,15 @@ func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.Resi
 
 // WaitContainer waits until container's status is stopped.
 func (c *Client) WaitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error) {
+	waitBody, err := c.waitContainer(ctx, id)
+	if err != nil {
+		return waitBody, convertCtrdErr(err)
+	}
+	return waitBody, nil
+}
+
+// waitContainer waits until container's status is stopped.
+func (c *Client) waitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return types.ContainerWaitOKBody{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
