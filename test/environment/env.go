@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/client"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -41,6 +42,20 @@ var (
 	// Subnet default subnet for test
 	Subnet = "192.168.1.0/24"
 )
+
+// the following check funtions provide cgroup file avaible check
+var (
+	cgroupInfo *system.CgroupInfo
+
+	// IsMemorySwapSupport checks if memory swap cgroup is avaible
+	IsMemorySwapSupport = func() bool {
+		return cgroupInfo.Memory.MemorySwap
+	}
+)
+
+func init() {
+	cgroupInfo = system.NewCgroupInfo()
+}
 
 // GetBusybox get image info from test environment variable.
 func GetBusybox() {
