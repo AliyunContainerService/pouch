@@ -145,7 +145,7 @@ func setMountTab(ctx context.Context, c *Container, spec *SpecWrapper) error {
 
 	mtabPrestart := specs.Hook{
 		Path: "/bin/cp",
-		Args: []string{"-f", hostmtabPath, mtabPath},
+		Args: []string{"-f", "--remove-destination", hostmtabPath, mtabPath},
 	}
 	spec.s.Hooks.Prestart = append(spec.s.Hooks.Prestart, mtabPrestart)
 

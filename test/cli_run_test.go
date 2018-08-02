@@ -422,3 +422,24 @@ func (suite *PouchRunSuite) TestRunSetRunningFlag(c *check.C) {
 	}
 	c.Assert(result[0].State.Running, check.Equals, true)
 }
+
+func (suite *PouchRunSuite) TestRunWithMtab(c *check.C) {
+	cname := "TestRunWithMtab"
+	volumeName := "TestRunWithMtabVolume"
+	dest := "/mnt/" + volumeName
+
+	command.PouchRun("volume", "create", "--name", volumeName).Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+
+	ret := command.PouchRun("run", "--rm", "--name", cname, "-v", volumeName+":"+dest, busyboxImage, "cat", "/etc/mtab").Assert(c, icmd.Success)
+	ret.Assert(c, icmd.Success)
+
+	found := false
+	for _, line := range strings.Split(ret.Stdout(), "\n") {
+		if strings.Contains(line, dest) {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, true)
+}
