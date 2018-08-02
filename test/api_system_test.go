@@ -106,3 +106,24 @@ func (suite *APISystemSuite) TestRegistryLogin(c *check.C) {
 	request.DecodeBody(authResp, resp.Body)
 	c.Assert(util.PartialEqual(authResp.Status, "Login Succeeded"), check.IsNil)
 }
+
+// TestStats tests /stats API.
+func (suite *APISystemSuite) TestStats(c *check.C) {
+	resp, err := request.Get("/stats")
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ResponseStats{}
+	err = json.NewDecoder(resp.Body).Decode(&got)
+	c.Assert(err, check.IsNil)
+
+	if got.AllRequests <= 1 {
+		c.Fatalf("daemon handling request should be more than 1, actual: %d", got.AllRequests)
+	}
+
+	if got.Req2xx3xxCount <= 1 {
+		c.Fatalf("daemon handling request should be more than 0, actual: %d", got.Req2xx3xxCount)
+	}
+}

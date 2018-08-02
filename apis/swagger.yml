@@ -80,6 +80,20 @@ paths:
           schema:
             $ref: "#/definitions/AuthConfig"
   
+  /stats:
+    get:
+      summary: "Get daemon's request dealing result, including all handled request number, 2xx3xx number, 4xx number and 5xx number"
+      description: "Get daemon's request dealing result, including all handled request number, 2xx3xx number, 4xx number and 5xx number"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "The request handling stats have returned"
+          schema:
+            $ref: "#/definitions/ResponseStats"
+
   /daemon/update:
     post:
       summary: "Update daemon's labels and image proxy"
@@ -1804,6 +1818,27 @@ definitions:
           type: "string"
         example:
           - ["unix:///var/run/pouchd.sock", "tcp://0.0.0.0:4243"]
+
+  ResponseStats:
+    type: "object"
+    description: ResponseStats contains all request handling result in daemon including 2xx3xx response number, 4xx and 5xx number.
+    properties:
+      AllRequests:
+        description: all requests number handled by daemon no matter success or failure.
+        type: "integer"
+        format: "uint64"
+      req2xx3xxCount:
+        description: all response number returned by daemon which is 2xx or 3xx status code.
+        type: "integer"
+        format: "uint64"
+      Req4xxCount:
+        description: all response number returned by daemon which is 4xx status code.
+        type: "integer"
+        format: "uint64"
+      Req5xxCount:
+        description: all response number returned by daemon which is 5xx status code.
+        type: "integer"
+        format: "uint64"
 
   DaemonUpdateConfig:
     type: "object"
