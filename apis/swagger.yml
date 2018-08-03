@@ -1964,7 +1964,12 @@ definitions:
         description: "Initial script executed in container. The script will be executed before entrypoint or command"
       DiskQuota:
         type: "object"
-        description: "Set disk quota for container"
+        description: |
+          Set disk quota for container.
+          Key is the dir in container.
+          Value is disk quota size for the dir.
+          / means rootfs dir in container.
+          .* includes rootfs dir and all volume dir.
         x-nullable: true
         additionalProperties:
           type: "string"
@@ -1975,7 +1980,10 @@ definitions:
           type: "string"
       QuotaID:
         type: "string"
-        description: "set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id"
+        description: |
+          Set disk quota by specified quota id. 
+          If QuotaID <= 0, it means pouchd should allocate a unique quota id by sequence automatically.
+          By default, a quota ID is mapped to only one container. And one quota ID can include several mountpoint.
       NetPriority:
         description: "net priority."
         type: "integer"

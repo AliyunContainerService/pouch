@@ -1,3 +1,5 @@
+// +build linux
+
 package quota
 
 import (
@@ -11,35 +13,49 @@ import (
 
 	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/pkg/exec"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/sirupsen/logrus"
 )
 
-// PrjQuota represents project quota.
-type PrjQuota struct {
+var (
+	prjQuotaType = "prjquota"
+)
+
+// PrjQuotaDriver represents project quota driver.
+type PrjQuotaDriver struct {
 	lock sync.Mutex
+
 	// quotaIDs saves all of quota ids.
-	quotaIDs map[uint32]uint32
-	// mountPoints saves all the mount point of volume.
+	// key: quota ID which means this ID is used in the global scope.
+	// value: stuct{}
+	quotaIDs map[uint32]struct{}
+
+	// mountPoints saves all the mount point of volume which have already been enforced disk quota.
+	// key: device ID such as /dev/sda1
+	// value: the mountpoint of the device in the filesystem
 	mountPoints map[uint64]string
+
 	// devLimits saves all the limit of device.
+	// key: device ID
+	// value: the storage upper limit size of the device(unit:B)
 	devLimits map[uint64]uint64
-	// quotaLastID is used to mark last used quota id.
-	quotaLastID uint32
+
+	// lastID is used to mark last used quota ID.
+	// quota ID is allocated increasingly by sequence one by one.
+	lastID uint32
 }
 
-// StartQuotaDriver is used to start quota driver.
-func (quota *PrjQuota) StartQuotaDriver(dir string) (string, error) {
+// EnforceQuota is used to enforce disk quota effect on specified directory.
+func (quota *PrjQuotaDriver) EnforceQuota(dir string) (string, error) {
 	logrus.Debugf("start project quota driver: %s", dir)
-	if !UseQuota {
-		return "", nil
-	}
 
-	devID, err := GetDevID(dir)
+	devID, err := system.GetDevID(dir)
 	if err != nil {
 		return "", err
 	}
 
+	// set limit of dir's device in driver
 	if _, err = quota.setDevLimit(dir, devID); err != nil {
 		return "", err
 	}
@@ -48,65 +64,67 @@ func (quota *PrjQuota) StartQuotaDriver(dir string) (string, error) {
 	defer quota.lock.Unlock()
 
 	if mp, ok := quota.mountPoints[devID]; ok {
+		// if the device has already been enforced quota, just return.
 		return mp, nil
 	}
 
 	mountPoint, hasQuota, _ := quota.CheckMountpoint(devID)
 	if len(mountPoint) == 0 {
-		return mountPoint, fmt.Errorf("mountPoint not found: %s", dir)
+		return mountPoint, fmt.Errorf("mountPoint not found for the device on which dir %s lies", dir)
 	}
 	if !hasQuota {
+		// remount option prjquota for mountpoint
+		// FIXME: ignore or record err? (rudyfly)
 		exec.Run(0, "mount", "-o", "remount,prjquota", mountPoint)
 	}
 
-	// on
+	// use tool quotaon to set disk quota for mountpoint
 	_, _, stderr, err := exec.Run(0, "quotaon", "-P", mountPoint)
 	if err != nil {
 		if strings.Contains(stderr, " File exists") {
 			err = nil
 		} else {
+			// FIXME: this else is quite strange
 			mountPoint = ""
 		}
 	}
 
+	// record device which has quota settings
 	quota.mountPoints[devID] = mountPoint
+
 	return mountPoint, err
 }
 
-// SetSubtree is used to set quota id for directory,
-//chattr -p qid +P $QUOTAID
-func (quota *PrjQuota) SetSubtree(dir string, qid uint32) (uint32, error) {
+// SetSubtree is used to set quota id for substree dir which is container's root dir.
+// For container, it has its own root dir.
+// And this dir is a subtree of the host dir which is mapped to a device.
+// chattr -p qid +P $QUOTAID
+func (quota *PrjQuotaDriver) SetSubtree(dir string, qid uint32) (uint32, error) {
 	logrus.Debugf("set subtree, dir: %s, quotaID: %d", dir, qid)
-	if !UseQuota {
-		return 0, nil
-	}
-
 	id := qid
 	var err error
+
 	if id == 0 {
-		id = quota.GetFileAttr(dir)
+		id = quota.GetQuotaIDInFileAttr(dir)
 		if id > 0 {
 			return id, nil
 		}
-		id, err = quota.GetNextQuatoID()
+		if id, err = quota.GetNextQuotaID(); err != nil {
+			return 0, err
+		}
 	}
 
-	if err != nil {
-		return 0, err
-	}
 	strid := strconv.FormatUint(uint64(id), 10)
 	_, _, _, err = exec.Run(0, "chattr", "-p", strid, "+P", dir)
 	return id, err
 }
 
-// SetDiskQuota is used to set quota for directory.
-func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID uint32) error {
+// SetDiskQuota uses the following two parameters to set disk quota for a directory.
+// * quota size: a byte size of requested quota.
+// * quota ID: an ID represent quota attr which is used in the global scope.
+func (quota *PrjQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint32) error {
 	logrus.Debugf("set disk quota, dir: %s, size: %s, quotaID: %d", dir, size, quotaID)
-	if !UseQuota {
-		return nil
-	}
-
-	mountPoint, err := quota.StartQuotaDriver(dir)
+	mountPoint, err := quota.EnforceQuota(dir)
 	if err != nil {
 		return err
 	}
@@ -129,10 +147,12 @@ func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID uint32) err
 		return err
 	}
 
-	return quota.setUserQuota(id, limit, mountPoint)
+	return quota.setQuota(id, limit, mountPoint)
 }
 
 // CheckMountpoint is used to check mount point.
+// It returns mointpoint, enable quota and filesystem type of the device.
+//
 // cat /proc/mounts as follows:
 // /dev/sda3 / ext4 rw,relatime,data=ordered 0 0
 // /dev/sda2 /boot/grub2 ext4 rw,relatime,stripe=4,data=ordered 0 0
@@ -144,137 +164,113 @@ func (quota *PrjQuota) SetDiskQuota(dir string, size string, quotaID uint32) err
 // cgroup /sys/fs/cgroup/devices cgroup rw,nosuid,nodev,noexec,relatime,devices 0 0
 // cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
 // cgroup /sys/fs/cgroup/blkio cgroup rw,nosuid,nodev,noexec,relatime,blkio 0 0
-func (quota *PrjQuota) CheckMountpoint(devID uint64) (string, bool, string) {
+func (quota *PrjQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string) {
 	logrus.Debugf("check mountpoint, devID: %d", devID)
-	output, err := ioutil.ReadFile("/proc/mounts")
+	output, err := ioutil.ReadFile(procMountFile)
 	if err != nil {
-		logrus.Warnf("ReadFile: %v", err)
+		logrus.Warnf("failed to ReadFile %s: %v", procMountFile, err)
 		return "", false, ""
 	}
 
-	var mountPoint, fsType string
-	hasQuota := false
 	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
 		if len(parts) != 6 {
 			continue
 		}
-		devID2, _ := GetDevID(parts[1])
 
-		if devID == devID2 {
-			mountPoint = parts[1]
-			fsType = parts[2]
-			for _, opt := range strings.Split(parts[3], ",") {
-				if opt == "prjquota" {
-					hasQuota = true
-				}
+		mountPoint := parts[1]
+		fsType := parts[2]
+
+		devID2, _ := system.GetDevID(mountPoint)
+		if devID != devID2 {
+			continue
+		}
+
+		for _, value := range strings.Split(parts[3], ",") {
+			if value == "prjquota" {
+				return mountPoint, true, fsType
 			}
-			break
 		}
 	}
 
-	return mountPoint, hasQuota, fsType
+	return "", false, ""
 }
 
-func (quota *PrjQuota) setUserQuota(quotaID uint32, diskQuota uint64, mountPoint string) error {
-	logrus.Debugf("set user quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, diskQuota, mountPoint)
+// setQuota uses system tool "setquota" to set project quota for binding of limit and mountpoint and quotaID.
+// * quotaID: quota ID which means this ID is used in the global scope.
+// * blockLimit: block limit number for mountpoint.
+// * mountPoint: the mountpoint of the device in the filesystem
+func (quota *PrjQuotaDriver) setQuota(quotaID uint32, blockLimit uint64, mountPoint string) error {
+	logrus.Debugf("set project quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, blockLimit, mountPoint)
 
-	uid := strconv.FormatUint(uint64(quotaID), 10)
-	limit := strconv.FormatUint(diskQuota, 10)
-	_, _, _, err := exec.Run(0, "setquota", "-P", uid, "0", limit, "0", "0", mountPoint)
+	quotaIDStr := strconv.FormatUint(uint64(quotaID), 10)
+	blockLimitStr := strconv.FormatUint(blockLimit, 10)
+	// set project quota
+	_, _, _, err := exec.Run(0, "setquota", "-P", quotaIDStr, "0", blockLimitStr, "0", "0", mountPoint)
 	return err
 }
 
-// GetFileAttr returns the directory attributes
-// lsattr -p $dir
-func (quota *PrjQuota) GetFileAttr(dir string) uint32 {
+// GetQuotaIDInFileAttr gets attributes of the file which is in the inode.
+// The returned result is quota ID.
+// return 0 if failure happens, since quota ID must be positive.
+// execution command: `lsattr -p $dir`
+func (quota *PrjQuotaDriver) GetQuotaIDInFileAttr(dir string) uint32 {
 	parent := path.Dir(dir)
 	qid := 0
 
 	_, out, _, err := exec.Run(0, "lsattr", "-p", parent)
 	if err != nil {
+		// failure, then return invalid value 0 for quota ID.
 		return 0
 	}
 
+	// example output:
+	// 16777256 --------------e---P ./exampleDir
 	lines := strings.Split(out, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		if len(parts) > 2 && parts[2] == dir {
+			// find the corresponding quota ID, return directly.
 			qid, _ = strconv.Atoi(parts[0])
-			break
+			logrus.Debugf("get file attr: [%s], quota id: [%d]", dir, qid)
+			return uint32(qid)
 		}
 	}
 
-	logrus.Debugf("get file attr: [%s], quota id: [%d]", dir, qid)
-
-	return uint32(qid)
+	logrus.Errorf("failed to get file attr of quota ID for dir %s", dir)
+	return 0
 }
 
-// SetFileAttr is used to set file attributes.
-func (quota *PrjQuota) SetFileAttr(dir string, id uint32) error {
-	logrus.Debugf("set file attr, dir: %s, quotaID: %d", dir, id)
+// SetQuotaIDInFileAttr sets file attributes of quota ID for the input directory.
+// The input attributes is quota ID.
+func (quota *PrjQuotaDriver) SetQuotaIDInFileAttr(dir string, quotaID uint32) error {
+	logrus.Debugf("set file attr, dir: %s, quotaID: %d", dir, quotaID)
 
-	strid := strconv.FormatUint(uint64(id), 10)
+	strid := strconv.FormatUint(uint64(quotaID), 10)
 	_, _, _, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
 	return err
 }
 
-// SetFileAttrNoOutput is used to set file attributes without error.
-func (quota *PrjQuota) SetFileAttrNoOutput(dir string, id uint32) {
-	strid := strconv.FormatUint(uint64(id), 10)
+// SetQuotaIDInFileAttrNoOutput is used to set file attributes without error.
+func (quota *PrjQuotaDriver) SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
+	strid := strconv.FormatUint(uint64(quotaID), 10)
 	exec.Run(0, "chattr", "-p", strid, "+P", dir)
 }
 
-// load
-// repquota -Pan
-// Project         used    soft    hard  grace    used  soft  hard  grace
-// ----------------------------------------------------------------------
-// #0        --     220       0       0             25     0     0
-// #123      --       4       0 88589934592          1     0     0
-// #8888     --       8       0       0              2     0     0
-func (quota *PrjQuota) loadQuotaIds() (uint32, error) {
-	minID := QuotaMinID
-	_, output, _, err := exec.Run(0, "repquota", "-Pan")
-	if err != nil {
-		return minID, err
-	}
-
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if len(line) == 0 || line[0] != '#' {
-			continue
-		}
-		parts := strings.Split(line, " ")
-		if len(parts) == 0 {
-			continue
-		}
-		id, err := strconv.Atoi(parts[0][1:])
-		uid := uint32(id)
-		if err == nil && uid > QuotaMinID {
-			quota.quotaIDs[uid] = 1
-			if uid > minID {
-				minID = uid
-			}
-		}
-	}
-	logrus.Infof("Load repquota ids: %d, list: %v", len(quota.quotaIDs), quota.quotaIDs)
-	return minID, nil
-}
-
-// GetNextQuatoID returns the next available quota id.
-func (quota *PrjQuota) GetNextQuatoID() (uint32, error) {
+// GetNextQuotaID returns the next available quota id.
+func (quota *PrjQuotaDriver) GetNextQuotaID() (uint32, error) {
 	quota.lock.Lock()
 	defer quota.lock.Unlock()
 
-	if quota.quotaLastID == 0 {
+	if quota.lastID == 0 {
 		var err error
-		quota.quotaLastID, err = quota.loadQuotaIds()
+		quota.quotaIDs, quota.lastID, err = loadQuotaIDs("-Pan")
 		if err != nil {
 			return 0, err
 		}
 	}
-	id := quota.quotaLastID
+	id := quota.lastID
 	for {
 		if id < QuotaMinID {
 			id = QuotaMinID
@@ -284,24 +280,25 @@ func (quota *PrjQuota) GetNextQuatoID() (uint32, error) {
 			break
 		}
 	}
-	quota.quotaIDs[id] = 1
-	quota.quotaLastID = id
+	quota.quotaIDs[id] = struct{}{}
+	quota.lastID = id
 
 	logrus.Debugf("get next project quota id: %d", id)
 	return id, nil
 }
 
-func (quota *PrjQuota) setDevLimit(dir string, devID uint64) (uint64, error) {
+// setDevLimit sets device storage upper limit in quota driver according to inpur dir.
+func (quota *PrjQuotaDriver) setDevLimit(dir string, devID uint64) (uint64, error) {
 	if limit, exist := quota.devLimits[devID]; exist {
 		return limit, nil
 	}
 
+	// get storage upper limit of the device which the dir is on.
 	var stfs syscall.Statfs_t
 	if err := syscall.Statfs(dir, &stfs); err != nil {
 		logrus.Errorf("fail to get path %s limit: %v", dir, err)
 		return 0, err
 	}
-
 	limit := stfs.Blocks * uint64(stfs.Bsize)
 
 	quota.lock.Lock()
@@ -312,24 +309,26 @@ func (quota *PrjQuota) setDevLimit(dir string, devID uint64) (uint64, error) {
 	return limit, nil
 }
 
-func (quota *PrjQuota) checkDevLimit(dir string, size uint64) error {
-	devID, err := GetDevID(dir)
+// checkDevLimit checks if the device on which the input dir lies has already been recorded in driver.
+func (quota *PrjQuotaDriver) checkDevLimit(dir string, size uint64) error {
+	devID, err := system.GetDevID(dir)
 	if err != nil {
 		return err
 	}
 
 	limit, exist := quota.devLimits[devID]
 	if !exist {
+		// if has not recorded, just add (dir, device, limit) to driver.
 		if limit, err = quota.setDevLimit(dir, devID); err != nil {
 			return err
 		}
 	}
 
 	if limit < size {
-		return fmt.Errorf("dir %s quota limit should < %v, use exceed limit %v", dir, limit, size)
+		return fmt.Errorf("dir %s quota limit %v must be less than %v", dir, size, limit)
 	}
 
-	logrus.Debugf("checkDevLimit dir %s quota limit %v B, size %v B", dir, limit, size)
+	logrus.Debugf("succeeded in checkDevLimit (dir %s quota limit %v B) with size %v B", dir, limit, size)
 
 	return nil
 }
