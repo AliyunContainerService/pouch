@@ -316,11 +316,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		HostConfig: config.HostConfig,
 	}
 
-	// validate log config
-	if err := mgr.validateLogConfig(container); err != nil {
-		return nil, err
-	}
-
 	// parse volume config
 	if err := mgr.generateMountPoints(ctx, container); err != nil {
 		return nil, errors.Wrap(err, "failed to parse volume argument")
@@ -378,7 +373,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	amendContainerSettings(&config.ContainerConfig, config.HostConfig)
 
 	// validate container Config
-	warnings, err := validateConfig(&config.ContainerConfig, config.HostConfig, false)
+	warnings, err := mgr.validateConfig(container, false)
 	if err != nil {
 		return nil, err
 	}
