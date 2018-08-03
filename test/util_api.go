@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,26 +20,33 @@ import (
 // CheckRespStatus checks the http.Response.Status is equal to status.
 func CheckRespStatus(c *check.C, resp *http.Response, status int) {
 	if resp.StatusCode != status {
-		got := types.Error{}
-		_ = request.DecodeBody(&got, resp.Body)
-		c.Assert(resp.StatusCode, check.Equals, status, check.Commentf("Error:%s", got.Message))
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, check.IsNil)
+		c.Assert(resp.StatusCode, check.Equals, status, check.Commentf("Response Body: %v", string(body)))
 	}
 }
 
-// CreateBusyboxContainerOk creates a busybox container and asserts success.
-func CreateBusyboxContainerOk(c *check.C, cname string, cmd ...string) {
-	// If not specified, CMD executed in container is "top".
+// CreateBusyboxContainerOk creates a busybox container with cmd and asserts OK.
+//
+// NOTE: If not specified, CMD executed in container is "top".
+func CreateBusyboxContainerOk(c *check.C, cname string, cmd ...string) string {
 	if len(cmd) == 0 {
 		cmd = []string{"top"}
 	}
 
-	resp, err := CreateBusyboxContainer(c, cname, cmd...)
+	resp, err := CreateBusyboxContainer(cname, cmd...)
 	c.Assert(err, check.IsNil)
+
+	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 201)
+
+	got := types.ContainerCreateResp{}
+	c.Assert(json.NewDecoder(resp.Body).Decode(&got), check.IsNil)
+	return got.ID
 }
 
-// CreateBusyboxContainer creates a basic container using busybox image.
-func CreateBusyboxContainer(c *check.C, cname string, cmd ...string) (*http.Response, error) {
+// CreateBusyboxContainer creates busybox with cmd.
+func CreateBusyboxContainer(cname string, cmd ...string) (*http.Response, error) {
 	q := url.Values{}
 	q.Add("name", cname)
 
@@ -56,133 +64,113 @@ func CreateBusyboxContainer(c *check.C, cname string, cmd ...string) (*http.Resp
 
 // StartContainerOk starts the container and asserts success.
 func StartContainerOk(c *check.C, cname string) {
-	resp, err := StartContainer(c, cname)
+	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
 
+	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 204)
 }
 
-// StartContainer starts the container.
-func StartContainer(c *check.C, cname string) (*http.Response, error) {
-	return request.Post("/containers/" + cname + "/start")
+// StopContainerOk stops the container and asserts success..
+func StopContainerOk(c *check.C, cname string) {
+	resp, err := request.Post("/containers/" + cname + "/stop")
+	c.Assert(err, check.IsNil)
+
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 204)
+}
+
+// CheckContainerStatus asserts the container status.
+func CheckContainerStatus(c *check.C, cname string, state string) {
+	resp, err := request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+	defer resp.Body.Close()
+	c.Assert(string(got.State.Status), check.Equals, state)
 }
 
 // DelContainerForceOk forcely deletes the container and asserts success.
 func DelContainerForceOk(c *check.C, cname string) {
-	resp, err := DelContainerForce(c, cname)
+	resp, err := delContainerForce(cname)
 	c.Assert(err, check.IsNil)
 
+	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 204)
 }
 
-// DelContainerForce forcely deletes the container.
-func DelContainerForce(c *check.C, cname string) (*http.Response, error) {
+func delContainerForce(cname string) (*http.Response, error) {
 	q := url.Values{}
 	q.Add("force", "true")
 	q.Add("v", "true")
+
 	return request.Delete("/containers/"+cname, request.WithQuery(q))
+}
+
+// PauseContainerOk pauses the container and asserts success..
+func PauseContainerOk(c *check.C, cname string) {
+	resp, err := request.Post("/containers/" + cname + "/pause")
+	c.Assert(err, check.IsNil)
+
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 204)
+}
+
+// UnpauseContainerOk unpauses the container and asserts success..
+func UnpauseContainerOk(c *check.C, cname string) {
+	resp, err := request.Post("/containers/" + cname + "/unpause")
+	c.Assert(err, check.IsNil)
+
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 204)
 }
 
 // DelContainerForceMultyTime forcely deletes the container multy times.
 func DelContainerForceMultyTime(c *check.C, cname string) {
-	done := make(chan bool, 1)
+	timeout := 1 * time.Minute
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(3 * time.Second)
-		timeout <- true
-	}()
-
 	for {
 		select {
-		case <-done:
-			return
-		case <-timeout:
+		case <-timer.C:
+			c.Logf("failed to force remove container(%s) in (%s), maybe impact other cases", cname, timeout)
 			return
 		case <-ticker.C:
-			resp, _ := DelContainerForce(c, cname)
-			if resp.StatusCode == 204 {
-				done <- true
+			resp, _ := delContainerForce(cname)
+			if resp != nil {
+				resp.Body.Close()
+
+				if resp.StatusCode == 204 || resp.StatusCode == 404 {
+					return
+				}
 			}
 		}
 	}
 }
 
-// StopContainerOk stops the container and asserts success..
-func StopContainerOk(c *check.C, cname string) {
-	resp, err := StopContainer(c, cname)
+// DelImageForceOk forcely deletes the image and asserts success.
+func DelImageForceOk(c *check.C, iname string) {
+	q := url.Values{}
+	q.Add("force", "true")
+
+	resp, err := request.Delete("/images/"+iname, request.WithQuery(q))
 	c.Assert(err, check.IsNil)
-
-	CheckRespStatus(c, resp, 204)
-}
-
-// StopContainer stops the container.
-func StopContainer(c *check.C, cname string) (*http.Response, error) {
-	return request.Post("/containers/" + cname + "/stop")
-}
-
-// PauseContainerOk pauses the container and asserts success..
-func PauseContainerOk(c *check.C, cname string) {
-	resp, err := PauseContainer(c, cname)
-	c.Assert(err, check.IsNil)
-
-	CheckRespStatus(c, resp, 204)
-}
-
-// PauseContainer pauses the container.
-func PauseContainer(c *check.C, cname string) (*http.Response, error) {
-	return request.Post("/containers/" + cname + "/pause")
-}
-
-// UnpauseContainerOk unpauses the container and asserts success..
-func UnpauseContainerOk(c *check.C, cname string) {
-	resp, err := UnpauseContainer(c, cname)
-	c.Assert(err, check.IsNil)
-
-	CheckRespStatus(c, resp, 204)
-}
-
-// UnpauseContainer unpauses the container.
-func UnpauseContainer(c *check.C, cname string) (*http.Response, error) {
-	return request.Post("/containers/" + cname + "/unpause")
-}
-
-// IsContainerCreated returns true is container's state is created.
-func IsContainerCreated(c *check.C, cname string) (bool, error) {
-	return isContainerStateEqual(c, cname, "created")
-}
-
-// IsContainerRunning returns true is container's state is running.
-func IsContainerRunning(c *check.C, cname string) (bool, error) {
-	return isContainerStateEqual(c, cname, "running")
-}
-
-func isContainerStateEqual(c *check.C, cname string, status string) (bool, error) {
-	resp, err := request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
 
 	defer resp.Body.Close()
-	got := types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-
-	if got.State == nil {
-		return false, nil
-	}
-
-	return string(got.State.Status) == status, nil
+	CheckRespStatus(c, resp, 204)
 }
 
 // CreateExecEchoOk exec process's environment with "echo" CMD.
-func CreateExecEchoOk(c *check.C, cname string) string {
-	// NOTICE:
-	// All files in the obj is needed, or start a new process may hang.
+func CreateExecEchoOk(c *check.C, cname string, echo string) string {
 	obj := map[string]interface{}{
-		"Cmd":          []string{"echo", "test"},
+		"Cmd":          []string{"echo", echo},
 		"Detach":       true,
 		"AttachStderr": true,
 		"AttachStdout": true,
@@ -190,14 +178,15 @@ func CreateExecEchoOk(c *check.C, cname string) string {
 		"Privileged":   false,
 		"User":         "",
 	}
-	body := request.WithJSONBody(obj)
 
+	body := request.WithJSONBody(obj)
 	resp, err := request.Post("/containers/"+cname+"/exec", body)
+
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 201)
 
 	var got types.ExecCreateResp
-	request.DecodeBody(&got, resp.Body)
+	c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
 	return got.ID
 }
 
@@ -214,8 +203,8 @@ func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http
 		request.WithJSONBody(obj))
 }
 
-// CreateVolume creates a volume in pouchd.
-func CreateVolume(c *check.C, name, driver string, options map[string]string) error {
+// CreateVolumeOK creates a volume in pouchd.
+func CreateVolumeOK(c *check.C, name, driver string, options map[string]string) {
 	obj := map[string]interface{}{
 		"Driver":     driver,
 		"Name":       name,
@@ -225,37 +214,29 @@ func CreateVolume(c *check.C, name, driver string, options map[string]string) er
 	body := request.WithJSONBody(obj)
 
 	resp, err := request.Post(path, body)
-	defer resp.Body.Close()
-
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
 
-	return err
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 201)
 }
 
-// RemoveVolume removes a volume in pouchd.
-func RemoveVolume(c *check.C, name string) error {
+// RemoveVolumeOK removes a volume in pouchd.
+func RemoveVolumeOK(c *check.C, name string) {
 	path := "/volumes/" + name
 	resp, err := request.Delete(path)
-	defer resp.Body.Close()
-
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
 
-	return err
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 204)
 }
 
 // DelNetworkOk deletes the network and asserts success.
 func DelNetworkOk(c *check.C, cname string) {
-	resp, err := DelNetwork(c, cname)
+	resp, err := request.Delete("/networks/" + cname)
 	c.Assert(err, check.IsNil)
 
+	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 204)
-}
-
-// DelNetwork  deletes the network.
-func DelNetwork(c *check.C, cname string) (*http.Response, error) {
-	return request.Delete("/networks/" + cname)
 }
 
 // PullImage pull image if it doesn't exist, image format should be repo:tag.
@@ -272,13 +253,13 @@ func PullImage(c *check.C, image string) {
 	q.Add("fromImage", image)
 	resp, err = request.Post("/images/create", request.WithQuery(q))
 	c.Assert(err, check.IsNil)
-	c.Assert(resp.StatusCode, check.Equals, 200)
 
 	defer resp.Body.Close()
-	c.Assert(fetchPullStatus(resp.Body), check.IsNil)
+	c.Assert(resp.StatusCode, check.Equals, 200)
+	c.Assert(discardPullStatus(resp.Body), check.IsNil)
 }
 
-func fetchPullStatus(r io.ReadCloser) error {
+func discardPullStatus(r io.ReadCloser) error {
 	dec := json.NewDecoder(r)
 	for {
 		var msg jsonstream.JSONMessage
@@ -287,6 +268,10 @@ func fetchPullStatus(r io.ReadCloser) error {
 				break
 			}
 			return err
+		}
+
+		if msg.Error != nil {
+			return msg.Error
 		}
 	}
 	return nil

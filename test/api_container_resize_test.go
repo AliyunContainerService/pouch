@@ -28,21 +28,18 @@ func (suite *APIContainerResizeSuite) TestContainerResizeOk(c *check.C) {
 	cname := "TestContainerResizeOk"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
-	resp, err := request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	StartContainerOk(c, cname)
 
 	q := url.Values{}
 	q.Add("h", "10")
 	q.Add("w", "10")
 	query := request.WithQuery(q)
 
-	resp, err = request.Post("/containers/"+cname+"/resize", query)
+	resp, err := request.Post("/containers/"+cname+"/resize", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
 // TestContainerResizeWithInvalidSize is to verify resize container with invalid size.
@@ -50,28 +47,26 @@ func (suite *APIContainerResizeSuite) TestContainerResizeWithInvalidSize(c *chec
 	cname := "TestContainerResizeWithInvalidSize"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
-	resp, err := request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	StartContainerOk(c, cname)
 
 	q := url.Values{}
 	q.Add("h", "hi")
 	q.Add("w", "wo")
 	query := request.WithQuery(q)
 
-	resp, err = request.Post("/containers/"+cname+"/resize", query)
+	resp, err := request.Post("/containers/"+cname+"/resize", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 400)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
-// TestResizeStoppedContainer is to verify resize a stopped container.
-func (suite *APIContainerResizeSuite) TestResizeStoppedContainer(c *check.C) {
-	cname := "TestResizeStoppedContainer"
+// TestResizeCreatedContainer is to verify resize a created container.
+func (suite *APIContainerResizeSuite) TestResizeCreatedContainer(c *check.C) {
+	cname := "TestResizeCreatedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
 	q := url.Values{}
 	q.Add("h", "10")
@@ -81,6 +76,24 @@ func (suite *APIContainerResizeSuite) TestResizeStoppedContainer(c *check.C) {
 	resp, err := request.Post("/containers/"+cname+"/resize", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
+}
 
-	DelContainerForceMultyTime(c, cname)
+// TestResizeStoppedContainer is to verify resize a stoped container.
+func (suite *APIContainerResizeSuite) TestResizeStoppedContainer(c *check.C) {
+	cname := "TestResizeStoppedContainer"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
+	StartContainerOk(c, cname)
+	StopContainerOk(c, cname)
+
+	q := url.Values{}
+	q.Add("h", "10")
+	q.Add("w", "10")
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/containers/"+cname+"/resize", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 500)
 }

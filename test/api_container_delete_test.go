@@ -17,6 +17,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerDeleteSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -26,42 +27,32 @@ func (suite *APIContainerDeleteSuite) TestDeleteNonExisting(c *check.C) {
 
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
-
 	CheckRespStatus(c, resp, 404)
 }
 
-// TestDeleteRunningCon test deleting running container return 500.
+// TestDeleteRunningCon test deleting running container, should return 500.
 func (suite *APIContainerDeleteSuite) TestDeleteRunningCon(c *check.C) {
-	cname := "TestDeleteRunningCon"
+	cname := "TestDeleteRunningContainer"
 
 	CreateBusyboxContainerOk(c, cname)
-
 	StartContainerOk(c, cname)
 
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
-
 	CheckRespStatus(c, resp, 500)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
-// TestDeletePausedCon test deleting paused container return 500.
+// TestDeletePausedCon test deleting paused container, should return 500.
 func (suite *APIContainerDeleteSuite) TestDeletePausedCon(c *check.C) {
-	cname := "TestDeletePausedCon"
+	cname := "TestDeletePausedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
-
 	StartContainerOk(c, cname)
-
 	PauseContainerOk(c, cname)
 
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
-
 	CheckRespStatus(c, resp, 500)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
 // TestDeleteStoppedCon test deleting stopped container return 204.
@@ -69,14 +60,11 @@ func (suite *APIContainerDeleteSuite) TestDeleteStoppedCon(c *check.C) {
 	cname := "TestDeleteStoppedCon"
 
 	CreateBusyboxContainerOk(c, cname)
-
 	StartContainerOk(c, cname)
-
 	StopContainerOk(c, cname)
 
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
-
 	CheckRespStatus(c, resp, 204)
 }
 
@@ -88,6 +76,5 @@ func (suite *APIContainerDeleteSuite) TestDeleteCreatedCon(c *check.C) {
 
 	resp, err := request.Delete("/containers/" + cname)
 	c.Assert(err, check.IsNil)
-
 	CheckRespStatus(c, resp, 204)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -18,6 +17,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerPauseSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -26,42 +26,21 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	// must required
 	cname := "TestPauseUnpauseOk"
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
 	StartContainerOk(c, cname)
 
+	// pause it
 	resp, err := request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
+	CheckContainerStatus(c, cname, "paused")
 
-	// add state check
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	got := types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
-
-	c.Assert(string(got.State.Status), check.Equals, "paused")
-
+	// unpause it
 	resp, err = request.Post("/containers/" + cname + "/unpause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
-
-	// add state check
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	got = types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	defer resp.Body.Close()
-
-	c.Assert(string(got.State.Status), check.Equals, "running")
-
-	DelContainerForceMultyTime(c, cname)
+	CheckContainerStatus(c, cname, "running")
 }
 
 // TestNonExistingContainer tests pause a non-existing container return 404.
@@ -76,30 +55,36 @@ func (suite *APIContainerPauseSuite) TestNonExistingContainer(c *check.C) {
 func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	cname := "TestNotRunningContainer"
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
+	// pause it
 	resp, err := request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
+	// start it
 	StartContainerOk(c, cname)
 
+	// pause it
 	resp, err = request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
+	// should not pause twice
 	resp, err = request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
 
+	// unpause it
 	resp, err = request.Post("/containers/" + cname + "/unpause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
+	// stop it
 	StopContainerOk(c, cname)
 
+	// pause it
 	resp, err = request.Post("/containers/" + cname + "/pause")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 500)
-
-	DelContainerForceMultyTime(c, cname)
 }
