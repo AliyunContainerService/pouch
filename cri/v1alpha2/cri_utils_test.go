@@ -683,12 +683,33 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+		want apitypes.HostConfig
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{Network: runtime.NamespaceMode_NODE, Pid: runtime.NamespaceMode_NODE},
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "host", IpcMode: "container:fakeSandBoxID", NetworkMode: "host"},
+		},
+		{
+			name: "nil test",
+			args: args{
+				nsOpts:       nil,
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "container:fakeSandBoxID", IpcMode: "container:fakeSandBoxID", NetworkMode: "container:fakeSandBoxID"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
+			if !reflect.DeepEqual(*tt.args.hostConfig, tt.want) {
+				t.Errorf("modifyContainerNamespaceOptions() = %v, want %v", *tt.args.hostConfig, tt.want)
+			}
 		})
 	}
 }
@@ -1173,6 +1194,135 @@ func Test_parseVolumesFromPouch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseVolumesFromPouch(tt.args.containerVolumes); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseVolumesFromPouch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_generateMountBindings(t *testing.T) {
+	type args struct {
+		mounts []*runtime.Mount
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "propagation_private test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       true,
+						SelinuxRelabel: true,
+						Propagation:    runtime.MountPropagation_PROPAGATION_PRIVATE,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:ro,Z"},
+		},
+		{
+			name: "propagation_bidirectinal test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       true,
+						SelinuxRelabel: false,
+						Propagation:    runtime.MountPropagation_PROPAGATION_BIDIRECTIONAL,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:ro,rshared"},
+		},
+		{
+			name: "propagation_host_to_container test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       false,
+						SelinuxRelabel: true,
+						Propagation:    runtime.MountPropagation_PROPAGATION_HOST_TO_CONTAINER,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:Z,rslave"},
+		},
+		{
+			name: "no_attrs test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       false,
+						SelinuxRelabel: false,
+					},
+				},
+			},
+			want: []string{"host_path:container_path"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateMountBindings(tt.args.mounts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateMountBindings() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifySandboxNamespaceOptions(t *testing.T) {
+	type args struct {
+		nsOpts     *runtime.NamespaceOption
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want *apitypes.HostConfig
+	}{
+		{
+			name: "nil test",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{},
+				hostConfig: &apitypes.HostConfig{
+					IpcMode:     namespaceModeHost,
+					PidMode:     namespaceModeHost,
+					NetworkMode: namespaceModeHost,
+				},
+			},
+			want: &apitypes.HostConfig{
+				IpcMode:     namespaceModeHost,
+				PidMode:     namespaceModeHost,
+				NetworkMode: namespaceModeHost,
+			},
+		},
+		{
+			name: "normal test",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					Ipc: runtime.NamespaceMode_NODE,
+					Pid: runtime.NamespaceMode_NODE,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			want: &apitypes.HostConfig{
+				IpcMode: namespaceModeHost,
+				PidMode: namespaceModeHost,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifySandboxNamespaceOptions(tt.args.nsOpts, tt.args.hostConfig)
+			if !reflect.DeepEqual(tt.args.hostConfig, tt.want) {
+				t.Errorf("modifySandboxNamespaceOptions() = %v, want %v", tt.args.hostConfig, tt.want)
 			}
 		})
 	}
