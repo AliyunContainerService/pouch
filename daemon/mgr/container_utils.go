@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -244,7 +245,19 @@ func validateConfig(config *types.ContainerConfig, hostConfig *types.HostConfig,
 		return warnings, fmt.Errorf("shm-size %d should greater than 0", *hostConfig.ShmSize)
 	}
 
-	// TODO: add more validate here
+	// validate if weight blkio device is cfq io scheduler
+	if len(hostConfig.Resources.BlkioWeightDevice) > 0 {
+		dev := []string{}
+		for _, d := range hostConfig.Resources.BlkioWeightDevice {
+			dev = append(dev, d.Path)
+		}
+		if !isCFQScheduler(dev) {
+			logrus.Warn(CFQWarn)
+			warnings = append(warnings, CFQWarn)
+			hostConfig.Resources.BlkioWeightDevice = []*types.WeightDevice{}
+		}
+	}
+
 	return warnings, nil
 }
 
@@ -386,4 +399,21 @@ func amendContainerSettings(config *types.ContainerConfig, hostConfig *types.Hos
 	if r.Memory > 0 && r.MemorySwap == 0 {
 		r.MemorySwap = 2 * r.Memory
 	}
+}
+
+// isCFQScheduler checks if dev slice is all cfq io scheduler
+func isCFQScheduler(dev []string) bool {
+	for _, d := range dev {
+		index := strings.LastIndex(d, "/")
+		raw, err := ioutil.ReadFile(fmt.Sprintf("/sys/block/%s/queue/scheduler", d[index+1:]))
+		if err != nil {
+			// continue if file can not open
+			continue
+		}
+		if !strings.Contains(string(raw), "[cfq]") {
+			return false
+		}
+	}
+
+	return true
 }

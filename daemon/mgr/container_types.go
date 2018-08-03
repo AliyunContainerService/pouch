@@ -76,6 +76,9 @@ var (
 
 	// PidsLimitWarn is warning for flag --pids-limit
 	PidsLimitWarn = "Current Kernel does not support pids cgroup, discard --pids-limit"
+
+	// CFQWarn is warning for flag --blkio-weight-device
+	CFQWarn = "Weight Device need CFQ IO Scheduler support, discard --blkio-weight-device"
 )
 
 const (
