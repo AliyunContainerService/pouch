@@ -53,6 +53,7 @@ func (s *streamRuntime) Exec(ctx context.Context, containerID string, cmd []stri
 	}
 
 	attachConfig := &mgr.AttachConfig{
+		Stdin:       streamOpts.Stdin,
 		Streams:     streams,
 		MuxDisabled: true,
 	}
