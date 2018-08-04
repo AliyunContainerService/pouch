@@ -1,0 +1,1620 @@
+#!/usr/bin/env bash
+
+# The contained completion function provide support for :
+#  *) pouch/pouchd commands and options
+#
+# To enable the completion function:
+#  1) copy this file to somewhere, like ~/pouch
+#  2) source the file make it take effect
+
+__pouch_previous_extglob_setting=$(shopt -p extglob)
+shopt -s extglob
+
+# __pouch_exe execute a pouch command and returns the data.
+__pouch_exe() {
+    pouch 2>/dev/null "$@"
+}
+
+# __pouch_containers returns a list of containers.
+# TODO need to support different format for acquire container data.
+__pouch_containers() {
+    __pouch_exe ps "$@"
+}
+
+__pouch_complete_containers() {
+    COMPREPLY=( $(compgen -W "$(__pouch_containers "$@")" -- "$current") )
+}
+
+__pouch_complete_containers_all() {
+    __pouch_complete_containers "$@" --all
+}
+
+# shellcheck disable=SC2120
+__pouch_complete_containers_removable() {
+    __pouch_complete_containers "$@" --filter status=created --filter status=exited
+}
+
+__pouch_complete_containers_running() {
+    __pouch_complete_containers "$@" --filter status=running
+}
+
+# shellcheck disable=SC2120
+__pouch_complete_containers_stopped() {
+    __pouch_complete_containers "$@" --filter status=exited --filter status=stopped
+}
+
+# shellcheck disable=SC2120
+__pouch_complete_containers_unpauseable() {
+    __pouch_complete_containers "$@" --filter status=paused
+}
+
+__pouch_complete_container_names() {
+    local containers=( $(__pouch_exe ps -aq --no-trunc) )
+    local names=( $(__pouch_exe inspect --format '{{.Name}}' "${containers[@]}") )
+    names=( "${names[@]#/}" ) # trim off the leading "/" from the container names
+    COMPREPLY=( $(compgen -W "${names[*]}" -- "$cur") )
+}
+
+__pouch_complete_container_ids() {
+    local containers=( $(__pouch_exe ps -aq) )
+    COMPREPLY=( $(compgen -W "${containers[*]}" -- "$cur") )
+}
+
+# __pouch_images returns a list of images.
+# TODO filter function need for pouch images, then we can do image completion.
+__pouch_images() {
+    return 0
+}
+
+# TODO __pouch_complete_images completion images.
+__pouch_complete_images() {
+    COMPREPLY=( $(compgen -W "$(__pouch_images "$@")" -- "$current") )
+    __ltrim_colon_completions "$current"
+}
+
+# __pouch_networks returns a list of all networks.
+__pouch_networks() {
+    local format
+    if [ "$1" = "--id" ] ; then
+        format='{{.ID}}'
+        shift
+    elif [ "$1" = "--name" ] ; then
+        format='{{.Name}}'
+        shift
+    else
+        format='{{.Name}}'
+    fi
+    __pouch_exe network ls --format "$format" "$@"
+}
+
+# TODO __pouch_complete_networks complete container networks.
+__pouch_complete_networks() {
+    COMPREPLY=( $(compgen -W "$(__pouch_networks "$@")" -- "$current") )
+}
+
+__pouch_volumes() {
+    __pouch_exe volume ls -q "$@"
+}
+
+# TODO __pouch_complete_volumes completes container volumes.
+__pouch_complete_volumes() {
+    COMPREPLY=( $(compgen -W "$(__pouch_volumes "$@")" -- "$current") )
+}
+
+
+__pouch_runtimes() {
+    __pouch_exe info | sed -n 's/^Runtimes: \(.*\)/\1/p'
+}
+
+__pouch_complete_runtimes() {
+    COMPREPLY=( $(compgen -W "$(__pouch_runtimes)" -- "$cur") )
+}
+
+# __pouch_append_to_completions appends the word passed as an argument to every
+# word in `$COMPREPLY`.
+# Normally you do this with `compgen -S` while generating the completions.
+# This function allows you to append a suffix later. It allows you to use
+# the __pouch_complete_XXX functions in cases where you need a suffix.
+__pouch_append_to_completions() {
+    COMPREPLY=( ${COMPREPLY[@]/%/"$1"} )
+}
+
+# __pouch_pos_first_nonflag finds the position of the first word that is neither
+# option nor an option's argument. If there are options that require arguments,
+# you should pass a glob describing those options, e.g. "--option1|-o|--option2"
+# Use this function to restrict completions to exact positions after the argument list.
+__pouch_pos_first_nonflag() {
+    local argument_flags=$1
+
+    local counter=$((${subcommand_pos:-${command_pos}} + 1))
+    while [ "$counter" -le "$cword" ]; do
+        if [ -n "$argument_flags" ] && eval "case '${words[$counter]}' in $argument_flags) true ;; *) false ;; esac"; then
+            (( counter++ ))
+            # eat "=" in case of --option=arg syntax
+            [ "${words[$counter]}" = "=" ] && (( counter++ ))
+        else
+            case "${words[$counter]}" in
+                -*)
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        fi
+
+        # Bash splits words at "=", retaining "=" as a word, examples:
+        # "--debug=false" => 3 words, "--log-opt syslog-facility=daemon" => 4 words
+        while [ "${words[$counter + 1]}" = "=" ] ; do
+            counter=$(( counter + 2))
+        done
+
+        (( counter++ ))
+    done
+
+    echo $counter
+}
+
+# __pouch_map_key_of_current_option returns `key` if we are currently completing the
+# value of a map option (`key=value`) which matches the extglob given as an argument.
+# This function is needed for key-specific completions.
+__pouch_map_key_of_current_option() {
+    local glob="$1"
+
+    local key glob_pos
+    if [ "$cur" = "=" ] ; then        # key= case
+        key="$prev"
+        glob_pos=$((cword - 2))
+    elif [[ $cur == *=* ]] ; then     # key=value case (OSX)
+        key=${cur%=*}
+        glob_pos=$((cword - 1))
+    elif [ "$prev" = "=" ] ; then
+        key=${words[$cword - 2]}  # key=value case
+        glob_pos=$((cword - 3))
+    else
+        return
+    fi
+
+    [ "${words[$glob_pos]}" = "=" ] && ((glob_pos--))  # --option=key=value syntax
+
+    [[ ${words[$glob_pos]} == @($glob) ]] && echo "$key"
+}
+
+# __pouch_value_of_option returns the value of the first option matching `option_glob`.
+# Valid values for `option_glob` are option names like `--log-level` and globs like
+# `--log-level|-l`
+# Only positions between the command and the current word are considered.
+__pouch_value_of_option() {
+    local option_extglob=$(__pouch_to_extglob "$1")
+
+    local counter=$((command_pos + 1))
+    while [ "$counter" -lt "$cword" ]; do
+        case ${words[$counter]} in
+            $option_extglob )
+                echo "${words[$counter + 1]}"
+                break
+                ;;
+        esac
+        (( counter++ ))
+    done
+}
+
+# __pouch_to_alternatives transforms a multiline list of strings into a single line
+# string with the words separated by `|`.
+# This is used to prepare arguments to __pouch_pos_first_nonflag().
+__pouch_to_alternatives() {
+    local parts=( $1 )
+    local IFS='|'
+    echo "${parts[*]}"
+}
+
+# __pouch_to_extglob transforms a multiline list of options into an extglob pattern
+# suitable for use in case statements.
+__pouch_to_extglob() {
+    local extglob=$( __pouch_to_alternatives "$1" )
+    echo "@($extglob)"
+}
+
+# __pouch_subcommands processes subcommands
+# Locates the first occurrence of any of the subcommands contained in the
+# first argument. In case of a match, calls the corresponding completion
+# function and returns 0.
+# If no match is found, 1 is returned. The calling function can then
+# continue processing its completion.
+#
+# TODO if the preceding command has options that accept arguments and an
+# argument is equal ot one of the subcommands, this is falsely detected as
+# a match.
+__pouch_subcommands() {
+    local subcommands="$1"
+
+    local counter=$((command_pos + 1))
+    while [ "$counter" -lt "$cword" ]; do
+        case "${words[$counter]}" in
+            $(__pouch_to_extglob "$subcommands") )
+                subcommand_pos=$counter
+                local subcommand=${words[$counter]}
+                local completions_func=_pouch_${command}_${subcommand//-/_}
+                declare -F "$completions_func" >/dev/null && "$completions_func"
+                return 0
+                ;;
+        esac
+        (( counter++ ))
+    done
+    return 1
+}
+
+# __pouch_nospace suppresses trailing whitespace
+__pouch_nospace() {
+    # compopt is not available in ancient bash versions
+    type compopt &>/dev/null && compopt -o nospace
+}
+
+__pouch_complete_resolved_hostname() {
+    command -v host >/dev/null 2>&1 || return
+    COMPREPLY=( $(host 2>/dev/null "${cur%:}" | awk '/has address/ {print $4}') )
+}
+
+# __pouch_complete_capabilities_addable completes Linux capabilities which are
+# not granted by default and may be added.
+__pouch_complete_capabilities_addable() {
+    COMPREPLY=( $( compgen -W "
+        ALL
+        AUDIT_CONTROL
+        BLOCK_SUSPEND
+        DAC_READ_SEARCH
+        IPC_LOCK
+        IPC_OWNER
+        LEASE
+        LINUX_IMMUTABLE
+        MAC_ADMIN
+        MAC_OVERRIDE
+        NET_ADMIN
+        NET_BROADCAST
+        SYS_ADMIN
+        SYS_BOOT
+        SYSLOG
+        SYS_MODULE
+        SYS_NICE
+        SYS_PACCT
+        SYS_PTRACE
+        SYS_RAWIO
+        SYS_RESOURCE
+        SYS_TIME
+        SYS_TTY_CONFIG
+        WAKE_ALARM
+    " -- "$cur" ) )
+}
+
+# __pouch_complete_capabilities_droppable completes Linux capability options which are
+# allowed by default and can be dropped.
+__pouch_complete_capabilities_droppable() {
+    COMPREPLY=( $( compgen -W "
+        ALL
+        AUDIT_WRITE
+        CHOWN
+        DAC_OVERRIDE
+        FOWNER
+        FSETID
+        KILL
+        MKNOD
+        NET_BIND_SERVICE
+        NET_RAW
+        SETFCAP
+        SETGID
+        SETPCAP
+        SETUID
+        SYS_CHROOT
+    " -- "$cur" ) )
+}
+
+__pouch_complete_detach_keys() {
+    case "$prev" in
+        --detach-keys)
+            case "$cur" in
+                *,)
+                    COMPREPLY=( $( compgen -W "${cur}ctrl-" -- "$cur" ) )
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "ctrl-" -- "$cur" ) )
+                    ;;
+            esac
+
+            __pouch_nospace
+            return
+            ;;
+    esac
+    return 1
+}
+
+__pouch_complete_log_drivers() {
+    COMPREPLY=( $( compgen -W "
+        json-file
+        syslog
+    " -- "$cur" ) )
+}
+
+# TODO add log options completion
+__pouch_complete_log_options() {
+    return 0
+}
+
+# TODO add log driver options completion
+__pouch_complete_log_driver_options() {
+    return 0
+}
+
+__pouch_complete_log_levels() {
+    COMPREPLY=( $( compgen -W "debug info warn error fatal" -- "$cur" ) )
+}
+
+__pouch_complete_restart() {
+    case "$prev" in
+        --restart)
+            case "$cur" in
+                on-failure:*)
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "always no on-failure on-failure: unless-stopped" -- "$cur") )
+                    ;;
+            esac
+            return
+            ;;
+    esac
+    return 1
+}
+
+# __pouch_complete_signals returns a subset of the available signals that is most likely
+# relevant in the context of pouch containers
+__pouch_complete_signals() {
+    local signals=(
+        SIGCONT
+        SIGHUP
+        SIGINT
+        SIGKILL
+        SIGQUIT
+        SIGSTOP
+        SIGTERM
+        SIGUSR1
+        SIGUSR2
+    )
+    COMPREPLY=( $( compgen -W "${signals[*]} ${signals[*]#SIG}" -- "$( echo "$cur" | tr '[:lower:]' '[:upper:]')" ) )
+}
+
+__pouch_complete_user_group() {
+    if [[ $cur == *:* ]] ; then
+        COMPREPLY=( $(compgen -g -- "${cur#*:}") )
+    else
+        COMPREPLY=( $(compgen -u -S : -- "$cur") )
+        __pouch_nospace
+    fi
+}
+
+_pouch_pouch() {
+    # global options that may appear after the pouch command
+    local options="
+        $global_options
+        --help -h
+        --version -v
+    "
+
+    case "$prev" in
+        --config)
+            _filedir -d
+            return
+            ;;
+        --log-level|-l)
+            __pouch_complete_log_levels
+            return
+            ;;
+        $(__pouch_to_extglob "$global_options") )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "$options" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$( __pouch_pos_first_nonflag "$(__pouch_to_extglob "$global_options")" )
+            if [ "$cword" -eq "$counter" ]; then
+                COMPREPLY=( $( compgen -W "${commands[*]} help" -- "$cur" ) )
+            fi
+            ;;
+    esac
+}
+
+_pouch_checkpoint() {
+    local subcommands="
+        create
+        ls
+        rm
+    "
+    local aliases="
+        list
+        remove
+    "
+    __pouch_subcommands "$subcommands $aliases" && return
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_checkpoint_create() {
+    case "$prev" in
+        --checkpoint-dir)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --exit" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag '--checkpoint-dir')
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_running
+            fi
+            ;;
+    esac
+}
+
+_pouch_checkpoint_ls() {
+    case "$prev" in
+        --checkpoint-dir)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--checkpoint-dir --help" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag '--checkpoint-dir')
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_all
+            fi
+            ;;
+    esac
+}
+
+_pouch_checkpoint_rm() {
+    case "$prev" in
+        --checkpoint-dir)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--checkpoint-dir --help" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag '--checkpoint-dir')
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_all
+            elif [ "$cword" -eq "$((counter + 1))" ]; then
+                COMPREPLY=( $( compgen -W "$(__pouch_exe checkpoint ls "$prev" | sed 1d)" -- "$cur" ) )
+            fi
+            ;;
+    esac
+}
+
+_pouch_container_create() {
+    _pouch_container_common
+}
+
+_pouch_container_upgrade() {
+    _pouch_container_common
+}
+
+_pouch_container_exec() {
+    __pouch_complete_detach_keys && return
+
+    case "$prev" in
+        --env|-e)
+            # we do not append a "=" here because "-e VARNAME" is legal syntax, too
+            COMPREPLY=( $( compgen -e -- "$cur" ) )
+            __pouch_nospace
+            return
+            ;;
+        --user|-u)
+            __pouch_complete_user_group
+            return
+            ;;
+        --workdir|-w)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--detach -d --env -e --help --interactive -i -t --tty -u --user" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_running
+            ;;
+    esac
+}
+
+_pouch_container_inspect() {
+    _pouch_inspect
+}
+
+_pouch_container_kill() {
+    case "$prev" in
+        --signal|-s)
+            __pouch_complete_signals
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --signal -s" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_running
+            ;;
+    esac
+}
+
+_pouch_container_logs() {
+    case "$prev" in
+        --since|--tail|--until)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--follow -f --help -h --since --tail --timestamps -t --until" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag '--since|--tail|--until')
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_all
+            fi
+            ;;
+    esac
+}
+
+_pouch_container_list() {
+    _pouch_container_ls
+}
+
+_pouch_container_ls() {
+    local key=$(__pouch_map_key_of_current_option '--filter|-f')
+    case "$key" in
+        id)
+            __pouch_complete_containers_all --cur "${cur##*=}" --id
+            return
+            ;;
+        name)
+            __pouch_complete_containers_all --cur "${cur##*=}" --name
+            return
+            ;;
+        status)
+            COMPREPLY=( $( compgen -W "created stopped exited paused restarting running" -- "${cur##*=}" ) )
+            return
+            ;;
+    esac
+
+    case "$prev" in
+        --filter|-f)
+            COMPREPLY=( $( compgen -S = -W "id label name status" -- "$cur" ) )
+            __pouch_nospace
+            return
+            ;;
+        --format|--last|-n)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--all -a --filter -f --help --no-trunc --quiet -q" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_container_pause() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_running
+            ;;
+    esac
+}
+
+_pouch_container_ps() {
+    _pouch_container_ls
+}
+
+_pouch_container_rename() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag)
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_all
+            fi
+            ;;
+    esac
+}
+
+_pouch_container_restart() {
+    case "$prev" in
+        --time|-t)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --time -t" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_all
+            ;;
+    esac
+}
+
+_pouch_container_rm() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--force -f --help --link -l --volumes -v" -- "$cur" ) )
+            ;;
+        *)
+            for arg in "${COMP_WORDS[@]}"; do
+                case "$arg" in
+                    --force|-f)
+                        __pouch_complete_containers_all
+                        return
+                        ;;
+                esac
+            done
+            __pouch_complete_containers_removable
+            ;;
+    esac
+}
+
+_pouch_container_run() {
+    _pouch_container_common
+}
+
+# _pouch_container_common is the combined completion for `_pouch_container_run`,
+# `_pouch_container_create` and `_pouch_container_upgrade`
+_pouch_container_common() {
+    local options_with_args="
+        --add-host
+        --attach -a
+        --blkio-weight
+        --blkio-weight-device
+        --cap-add
+        --cap-drop
+        --cgroup-parent
+        --cpu-period
+        --cpu-quota
+        --cpuset-cpus
+        --cpus
+        --cpuset-mems
+        --cpu-shares -c
+        --device
+        --device-read-bps
+        --device-read-iops
+        --device-write-bps
+        --device-write-iops
+        --entrypoint
+        --env -e
+        --group-add
+        --hostname -h
+        --initscript
+        --intel-rdt-l3-cbm
+        --label -l
+        --log-driver
+        --log-opt
+        --memory -m
+        --memory-swap
+        --memory-swappiness
+        --memory-reservation
+        --name
+        --net
+        --net-priority
+        --oom-score-adj
+        --pid
+        --pids-limit
+        --port
+        --privileged
+        --restart
+        --runtime
+        --security-opt
+        --shm-size
+        --ulimit
+        --user -u
+        --uts
+        --volume -v
+        --volume-from
+        --workdir -w
+        --help -h
+        --interactive -i
+        --oom-kill-disable
+        --tty -t
+    "
+
+    if [ "$command" = "run" ]; then
+        options_with_args="$options_with_args
+            --detach-keys
+            --detach -d
+            --rm
+        "
+        __pouch_complete_detach_keys && return
+    fi
+
+    local all_options="$options_with_args"
+
+
+    __pouch_complete_log_driver_options && return
+    __pouch_complete_restart && return
+
+    case "$prev" in
+        --add-host)
+            case "$cur" in
+                *:)
+                    __pouch_complete_resolved_hostname
+                    return
+                    ;;
+            esac
+            ;;
+        --attach|-a)
+            COMPREPLY=( $( compgen -W 'stdin stdout stderr' -- "$cur" ) )
+            return
+            ;;
+        --cap-add)
+            __pouch_complete_capabilities_addable
+            return
+            ;;
+        --cap-drop)
+            __pouch_complete_capabilities_droppable
+            return
+            ;;
+        --device|--volume|-v)
+            case "$cur" in
+                *:*)
+                    # TODO somehow do _filedir for stuff inside the image, if it's already specified (which is also somewhat difficult to determine)
+                    ;;
+                '')
+                    COMPREPLY=( $( compgen -W '/' -- "$cur" ) )
+                    __pouch_nospace
+                    ;;
+                /*)
+                    _filedir
+                    __pouch_nospace
+                    ;;
+            esac
+            return
+            ;;
+        --env|-e)
+            # we do not append a "=" here because "-e VARNAME" is legal syntax, too
+            COMPREPLY=( $( compgen -e -- "$cur" ) )
+            __pouch_nospace
+            return
+            ;;
+        --ipc)
+            case "$cur" in
+                *:*)
+                    cur="${cur#*:}"
+                    __pouch_complete_containers_running
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W 'none host private shareable container:' -- "$cur" ) )
+                    # shellcheck disable=SC2128
+                    if [ "$COMPREPLY" = "container:" ]; then
+                        __pouch_nospace
+                    fi
+                    ;;
+            esac
+            return
+            ;;
+        --log-driver)
+            __pouch_complete_log_drivers
+            return
+            ;;
+        --log-opt)
+            __pouch_complete_log_options
+            return
+            ;;
+        --runtime)
+            __pouch_complete_runtimes
+            return
+            ;;
+        --user|-u)
+            __pouch_complete_user_group
+            return
+            ;;
+        --volumes-from)
+            __pouch_complete_containers_all
+            return
+            ;;
+        $(__pouch_to_extglob "$all_options") )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "$all_options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_container_start() {
+    __pouch_complete_detach_keys && return
+
+    case "$cur" in
+        -*)
+            local options="--attach -a --detach-keys --help --interactive -i"
+            COMPREPLY=( $( compgen -W "$options" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_stopped
+            ;;
+    esac
+}
+
+_pouch_container_stop() {
+    case "$prev" in
+        --time|-t)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --time -t" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_running
+            ;;
+    esac
+}
+
+_pouch_container_top() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag)
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_running
+            fi
+            ;;
+    esac
+}
+
+_pouch_container_unpause() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            local counter=$(__pouch_pos_first_nonflag)
+            if [ "$cword" -eq "$counter" ]; then
+                __pouch_complete_containers_unpauseable
+            fi
+            ;;
+    esac
+}
+
+_pouch_container_update() {
+    local options_with_args="
+        --blkio-weight
+        --cpu-period
+        --cpu-quota
+        --cpus
+        --cpuset-cpus
+        --cpuset-mems
+        --cpu-shares -c
+        --disk-quota
+        --env -e
+        --memory -m
+        --memory-swap
+        --restart
+        --help
+    "
+
+    local all_options="$options_with_args"
+
+    __pouch_complete_restart && return
+
+    case "$prev" in
+        $(__pouch_to_extglob "$options_with_args") )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "$all_options" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_all
+            ;;
+    esac
+}
+
+_pouch_container_wait() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+        *)
+            __pouch_complete_containers_all
+            ;;
+    esac
+}
+
+_pouch_container_updatedaemon() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_container_gen_doc() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+    return 0
+}
+
+_pouch_container_remount_lxcfs() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+    return 0
+}
+
+_pouch_daemon() {
+    local options_with_args="
+        --add-runtime
+        --bip
+        --bridge-name
+        --cgroup-parent
+        --cni-bin-dir
+        --cni-bin-dir
+        --config-file
+        --containerd
+        --containerd-path
+        --cri-version
+        --default-gateway
+        --default-runtime
+        --default-registry
+        --default-registry-namespace
+        --exec-root-dir
+        --label
+        --log-driver
+        --log-opt
+        --lxcfs
+        --lxcfs-home
+        --mtu
+        --manager-whitelist
+        --network-control-plane-mtu
+        --oom-score-adjust
+        --pidfile -p
+        --oom-score-adj
+        --pidfile
+        --plugin
+        --quota-driver
+        --sandbox-image
+        --tlscacert
+        --tlscert
+        --tlskey
+        --tlsverify
+        --version
+        --userland-proxy
+        --volume-driver-alias
+    "
+
+    __pouch_complete_log_driver_options && return
+
+    case "$prev" in
+        --config-file|--containerd|--pidfile|--tlscacert|--tlscert|--tlskey|--userland-proxy)
+            _filedir
+            return
+            ;;
+        --exec-root-dir)
+            _filedir -d
+            return
+            ;;
+        --log-driver)
+            __pouch_complete_log_drivers
+            return
+            ;;
+        --log-level|-l)
+            __pouch_complete_log_levels
+            return
+            ;;
+        --log-opt)
+            __pouch_complete_log_options
+            return
+            ;;
+        $(__pouch_to_extglob "$options_with_args") )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "$options_with_args" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_exec() {
+    _pouch_container_exec
+}
+
+_pouch_help() {
+    local counter=$(__pouch_pos_first_nonflag)
+    if [ "$cword" -eq "$counter" ]; then
+        COMPREPLY=( $( compgen -W "${commands[*]}" -- "$cur" ) )
+    fi
+}
+
+_pouch_image() {
+    local subcommands="
+        inspect
+    "
+
+    __pouch_subcommands "$subcommands" && return
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_image_load() {
+    case "$prev" in
+        --input|-i|"<")
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --input -i" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_image_list() {
+    _pouch_image_ls
+}
+
+_pouch_image_ls() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--digests --help -h --quiet -q" -- "$cur" ) )
+            ;;
+        =)
+            return
+            ;;
+    esac
+}
+
+_pouch_image_pull() {
+    case "$cur" in
+        -*)
+            local options="--help -h"
+
+            COMPREPLY=( $( compgen -W "$options" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_image_remove() {
+    _pouch_image_rm
+}
+
+_pouch_image_rm() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--force -f --help --no-prune" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_image_rmi() {
+    _pouch_image_rm
+}
+
+_pouch_image_save() {
+    case "$prev" in
+        --output|-o|">")
+            _filedir
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help --output -o" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_image_tag() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+
+_pouch_images() {
+    _pouch_image_ls
+}
+
+#TODO add pouch info completion
+_pouch_info() {
+    _pouch_system_info
+}
+
+# TODO: current pouch only support containers inspect, but more inspect is need,
+# like image, network, volume.
+_pouch_inspect() {
+    case "$cur" in
+        -*)
+            local options="--format -f --help"
+            COMPREPLY=( $( compgen -W "$options" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "
+                $(__pouch_containers --all)
+            " -- "$cur" ) )
+            __ltrim_colon_completions "$cur"
+    esac
+}
+
+_pouch_kill() {
+    _pouch_container_kill
+}
+
+_pouch_load() {
+    _pouch_image_load
+}
+
+_pouch_login() {
+    case "$prev" in
+        --password|-p|--username|-u)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h --password -p --password --username -u" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_logout() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_logs() {
+    _pouch_container_logs
+}
+
+_pouch_network_connect() {
+    local options_with_args="
+        --alias
+        --ip
+        --ip6
+        --link
+        --link-local-ip
+        --help -h
+    "
+
+    case "$prev" in
+        --link)
+            case "$cur" in
+                *:*)
+                    ;;
+                *)
+                    __pouch_complete_containers_running
+                    COMPREPLY=( $( compgen -W "${COMPREPLY[*]}" -S ':' ) )
+                    __pouch_nospace
+                    ;;
+            esac
+            return
+            ;;
+        $(__pouch_to_extglob "$options_with_args") )
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "$options_with_args" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network_create() {
+    case "$prev" in
+        --gateway|--ip-range|--ipam-opt|--option|-o|--subnet|--driver|-d)
+            return
+            ;;
+        --ipam-driver)
+            COMPREPLY=( $( compgen -W "default" -- "$cur" ) )
+            return
+            ;;
+        --label)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--driver -d --gateway --help --ingress --internal --ip-range --ipam-driver --ipam-opt --label --option -o --subnet" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network_disconnect() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network_inspect() {
+    case "$prev" in
+        --format|-f)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--format -f --help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network_ls() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network_remove() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_network() {
+    local subcommands="
+        connect
+        create
+        disconnect
+        inspect
+        ls
+        rm
+    "
+    local aliases="
+        list
+        remove
+    "
+    __pouch_subcommands "$subcommands $aliases" && return
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_pause() {
+    _pouch_container_pause
+}
+
+_pouch_ps() {
+    _pouch_container_ls
+}
+
+_pouch_pull() {
+    _pouch_image_pull
+}
+
+_pouch_rename() {
+    _pouch_container_rename
+}
+
+_pouch_restart() {
+    _pouch_container_restart
+}
+
+_pouch_rm() {
+    _pouch_container_rm
+}
+
+_pouch_rmi() {
+    _pouch_image_rm
+}
+
+_pouch_run() {
+    _pouch_container_run
+}
+
+_pouch_save() {
+    _pouch_image_save
+}
+
+_pouch_start() {
+    _pouch_container_start
+}
+
+_pouch_stop() {
+    _pouch_container_stop
+}
+
+_pouch_tag() {
+    _pouch_image_tag
+}
+
+_pouch_unpause() {
+    _pouch_container_unpause
+}
+
+_pouch_update() {
+    _pouch_container_update
+}
+
+_pouch_top() {
+    _pouch_container_top
+}
+
+_pouch_create() {
+    _pouch_container_create
+}
+
+_pouch_upgrade() {
+    _pouch_container_upgrade
+}
+
+_pouch_gen_doc() {
+    _pouch_container_gen_doc
+}
+
+_pouch_updatedaemon() {
+    _pouch_container_updatedaemon
+}
+
+_pouch_remount_lxcfs() {
+    _pouch_container_remount_lxcfs
+}
+
+_pouch_version() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_volume_create() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--driver -d --help --label --option -o --selector -s" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_volume_inspect() {
+    case "$prev" in
+        --format|-f)
+            return
+            ;;
+    esac
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--format -f --help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_volume_list() {
+    _pouch_volume_ls
+}
+
+_pouch_volume_ls() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h --mountpoint --size" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_volume_remove() {
+    _pouch_volume_rm
+}
+
+_pouch_volume_rm() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--force -f --help" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_volume() {
+    local subcommands="
+        create
+        inspect
+        list
+        remove
+    "
+    local aliases="
+        list
+        remove
+    "
+    __pouch_subcommands "$subcommands $aliases" && return
+
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help" -- "$cur" ) )
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "$subcommands" -- "$cur" ) )
+            ;;
+    esac
+}
+
+_pouch_wait() {
+    _pouch_container_wait
+}
+
+_pouch() {
+    local previous_extglob_setting=$(shopt -p extglob)
+    shopt -s extglob
+
+    local commands=(
+       create        
+       exec          
+       gen-doc       
+       help          
+       image         
+       images        
+       info          
+       inspect       
+       load          
+       login         
+       logout        
+       logs          
+       network       
+       pause         
+       ps            
+       pull          
+       remount-lxcfs 
+       rename        
+       restart       
+       rm            
+       rmi           
+       run           
+       save          
+       start         
+       stop          
+       tag           
+       top           
+       unpause       
+       update   
+       updatedaemon  
+       upgrade       
+       version       
+       volume        
+       wait 
+       checkpoint
+   )
+
+   local global_options="
+       --debug  -D  
+       --help   -h
+       --host -H     
+       --tlscacert
+       --tlscert
+       --tlskey
+       --tlsverify          
+   "
+
+    COMPREPLY=()
+    local cur prev words cword
+    _get_comp_words_by_ref -n : cur prev words cword
+
+    local command='pouch' command_pos=0 subcommand_pos
+    local counter=1
+    while [ "$counter" -lt "$cword" ]; do
+        case "${words[$counter]}" in
+            pouch)
+                return 0
+                ;;
+            $(__pouch_to_extglob "$global_options") )
+                (( counter++ ))
+                ;;
+            -*)
+                ;;
+            =)
+                (( counter++ ))
+                ;;
+            *)
+                command="${words[$counter]}"
+                command_pos=$counter
+                break
+                ;;
+        esac
+        (( counter++ ))
+    done
+
+    local binary="${words[0]}"
+    if [[ $binary == ?(*/)pouchd ]] ; then
+        # for the pouchd binary, we reuse completion of `pouch daemon`.
+        # pouchd does not have subcommands and global options.
+        command=daemon
+        command_pos=0
+    fi
+
+    local completions_func=_pouch_${command//-/_}
+    declare -F $completions_func >/dev/null && $completions_func
+
+    eval "$previous_extglob_setting"
+    return 0
+}
+
+eval "$__pouch_previous_extglob_setting"
+unset __pouch_previous_extglob_setting
+
+complete -F _pouch pouch
