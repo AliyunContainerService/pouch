@@ -104,8 +104,16 @@ type CriManager struct {
 
 	// SandboxImage is the image used by sandbox container.
 	SandboxImage string
+
 	// SandboxStore stores the configuration of sandboxes.
 	SandboxStore *meta.Store
+
+	// ContainerStore stores the configuration of containers.
+	// NOTE: The ContainerStore is only used to store the log path
+	// of container right now. Actually we should let the container
+	// manager handle the log stuff for CRI container, then we could
+	// remove the ContainerStore.
+	ContainerStore *meta.Store
 
 	// SnapshotStore stores information of all snapshots.
 	SnapshotStore *mgr.SnapshotStore
@@ -143,6 +151,20 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sandbox meta store: %v", err)
+	}
+
+	c.ContainerStore, err = meta.NewStore(meta.Config{
+		Driver:  "local",
+		BaseDir: path.Join(config.HomeDir, "containers-meta"),
+		Buckets: []meta.Bucket{
+			{
+				Name: meta.MetaJSONFile,
+				Type: reflect.TypeOf(ContainerMeta{}),
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create container meta store: %v", err)
 	}
 
 	imageFSPath := imageFSPath(path.Join(config.HomeDir, "containerd/root"), defaultSnapshotterName)
@@ -538,8 +560,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	containerID := createResp.ID
 
 	// Get container log.
+	// TODO: let the container manager handle the log stuff for CRI.
+	var logPath string
 	if config.GetLogPath() != "" {
-		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
+		logPath = filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
 		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create container for opening log file failed: %v", err)
@@ -555,6 +579,12 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			return nil, fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
 		}
 	}
+
+	containerMeta := &ContainerMeta{
+		ID:      containerID,
+		LogPath: logPath,
+	}
+	c.ContainerStore.Put(containerMeta)
 
 	return &runtime.CreateContainerResponse{ContainerId: containerID}, nil
 }
@@ -590,6 +620,11 @@ func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 	err := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove container %q: %v", containerID, err)
+	}
+
+	err = c.ContainerStore.Remove(containerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove meta %q: %v", containerID, err)
 	}
 
 	return &runtime.RemoveContainerResponse{}, nil
@@ -714,6 +749,12 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		imageRef = imageInfo.RepoDigests[0]
 	}
 
+	res, err := c.ContainerStore.Get(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from ContainerStore: %v", id, err)
+	}
+	containerMeta := res.(*ContainerMeta)
+
 	status := &runtime.ContainerStatus{
 		Id:          container.ID,
 		Metadata:    metadata,
@@ -729,7 +770,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Message:     message,
 		Labels:      labels,
 		Annotations: annotations,
-		// TODO: LogPath.
+		LogPath:     containerMeta.LogPath,
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil

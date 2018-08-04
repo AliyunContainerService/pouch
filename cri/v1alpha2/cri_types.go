@@ -23,3 +23,17 @@ type SandboxMeta struct {
 func (meta *SandboxMeta) Key() string {
 	return meta.ID
 }
+
+// ContainerMeta reprensets the cri container's meta data.
+type ContainerMeta struct {
+	// ID is the id of cri container.
+	ID string
+
+	// LogPath is the log path of the cri container.
+	LogPath string
+}
+
+// Key returns container's id.
+func (meta *ContainerMeta) Key() string {
+	return meta.ID
+}
