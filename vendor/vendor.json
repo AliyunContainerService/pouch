@@ -1733,10 +1733,10 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "HR73EwZ0VzFMLD6RYh4U0OkdaMY=",
+			"checksumSHA1": "EjBv5mhIgEH3MNAGsOEk6Udzqk8=",
 			"path": "golang.org/x/net",
-			"revision": "b3756b4b77d7b13260a0a2ec658753cf48922eac",
-			"revisionTime": "2017-07-16T02:53:09Z",
+			"revision": "c21de06aaf072cea07f3a65d6970e5c7d8b6cd6d",
+			"revisionTime": "2018-05-30T03:23:02Z",
 			"tree": true
 		},
 		{
