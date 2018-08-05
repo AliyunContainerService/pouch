@@ -1,82 +1,30 @@
 package ctrd
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 )
 
-func TestHasPort(t *testing.T) {
-	type args struct {
-		str string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		// TODO: Add test cases.
-		{name: "test1", args: args{str: string("localhost:8000")}, want: true},
-		{name: "test2", args: args{str: string("[ipv6::localhost]:8000")}, want: true},
-		{name: "test3", args: args{str: string(":8000")}, want: true},
-		{name: "test4", args: args{str: string("[ipv6::127.0.0.1]::8000")}, want: true},
-		{name: "test5", args: args{str: string("localhost")}, want: false},
-		{name: "test6", args: args{str: string("[ipv6::localhost]")}, want: false},
-		{name: "test7", args: args{str: string("[ipv6::localhost]8000")}, want: false},
-	}
+func TestProxyFromEnvironment(t *testing.T) {
+	SetImageProxy("http://proxy.example.com")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := hasPort(tt.args.str)
-			if got != tt.want {
-				t.Errorf("hasPort() = %v, want %v", got, tt.want)
-				return
-			}
-		})
-	}
-}
-
-func TestCanonicalAddr(t *testing.T) {
-	tests := []struct {
-		name      string
-		urlString string
-		want      string
-	}{
-		{name: "test1", urlString: "http://google.com", want: "google.com:80"},
-		{name: "test2", urlString: "https://www.github.com", want: "www.github.com:443"},
-		{name: "test3", urlString: "socks5://shadowsocks.com", want: "shadowsocks.com:1080"},
-		{name: "test4", urlString: "ftp://127.0.0.1", want: "127.0.0.1:"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			exampleURL, _ := url.Parse(tt.urlString)
-			got := canonicalAddr(exampleURL)
-
-			if got != tt.want {
-				t.Errorf("canonicalAddr() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestUseProxy(t *testing.T) {
 	tests := []struct {
 		name    string
 		addr    string
 		noProxy string
-		want    bool
+		want    string
 	}{
-		{name: "test1", addr: "", want: true},
-		{name: "test2", addr: "google.com", want: false},
-		{name: "test3", addr: "localhost:80", want: false},
-		{name: "test4", addr: "127.0.0.1:80", want: false},
-		{name: "test5", addr: "10.0.0.1:80", want: true},
-		{name: "test6", addr: "golang.org:80", noProxy: "*", want: false},
-		{name: "test7", addr: "maps.google.com:443", noProxy: ".google.com", want: false},
-		{name: "test8", addr: "google.com:443", noProxy: ".google.com", want: false},
-		{name: "test9", addr: "maps.google.com:443", noProxy: "google.com", want: false},
-		{name: "test10", addr: "google.com:443", noProxy: "google.com", want: false},
-		{name: "test11", addr: "maps.google.com:443", want: true},
+		{name: "test1", addr: "", want: "http://proxy.example.com"},
+		{name: "test2", addr: "http://localhost", want: ""},
+		{name: "test3", addr: "http://127.0.0.1", want: ""},
+		{name: "test4", addr: "http://10.0.0.1", want: "http://proxy.example.com"},
+		{name: "test5", addr: "http://golang.org", noProxy: "*", want: ""},
+		{name: "test6", addr: "https://maps.google.com", noProxy: ".google.com", want: ""},
+		{name: "test7", addr: "https://google.com", noProxy: ".google.com", want: "http://proxy.example.com"},
+		{name: "test8", addr: "https://maps.google.com", noProxy: "google.com", want: ""},
+		{name: "test9", addr: "https://google.com", noProxy: "google.com", want: ""},
+		{name: "test10", addr: "https://maps.google.com", want: "http://proxy.example.com"},
 	}
 
 	// simulate the fetch of environmental variable no_proxy
@@ -85,9 +33,15 @@ func TestUseProxy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			noProxyEnv.val = tt.noProxy
-			got := useProxy(tt.addr)
+			u, _ := url.Parse(tt.addr)
+			req := &http.Request{
+				URL: u,
+			}
+			got, _ := proxyFromEnvironment(req)
 
-			if got != tt.want {
+			if got != nil && got.String() != tt.want {
+				t.Errorf("useProxy() = %v, want %v", got.String(), tt.want)
+			} else if got == nil && tt.want != "" {
 				t.Errorf("useProxy() = %v, want %v", got, tt.want)
 			}
 		})
