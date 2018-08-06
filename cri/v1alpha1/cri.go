@@ -714,6 +714,16 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		imageRef = imageInfo.RepoDigests[0]
 	}
 
+	podSandboxID := container.Config.Labels[sandboxIDLabelKey]
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*SandboxMeta)
+	logDirectory := sandboxMeta.Config.GetLogDirectory()
+	// TODO: let the container manager handle the log stuff for CRI.
+	logPath := makeupLogPath(logDirectory, metadata)
+
 	status := &runtime.ContainerStatus{
 		Id:          container.ID,
 		Metadata:    metadata,
@@ -729,7 +739,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Message:     message,
 		Labels:      labels,
 		Annotations: annotations,
-		// TODO: LogPath.
+		LogPath:     logPath,
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil
