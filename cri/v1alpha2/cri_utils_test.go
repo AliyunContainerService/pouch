@@ -5,10 +5,12 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
@@ -796,6 +798,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 }
 
 func Test_toCriContainer(t *testing.T) {
+	_, timeParseErr := time.Parse(utils.TimeLayout, "foo")
 	type args struct {
 		c *mgr.Container
 	}
@@ -803,14 +806,113 @@ func Test_toCriContainer(t *testing.T) {
 		name    string
 		args    args
 		want    *runtime.Container
-		wantErr bool
+		wantErr error
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Normal Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "k8s_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "2018-01-12T07:38:32.245589846Z",
+				},
+			},
+			want: &runtime.Container{
+				Id:           "cid",
+				PodSandboxId: "sid",
+				Metadata: &runtime.ContainerMetadata{
+					Name:    "cname",
+					Attempt: uint32(3),
+				},
+				Image:     &runtime.ImageSpec{Image: "image"},
+				ImageRef:  "imageRef",
+				State:     runtime.ContainerState_CONTAINER_RUNNING,
+				CreatedAt: int64(1515742712245589846),
+				Labels: map[string]string{
+					"aa": "bb",
+					"cc": "dd",
+				},
+				Annotations: map[string]string{
+					"aaa": "bbb",
+					"ccc": "ddd",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ParseContainerName Error Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "kubernetes_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "2018-01-12T07:38:32.245589846Z",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("container is not managed by kubernetes: %q", "kubernetes_cname_sname_namespace_uid_3"),
+		},
+		{
+			name: "ToCriTimestamp Error Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "k8s_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "foo",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("failed to parse create timestamp for container %q: %v", "cid", timeParseErr),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := toCriContainer(tt.args.c)
-			if (err != nil) != tt.wantErr {
+			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("toCriContainer() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
