@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
@@ -1581,6 +1582,91 @@ func Test_modifySandboxNamespaceOptions(t *testing.T) {
 			modifySandboxNamespaceOptions(tt.args.nsOpts, tt.args.hostConfig)
 			if !reflect.DeepEqual(tt.args.hostConfig, tt.want) {
 				t.Errorf("modifySandboxNamespaceOptions() = %v, want %v", tt.args.hostConfig, tt.want)
+			}
+		})
+	}
+}
+
+// CNI Network related unit tests.
+func Test_toCNIPortMappings(t *testing.T) {
+	criNormalTCP := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_TCP,
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIp:        "192.168.1.101",
+	}
+	pouchNormalTCP := ocicni.PortMapping{
+		Protocol:      "tcp",
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIP:        "192.168.1.101",
+	}
+	criNormalUDP := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_UDP,
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIp:        "192.168.1.102",
+	}
+	pouchNormalUDP := ocicni.PortMapping{
+		Protocol:      "udp",
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIP:        "192.168.1.102",
+	}
+	criHostPortLEZero := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_TCP,
+		ContainerPort: 8080,
+		HostPort:      0,
+		HostIp:        "192.168.1.100",
+	}
+
+	type args struct {
+		criPortMappings []*runtime.PortMapping
+	}
+	tests := []struct {
+		name string
+		args args
+		want []ocicni.PortMapping
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{
+					criNormalTCP,
+					criNormalUDP,
+				},
+			},
+			want: []ocicni.PortMapping{
+				pouchNormalTCP,
+				pouchNormalUDP,
+			},
+		},
+		{
+			name: "HostPort LE Zero Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{
+					criNormalTCP,
+					criNormalUDP,
+					criHostPortLEZero,
+				},
+			},
+			want: []ocicni.PortMapping{
+				pouchNormalTCP,
+				pouchNormalUDP,
+			},
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIPortMappings(tt.args.criPortMappings); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIPortMappings() = %v, want %v", got, tt.want)
 			}
 		})
 	}
