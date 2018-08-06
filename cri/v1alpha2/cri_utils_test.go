@@ -1,8 +1,10 @@
 package v1alpha2
 
 import (
+	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +16,6 @@ import (
 
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -738,6 +739,197 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
 			if !reflect.DeepEqual(*tt.args.hostConfig, tt.want) {
 				t.Errorf("modifyContainerNamespaceOptions() = %v, want %v", *tt.args.hostConfig, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifyHostConfig(t *testing.T) {
+	supplementalGroups := []int64{1, 2, 3}
+	groupAdd := []string{}
+	for _, group := range supplementalGroups {
+		groupAdd = append(groupAdd, strconv.FormatInt(group, 10))
+	}
+
+	type args struct {
+		sc         *runtime.LinuxContainerSecurityContext
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name           string
+		args           args
+		wantHostConfig *apitypes.HostConfig
+		wantErr        error
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "SupplementalGroups Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					Privileged:     true,
+					ReadonlyRootfs: true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Capabilities Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetSeccompSecurityOpts Err Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: "foo",
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: fmt.Errorf("failed to generate seccomp security options: %v", fmt.Errorf("undefault profile %q should prefix with %q", "foo", mgr.ProfileNamePrefix)),
+		},
+		{
+			name: "GetAppArmorSecurityOpts Err Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    "foo",
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: fmt.Errorf("failed to generate appArmor security options: %v", fmt.Errorf("undefault profile name should prefix with %q", mgr.ProfileNamePrefix)),
+		},
+		{
+			name: "NoNewPrivs False Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         false,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{},
+			wantErr:        nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := modifyHostConfig(tt.args.sc, tt.args.hostConfig)
+			if !reflect.DeepEqual(tt.args.hostConfig, tt.wantHostConfig) {
+				t.Errorf("modifyHostConfig() hostConfig = %v, wantHostConfig %v", tt.args.hostConfig, tt.wantHostConfig)
+				return
+			}
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("modifyHostConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
