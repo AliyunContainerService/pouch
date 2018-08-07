@@ -1,12 +1,8 @@
 package types
 
 const (
-	defaultSize       = "100G"
 	defaultFileSystem = "ext4"
-	defaultMountpoint = "/mnt"
-	optionPath        = "mount"
 	optionSize        = "opt.size"
-	optionSifter      = "sifter"
 	optionFS          = "opt.fs"
 	optionWBps        = "opt.wbps"
 	optionRBps        = "opt.rbps"

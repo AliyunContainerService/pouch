@@ -13,10 +13,6 @@ type remoteVolumeRemoveReq struct {
 	Name string `json:"Name"`
 }
 
-type remoteVolumeRemoveResp struct {
-	Err string `json:"Err"`
-}
-
 type remoteVolumeMountReq struct {
 	Name string `json:"Name"`
 	ID   string `json:"ID"`
