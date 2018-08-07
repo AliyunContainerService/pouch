@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	apitypes "github.com/alibaba/pouch/apis/types"
 )
 
 // Executor knows how to execute a command in a container of the pod.
 type Executor interface {
 	// Exec executes a command in a container of the pod.
-	Exec(ctx context.Context, containerID string, cmd []string, streamOpts *Options, streams *Streams) (uint32, error)
+	Exec(ctx context.Context, containerID string, cmd []string, resizeChan <-chan apitypes.ResizeOptions, streamOpts *Options, streams *Streams) (uint32, error)
 }
 
 // ServeExec handles requests to execute a command in a container. After
@@ -24,7 +26,7 @@ func ServeExec(ctx context.Context, w http.ResponseWriter, req *http.Request, ex
 	}
 	defer streamCtx.conn.Close()
 
-	exitCode, err := executor.Exec(ctx, container, cmd, streamOpts, &Streams{
+	exitCode, err := executor.Exec(ctx, container, cmd, streamCtx.resizeChan, streamOpts, &Streams{
 		StdinStream:  streamCtx.stdinStream,
 		StdoutStream: streamCtx.stdoutStream,
 		StderrStream: streamCtx.stderrStream,

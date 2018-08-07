@@ -17,10 +17,14 @@ const (
 	DefaultStreamCreationTimeout = 30 * time.Second
 )
 
-// TODO: StreamProtocolV2Name, StreamProtocolV3Name, StreamProtocolV4Name support.
+// TODO: StreamProtocolV4Name support.
 
 // SupportedStreamingProtocols is the streaming protocols which server supports.
-var SupportedStreamingProtocols = []string{constant.StreamProtocolV1Name, constant.StreamProtocolV2Name}
+var SupportedStreamingProtocols = []string{
+	constant.StreamProtocolV1Name,
+	constant.StreamProtocolV2Name,
+	constant.StreamProtocolV3Name,
+}
 
 // SupportedPortForwardProtocols is the portforward protocols which server supports.
 var SupportedPortForwardProtocols = []string{constant.PortForwardProtocolV1Name}

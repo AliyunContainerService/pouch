@@ -121,6 +121,9 @@ type ContainerMgr interface {
 	// CheckExecExist check if exec process `name` exist
 	CheckExecExist(ctx context.Context, name string) error
 
+	// ResizeExec resizes the size of exec process's tty.
+	ResizeExec(ctx context.Context, execid string, opts types.ResizeOptions) error
+
 	// 3. The following two function is related to network management.
 	// TODO: inconsistency, Connect/Disconnect operation is in newtork_bridge.go in upper API layer.
 	// Here we encapsualted them in container manager, inconsistency exists.
