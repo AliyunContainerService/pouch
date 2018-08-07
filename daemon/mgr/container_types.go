@@ -241,6 +241,9 @@ type Container struct {
 
 	// RootFSProvided is a flag to point the container is created by specify rootfs
 	RootFSProvided bool
+
+	// MountFS is used to mark the directory of mount overlayfs for pouch daemon to operate the image.
+	MountFS string `json:"-"`
 }
 
 // Key returns container's id.
