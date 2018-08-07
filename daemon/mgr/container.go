@@ -2321,7 +2321,9 @@ func (mgr *ContainerManager) setMountPointDiskQuota(ctx context.Context, c *Cont
 		}
 		err := quota.SetDiskQuota(mp.Source, size, qid)
 		if err != nil {
-			return err
+			// just ignore set disk quota fail
+			logrus.Warnf("failed to set disk quota, directory: (%s), size: (%s), quota id: (%d), err: (%v)",
+				mp.Source, size, qid, err)
 		}
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/system"
+	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
 )
@@ -48,16 +49,16 @@ type PrjQuotaDriver struct {
 
 // EnforceQuota is used to enforce disk quota effect on specified directory.
 func (quota *PrjQuotaDriver) EnforceQuota(dir string) (string, error) {
-	logrus.Debugf("start project quota driver: %s", dir)
+	logrus.Debugf("start project quota driver: (%s)", dir)
 
 	devID, err := system.GetDevID(dir)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to get device id for directory: (%s)", dir)
 	}
 
 	// set limit of dir's device in driver
 	if _, err = quota.setDevLimit(dir, devID); err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
 	}
 
 	quota.lock.Lock()
@@ -70,21 +71,29 @@ func (quota *PrjQuotaDriver) EnforceQuota(dir string) (string, error) {
 
 	mountPoint, hasQuota, _ := quota.CheckMountpoint(devID)
 	if len(mountPoint) == 0 {
-		return mountPoint, fmt.Errorf("mountPoint not found for the device on which dir %s lies", dir)
+		return mountPoint, fmt.Errorf("mountPoint not found for the device on which dir (%s) lies", dir)
 	}
 	if !hasQuota {
 		// remount option prjquota for mountpoint
-		// FIXME: ignore or record err? (rudyfly)
-		exec.Run(0, "mount", "-o", "remount,prjquota", mountPoint)
+		exit, stdout, stderr, err := exec.Run(0, "mount", "-o", "remount,prjquota", mountPoint)
+		if err != nil {
+			logrus.Errorf("failed to remount prjquota, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
+				mountPoint, stdout, stderr, exit, err)
+			return "", errors.Wrapf(err, "failed to remount prjquota, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+				mountPoint, stdout, stderr, exit)
+		}
 	}
 
 	// use tool quotaon to set disk quota for mountpoint
-	_, _, stderr, err := exec.Run(0, "quotaon", "-P", mountPoint)
+	exit, stdout, stderr, err := exec.Run(0, "quotaon", "-P", mountPoint)
 	if err != nil {
 		if strings.Contains(stderr, " File exists") {
 			err = nil
 		} else {
-			// FIXME: this else is quite strange
+			logrus.Errorf("failed to quota on, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
+				mountPoint, stdout, stderr, exit, err)
+			err = errors.Wrapf(err, "failed to quota on, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+				mountPoint, stdout, stderr, exit)
 			mountPoint = ""
 		}
 	}
@@ -110,13 +119,14 @@ func (quota *PrjQuotaDriver) SetSubtree(dir string, qid uint32) (uint32, error) 
 			return id, nil
 		}
 		if id, err = quota.GetNextQuotaID(); err != nil {
-			return 0, err
+			return 0, errors.Wrapf(err, "failed to get file: (%s) quota id", dir)
 		}
 	}
 
 	strid := strconv.FormatUint(uint64(id), 10)
-	_, _, _, err = exec.Run(0, "chattr", "-p", strid, "+P", dir)
-	return id, err
+	exit, stdout, stderr, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
+	return id, errors.Wrapf(err, "failed to chattr, dir: (%s), quota id: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+		dir, strid, stdout, stderr, exit)
 }
 
 // SetDiskQuota uses the following two parameters to set disk quota for a directory.
@@ -126,25 +136,28 @@ func (quota *PrjQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 	logrus.Debugf("set disk quota, dir: %s, size: %s, quotaID: %d", dir, size, quotaID)
 	mountPoint, err := quota.EnforceQuota(dir)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to enforce quota, dir: (%s)", dir)
 	}
 	if len(mountPoint) == 0 {
-		return fmt.Errorf("mountpoint not found: %s", dir)
+		return errors.Errorf("failed to find mountpoint, dir: (%s)", dir)
 	}
 
 	id, err := quota.SetSubtree(dir, quotaID)
-	if err != nil || id == 0 {
-		return fmt.Errorf("subtree not found: %s %v", dir, err)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set subtree, dir: (%s), quota id: (%d)", dir, quotaID)
+	}
+	if id == 0 {
+		return errors.Errorf("failed to find quota id to set subtree")
 	}
 
 	limit, err := bytefmt.ToKilobytes(size)
 	if err != nil {
-		return fmt.Errorf("invalid size: %s %v", size, err)
+		return errors.Wrapf(err, "failed to change size: (%s) to kilobytes", size)
 	}
 
 	// transfer limit from kbyte to byte
 	if err := quota.checkDevLimit(dir, limit*1024); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to check device limit, dir: (%s), limit: (%d)kb", dir, limit)
 	}
 
 	return quota.setQuota(id, limit, mountPoint)
@@ -168,7 +181,7 @@ func (quota *PrjQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 	logrus.Debugf("check mountpoint, devID: %d", devID)
 	output, err := ioutil.ReadFile(procMountFile)
 	if err != nil {
-		logrus.Warnf("failed to ReadFile %s: %v", procMountFile, err)
+		logrus.Warnf("failed to read file: (%s), err: (%v)", procMountFile, err)
 		return "", false, ""
 	}
 
@@ -207,8 +220,9 @@ func (quota *PrjQuotaDriver) setQuota(quotaID uint32, blockLimit uint64, mountPo
 	quotaIDStr := strconv.FormatUint(uint64(quotaID), 10)
 	blockLimitStr := strconv.FormatUint(blockLimit, 10)
 	// set project quota
-	_, _, _, err := exec.Run(0, "setquota", "-P", quotaIDStr, "0", blockLimitStr, "0", "0", mountPoint)
-	return err
+	exit, stdout, stderr, err := exec.Run(0, "setquota", "-P", quotaIDStr, "0", blockLimitStr, "0", "0", mountPoint)
+	return errors.Wrapf(err, "failed to set quota, mountpoint: (%s), quota id: (%d), quota: (%d kbytes), stdout: (%s), stderr: (%s), exit: (%d)",
+		mountPoint, quotaID, blockLimit, stdout, stderr, exit)
 }
 
 // GetQuotaIDInFileAttr gets attributes of the file which is in the inode.
@@ -219,15 +233,17 @@ func (quota *PrjQuotaDriver) GetQuotaIDInFileAttr(dir string) uint32 {
 	parent := path.Dir(dir)
 	qid := 0
 
-	_, out, _, err := exec.Run(0, "lsattr", "-p", parent)
+	exit, stdout, stderr, err := exec.Run(0, "lsattr", "-p", parent)
 	if err != nil {
 		// failure, then return invalid value 0 for quota ID.
+		logrus.Errorf("failed to lsattr, dir: (%s), stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
+			dir, stdout, stderr, exit, err)
 		return 0
 	}
 
 	// example output:
 	// 16777256 --------------e---P ./exampleDir
-	lines := strings.Split(out, "\n")
+	lines := strings.Split(stdout, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		if len(parts) > 2 && parts[2] == dir {
@@ -248,14 +264,19 @@ func (quota *PrjQuotaDriver) SetQuotaIDInFileAttr(dir string, quotaID uint32) er
 	logrus.Debugf("set file attr, dir: %s, quotaID: %d", dir, quotaID)
 
 	strid := strconv.FormatUint(uint64(quotaID), 10)
-	_, _, _, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
-	return err
+	exit, stdout, stderr, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
+	return errors.Wrapf(err, "failed to chattr, dir: (%s), quota id: (%d), stdout: (%s), stderr: (%s), exit: (%d)",
+		dir, quotaID, stdout, stderr, exit)
 }
 
 // SetQuotaIDInFileAttrNoOutput is used to set file attributes without error.
 func (quota *PrjQuotaDriver) SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
 	strid := strconv.FormatUint(uint64(quotaID), 10)
-	exec.Run(0, "chattr", "-p", strid, "+P", dir)
+	exit, stdout, stderr, err := exec.Run(0, "chattr", "-p", strid, "+P", dir)
+	if err != nil {
+		logrus.Errorf("failed to chattr, dir: (%s), quota id: (%d), stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
+			dir, quotaID, stdout, stderr, exit, err)
+	}
 }
 
 // GetNextQuotaID returns the next available quota id.
@@ -267,7 +288,7 @@ func (quota *PrjQuotaDriver) GetNextQuotaID() (uint32, error) {
 		var err error
 		quota.quotaIDs, quota.lastID, err = loadQuotaIDs("-Pan")
 		if err != nil {
-			return 0, err
+			return 0, errors.Wrap(err, "failed to load quota list")
 		}
 	}
 	id := quota.lastID
@@ -296,8 +317,8 @@ func (quota *PrjQuotaDriver) setDevLimit(dir string, devID uint64) (uint64, erro
 	// get storage upper limit of the device which the dir is on.
 	var stfs syscall.Statfs_t
 	if err := syscall.Statfs(dir, &stfs); err != nil {
-		logrus.Errorf("fail to get path %s limit: %v", dir, err)
-		return 0, err
+		logrus.Errorf("failed to get path: (%s) limit, err: (%v)", dir, err)
+		return 0, errors.Wrapf(err, "failed to get path: (%s) limit", dir)
 	}
 	limit := stfs.Blocks * uint64(stfs.Bsize)
 
@@ -313,14 +334,14 @@ func (quota *PrjQuotaDriver) setDevLimit(dir string, devID uint64) (uint64, erro
 func (quota *PrjQuotaDriver) checkDevLimit(dir string, size uint64) error {
 	devID, err := system.GetDevID(dir)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get device id, dir: (%s)", dir)
 	}
 
 	limit, exist := quota.devLimits[devID]
 	if !exist {
 		// if has not recorded, just add (dir, device, limit) to driver.
 		if limit, err = quota.setDevLimit(dir, devID); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
 		}
 	}
 
