@@ -935,6 +935,76 @@ func Test_modifyHostConfig(t *testing.T) {
 	}
 }
 
+func Test_modifyContainerConfig(t *testing.T) {
+	runAsUser := &runtime.Int64Value{int64(1)}
+	configUser := strconv.FormatInt(1, 10)
+
+	type args struct {
+		sc     *runtime.LinuxContainerSecurityContext
+		config *apitypes.ContainerConfig
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantConfig *apitypes.ContainerConfig
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUser:     runAsUser,
+					RunAsUsername: "foo",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: "foo",
+			},
+		},
+		{
+			name: "RunAsUser Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUsername: "foo",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: "foo",
+			},
+		},
+		{
+			name: "RunAsUsername Empty Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUser:     runAsUser,
+					RunAsUsername: "",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: configUser,
+			},
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifyContainerConfig(tt.args.sc, tt.args.config)
+			if !reflect.DeepEqual(tt.args.config, tt.wantConfig) {
+				t.Errorf("modifyContainerConfig() config = %v, wantConfig %v", tt.args.config, tt.wantConfig)
+				return
+			}
+		})
+	}
+}
+
 func Test_applyContainerSecurityContext(t *testing.T) {
 	type args struct {
 		lc           *runtime.LinuxContainerConfig
@@ -1111,6 +1181,47 @@ func Test_toCriContainer(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("toCriContainer() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_containerNetns(t *testing.T) {
+	type args struct {
+		container *mgr.Container
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				container: &mgr.Container{
+					State: &apitypes.ContainerState{
+						Pid: int64(1001),
+					},
+				},
+			},
+			want: fmt.Sprintf("/proc/%v/ns/net", 1001),
+		},
+		{
+			name: "Pid EQ -1 Test",
+			args: args{
+				container: &mgr.Container{
+					State: &apitypes.ContainerState{
+						Pid: int64(-1),
+					},
+				},
+			},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := containerNetns(tt.args.container); got != tt.want {
+				t.Errorf("containerNetns() = %v, want %v", got, tt.want)
 			}
 		})
 	}
