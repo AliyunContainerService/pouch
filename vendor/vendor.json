@@ -620,16 +620,16 @@
 			"revisionTime": "2018-01-08T23:09:05Z"
 		},
 		{
-			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
-			"path": "github.com/coreos/go-systemd/dbus",
-			"revision": "39ca1b05acc7ad1220e09f133283b8859a8b71ab",
-			"revisionTime": "2018-05-11T13:34:05Z"
-		},
-		{
 			"checksumSHA1": "dPUClu2Gew2ddf1Y5rmgvxUUFeU=",
 			"path": "github.com/coreos/go-systemd/daemon",
 			"revision": "a4887aeaa186e68961d2d6af7d5fbac6bd6fa79b",
 			"revisionTime": "2018-05-25T14:22:39Z"
+		},
+		{
+			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
+			"path": "github.com/coreos/go-systemd/dbus",
+			"revision": "39ca1b05acc7ad1220e09f133283b8859a8b71ab",
+			"revisionTime": "2018-05-11T13:34:05Z"
 		},
 		{
 			"checksumSHA1": "5GD2mlKEoDM+bU1PfSlx8rAz4oc=",
@@ -651,10 +651,10 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "je2SUpKP4rZR5hpk1VidpPYGUWA=",
+			"checksumSHA1": "2/jWygRyq/dGS2wMjuK6cYiSvPY=",
 			"path": "github.com/cri-o/ocicni/pkg/ocicni",
-			"revision": "17d9dd2837c6facb27b618c441193e5e912f3212",
-			"revisionTime": "2018-01-11T00:30:19Z"
+			"revision": "2a19a0093d927d3ecc0e305b522c48e2213b22fd",
+			"revisionTime": "2018-02-02T23:36:03Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
