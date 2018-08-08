@@ -126,7 +126,7 @@ type CriManager struct {
 
 // NewCriManager creates a brand new cri manager.
 func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr) (CriMgr, error) {
-	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort)
+	streamServer, err := newStreamServer(ctrMgr, config.CriConfig.ServerTLS, config.TLS, streamServerAddress, streamServerPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
 	}

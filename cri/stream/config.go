@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/cri/stream/constant"
 )
 
@@ -37,6 +38,11 @@ type Config struct {
 	// BaseURL is the optional base URL for constructing streaming URLs.
 	// If empty, the baseURL will be constructed from the serve address.
 	BaseURL *url.URL
+
+	// ServerTLS whether to enable https server.
+	ServerTLS bool
+	// TLS configuration
+	TLS client.TLSConfig
 
 	// StreamIdleTimeout is how long to leave idle connections open for.
 	StreamIdleTimeout time.Duration

@@ -1,6 +1,7 @@
 package v1alpha2
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/url"
 	"path"
@@ -9,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/cri/stream/portforward"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
+	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
@@ -46,9 +48,16 @@ func NewServer(config stream.Config, runtime stream.Runtime) (Server, error) {
 	}
 
 	if s.config.BaseURL == nil {
-		s.config.BaseURL = &url.URL{
-			Scheme: "http",
-			Host:   s.config.Address,
+		if s.config.ServerTLS {
+			s.config.BaseURL = &url.URL{
+				Scheme: "https",
+				Host:   s.config.Address,
+			}
+		} else {
+			s.config.BaseURL = &url.URL{
+				Scheme: "http",
+				Host:   s.config.Address,
+			}
 		}
 	}
 
@@ -78,7 +87,21 @@ func NewServer(config stream.Config, runtime stream.Runtime) (Server, error) {
 
 // Start starts the stream server.
 func (s *server) Start() error {
-	return s.server.ListenAndServe()
+	if !s.config.ServerTLS {
+		s.server.ListenAndServe()
+	}
+
+	var tlsConfig *tls.Config
+	// TODO Maybe a non-empty judgment ?
+	tlsConfig, err := httputils.GenTLSConfig(s.config.TLS.Key, s.config.TLS.Cert, s.config.TLS.CA)
+	if err != nil {
+		return err
+	}
+
+	tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	s.server.TLSConfig = tlsConfig
+
+	return s.server.ListenAndServeTLS(s.config.TLS.Cert, s.config.TLS.Key)
 }
 
 func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {

@@ -17,4 +17,6 @@ type Config struct {
 	SandboxImage string `json:"sandbox-image,omitempty"`
 	// CriVersion is the cri version
 	CriVersion string `json:"cri-version,omitempty"`
+	// ServerTLS whether to enable https server.
+	ServerTLS bool `json:"server-tls,omitempty"`
 }
