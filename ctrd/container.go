@@ -121,6 +121,22 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 	return nil
 }
 
+// ResizeExec changes the size of the TTY of the exec process running
+// in the container to the given height and width.
+func (c *Client) ResizeExec(ctx context.Context, id string, execid string, opts types.ResizeOptions) error {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	execProcess, err := pack.task.LoadProcess(ctx, execid, nil)
+	if err != nil {
+		return err
+	}
+
+	return execProcess.Resize(ctx, uint32(opts.Width), uint32(opts.Height))
+}
+
 // ContainerPID returns the container's init process id.
 func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
 	pack, err := c.watch.get(id)
@@ -525,7 +541,7 @@ func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.Resi
 		return err
 	}
 
-	return pack.task.Resize(ctx, uint32(opts.Height), uint32(opts.Width))
+	return pack.task.Resize(ctx, uint32(opts.Width), uint32(opts.Height))
 }
 
 // WaitContainer waits until container's status is stopped.

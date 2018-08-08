@@ -39,6 +39,16 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 	return execid, nil
 }
 
+// ResizeExec resizes the size of exec process's tty.
+func (mgr *ContainerManager) ResizeExec(ctx context.Context, execid string, opts types.ResizeOptions) error {
+	execConfig, err := mgr.GetExecConfig(ctx, execid)
+	if err != nil {
+		return err
+	}
+
+	return mgr.Client.ResizeExec(ctx, execConfig.ContainerID, execid, opts)
+}
+
 // StartExec executes a new process in container.
 func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attach *AttachConfig) (err error) {
 	// GetExecConfig should not error, since we have done this before call StartExec
