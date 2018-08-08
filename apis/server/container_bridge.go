@@ -156,9 +156,12 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 func (s *Server) startContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
-	detachKeys := req.FormValue("detachKeys")
+	options := &types.ContainerStartOptions{}
+	if err := json.NewDecoder(req.Body).Decode(options); err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
 
-	if err := s.ContainerMgr.Start(ctx, name, detachKeys); err != nil {
+	if err := s.ContainerMgr.Start(ctx, name, options); err != nil {
 		return err
 	}
 

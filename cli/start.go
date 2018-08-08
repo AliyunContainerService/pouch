@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -24,6 +26,8 @@ type StartCommand struct {
 	detachKeys string
 	attach     bool
 	stdin      bool
+	checkpoint string
+	cpDir      string
 }
 
 // Init initialize start command.
@@ -48,6 +52,8 @@ func (s *StartCommand) addFlags() {
 	flagSet.StringVar(&s.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
 	flagSet.BoolVarP(&s.attach, "attach", "a", false, "Attach container's STDOUT and STDERR")
 	flagSet.BoolVarP(&s.stdin, "interactive", "i", false, "Attach container's STDIN")
+	flagSet.StringVar(&s.checkpoint, "checkpoint", "", "Restore container state from the checkpoint")
+	flagSet.StringVar(&s.cpDir, "checkpoint-dir", "", "Directory to store checkpoints images")
 }
 
 // runStart is the entry of start command.
@@ -90,7 +96,11 @@ func (s *StartCommand) runStart(args []string) error {
 		}()
 
 		// start container
-		if err := apiClient.ContainerStart(ctx, container, s.detachKeys); err != nil {
+		if err := apiClient.ContainerStart(ctx, container, types.ContainerStartOptions{
+			DetachKeys:    s.detachKeys,
+			CheckpointID:  s.checkpoint,
+			CheckpointDir: s.cpDir,
+		}); err != nil {
 			return fmt.Errorf("failed to start container %s: %v", container, err)
 		}
 
@@ -112,7 +122,11 @@ func (s *StartCommand) runStart(args []string) error {
 		// We're not going to attach to any container, so we just start as many containers as we want.
 		var errs []string
 		for _, name := range args {
-			if err := apiClient.ContainerStart(ctx, name, s.detachKeys); err != nil {
+			if err := apiClient.ContainerStart(ctx, name, types.ContainerStartOptions{
+				DetachKeys:    s.detachKeys,
+				CheckpointID:  s.checkpoint,
+				CheckpointDir: s.cpDir,
+			}); err != nil {
 				errs = append(errs, err.Error())
 				continue
 			}

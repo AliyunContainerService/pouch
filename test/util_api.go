@@ -64,7 +64,8 @@ func CreateBusyboxContainer(cname string, cmd ...string) (*http.Response, error)
 
 // StartContainerOk starts the container and asserts success.
 func StartContainerOk(c *check.C, cname string) {
-	resp, err := request.Post("/containers/" + cname + "/start")
+	body := request.WithJSONBody(map[string]interface{}{})
+	resp, err := request.Post("/containers/"+cname+"/start", body)
 	c.Assert(err, check.IsNil)
 
 	defer resp.Body.Close()

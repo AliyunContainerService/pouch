@@ -36,9 +36,9 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointCreateAPI(c *check.C) {
 	SkipIfFalse(c, environment.IsCRIUExist)
 	cname := "TestCheckpointCreateAPI"
 
+	defer DelContainerForceMultyTime(c, cname)
 	CreateBusyboxContainerOk(c, cname)
 	StartContainerOk(c, cname)
-	defer DelContainerForceMultyTime(c, cname)
 
 	obj := map[string]interface{}{
 		"CheckpointID": "cp0",
@@ -81,9 +81,9 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointListAPI(c *check.C) {
 	SkipIfFalse(c, environment.IsCRIUExist)
 	cname := "TestCheckpointListAPI"
 
+	defer DelContainerForceMultyTime(c, cname)
 	CreateBusyboxContainerOk(c, cname)
 	StartContainerOk(c, cname)
-	defer DelContainerForceMultyTime(c, cname)
 
 	resp, err := request.Get("/containers/" + cname + "/checkpoints")
 	c.Assert(err, check.IsNil)
@@ -110,9 +110,9 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointDelAPI(c *check.C) {
 	SkipIfFalse(c, environment.IsCRIUExist)
 	cname := "TestCheckpointDelAPI"
 
+	defer DelContainerForceMultyTime(c, cname)
 	CreateBusyboxContainerOk(c, cname)
 	StartContainerOk(c, cname)
-	defer DelContainerForceMultyTime(c, cname)
 
 	obj := map[string]interface{}{
 		"CheckpointID": "cp0",

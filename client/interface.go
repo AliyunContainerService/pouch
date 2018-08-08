@@ -21,7 +21,7 @@ type CommonAPIClient interface {
 // ContainerAPIClient defines methods of Container client.
 type ContainerAPIClient interface {
 	ContainerCreate(ctx context.Context, config types.ContainerConfig, hostConfig *types.HostConfig, networkConfig *types.NetworkingConfig, containerName string) (*types.ContainerCreateResp, error)
-	ContainerStart(ctx context.Context, name, detachKeys string) error
+	ContainerStart(ctx context.Context, name string, options types.ContainerStartOptions) error
 	ContainerStop(ctx context.Context, name, timeout string) error
 	ContainerRemove(ctx context.Context, name string, options *types.ContainerRemoveOptions) error
 	ContainerList(ctx context.Context, option types.ContainerListOptions) ([]*types.Container, error)

@@ -3563,6 +3563,17 @@ definitions:
       Width:
         type: "integer"
 
+  ContainerStartOptions:
+    description: "options of starting container"
+    type: "object"
+    properties:
+      DetachKeys:
+        type: "string"
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+
   ContainerRemoveOptions:
     description: "options of remove container"
     type: "object"

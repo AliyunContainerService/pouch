@@ -61,7 +61,7 @@ type ContainerMgr interface {
 	List(ctx context.Context, option *ContainerListOption) ([]*Container, error)
 
 	// Start a container.
-	Start(ctx context.Context, id, detachKeys string) error
+	Start(ctx context.Context, id string, options *types.ContainerStartOptions) error
 
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout int64) error
@@ -452,7 +452,7 @@ func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, 
 }
 
 // Start a pre created Container.
-func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (err error) {
+func (mgr *ContainerManager) Start(ctx context.Context, id string, options *types.ContainerStartOptions) (err error) {
 	if id == "" {
 		return errors.Wrap(errtypes.ErrInvalidParam, "either container name or id is required")
 	}
@@ -462,12 +462,12 @@ func (mgr *ContainerManager) Start(ctx context.Context, id, detachKeys string) (
 		return err
 	}
 
-	return mgr.start(ctx, c, detachKeys)
+	return mgr.start(ctx, c, options)
 }
 
-func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys string) error {
+func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *types.ContainerStartOptions) error {
 	var err error
-	c.DetachKeys = detachKeys
+	c.DetachKeys = options.DetachKeys
 
 	attachedVolumes := map[string]struct{}{}
 	defer func() {
@@ -503,7 +503,7 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, detachKeys
 		return err
 	}
 
-	if err = mgr.createContainerdContainer(ctx, c); err != nil {
+	if err = mgr.createContainerdContainer(ctx, c, options.CheckpointDir, options.CheckpointID); err != nil {
 		return errors.Wrapf(err, "failed to create container(%s) on containerd", c.ID)
 	}
 
@@ -579,7 +579,7 @@ func (mgr *ContainerManager) buildNetworkRelatedPath(c *Container) error {
 	return ioutil.WriteFile(c.HostnamePath, []byte(c.Config.Hostname+"\n"), 0644)
 }
 
-func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container) error {
+func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *Container, checkpointDir, checkpointID string) error {
 	// CgroupParent from HostConfig will be first priority to use,
 	// then will be value from mgr.Config.CgroupParent
 	c.Lock()
@@ -641,7 +641,13 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 	c.Unlock()
 
-	if err := mgr.Client.CreateContainer(ctx, ctrdContainer); err != nil {
+	if checkpointID != "" {
+		checkpointDir, err = mgr.getCheckpointDir(c.ID, checkpointDir, checkpointID, false)
+		if err != nil {
+			return err
+		}
+	}
+	if err := mgr.Client.CreateContainer(ctx, ctrdContainer, checkpointDir); err != nil {
 		logrus.Errorf("failed to create new containerd container: %v", err)
 
 		// TODO(ziren): markStoppedAndRelease may failed
@@ -765,7 +771,7 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 
 	logrus.Debugf("start container %s when restarting", c.ID)
 	// start container
-	return mgr.start(ctx, c, "")
+	return mgr.start(ctx, c, &types.ContainerStartOptions{})
 }
 
 // Pause pauses a running container.
@@ -1223,7 +1229,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 				return
 			}
 			// FIXME: create new containerd container may failed
-			_ = mgr.createContainerdContainer(ctx, c)
+			_ = mgr.createContainerdContainer(ctx, c, "", "")
 		}
 	}()
 
@@ -1299,7 +1305,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		return errors.Wrap(err, "failed to create snapshot")
 	}
 
-	if err := mgr.createContainerdContainer(ctx, c); err != nil {
+	if err := mgr.createContainerdContainer(ctx, c, "", ""); err != nil {
 		needRollback = true
 		return errors.Wrap(err, "failed to create new container")
 	}
@@ -1804,7 +1810,7 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 			return nil
 		}
 
-		return mgr.Start(context.TODO(), c.ID, keys)
+		return mgr.Start(context.TODO(), c.ID, &types.ContainerStartOptions{DetachKeys: keys})
 	}))
 
 	return nil

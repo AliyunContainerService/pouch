@@ -115,6 +115,17 @@ function install_lxcfs
 	fi
 }
 
+function install_criu
+{
+	echo "Try installing criu"
+	if grep -qi "ubuntu" /etc/issue ; then
+		apt-get update
+		apt-get install -y lxcfs
+	else
+		yum install criu
+	fi
+}
+
 # local-persist is a volume plugin
 function install_local_persist
 {
@@ -207,6 +218,7 @@ function install_pouch
 	cp -f "$DIR/pouch" "$DIR/pouchd" /usr/local/bin/
 	install_lxcfs
 	install_nsenter
+	install_criu
 }
 
 function target
