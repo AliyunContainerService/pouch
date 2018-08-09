@@ -120,7 +120,7 @@ function install_criu
 	echo "Try installing criu"
 	if grep -qi "ubuntu" /etc/issue ; then
 		apt-get update
-		apt-get install -y lxcfs
+		apt-get install -y criu
 	else
 		yum install criu
 	fi

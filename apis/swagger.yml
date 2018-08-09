@@ -3690,6 +3690,15 @@ definitions:
       CheckpointDir:
         type: "string"
 
+  Checkpoint:
+    description: "describe a created checkpoint, include container name and checkpoint name"
+    type: "object"
+    properties:
+      ContainerID:
+        type: "string"
+      CheckpointName:
+        type: "string"
+
 parameters:
   id:
     name: id

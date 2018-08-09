@@ -2,12 +2,18 @@ package mgr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/alibaba/pouch/apis/types"
+)
+
+var (
+	checkpointConfigPath             = "config.json"
+	checkpointConfigPerm os.FileMode = 0700
 )
 
 // getCheckpointDir gets container checkpoint directory.
@@ -42,7 +48,7 @@ func (mgr *ContainerManager) getCheckpointDir(container, prefixDir, checkpointID
 }
 
 // CreateCheckpoint creates a checkpoint from a running container
-func (mgr *ContainerManager) CreateCheckpoint(ctx context.Context, name string, options *types.CheckpointCreateOptions) error {
+func (mgr *ContainerManager) CreateCheckpoint(ctx context.Context, name string, options *types.CheckpointCreateOptions) (err0 error) {
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
@@ -60,12 +66,17 @@ func (mgr *ContainerManager) CreateCheckpoint(ctx context.Context, name string, 
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err0 != nil {
+			os.RemoveAll(dir)
+		}
+	}()
 
 	if err := mgr.Client.CreateCheckpoint(ctx, c.ID, dir, options.Exit); err != nil {
 		return err
 	}
 
-	return nil
+	return writeCheckpointConfig(filepath.Join(dir, checkpointConfigPath), c.ID, options.CheckpointID)
 }
 
 // ListCheckpoint lists checkpoints from a container
@@ -89,10 +100,10 @@ func (mgr *ContainerManager) ListCheckpoint(ctx context.Context, name string, op
 
 	cpList := make([]string, 0)
 	for _, checkpoint := range checkpoints {
-		cp := filepath.Join(dir, checkpoint.Name())
-		if stat, err := os.Stat(cp); err == nil && stat.IsDir() {
-			cpList = append(cpList, checkpoint.Name())
-
+		path := filepath.Join(dir, checkpoint.Name(), checkpointConfigPath)
+		if config, err := readCheckpointConfig(path); err == nil &&
+			config != nil && config.ContainerID == c.ID {
+			cpList = append(cpList, config.CheckpointName)
 		}
 	}
 
@@ -112,4 +123,31 @@ func (mgr *ContainerManager) DeleteCheckpoint(ctx context.Context, name string, 
 	}
 
 	return os.RemoveAll(dir)
+}
+
+func writeCheckpointConfig(path, container, checkpoint string) error {
+	config := &types.Checkpoint{
+		ContainerID:    container,
+		CheckpointName: checkpoint,
+	}
+
+	raw, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, raw, checkpointConfigPerm)
+}
+
+func readCheckpointConfig(path string) (*types.Checkpoint, error) {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, nil
+	}
+
+	config := &types.Checkpoint{}
+	if err = json.Unmarshal(raw, config); err != nil {
+		return nil, err
+	}
+
+	return config, err
 }
