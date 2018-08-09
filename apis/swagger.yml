@@ -3597,6 +3597,58 @@ definitions:
           items:
             type: "string"
 
+  EventsMessage:
+    description: |
+      EventsMessage represents the information an event contains, the message
+      at least contains type, action and id. type specifies which object generates
+      the event, like container, or a network, or a volume. the action specifies
+      the action name, like create, or destroy. the id identifies the object that
+      generates the event.
+      The message also can contain the EventsActor that describes the extra
+      attributes that describe the event.
+    type: "object"
+    properties:
+      status:
+        type: "string"
+      id:
+        type: "string"
+      from:
+        type: "string"
+      type:
+        $ref: "#/definitions/EventType"
+      action:
+        type: "string"
+      actor:
+        $ref: "#/definitions/EventsActor"
+      time:
+        type: "integer"
+      timeNano:
+        type: "integer"
+
+  EventsActor:
+    description: |
+      EventsActor describes something that generates events,
+      like a container, or a network, or a volume.
+      It has a defined name and a set or attributes.
+      The container attributes are its labels, other actors
+      can generate these attributes from other properties.
+    type: "object"
+    properties:
+      ID:
+        type: "string"
+      Attributes:
+        type: "object"
+        additionalProperties:
+          type: "string"
+
+  EventType:
+    description: |
+      The type of event. For example, "container" or "image",
+      Now we only support container, image, network and volume events.
+    type: "string"
+    enum: ["container", "daemon", "image", "network", "plugin", "volume"]
+
+
 parameters:
   id:
     name: id
