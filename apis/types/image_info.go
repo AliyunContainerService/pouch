@@ -34,6 +34,7 @@ type ImageInfo struct {
 	Os string `json:"Os,omitempty"`
 
 	// repository with digest.
+
 	RepoDigests []string `json:"RepoDigests"`
 
 	// repository with tag.
