@@ -12,13 +12,13 @@ import (
 
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
+
 	"github.com/sirupsen/logrus"
 )
 
 const (
 	// QuotaMinID represents the minimize quota id.
 	// The value is unit32(2^24).
-	// 这个需要问苦志?
 	QuotaMinID = uint32(16777216)
 
 	// procMountFile represent the mounts file in proc virtual file system.
@@ -308,7 +308,6 @@ func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
 
 		id, err := strconv.Atoi(parts[0][1:])
 		quotaID := uint32(id)
-		// 这里需要问苦志, minID is max ID in quotaIDs?
 		if err == nil && quotaID > QuotaMinID {
 			quotaIDs[quotaID] = struct{}{}
 			if quotaID > minID {

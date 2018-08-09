@@ -175,7 +175,9 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 		return "", false, ""
 	}
 
+	// Two formats of group quota.
 	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
+	// /dev/sda1 /home/pouch ext4 rw,relatime,data=ordered,jqfmt=vfsv0,grpjquota=aquota.group 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
 		if len(parts) != 6 {
@@ -190,10 +192,8 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 			continue
 		}
 
-		for _, value := range strings.Split(parts[3], ",") {
-			if value == "grpquota" {
-				return mountPoint, true, fsType
-			}
+		if strings.Contains(parts[3], "grpquota") || strings.Contains(parts[3], "grpjquota") {
+			return mountPoint, true, fsType
 		}
 	}
 
