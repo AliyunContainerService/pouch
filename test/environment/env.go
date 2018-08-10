@@ -2,6 +2,7 @@ package environment
 
 import (
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -164,6 +165,15 @@ func IsLxcfsEnabled() bool {
 	}
 	cmd := "ps -ef |grep pouchd |grep \"enable\\-lxcfs\""
 	if icmd.RunCommand("sh", "-c", cmd).ExitCode != 0 {
+		return false
+	}
+	return true
+}
+
+// IsCRIUExist checks if criu exist on machine.
+func IsCRIUExist() bool {
+	_, err := exec.LookPath("criu")
+	if err != nil {
 		return false
 	}
 	return true

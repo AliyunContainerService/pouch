@@ -13,40 +13,37 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-func TestContainerStartError(t *testing.T) {
+func TestCheckpointListError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerStart(context.Background(), "nothing", types.ContainerStartOptions{})
+	_, err := client.ContainerCheckpointList(context.Background(), "nothing", types.CheckpointListOptions{CheckpointDir: "nothing"})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
-func TestContainerStart(t *testing.T) {
-	expectedURL := "/containers/container_id/start"
+func TestCheckpointList(t *testing.T) {
+	expectedURL := "/containers/container_id/checkpoints"
 
 	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
 			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
-		if req.Header.Get("Content-Type") == "application/json" {
-			var startConfig interface{}
-			if err := json.NewDecoder(req.Body).Decode(&startConfig); err != nil {
-				return nil, fmt.Errorf("failed to parse json: %v", err)
-			}
+		list := make([]string, 0)
+		b, err := json.Marshal(&list)
+		if err != nil {
+			return nil, err
 		}
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte(b))),
 		}, nil
 	})
-
 	client := &APIClient{
 		HTTPCli: httpClient,
 	}
-
-	if err := client.ContainerStart(context.Background(), "container_id", types.ContainerStartOptions{}); err != nil {
+	if _, err := client.ContainerCheckpointList(context.Background(), "container_id", types.CheckpointListOptions{CheckpointDir: "nothing"}); err != nil {
 		t.Fatal(err)
 	}
 }

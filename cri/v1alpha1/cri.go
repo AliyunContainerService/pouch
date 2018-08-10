@@ -212,7 +212,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	}()
 
 	// Step 3: Start the sandbox container.
-	err = c.ContainerMgr.Start(ctx, id, "")
+	err = c.ContainerMgr.Start(ctx, id, &apitypes.ContainerStartOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
 	}
@@ -563,7 +563,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 func (c *CriManager) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (*runtime.StartContainerResponse, error) {
 	containerID := r.GetContainerId()
 
-	err := c.ContainerMgr.Start(ctx, containerID, "")
+	err := c.ContainerMgr.Start(ctx, containerID, &apitypes.ContainerStartOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to start container %q: %v", containerID, err)
 	}

@@ -47,6 +47,7 @@ func main() {
 	cli.AddCommand(base, &RemountLxcfsCommand{})
 	cli.AddCommand(base, &WaitCommand{})
 	cli.AddCommand(base, &DaemonUpdateCommand{})
+	cli.AddCommand(base, &CheckpointCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

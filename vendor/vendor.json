@@ -262,6 +262,12 @@
 			"versionExact": "v1.0.3"
 		},
 		{
+			"checksumSHA1": "HoGaFt++oBcQULZwr93dpHrOonA=",
+			"path": "github.com/containerd/containerd/archive",
+			"revision": "278a4f5007eef70fab7982ec9c2a57dc371b91e0",
+			"revisionTime": "2018-06-03T08:25:26Z"
+		},
+		{
 			"checksumSHA1": "vmjGd4DU++wHR9j8jVfqnfJ1T10=",
 			"path": "github.com/containerd/containerd/cio",
 			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
@@ -620,16 +626,16 @@
 			"revisionTime": "2018-01-08T23:09:05Z"
 		},
 		{
-			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
-			"path": "github.com/coreos/go-systemd/dbus",
-			"revision": "39ca1b05acc7ad1220e09f133283b8859a8b71ab",
-			"revisionTime": "2018-05-11T13:34:05Z"
-		},
-		{
 			"checksumSHA1": "dPUClu2Gew2ddf1Y5rmgvxUUFeU=",
 			"path": "github.com/coreos/go-systemd/daemon",
 			"revision": "a4887aeaa186e68961d2d6af7d5fbac6bd6fa79b",
 			"revisionTime": "2018-05-25T14:22:39Z"
+		},
+		{
+			"checksumSHA1": "1txgvJO9bgE703kK2EQ/NATy1Rg=",
+			"path": "github.com/coreos/go-systemd/dbus",
+			"revision": "39ca1b05acc7ad1220e09f133283b8859a8b71ab",
+			"revisionTime": "2018-05-11T13:34:05Z"
 		},
 		{
 			"checksumSHA1": "5GD2mlKEoDM+bU1PfSlx8rAz4oc=",
@@ -668,6 +674,12 @@
 			"path": "github.com/deckarep/golang-set",
 			"revision": "504e848d77ea4752b3057b8fb46da0e7f746ccf3",
 			"revisionTime": "2018-06-03T19:32:48Z"
+		},
+		{
+			"checksumSHA1": "zlJUlwvnskgPoHQgTfG3CPLCJ0g=",
+			"path": "github.com/dmcgowan/go-tar",
+			"revision": "01eea4a853c4e9ab63191abd92e8ed55be1f0928",
+			"revisionTime": "2017-07-18T22:32:38Z"
 		},
 		{
 			"checksumSHA1": "IggTTG/yCDaV9SjtQz5SSarqUtc=",

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/url"
-
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -36,7 +34,8 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 func (suite *APIContainerStartSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
 
-	resp, err := request.Post("/containers/" + cname + "/start")
+	body := request.WithJSONBody(map[string]interface{}{})
+	resp, err := request.Post("/containers/"+cname+"/start", body)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
 }
@@ -62,7 +61,8 @@ func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
 	StartContainerOk(c, cname)
 	PauseContainerOk(c, cname)
 
-	resp, err := request.Post("/containers/" + cname + "/start")
+	body := request.WithJSONBody(map[string]interface{}{})
+	resp, err := request.Post("/containers/"+cname+"/start", body)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 409)
 }
@@ -74,11 +74,10 @@ func (suite *APIContainerStartSuite) TestStartDetachKeyWork(c *check.C) {
 	CreateBusyboxContainerOk(c, cname)
 	defer DelContainerForceMultyTime(c, cname)
 
-	q := url.Values{}
-	q.Add("detachKeys", "EOF")
-	query := request.WithQuery(q)
-
-	resp, err := request.Post("/containers/"+cname+"/start", query)
+	body := request.WithJSONBody(map[string]interface{}{
+		"DetachKeys": "EOF",
+	})
+	resp, err := request.Post("/containers/"+cname+"/start", body)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 

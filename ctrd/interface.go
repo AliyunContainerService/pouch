@@ -29,7 +29,7 @@ type APIClient interface {
 // ContainerAPIClient provides access to containerd container features.
 type ContainerAPIClient interface {
 	// CreateContainer creates a containerd container and start process.
-	CreateContainer(ctx context.Context, container *Container) error
+	CreateContainer(ctx context.Context, container *Container, checkpointDir string) error
 	// DestroyContainer kill container and delete it.
 	DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error)
 	// ProbeContainer probe the container's status, if timeout <= 0, will block to receive message.
@@ -98,4 +98,6 @@ type SnapshotAPIClient interface {
 	GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error)
 	// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
 	WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error
+	// CreateCheckpoint creates a checkpoint from a running container
+	CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error
 }

@@ -135,7 +135,9 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 
 	// start container
-	if err := apiClient.ContainerStart(ctx, containerName, rc.detachKeys); err != nil {
+	if err := apiClient.ContainerStart(ctx, containerName, types.ContainerStartOptions{
+		DetachKeys: rc.detachKeys,
+	}); err != nil {
 		return fmt.Errorf("failed to run container %s: %v", containerName, err)
 	}
 

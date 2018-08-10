@@ -3563,6 +3563,17 @@ definitions:
       Width:
         type: "integer"
 
+  ContainerStartOptions:
+    description: "options of starting container"
+    type: "object"
+    properties:
+      DetachKeys:
+        type: "string"
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+
   ContainerRemoveOptions:
     description: "options of remove container"
     type: "object"
@@ -3652,6 +3663,41 @@ definitions:
     type: "string"
     enum: ["container", "daemon", "image", "network", "plugin", "volume"]
 
+  CheckpointCreateOptions:
+    description: "options of creating a checkpoint from a running container, checkpoint is used to restore a container with current state later"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+      Exit:
+        type: "boolean"
+
+  CheckpointListOptions:
+    description: "options of listing all checkpoints of a container"
+    type: "object"
+    properties:
+      CheckpointDir:
+        type: "string"
+
+  CheckpointDeleteOptions:
+    description: "options of deleting a checkpoint from a container"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+
+  Checkpoint:
+    description: "describe a created checkpoint, include container name and checkpoint name"
+    type: "object"
+    properties:
+      ContainerID:
+        type: "string"
+      CheckpointName:
+        type: "string"
 
 parameters:
   id:

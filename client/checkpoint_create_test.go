@@ -1,11 +1,9 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -13,32 +11,36 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-func TestContainerStartError(t *testing.T) {
+func TestCheckpointCreateError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerStart(context.Background(), "nothing", types.ContainerStartOptions{})
+	err := client.ContainerCheckpointCreate(context.Background(), "nothing", types.CheckpointCreateOptions{CheckpointID: "cp0"})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
-func TestContainerStart(t *testing.T) {
-	expectedURL := "/containers/container_id/start"
+func TestCheckpointCreate(t *testing.T) {
+	expectedURL := "/containers/id/checkpoints"
 
 	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
 			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
 		if req.Header.Get("Content-Type") == "application/json" {
-			var startConfig interface{}
-			if err := json.NewDecoder(req.Body).Decode(&startConfig); err != nil {
+			options := types.CheckpointCreateOptions{}
+			if err := json.NewDecoder(req.Body).Decode(&options); err != nil {
 				return nil, fmt.Errorf("failed to parse json: %v", err)
 			}
+
+			if options.CheckpointID != "cp0" {
+				return nil, fmt.Errorf("expected CheckpointID %s, obtain %s", "cp0", options.CheckpointID)
+			}
 		}
+
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
 		}, nil
 	})
 
@@ -46,7 +48,8 @@ func TestContainerStart(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	if err := client.ContainerStart(context.Background(), "container_id", types.ContainerStartOptions{}); err != nil {
+	err := client.ContainerCheckpointCreate(context.Background(), "id", types.CheckpointCreateOptions{CheckpointID: "cp0"})
+	if err != nil {
 		t.Fatal(err)
 	}
 }
