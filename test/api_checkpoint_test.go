@@ -47,7 +47,7 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointCreateAPI(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post("/containers/"+cname+"/checkpoints", body)
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
+	CheckRespStatus(c, resp, 201)
 
 	CheckContainerRunning(c, cname, true)
 
@@ -60,7 +60,7 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointCreateAPI(c *check.C) {
 	body = request.WithJSONBody(obj)
 	resp, err = request.Post("/containers/"+cname+"/checkpoints", body)
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
+	CheckRespStatus(c, resp, 201)
 
 	CheckContainerRunning(c, cname, false)
 }
@@ -120,7 +120,7 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointDelAPI(c *check.C) {
 	body := request.WithJSONBody(obj)
 	resp, err := request.Post("/containers/"+cname+"/checkpoints", body)
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
+	CheckRespStatus(c, resp, 201)
 
 	resp, err = request.Delete("/containers/" + cname + "/checkpoints/" + "cp0")
 	c.Assert(err, check.IsNil)

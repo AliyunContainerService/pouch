@@ -23,28 +23,33 @@ func (mgr *ContainerManager) getCheckpointDir(container, prefixDir, checkpointID
 	}
 	checkpointDir := filepath.Join(prefixDir, checkpointID)
 
+	var rerr error
 	stat, err := os.Stat(checkpointDir)
 	if create {
 		switch {
 		case err != nil && os.IsNotExist(err):
-			return checkpointDir, os.MkdirAll(checkpointDir, 0700)
+			rerr = os.MkdirAll(checkpointDir, 0700)
 		case err != nil:
-			return "", fmt.Errorf("failed to create checkpoint %s", checkpointID)
+			rerr = fmt.Errorf("failed to create checkpoint %s: %s", checkpointID, err)
 		case !stat.IsDir():
-			return "", fmt.Errorf("checkpoint %s exist but not directory", checkpointID)
+			rerr = fmt.Errorf("checkpoint %s exist but not directory", checkpointID)
 		default:
-			return "", fmt.Errorf("checkpoint %s is already exist", checkpointID)
+			rerr = fmt.Errorf("checkpoint %s is already exist", checkpointID)
 		}
+
+		return checkpointDir, rerr
 	}
 
 	switch {
 	case err == nil && stat.IsDir():
-		return checkpointDir, nil
+		break
 	case err == nil:
-		return "", fmt.Errorf("checkpoint %s exist but not directory", checkpointID)
+		rerr = fmt.Errorf("checkpoint %s exist but not directory", checkpointID)
+	default:
+		rerr = fmt.Errorf("checkpoint %s is not exist for container %s", checkpointID, container)
 	}
 
-	return "", fmt.Errorf("checkpoint %s is not exist for container %s", checkpointID, container)
+	return checkpointDir, rerr
 }
 
 // CreateCheckpoint creates a checkpoint from a running container

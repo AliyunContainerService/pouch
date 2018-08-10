@@ -510,6 +510,14 @@ paths:
           in: "query"
           description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
           type: "string"
+        - name: "checkpoint-dir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpoint"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
       responses:
         204:
           description: "no error"
@@ -760,6 +768,79 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/Error"
+      tags: ["Container"]
+
+  /containers/{id}/checkpoints:
+    post:
+      summary: "create a checkpoint from a running container"
+      operationId: "ContainerCheckpointCreate"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpointid"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
+        - name: "exit"
+          in: "query"
+          description: "exit after checkpoint"
+          type: "bool"
+      responses:
+        201:
+          description: "created"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+      tags: ["Container"]
+
+  /containers/{id}/checkpoints:
+    get:
+      summary: "list checkpoints of a container"
+      operationId: "ContainerCheckpointList"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+      tags: ["Container"]
+
+  /containers/{id}/checkpoints/{id}:
+    delete:
+      summary: "delete a checkpoint of a container"
+      operationId: "ContainerCheckpointDelete"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpointid"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
+      responses:
+        204:
+          description: "no error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /exec/{id}/start:
