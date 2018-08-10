@@ -345,13 +345,8 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 
 // ListReferences returns all references
 func (mgr *ImageManager) ListReferences(ctx context.Context, imageID digest.Digest) ([]reference.Named, error) {
-	refs := mgr.localStore.GetPrimaryReferences(imageID)
-	if len(refs) == 0 {
-		err := errtypes.ErrNotfound
-		logrus.Errorf("one Image ID must have the primary references, but got nothing")
-		return nil, err
-	}
-	return refs, nil
+	// NOTE: we just keep ctx and error for further expansion
+	return mgr.localStore.GetPrimaryReferences(imageID), nil
 }
 
 // updateLocalStore updates the local store.
