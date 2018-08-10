@@ -207,7 +207,10 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		// If running sandbox failed, clean up the container.
 		if retErr != nil {
-			c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+			err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+			if err != nil {
+				logrus.Errorf("failed to remove the container when running sandbox failed: %v", err)
+			}
 		}
 	}()
 
@@ -460,6 +463,11 @@ func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 	sandboxList, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sandbox: %v", err)
+	}
+
+	sandboxList, err = c.filterInvalidSandboxes(ctx, sandboxList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter invalid sandboxes: %v", err)
 	}
 
 	sandboxes := make([]*runtime.PodSandbox, 0, len(sandboxList))
