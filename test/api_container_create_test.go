@@ -196,3 +196,38 @@ func (suite *APIContainerCreateSuite) TestBadParam(c *check.C) {
 	// 2. Invalid Parameters
 	helpwantedForMissingCase(c, "container api create with bad request")
 }
+
+func (suite *APIContainerCreateSuite) TestCreateNvidiaConfig(c *check.C) {
+	cname := "TestCreateNvidiaConfig"
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+
+	obj := map[string]interface{}{
+		"Image": busyboxImage,
+		"HostConfig": map[string]interface{}{
+			"NvidiaConfig": map[string]interface{}{
+				"NvidiaDriverCapabilities": "all",
+				"NvidiaVisibleDevices":     "none",
+			},
+		},
+	}
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	resp, err = request.Get("/containers/" + cname + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := types.ContainerJSON{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(got.HostConfig.Resources.NvidiaConfig.NvidiaVisibleDevices, check.Equals, "none")
+	c.Assert(got.HostConfig.Resources.NvidiaConfig.NvidiaDriverCapabilities, check.Equals, "all")
+
+	DelContainerForceMultyTime(c, cname)
+}

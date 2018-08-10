@@ -109,5 +109,9 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// additional runtime spec annotations
 	flagSet.StringSliceVar(&c.specAnnotation, "annotation", nil, "Additional annotation for runtime")
 
+	// nvidia container
+	flagSet.StringVar(&c.nvidiaDriverCapabilities, "nvidia-capabilities", "", "NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container")
+	flagSet.StringVar(&c.nvidiaVisibleDevices, "nvidia-visible-devs", "", "NvidiaVisibleDevices controls which GPUs will be made accessible inside the container")
+
 	return c
 }

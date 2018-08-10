@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -61,6 +62,9 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 		return err
 	}
 
+	if err := setupNvidiaEnv(ctx, c, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -161,5 +165,15 @@ func setupRlimits(ctx context.Context, hostConfig *types.HostConfig, s *specs.Sp
 	}
 
 	s.Process.Rlimits = rlimits
+	return nil
+}
+
+func setupNvidiaEnv(ctx context.Context, c *Container, s *specs.Spec) error {
+	n := c.HostConfig.NvidiaConfig
+	if n == nil {
+		return nil
+	}
+	s.Process.Env = append(s.Process.Env, fmt.Sprintf("NVIDIA_DRIVER_CAPABILITIES=%s", n.NvidiaDriverCapabilities))
+	s.Process.Env = append(s.Process.Env, fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=%s", n.NvidiaVisibleDevices))
 	return nil
 }
