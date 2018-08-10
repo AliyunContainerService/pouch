@@ -156,9 +156,10 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 func (s *Server) startContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
-	options := &types.ContainerStartOptions{}
-	if err := json.NewDecoder(req.Body).Decode(options); err != nil {
-		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	options := &types.ContainerStartOptions{
+		DetachKeys:    req.FormValue("detachKeys"),
+		CheckpointID:  req.FormValue("checkpoint"),
+		CheckpointDir: req.FormValue("checkpoint-dir"),
 	}
 
 	if err := s.ContainerMgr.Start(ctx, name, options); err != nil {
@@ -430,7 +431,7 @@ func (s *Server) createContainerCheckpoint(ctx context.Context, rw http.Response
 		return err
 	}
 
-	rw.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusCreated)
 	return nil
 }
 
