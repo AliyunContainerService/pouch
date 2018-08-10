@@ -154,6 +154,15 @@ gpasswd -a $user pouch
 
 Remind that you should relogin to make /etc/group take effect, check it by typing groups to see if your shell gets pouch group.
 
+## Run pouch command with auto-completion
+
+Pouch provides a bash completion file locate at `contrib/completion/bash/pouch`, place this file under `/usr/share/bash-completion/completions`. Source it to make it take effect, then you can enjoy pouch/pouchd commands completion.
+
+```bash
+cp contrib/completion/bash/pouch /usr/share/bash-completion/completions
+source /usr/share/bash-completion/completions/pouch
+```
+
 ## Uninstall pouch
 
 On Ubuntu

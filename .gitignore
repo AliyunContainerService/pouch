@@ -5,6 +5,7 @@ pouch
 volume_build.go
 coverage.txt
 .*.swp
+.*.swo
 .editorconfig
 .bashrc
 .idea
