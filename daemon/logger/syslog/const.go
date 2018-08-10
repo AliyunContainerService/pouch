@@ -6,7 +6,22 @@ import (
 	"github.com/RackSec/srslog"
 )
 
+// Priority is alias srslog.Priority.
+type Priority = srslog.Priority
+
+// Framer is alias srslog.Framer.
+type Framer = srslog.Framer
+
+// Formatter is alias srslog.Formatter.
+type Formatter = srslog.Formatter
+
+const (
+	severityMask = 0x07
+	facilityMask = 0xf8
+)
+
 var (
+
 	// rfc5424 provides millisecond resolution.
 	timeRfc5424fmt = "2006-01-02T15:04:05.999999Z07:00"
 
@@ -16,7 +31,7 @@ var (
 	defaultSyslogPriority = srslog.LOG_DAEMON
 
 	// facilityAliasMap allows user to use alias to set the syslog priority.
-	facilityAliasMap = map[string]srslog.Priority{
+	facilityAliasMap = map[string]Priority{
 		"kern":     srslog.LOG_KERN,
 		"user":     srslog.LOG_USER,
 		"mail":     srslog.LOG_MAIL,
@@ -46,6 +61,9 @@ var (
 		"unix://",
 		"unixgram://",
 	}
+
+	unixDialerTypes      = []string{"unixgram", "unix"}
+	unixDialerLocalPaths = []string{"/dev/log", "/var/run/syslog", "/var/run/log"}
 
 	// tls client cipher suites
 	defaultCipherSuites = []uint16{
