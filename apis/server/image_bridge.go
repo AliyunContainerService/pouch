@@ -16,8 +16,8 @@ import (
 	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 )
 
 // pullImage will pull an image from a specified registry.

@@ -48,7 +48,7 @@ type ImageMgr interface {
 	CheckReference(ctx context.Context, idOrRef string) (digest.Digest, reference.Named, reference.Named, error)
 
 	// ListReferences returns all references
-	ListReferences(ctx context.Context, imageId digest.Digest) ([]reference.Named, error)
+	ListReferences(ctx context.Context, imageID digest.Digest) ([]reference.Named, error)
 
 	// LoadImage creates a set of images by tarstream.
 	LoadImage(ctx context.Context, imageName string, tarstream io.ReadCloser) error
@@ -344,8 +344,8 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 }
 
 // ListReferences returns all references
-func (mgr *ImageManager) ListReferences(ctx context.Context, imageId digest.Digest) ([]reference.Named, error) {
-	refs := mgr.localStore.GetPrimaryReferences(imageId)
+func (mgr *ImageManager) ListReferences(ctx context.Context, imageID digest.Digest) ([]reference.Named, error) {
+	refs := mgr.localStore.GetPrimaryReferences(imageID)
 	if len(refs) == 0 {
 		err := errtypes.ErrNotfound
 		logrus.Errorf("one Image ID must have the primary references, but got nothing")
