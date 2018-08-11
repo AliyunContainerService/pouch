@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/storage/volume"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -38,11 +39,12 @@ type VolumeMgr interface {
 
 // VolumeManager is the default implement of interface VolumeMgr.
 type VolumeManager struct {
-	core *volume.Core
+	core          *volume.Core
+	eventsService *events.Events
 }
 
 // NewVolumeManager creates a brand new volume manager.
-func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
+func NewVolumeManager(cfg volume.Config, eventsService *events.Events) (*VolumeManager, error) {
 	// init volume config
 	cfg.RemoveVolume = true
 	cfg.DefaultBackend = types.DefaultBackend
@@ -53,7 +55,8 @@ func NewVolumeManager(cfg volume.Config) (*VolumeManager, error) {
 	}
 
 	return &VolumeManager{
-		core: core,
+		core:          core,
+		eventsService: eventsService,
 	}, nil
 }
 
@@ -79,7 +82,14 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 		id.Options = options
 	}
 
-	return vm.core.CreateVolume(id)
+	v, err := vm.core.CreateVolume(id)
+	if err != nil {
+		return nil, err
+	}
+
+	vm.LogVolumeEvent(ctx, name, "create", map[string]string{"driver": driver})
+
+	return v, nil
 }
 
 // Get returns the information of volume that specified name/id.
@@ -132,6 +142,8 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 		}
 		return err
 	}
+
+	vm.LogVolumeEvent(ctx, name, "destroy", map[string]string{"driver": vol.Driver()})
 
 	return nil
 }

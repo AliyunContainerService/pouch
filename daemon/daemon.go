@@ -13,6 +13,7 @@ import (
 	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
@@ -39,6 +40,7 @@ type Daemon struct {
 	server          server.Server
 	containerPlugin plugins.ContainerPlugin
 	daemonPlugin    plugins.DaemonPlugin
+	eventsService   *events.Events
 }
 
 // router represents the router of daemon.
@@ -154,6 +156,8 @@ func (d *Daemon) Run() error {
 	if err := d.loadPlugin(); err != nil {
 		return err
 	}
+
+	d.eventsService = events.NewEvents()
 
 	imageMgr, err := internal.GenImageMgr(d.config, d)
 	if err != nil {
@@ -324,6 +328,11 @@ func (d *Daemon) ShutdownPlugin() error {
 		}
 	}
 	return nil
+}
+
+// EventsService gets Events instance
+func (d *Daemon) EventsService() *events.Events {
+	return d.eventsService
 }
 
 // addSystemLabels adds some system labels to daemon's config.

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 )
 
@@ -71,6 +72,7 @@ type SystemAPIClient interface {
 	SystemInfo(ctx context.Context) (*types.SystemInfo, error)
 	RegistryLogin(ctx context.Context, auth *types.AuthConfig) (*types.AuthResponse, error)
 	DaemonUpdate(ctx context.Context, daemonConfig *types.DaemonUpdateConfig) error
+	Events(ctx context.Context, since string, until string, filters filters.Args) (io.ReadCloser, error)
 }
 
 // NetworkAPIClient defines methods of Network client.
