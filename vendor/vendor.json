@@ -657,10 +657,10 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "je2SUpKP4rZR5hpk1VidpPYGUWA=",
+			"checksumSHA1": "2/jWygRyq/dGS2wMjuK6cYiSvPY=",
 			"path": "github.com/cri-o/ocicni/pkg/ocicni",
-			"revision": "17d9dd2837c6facb27b618c441193e5e912f3212",
-			"revisionTime": "2018-01-11T00:30:19Z"
+			"revision": "2a19a0093d927d3ecc0e305b522c48e2213b22fd",
+			"revisionTime": "2018-02-02T23:36:03Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
