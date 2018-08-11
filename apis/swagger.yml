@@ -103,6 +103,52 @@ paths:
           schema:
             $ref: "#/definitions/DaemonUpdateConfig"
 
+  /events:
+    get:
+      summary: "Subscribe pouchd events to users"
+      description: |
+        Stream real-time events from the server.
+        Report various object events of pouchd when something happens to them.
+        Containers report these events: create`, `destroy`, `die`, `oom`, `pause`, `rename`, `resize`, `restart`, `start`, `stop`, `top`, `unpause`, and `update`
+        Images report these events: `pull`, `untag`
+        Volumes report these events: `create`, `destroy`
+        Networks report these events: `create`, `connect`, `disconnect`, `destroy`
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: '#definitions/EventsMessage'
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "since"
+          in: "query"
+          description: "Show events created since this timestamp then stream new events."
+          type: "string"
+        - name: "until"
+          in: "query"
+          description: "Show events created until this timestamp then stop streaming"
+          type: "string"
+        - name: "filters"
+          in: "query"
+          description: |
+            A JSON encoded value of filters (a `map[string][]string`) to process on the event list. Available filters:
+            - `container=<string>` container name or ID
+            - `event=<string>` event type
+            - `image=<string>` image name or ID
+            - `label=<string>` image or container label
+            - `network=<string>` network name or ID
+            - `type=<string>` object to filter by, one of `container`, `image`, `volume`, `network`
+            - `volume=<string>` volume name
+          type: "string"
+
+
   /images/create:
     post:
       summary: "Create an image by pulling from a registry or importing from an existing source file"

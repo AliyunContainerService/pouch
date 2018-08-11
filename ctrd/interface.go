@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
+	eventsapi "github.com/containerd/containerd/api/services/events/v1"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
@@ -62,6 +63,10 @@ type ContainerAPIClient interface {
 	SetExitHooks(hooks ...func(string, *Message) error)
 	// SetExecExitHooks specified the handlers of exec process exit.
 	SetExecExitHooks(hooks ...func(string, *Message) error)
+	// Events subscribe containerd events through an event subscribe client.
+	Events(ctx context.Context, ef ...string) (eventsapi.Events_SubscribeClient, error)
+	// SetEventsHooks specified the methods to handle the containerd events.
+	SetEventsHooks(hooks ...func(context.Context, string, string, map[string]string) error)
 }
 
 // ImageAPIClient provides access to containerd image features.

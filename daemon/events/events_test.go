@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -43,10 +44,10 @@ func TestBasicSubscribe(t *testing.T) {
 	// Create two subscribers for same set of events and make sure they
 	// traverse the event.
 	ctx1, cancel1 := context.WithCancel(ctx)
-	eventq1, errq1 := eventsService.Subscribe(ctx1, nil)
+	_, eventq1, errq1 := eventsService.Subscribe(ctx1, time.Time{}, time.Time{}, nil)
 
 	ctx2, cancel2 := context.WithCancel(ctx)
-	eventq2, errq2 := eventsService.Subscribe(ctx2, nil)
+	_, eventq2, errq2 := eventsService.Subscribe(ctx2, time.Time{}, time.Time{}, nil)
 
 	t.Log("publish")
 	var wg sync.WaitGroup

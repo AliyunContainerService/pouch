@@ -28,6 +28,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodGet, "/info", s.info)
 	s.addRoute(r, http.MethodGet, "/version", s.version)
 	s.addRoute(r, http.MethodPost, "/auth", s.auth)
+	s.addRoute(r, http.MethodGet, "/events", s.events)
 
 	// daemon, we still list this API into system manager.
 	s.addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)

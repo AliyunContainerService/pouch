@@ -48,6 +48,7 @@ func main() {
 	cli.AddCommand(base, &WaitCommand{})
 	cli.AddCommand(base, &DaemonUpdateCommand{})
 	cli.AddCommand(base, &CheckpointCommand{})
+	cli.AddCommand(base, &EventsCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})
