@@ -158,6 +158,14 @@
 			"versionExact": "v1.0.3"
 		},
 		{
+			"checksumSHA1": "5pKxGJe3gsS/LjW8ZklKJvSXBMs=",
+			"path": "github.com/containerd/containerd/api/events",
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
+		},
+		{
 			"checksumSHA1": "V/ZFMKUvTntwELx2zTjn/9IFUqw=",
 			"path": "github.com/containerd/containerd/api/services/containers/v1",
 			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
@@ -494,6 +502,14 @@
 		{
 			"checksumSHA1": "eHFZrtLsqkippwdT4O1cOnadqac=",
 			"path": "github.com/containerd/containerd/rootfs",
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
+		},
+		{
+			"checksumSHA1": "2PwNsRYBau8Sl+WShKZoqovwWzY=",
+			"path": "github.com/containerd/containerd/runtime",
 			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
 			"revisionTime": "2018-04-02T20:34:37Z",
 			"version": "v1.0.3",
