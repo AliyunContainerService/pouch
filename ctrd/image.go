@@ -15,7 +15,6 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	ctrdmetaimages "github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -246,8 +245,6 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 }
 
 func (c *Client) pullImage(ctx context.Context, wrapperCli *WrapperClient, ref string, options []containerd.RemoteOpt) (containerd.Image, error) {
-	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
-
 	img, err := wrapperCli.client.Pull(ctx, ref, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to pull image")
