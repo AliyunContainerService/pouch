@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -172,6 +173,47 @@ func TestListVolumes(t *testing.T) {
 		if found == false {
 			t.Fatalf("list volumes %v not found", vol)
 		}
+	}
+}
+
+func TestListVolumesWithLabels(t *testing.T) {
+	driverName := "fake_driver5"
+	dir, err := ioutil.TempDir("", "TestListVolumesWithLabels")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	core, err := createVolumeCore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver.Register(driver.NewFakeDriver(driverName))
+	defer driver.Unregister(driverName)
+
+	var i int64
+	for i = 0; i < 6; i++ {
+		volName := strconv.FormatInt(i, 10)
+		volid := types.VolumeID{Name: volName, Driver: driverName, Labels: map[string]string{fmt.Sprintf("label-%v", i): fmt.Sprintf("value-%v", i)}}
+		_, err := core.CreateVolume(volid)
+		if err != nil {
+			t.Fatalf("create volume error: %v", err)
+		}
+	}
+
+	testLabels := map[string]string{"test-label": "test-value"}
+
+	testVolume, err := core.CreateVolume(types.VolumeID{Name: "test-volume", Driver: driverName, Labels: testLabels})
+	if err != nil {
+		t.Fatalf("create volume error: %v", err)
+	}
+	realVolume, err := core.ListVolumes(testLabels)
+	if err != nil {
+		t.Fatalf("list volumes error: %v", err)
+	}
+	if len(realVolume) != 1 || testVolume.UID != realVolume[0].UID {
+		t.Fatalf("fail to list volumes with labels %v, expect value is %v, real value is %v.", testLabels, testVolume, realVolume[0])
 	}
 }
 
