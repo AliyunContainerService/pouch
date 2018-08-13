@@ -5,6 +5,7 @@ Below are the adoptors of project PouchContainer. If you are using to PouchConta
 <a href="https://www.alibabagroup.com" border="0" target="_blank"><img alt="AlibabaGroup" src="docs/static_files/adoptors_logo/AlibabaGroup.jpg" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
 <a href="https://www.alibabacloud.com/zh" border="0" target="_blank"><img alt="AlibabaCloud" src="docs/static_files/adoptors_logo/AlibabaCloud.png" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
 <a href="https://www.antfin.com/" border="0" target="_blank"><img alt="AntFinancial" src="docs/static_files/adoptors_logo/AntFinancial.png" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
+<a href="https://www.ele.me/home/" border="0" target="_blank"><img alt="eleme" src="docs/static_files/adoptors_logo/eleme.png" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
 <a href="https://www.cainiao.com/" border="0" target="_blank"><img alt="CaiNiao" src="docs/static_files/adoptors_logo/CaiNiao.gif" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
 <a href="http://www.iflytek.com/" border="0" target="_blank"><img alt="iFLYTEK" src="docs/static_files/adoptors_logo/iFLYTEK.png" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
 <a href="https://www.didiglobal.com" border="0" target="_blank"><img alt="didi" src="docs/static_files/adoptors_logo/didi.png" height="50"></a>&nbsp; &nbsp; &nbsp; &nbsp;
