@@ -157,6 +157,11 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
+	// initializes runtimes real path.
+	if err := initialRuntime(d.config.HomeDir, d.config.Runtimes); err != nil {
+		return err
+	}
+
 	d.eventsService = events.NewEvents()
 
 	imageMgr, err := internal.GenImageMgr(d.config, d)
