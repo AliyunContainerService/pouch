@@ -337,16 +337,22 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	mgr.setBaseFS(ctx, container, id)
 
 	if err := mgr.Mount(ctx, container); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to mount container: (%s) rootfs: (%s)", id, container.MountFS)
 	}
 
 	// parse volume config
 	if err := mgr.generateMountPoints(ctx, container); err != nil {
+		if err = mgr.Unmount(ctx, container); err != nil {
+			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+		}
 		return nil, errors.Wrap(err, "failed to parse volume argument")
 	}
 
 	// set mount point disk quota
 	if err := mgr.setMountPointDiskQuota(ctx, container); err != nil {
+		if err = mgr.Unmount(ctx, container); err != nil {
+			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+		}
 		return nil, errors.Wrap(err, "failed to set mount point disk quota")
 	}
 
@@ -356,7 +362,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	if err := mgr.Unmount(ctx, container); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
 	}
 
 	// set network settings
