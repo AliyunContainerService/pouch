@@ -1,15 +1,5 @@
 package meta
 
-import (
-	"fmt"
-	"reflect"
-
-	"github.com/alibaba/pouch/pkg/serializer"
-)
-
-var errNotList = fmt.Errorf("object does not implement the List interfaces")
-var errNotObject = fmt.Errorf("object does not implement the object interfaces")
-
 // List represents list interface.
 type List interface {
 	GetResourceVersion() int64
@@ -62,77 +52,3 @@ func (meta *ObjectMeta) SetName(name string) { meta.Name = name }
 
 // SetResourceVersion is used to set meta's resource version.
 func (meta *ObjectMeta) SetResourceVersion(version int64) { meta.ResourceVersion = version }
-
-// ListAccessor is used to check obj types, is list type or not.
-func ListAccessor(obj interface{}) (List, error) {
-	switch t := obj.(type) {
-	case List:
-		return t, nil
-	case ListMetaAccessor:
-		if m := t.GetListMeta(); m != nil {
-			return m, nil
-		}
-		return nil, errNotList
-	case Object:
-		return t, nil
-	case ObjectMetaAccessor:
-		if m := t.GetObjectMeta(); m != nil {
-			return m, nil
-		}
-		return nil, errNotList
-	default:
-		return nil, errNotList
-	}
-}
-
-// Accessor is used to check obj types.
-func Accessor(obj interface{}) (Object, error) {
-	switch t := obj.(type) {
-	case Object:
-		return t, nil
-	case ObjectMetaAccessor:
-		if m := t.GetObjectMeta(); m != nil {
-			return m, nil
-		}
-		return nil, errNotObject
-	case List, ListMetaAccessor:
-		return nil, errNotObject
-	default:
-		return nil, errNotObject
-	}
-}
-
-// ListMetaFor is used to change obj to ListMeta and return it.
-func ListMetaFor(obj serializer.Object) (*ListMeta, error) {
-	v, err := EnforcePtr(obj)
-	if err != nil {
-		return nil, err
-	}
-	var meta *ListMeta
-	err = FieldPtr(v, "ListMeta", &meta)
-	return meta, err
-}
-
-// FieldPtr is used to get type that base on filedName from v, return dest type.
-func FieldPtr(v reflect.Value, fieldName string, dest interface{}) error {
-	field := v.FieldByName(fieldName)
-	if !field.IsValid() {
-		return fmt.Errorf("couldn't find %v field in %#v", fieldName, v.Interface())
-	}
-	v, err := EnforcePtr(dest)
-	if err != nil {
-		return err
-	}
-	if field.Kind() != reflect.Ptr && field.CanAddr() {
-		field = field.Addr()
-	}
-	if field.Type().AssignableTo(v.Type()) {
-		v.Set(field)
-		return nil
-	}
-	if field.Type().ConvertibleTo(v.Type()) {
-		v.Set(field.Convert(v.Type()))
-		return nil
-	}
-	return fmt.Errorf("couldn't assign/convert %v to %v", field.Type(), v.Type())
-}
