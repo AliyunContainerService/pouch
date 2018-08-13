@@ -2,7 +2,9 @@
 
 package quota
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGetDefaultQuota(t *testing.T) {
 	type args struct {
