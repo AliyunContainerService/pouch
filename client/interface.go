@@ -44,6 +44,7 @@ type ContainerAPIClient interface {
 	ContainerCheckpointCreate(ctx context.Context, name string, options types.CheckpointCreateOptions) error
 	ContainerCheckpointList(ctx context.Context, name string, options types.CheckpointListOptions) ([]string, error)
 	ContainerCheckpointDelete(ctx context.Context, name string, options types.CheckpointDeleteOptions) error
+	ContainerCommit(ctx context.Context, name string, options types.ContainerCommitOptions) (*types.ContainerCommitResp, error)
 }
 
 // ImageAPIClient defines methods of Image client.

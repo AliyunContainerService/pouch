@@ -63,6 +63,9 @@ type ImageMgr interface {
 
 	// ImageHistory returns image history by reference.
 	ImageHistory(ctx context.Context, idOrRef string) ([]types.HistoryResultItem, error)
+
+	// StoreImageReference update image reference.
+	StoreImageReference(ctx context.Context, img containerd.Image) error
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -137,7 +140,7 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 
 	mgr.LogImageEvent(ctx, img.Name(), namedRef.String(), "pull")
 
-	return mgr.storeImageReference(ctx, img)
+	return mgr.StoreImageReference(ctx, img)
 }
 
 // GetImage returns imageInfo by reference.
@@ -440,14 +443,15 @@ func (mgr *ImageManager) updateLocalStore() error {
 	}
 
 	for _, img := range imgs {
-		if err := mgr.storeImageReference(ctx, img); err != nil {
+		if err := mgr.StoreImageReference(ctx, img); err != nil {
 			logrus.Warnf("failed to load the image reference into local store: %v", err)
 		}
 	}
 	return nil
 }
 
-func (mgr *ImageManager) storeImageReference(ctx context.Context, img containerd.Image) error {
+// StoreImageReference updates image reference in memory store.
+func (mgr *ImageManager) StoreImageReference(ctx context.Context, img containerd.Image) error {
 	imgCfg, err := img.Config(ctx)
 	if err != nil {
 		return err

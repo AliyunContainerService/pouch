@@ -154,6 +154,9 @@ type ContainerMgr interface {
 
 	// DeleteCheckpoint deletes a checkpoint from a container
 	DeleteCheckpoint(ctx context.Context, name string, options *types.CheckpointDeleteOptions) error
+
+	// Commit commits a image from a container.
+	Commit(ctx context.Context, name string, options *types.ContainerCommitOptions) (*types.ContainerCommitResp, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.

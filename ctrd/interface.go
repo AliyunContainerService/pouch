@@ -85,6 +85,8 @@ type ImageAPIClient interface {
 	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
 	// SaveImage saves image to tarstream
 	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
+	// Commit commits a image from a container.
+	Commit(ctx context.Context, config *CommitConfig) (string, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features
