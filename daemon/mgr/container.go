@@ -258,7 +258,18 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (resp *types.ContainerCreateResp, err error) {
+	// cleanup allocated resources when failed
+	cleanups := []func(){}
+	defer func() {
+		// do cleanup
+		if err != nil {
+			for _, f := range cleanups {
+				f()
+			}
+		}
+	}()
+
 	imgID, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
 	if err != nil {
 		return nil, err
@@ -303,6 +314,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
 		return nil, err
 	}
+	cleanups = append(cleanups, func() {
+		mgr.Client.RemoveSnapshot(ctx, id)
+	})
 
 	// set lxcfs binds
 	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
