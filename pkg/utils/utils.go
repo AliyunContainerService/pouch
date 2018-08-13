@@ -301,3 +301,32 @@ func IsFileExist(file string) bool {
 
 	return false
 }
+
+// StringSliceEqual compare two string slice, ignore the order.
+func StringSliceEqual(s1, s2 []string) bool {
+	if s1 == nil && s2 == nil {
+		return true
+	}
+
+	if s1 == nil || s2 == nil {
+		return false
+	}
+
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for _, s := range s1 {
+		if !StringInSlice(s2, s) {
+			return false
+		}
+	}
+
+	for _, s := range s2 {
+		if !StringInSlice(s1, s) {
+			return false
+		}
+	}
+
+	return true
+}
