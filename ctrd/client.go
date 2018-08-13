@@ -109,7 +109,6 @@ func NewClient(homeDir string, opts ...ClientOpt) (APIClient, error) {
 	client.scheduler = scheduler
 
 	// start collect containerd events
-	initTypeURL()
 	go client.collectContainerdEvents()
 
 	return client, nil

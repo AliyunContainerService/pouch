@@ -3,10 +3,8 @@ package ctrd
 import (
 	"context"
 
-	eventstypes "github.com/containerd/containerd/api/events"
 	eventsapi "github.com/containerd/containerd/api/services/events/v1"
 	"github.com/containerd/containerd/runtime"
-	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 )
 
@@ -37,11 +35,4 @@ func (c *Client) Events(ctx context.Context, ef ...string) (eventsapi.Events_Sub
 	return eventsClient.Subscribe(ctx, &eventsapi.SubscribeRequest{
 		Filters: ef,
 	})
-}
-
-// initTypeURL initializes URL type for containerd events url type,
-// it works for typeurl.UnmarshalAny
-func initTypeURL() {
-	proto.RegisterType((*eventstypes.ContainerDelete)(nil), "containerd.events.ContainerDelete")
-	proto.RegisterType((*eventstypes.TaskOOM)(nil), "containerd.events.TaskOOM")
 }
