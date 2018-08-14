@@ -887,7 +887,7 @@ func (c *CriManager) attachLog(logPath string, containerID string) error {
 func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Container) (*runtime.ContainerStats, error) {
 	var usedBytes, inodesUsed uint64
 
-	stats, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	stats, _, err := c.ContainerMgr.Stats(ctx, meta.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
 	}

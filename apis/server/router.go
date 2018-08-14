@@ -56,6 +56,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
 	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
 	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", withCancelHandler(s.logsContainer))
+	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/stats", withCancelHandler(s.statsContainer))
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/wait", withCancelHandler(s.waitContainer))

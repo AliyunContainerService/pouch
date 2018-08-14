@@ -25,8 +25,11 @@ var (
 	// time unit is minute.
 	GCExecProcessTick = 5
 
-	// MinMemory is minimal memory container should has
+	// MinMemory is minimal memory container should has.
 	MinMemory int64 = 4194304
+
+	// DefaultStatsInterval is the interval configured for stats.
+	DefaultStatsInterval = time.Duration(time.Second)
 )
 
 var (
@@ -146,6 +149,13 @@ type ContainerListOption struct {
 	All        bool
 	Filter     map[string][]string
 	FilterFunc ContainerFilter
+}
+
+// ContainerStatsConfig contains all configs on stats interface.
+// This struct is only used in daemon side.
+type ContainerStatsConfig struct {
+	Stream    bool
+	OutStream io.Writer
 }
 
 // Container represents the container's meta data.
