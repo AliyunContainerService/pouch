@@ -54,10 +54,11 @@ foo    18592900006405ee64788bd108ef1de3d24dc3add73725891f4787d0f8e036f5   Up 2 m
 ### Options
 
 ```
-  -a, --all        Show all containers (default shows just running)
-  -h, --help       help for ps
-      --no-trunc   Do not truncate output
-  -q, --quiet      Only show numeric IDs
+  -a, --all              Show all containers (default shows just running)
+  -f, --filter strings   Filter output based on given conditions, support filter key [ id label name status ]
+  -h, --help             help for ps
+      --no-trunc         Do not truncate output
+  -q, --quiet            Only show numeric IDs
 ```
 
 ### Options inherited from parent commands

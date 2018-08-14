@@ -20,7 +20,9 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 
 ### SEE ALSO
 
+* [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
+* [pouch events](pouch_events.md)	 - Get real time events from the daemon
 * [pouch exec](pouch_exec.md)	 - Exec a process in a running container
 * [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
 * [pouch image](pouch_image.md)	 - Manage image
@@ -41,6 +43,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it
+* [pouch save](pouch_save.md)	 - Save an image to a tar archive or STDOUT
 * [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
 * [pouch tag](pouch_tag.md)	 - Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
