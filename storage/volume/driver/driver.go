@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/plugins"
-	"github.com/alibaba/pouch/storage/volume/types"
-
 	"github.com/pkg/errors"
 )
 
@@ -251,18 +249,6 @@ func AllDriversName() []string {
 	sort.Strings(names)
 
 	return names
-}
-
-// ListDriverOption return backend driver's options by name.
-func ListDriverOption(name string) map[string]types.Option {
-	dv, err := Get(name)
-	if err != nil {
-		return nil
-	}
-	if opt, ok := dv.(Opt); ok {
-		return opt.Options()
-	}
-	return nil
 }
 
 // Alias is used to add driver name's alias into exist driver.
