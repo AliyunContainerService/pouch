@@ -16,9 +16,3 @@ func ParseMemorySwap(memorySwap string) (int64, error) {
 	}
 	return result, nil
 }
-
-// ValidateMemorySwap verifies the correctness of memory-swap.
-func ValidateMemorySwap(memorySwap int64) error {
-	// TODO
-	return nil
-}
