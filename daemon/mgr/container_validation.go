@@ -100,7 +100,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			warnings = append(warnings, MemorySwappinessWarn)
 			r.MemorySwappiness = nil
 		}
-		if r.MemorySwappiness != nil && (*r.MemorySwappiness < 0 || *r.MemorySwappiness > 100) {
+		if r.MemorySwappiness != nil && *r.MemorySwappiness != -1 && (*r.MemorySwappiness < 0 || *r.MemorySwappiness > 100) {
 			return warnings, fmt.Errorf("MemorySwappiness should in range [0, 100]")
 		}
 		if r.OomKillDisable != nil && !cgroupInfo.Memory.OOMKillDisable {
