@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/archive"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/system"
@@ -672,15 +672,9 @@ func copyImageContent(source, destination string) error {
 			return err
 		}
 		if len(dstList) == 0 {
-			// TODO: refactor
-
-			// If the source volume is empty, copies files from the root into the volume
-			commandLine := fmt.Sprintf("cp -r %s/* %s", source, destination)
-
-			cmd := exec.Command("sh", "-c", commandLine)
-			out, err := cmd.CombinedOutput()
+			err := archive.CopyWithTar(source, destination)
 			if err != nil {
-				logrus.Errorf("copyImageContent: %s, %v", string(out), err)
+				logrus.Errorf("copyImageContent: %v", err)
 				return err
 			}
 		}

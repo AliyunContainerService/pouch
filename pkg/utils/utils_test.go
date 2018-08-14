@@ -523,3 +523,24 @@ func TestIsFileExist(t *testing.T) {
 		assert.Equal(IsFileExist(t.path), t.exist)
 	}
 }
+
+func TestStringSliceEqual(t *testing.T) {
+	tests := []struct {
+		s1    []string
+		s2    []string
+		equal bool
+	}{
+		{nil, nil, true},
+		{nil, []string{"a"}, false},
+		{[]string{"a"}, []string{"a"}, true},
+		{[]string{"a"}, []string{"b", "a"}, false},
+		{[]string{"a", "b"}, []string{"b", "a"}, true},
+	}
+
+	for _, test := range tests {
+		result := StringSliceEqual(test.s1, test.s2)
+		if result != test.equal {
+			t.Fatalf("StringSliceEqual(%v, %v) expected: %v, but got %v", test.s1, test.s2, test.equal, result)
+		}
+	}
+}
