@@ -258,7 +258,22 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (resp *types.ContainerCreateResp, err error) {
+	// cleanup allocated resources when failed
+	cleanups := []func() error{}
+	defer func() {
+		// do cleanup
+		if err != nil {
+			logrus.Infof("start to rollback allocated resources of container %v.", name)
+			for _, f := range cleanups {
+				nerr := f()
+				if nerr != nil {
+					logrus.Errorf("fail to cleanup allocated resource, error is %v.", nerr)
+				}
+			}
+		}
+	}()
+
 	imgID, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
 	if err != nil {
 		return nil, err
@@ -303,6 +318,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
 		return nil, err
 	}
+	cleanups = append(cleanups, func() error {
+		logrus.Infof("start to cleanup snapshot, id is %v.", id)
+		return mgr.Client.RemoveSnapshot(ctx, id)
+	})
 
 	// set lxcfs binds
 	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
