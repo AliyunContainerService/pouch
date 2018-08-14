@@ -81,6 +81,9 @@ var (
 const (
 	// DefaultStopTimeout is the timeout (in seconds) for the syscall signal used to stop a container.
 	DefaultStopTimeout = 10
+
+	// RuntimeDir is specified name keeps runtime path script.
+	RuntimeDir = "runtimes"
 )
 
 // ContainerFilter defines a function to filter

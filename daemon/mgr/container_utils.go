@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -102,6 +103,29 @@ func (mgr *ContainerManager) generateName(id string) string {
 		}
 	}
 	return name
+}
+
+// getRuntime returns runtime real path.
+// TODO(huamin): do we need validate runtime is executable ?
+func (mgr *ContainerManager) getRuntime(runtime string) (string, error) {
+	r, exist := mgr.Config.Runtimes[runtime]
+	if !exist {
+		return "", fmt.Errorf("failed to find runtime %s in daemon config", runtime)
+	}
+
+	// it is ok to use runtime name as a path.
+	rPath := runtime
+	if len(r.RuntimeArgs) > 0 {
+		rPath = filepath.Join(mgr.Config.HomeDir, RuntimeDir, runtime)
+	}
+
+	// generally speaking, path is not be empty, but we not forbid empty path
+	// in config set, since name can be a path too.
+	if r.Path != "" {
+		rPath = r.Path
+	}
+
+	return rPath, nil
 }
 
 // BuildContainerEndpoint is used to build container's endpoint config.

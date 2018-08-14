@@ -644,12 +644,17 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return errors.Wrap(err, "failed to open io")
 	}
 
+	runtime, err := mgr.getRuntime(c.HostConfig.Runtime)
+	if err != nil {
+		return err
+	}
+
 	c.Lock()
 	ctrdContainer := &ctrd.Container{
 		ID:             c.ID,
 		Image:          c.Config.Image,
 		Labels:         c.Config.Labels,
-		Runtime:        c.HostConfig.Runtime,
+		Runtime:        runtime,
 		Spec:           sw.s,
 		IO:             io,
 		RootFSProvided: c.RootFSProvided,
