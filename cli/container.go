@@ -95,10 +95,6 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
-	if err := opts.ValidateMemorySwappiness(c.memorySwappiness); err != nil {
-		return nil, err
-	}
-
 	memory, err := opts.ParseMemory(c.memory)
 	if err != nil {
 		return nil, err
@@ -144,18 +140,6 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	specAnnotation, err := opts.ParseAnnotation(c.specAnnotation)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := opts.ValidateOOMScore(c.oomScoreAdj); err != nil {
-		return nil, err
-	}
-
-	if err := opts.ValidateCPUPeriod(c.cpuperiod); err != nil {
-		return nil, err
-	}
-
-	if err := opts.ValidateCPUQuota(c.cpuquota); err != nil {
 		return nil, err
 	}
 
