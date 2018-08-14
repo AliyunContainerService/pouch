@@ -9,7 +9,8 @@ https://github.com/alibaba/pouch/blob/master/CONTRIBUTING.md -->
 <!--If that, add "fixes #xxxx" below in the next line, for example, fixes #15. Otherwise, add "NONE" -->
 
 
-### Ⅲ. Describe how you did it
+### Ⅲ. Why don't you add test cases (unit test/integration test)? (你真的觉得不需要加测试吗？)
+
 
 
 ### Ⅳ. Describe how to verify it
