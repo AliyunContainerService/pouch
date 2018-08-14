@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -17,8 +18,11 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/content"
 	ctrdmetaimages "github.com/containerd/containerd/images"
-	"github.com/opencontainers/go-digest"
+	"github.com/containerd/containerd/platforms"
+	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -56,6 +60,9 @@ type ImageMgr interface {
 
 	// SaveImage saves image to tarstream.
 	SaveImage(ctx context.Context, idOrRef string) (io.ReadCloser, error)
+
+	// ImageHistory returns image history by reference.
+	ImageHistory(ctx context.Context, idOrRef string) ([]types.HistoryResultItem, error)
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -296,6 +303,72 @@ func (mgr *ImageManager) AddTag(ctx context.Context, sourceImage string, targetT
 	return err
 }
 
+// ImageHistory returns image history by reference.
+func (mgr *ImageManager) ImageHistory(ctx context.Context, idOrRef string) ([]types.HistoryResultItem, error) {
+	img, err := mgr.fetchContainerdImage(ctx, idOrRef)
+	if err != nil {
+		return nil, err
+	}
+
+	desc, err := img.Config(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ociImage, err := containerdImageToOciImage(ctx, img)
+	if err != nil {
+		return nil, err
+	}
+
+	cs := img.ContentStore()
+	manifest, err := mgr.getManifest(ctx, cs, img, platforms.Default())
+	if err != nil {
+		return nil, err
+	}
+
+	ociImageHistory := ociImage.History
+	lenOciImageHistory := len(ociImageHistory)
+	history := make([]types.HistoryResultItem, lenOciImageHistory)
+	// Note: ociImage History layers info and manifest layers info are all in order from bottom-most to top-most, but the
+	// user-interactive history is in order from top-most to top-bottom, so we need to reverse ociImage History traverse order.
+	j := len(manifest.Layers) - 1
+	for i := range ociImageHistory {
+		history[i] = types.HistoryResultItem{
+			Created:    ociImageHistory[lenOciImageHistory-i-1].Created.UnixNano(),
+			CreatedBy:  ociImageHistory[lenOciImageHistory-i-1].CreatedBy,
+			Author:     ociImageHistory[lenOciImageHistory-i-1].Author,
+			Comment:    ociImageHistory[lenOciImageHistory-i-1].Comment,
+			EmptyLayer: ociImageHistory[lenOciImageHistory-i-1].EmptyLayer,
+			ID:         "<missing>",
+			Size:       0,
+		}
+
+		// TODO: here we just set imageID of top image layer, we do nothing with the lower image ID, after pouch
+		// enables build/commit functionality, we should get local lower image(parent image) layer ID.
+		if i == 0 {
+			history[i].ID = desc.Digest.String()
+		}
+
+		// Note: number of manifest layers should be less than ociImage History messages due to the existence of empty layers.
+		// The size of these empty layers should be set to 0 by default.
+		if !history[i].EmptyLayer {
+			if j < 0 {
+				return nil, errors.New("number of manifest layers shouldn't be less than number of non-empty layer in history info")
+			}
+			info, err := cs.Info(ctx, manifest.Layers[j].Digest)
+			if err != nil {
+				return nil, err
+			}
+			history[i].Size = info.Size
+			j--
+		}
+	}
+	if j != -1 {
+		return nil, errors.New("number of manifest layers shouldn't be greater than number of non-empty layer in history info")
+	}
+	return history, nil
+}
+
 // CheckReference returns image ID and actual reference.
 func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (actualID digest.Digest, actualRef reference.Named, primaryRef reference.Named, err error) {
 	var namedRef reference.Named
@@ -488,6 +561,27 @@ func (mgr *ImageManager) validateTagReference(ref reference.Named) error {
 		)
 	}
 	return nil
+}
+
+// getManifest gets a manifest from the image for the given platform.
+func (mgr *ImageManager) getManifest(ctx context.Context, cs content.Store, img containerd.Image, platform string) (ocispec.Manifest, error) {
+	// layers info
+	manifest, err := ctrdmetaimages.Manifest(ctx, cs, img.Target(), platform)
+	if err != nil {
+		return ocispec.Manifest{}, err
+	}
+
+	// diffIDs info
+	diffIDs, err := img.RootFS(ctx)
+	if err != nil {
+		return ocispec.Manifest{}, err
+	}
+
+	if len(manifest.Layers) != len(diffIDs) {
+		return ocispec.Manifest{}, errors.New("mismatched image rootfs and manifest layers")
+	}
+
+	return manifest, nil
 }
 
 func parseTagReference(targetTag string) (reference.Named, error) {
