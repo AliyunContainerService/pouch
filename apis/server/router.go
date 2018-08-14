@@ -68,6 +68,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/images/{name:.*}/tag", s.postImageTag)
 	s.addRoute(r, http.MethodPost, "/images/load", withCancelHandler(s.loadImage))
 	s.addRoute(r, http.MethodGet, "/images/save", withCancelHandler(s.saveImage))
+	s.addRoute(r, http.MethodGet, "/images/{name:.*}/history", s.getImageHistory)
 
 	// volume
 	s.addRoute(r, http.MethodGet, "/volumes", s.listVolume)
