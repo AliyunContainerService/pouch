@@ -1,27 +1,27 @@
-## pouch network disconnect
+## pouch checkpoint ls
 
-Disconnect a container from a network
+list checkpoints of a container
 
 ### Synopsis
 
-Disconnect a container from a network
+List a container checkpoint.
 
 ```
-pouch network disconnect [OPTIONS] NETWORK CONTAINER
+pouch checkpoint ls [OPTIONS] CONTAINER
 ```
 
 ### Examples
 
 ```
-$ pouch network disconnect bridge test
-container test is disconnected from network bridge successfully
+$ pouch checkpoint list container-name
+cp0
 ```
 
 ### Options
 
 ```
-  -f, --force   Force the container to disconnect from a network
-  -h, --help    help for disconnect
+      --checkpoint-dir string   directory to store checkpoints images
+  -h, --help                    help for ls
 ```
 
 ### Options inherited from parent commands
@@ -37,5 +37,5 @@ container test is disconnected from network bridge successfully
 
 ### SEE ALSO
 
-* [pouch network](pouch_network.md)	 - Manage pouch networks
+* [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
 

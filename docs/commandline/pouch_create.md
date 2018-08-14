@@ -50,7 +50,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --ipc string                   IPC namespace to use
   -l, --label strings                Set labels for a container
       --log-driver string            Logging driver for the container (default "json-file")
-      --log-opt strings              Log driver options
+      --log-opt stringArray          Log driver options
   -m, --memory string                Memory limit
       --memory-extra int             Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int   Whether to reclaim page cache when deleting the cgroup of container
@@ -59,6 +59,9 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --memory-wmark-ratio int       Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                  Specify name of container
       --net strings                  Set networks to container
+      --net-priority int             net priority
+      --nvidia-capabilities string   NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container
+      --nvidia-visible-devs string   NvidiaVisibleDevices controls which GPUs will be made accessible inside the container
       --oom-kill-disable             Disable OOM Killer
       --oom-score-adj int            Tune host's OOM preferences (-1000 to 1000) (default -500)
       --pid string                   PID namespace to use

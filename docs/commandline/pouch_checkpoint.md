@@ -1,27 +1,16 @@
-## pouch network disconnect
+## pouch checkpoint
 
-Disconnect a container from a network
+Manage checkpoint commands
 
 ### Synopsis
 
-Disconnect a container from a network
 
-```
-pouch network disconnect [OPTIONS] NETWORK CONTAINER
-```
-
-### Examples
-
-```
-$ pouch network disconnect bridge test
-container test is disconnected from network bridge successfully
-```
+Manage checkpoint commands, create checkpoint.
 
 ### Options
 
 ```
-  -f, --force   Force the container to disconnect from a network
-  -h, --help    help for disconnect
+  -h, --help   help for checkpoint
 ```
 
 ### Options inherited from parent commands
@@ -37,5 +26,8 @@ container test is disconnected from network bridge successfully
 
 ### SEE ALSO
 
-* [pouch network](pouch_network.md)	 - Manage pouch networks
+* [pouch](pouch.md)	 - An efficient container engine
+* [pouch checkpoint create](pouch_checkpoint_create.md)	 - create a checkpoint from a running container instance
+* [pouch checkpoint ls](pouch_checkpoint_ls.md)	 - list checkpoints of a container
+* [pouch checkpoint rm](pouch_checkpoint_rm.md)	 - delete a container checkpoint
 
