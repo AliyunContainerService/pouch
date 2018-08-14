@@ -16,7 +16,7 @@ func TestValidateMemorySwappiness(t *testing.T) {
 	testCases := []TestCase{
 		{
 			input:    -1,
-			expected: fmt.Errorf("invalid memory swappiness: %d (its range is 0-100)", -1),
+			expected: nil,
 		},
 		{
 			input:    0,

@@ -261,7 +261,7 @@ func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 		memory.Swap = &v
 	}
 
-	if r.MemorySwappiness != nil {
+	if r.MemorySwappiness != nil && *r.MemorySwappiness != -1 {
 		v := uint64(*r.MemorySwappiness)
 		memory.Swappiness = &v
 	}
