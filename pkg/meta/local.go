@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -98,6 +100,7 @@ func (s *localStore) Get(fileName, key string) ([]byte, error) {
 
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
+			logrus.Warnf("container %s meta.json file not exist", key)
 			return nil, ErrObjectNotFound
 		}
 	}
@@ -186,7 +189,10 @@ func walkDir(dir string, handle func(os.FileInfo) error) error {
 		if !f.IsDir() {
 			continue
 		}
-		if err := handle(f); err != nil {
+
+		err := handle(f)
+		// Skip empty container dirs
+		if err != nil && err != ErrObjectNotFound {
 			return fmt.Errorf("failed to handle file %s: %v", f.Name(), err)
 		}
 	}
