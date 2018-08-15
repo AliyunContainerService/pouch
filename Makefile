@@ -89,16 +89,20 @@ uninstall: ## uninstall pouchd and pouch binary
 	@rm -f $(addprefix $(DEST_DIR)/bin/,$(notdir $(DAEMON_BINARY_NAME)))
 	@rm -f $(addprefix $(DEST_DIR)/bin/,$(notdir $(CLI_BINARY_NAME)))
 
-.PHONY: download_dependencies
-download_dependencies: ## download related dependencies, such as dumb_init
+.PHONY: package-dependencies
+package-dependencies: ## install containerd, runc and lxcfs dependencies for packaging
+	@echo $@
+	hack/install/install_containerd.sh
+	hack/install/install_lxcfs.sh
+	hack/install/install_runc.sh
+
+.PHONY: download-dependencies
+download-dependencies: package-dependencies ## install dumb-init, local-persist, nsenter and CI tools dependencies
 	@echo $@
 	hack/install/install_ci_related.sh
-	hack/install/install_containerd.sh
 	hack/install/install_dumb_init.sh
 	hack/install/install_local_persist.sh
-	hack/install/install_lxcfs.sh
 	hack/install/install_nsenter.sh
-	hack/install/install_runc.sh
 
 .PHONY: clean
 clean: ## clean to remove bin/* and files created by module
