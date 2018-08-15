@@ -18,8 +18,8 @@ import (
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
-	"github.com/containerd/containerd/mount"
 
+	"github.com/containerd/containerd/mount"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
