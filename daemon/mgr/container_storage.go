@@ -461,10 +461,19 @@ func (mgr *ContainerManager) setRootfsQuota(ctx context.Context, c *Container) e
 		return errors.Wrapf(err, "failed to change quota id: (%s) from string to int", qid)
 	}
 
-	err = quota.SetRootfsDiskQuota(c.MountFS, rootfsQuota, uint32(id))
+	// set rootfs quota
+	newID, err := quota.SetRootfsDiskQuota(c.MountFS, rootfsQuota, uint32(id))
 	if err != nil {
 		return errors.Wrapf(err, "failed to set rootfs quota, mountfs: (%s), quota: (%s), quota id: (%d)",
 			c.MountFS, rootfsQuota, id)
+	}
+
+	// set container's metadata directory diskquota, for limit the size of container's logs
+	metaDir := mgr.Store.Path(c.ID)
+	err = quota.SetDiskQuota(metaDir, rootfsQuota, newID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set container's log quota, dir: (%s), quota: (%s), quota id: (%d)",
+			metaDir, rootfsQuota, newID)
 	}
 
 	return nil
@@ -638,6 +647,39 @@ func (mgr *ContainerManager) Unmount(ctx context.Context, c *Container) error {
 	}
 
 	return os.RemoveAll(c.MountFS)
+}
+
+func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Container) (err error) {
+	if err = mgr.Mount(ctx, c); err != nil {
+		return errors.Wrapf(err, "failed to mount rootfs: (%s)", c.MountFS)
+	}
+
+	defer func() {
+		if umountErr := mgr.Unmount(ctx, c); umountErr != nil {
+			if err != nil {
+				err = errors.Wrapf(err, "failed to umount rootfs: (%s), err: (%v)", c.MountFS, umountErr)
+			} else {
+				err = errors.Wrapf(umountErr, "failed to umount rootfs: (%s)", c.MountFS)
+			}
+		}
+	}()
+
+	// parse volume config
+	if err = mgr.generateMountPoints(ctx, c); err != nil {
+		return errors.Wrap(err, "failed to parse volume argument")
+	}
+
+	// set mount point disk quota
+	if err = mgr.setMountPointDiskQuota(ctx, c); err != nil {
+		return errors.Wrap(err, "failed to set mount point disk quota")
+	}
+
+	// set rootfs disk quota
+	if err = mgr.setRootfsQuota(ctx, c); err != nil {
+		logrus.Warnf("failed to set rootfs disk quota, err: %v", err)
+	}
+
+	return nil
 }
 
 func copyImageContent(source, destination string) error {

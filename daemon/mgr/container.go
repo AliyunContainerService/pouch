@@ -355,33 +355,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// after create options passed to containerd.
 	mgr.setBaseFS(ctx, container, id)
 
-	if err := mgr.Mount(ctx, container); err != nil {
-		return nil, errors.Wrapf(err, "failed to mount container: (%s) rootfs: (%s)", id, container.MountFS)
-	}
-
-	// parse volume config
-	if err := mgr.generateMountPoints(ctx, container); err != nil {
-		if err = mgr.Unmount(ctx, container); err != nil {
-			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
-		}
-		return nil, errors.Wrap(err, "failed to parse volume argument")
-	}
-
-	// set mount point disk quota
-	if err := mgr.setMountPointDiskQuota(ctx, container); err != nil {
-		if err = mgr.Unmount(ctx, container); err != nil {
-			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
-		}
-		return nil, errors.Wrap(err, "failed to set mount point disk quota")
-	}
-
-	// set rootfs disk quota
-	if err := mgr.setRootfsQuota(ctx, container); err != nil {
-		logrus.Warnf("failed to set rootfs disk quota, err: %v", err)
-	}
-
-	if err := mgr.Unmount(ctx, container); err != nil {
-		return nil, errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+	// init container storage module, such as: set volumes, set diskquota, set /etc/mtab, copy image's data to volume.
+	if err := mgr.initContainerStorage(ctx, container); err != nil {
+		return nil, errors.Wrapf(err, "failed to init container storage, id: (%s)", container.ID)
 	}
 
 	// set network settings
@@ -1193,15 +1169,36 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 	}
 	// update container rootfs disk quota
 	// TODO: add lock for container?
+	rootfs := ""
 	if c.IsRunningOrPaused() && c.Snapshotter != nil {
 		basefs, ok := c.Snapshotter.Data["MergedDir"]
 		if !ok || basefs == "" {
 			return fmt.Errorf("Container is running, but MergedDir is missing")
 		}
-
-		if err := quota.SetRootfsDiskQuota(basefs, defaultQuota, qid); err != nil {
-			return errors.Wrapf(err, "failed to set container rootfs diskquota")
+		rootfs = basefs
+	} else {
+		if err := mgr.Mount(ctx, c); err != nil {
+			return errors.Wrapf(err, "failed to mount rootfs: (%s)", c.MountFS)
 		}
+		rootfs = c.MountFS
+
+		defer func() {
+			if err := mgr.Unmount(ctx, c); err != nil {
+				logrus.Errorf("failed to umount rootfs: (%s), err: (%v)", c.MountFS, err)
+			}
+		}()
+	}
+	newID, err := quota.SetRootfsDiskQuota(rootfs, defaultQuota, qid)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set container rootfs diskquota")
+	}
+
+	// set container's metadata directory diskquota, for limit the size of container's logs
+	metaDir := mgr.Store.Path(c.ID)
+	err = quota.SetDiskQuota(metaDir, defaultQuota, newID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set container's log quota, dir: (%s), quota: (%s), quota id: (%d)",
+			metaDir, defaultQuota, newID)
 	}
 
 	return nil
