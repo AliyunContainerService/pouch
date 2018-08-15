@@ -25,6 +25,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch events](pouch_events.md)	 - Get real time events from the daemon
 * [pouch exec](pouch_exec.md)	 - Exec a process in a running container
 * [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
+* [pouch history](pouch_history.md)	 - Display history information on image
 * [pouch image](pouch_image.md)	 - Manage image
 * [pouch images](pouch_images.md)	 - List all images
 * [pouch info](pouch_info.md)	 - Display system-wide information

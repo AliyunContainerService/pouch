@@ -1239,8 +1239,40 @@ json :
 ```
 
 
+<a name="imagehistory"></a>
+### Get an image's history
+```
+GET /images/{imageid}/history
+```
+
+
+#### Description
+Return the history of each layer of image
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**imageid**  <br>*required*|Image name or id|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|< [HistoryResultItem](#historyresultitem) > array|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
+
+
 <a name="imageinspect"></a>
-### Inspect a image
+### Inspect an image
 ```
 GET /images/{imageid}/json
 ```
@@ -2297,6 +2329,22 @@ Information about a container's graph driver.
 |---|---|
 |**Data**  <br>*required*|< string, string > map|
 |**Name**  <br>*required*|string|
+
+
+<a name="historyresultitem"></a>
+### HistoryResultItem
+An object containing image history at API side.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Author**  <br>*required*|the author of the build point.|string|
+|**Comment**  <br>*required*|a custom message set when creating the layer.|string|
+|**Created**  <br>*required*|the combined date and time at which the layer was created.|integer (int64)|
+|**CreatedBy**  <br>*required*|the command which created the layer.|string|
+|**EmptyLayer**  <br>*required*|mark whether the history item created a filesystem diff or not.|boolean|
+|**ID**  <br>*required*|ID of each layer image.|string|
+|**Size**  <br>*required*|size of each layer image.|integer (int64)|
 
 
 <a name="hostconfig"></a>
