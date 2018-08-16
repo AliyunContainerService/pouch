@@ -18,14 +18,10 @@ BINDIR=$POUCHDIR/bin
 [ -d "$BINDIR" ] || mkdir -p "$BINDIR"
 LIBDIR=$POUCHDIR/lib
 [ -d "$LIBDIR" ] || mkdir -p "$LIBDIR"
-LXC_DIR=$TMP/lxc
-[ -d "$LXC_DIR" ] || mkdir -p "$LXC_DIR"
 
-# Dependency
-# lxcfs stable branch
-LXC_BRANCH="stable-2.0"
-CONTAINERD_VERSION="1.0.3"
-RUNC_VERSION="1.0.0-rc4-1"
+USRBASE=/usr/local
+USRBINDIR=$USRBASE/bin
+USRLIBDIR=$USRBASE/lib
 
 # ARCHITECTURE, The architecture name. Usually matches 'uname -m'.
 ARCHITECTURE=$(uname -m)
@@ -39,39 +35,20 @@ VENDOR='Pouch'
 LIB_NVIDIA_VERSION="1.0.0-rc.2"
 NVIDIA_RUNTIME_VERSION="1.4.0-1"
 
-# build lxcfs
-function build_lxcfs ()
-{
-    pushd "$LXC_DIR"
-    git clone -b "$LXC_BRANCH" https://github.com/lxc/lxcfs.git && cd lxcfs
-    
-    # change liblxcfs.so to libpouchlxcfs.so
-    grep -l -r "liblxcfs" . | xargs sed -i 's/liblxcfs/libpouchlxcfs/g'
-    ./bootstrap.sh > /dev/null 2>&1
-    ./configure > /dev/null 2>&1
-    make install DESTDIR="$LXC_DIR" > /dev/null 2>&1
-    popd
-}
-
-# install containerd, runc and pouch
+# build lxcfs and install containerd, runc and pouch
 function build_pouch()
 {
-    # install containerd
-    echo "Downloading containerd."
-    wget --quiet "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz" -P "$TMP"
-    tar xf "$TMP/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz" -C "$TMP" && cp -f "$TMP"/bin/* "$BINDIR/"
-
-    # install runc
-    echo "Downloading runc."
-    wget --quiet "https://github.com/alibaba/runc/releases/download/v${RUNC_VERSION}/runc.amd64" -P "$BINDIR/"
-    chmod +x "$BINDIR/runc.amd64"
-    mv "$BINDIR/runc.amd64" "$BINDIR/runc"
-
-    # build pouch
-    echo "Building pouch."
     pushd $BASEDIR/pouch
-    make install DESTDIR="$POUCHDIR"
+    # install containerd, runc and lxcfs dependencies for packaging
+    make package-dependencies
+    # build pouch
+    make build
+    make install DEST_DIR="$POUCHDIR"
     popd
+
+    # make sure related binaries are included by pouch package
+    cp $USRBINDIR/containerd* $USRBINDIR/ctr $USRBINDIR/runc "$BINDIR"
+
 }
 
 # install nvidia-container-runtime
@@ -135,8 +112,8 @@ function build_rpm ()
           "$BINDIR/"=/usr/local/bin/ \
           "$LIBDIR/"=/usr/lib64/ \
           "$SERVICEDIR/"=/usr/lib/systemd/system/ \
-          "$LXC_DIR/usr/local/bin/lxcfs"=/usr/bin/pouch-lxcfs \
-          "$LXC_DIR/usr/local/lib/lxcfs/libpouchlxcfs.so"=/usr/lib64/libpouchlxcfs.so \
+          "$USRBINDIR/lxcfs"=/usr/bin/pouch-lxcfs \
+          "$USRLIBDIR/lxcfs/liblxcfs.so"=/usr/lib64/libpouchlxcfs.so \
 
 }
 
@@ -144,7 +121,6 @@ function main()
 {
 	echo "Building rpm package."
 	build_pouch
-	build_lxcfs
 	build_nvidia_runtime
 	build_rpm
 }
