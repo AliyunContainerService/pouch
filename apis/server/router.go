@@ -47,6 +47,7 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/exec", s.createContainerExec)
 	s.addRoute(r, http.MethodGet, "/exec/{name:.*}/json", s.getExecInfo)
 	s.addRoute(r, http.MethodPost, "/exec/{name:.*}/start", s.startContainerExec)
+	s.addRoute(r, http.MethodPost, "/exec/{name:.*}/resize", s.resizeExec)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/rename", s.renameContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
 	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/pause", s.pauseContainer)
