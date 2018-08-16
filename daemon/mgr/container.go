@@ -1981,7 +1981,7 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container, id str
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	c.Lock()
-	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.Namespace, info.Name, "rootfs")
+	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.DefaultNamespace, info.Name, "rootfs")
 	c.Unlock()
 }
 
