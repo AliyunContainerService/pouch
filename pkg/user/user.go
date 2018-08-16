@@ -5,9 +5,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/opencontainers/runc/libcontainer/user"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -45,13 +49,45 @@ type gidParser struct {
 // Get accepts user and group slice, return valid uid, gid and additional gids.
 // Through Get is a interface returns all user informations runtime-spec need,
 // GetUser, GetIntegerID, GetAdditionalGids still can be used independently.
-func Get(passwdPath, groupPath, user string, groups []string) (uint32, uint32, []uint32, error) {
-	uid, gid, err := GetUser(passwdPath, groupPath, user)
+func Get(passwdPath, groupPath, username string, groups []string) (uint32, uint32, []uint32, error) {
+	logrus.Debugf("get users, passwd path: (%s), group path: (%s), username: (%s), groups: (%v)",
+		passwdPath, groupPath, username, groups)
+
+	if passwdPath == "" || groupPath == "" {
+		logrus.Warn("get passwd file or group file is nil")
+	}
+
+	passwdFile, err := os.Open(passwdPath)
+	if err == nil {
+		defer passwdFile.Close()
+	}
+
+	groupFile, err := os.Open(groupPath)
+	if err == nil {
+		defer groupFile.Close()
+	}
+
+	execUser, err := user.GetExecUser(username, nil, passwdFile, groupFile)
 	if err != nil {
 		return 0, 0, nil, err
 	}
 
-	return uid, gid, GetAdditionalGids(groups), nil
+	var addGroups []int
+	if len(groups) > 0 {
+		addGroups, err = user.GetAdditionalGroups(groups, groupFile)
+		if err != nil {
+			return 0, 0, nil, err
+		}
+	}
+	uid := uint32(execUser.Uid)
+	gid := uint32(execUser.Gid)
+	sgids := append(execUser.Sgids, addGroups...)
+	var additionalGids []uint32
+	for _, g := range sgids {
+		additionalGids = append(additionalGids, uint32(g))
+	}
+
+	return uid, gid, additionalGids, nil
 }
 
 // GetUser accepts user string like <uid|username>:<gid|groupname>, and transfers them to format valid uid:gid.
