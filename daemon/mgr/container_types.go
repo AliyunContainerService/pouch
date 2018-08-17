@@ -30,6 +30,9 @@ var (
 
 	// DefaultStatsInterval is the interval configured for stats.
 	DefaultStatsInterval = time.Duration(time.Second)
+
+	// ProfileUnconfined means run a container without the default seccomp profile.
+	ProfileUnconfined = "unconfined"
 )
 
 var (

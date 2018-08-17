@@ -36,6 +36,8 @@ DEFAULT_LDFLAGS="-X ${VERSION_PKG}/version.GitCommit=${GIT_COMMIT} \
 		  -X ${VERSION_PKG}/version.ApiVersion=${API_VERSION} \
 		  -X ${VERSION_PKG}/version.BuildTime=${BUILD_TIME}"
 
+GOBUILD_TAGS=$(if $(BUILDTAGS),-tags "$(BUILDTAGS)",)
+
 # COVERAGE_PACKAGES is the coverage we care about.
 COVERAGE_PACKAGES=$(shell go list ./... | \
 				  grep -v github.com/alibaba/pouch$$ | \
@@ -52,7 +54,7 @@ build: build-daemon build-cli ## build PouchContainer both daemon and cli binari
 build-daemon: modules ## build PouchContainer daemon binary
 	@echo "$@: bin/${DAEMON_BINARY_NAME}"
 	@mkdir -p bin
-	@GOOS=linux go build -ldflags ${DEFAULT_LDFLAGS} -o bin/${DAEMON_BINARY_NAME} -tags 'selinux'
+	@GOOS=linux go build -ldflags ${DEFAULT_LDFLAGS} ${GOBUILD_TAGS} -o bin/${DAEMON_BINARY_NAME}
 
 build-cli: ## build PouchContainer cli binary
 	@echo "$@: bin/${CLI_BINARY_NAME}"
@@ -62,7 +64,7 @@ build-cli: ## build PouchContainer cli binary
 build-daemon-integration: modules ## build PouchContainer daemon integration testing binary
 	@echo $@
 	@mkdir -p bin
-	go test -c ${TEST_FLAGS} \
+	go test -c ${TEST_FLAGS} ${GOBUILD_TAGS} \
 		-cover -covermode=atomic -coverpkg ${COVERAGE_PACKAGES_LIST} \
 		-o bin/${DAEMON_INTEGRATION_BINARY_NAME}
 

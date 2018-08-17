@@ -38,7 +38,7 @@ script: |
     make coverage
   elif [[ "${TEST_SUITE}" = "criv1alpha1test" ]]; then
     make build
-    TEST_FLAGS= make build-daemon-integration
+    TEST_FLAGS= BUILDTAGS="selinux seccomp" make build-daemon-integration
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download-dependencies
@@ -46,7 +46,7 @@ script: |
     make coverage
   else
     make build
-    TEST_FLAGS= make build-daemon-integration
+    TEST_FLAGS= BUILDTAGS="selinux seccomp" make build-daemon-integration
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download-dependencies
