@@ -111,6 +111,12 @@ service ImageService {
 	rpc ImageFsInfo(ImageFsInfoRequest) returns (ImageFsInfoResponse) {}
 }
 
+// VolumeService defines the public APIs for managing volumes.
+service VolumeService {
+	// RemoveVolume removes the volume.
+	rpc RemoveVolume(RemoveVolumeRequest) returns (RemoveVolumeResponse) {}
+}
+
 message VersionRequest {
 	// Version of the kubelet runtime API.
 	string version = 1;
@@ -181,6 +187,8 @@ message Mount {
 	bool selinux_relabel = 4;
 	// Requested propagation mode.
 	MountPropagation propagation = 5;
+	// Name of volume
+	string name = 100;
 }
 
 // A NamespaceMode describes the intended namespace configuration for each
@@ -1282,4 +1290,12 @@ message ReopenContainerLogRequest {
 }
 
 message ReopenContainerLogResponse{
+}
+
+message RemoveVolumeRequest {
+	// Name of the volume to remove
+	string volume_name = 1;
+}
+
+message RemoveVolumeResponse {
 }

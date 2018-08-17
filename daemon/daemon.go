@@ -228,7 +228,7 @@ func (d *Daemon) Run() error {
 	}()
 
 	criStopCh := make(chan error)
-	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh, criReadyCh)
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, d.volumeMgr, criStopCh, criReadyCh)
 
 	httpReady := <-httpReadyCh
 	criReady := <-criReadyCh

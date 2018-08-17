@@ -91,6 +91,9 @@ type CriMgr interface {
 	// ImageServiceServer is interface of CRI image service.
 	runtime.ImageServiceServer
 
+	// VolumeServiceServer is interface of CRI volume service.
+	runtime.VolumeServiceServer
+
 	// StreamServerStart starts the stream server of CRI.
 	StreamServerStart() error
 }
@@ -99,6 +102,7 @@ type CriMgr interface {
 type CriManager struct {
 	ContainerMgr mgr.ContainerMgr
 	ImageMgr     mgr.ImageMgr
+	VolumeMgr    mgr.VolumeMgr
 	CniMgr       cni.CniMgr
 
 	// StreamServer is the stream server of CRI serves container streaming request.
@@ -121,7 +125,7 @@ type CriManager struct {
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr) (CriMgr, error) {
+func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr) (CriMgr, error) {
 	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
@@ -130,6 +134,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 	c := &CriManager{
 		ContainerMgr:   ctrMgr,
 		ImageMgr:       imgMgr,
+		VolumeMgr:      volumeMgr,
 		CniMgr:         cni.NewCniManager(&config.CriConfig),
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
@@ -671,6 +676,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 			HostPath:      m.Source,
 			ContainerPath: m.Destination,
 			Readonly:      !m.RW,
+			Name:          m.Name,
 			// Note: can't set SeLinuxRelabel.
 		})
 	}
@@ -1103,4 +1109,13 @@ func (c *CriManager) ImageFsInfo(ctx context.Context, r *runtime.ImageFsInfoRequ
 			},
 		},
 	}, nil
+}
+
+// RemoveVolume removes the volume.
+func (c *CriManager) RemoveVolume(ctx context.Context, r *runtime.RemoveVolumeRequest) (*runtime.RemoveVolumeResponse, error) {
+	volumeName := r.GetVolumeName()
+	if err := c.VolumeMgr.Remove(ctx, volumeName); err != nil {
+		return nil, err
+	}
+	return &runtime.RemoveVolumeResponse{}, nil
 }
