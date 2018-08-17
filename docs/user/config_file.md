@@ -28,6 +28,23 @@ value of `--config-file`.
 * We allow users set slice or array type of flag simultaneously from command
   and config file line，and merge them.
 
+### Runtime format
+
+If user want to add more runtime into pouchd, add like:
+
+```
+{
+    "add-runtime": {
+        "runc": {
+            "path": "/usr/local/bin/runc",
+            "runtimeArgs": [
+                "--debug"
+            ]
+        }
+    }
+}
+```
+
 ### Steps to configure config file
 
 1. Install PouchContainer, you can find detail steps in [PouchContainer install](https://github.com/alibaba/pouch/blob/master/INSTALLATION.md).
