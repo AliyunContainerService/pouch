@@ -165,7 +165,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	}
 
 	fileFlags := make(map[string]interface{}, 0)
-	iterateTLSConfig(origin, fileFlags)
+	iterateConfig(origin, fileFlags)
 
 	// check if invalid or unknown flag exist in config file
 	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
@@ -225,12 +225,11 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 	return cfg
 }
 
-// iterateTLSConfig resolves key-value from config file iteratly.
-// only for TLS config, and recursive once.
-func iterateTLSConfig(origin map[string]interface{}, config map[string]interface{}) {
+// iterateConfig resolves key-value from config file iteratly.
+func iterateConfig(origin map[string]interface{}, config map[string]interface{}) {
 	for k, v := range origin {
-		if c, ok := v.(map[string]interface{}); ok && k == "TLS" {
-			iterateTLSConfig(c, config)
+		if c, ok := v.(map[string]interface{}); ok && k != "add-runtime" {
+			iterateConfig(c, config)
 		} else {
 			config[k] = v
 		}
