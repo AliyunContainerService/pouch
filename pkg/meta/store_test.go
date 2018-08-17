@@ -200,3 +200,63 @@ func TestBoltdbRemove(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+type Demo4 struct {
+	A int
+	B string
+}
+
+func (d *Demo4) Key() string {
+	return d.B
+}
+
+var boltdb4 *Store
+
+var boltdbCfg4 = Config{
+	Driver:  "boltdb",
+	BaseDir: "/tmp/bolt4.db",
+	Buckets: []Bucket{
+		{"boltdb", reflect.TypeOf(Demo4{})},
+	},
+}
+
+func TestKeysWithPrefix(t *testing.T) {
+	var err error
+	boltdb4, err = NewStore(boltdbCfg4)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// put 1
+	if err := boltdb4.Put(&Demo4{
+		A: 1,
+		B: "prefixkey",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// put 2
+	if err := boltdb4.Put(&Demo4{
+		A: 2,
+		B: "prefixkey2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// find item with prefix
+	obj, err := boltdb4.KeysWithPrefix("prefixkey")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(obj) != 2 {
+		t.Fatal("should get 2 item")
+	}
+
+	// find item with prefix empty should return null item
+	obj, err = boltdb4.KeysWithPrefix("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(obj) != 0 {
+		t.Fatal("should get empty item")
+	}
+}
