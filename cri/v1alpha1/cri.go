@@ -306,7 +306,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	for _, container := range containers {
 		err = c.ContainerMgr.Stop(ctx, container.ID, defaultStopTimeout)
 		if err != nil {
-			// TODO: log an error message or break?
+			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 	}
 
@@ -371,7 +371,7 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	for _, container := range containers {
 		err = c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 		if err != nil {
-			// TODO: log an error message or break?
+			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 	}
 
