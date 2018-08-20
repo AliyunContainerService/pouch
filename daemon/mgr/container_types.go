@@ -287,11 +287,13 @@ func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 		}
 		c.Config.Entrypoint = config.Entrypoint
 	}
-	if c.Config.Env == nil {
-		c.Config.Env = config.Env
-	} else {
-		c.Config.Env = append(c.Config.Env, config.Env...)
+
+	// ContainerConfig.Env is new, and the ImageConfig.Env is old
+	newEnvSlice, err := mergeEnvSlice(c.Config.Env, config.Env)
+	if err != nil {
+		return err
 	}
+	c.Config.Env = newEnvSlice
 	if c.Config.WorkingDir == "" {
 		c.Config.WorkingDir = config.WorkingDir
 	}
