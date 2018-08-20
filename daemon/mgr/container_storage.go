@@ -664,6 +664,11 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 		}
 	}()
 
+	// try to setup container working directory
+	if err := mgr.SetupWorkingDirectory(ctx, c); err != nil {
+		return errors.Wrapf(err, "failed to setup container %s working directory", c.ID)
+	}
+
 	// parse volume config
 	if err = mgr.generateMountPoints(ctx, c); err != nil {
 		return errors.Wrap(err, "failed to parse volume argument")
@@ -677,6 +682,28 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 	// set rootfs disk quota
 	if err = mgr.setRootfsQuota(ctx, c); err != nil {
 		logrus.Warnf("failed to set rootfs disk quota, err: %v", err)
+	}
+
+	return nil
+}
+
+// SetupWorkingDirectory setup working directory for container
+func (mgr *ContainerManager) SetupWorkingDirectory(ctx context.Context, c *Container) error {
+	if c.Config.WorkingDir == "" {
+		return nil
+	}
+
+	if c.MountFS == "" {
+		mgr.setMountFS(ctx, c)
+	}
+
+	c.Config.WorkingDir = filepath.Clean(c.Config.WorkingDir)
+
+	path := filepath.Join(c.MountFS, c.Config.WorkingDir)
+	// TODO(ziren): not care about File mode
+	err := os.MkdirAll(path, 0755)
+	if err != nil && !os.IsExist(err) {
+		return err
 	}
 
 	return nil
