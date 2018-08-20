@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -289,9 +290,10 @@ func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
 	quotaIDs := make(map[uint32]struct{}, 0)
 
 	minID := QuotaMinID
-	_, output, _, err := exec.Run(0, "repquota", repquotaOpt)
+	exit, output, stderr, err := exec.Run(0, "repquota", repquotaOpt)
 	if err != nil {
-		return nil, minID, err
+		return nil, 0, errors.Wrapf(err, "failed to execute [repquota %s], stdout: (%s), stderr: (%s), exit: (%d)",
+			repquotaOpt, output, stderr, exit)
 	}
 
 	lines := strings.Split(string(output), "\n")
