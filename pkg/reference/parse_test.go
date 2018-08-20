@@ -131,6 +131,22 @@ func TestParse(t *testing.T) {
 			input:    "  ",
 			expected: nil,
 			err:      ErrInvalid,
+		}, {
+			name:     "With __ as separator in name",
+			input:    "new__separator",
+			expected: namedReference{"new__separator"},
+		}, {
+			name:  "With __ as separator in name and tag",
+			input: "new__separator:build__testing",
+			expected: taggedReference{
+				Named: namedReference{"new__separator"},
+				tag:   "build__testing",
+			},
+		}, {
+			name:     "Invalid separator ___",
+			input:    "new__separator___invalid",
+			expected: nil,
+			err:      ErrInvalid,
 		},
 	} {
 		ref, err := Parse(tc.input)

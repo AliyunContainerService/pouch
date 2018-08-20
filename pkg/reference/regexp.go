@@ -5,10 +5,12 @@ import "regexp"
 //
 // v1 org.opencontainers.image.ref.name:
 //
+// NOTE: extend separator with "__" here to compatibility with moby
+//
 // 	ref       ::= component ("/" component)*
 // 	component ::= alphanum (separator alphanum)*
 // 	alphanum  ::= [A-Za-z0-9]+
-// 	separator ::= [-._:@+] | "--"
+// 	separator ::= [-._:@+] | "--" | "__"
 //
 // In the image-spec, there is no definition about Tag.
 //
@@ -19,7 +21,7 @@ import "regexp"
 var (
 	regAlphanum = expression(`[A-Za-z0-9]`)
 
-	regSeparator = expression(`([-._:@+]|--)`)
+	regSeparator = expression(`([-._:@+]|--|__)`)
 
 	regComponent = group(
 		oneOrMore(regAlphanum),
