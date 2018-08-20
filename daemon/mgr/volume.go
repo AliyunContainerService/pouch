@@ -2,7 +2,6 @@ package mgr
 
 import (
 	"context"
-	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/daemon/events"
@@ -109,15 +108,6 @@ func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, e
 
 // List returns all volumes on this host.
 func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]*types.Volume, error) {
-	if _, ok := labels["hostname"]; !ok {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return nil, err
-		}
-
-		labels["hostname"] = hostname
-	}
-
 	return vm.core.ListVolumes(labels)
 }
 
