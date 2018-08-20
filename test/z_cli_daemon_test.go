@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
 	"github.com/alibaba/pouch/test/environment"
@@ -28,6 +30,17 @@ func (suite *PouchDaemonSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 }
 
+// Generate container name with random suffix
+func GenerateCnameWithRandomSuffix(prefix string) string {
+	var str bytes.Buffer
+	suffix := randomid.Generate()[0:6]
+	list := []string{"TestDaemonCgroupParent", "-", suffix}
+	for _, s := range list {
+		str.WriteString(s)
+	}
+	return str.String()
+}
+
 // TestDaemonCgroupParent tests daemon with cgroup parent
 func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug("--cgroup-parent=tmp")
@@ -38,7 +51,7 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 	// Must kill it, as we may loose the pid in next call.
 	defer dcfg.KillDaemon()
 
-	cname := "TestDaemonCgroupParent"
+	cname := GenerateCnameWithRandomSuffix("TestDaemonCgroupParent")
 	{
 
 		result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
@@ -246,7 +259,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 		}
 	}
 
-	cname := "TestDaemonRestart"
+	cname := GenerateCnameWithRandomSuffix("TestDaemonRestart")
 	{
 		result := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname,
 			"-p", "1234:80",
@@ -288,7 +301,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) 
 		}
 	}
 
-	cname := "TestDaemonRestartWithPausedContainer"
+	cname := GenerateCnameWithRandomSuffix("TestDaemonRestartWithPausedContainer")
 	{
 		result := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname,
 			"-p", "5678:80", busyboxImage, "top")
