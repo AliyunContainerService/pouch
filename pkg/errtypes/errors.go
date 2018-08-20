@@ -29,8 +29,14 @@ var (
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 
-	// ErrUsingbyContainers represents that object is used by containers
+	// ErrUsingbyContainers represents that object is used by containers.
 	ErrUsingbyContainers = errorType{codeInUse, "using by containers"}
+
+	// ErrVolumeInUse represents that volume in use.
+	ErrVolumeInUse = errorType{codeInUse, "volume is in use"}
+
+	// ErrVolumeNotFound represents that no such volume.
+	ErrVolumeNotFound = errorType{codeNotfound, "no such volume"}
 )
 
 const (

@@ -35,8 +35,8 @@ type TLSConfig struct {
 	CA               string `json:"tlscacert,omitempty"`
 	Cert             string `json:"tlscert,omitempty"`
 	Key              string `json:"tlskey,omitempty"`
-	VerifyRemote     bool   `json:"tlsverify"`
-	ManagerWhiteList string `json:"manager-whitelist"`
+	VerifyRemote     bool   `json:"tlsverify,omitempty"`
+	ManagerWhiteList string `json:"manager-whitelist,omitempty"`
 }
 
 // NewAPIClient initializes a new API client for the given host

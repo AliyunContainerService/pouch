@@ -15,7 +15,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/credential"
-	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd/progress"
@@ -93,34 +93,44 @@ func showProgress(body io.ReadCloser) error {
 		output = progress.NewWriter(os.Stdout)
 	}
 
+	pos := make(map[string]int)
+	status := []jsonstream.JSONMessage{}
+
 	dec := json.NewDecoder(body)
-	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("failed to read the opening token: %v", err)
-	}
+	for {
+		var (
+			msg  jsonstream.JSONMessage
+			msgs []jsonstream.JSONMessage
+		)
 
-	refStatus := make(map[string]string)
-	for dec.More() {
-		var infos []ctrd.ProgressInfo
+		if err := dec.Decode(&msg); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
 
-		if err := dec.Decode(&infos); err != nil {
-			return fmt.Errorf("failed to decode: %v", err)
+		change := true
+		if _, ok := pos[msg.ID]; !ok {
+			status = append(status, msg)
+			pos[msg.ID] = len(status) - 1
+		} else {
+			change = (status[pos[msg.ID]].Status != msg.Status)
+			status[pos[msg.ID]] = msg
 		}
 
 		// only display the new status if the stdout is not terminal
 		if !isTerminal {
-			newInfos := make([]ctrd.ProgressInfo, 0)
-			for i, info := range infos {
-				old, ok := refStatus[info.Ref]
-				if !ok || info.Status != old {
-					refStatus[info.Ref] = info.Status
-					newInfos = append(newInfos, infos[i])
-				}
+			// if the status doesn't change, skip to avoid duplicate status
+			if !change {
+				continue
 			}
-
-			infos = newInfos
+			msgs = []jsonstream.JSONMessage{msg}
+		} else {
+			msgs = status
 		}
 
-		if err := displayProgressInfos(output, isTerminal, infos, start); err != nil {
+		if err := displayImageReferenceProgress(output, isTerminal, msgs, start); err != nil {
 			return fmt.Errorf("failed to display progress: %v", err)
 		}
 
@@ -128,27 +138,27 @@ func showProgress(body io.ReadCloser) error {
 			return fmt.Errorf("failed to display progress: %v", err)
 		}
 	}
-
-	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("failed to read the closing token: %v", err)
-	}
 	return nil
 }
 
-// displayProgressInfos uses tabwriter to show current progress info.
-func displayProgressInfos(output io.Writer, isTerminal bool, infos []ctrd.ProgressInfo, start time.Time) error {
+// displayImageReferenceProgress uses tabwriter to show current progress status.
+func displayImageReferenceProgress(output io.Writer, isTerminal bool, msgs []jsonstream.JSONMessage, start time.Time) error {
 	var (
-		tw    = tabwriter.NewWriter(output, 1, 8, 1, ' ', 0)
-		total = int64(0)
+		tw      = tabwriter.NewWriter(output, 1, 8, 1, ' ', 0)
+		current = int64(0)
 	)
 
-	for _, info := range infos {
-		if info.ErrorMessage != "" {
-			return fmt.Errorf(info.ErrorMessage)
+	for _, msg := range msgs {
+		if msg.Error != nil {
+			return fmt.Errorf(msg.Error.Message)
 		}
 
-		total += info.Offset
-		if _, err := fmt.Fprint(tw, formatProgressInfo(info, isTerminal)); err != nil {
+		if msg.Detail != nil {
+			current += msg.Detail.Current
+		}
+
+		status := jsonstream.PullReferenceStatus(!isTerminal, msg)
+		if _, err := fmt.Fprint(tw, status); err != nil {
 			return err
 		}
 	}
@@ -157,45 +167,13 @@ func displayProgressInfos(output io.Writer, isTerminal bool, infos []ctrd.Progre
 	if isTerminal {
 		_, err := fmt.Fprintf(tw, "elapsed: %-4.1fs\ttotal: %7.6v\t(%v)\t\n",
 			time.Since(start).Seconds(),
-			progress.Bytes(total),
-			progress.NewBytesPerSecond(total, time.Since(start)))
+			progress.Bytes(current),
+			progress.NewBytesPerSecond(current, time.Since(start)))
 		if err != nil {
 			return err
 		}
 	}
 	return tw.Flush()
-}
-
-// formatProgressInfo formats ProgressInfo into string.
-func formatProgressInfo(info ctrd.ProgressInfo, isTerminal bool) string {
-	if !isTerminal {
-		return fmt.Sprintf("%s:\t%s\n", info.Ref, info.Status)
-	}
-
-	switch info.Status {
-	case "downloading", "uploading":
-		var bar progress.Bar
-		if info.Total > 0.0 {
-			bar = progress.Bar(float64(info.Offset) / float64(info.Total))
-		}
-		return fmt.Sprintf("%s:\t%s\t%40r\t%8.8s/%s\t\n",
-			info.Ref,
-			info.Status,
-			bar,
-			progress.Bytes(info.Offset), progress.Bytes(info.Total))
-
-	case "resolving", "waiting":
-		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
-			info.Ref,
-			info.Status,
-			progress.Bar(0.0))
-
-	default:
-		return fmt.Sprintf("%s:\t%s\t%40r\t\n",
-			info.Ref,
-			info.Status,
-			progress.Bar(1.0))
-	}
 }
 
 // pullExample shows examples in pull command, and is used in auto-generated cli docs.
@@ -226,7 +204,11 @@ func pullMissingImage(ctx context.Context, apiClient client.CommonAPIClient, ima
 		}
 	}
 
-	namedRef, _ := reference.Parse(image)
+	namedRef, err := reference.Parse(image)
+	if err != nil {
+		return err
+	}
+
 	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
 	var name, tag string

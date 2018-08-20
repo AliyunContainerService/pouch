@@ -107,7 +107,7 @@ func (suite *PouchRunBlkioSuite) TestRunWithBlkioWeight(c *check.C) {
 	name := "test-run-with-blkio-weight"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--blkio-weight", "500", busyboxImage)
+		"--blkio-weight", "500", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 }

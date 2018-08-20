@@ -38,7 +38,12 @@ type ContainerConfig struct {
 	// Whether to generate the network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container.
 	DisableNetworkFiles bool `json:"DisableNetworkFiles,omitempty"`
 
-	// Set disk quota for container
+	// Set disk quota for container.
+	// Key is the dir in container.
+	// Value is disk quota size for the dir.
+	// / means rootfs dir in container.
+	// .* includes rootfs dir and all volume dir.
+	//
 	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
 	// The domain name to use for the container.
@@ -73,6 +78,9 @@ type ContainerConfig struct {
 	// MAC address of the container.
 	MacAddress string `json:"MacAddress,omitempty"`
 
+	// net priority.
+	NetPriority int64 `json:"NetPriority,omitempty"`
+
 	// Disable networking for the container.
 	NetworkDisabled bool `json:"NetworkDisabled,omitempty"`
 
@@ -82,7 +90,10 @@ type ContainerConfig struct {
 	// Open `stdin`
 	OpenStdin bool `json:"OpenStdin,omitempty"`
 
-	// set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id
+	// Set disk quota by specified quota id.
+	// If QuotaID <= 0, it means pouchd should allocate a unique quota id by sequence automatically.
+	// By default, a quota ID is mapped to only one container. And one quota ID can include several mountpoint.
+	//
 	QuotaID string `json:"QuotaID,omitempty"`
 
 	// Whether to start container in rich container mode. (default false)
@@ -150,6 +161,8 @@ type ContainerConfig struct {
 /* polymorph ContainerConfig Labels false */
 
 /* polymorph ContainerConfig MacAddress false */
+
+/* polymorph ContainerConfig NetPriority false */
 
 /* polymorph ContainerConfig NetworkDisabled false */
 

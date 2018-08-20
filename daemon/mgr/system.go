@@ -7,9 +7,12 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/pkg/meta"
@@ -28,6 +31,7 @@ type SystemMgr interface {
 	Version() (types.SystemVersion, error)
 	Auth(*types.AuthConfig) (string, error)
 	UpdateDaemon(*types.DaemonUpdateConfig) error
+	SubscribeToEvents(ctx context.Context, since, until time.Time, ef filters.Args) ([]types.EventsMessage, <-chan *types.EventsMessage, <-chan error)
 }
 
 // SystemManager is an instance of system management.
@@ -38,16 +42,19 @@ type SystemManager struct {
 	imageMgr ImageMgr
 
 	store *meta.Store
+
+	eventsService *events.Events
 }
 
 // NewSystemManager creates a brand new system manager.
-func NewSystemManager(cfg *config.Config, store *meta.Store, imageManager ImageMgr) (*SystemManager, error) {
+func NewSystemManager(cfg *config.Config, store *meta.Store, imageManager ImageMgr, eventsService *events.Events) (*SystemManager, error) {
 	return &SystemManager{
-		name:     "system_manager",
-		registry: &registry.Client{},
-		config:   cfg,
-		imageMgr: imageManager,
-		store:    store,
+		name:          "system_manager",
+		registry:      &registry.Client{},
+		config:        cfg,
+		imageMgr:      imageManager,
+		store:         store,
+		eventsService: eventsService,
 	}, nil
 }
 
@@ -132,6 +139,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		LoggingDriver:      mgr.config.DefaultLogConfig.LogDriver,
 		VolumeDrivers:      volumeDrivers,
 		LxcfsEnabled:       mgr.config.IsLxcfsEnabled,
+		CriEnabled:         mgr.config.IsCriEnabled,
 		MemTotal:           totalMem,
 		Name:               hostname,
 		NCPU:               int64(runtime.NumCPU()),
@@ -140,12 +148,20 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		PouchRootDir:       mgr.config.HomeDir,
 		RegistryConfig:     &mgr.config.RegistryService,
 		// RuncCommit: ,
-		// Runtimes: ,
+		Runtimes: mgr.config.Runtimes,
 		// SecurityOptions: ,
 		ServerVersion:   version.Version,
 		ListenAddresses: mgr.config.Listen,
 	}
 	return info, nil
+}
+
+// SubscribeToEvents returns to events on the exchange. Events are sent through the returned
+// channel ch. If an error is encountered, it will be sent on channel errs and
+// errs will be closed. To end the subscription, cancel the provided context.
+func (mgr *SystemManager) SubscribeToEvents(ctx context.Context, since, until time.Time, filter filters.Args) ([]types.EventsMessage, <-chan *types.EventsMessage, <-chan error) {
+	ef := events.NewFilter(filter)
+	return mgr.eventsService.Subscribe(ctx, since, until, ef)
 }
 
 // Version shows version of daemon.

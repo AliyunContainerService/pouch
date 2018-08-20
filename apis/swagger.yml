@@ -70,13 +70,9 @@ paths:
           schema:
             $ref: "#/definitions/AuthResponse"
         401:
-          description: "Login unauthorized"
-          schema:
-            $ref: "#/responses/401ErrorResponse"
+          $ref: "#/responses/401ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "authConfig"
           in: "body"
@@ -106,6 +102,52 @@ paths:
           description: "Config used to update daemon, only labels and image proxy are allowed."
           schema:
             $ref: "#/definitions/DaemonUpdateConfig"
+
+  /events:
+    get:
+      summary: "Subscribe pouchd events to users"
+      description: |
+        Stream real-time events from the server.
+        Report various object events of pouchd when something happens to them.
+        Containers report these events: create`, `destroy`, `die`, `oom`, `pause`, `rename`, `resize`, `restart`, `start`, `stop`, `top`, `unpause`, and `update`
+        Images report these events: `pull`, `untag`
+        Volumes report these events: `create`, `destroy`
+        Networks report these events: `create`, `connect`, `disconnect`, `destroy`
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: '#definitions/EventsMessage'
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "since"
+          in: "query"
+          description: "Show events created since this timestamp then stream new events."
+          type: "string"
+        - name: "until"
+          in: "query"
+          description: "Show events created until this timestamp then stop streaming"
+          type: "string"
+        - name: "filters"
+          in: "query"
+          description: |
+            A JSON encoded value of filters (a `map[string][]string`) to process on the event list. Available filters:
+            - `container=<string>` container name or ID
+            - `event=<string>` event type
+            - `image=<string>` image name or ID
+            - `label=<string>` image or container label
+            - `network=<string>` network name or ID
+            - `type=<string>` object to filter by, one of `container`, `image`, `volume`, `network`
+            - `volume=<string>` volume name
+          type: "string"
+
 
   /images/create:
     post:
@@ -163,9 +205,7 @@ paths:
         200:
           description: "no error"
         500:
-          description: "server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "imageTarStream"
           in: "body"
@@ -178,9 +218,32 @@ paths:
           description: "set the image name for the tar stream, default unknown/unknown"
           type: "string"
 
+  /images/save:
+    get:
+      summary: "Save image"
+      description: |
+        Save an image by oci.v1 format tar stream.
+      produces:
+        - application/x-tar
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "string"
+            format: "binary"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "name"
+          in: "query"
+          description: "Image name which is to be saved"
+          type: "string"
+
   /images/{imageid}/json:
     get:
-      summary: "Inspect a image"
+      summary: "Inspect an image"
       description: "Return the information about image"
       operationId: "ImageInspect"
       produces:
@@ -205,6 +268,27 @@ paths:
           examples:
             application/json:
               message: "No such image: e216a057b1cb"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/imageid"
+
+  /images/{imageid}/history:
+    get:
+      summary: "Get an image's history"
+      description: "Return the history of each layer of image"
+      operationId: "ImageHistory"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/HistoryResultItem"
+        404:
+          $ref: "#/responses/404ErrorResponse"
         500:
           $ref: "#/responses/500ErrorResponse"
       parameters:
@@ -493,11 +577,23 @@ paths:
           in: "query"
           description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
           type: "string"
+        - name: "checkpoint-dir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpoint"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
       responses:
         204:
           description: "no error"
         404:
           $ref: "#/responses/404ErrorResponse"
+        409:
+          description: "container is paused"
+          schema:
+            $ref: "#/definitions/Error"
         500:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
@@ -741,6 +837,79 @@ paths:
             $ref: "#/definitions/Error"
       tags: ["Container"]
 
+  /containers/{id}/checkpoints:
+    post:
+      summary: "create a checkpoint from a running container"
+      operationId: "ContainerCheckpointCreate"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpointid"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
+        - name: "exit"
+          in: "query"
+          description: "exit after checkpoint"
+          type: "bool"
+      responses:
+        201:
+          description: "created"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+      tags: ["Container"]
+
+  /containers/{id}/checkpoints:
+    get:
+      summary: "list checkpoints of a container"
+      operationId: "ContainerCheckpointList"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+      tags: ["Container"]
+
+  /containers/{id}/checkpoints/{id}:
+    delete:
+      summary: "delete a checkpoint of a container"
+      operationId: "ContainerCheckpointDelete"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "checkpointdir"
+          in: "query"
+          description: "checkpoint directory"
+          type: "string"
+        - name: "checkpointid"
+          in: "query"
+          description: "checkpoint id"
+          type: "string"
+      responses:
+        204:
+          description: "no error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /exec/{id}/start:
     post:
       summary: "Start an exec instance"
@@ -786,13 +955,9 @@ paths:
           schema:
             $ref: "#/definitions/ContainerExecInspect"
         404:
-          description: "No such exec instance"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
@@ -1184,13 +1349,9 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         404:
-          description: "Network or container not found"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
@@ -1218,13 +1379,9 @@ paths:
           schema:
             $ref: "#/definitions/Error"
         404:
-          description: "Network or container not found"
-          schema:
-            $ref: "#/responses/404ErrorResponse"
+          $ref: "#/responses/404ErrorResponse"
         500:
-          description: "Server error"
-          schema:
-            $ref: "#/responses/500ErrorResponse"
+          $ref: "#/responses/500ErrorResponse"
       parameters:
         - name: "id"
           in: "path"
@@ -1519,6 +1676,13 @@ definitions:
         x-nullable: false
         default: false
         example: false
+      CriEnabled:
+        description: |
+          Indicates if pouchd has accepted flag --enable-cri and enables cri part.
+        type: "boolean"
+        x-nullable: false
+        default: false
+        example: false
       ContainerdCommit:
         $ref: "#/definitions/Commit"
       RuncCommit:
@@ -1590,6 +1754,7 @@ definitions:
           > are in compliance with any terms that cover redistributing
           > nondistributable artifacts.
 
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
@@ -1616,6 +1781,7 @@ definitions:
           > feature to push artifacts to private registries and ensure that you
           > are in compliance with any terms that cover redistributing
           > nondistributable artifacts.
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
@@ -1645,11 +1811,13 @@ definitions:
           > should therefore ONLY be used for testing purposes. For increased
           > security, users should add their CA to their system's list of trusted
           > CAs instead of enabling this option.
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
         example: ["::1/128", "127.0.0.0/8"]
       IndexConfigs:
+        x-omitempty: true
         type: "object"
         additionalProperties:
           $ref: "#/definitions/IndexInfo"
@@ -1671,6 +1839,7 @@ definitions:
             Official: false
       Mirrors:
         description: "List of registry URLs that act as a mirror for the official registry."
+        x-omitempty: true
         type: "array"
         items:
           type: "string"
@@ -1947,7 +2116,12 @@ definitions:
         description: "Initial script executed in container. The script will be executed before entrypoint or command"
       DiskQuota:
         type: "object"
-        description: "Set disk quota for container"
+        description: |
+          Set disk quota for container.
+          Key is the dir in container.
+          Value is disk quota size for the dir.
+          / means rootfs dir in container.
+          .* includes rootfs dir and all volume dir.
         x-nullable: true
         additionalProperties:
           type: "string"
@@ -1958,7 +2132,14 @@ definitions:
           type: "string"
       QuotaID:
         type: "string"
-        description: "set disk quota by specified quota id, if id < 0, it means pouchd alloc a unique quota id"
+        description: |
+          Set disk quota by specified quota id. 
+          If QuotaID <= 0, it means pouchd should allocate a unique quota id by sequence automatically.
+          By default, a quota ID is mapped to only one container. And one quota ID can include several mountpoint.
+      NetPriority:
+        description: "net priority."
+        type: "integer"
+        default: 0
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
@@ -2196,8 +2377,11 @@ definitions:
             items:
               type: "string"
           DiskQuota:
-            type: "string"
+            type: "object"
             description: "update disk quota for container"
+            x-nullable: true
+            additionalProperties:
+              type: "string"
 
   ContainerUpgradeConfig:
     description: |
@@ -2237,19 +2421,17 @@ definitions:
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"
     type: "object"
+    required: [CpuShares, Memory, CgroupParent, BlkioWeight, CpuPeriod, CpuQuota, CpuRealtimePeriod, 
+    CpuRealtimeRuntime, CpusetCpus, CpusetMems, DeviceCgroupRules, KernelMemory, MemoryReservation, 
+    MemorySwap, MemorySwappiness, NanoCpus, OomKillDisable, PidsLimit, CpuCount, CpuPercent, 
+    IOMaximumIOps, IOMaximumBandwidth, IntelRdtL3Cbm, ScheLatSwitch, MemoryWmarkRatio, MemoryExtra, 
+    MemoryForceEmptyCtl]
     properties:
-      # Applicable to all platforms
-      CpuShares:
-        description: "An integer value representing this container's relative CPU weight versus other containers."
-        type: "integer"
-      Memory:
-        description: "Memory limit in bytes."
-        type: "integer"
-        default: 0
       # Applicable to UNIX platforms
       CgroupParent:
         description: "Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist."
         type: "string"
+        x-nullable: false
       BlkioWeight:
         description: "Block IO weight (relative weight), need CFQ IO Scheduler enable."
         type: "integer"
@@ -2287,6 +2469,10 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/ThrottleDevice"
+      CpuShares:
+        description: "An integer value representing this container's relative CPU weight versus other containers."
+        type: "integer"
+        x-nullable: false
       CpuPeriod:
         description: |
           CPU CFS (Completely Fair Scheduler) period.
@@ -2295,6 +2481,7 @@ definitions:
         format: "int64"
         minimum: 1000
         maximum: 1000000
+        x-nullable: false
       CpuQuota:
         description: |
           CPU CFS (Completely Fair Scheduler) quota.
@@ -2302,21 +2489,26 @@ definitions:
         type: "integer"
         format: "int64"
         minimum: 1000
+        x-nullable: false
       CpuRealtimePeriod:
         description: "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
         type: "integer"
         format: "int64"
+        x-nullable: false
       CpuRealtimeRuntime:
         description: "The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
         type: "integer"
         format: "int64"
+        x-nullable: false
       CpusetCpus:
         description: "CPUs in which to allow execution (e.g., `0-3`, `0,1`)"
         type: "string"
         example: "0-3"
+        x-nullable: false
       CpusetMems:
         description: "Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems."
         type: "string"
+        x-nullable: false
       Devices:
         description: "A list of devices to add to the container."
         type: "array"
@@ -2332,24 +2524,33 @@ definitions:
         description: "Kernel memory limit in bytes."
         type: "integer"
         format: "int64"
+        x-nullable: false
+      Memory:
+        description: "Memory limit in bytes."
+        type: "integer"
+        default: 0
+        x-nullable: false
       MemoryReservation:
         description: "Memory soft limit in bytes."
         type: "integer"
         format: "int64"
+        x-nullable: false
       MemorySwap:
         description: "Total memory limit (memory + swap). Set as `-1` to enable unlimited swap."
         type: "integer"
         format: "int64"
+        x-nullable: false
       MemorySwappiness:
         description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
         type: "integer"
         format: "int64"
-        minimum: -1
+        minimum: 0
         maximum: 100
-      NanoCPUs:
+      NanoCpus:
         description: "CPU quota in units of 10<sup>-9</sup> CPUs."
         type: "integer"
         format: "int64"
+        x-nullable: false
       OomKillDisable:
         description: "Disable OOM Killer for the container."
         type: "boolean"
@@ -2359,6 +2560,7 @@ definitions:
           Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.
         type: "integer"
         format: "int64"
+        x-nullable: false
       Ulimits:
         description: |
           A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
@@ -2372,23 +2574,28 @@ definitions:
           On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
         type: "integer"
         format: "int64"
+        x-nullable: false
       CpuPercent:
         description: |
           The usable percentage of the available CPUs (Windows only).
           On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
         type: "integer"
         format: "int64"
+        x-nullable: false
       IOMaximumIOps:
         description: "Maximum IOps for the container system drive (Windows only)"
         type: "integer"
         format: "uint64"
+        x-nullable: false
       IOMaximumBandwidth:
         description: "Maximum IO in bytes per second for the container system drive (Windows only)"
         type: "integer"
         format: "uint64"
+        x-nullable: false
       IntelRdtL3Cbm:
         description: "IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available."
         type: "string"
+        x-nullable: false
 
       # applicable to AliKenerl 4.9
       ScheLatSwitch:
@@ -2398,6 +2605,7 @@ definitions:
         x-nullable: false
         minimum: 0
         maximum: 1
+        x-nullable: false
       MemoryWmarkRatio:
         description: | 
           MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. 
@@ -2423,6 +2631,29 @@ definitions:
         x-nullable: false
         minimum: 0
         maximum: 1
+      NvidiaConfig:
+        $ref: "#/definitions/NvidiaConfig"
+
+  NvidiaConfig:
+    type: "object"
+    properties:
+      NvidiaVisibleDevices:
+        description: "NvidiaVisibleDevices controls which GPUs will be made accessible inside the container"
+        type: "string"
+        example: |
+                  Possible values.
+                  0,1,2, GPU-fef8089b …: a comma-separated list of GPU UUID(s) or index(es).
+                  all: all GPUs will be accessible, this is the default value in our container images.
+                  none: no GPU will be accessible, but driver capabilities will be enabled.
+        x-nullable: false
+      NvidiaDriverCapabilities:
+        description: "NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container"
+        type: "string"
+        example: |
+                  Possible values
+                  compute,video, graphics,utility …: a comma-separated list of driver features the container needs.
+                  all: enable all available driver capabilities.
+        x-nullable: false
 
   ThrottleDevice:
     type: "object"
@@ -2717,6 +2948,42 @@ definitions:
             description: "the base layer content hash."
             type: "string"
 
+  HistoryResultItem:
+    description: "An object containing image history at API side."
+    type: "object"
+    required: [ID, Created, CreatedBy, Author, Comment, EmptyLayer, Size]
+    properties:
+      ID:
+        description: "ID of each layer image."
+        type: "string"
+        x-nullable: false
+      Created:
+        description: "the combined date and time at which the layer was created."
+        type: "integer"
+        format: "int64"
+        x-nullable: false
+      CreatedBy:
+        description: "the command which created the layer."
+        type: "string"
+        x-nullable: false
+      Author:
+        description: "the author of the build point."
+        type: "string"
+        x-nullable: false
+      Comment:
+        description: "a custom message set when creating the layer."
+        type: "string"
+        x-nullable: false
+      EmptyLayer:
+        description: "mark whether the history item created a filesystem diff or not."
+        type: "boolean"
+        x-nullable: false
+      Size:
+        description: "size of each layer image."
+        type: "integer"
+        format: "int64"
+        x-nullable: false
+
   SearchResultItem:
     type: "object"
     description: "search result item in search results."
@@ -2897,50 +3164,67 @@ definitions:
   ContainerExecInspect:
     type: "object"
     description: holds information about a running process started.
+    required: [ID, Running, ExitCode, ProcessConfig, OpenStdin, OpenStderr, OpenStdout, CanRemove, ContainerID, DetachKeys]
     properties:
       ID:
+        x-nullable: false
         type: "string"
         description: "The ID of this exec"
       Running:
+        x-nullable: false
         type: "boolean"
       ExitCode:
+        x-nullable: false
         type: "integer"
         description: "The last exit code of this container"
       ProcessConfig:
+        x-nullable: false
         $ref: "#/definitions/ProcessConfig"
       OpenStdin:
+        x-nullable: false
         type: "boolean"
       OpenStderr:
+        x-nullable: false
         type: "boolean"
       OpenStdout:
+        x-nullable: false
         type: "boolean"
       CanRemove:
+        x-nullable: false
         type: "boolean"
       ContainerID:
+        x-nullable: false
         type: "string"
         description: "The ID of this container"
       DetachKeys:
+        x-nullable: false
         type: "string"
 
   ProcessConfig:
     type: "object"
     description: ExecProcessConfig holds information about the exec process.
+    required: [privileged, user, tty, entrypoint, arguments]
     properties:
       privileged:
+        x-nullable: false
         type: "boolean"
       user:
+        x-nullable: false
         type: "string"
       tty:
+        x-nullable: false
         type: "boolean"
       entrypoint:
+        x-nullable: false
         type: "string"
       arguments:
+        x-nullable: false
         type: "array"
         items:
           type: "string"
 
   ContainerJSON:
-    description: | 
+    description: |
       ContainerJSON contains response of Engine API:
       GET "/containers/{id}/json"
     type: "object"
@@ -3463,12 +3747,16 @@ definitions:
     x-nullable: false
     properties:
       Subnet:
+        description: "subnet address for network"
         type: "string"
       IPRange:
+        description: "sub ip range in sub-network"
         type: "string"
       Gateway:
+        description: "gateway for sub-network"
         type: "string"
       AuxAddress:
+        description: "aux address in sub-network"
         type: "object"
         additionalProperties:
           type: "string"
@@ -3482,6 +3770,17 @@ definitions:
       Width:
         type: "integer"
 
+  ContainerStartOptions:
+    description: "options of starting container"
+    type: "object"
+    properties:
+      DetachKeys:
+        type: "string"
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+
   ContainerRemoveOptions:
     description: "options of remove container"
     type: "object"
@@ -3492,6 +3791,120 @@ definitions:
         type: "boolean"
       Link:
         type: "boolean"
+
+  ContainerListOptions:
+    description: |
+      options of list container, filters (a `map[string][]string`) to process on the container list. Available filters:
+
+      - `id=container-id`
+      - `name=container-name`
+      - `status=running`
+      - `label=key` or `label=key=value`
+      - `network=container-network`
+      - `volume=volume-id`
+    type: "object"
+    properties:
+      All:
+        type: "boolean"
+      Since:
+        type: "string"
+      Before:
+        type: "string"
+      Limit:
+        type: "integer"
+      Filter:
+        type: "object"
+        additionalProperties:
+          type: "array"
+          items:
+            type: "string"
+
+  EventsMessage:
+    description: |
+      EventsMessage represents the information an event contains, the message
+      at least contains type, action and id. type specifies which object generates
+      the event, like container, or a network, or a volume. the action specifies
+      the action name, like create, or destroy. the id identifies the object that
+      generates the event.
+      The message also can contain the EventsActor that describes the extra
+      attributes that describe the event.
+    type: "object"
+    properties:
+      status:
+        type: "string"
+      id:
+        type: "string"
+      from:
+        type: "string"
+      type:
+        $ref: "#/definitions/EventType"
+      action:
+        type: "string"
+      actor:
+        $ref: "#/definitions/EventsActor"
+      time:
+        type: "integer"
+      timeNano:
+        type: "integer"
+
+  EventsActor:
+    description: |
+      EventsActor describes something that generates events,
+      like a container, or a network, or a volume.
+      It has a defined name and a set or attributes.
+      The container attributes are its labels, other actors
+      can generate these attributes from other properties.
+    type: "object"
+    properties:
+      ID:
+        type: "string"
+      Attributes:
+        type: "object"
+        additionalProperties:
+          type: "string"
+
+  EventType:
+    description: |
+      The type of event. For example, "container" or "image",
+      Now we only support container, image, network and volume events.
+    type: "string"
+    enum: ["container", "daemon", "image", "network", "plugin", "volume"]
+
+  CheckpointCreateOptions:
+    description: "options of creating a checkpoint from a running container, checkpoint is used to restore a container with current state later"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+      Exit:
+        type: "boolean"
+
+  CheckpointListOptions:
+    description: "options of listing all checkpoints of a container"
+    type: "object"
+    properties:
+      CheckpointDir:
+        type: "string"
+
+  CheckpointDeleteOptions:
+    description: "options of deleting a checkpoint from a container"
+    type: "object"
+    properties:
+      CheckpointID:
+        type: "string"
+      CheckpointDir:
+        type: "string"
+
+  Checkpoint:
+    description: "describe a created checkpoint, include container name and checkpoint name"
+    type: "object"
+    properties:
+      ContainerID:
+        type: "string"
+      CheckpointName:
+        type: "string"
 
 parameters:
   id:

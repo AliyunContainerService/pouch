@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/plugins"
-	"github.com/alibaba/pouch/storage/volume/types"
-
 	"github.com/pkg/errors"
 )
 
@@ -199,6 +197,21 @@ func Register(d Driver) error {
 	return nil
 }
 
+// Unregister deletes a driver from driverTable
+func Unregister(name string) bool {
+	backendDrivers.Lock()
+	defer backendDrivers.Unlock()
+
+	_, exist := backendDrivers.drivers[name]
+	if !exist {
+		return false
+	}
+
+	delete(backendDrivers.drivers, name)
+
+	return true
+}
+
 // Get returns one backend driver with specified name.
 func Get(name string) (Driver, error) {
 	return backendDrivers.Get(name)
@@ -236,18 +249,6 @@ func AllDriversName() []string {
 	sort.Strings(names)
 
 	return names
-}
-
-// ListDriverOption return backend driver's options by name.
-func ListDriverOption(name string) map[string]types.Option {
-	dv, err := Get(name)
-	if err != nil {
-		return nil
-	}
-	if opt, ok := dv.(Opt); ok {
-		return opt.Options()
-	}
-	return nil
 }
 
 // Alias is used to add driver name's alias into exist driver.

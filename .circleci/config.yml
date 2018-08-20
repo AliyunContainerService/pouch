@@ -13,15 +13,15 @@ jobs:
       - run:
           name: use markdownlint v0.4.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
           command: |
-            find  ./ -name  "*.md" | grep -v vendor | grep -v extra |  grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
+            find  ./ -name  "*.md" | grep -v vendor | grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
       - run:
           name: use opensource tool client9/misspell to correct commonly misspelled English words 
           command: |
-            find  ./* -name  "*"  | grep -v extra | grep -v vendor | xargs misspell -error
+            find  ./* -name  "*"  | grep -v vendor | xargs misspell -error
       - run:
           name: use ShellCheck (https://github.com/koalaman/shellcheck) to check the validateness of shell scripts in pouch repo
           command: |
-            find ./ -name "*.sh" | grep -v vendor | grep -v extra | xargs shellcheck
+            find ./ -name "*.sh" | grep -v vendor | xargs shellcheck
 
   code-check:
     docker: 
@@ -30,29 +30,15 @@ jobs:
     steps:
       - checkout
       - run: 
-          name: install golint
-          command: go get -u golang.org/x/lint/golint
-      - run: 
-          name: install swagger-0.12.0
-          command: |
-            wget --quiet -O /bin/swagger https://github.com/go-swagger/go-swagger/releases/download/0.12.0/swagger_linux_amd64
-            chmod +x /bin/swagger
+          name: install gometalinter linters tools
+          command: hack/install/install_ci_related.sh
       - run: 
           name: use check target in Makefile to check code
           command: make check
-  
-  unit-test:
-    docker:
-      - image: golang:1.9.1
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
-    steps:
-      - checkout
-      - run:
-          name: unit test
-          command: make unit-test
-      - run:
-          name: upload code coverage report
-          command: bash <(curl -s https://codecov.io/bash)
+
+notify:
+  webhooks:
+    - url: http://47.96.190.121:6788/circleci_notifications
 
 workflows:
   version: 2
@@ -60,4 +46,3 @@ workflows:
     jobs:
       - markdownlint-misspell-shellcheck
       - code-check
-      - unit-test

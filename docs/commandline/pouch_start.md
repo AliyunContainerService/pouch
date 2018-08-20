@@ -29,10 +29,12 @@ foo1   e05637   Up 3 seconds   17 seconds ago   registry.hub.docker.com/library/
 ### Options
 
 ```
-  -a, --attach               Attach container's STDOUT and STDERR
-      --detach-keys string   Override the key sequence for detaching a container
-  -h, --help                 help for start
-  -i, --interactive          Attach container's STDIN
+  -a, --attach                  Attach container's STDOUT and STDERR
+      --checkpoint string       Restore container state from the checkpoint
+      --checkpoint-dir string   Directory to store checkpoints images
+      --detach-keys string      Override the key sequence for detaching a container
+  -h, --help                    help for start
+  -i, --interactive             Attach container's STDIN
 ```
 
 ### Options inherited from parent commands

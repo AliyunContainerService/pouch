@@ -17,7 +17,7 @@ func TestParseString(t *testing.T) {
 	} {
 		var u1, u2 string
 		var i1, i2 int
-		parseString(l, &u1, &u2, &i1, &i2)
+		ParseString(l, &u1, &u2, &i1, &i2)
 		assert.Equal(fmt.Sprintf("%s:%s:%d:%d", u1, u2, i1, i2), l)
 	}
 }

@@ -9,6 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/apis/opts"
+	optscfg "github.com/alibaba/pouch/apis/opts/config"
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
@@ -18,6 +21,7 @@ import (
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
 
+	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/google/gops/agent"
 	"github.com/sirupsen/logrus"
@@ -28,6 +32,7 @@ import (
 var (
 	sigHandles   []func() error
 	printVersion bool
+	logOpts      []string
 )
 
 var cfg = &config.Config{}
@@ -42,17 +47,11 @@ func main() {
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDaemon()
+			return runDaemon(cmd)
 		},
 	}
 
 	setupFlags(cmdServe)
-	parseFlags(cmdServe, os.Args[1:])
-	if err := loadDaemonFile(cfg, cmdServe.Flags()); err != nil {
-		logrus.Errorf("failed to load daemon file: %s", err)
-		os.Exit(1)
-	}
-
 	if err := cmdServe.Execute(); err != nil {
 		logrus.Error(err)
 		os.Exit(1)
@@ -73,7 +72,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringArrayVarP(&cfg.Listen, "listen", "l", []string{"unix:///var/run/pouchd.sock"}, "Specify listening addresses of Pouchd")
 	flagSet.BoolVar(&cfg.IsCriEnabled, "enable-cri", false, "Specify whether enable the cri part of pouchd which is used to support Kubernetes")
 	flagSet.StringVar(&cfg.CriConfig.CriVersion, "cri-version", "v1alpha2", "Specify the version of cri which is used to support Kubernetes")
-	flagSet.StringVar(&cfg.CriConfig.Listen, "listen-cri", "/var/run/pouchcri.sock", "Specify listening address of CRI")
+	flagSet.StringVar(&cfg.CriConfig.Listen, "listen-cri", "unix:///var/run/pouchcri.sock", "Specify listening address of CRI")
 	flagSet.StringVar(&cfg.CriConfig.NetworkPluginBinDir, "cni-bin-dir", "/opt/cni/bin", "The directory for putting cni plugin binaries.")
 	flagSet.StringVar(&cfg.CriConfig.NetworkPluginConfDir, "cni-conf-dir", "/etc/cni/net.d", "The directory for putting cni plugin configuration files.")
 	flagSet.StringVar(&cfg.CriConfig.SandboxImage, "sandbox-image", "registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0", "The image used by sandbox container.")
@@ -99,6 +98,21 @@ func setupFlags(cmd *cobra.Command) {
 	// volume config
 	flagSet.StringVar(&cfg.VolumeConfig.DriverAlias, "volume-driver-alias", "", "Set volume driver alias, <name=alias>[;name1=alias1]")
 
+	// network config
+	flagSet.StringVar(&cfg.NetworkConfig.ExecRoot, "exec-root-dir", "", "Set exec root directory for network")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.Name, "bridge-name", "", "Set default bridge name")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.IP, "bip", "", "Set bridge IP")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.GatewayIPv4, "default-gateway", "", "Set default bridge gateway")
+	flagSet.StringVar(&cfg.NetworkConfig.BridgeConfig.FixedCIDR, "fixed-cidr", "", "Set bridge fixed CIDR")
+	flagSet.IntVar(&cfg.NetworkConfig.BridgeConfig.Mtu, "mtu", 1500, "Set bridge MTU")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.IPTables, "iptables", true, "Enable iptables")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.IPForward, "ipforward", true, "Enable ipforward")
+	flagSet.BoolVar(&cfg.NetworkConfig.BridgeConfig.UserlandProxy, "userland-proxy", false, "Enable userland proxy")
+
+	// log config
+	flagSet.StringVar(&cfg.DefaultLogConfig.LogDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Set default log driver")
+	flagSet.StringArrayVar(&logOpts, "log-opt", nil, "Set default log driver options")
+
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
 	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
 	flagSet.StringVar(&cfg.PluginPath, "plugin", "", "Set the path where plugin shared library file put")
@@ -106,21 +120,27 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
 	flagSet.IntVar(&cfg.OOMScoreAdjust, "oom-score-adj", -500, "Set the oom_score_adj for the daemon")
-}
+	flagSet.Var(optscfg.NewRuntime(&cfg.Runtimes), "add-runtime", "register a OCI runtime to daemon")
 
-// parse flags
-func parseFlags(cmd *cobra.Command, flags []string) {
-	err := cmd.Flags().Parse(flags)
-	if err == nil || err == pflag.ErrHelp {
-		return
-	}
-
-	cmd.SetOutput(os.Stderr)
-	cmd.Usage()
+	// Notes(ziren): default-namespace is passed to containerd, the default
+	// value is 'default'. So if IsCriEnabled is true for k8s, we should set the DefaultNamespace
+	// to k8s.io
+	flagSet.StringVar(&cfg.DefaultNamespace, "default-namespace", namespaces.Default, "default-namespace is passed to containerd, the default value is 'default'")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
-func runDaemon() error {
+func runDaemon(cmd *cobra.Command) error {
+	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
+		return fmt.Errorf("failed to load daemon file: %s", err)
+	}
+
+	// parse log driver config
+	logOptMap, err := opts.ParseLogOptions(cfg.DefaultLogConfig.LogDriver, logOpts)
+	if err != nil {
+		return err
+	}
+	cfg.DefaultLogConfig.LogOpts = logOptMap
+
 	//user specifies --version or -v, print version and return.
 	if printVersion {
 		fmt.Printf("pouchd version: %s, build: %s, build at: %s\n", version.Version, version.GitCommit, version.BuildTime)
@@ -275,5 +295,5 @@ func loadDaemonFile(cfg *config.Config, flagSet *pflag.FlagSet) error {
 		return nil
 	}
 
-	return cfg.MergeConfigurations(cfg, flagSet)
+	return cfg.MergeConfigurations(flagSet)
 }

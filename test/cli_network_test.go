@@ -445,3 +445,82 @@ func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestNetworkConnectWithRestart is to verify the 'network connect'
+// and 'network disconnect' after restart daemon.
+func (suite *PouchNetworkSuite) TestNetworkConnectWithRestart(c *check.C) {
+	// start the test pouch daemon
+	dcfg, err := StartDefaultDaemonDebug()
+	if err != nil {
+		c.Skip("daemon start failed.")
+	}
+	defer dcfg.KillDaemon()
+
+	// pull image
+	RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage).Assert(c, icmd.Success)
+
+	bridgeName := "p1"
+	networkName := "net1"
+	containerName := "TestNetworkConnectWithRestart"
+
+	// create bridge device
+	br, err := createBridge("p1")
+	c.Assert(err, check.Equals, nil)
+	defer netlink.LinkDel(br)
+
+	// create bridge network
+	RunWithSpecifiedDaemon(dcfg, "network", "create",
+		"-d", "bridge",
+		"--subnet=172.18.0.0/24", "--gateway=172.18.0.1",
+		"-o", "com.docker.network.bridge.name="+bridgeName, networkName).Assert(c, icmd.Success)
+	defer func() {
+		RunWithSpecifiedDaemon(dcfg, "network", "rm", networkName).Assert(c, icmd.Success)
+	}()
+
+	// create container
+	RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", containerName, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
+		RunWithSpecifiedDaemon(dcfg, "rm", "-f", containerName).Assert(c, icmd.Success)
+	}()
+
+	// restart daemon
+	err = RestartDaemon(dcfg)
+	c.Assert(err, check.IsNil)
+
+	// connect a network
+	RunWithSpecifiedDaemon(dcfg, "network", "connect", networkName, containerName).Assert(c, icmd.Success)
+
+	// inspect container check result
+	ret := RunWithSpecifiedDaemon(dcfg, "inspect", containerName).Assert(c, icmd.Success)
+
+	out := ret.Stdout()
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "net1") {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, true)
+
+	// restart daemon
+	err = RestartDaemon(dcfg)
+	c.Assert(err, check.IsNil)
+
+	// disconnect a network
+	RunWithSpecifiedDaemon(dcfg, "network", "disconnect", networkName, containerName).Assert(c, icmd.Success)
+
+	// inspect container check result
+	ret = RunWithSpecifiedDaemon(dcfg, "inspect", containerName).Assert(c, icmd.Success)
+
+	out = ret.Stdout()
+	found = false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "net1") {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, false)
+}

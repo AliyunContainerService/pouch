@@ -6,17 +6,16 @@ import (
 	"net"
 	"path"
 	"strings"
-	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
-	netlog "github.com/Sirupsen/logrus"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
@@ -59,39 +58,45 @@ type NetworkMgr interface {
 
 // NetworkManager is the default implement of interface NetworkMgr.
 type NetworkManager struct {
-	store      *meta.Store
-	controller libnetwork.NetworkController
-	config     network.Config
+	store         *meta.Store
+	controller    libnetwork.NetworkController
+	config        network.Config
+	eventsService *events.Events
 }
 
 // NewNetworkManager creates a brand new network manager.
-func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMgr) (*NetworkManager, error) {
+func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMgr, eventsService *events.Events) (*NetworkManager, error) {
 	// Create a new controller instance
-	cfg.NetworkConfg.MetaPath = path.Dir(store.BaseDir)
-	cfg.NetworkConfg.ExecRoot = network.DefaultExecRoot
+	if cfg.NetworkConfig.MetaPath == "" {
+		cfg.NetworkConfig.MetaPath = path.Dir(store.BaseDir)
+	}
 
-	initNetworkLog(cfg)
+	if cfg.NetworkConfig.ExecRoot == "" {
+		cfg.NetworkConfig.ExecRoot = network.DefaultExecRoot
+	}
 
 	// get active sandboxes
 	ctrs, err := ctrMgr.List(context.Background(),
-		func(c *Container) bool {
-			return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
-		}, &ContainerListOption{All: true})
+		&ContainerListOption{
+			All: true,
+			FilterFunc: func(c *Container) bool {
+				return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
+			}})
 	if err != nil {
 		logrus.Errorf("failed to new network manager, can not get container list")
 		return nil, errors.Wrap(err, "failed to get container list")
 	}
-	cfg.NetworkConfg.ActiveSandboxes = make(map[string]interface{})
+	cfg.NetworkConfig.ActiveSandboxes = make(map[string]interface{})
 	for _, c := range ctrs {
 		endpoint := BuildContainerEndpoint(c)
-		sbOptions, err := buildSandboxOptions(cfg.NetworkConfg, endpoint)
+		sbOptions, err := buildSandboxOptions(cfg.NetworkConfig, endpoint)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to build sandbox options")
 		}
-		cfg.NetworkConfg.ActiveSandboxes[c.NetworkSettings.SandboxID] = sbOptions
+		cfg.NetworkConfig.ActiveSandboxes[c.NetworkSettings.SandboxID] = sbOptions
 	}
 
-	ctlOptions, err := controllerOptions(cfg.NetworkConfg)
+	ctlOptions, err := controllerOptions(cfg.NetworkConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build network options")
 	}
@@ -102,9 +107,10 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 	}
 
 	return &NetworkManager{
-		store:      store,
-		controller: controller,
-		config:     cfg.NetworkConfg,
+		store:         store,
+		controller:    controller,
+		config:        cfg.NetworkConfig,
+		eventsService: eventsService,
 	}, nil
 }
 
@@ -134,6 +140,8 @@ func (nm *NetworkManager) Create(ctx context.Context, create apitypes.NetworkCre
 		Type:    driver,
 		Network: net,
 	}
+
+	nm.LogNetworkEvent(ctx, net, "create")
 
 	return &network, nil
 }
@@ -187,7 +195,12 @@ func (nm *NetworkManager) Remove(ctx context.Context, name string) error {
 		return nil
 	}
 
-	return nw.Delete()
+	if err := nw.Delete(); err != nil {
+		return err
+	}
+
+	nm.LogNetworkEvent(ctx, nw, "destroy")
+	return nil
 }
 
 // GetNetworkByName returns the information of network that specified name.
@@ -283,6 +296,12 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	}
 
 	endpointName := containerID[:8]
+
+	// ensure the endpoint has been deleted before creating
+	if ep, _ := n.EndpointByName(endpointName); ep != nil {
+		ep.Delete(true)
+	}
+
 	ep, err := n.CreateEndpoint(endpointName, epOptions...)
 	if err != nil {
 		return "", err
@@ -447,18 +466,20 @@ func controllerOptions(cfg network.Config) ([]nwconfig.Option, error) {
 
 	options = append(options, nwconfig.OptionDefaultDriver("bridge"))
 	options = append(options, nwconfig.OptionDefaultNetwork("bridge"))
+	options = append(options, nwconfig.OptionNetworkControlPlaneMTU(cfg.BridgeConfig.Mtu))
+	options = append(options, nwconfig.OptionExperimental(false))
 
 	// set bridge options
-	options = append(options, bridgeDriverOptions())
+	options = append(options, bridgeDriverOptions(cfg.BridgeConfig))
 
 	return options, nil
 }
 
-func bridgeDriverOptions() nwconfig.Option {
+func bridgeDriverOptions(cfg network.BridgeConfig) nwconfig.Option {
 	bridgeConfig := options.Generic{
-		"EnableIPForwarding":  true,
-		"EnableIPTables":      true,
-		"EnableUserlandProxy": true}
+		"EnableIPForwarding":  cfg.IPForward,
+		"EnableIPTables":      cfg.IPTables,
+		"EnableUserlandProxy": cfg.UserlandProxy}
 	bridgeOption := options.Generic{netlabel.GenericData: bridgeConfig}
 
 	return nwconfig.OptionDriverConfig("bridge", bridgeOption)
@@ -484,7 +505,7 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 	nwOptions = append(nwOptions, libnetwork.NetworkOptionDriverOpts(networkCreate.Options))
 
 	if create.Name == "ingress" {
-		nwOptions = append(nwOptions, libnetwork.NetworkOptionIngress())
+		nwOptions = append(nwOptions, libnetwork.NetworkOptionIngress(true))
 	}
 
 	if networkCreate.Internal {
@@ -535,20 +556,6 @@ func (nm *NetworkManager) getNetworkSandbox(id string) libnetwork.Sandbox {
 		return false
 	})
 	return sb
-}
-
-// libnetwork's logrus version is different from pouchd,
-// so we need to set libnetwork's logrus addintionly.
-func initNetworkLog(cfg *config.Config) {
-	if cfg.Debug {
-		netlog.SetLevel(netlog.DebugLevel)
-	}
-
-	formatter := &netlog.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339Nano,
-	}
-	netlog.SetFormatter(formatter)
 }
 
 func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwork.EndpointOption, error) {

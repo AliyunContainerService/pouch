@@ -14,7 +14,7 @@ pouch network disconnect [OPTIONS] NETWORK CONTAINER
 
 ```
 $ pouch network disconnect bridge test
-	
+container test is disconnected from network bridge successfully
 ```
 
 ### Options

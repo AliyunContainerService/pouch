@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ProcessConfig ExecProcessConfig holds information about the exec process.
@@ -18,19 +19,24 @@ import (
 type ProcessConfig struct {
 
 	// arguments
+	// Required: true
 	Arguments []string `json:"arguments"`
 
 	// entrypoint
-	Entrypoint string `json:"entrypoint,omitempty"`
+	// Required: true
+	Entrypoint string `json:"entrypoint"`
 
 	// privileged
-	Privileged bool `json:"privileged,omitempty"`
+	// Required: true
+	Privileged bool `json:"privileged"`
 
 	// tty
-	Tty bool `json:"tty,omitempty"`
+	// Required: true
+	Tty bool `json:"tty"`
 
 	// user
-	User string `json:"user,omitempty"`
+	// Required: true
+	User string `json:"user"`
 }
 
 /* polymorph ProcessConfig arguments false */
@@ -52,6 +58,26 @@ func (m *ProcessConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateEntrypoint(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validatePrivileged(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateTty(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateUser(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -60,8 +86,44 @@ func (m *ProcessConfig) Validate(formats strfmt.Registry) error {
 
 func (m *ProcessConfig) validateArguments(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Arguments) { // not required
-		return nil
+	if err := validate.Required("arguments", "body", m.Arguments); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ProcessConfig) validateEntrypoint(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("entrypoint", "body", string(m.Entrypoint)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ProcessConfig) validatePrivileged(formats strfmt.Registry) error {
+
+	if err := validate.Required("privileged", "body", bool(m.Privileged)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ProcessConfig) validateTty(formats strfmt.Registry) error {
+
+	if err := validate.Required("tty", "body", bool(m.Tty)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ProcessConfig) validateUser(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("user", "body", string(m.User)); err != nil {
+		return err
 	}
 
 	return nil

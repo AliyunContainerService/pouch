@@ -55,6 +55,8 @@ func (suite *APIDaemonUpdateSuite) TestUpdateDaemon(c *check.C) {
 			c.Fatalf("label %s should be in labels in info API", label)
 		}
 	}
-	//c.Assert(info.Labels, check.DeepEquals, labels)
-	// TODO: add checking image proxy
+
+	// TODO: missing case
+	//
+	//	add checking image proxy
 }

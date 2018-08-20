@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -26,6 +27,8 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 	}
 
 	name := mux.Vars(req)["name"]
+
+	logCreateOptions("container exec for "+name, config)
 
 	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
 	if err != nil {
@@ -53,8 +56,13 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	name := mux.Vars(req)["name"]
 	_, upgrade := req.Header["Upgrade"]
 
+	if err := s.ContainerMgr.CheckExecExist(ctx, name); err != nil {
+		return err
+	}
+
 	var attach *mgr.AttachConfig
 
+	// TODO(huamin.thm): support detach exec process through http post method
 	if !config.Detach {
 		hijacker, ok := rw.(http.Hijacker)
 		if !ok {
@@ -70,7 +78,11 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 		}
 	}
 
-	return s.ContainerMgr.StartExec(ctx, name, config, attach)
+	if err := s.ContainerMgr.StartExec(ctx, name, attach); err != nil {
+		logrus.Errorf("failed to run exec process: %s", err)
+	}
+
+	return nil
 }
 
 func (s *Server) getExecInfo(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {

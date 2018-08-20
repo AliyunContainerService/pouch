@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/stretchr/testify/assert"
 )
 

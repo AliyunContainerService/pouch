@@ -143,3 +143,38 @@ func (suite *PouchExecSuite) TestExecExitCode(c *check.C) {
 	command.PouchRun("exec", name, "sh", "-c", "exit 101").Assert(c, icmd.Expected{ExitCode: 101})
 	command.PouchRun("exec", name, "sh", "-c", "exit 0").Assert(c, icmd.Success)
 }
+
+// TestExecFail test exec fail should not hang.
+func (suite *PouchExecSuite) TestExecFail(c *check.C) {
+	name := "TestExecFail"
+	res := command.PouchRun("run", "-d", "--name", name, "-u", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	c.Assert(res.Stderr(), check.NotNil)
+}
+
+// TestExecUser test exec with user.
+func (suite *PouchExecSuite) TestExecUser(c *check.C) {
+	name := "TestExecUser"
+	res := command.PouchRun("run", "-d", "-u=1001", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1001") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1001", res.Stdout())
+	}
+
+	res = command.PouchRun("exec", "-u=1002", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1002") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1002", res.Stdout())
+	}
+
+	// test user should not changed by exec process
+	res = command.PouchRun("exec", name, "id", "-u")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "1001") {
+		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1001", res.Stdout())
+	}
+}

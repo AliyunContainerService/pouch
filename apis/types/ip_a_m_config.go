@@ -17,16 +17,16 @@ import (
 
 type IPAMConfig struct {
 
-	// aux address
+	// aux address in sub-network
 	AuxAddress map[string]string `json:"AuxAddress,omitempty"`
 
-	// gateway
+	// gateway for sub-network
 	Gateway string `json:"Gateway,omitempty"`
 
-	// IP range
+	// sub ip range in sub-network
 	IPRange string `json:"IPRange,omitempty"`
 
-	// subnet
+	// subnet address for network
 	Subnet string `json:"Subnet,omitempty"`
 }
 

@@ -9,13 +9,15 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/alibaba/pouch/apis/types"
 )
 
 func TestContainerStartError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerStart(context.Background(), "nothing", "")
+	err := client.ContainerStart(context.Background(), "nothing", types.ContainerStartOptions{})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -44,7 +46,7 @@ func TestContainerStart(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	if err := client.ContainerStart(context.Background(), "container_id", ""); err != nil {
+	if err := client.ContainerStart(context.Background(), "container_id", types.ContainerStartOptions{}); err != nil {
 		t.Fatal(err)
 	}
 }

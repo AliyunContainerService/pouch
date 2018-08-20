@@ -19,6 +19,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerStartSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -27,12 +28,8 @@ func (suite *APIContainerStartSuite) TestStartOk(c *check.C) {
 	cname := "TestStartOk"
 
 	CreateBusyboxContainerOk(c, cname)
-
-	resp, err := request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
-
-	DelContainerForceMultyTime(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
 }
 
 // TestNonExistingContainer tests start a non-existing container return 404.
@@ -49,16 +46,10 @@ func (suite *APIContainerStartSuite) TestStartStoppedContainer(c *check.C) {
 	cname := "TestStartStoppedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
-
+	defer DelContainerForceMultyTime(c, cname)
 	StartContainerOk(c, cname)
-
 	StopContainerOk(c, cname)
-
-	resp, err := request.Post("/containers/" + cname + "/start")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
-
-	DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
 }
 
 // TestStartPausedContainer tests start a contain in paused state will fail.
@@ -66,16 +57,14 @@ func (suite *APIContainerStartSuite) TestStartPausedContainer(c *check.C) {
 	cname := "TestStartPausedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
 	StartContainerOk(c, cname)
-
 	PauseContainerOk(c, cname)
 
 	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 500)
-
-	DelContainerForceMultyTime(c, cname)
+	CheckRespStatus(c, resp, 409)
 }
 
 // TestStartDetachKeyWork test detatch-keys works.
@@ -83,6 +72,7 @@ func (suite *APIContainerStartSuite) TestStartDetachKeyWork(c *check.C) {
 	cname := "TestStartDetachKeyWork"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
 	q := url.Values{}
 	q.Add("detachKeys", "EOF")
@@ -92,12 +82,13 @@ func (suite *APIContainerStartSuite) TestStartDetachKeyWork(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
 
-	// TODO: check the "EOF" detatchkey really works.
-
-	DelContainerForceMultyTime(c, cname)
+	// TODO: missing case
+	//
+	//	check the "EOF" detatchkey really works.
 }
 
 // TestInvalidParam tests using invalid parameter return.
 func (suite *APIContainerStartSuite) TestInvalidParam(c *check.C) {
-	//TODO
+	// TODO: missing case
+	helpwantedForMissingCase(c, "container api start bad request")
 }

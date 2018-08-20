@@ -145,7 +145,7 @@ func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
 	name := "test-run-with-ipc-mode"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--ipc", "host", busyboxImage)
+		"--ipc", "host", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -156,7 +156,7 @@ func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
 	name := "test-run-with-uts-mode"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--uts", "host", busyboxImage)
+		"--uts", "host", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -186,7 +186,7 @@ func (suite *PouchRunSuite) TestRunWithAppArmor(c *check.C) {
 	name := "run-apparmor"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--security-opt", appArmor, busyboxImage)
+		"--security-opt", appArmor, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -200,7 +200,7 @@ func (suite *PouchRunSuite) TestRunWithSeccomp(c *check.C) {
 	name := "run-seccomp"
 
 	res := command.PouchRun("run", "-d", "--name", name,
-		"--security-opt", seccomp, busyboxImage)
+		"--security-opt", seccomp, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -281,7 +281,7 @@ func (suite *PouchRunSuite) TestRunWithAnnotation(c *check.C) {
 	cname := "TestRunWithAnnotation"
 	res := command.PouchRun("run", "-d", "--annotation", "a=b",
 		"--annotation", "foo=bar",
-		"--name", cname, busyboxImage).Assert(c, icmd.Success)
+		"--name", cname, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -374,4 +374,72 @@ func (suite *PouchRunSuite) TestRunWithDisableNetworkFiles(c *check.C) {
 	if !strings.Contains(output, "resolv.conf") {
 		c.Fatal("expected /etc/resolv.conf, but the file does not exist")
 	}
+}
+
+// TestRunWithShm is to verify the valid running container
+// with shm-size
+func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
+	cname := "TestRunWithShm"
+	res := command.PouchRun("run", "-d", "--shm-size", "1g",
+		"--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	res = command.PouchRun("inspect", cname)
+	res.Assert(c, icmd.Success)
+
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(int64(*result[0].HostConfig.ShmSize),
+		check.Equals, int64(1073741824))
+
+	containerID := result[0].ID
+
+	res = command.PouchRun("exec", containerID, "df", "-k", "/dev/shm")
+	res.Assert(c, icmd.Success)
+
+	c.Assert(util.PartialEqual(res.Stdout(), "1048576"), check.IsNil)
+}
+
+// TestRunSetRunningFlag is to verfy whether set Running Flag in ContainerState
+// when started a container
+func (suite *PouchRunSuite) TestRunSetRunningFlag(c *check.C) {
+	cname := "TestRunSetRunningFlag"
+	res := command.PouchRun("run", "-d", "--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	res = command.PouchRun("inspect", cname)
+	res.Assert(c, icmd.Success)
+
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Running, check.Equals, true)
+}
+
+func (suite *PouchRunSuite) TestRunWithMtab(c *check.C) {
+	cname := "TestRunWithMtab"
+	volumeName := "TestRunWithMtabVolume"
+	dest := "/mnt/" + volumeName
+
+	command.PouchRun("volume", "create", "--name", volumeName).Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+
+	ret := command.PouchRun("run", "--rm", "--name", cname, "-v", volumeName+":"+dest, busyboxImage, "cat", "/etc/mtab").Assert(c, icmd.Success)
+	ret.Assert(c, icmd.Success)
+
+	found := false
+	for _, line := range strings.Split(ret.Stdout(), "\n") {
+		if strings.Contains(line, dest) {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, true)
 }

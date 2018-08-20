@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes"
@@ -19,6 +21,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 )
 
 // NewDefaultSpec new a template spec with default.
@@ -156,18 +159,41 @@ func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) 
 	}
 
 	// toLinuxMemory
-	var swappiness uint64
-	if resources.MemorySwappiness != nil {
-		swappiness = uint64(*(resources.MemorySwappiness))
-	}
 	r.Memory = &specs.LinuxMemory{
 		Limit:       &resources.Memory,
 		Swap:        &resources.MemorySwap,
-		Swappiness:  &swappiness,
 		Reservation: &resources.MemoryReservation,
 	}
 
 	// TODO: add more fields.
 
 	return r, nil
+}
+
+// convertCtrdErr converts containerd client error into a pouchd manager error.
+// containerd client error converts GRPC code from containerd API to containerd client error.
+// pouchd manager error is used in the whole managers and API layers to construct status code for API.
+// there should be a way convert the previous to the latter one.
+func convertCtrdErr(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errdefs.IsNotFound(err) {
+		return errors.Wrap(errtypes.ErrNotfound, err.Error())
+	}
+
+	if errdefs.IsAlreadyExists(err) {
+		return errors.Wrap(errtypes.ErrAlreadyExisted, err.Error())
+	}
+
+	if errdefs.IsInvalidArgument(err) {
+		return errors.Wrap(errtypes.ErrInvalidParam, err.Error())
+	}
+
+	if errdefs.IsNotImplemented(err) {
+		return errors.Wrap(errtypes.ErrNotImplemented, err.Error())
+	}
+
+	return err
 }

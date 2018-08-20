@@ -40,23 +40,25 @@ func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 
 	cname := "TestDaemonCgroupParent"
 	{
-		result := command.PouchRun("--host", daemon.Listen, "pull", busyboxImage)
+
+		result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("pull image failed, err:%v", result)
 		}
 	}
 	{
-		result := command.PouchRun("--host", daemon.Listen, "run", "-d", "--name", cname, busyboxImage)
+		result := RunWithSpecifiedDaemon(dcfg, "run",
+			"-d", "--name", cname, busyboxImage, "top")
 		if result.ExitCode != 0 {
 			dcfg.DumpLog()
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// test if the value is in inspect result
-	output := command.PouchRun("inspect", "--host", daemon.Listen, cname).Stdout()
+	output := RunWithSpecifiedDaemon(dcfg, "inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
@@ -85,6 +87,7 @@ func (suite *PouchDaemonSuite) TestDaemonListenTCP(c *check.C) {
 		dcfg := daemon.NewConfig()
 		dcfg.Listen = ""
 		dcfg.NewArgs("--listen=" + addr)
+		dcfg.Debug = true
 		err := dcfg.StartDaemon()
 		c.Assert(err, check.IsNil)
 
@@ -253,7 +256,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestart(c *check.C) {
 			c.Fatalf("run container failed, err:%v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// restart daemon
 	err = RestartDaemon(dcfg)
@@ -301,7 +304,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) 
 			c.Fatalf("pause container failed, err: %v", result)
 		}
 	}
-	defer DelContainerForceMultyTime(c, cname)
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 
 	// restart daemon
 	err = RestartDaemon(dcfg)
@@ -386,6 +389,19 @@ func (suite *PouchDaemonSuite) TestDaemonDefaultRegistry(c *check.C) {
 	defer dcfg.KillDaemon()
 }
 
+// TestDaemonCriEnabled tests enabling cri part in pouchd.
+func (suite *PouchDaemonSuite) TestDaemonCriEnabled(c *check.C) {
+	dcfg, err := StartDefaultDaemonDebug(
+		"--enable-cri")
+	c.Assert(err, check.IsNil)
+
+	result := RunWithSpecifiedDaemon(dcfg, "info")
+	err = util.PartialEqual(result.Combined(), "CriEnabled:  true")
+	c.Assert(err, check.IsNil)
+
+	defer dcfg.KillDaemon()
+}
+
 // TestDaemonTlsVerify tests start daemon with TLS verification enabled.
 func (suite *PouchDaemonSuite) TestDaemonTlsVerify(c *check.C) {
 	SkipIfFalse(c, IsTLSExist)
@@ -450,4 +466,56 @@ func (suite *PouchDaemonSuite) TestDaemonStartOverOneTimes(c *check.C) {
 	err = dcfg2.StartDaemon()
 	c.Assert(err, check.NotNil)
 
+}
+
+// TestDaemonWithMultiRuntimes tests start daemon with multiple runtimes
+func (suite *PouchDaemonSuite) TestDaemonWithMultiRuntimes(c *check.C) {
+	dcfg1, err := StartDefaultDaemonDebug(
+		"--add-runtime", "foo=bar")
+	c.Assert(err, check.IsNil)
+	dcfg1.KillDaemon()
+
+	// should fail if runtime name equal
+	dcfg2, err := StartDefaultDaemonDebug(
+		"--add-runtime", "runa=runa",
+		"--add-runtime", "runa=runa")
+	c.Assert(err, check.NotNil)
+	dcfg2.KillDaemon()
+}
+
+// TestUpdateDaemonWithLabels tests update daemon online with labels updated
+func (suite *PouchDaemonSuite) TestUpdateDaemonWithLabels(c *check.C) {
+	cfg := daemon.NewConfig()
+	err := cfg.StartDaemon()
+	c.Assert(err, check.IsNil)
+
+	defer cfg.KillDaemon()
+
+	RunWithSpecifiedDaemon(&cfg, "updatedaemon", "--label", "aaa=bbb").Assert(c, icmd.Success)
+
+	ret := RunWithSpecifiedDaemon(&cfg, "info")
+	ret.Assert(c, icmd.Success)
+
+	updated := strings.Contains(ret.Stdout(), "aaa=bbb")
+	c.Assert(updated, check.Equals, true)
+}
+
+// TestUpdateDaemonWithLabels tests update daemon offline
+func (suite *PouchDaemonSuite) TestUpdateDaemonOffline(c *check.C) {
+	path := "/tmp/pouchconfig.json"
+	fd, err := os.Create(path)
+	c.Assert(err, check.IsNil)
+	fd.Close()
+	defer os.Remove(path)
+
+	cfg := daemon.NewConfig()
+	err = cfg.StartDaemon()
+	c.Assert(err, check.IsNil)
+
+	defer cfg.KillDaemon()
+
+	RunWithSpecifiedDaemon(&cfg, "updatedaemon", "--config-file", path, "--offline=true").Assert(c, icmd.Success)
+
+	ret := RunWithSpecifiedDaemon(&cfg, "info")
+	ret.Assert(c, icmd.Success)
 }

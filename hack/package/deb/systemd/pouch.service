@@ -4,6 +4,7 @@ Description=pouch
 [Service]
 ExecStart=/usr/bin/pouchd
 ExecReload=/bin/kill -HUP $MAINPID
+Type=notify
 
 # Having non-zero Limit*s causes performance problems due to accounting overhead
 # in the kernel. We recommend using cgroups to do container-local accounting.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibaba/pouch/pkg/errtypes"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -76,6 +77,13 @@ func (w *watch) add(pack *containerPack) {
 			return
 		}
 
+		// isContainerdDead only take effect when contained stop normal, if containerd
+		// stop unexpected, judge exit time is zero, zero exit time means grpc connection
+		// is broken.
+		if status.ExitTime().IsZero() {
+			return
+		}
+
 		logrus.Infof("the task has quit, id: %s, err: %v, exitcode: %d, time: %v",
 			pack.id, status.Error(), status.ExitCode(), status.ExitTime())
 
@@ -128,7 +136,7 @@ func (w *watch) get(id string) (*containerPack, error) {
 
 	pack, ok := w.containers[id]
 	if !ok {
-		return pack, errtypes.ErrNotfound
+		return pack, errors.Wrapf(errtypes.ErrNotfound, "container %s in metadata", id)
 	}
 	return pack, nil
 }
@@ -141,7 +149,7 @@ func (w *watch) notify(id string) chan *Message {
 	if !ok {
 		ch := make(chan *Message, 1)
 		ch <- &Message{
-			err: errtypes.ErrNotfound,
+			err: errors.Wrapf(errtypes.ErrNotfound, "container %s in metadata", id),
 		}
 		return ch
 	}

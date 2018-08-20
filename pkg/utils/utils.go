@@ -4,30 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
+
+	"github.com/sirupsen/logrus"
 )
-
-// Common durations that is .
-// There are some definitions for units of Day and larger .
-const (
-	Second = time.Second
-	Minute = Second * 60
-	Hour   = Minute * 60
-	Day    = Hour * 24
-	Week   = Day * 7
-	Month  = Day * 30
-	Year   = Day * 365
-
-	TimeLayout = time.RFC3339Nano
-)
-
-var errInvalid = errors.New("invalid time")
 
 // If implements ternary operator. if cond is true return v1, or return v2 instead.
 func If(cond bool, v1, v2 interface{}) interface{} {
@@ -55,70 +39,6 @@ func FormatSize(size int64) string {
 	}
 
 	return fmt.Sprintf("%.2f %s", formattedSize, suffixes[count])
-}
-
-// FormatTimeInterval is used to show the time interval from input time to now.
-func FormatTimeInterval(input int64) (formattedTime string, err error) {
-	start := time.Unix(0, input)
-	diff := time.Now().Sub(start)
-
-	// That should not happen.
-	if diff < 0 {
-		return "", errInvalid
-	}
-
-	timeThresholds := []time.Duration{Year, Month, Week, Day, Hour, Minute, Second}
-	timeNames := []string{"year", "month", "week", "day", "hour", "minute", "second"}
-
-	for i, threshold := range timeThresholds {
-		if diff >= threshold {
-			count := int(diff / threshold)
-			formattedTime += strconv.Itoa(count) + " " + timeNames[i]
-			if count > 1 {
-				formattedTime += "s"
-			}
-			break
-		}
-	}
-
-	if diff < Second {
-		formattedTime += "0 second"
-	}
-
-	return formattedTime, nil
-}
-
-// ParseTimestamp returns seconds and nanoseconds.
-//
-// 1. If the value is empty, it will return default second, the second arg.
-// 2. If the incoming nanosecond portion is longer or shorter than 9 digits,
-//	it will be converted into 9 digits nanoseconds.
-func ParseTimestamp(value string, defaultSec int64) (int64, int64, error) {
-	if value == "" {
-		return defaultSec, 0, nil
-	}
-
-	vs := strings.SplitN(value, ".", 2)
-
-	// for second
-	s, err := strconv.ParseInt(vs[0], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	if len(vs) != 2 {
-		return s, 0, nil
-	}
-
-	// for nanoseconds
-	n, err := strconv.ParseInt(vs[1], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	// convert the n into 9 digits
-	n = int64(float64(n) * math.Pow(float64(10), float64(9-len(vs[1]))))
-	return s, n, nil
 }
 
 // TruncateID is used to transfer image ID from digest to short ID.
@@ -196,16 +116,13 @@ func doMerge(src, dest reflect.Value) error {
 	return nil
 }
 
-// From src/pkg/encoding/json
+// From src/pkg/encoding/json,
+// we recognize nullable values like `false` `0` as not empty.
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
-	case reflect.Bool:
-		return !v.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case reflect.Uintptr:
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
@@ -335,4 +252,81 @@ func SetOOMScore(pid, score int) error {
 	_, err = f.WriteString(strconv.Itoa(score))
 	f.Close()
 	return err
+}
+
+// ConvertKVStringsToMap converts ["key=value"] into {"key":"value"}
+func ConvertKVStringsToMap(values []string) (map[string]string, error) {
+	kvs := make(map[string]string, len(values))
+
+	for _, value := range values {
+		terms := strings.SplitN(value, "=", 2)
+		if len(terms) != 2 {
+			return nil, fmt.Errorf("input %s must have format of key=value", value)
+		}
+		kvs[terms[0]] = terms[1]
+	}
+	return kvs, nil
+}
+
+// ConvertKVStrToMapWithNoErr converts input strings and converts them all in a map,
+// When there is invalid input, the dealing procedure ignores the error and log a warning message.
+func ConvertKVStrToMapWithNoErr(values []string) map[string]string {
+	kvs := make(map[string]string, len(values))
+	for _, value := range values {
+		k, v, err := ConvertStrToKV(value)
+		if err != nil {
+			logrus.Warnf("input %s should have a format of key=value", value)
+			continue
+		}
+		kvs[k] = v
+	}
+	return kvs
+}
+
+// ConvertStrToKV converts an string into key and value string without returning an error.
+// For example, for input "a=b", it should return "a", "b".
+func ConvertStrToKV(input string) (string, string, error) {
+	results := strings.SplitN(input, "=", 2)
+	if len(results) != 2 {
+		return "", "", fmt.Errorf("input string %s must have format key=value", input)
+	}
+	return results[0], results[1], nil
+}
+
+// IsFileExist checks if file is exits on host.
+func IsFileExist(file string) bool {
+	if _, err := os.Stat(file); err == nil {
+		return true
+	}
+
+	return false
+}
+
+// StringSliceEqual compare two string slice, ignore the order.
+func StringSliceEqual(s1, s2 []string) bool {
+	if s1 == nil && s2 == nil {
+		return true
+	}
+
+	if s1 == nil || s2 == nil {
+		return false
+	}
+
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for _, s := range s1 {
+		if !StringInSlice(s2, s) {
+			return false
+		}
+	}
+
+	for _, s := range s2 {
+		if !StringInSlice(s1, s) {
+			return false
+		}
+	}
+
+	return true
 }

@@ -28,6 +28,12 @@ type Opt interface {
 	Options() map[string]types.Option
 }
 
+// Conf represents pass volume config to volume driver.
+type Conf interface {
+	// Config is used to pass the daemon volume config into driver.
+	Config(Context, map[string]interface{}) error
+}
+
 // AttachDetach represents volume attach/detach interface.
 type AttachDetach interface {
 	// Attach a Volume to host, enable the volume.

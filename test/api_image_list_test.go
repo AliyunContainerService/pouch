@@ -38,7 +38,9 @@ func (suite *APIImageListSuite) TestImageListAll(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	// TODO: Add more check
+	// TODO: missing case
+	//
+	//	check the fields
 }
 
 // TestImageListDigest tests listing images digest.
@@ -54,5 +56,6 @@ func (suite *APIImageListSuite) TestImageListDigest(c *check.C) {
 
 // TestImageListFilter tests listing images with filter.
 func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
-	// TODO
+	// TODO: missing case
+	helpwantedForMissingCase(c, "iamge api list filter cases")
 }

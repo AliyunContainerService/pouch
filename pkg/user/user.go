@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	passwdFile = "/etc/passwd"
-	groupFile  = "/etc/group"
+	// PasswdFile keeps user passwd information
+	PasswdFile = "/etc/passwd"
+	// GroupFile keeps group information
+	GroupFile = "/etc/group"
 
 	minID      = 0
 	maxID      = 1<<31 - 1 // compatible for 32-bit OS
@@ -40,7 +42,19 @@ type gidParser struct {
 	otherGroup  []string
 }
 
-// Get accepts user string like uid:gid or username:groupname, and transfers them to format valid uid:gid.
+// Get accepts user and group slice, return valid uid, gid and additional gids.
+// Through Get is a interface returns all user informations runtime-spec need,
+// GetUser, GetIntegerID, GetAdditionalGids still can be used independently.
+func Get(passwdPath, groupPath, user string, groups []string) (uint32, uint32, []uint32, error) {
+	uid, gid, err := GetUser(passwdPath, groupPath, user)
+	if err != nil {
+		return 0, 0, nil, err
+	}
+
+	return uid, gid, GetAdditionalGids(groups), nil
+}
+
+// GetUser accepts user string like <uid|username>:<gid|groupname>, and transfers them to format valid uid:gid.
 // user format example:
 // user
 // uid
@@ -48,7 +62,7 @@ type gidParser struct {
 // user:group
 // uid:group
 // user:gid
-func Get(path string, user string) (uint32, uint32, error) {
+func GetUser(passwdPath, groupPath, user string) (uint32, uint32, error) {
 	if user == "" {
 		// if user is null, return 0 value as root user
 		return 0, 0, nil
@@ -60,46 +74,53 @@ func Get(path string, user string) (uint32, uint32, error) {
 		err            error
 	)
 
-	parseString(user, &uidStr, &gidStr)
+	ParseString(user, &uidStr, &gidStr)
 
 	// get uid from /etc/passwd
-	uid, err = parseID(filepath.Join(path, passwdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+	uid, err = ParseID(filepath.Join(passwdPath, PasswdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 		var up uidParser
-		parseString(line, &up.user, &up.placeholder, &up.uid)
+		ParseString(line, &up.user, &up.placeholder, &up.uid)
 		if (idErr == nil && idInt == up.uid) || str == up.user {
 			return uint32(up.uid), true
 		}
 		return 0, false
 	})
 	if err != nil {
-		return 0, 0, err
+		// if uidStr is a integer, treat it as valid uid
+		integer, e := strconv.Atoi(uidStr)
+		if e != nil {
+			return 0, 0, err
+		}
+		uid = uint32(integer)
 	}
 
 	// if gidStr is null, then get gid from /etc/passwd
 	if len(gidStr) == 0 {
-		gid, err = parseID(filepath.Join(path, passwdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+		gid, err = ParseID(filepath.Join(passwdPath, PasswdFile), uidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 			var up uidParser
-			parseString(line, &up.user, &up.placeholder, &up.uid, &up.gid)
+			ParseString(line, &up.user, &up.placeholder, &up.uid, &up.gid)
 			if (idErr == nil && idInt == up.uid) || str == up.user {
 				return uint32(up.gid), true
 			}
 			return 0, false
 		})
-		if err != nil {
-			return 0, 0, err
-		}
 	} else {
-		gid, err = parseID(filepath.Join(path, groupFile), gidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
+		gid, err = ParseID(filepath.Join(groupPath, GroupFile), gidStr, func(line, str string, idInt int, idErr error) (uint32, bool) {
 			var gp gidParser
-			parseString(line, &gp.group, &gp.placeholder, &gp.gid)
+			ParseString(line, &gp.group, &gp.placeholder, &gp.gid)
 			if (idErr == nil && idInt == gp.gid) || str == gp.group {
 				return uint32(gp.gid), true
 			}
 			return 0, false
 		})
-		if err != nil {
+	}
+	if err != nil {
+		// if gidStr is a integer, treat it as valid gid
+		integer, e := strconv.Atoi(gidStr)
+		if e != nil {
 			return 0, 0, err
 		}
+		gid = uint32(integer)
 	}
 
 	return uid, gid, nil
@@ -107,6 +128,7 @@ func Get(path string, user string) (uint32, uint32, error) {
 
 // GetIntegerID only parser user format uid:gid, cause container rootfs is not created
 // by contianerd now, can not change user to id, only support user id >= 1000
+// TODO(huamin.thm): removed later
 func GetIntegerID(user string) (uint32, uint32) {
 	if user == "" {
 		// return default user root
@@ -115,7 +137,7 @@ func GetIntegerID(user string) (uint32, uint32) {
 
 	// if uid gid can not be parsed successfully, return default user root
 	var uid, gid int
-	parseString(user, &uid, &gid)
+	ParseString(user, &uid, &gid)
 	return uint32(uid), uint32(gid)
 }
 
@@ -135,13 +157,13 @@ func GetAdditionalGids(groups []string) []uint32 {
 	return additionalGids
 }
 
-// parseID parses uid from /etc/passwd.
-func parseID(file, str string, parserFilter filterFunc) (uint32, error) {
+// ParseID parses id or name from given file.
+func ParseID(file, str string, parserFilter filterFunc) (uint32, error) {
 	idInt, idErr := strconv.Atoi(str)
 
 	ba, err := ioutil.ReadFile(file)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read passwd file %s: %s", passwdFile, err)
+		return 0, fmt.Errorf("failed to read passwd file %s: %s", PasswdFile, err)
 	}
 
 	scanner := bufio.NewScanner(bytes.NewReader(ba))
@@ -163,7 +185,7 @@ func parseID(file, str string, parserFilter filterFunc) (uint32, error) {
 		}
 	}
 
-	return 0, fmt.Errorf("failed to find id or name %s in %s", str, file)
+	return 0, fmt.Errorf("failed to find %s in %s", str, file)
 }
 
 // isUnknownUser determines if id can be accepted as a unknown user. this kind of user id should >= 1000
@@ -180,8 +202,8 @@ func isUnknownUser(id int) (bool, error) {
 	return true, nil
 }
 
-// parseString parses line in format a:b:c.
-func parseString(line string, v ...interface{}) {
+// ParseString parses line in format a:b:c.
+func ParseString(line string, v ...interface{}) {
 	splits := strings.Split(line, ":")
 	for i, s := range splits {
 		if len(v) <= i {

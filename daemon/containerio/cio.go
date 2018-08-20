@@ -116,6 +116,12 @@ func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, e
 		}
 	}()
 
+	// if fifos directory is not exist, create fifo will fails,
+	// also in case of fifo directory lost in container recovery process.
+	if _, err := os.Stat(fifos.Dir); err != nil && os.IsNotExist(err) {
+		os.MkdirAll(fifos.Dir, 0700)
+	}
+
 	if fifos.In != "" {
 		if f, err = fifo.OpenFifo(ctx, fifos.In, syscall.O_WRONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
 			return nil, err

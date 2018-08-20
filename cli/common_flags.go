@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/spf13/pflag"
 )
 
@@ -21,7 +23,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVar(&c.capDrop, "cap-drop", nil, "Drop Linux capabilities")
 
 	// cpu
-	flagSet.Int64Var(&c.cpushare, "cpu-share", 0, "CPU shares (relative weight)")
+	flagSet.Int64Var(&c.cpushare, "cpu-shares", 0, "CPU shares (relative weight)")
 	flagSet.StringVar(&c.cpusetcpus, "cpuset-cpus", "", "CPUs in which to allow execution (0-3, 0,1)")
 	flagSet.StringVar(&c.cpusetmems, "cpuset-mems", "", "MEMs in which to allow execution (0-3, 0,1)")
 	flagSet.Int64Var(&c.cpuperiod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]")
@@ -42,11 +44,15 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.ipcMode, "ipc", "", "IPC namespace to use")
 	flagSet.StringSliceVarP(&c.labels, "label", "l", nil, "Set labels for a container")
 
+	// log driver and log options
+	flagSet.StringVar(&c.logDriver, "log-driver", types.LogConfigLogDriverJSONFile, "Logging driver for the container")
+	flagSet.StringArrayVar(&c.logOpts, "log-opt", nil, "Log driver options")
+
 	// memory
 
 	flagSet.StringVarP(&c.memory, "memory", "m", "", "Memory limit")
 	flagSet.StringVar(&c.memorySwap, "memory-swap", "", "Swap limit equal to memory + swap, '-1' to enable unlimited swap")
-	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", -1, "Container memory swappiness [0, 100]")
+	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", 0, "Container memory swappiness [0, 100]")
 	// for alikernel isolation options
 	flagSet.Int64Var(&c.memoryWmarkRatio, "memory-wmark-ratio", 0, "Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio")
 	flagSet.Int64Var(&c.memoryExtra, "memory-extra", 0, "Represent container's memory high water mark percentage, range in [0, 100]")
@@ -90,6 +96,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.BoolVar(&c.rich, "rich", false, "Start container in rich container mode. (default false)")
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
 	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
+	flagSet.StringVar(&c.shmSize, "shm-size", "", "Size of /dev/shm, default value is 64MB")
+	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
 
 	// cgroup
 	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "", "Optional parent cgroup for the container")
@@ -100,6 +108,10 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	// additional runtime spec annotations
 	flagSet.StringSliceVar(&c.specAnnotation, "annotation", nil, "Additional annotation for runtime")
+
+	// nvidia container
+	flagSet.StringVar(&c.nvidiaDriverCapabilities, "nvidia-capabilities", "", "NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container")
+	flagSet.StringVar(&c.nvidiaVisibleDevices, "nvidia-visible-devs", "", "NvidiaVisibleDevices controls which GPUs will be made accessible inside the container")
 
 	return c
 }

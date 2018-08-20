@@ -56,8 +56,8 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaWorks(c *check.C) {
 
 	// generate a file larger than 1G should fail.
 	expct = icmd.Expected{
-		// TODO: Add exit code check when pouch exec return the exit code of process
-		Error: "Disk quota exceeded",
+		ExitCode: 1,
+		Err:      "Disk quota exceeded",
 	}
 	cmd := "dd if=/dev/zero of=/mnt/test bs=1024k count=1500"
 	err = command.PouchRun("exec", funcname, "sh", "-c", cmd).Compare(expct)

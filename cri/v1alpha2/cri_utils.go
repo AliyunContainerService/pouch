@@ -7,17 +7,23 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	anno "github.com/alibaba/pouch/cri/annotations"
+	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/containerd/cgroups"
+	"github.com/containerd/typeurl"
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
 func parseUint32(s string) (uint32, error) {
@@ -242,6 +248,12 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
 
 	hc := &apitypes.HostConfig{}
+
+	// Apply runtime options.
+	if annotations := config.GetAnnotations(); annotations != nil {
+		hc.Runtime = annotations[anno.KubernetesRuntime]
+	}
+
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
 			Hostname: strfmt.Hostname(config.Hostname),
@@ -256,6 +268,10 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	err := applySandboxLinuxOptions(hc, config.GetLinux(), createConfig, image)
 	if err != nil {
 		return nil, err
+	}
+	// Apply resource options.
+	if lc := config.GetLinux(); lc != nil {
+		hc.CgroupParent = lc.CgroupParent
 	}
 
 	return createConfig, nil
@@ -277,14 +293,57 @@ func toCriSandbox(c *mgr.Container) (*runtime.PodSandbox, error) {
 		return nil, err
 	}
 	labels, annotations := extractLabels(c.Config.Labels)
+
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.PodSandbox{
-		Id:       c.ID,
-		Metadata: metadata,
-		State:    state,
-		// TODO: fill "CreatedAt" when it is appropriate.
+		Id:          c.ID,
+		Metadata:    metadata,
+		State:       state,
+		CreatedAt:   createdAt,
 		Labels:      labels,
 		Annotations: annotations,
 	}, nil
+}
+
+// It has the possibility that we failed to run the sandbox and it is not being cleaned up.
+// Kubelet will use list to get the sandboxes, but will not get the status of the failed pod
+// whose meta data has not been put into the Sandbox Store. And Kubelet will keep trying to
+// get the status of the failed pod and won't create a new one to replace it. It's a DEAD LOCK.
+// Actually Kubelet should not know the existence of invalid pod whose meta data won't be in the
+// Sandbox Store. So we could avoid the DEAD LOCK mentioned above.
+func (c *CriManager) filterInvalidSandboxes(ctx context.Context, sandboxes []*mgr.Container) ([]*mgr.Container, error) {
+	validSandboxes, err := c.SandboxStore.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*mgr.Container
+	for _, sandbox := range sandboxes {
+		exist := false
+		for _, id := range validSandboxes {
+			if sandbox.ID == id {
+				exist = true
+				break
+			}
+		}
+		if exist {
+			result = append(result, sandbox)
+			continue
+		}
+
+		status := sandbox.State.Status
+		// NOTE: what if the worst case that we failed to remove the sandbox and
+		// it is still running?
+		if status != apitypes.StatusRunning && status != apitypes.StatusCreated {
+			logrus.Warnf("filterInvalidSandboxes: remove invalid sandbox %v", sandbox.ID)
+			c.ContainerMgr.Remove(ctx, sandbox.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+		}
+	}
+	return result, nil
 }
 
 func filterCRISandboxes(sandboxes []*runtime.PodSandbox, filter *runtime.PodSandboxFilter) []*runtime.PodSandbox {
@@ -421,6 +480,11 @@ func parseContainerName(name string) (*runtime.ContainerMetadata, error) {
 		Name:    parts[1],
 		Attempt: attempt,
 	}, nil
+}
+
+// makeupLogPath makes up the log path of container from log directory and its metadata.
+func makeupLogPath(logDirectory string, metadata *runtime.ContainerMetadata) string {
+	return filepath.Join(logDirectory, metadata.Name, fmt.Sprintf("%d.log", metadata.Attempt))
 }
 
 // modifyContainerNamespaceOptions apply namespace options for container.
@@ -610,8 +674,26 @@ func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxI
 
 // Apply Linux-specific options if applicable.
 func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, podSandboxID string) error {
+	// Apply runtime options.
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*SandboxMeta)
+	if sandboxMeta.Runtime != "" {
+		createConfig.HostConfig.Runtime = sandboxMeta.Runtime
+	}
+
 	if lc := config.GetLinux(); lc != nil {
-		// TODO: resource restriction.
+		resources := lc.GetResources()
+		if resources != nil {
+			createConfig.HostConfig.Resources.CPUPeriod = resources.GetCpuPeriod()
+			createConfig.HostConfig.Resources.CPUQuota = resources.GetCpuQuota()
+			createConfig.HostConfig.Resources.CPUShares = resources.GetCpuShares()
+			createConfig.HostConfig.Resources.Memory = resources.GetMemoryLimitInBytes()
+			createConfig.HostConfig.Resources.CpusetCpus = resources.GetCpusetCpus()
+			createConfig.HostConfig.Resources.CpusetMems = resources.GetCpusetMems()
+		}
 
 		// Apply security context.
 		if err := applyContainerSecurityContext(lc, podSandboxID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
@@ -619,7 +701,11 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		}
 	}
 
-	// TODO: apply cgroupParent derived from the sandbox config.
+	// Apply cgroupsParent derived from the sandbox config.
+	if lc := sandboxConfig.GetLinux(); lc != nil {
+		// Apply Cgroup options.
+		createConfig.HostConfig.CgroupParent = lc.CgroupParent
+	}
 
 	return nil
 }
@@ -646,6 +732,11 @@ func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
 	labels, annotations := extractLabels(c.Config.Labels)
 	sandboxID := c.Config.Labels[sandboxIDLabelKey]
 
+	createdAt, err := toCriTimestamp(c.Created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
+	}
+
 	return &runtime.Container{
 		Id:           c.ID,
 		PodSandboxId: sandboxID,
@@ -653,9 +744,9 @@ func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
 		Image:        &runtime.ImageSpec{Image: c.Config.Image},
 		ImageRef:     c.Image,
 		State:        state,
-		// TODO: fill "CreatedAt" when it is appropriate.
-		Labels:      labels,
-		Annotations: annotations,
+		CreatedAt:    createdAt,
+		Labels:       labels,
+		Annotations:  annotations,
 	}, nil
 }
 
@@ -724,6 +815,7 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 		Size_:       size,
 		Uid:         uid,
 		Username:    username,
+		Volumes:     parseVolumesFromPouch(image.Config.Volumes),
 	}, nil
 }
 
@@ -790,4 +882,223 @@ func (c *CriManager) attachLog(logPath string, containerID string) error {
 		return fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
 	}
 	return nil
+}
+
+func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Container) (*runtime.ContainerStats, error) {
+	var usedBytes, inodesUsed uint64
+
+	stats, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
+	}
+
+	sn, err := c.SnapshotStore.Get(meta.ID)
+	if err == nil {
+		usedBytes = sn.Size
+		inodesUsed = sn.Inodes
+	}
+
+	cs := &runtime.ContainerStats{}
+	cs.WritableLayer = &runtime.FilesystemUsage{
+		Timestamp: sn.Timestamp,
+		FsId: &runtime.FilesystemIdentifier{
+			Mountpoint: c.imageFSPath,
+		},
+		UsedBytes:  &runtime.UInt64Value{usedBytes},
+		InodesUsed: &runtime.UInt64Value{inodesUsed},
+	}
+
+	metadata, err := parseContainerName(meta.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of container %q: %v", meta.ID, err)
+	}
+
+	labels, annotations := extractLabels(meta.Config.Labels)
+
+	cs.Attributes = &runtime.ContainerAttributes{
+		Id:          meta.ID,
+		Metadata:    metadata,
+		Labels:      labels,
+		Annotations: annotations,
+	}
+
+	if stats != nil {
+		s, err := typeurl.UnmarshalAny(stats.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract container metrics: %v", err)
+		}
+		metrics := s.(*cgroups.Metrics)
+		if metrics.CPU != nil && metrics.CPU.Usage != nil {
+			cs.Cpu = &runtime.CpuUsage{
+				Timestamp:            stats.Timestamp.UnixNano(),
+				UsageCoreNanoSeconds: &runtime.UInt64Value{metrics.CPU.Usage.Total},
+			}
+		}
+		if metrics.Memory != nil && metrics.Memory.Usage != nil {
+			cs.Memory = &runtime.MemoryUsage{
+				Timestamp:       stats.Timestamp.UnixNano(),
+				WorkingSetBytes: &runtime.UInt64Value{metrics.Memory.Usage.Usage},
+			}
+		}
+	}
+
+	return cs, nil
+}
+
+// imageFSPath returns containerd image filesystem path.
+func imageFSPath(rootDir, snapshotter string) string {
+	return filepath.Join(rootDir, fmt.Sprintf("%s.%s", snapshotPlugin, snapshotter))
+}
+
+// CRI extension related tool functions.
+
+// parseResourceFromCRI parse Resources from runtime.LinuxContainerResources to apitypes.Resources
+func parseResourcesFromCRI(runtimeResources *runtime.LinuxContainerResources) apitypes.Resources {
+	var memorySwappiness *int64
+	if runtimeResources.GetMemorySwappiness() != nil {
+		memorySwappiness = &runtimeResources.GetMemorySwappiness().Value
+	}
+
+	return apitypes.Resources{
+		CPUPeriod:            runtimeResources.GetCpuPeriod(),
+		CPUQuota:             runtimeResources.GetCpuQuota(),
+		CPUShares:            runtimeResources.GetCpuShares(),
+		Memory:               runtimeResources.GetMemoryLimitInBytes(),
+		CpusetCpus:           runtimeResources.GetCpusetCpus(),
+		CpusetMems:           runtimeResources.GetCpusetMems(),
+		BlkioWeight:          uint16(runtimeResources.GetBlkioWeight()),
+		BlkioWeightDevice:    parseWeightDeviceFromCRI(runtimeResources.GetBlkioWeightDevice()),
+		BlkioDeviceReadBps:   parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceReadBps()),
+		BlkioDeviceWriteBps:  parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceWriteBps()),
+		BlkioDeviceReadIOps:  parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceRead_IOps()),
+		BlkioDeviceWriteIOps: parseThrottleDeviceFromCRI(runtimeResources.GetBlkioDeviceWrite_IOps()),
+		KernelMemory:         runtimeResources.GetKernelMemory(),
+		MemoryReservation:    runtimeResources.GetMemoryReservation(),
+		MemorySwappiness:     memorySwappiness,
+		Ulimits:              parseUlimitFromCRI(runtimeResources.GetUlimits()),
+	}
+}
+
+// parseResourceFromPouch parse Resources from apitypes.Resources to runtime.LinuxContainerResources
+func parseResourcesFromPouch(apitypesResources apitypes.Resources, diskQuota map[string]string) *runtime.LinuxContainerResources {
+	var memorySwappiness *runtime.Int64Value
+	if apitypesResources.MemorySwappiness != nil {
+		memorySwappiness = &runtime.Int64Value{Value: *apitypesResources.MemorySwappiness}
+	}
+
+	return &runtime.LinuxContainerResources{
+		CpuPeriod:             apitypesResources.CPUPeriod,
+		CpuQuota:              apitypesResources.CPUQuota,
+		CpuShares:             apitypesResources.CPUShares,
+		MemoryLimitInBytes:    apitypesResources.Memory,
+		CpusetCpus:            apitypesResources.CpusetCpus,
+		CpusetMems:            apitypesResources.CpusetMems,
+		BlkioWeight:           uint32(apitypesResources.BlkioWeight),
+		BlkioWeightDevice:     parseWeightDeviceFromPouch(apitypesResources.BlkioWeightDevice),
+		BlkioDeviceReadBps:    parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceReadBps),
+		BlkioDeviceWriteBps:   parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceWriteBps),
+		BlkioDeviceRead_IOps:  parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceReadIOps),
+		BlkioDeviceWrite_IOps: parseThrottleDeviceFromPouch(apitypesResources.BlkioDeviceWriteIOps),
+		KernelMemory:          apitypesResources.KernelMemory,
+		MemoryReservation:     apitypesResources.MemoryReservation,
+		MemorySwappiness:      memorySwappiness,
+		Ulimits:               parseUlimitFromPouch(apitypesResources.Ulimits),
+		DiskQuota:             diskQuota,
+	}
+}
+
+// parseWeightDeviceFromCRI parse WeightDevice from runtime.WeightDevice to apitypes.WeightDevice
+func parseWeightDeviceFromCRI(runtimeWeightDevices []*runtime.WeightDevice) (weightDevices []*apitypes.WeightDevice) {
+	for _, v := range runtimeWeightDevices {
+		weightDevices = append(weightDevices, &apitypes.WeightDevice{
+			Path:   v.GetPath(),
+			Weight: uint16(v.GetWeight()),
+		})
+	}
+	return
+}
+
+// parseWeightDeviceFromPouch parse WeightDevice from apitypes.WeightDevice to runtime.WeightDevice
+func parseWeightDeviceFromPouch(apitypesWeightDevices []*apitypes.WeightDevice) (weightDevices []*runtime.WeightDevice) {
+	for _, v := range apitypesWeightDevices {
+		weightDevices = append(weightDevices, &runtime.WeightDevice{
+			Path:   v.Path,
+			Weight: uint32(v.Weight),
+		})
+	}
+	return
+}
+
+// parseThrottleDeviceFromCRI parse ThrottleDevice from runtime.ThrottleDevice to apitypes.ThrottleDevice
+func parseThrottleDeviceFromCRI(runtimeThrottleDevices []*runtime.ThrottleDevice) (throttleDevices []*apitypes.ThrottleDevice) {
+	for _, v := range runtimeThrottleDevices {
+		throttleDevices = append(throttleDevices, &apitypes.ThrottleDevice{
+			Path: v.GetPath(),
+			Rate: v.GetRate(),
+		})
+	}
+	return
+}
+
+// parseThrottleDeviceFromPouch parse ThrottleDevice from apitypes.ThrottleDevice to runtime.ThrottleDevice
+func parseThrottleDeviceFromPouch(apitypesThrottleDevices []*apitypes.ThrottleDevice) (throttleDevices []*runtime.ThrottleDevice) {
+	for _, v := range apitypesThrottleDevices {
+		throttleDevices = append(throttleDevices, &runtime.ThrottleDevice{
+			Path: v.Path,
+			Rate: v.Rate,
+		})
+	}
+	return
+}
+
+// parseUlimitFromCRI parse Ulimit from runtime.Ulimit to apitypes.Ulimit
+func parseUlimitFromCRI(runtimeUlimits []*runtime.Ulimit) (ulimits []*apitypes.Ulimit) {
+	for _, v := range runtimeUlimits {
+		ulimits = append(ulimits, &apitypes.Ulimit{
+			Hard: v.GetHard(),
+			Name: v.GetName(),
+			Soft: v.GetSoft(),
+		})
+	}
+	return
+}
+
+// parseUlimitFromPouch parse Ulimit from apitypes.Ulimit to runtime.Ulimit
+func parseUlimitFromPouch(apitypesUlimits []*apitypes.Ulimit) (ulimits []*runtime.Ulimit) {
+	for _, v := range apitypesUlimits {
+		ulimits = append(ulimits, &runtime.Ulimit{
+			Hard: v.Hard,
+			Name: v.Name,
+			Soft: v.Soft,
+		})
+	}
+	return
+}
+
+// parseVolumesFromPouch parse Volumes from map[string]interface{} to map[string]*runtime.Volume
+func parseVolumesFromPouch(containerVolumes map[string]interface{}) map[string]*runtime.Volume {
+	volumes := make(map[string]*runtime.Volume)
+	for k := range containerVolumes {
+		volumes[k] = &runtime.Volume{}
+	}
+	return volumes
+}
+
+// CNI Network related tool functions.
+
+// toCNIPortMappings converts CRI port mappings to CNI.
+func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapping {
+	var portMappings []ocicni.PortMapping
+	for _, mapping := range criPortMappings {
+		if mapping.HostPort <= 0 {
+			continue
+		}
+		portMappings = append(portMappings, ocicni.PortMapping{
+			HostPort:      mapping.HostPort,
+			ContainerPort: mapping.ContainerPort,
+			Protocol:      strings.ToLower(mapping.Protocol.String()),
+			HostIP:        mapping.HostIp,
+		})
+	}
+	return portMappings
 }

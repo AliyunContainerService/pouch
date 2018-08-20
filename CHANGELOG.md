@@ -1,5 +1,151 @@
 # CHANGELOG
 
+## 1.0.0-rc1 (2018-07-13)
+
+__IMPORTANT__: In PouchContainer 1.0.0-rc1 we have done many things that important to all users of PouchContainer:
+
+* PouchContainer-CRI now supports using annotation to choose different runtime.
+* PouchContainer Image Manager supports `load` and `save` functionality.
+* PouchContainer Log Driver supports `syslog` type.
+* PouchContainer uses latest `libnetwork` in network module.
+* PouchContainer makes the runtime module stable.
+
+### __Pouch Daemon & API:__
+
+* bugfix: Fix log-opt option parse fails if value contains comma [#1729](https://github.com/alibaba/pouch/pull/1729) ([Frankzhaopku](https://github.com/Frankzhaopku))
+* enhance: add ExtraAttribute functionality in LogInfo [#1714](https://github.com/alibaba/pouch/pull/1714) ([fuweid](https://github.com/fuweid))
+* bugfix: schema point to a response object  [#1712](https://github.com/alibaba/pouch/pull/1712) ([zhuangqh](https://github.com/zhuangqh))
+* bugfix: fix exec record user as container config user [#1657](https://github.com/alibaba/pouch/pull/1657) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: deamon support --log-driver and --log-opt options [#1647](https://github.com/alibaba/pouch/pull/1647) ([zhuangqh](https://github.com/zhuangqh))
+* bugfix: list image should ignore error if containerd can't handle well [#1625](https://github.com/alibaba/pouch/pull/1625) ([fuweid](https://github.com/fuweid))
+* bugfix: execConfig remove omitemtpy [#1619](https://github.com/alibaba/pouch/pull/1619) ([HusterWan](https://github.com/HusterWan))
+* enhance: add new formatter for syslog [#1608](https://github.com/alibaba/pouch/pull/1608) ([fuweid](https://github.com/fuweid))
+* enhance: Port Pouch Cli to Darwin(MacOS) [#1598](https://github.com/alibaba/pouch/pull/1598) ([xuzhenglun](https://github.com/xuzhenglun))
+* feature: support pouch ps filter [#1595](https://github.com/alibaba/pouch/pull/1595) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: add pouch save functionality [#1592](https://github.com/alibaba/pouch/pull/1592) ([xiechengsheng](https://github.com/xiechengsheng))
+* enhance: adjust data stream from pouch pull api [#1586](https://github.com/alibaba/pouch/pull/1586) ([fuweid](https://github.com/fuweid))
+* feature: add systemd notify [#1577](https://github.com/alibaba/pouch/pull/1577) ([shaloulcy](https://github.com/shaloulcy))
+* feature: adjust pouchd unix socket permissions [#1561](https://github.com/alibaba/pouch/pull/1561) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: rename cpu-share to cpu-shares in command line [#1547](https://github.com/alibaba/pouch/pull/1547) ([allencloud](https://github.com/allencloud))
+* feature: add update daemon config function [#1514](https://github.com/alibaba/pouch/pull/1514) ([rudyfly](https://github.com/rudyfly))
+* bugfix: pull image before run and upgrade [#1419](https://github.com/alibaba/pouch/pull/1419) ([wrfly](https://github.com/wrfly))
+* feature: add pouch load functionality [#1391](https://github.com/alibaba/pouch/pull/1391) ([fuweid](https://github.com/fuweid))
+* feature: add wait client command for pouch [#1333](https://github.com/alibaba/pouch/pull/1333) ([xiechengsheng](https://github.com/xiechengsheng))
+
+### __Container Runtime:__
+
+* bugfix: execute remount rootfs before prestart hook [#1622](https://github.com/alibaba/pouch/pull/1622) ([HusterWan](https://github.com/HusterWan))
+* bugfix: release the container resources if contaienr failed to start [#1621](https://github.com/alibaba/pouch/pull/1621) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: fix memory-swap flag not validate correct [#1614](https://github.com/alibaba/pouch/pull/1614) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: fix exec stuck when exec get error [#1605](https://github.com/alibaba/pouch/pull/1605) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: we should set Running flag to true when started container [#1604](https://github.com/alibaba/pouch/pull/1604) ([HusterWan](https://github.com/HusterWan))
+* refactor: move config file from cli into one places [#1597](https://github.com/alibaba/pouch/pull/1597) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: support net priority flag [#1576](https://github.com/alibaba/pouch/pull/1576) ([Ace-Tang](https://github.com/Ace-Tang))
+* refactor: refactor container update diskquota type [#1572](https://github.com/alibaba/pouch/pull/1572) ([rudyfly](https://github.com/rudyfly))
+* bugfix: make ringbuffer right [#1558](https://github.com/alibaba/pouch/pull/1558) ([fuweid](https://github.com/fuweid))
+* bugfix: vendor latest libnetwork for connect panic [#1556](https://github.com/alibaba/pouch/pull/1556) ([shaloulcy](https://github.com/shaloulcy))
+* feature: support shm size [#1542](https://github.com/alibaba/pouch/pull/1542) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: change the order of generating MountPoints [#1541](https://github.com/alibaba/pouch/pull/1541) ([shaloulcy](https://github.com/shaloulcy))
+* refactor: make code more encapsulate and logic simple [#1540](https://github.com/alibaba/pouch/pull/1540) ([allencloud](https://github.com/allencloud))
+* feature: add container setting check [#1537](https://github.com/alibaba/pouch/pull/1537) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: update cpu-quota of 0.2.4 container may occur error [#1533](https://github.com/alibaba/pouch/pull/1533) ([HusterWan](https://github.com/HusterWan))
+* enhance: add volume lock [#1531](https://github.com/alibaba/pouch/pull/1531) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: restore config after update fail [#1513](https://github.com/alibaba/pouch/pull/1513) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: rm omitempty in resource fields [#1505](https://github.com/alibaba/pouch/pull/1505) ([allencloud](https://github.com/allencloud))
+* bugfix: support nullable bool value set in config [#1502](https://github.com/alibaba/pouch/pull/1502) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: init syslog functionality in pouchd [#1500](https://github.com/alibaba/pouch/pull/1500) ([fuweid](https://github.com/fuweid))
+* bugfix: fix the wrong bridge gateway [#1495](https://github.com/alibaba/pouch/pull/1495) ([rudyfly](https://github.com/rudyfly))
+* bugfix: set memory swap double of non-zero memory value [#1492](https://github.com/alibaba/pouch/pull/1492) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: add attach volume when container start [#1483](https://github.com/alibaba/pouch/pull/1483) ([rudyfly](https://github.com/rudyfly))
+* feature: support creating container by just specifying rootfs [#1474](https://github.com/alibaba/pouch/pull/1474) ([HusterWan](https://github.com/HusterWan))
+* feature: finish the CLI logs part [#1472](https://github.com/alibaba/pouch/pull/1472) ([fuweid](https://github.com/fuweid))
+* bugfix: copy data before put it into ringbuf [#1471](https://github.com/alibaba/pouch/pull/1471) ([fuweid](https://github.com/fuweid))
+* bugfix: set memory swap initial value to 0 [#1466](https://github.com/alibaba/pouch/pull/1466) ([Ace-Tang](https://github.com/Ace-Tang))
+* refactor: remove ceph volume plugin [#1441](https://github.com/alibaba/pouch/pull/1441) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: we must call Restore container after initialize network Mgr [#1422](https://github.com/alibaba/pouch/pull/1422) ([HusterWan](https://github.com/HusterWan))
+* bugfix: change the option to set volume size [#1409](https://github.com/alibaba/pouch/pull/1409) ([rudyfly](https://github.com/rudyfly))
+* feature: add cgroup resources check [#1375](https://github.com/alibaba/pouch/pull/1375) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: add runtime config [#1366](https://github.com/alibaba/pouch/pull/1366) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: update lock policy for container management [#1307](https://github.com/alibaba/pouch/pull/1307) ([allencloud](https://github.com/allencloud))
+
+### __Network:__
+
+* enhance: display disconnect result for pouch network disconnect [#1590](https://github.com/alibaba/pouch/pull/1590) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: network not found [#1473](https://github.com/alibaba/pouch/pull/1473) ([shaloulcy](https://github.com/shaloulcy))
+* refactor: use govendor to depend on libnetwork [#1445](https://github.com/alibaba/pouch/pull/1445) ([idealhack](https://github.com/idealhack))
+* feature: modify defaut bridge mode [#1424](https://github.com/alibaba/pouch/pull/1424) ([rudyfly](https://github.com/rudyfly))
+* feature: add container's network files [#1403](https://github.com/alibaba/pouch/pull/1403) ([shaloulcy](https://github.com/shaloulcy))
+
+### __Kubernetes CRI:__
+
+* feature: make runtime choosing supported in CRI managers for Kubernetes [#1593](https://github.com/alibaba/pouch/pull/1593) ([Starnop](https://github.com/Starnop))
+* bugfix: skip teardown network, if the sandbox has been stopped [#1539](https://github.com/alibaba/pouch/pull/1539) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* refactor: return CRI services error [#1521](https://github.com/alibaba/pouch/pull/1521) ([oiooj](https://github.com/oiooj))
+* bugfix: bind an address for stream server [#1520](https://github.com/alibaba/pouch/pull/1520) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* feature: UpdateContainerResources of CRI Manager [#1511](https://github.com/alibaba/pouch/pull/1511) ([Starnop](https://github.com/Starnop))
+* bugfix: Make hack/kubernetes/allinone\_aliyun.sh to pass shellcheck [#1507](https://github.com/alibaba/pouch/pull/1507) ([Starnop](https://github.com/Starnop))
+* bugfix: if run sandbox failed, clean up; deduplicate the default mounts with user defined ones [#1468](https://github.com/alibaba/pouch/pull/1468) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* feature: stats of cri manager [#1431](https://github.com/alibaba/pouch/pull/1431) ([Starnop](https://github.com/Starnop))
+
+### __Test & Tool:__
+
+* bugfix: deb package build failed [#1727](https://github.com/alibaba/pouch/pull/1727) ([shaloulcy](https://github.com/shaloulcy))
+* enhance: add .DS\_Store ignore [#1724](https://github.com/alibaba/pouch/pull/1724) ([Frankzhaopku](https://github.com/Frankzhaopku))
+* test: add unit test for filter validation [#1718](https://github.com/alibaba/pouch/pull/1718) ([allencloud](https://github.com/allencloud))
+* test: TestListVolumes [#1707](https://github.com/alibaba/pouch/pull/1707) ([mengjiahao](https://github.com/mengjiahao))
+* test: add unit-test for ValidateCPUQuota [#1692](https://github.com/alibaba/pouch/pull/1692) ([johanzhu](https://github.com/johanzhu))
+* Add unit-test for ValidateCPUPeriod [#1690](https://github.com/alibaba/pouch/pull/1690) ([johanzhu](https://github.com/johanzhu))
+* test: TestRemoveVolume [#1679](https://github.com/alibaba/pouch/pull/1679) ([mengjiahao](https://github.com/mengjiahao))
+* test: add unit-test for proxy/has port [#1668](https://github.com/alibaba/pouch/pull/1668) ([mengjiahao](https://github.com/mengjiahao))
+* test: add unit-tests for core GetVolume [#1660](https://github.com/alibaba/pouch/pull/1660) ([forienlauo](https://github.com/forienlauo))
+* test: add unit test for function ValidateOOMScore in oom\_score\_test.go [#1658](https://github.com/alibaba/pouch/pull/1658) ([quyi1993](https://github.com/quyi1993))
+* test: add unit-test for hasPort method [#1654](https://github.com/alibaba/pouch/pull/1654) ([forienlauo](https://github.com/forienlauo))
+* test: add unit-tests for core CreateVolume [#1626](https://github.com/alibaba/pouch/pull/1626) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: should remove the container in specified daemon [#1613](https://github.com/alibaba/pouch/pull/1613) ([Letty5411](https://github.com/Letty5411))
+* test: add top command in upgrade test suite [#1554](https://github.com/alibaba/pouch/pull/1554) ([allencloud](https://github.com/allencloud))
+* test: add test for different volume sources [#1553](https://github.com/alibaba/pouch/pull/1553) ([shaloulcy](https://github.com/shaloulcy))
+* test: add TestRunMemoryOOM test case [#1552](https://github.com/alibaba/pouch/pull/1552) ([sunyuan3](https://github.com/sunyuan3))
+* test: add all states container restart validation [#1549](https://github.com/alibaba/pouch/pull/1549) ([allencloud](https://github.com/allencloud))
+* bugfix: refine tests with specifying CMD [#1548](https://github.com/alibaba/pouch/pull/1548) ([Letty5411](https://github.com/Letty5411))
+* bugfix: fix rpm package bug [#1519](https://github.com/alibaba/pouch/pull/1519) ([Letty5411](https://github.com/Letty5411))
+* bugfix: rename lxcfs to pouch-lxcfs in pouch.rpm [#1490](https://github.com/alibaba/pouch/pull/1490) ([Letty5411](https://github.com/Letty5411))
+* feature: add make help into makefile [#1478](https://github.com/alibaba/pouch/pull/1478) ([houstar](https://github.com/houstar))
+* bugfix: replace DelContainerForceOk with DelContainerForceMultyTime [#1462](https://github.com/alibaba/pouch/pull/1462) ([zhuangqh](https://github.com/zhuangqh))
+* test: add more test for container operations [#1457](https://github.com/alibaba/pouch/pull/1457) ([ZouRui89](https://github.com/ZouRui89))
+* refactor: correct hard coding in several shell script [#1452](https://github.com/alibaba/pouch/pull/1452) ([zhuangqh](https://github.com/zhuangqh))
+* bugfix: correct shell script format via shellcheck reports [#1447](https://github.com/alibaba/pouch/pull/1447) ([zhuangqh](https://github.com/zhuangqh))
+* test: sort image list before check [#1413](https://github.com/alibaba/pouch/pull/1413) ([fuweid](https://github.com/fuweid))
+* feature: travis doesn't run document-only changed commit [#1412](https://github.com/alibaba/pouch/pull/1412) ([fuweid](https://github.com/fuweid))
+
+### __Documentation:__
+
+* docs: change logos to new version [#1720](https://github.com/alibaba/pouch/pull/1720) ([Frankzhaopku](https://github.com/Frankzhaopku))
+* Update [INSTALLATION.md](http://INSTALLATION.md) [#1698](https://github.com/alibaba/pouch/pull/1698) ([wq2526](https://github.com/wq2526))
+* docs: update docs about contributing [#1673](https://github.com/alibaba/pouch/pull/1673) ([shannonxn](https://github.com/shannonxn))
+* docs: enable non-root user to run pouch commands without sudo [#1573](https://github.com/alibaba/pouch/pull/1573) ([Ace-Tang](https://github.com/Ace-Tang))
+* docs: change pouch to PouchContainer [#1525](https://github.com/alibaba/pouch/pull/1525) ([Frankzhaopku](https://github.com/Frankzhaopku))
+* bugfix typo in the vendor/README.md [#1496](https://github.com/alibaba/pouch/pull/1496) ([houstar](https://github.com/houstar))
+* docs: better arch to add connection between cri manager and pouchd [#1465](https://github.com/alibaba/pouch/pull/1465) ([allencloud](https://github.com/allencloud))
+* docs: add docs about  lxcfs feature [#1461](https://github.com/alibaba/pouch/pull/1461) ([fanux](https://github.com/fanux))
+* doc: Modify the document about Kubernetes&pouch to make it friendly [#1459](https://github.com/alibaba/pouch/pull/1459) ([Starnop](https://github.com/Starnop))
+* docs: update [FAQ.md](http://FAQ.md) to add kernel version support [#1444](https://github.com/alibaba/pouch/pull/1444) ([allencloud](https://github.com/allencloud))
+* docs: add supporting legacy kernels into runV [#1442](https://github.com/alibaba/pouch/pull/1442) ([allencloud](https://github.com/allencloud))
+* docs: add more details on rich container [#1440](https://github.com/alibaba/pouch/pull/1440) ([allencloud](https://github.com/allencloud))
+
+### New Contributors
+
+Here is the list of new contributors:
+
+* [Frankzhaopku](https://github.com/Frankzhaopku)
+* [johanzhu](https://github.com/johanzhu)
+* [lauo](https://github.com/forienlauo)
+* [mengjiahao](https://github.com/mengjiahao)
+* [xuzhenglun](https://github.com/xuzhenglun)
+* [fanux](https://github.com/fanux)
+* [wq2526](https://github.com/wq2526)
+* [idealhack](https://github.com/idealhack)
+* [shannonxn](https://github.com/shannonxn)
+
 ## 0.5.0 (2018-05-25)
 
 **IMPORTANT**: In PouchContainer 0.5.0 we have done many things that important to all users of PouchContainer:
@@ -124,15 +270,15 @@
 
 ### Test
 
-* Fix use `busybox:1.25` instead of `busybox:1.28` in `tag` command cli test [\#1406](https://github.com/alibaba/pouch/pull/1406) ([fuweid](https://github.com/fuweid))
+* Fix use `busybox:1.25` instead of `busybox:1.28` in `tag` command CLI test [\#1406](https://github.com/alibaba/pouch/pull/1406) ([fuweid](https://github.com/fuweid))
 * Fix use the stable image ID in test case [\#1397](https://github.com/alibaba/pouch/pull/1397) ([fuweid](https://github.com/fuweid))
 * Fix make the PullImage test util work [\#1386](https://github.com/alibaba/pouch/pull/1386) ([fuweid](https://github.com/fuweid))
 * Update split `run` command test file into several files [\#1385](https://github.com/alibaba/pouch/pull/1385) ([Letty5411](https://github.com/Letty5411))
 * Add test cases for `volume plugin` [\#1368](https://github.com/alibaba/pouch/pull/1368) ([shaloulcy](https://github.com/shaloulcy))
-* Add cli test for `pause` command and fix some tiny bugs [\#1360](https://github.com/alibaba/pouch/pull/1360) ([ZouRui89](https://github.com/ZouRui89))
+* Add CLI test for `pause` command and fix some tiny bugs [\#1360](https://github.com/alibaba/pouch/pull/1360) ([ZouRui89](https://github.com/ZouRui89))
 * Fix `TestRunWithPidsLimit` test case failed because no pids cgroup support [\#1353](https://github.com/alibaba/pouch/pull/1353) ([Ace-Tang](https://github.com/Ace-Tang))
-* Enhance cli related tests [\#1341](https://github.com/alibaba/pouch/pull/1341) ([Letty5411](https://github.com/Letty5411))
-* Fix `ps` command cli tests failed [\#1334](https://github.com/alibaba/pouch/pull/1334) ([HusterWan](https://github.com/HusterWan))
+* Enhance CLI related tests [\#1341](https://github.com/alibaba/pouch/pull/1341) ([Letty5411](https://github.com/Letty5411))
+* Fix `ps` command CLI tests failed [\#1334](https://github.com/alibaba/pouch/pull/1334) ([HusterWan](https://github.com/HusterWan))
 * Fix missing removal of container when test suit end [\#1327](https://github.com/alibaba/pouch/pull/1327) ([allencloud](https://github.com/allencloud))
 * Fix using existing image and fix shell format error [\#1313](https://github.com/alibaba/pouch/pull/1313) ([Letty5411](https://github.com/Letty5411))
 * Add `-race` flag to `go test` command to detect race [\#1294](https://github.com/alibaba/pouch/pull/1294) ([allencloud](https://github.com/allencloud))

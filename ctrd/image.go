@@ -10,11 +10,11 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	ctrdmetaimages "github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/remotes"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -24,6 +24,15 @@ import (
 
 // CreateImageReference creates the image in the meta data in the containerd.
 func (c *Client) CreateImageReference(ctx context.Context, img ctrdmetaimages.Image) (ctrdmetaimages.Image, error) {
+	image, err := c.createImageReference(ctx, img)
+	if err != nil {
+		return image, convertCtrdErr(err)
+	}
+	return image, nil
+}
+
+// createImageReference creates the image in the meta data in the containerd.
+func (c *Client) createImageReference(ctx context.Context, img ctrdmetaimages.Image) (ctrdmetaimages.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return ctrdmetaimages.Image{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -34,6 +43,15 @@ func (c *Client) CreateImageReference(ctx context.Context, img ctrdmetaimages.Im
 
 // GetImage returns the containerd's Image.
 func (c *Client) GetImage(ctx context.Context, ref string) (containerd.Image, error) {
+	img, err := c.getImage(ctx, ref)
+	if err != nil {
+		return img, convertCtrdErr(err)
+	}
+	return img, nil
+}
+
+// getImage returns the containerd's Image.
+func (c *Client) getImage(ctx context.Context, ref string) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -44,6 +62,15 @@ func (c *Client) GetImage(ctx context.Context, ref string) (containerd.Image, er
 
 // ListImages lists all images.
 func (c *Client) ListImages(ctx context.Context, filter ...string) ([]containerd.Image, error) {
+	imgs, err := c.listImages(ctx, filter...)
+	if err != nil {
+		return imgs, convertCtrdErr(err)
+	}
+	return imgs, nil
+}
+
+// listImages lists all images.
+func (c *Client) listImages(ctx context.Context, filter ...string) ([]containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -54,6 +81,14 @@ func (c *Client) ListImages(ctx context.Context, filter ...string) ([]containerd
 
 // RemoveImage deletes an image.
 func (c *Client) RemoveImage(ctx context.Context, ref string) error {
+	if err := c.removeImage(ctx, ref); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// removeImage deletes an image.
+func (c *Client) removeImage(ctx context.Context, ref string) error {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -65,10 +100,61 @@ func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 	return nil
 }
 
+// SaveImage saves image to tarstream
+func (c *Client) SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error) {
+	r, err := c.saveImage(ctx, exporter, ref)
+	if err != nil {
+		return r, convertCtrdErr(err)
+	}
+	return r, nil
+}
+
+// saveImage saves image to tarstream
+func (c *Client) saveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error) {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	image, err := c.GetImage(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	desc := image.Target()
+	// add annotations in image description
+	if desc.Annotations == nil {
+		desc.Annotations = make(map[string]string)
+	}
+	if s, exist := desc.Annotations[ocispec.AnnotationRefName]; !exist || s == "" {
+		namedRef, err := reference.Parse(ref)
+		if err != nil {
+			return nil, err
+		}
+
+		if reference.IsNameTagged(namedRef) {
+			desc.Annotations[ocispec.AnnotationRefName] = namedRef.(reference.Tagged).Tag()
+		}
+	}
+
+	return wrapperCli.client.Export(ctx, exporter, desc)
+}
+
 // ImportImage creates a set of images by tarstream.
 //
 // NOTE: One tar may have several manifests.
 func (c *Client) ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error) {
+	imgs, err := c.importImage(ctx, importer, reader)
+	if err != nil {
+		return imgs, convertCtrdErr(err)
+	}
+	return imgs, nil
+}
+
+// importImage creates a set of images by tarstream.
+//
+// NOTE: One tar may have several manifests.
+func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -143,10 +229,14 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 
 	if err != nil {
 		// Send Error information to client through stream
-		messages := []ProgressInfo{
-			{Code: http.StatusInternalServerError, ErrorMessage: err.Error()},
+		message := jsonstream.JSONMessage{
+			Error: &jsonstream.JSONError{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			},
+			ErrorMessage: err.Error(),
 		}
-		stream.WriteObject(messages)
+		stream.WriteObject(message)
 		return nil, err
 	}
 
@@ -155,8 +245,6 @@ func (c *Client) PullImage(ctx context.Context, ref string, authConfig *types.Au
 }
 
 func (c *Client) pullImage(ctx context.Context, wrapperCli *WrapperClient, ref string, options []containerd.RemoteOpt) (containerd.Image, error) {
-	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
-
 	img, err := wrapperCli.client.Pull(ctx, ref, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to pull image")
@@ -165,26 +253,13 @@ func (c *Client) pullImage(ctx context.Context, wrapperCli *WrapperClient, ref s
 	return img, nil
 }
 
-// ProgressInfo represents the status of downloading image.
-type ProgressInfo struct {
-	Ref       string
-	Status    string
-	Offset    int64
-	Total     int64
-	StartedAt time.Time
-	UpdatedAt time.Time
-
-	// For Error handling
-	Code         int    // http response code
-	ErrorMessage string // detail error information
-}
-
+// FIXME(fuwei): put the fetchProgress into jsonstream and make it readable.
 func (c *Client) fetchProgress(ctx context.Context, wrapperCli *WrapperClient, ongoing *jobs, stream *jsonstream.JSONStream) error {
 	var (
-		ticker     = time.NewTicker(100 * time.Millisecond)
+		ticker     = time.NewTicker(300 * time.Millisecond)
 		cs         = wrapperCli.client.ContentStore()
 		start      = time.Now()
-		progresses = map[string]ProgressInfo{}
+		progresses = map[string]jsonstream.JSONMessage{}
 		done       bool
 	)
 	defer ticker.Stop()
@@ -193,30 +268,33 @@ outer:
 	for {
 		select {
 		case <-ticker.C:
-			resolved := "resolved"
+			resolved := jsonstream.PullStatusResolved
 			if !ongoing.isResolved() {
-				resolved = "resolving"
+				resolved = jsonstream.PullStatusResolving
 			}
-			progresses[ongoing.name] = ProgressInfo{
-				Ref:    ongoing.name,
+			progresses[ongoing.name] = jsonstream.JSONMessage{
+				ID:     ongoing.name,
 				Status: resolved,
+				Detail: &jsonstream.ProgressDetail{},
 			}
 			keys := []string{ongoing.name}
 
 			activeSeen := map[string]struct{}{}
 			if !done {
-				active, err := cs.ListStatuses(context.TODO(), "")
+				actives, err := cs.ListStatuses(context.TODO(), "")
 				if err != nil {
 					logrus.Errorf("failed to list statuses: %v", err)
 					continue
 				}
 				// update status of active entries!
-				for _, active := range active {
-					progresses[active.Ref] = ProgressInfo{
-						Ref:       active.Ref,
-						Status:    "downloading",
-						Offset:    active.Offset,
-						Total:     active.Total,
+				for _, active := range actives {
+					progresses[active.Ref] = jsonstream.JSONMessage{
+						ID:     active.Ref,
+						Status: jsonstream.PullStatusDownloading,
+						Detail: &jsonstream.ProgressDetail{
+							Current: active.Offset,
+							Total:   active.Total,
+						},
 						StartedAt: active.StartedAt,
 						UpdatedAt: active.UpdatedAt,
 					}
@@ -233,53 +311,54 @@ outer:
 				}
 
 				status, ok := progresses[key]
-				if !done && (!ok || status.Status == "downloading") {
+				if !done && (!ok || status.Status == jsonstream.PullStatusDownloading) {
 					info, err := cs.Info(context.TODO(), j.Digest)
 					if err != nil {
 						if !errdefs.IsNotFound(err) {
 							logrus.Errorf("failed to get content info: %v", err)
 							continue outer
 						} else {
-							progresses[key] = ProgressInfo{
-								Ref:    key,
-								Status: "waiting",
+							progresses[key] = jsonstream.JSONMessage{
+								ID:     key,
+								Status: jsonstream.PullStatusWaiting,
 							}
 						}
 					} else if info.CreatedAt.After(start) {
-						progresses[key] = ProgressInfo{
-							Ref:       key,
-							Status:    "done",
-							Offset:    info.Size,
-							Total:     info.Size,
+						progresses[key] = jsonstream.JSONMessage{
+							ID:     key,
+							Status: jsonstream.PullStatusDone,
+							Detail: &jsonstream.ProgressDetail{
+								Current: info.Size,
+								Total:   info.Size,
+							},
 							UpdatedAt: info.CreatedAt,
 						}
 					} else {
-						progresses[key] = ProgressInfo{
-							Ref:    key,
-							Status: "exists",
+						progresses[key] = jsonstream.JSONMessage{
+							ID:     key,
+							Status: jsonstream.PullStatusExists,
 						}
 					}
 				} else if done {
 					if ok {
-						if status.Status != "done" && status.Status != "exists" {
-							status.Status = "done"
+						if status.Status != jsonstream.PullStatusDone &&
+							status.Status != jsonstream.PullStatusExists {
+
+							status.Status = jsonstream.PullStatusDone
 							progresses[key] = status
 						}
 					} else {
-						progresses[key] = ProgressInfo{
-							Ref:    key,
-							Status: "done",
+						progresses[key] = jsonstream.JSONMessage{
+							ID:     key,
+							Status: jsonstream.PullStatusDone,
 						}
 					}
 				}
 			}
 
-			var ordered []ProgressInfo
 			for _, key := range keys {
-				ordered = append(ordered, progresses[key])
+				stream.WriteObject(progresses[key])
 			}
-
-			stream.WriteObject(ordered)
 
 			if done {
 				return nil

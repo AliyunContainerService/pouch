@@ -115,6 +115,17 @@ function install_lxcfs
 	fi
 }
 
+function install_criu
+{
+	echo "Try installing criu"
+	if grep -qi "ubuntu" /etc/issue ; then
+		apt-get update
+		apt-get install -y criu
+	else
+		yum install criu
+	fi
+}
+
 # local-persist is a volume plugin
 function install_local_persist
 {
@@ -207,6 +218,7 @@ function install_pouch
 	cp -f "$DIR/pouch" "$DIR/pouchd" /usr/local/bin/
 	install_lxcfs
 	install_nsenter
+	install_criu
 }
 
 function target
@@ -247,7 +259,7 @@ function target
 				 rich container related tests will be skipped"
 	
 		docker run --rm -v "$(pwd):$SOURCEDIR" \
-			-e GOPATH=/go:$SOURCEDIR/extra/libnetwork/Godeps/_workspace \
+			-e GOPATH=/go \
 			$IMAGE \
 			bash -c "cd test && go test -c -o integration-test"
 
@@ -260,10 +272,10 @@ function target
 		# start pouch daemon
 		echo "start pouch daemon"
 		if stat /usr/bin/lxcfs ; then
-			$POUCHD --debug --enable-lxcfs=true \
+			$POUCHD --debug --enable-lxcfs=true --add-runtime runv=runv \
 				--lxcfs=/usr/bin/lxcfs > "$TMP/log" 2>&1 &
 		else
-			$POUCHD --debug > "$TMP/log" 2>&1 &
+			$POUCHD --debug --add-runtime runv=runv > "$TMP/log" 2>&1 &
 		fi
 
 		# wait until pouch daemon is ready

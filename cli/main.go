@@ -31,6 +31,8 @@ func main() {
 	cli.AddCommand(base, &NetworkCommand{})
 	cli.AddCommand(base, &TagCommand{})
 	cli.AddCommand(base, &LoadCommand{})
+	cli.AddCommand(base, &SaveCommand{})
+	cli.AddCommand(base, &HistoryCommand{})
 
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})
@@ -45,6 +47,9 @@ func main() {
 	cli.AddCommand(base, &LogsCommand{})
 	cli.AddCommand(base, &RemountLxcfsCommand{})
 	cli.AddCommand(base, &WaitCommand{})
+	cli.AddCommand(base, &DaemonUpdateCommand{})
+	cli.AddCommand(base, &CheckpointCommand{})
+	cli.AddCommand(base, &EventsCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

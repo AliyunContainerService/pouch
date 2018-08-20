@@ -2,12 +2,10 @@ package main
 
 import (
 	"net/url"
-	"time"
 
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
-	"github.com/alibaba/pouch/test/util"
 	"github.com/go-check/check"
 )
 
@@ -28,24 +26,20 @@ func (suite *APIImageCreateSuite) TestImageCreateOk(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", environment.HelloworldRepo)
 	q.Add("tag", "latest")
+
 	query := request.WithQuery(q)
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
+	c.Assert(discardPullStatus(resp.Body), check.IsNil)
 
-	// TODO: add a waituntil func to check the exsitence of image
-	time.Sleep(5000 * time.Millisecond)
-
-	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":latest")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	DelImageForceOk(c, environment.HelloworldRepo+":latest")
 }
 
 // TestImageCreateNil tests fromImage is nil.
 func (suite *APIImageCreateSuite) TestImageCreateNil(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", "")
-
 	query := request.WithQuery(q)
 
 	resp, err := request.Post("/images/create", query)
@@ -58,15 +52,13 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", environment.HelloworldRepo)
 	query := request.WithQuery(q)
+
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
+	c.Assert(discardPullStatus(resp.Body), check.IsNil)
 
-	time.Sleep(5000 * time.Millisecond)
-
-	resp, err = request.Delete("/images/" + environment.HelloworldRepo + ":latest")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	DelImageForceOk(c, environment.HelloworldRepo)
 }
 
 // TestImageCreateWithoutRegistry tests creating an image only by name, will use "latest" by default.
@@ -74,18 +66,11 @@ func (suite *APIImageCreateSuite) TestImageCreateWithoutRegistry(c *check.C) {
 	q := url.Values{}
 	q.Add("fromImage", helloworldImageOnlyRepoName)
 	query := request.WithQuery(q)
+
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
+	c.Assert(discardPullStatus(resp.Body), check.IsNil)
 
-	ret := util.WaitTimeout(10*time.Second, DelHelloworldImage)
-	c.Assert(ret, check.Equals, true)
-}
-
-func DelHelloworldImage() bool {
-	resp, err := request.Delete("/images/" + helloworldImageOnlyRepoName + ":latest")
-	if err == nil && resp.StatusCode == 204 {
-		return true
-	}
-	return false
+	DelImageForceOk(c, helloworldImageOnlyRepoName+":latest")
 }

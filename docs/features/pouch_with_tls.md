@@ -2,7 +2,7 @@
 
 If clients merely connect to pouchd from the same sever, only unix socket should be used, which means starting pouchd with argument `-l unix:///var/run/pouchd.sock`. If pouchd will be connected via http client on a remote server, pouchd should listen on a tcp port eg:`-l 0.0.0.0:4243`. In this case, if we don't put on a tls protection, pouchd will accept any connection regardless of the remote identity, which is absolutely not safe in production environment.
 
-In order to verify client identity, a CA should be created to generate certificates for pouch daemon and clients.
+In order to verify client identity, a CA should be created to generate certificates for pouchd and clients.
 
 ## create a CA
 
@@ -58,10 +58,10 @@ After applying above commands, we have a directory which contains all files we n
 --tlsverify --tlscacert=${name}/ca.pem --tlscert=${name}/cert.pem --tlskey=${name}/key.pem
 ```
 
-Then we have a directory which contains all files we needed to use with pouch client. eg: use this certificate as an identity to get pouchd service version:
+Then we have a directory which contains all files we needed to use with PouchContainer client. eg: use this certificate as an identity to get pouchd service version:
 
 ```
 ./pouch -H ${server_hostname}:4243 --tlsverify --tlscacert=${path}/ca.pem --tlscert=${path}/cert.pem --tlskey=${path}/key.pem version
 ```
 
-When a client without a certificate or with a certificate not published by the same CA tries to connect to a pouch daemon having a TLS protection, this connection will be refused.
+When a client without a certificate or with a certificate not published by the same CA tries to connect to a pouchd having a TLS protection, this connection will be refused.

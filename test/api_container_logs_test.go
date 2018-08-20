@@ -37,6 +37,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerLogsSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -45,6 +46,23 @@ func (suite *APIContainerLogsSuite) TestNoSuchContainer(c *check.C) {
 	resp, err := request.Get("/containers/nosuchcontainerxxx/logs")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, http.StatusNotFound)
+}
+
+// TestOnlySupportForJSONFile tests for non-jsonfile log driver.
+func (suite *APIContainerLogsSuite) TestOnlySupportForJSONFile(c *check.C) {
+	name := "logs_with_none_driver"
+	command.PouchRun("run", "--log-driver", "none", "-d", "--name", name, busyboxImage, "ls").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	resp, err := request.Get(fmt.Sprintf("/containers/%s/logs", name),
+		request.WithQuery(
+			url.Values(map[string][]string{
+				"stdout": {"1"},
+			}),
+		),
+	)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, http.StatusBadRequest)
 }
 
 // TestNoShowStdoutAndShowStderr tests logs API without ShowStderr and
@@ -57,8 +75,6 @@ func (suite *APIContainerLogsSuite) TestNoShowStdoutAndShowStderr(c *check.C) {
 	resp, err := request.Get(fmt.Sprintf("/containers/%s/logs", name))
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, http.StatusBadRequest)
-
-	DelContainerForceOk(c, name)
 }
 
 // TestStdout tests stdout stream.
@@ -118,8 +134,8 @@ func (suite *APIContainerLogsSuite) TestSinceAndUntil(c *check.C) {
 
 	allLogs = suite.syncReadLog(c, name, map[string]string{
 		"stdout": "1",
-		"since":  fmt.Sprintf("%d.%09d", sinceTime.Unix(), sinceTime.UnixNano()),
-		"until":  fmt.Sprintf("%d.%09d", untilTime.Unix(), untilTime.UnixNano()),
+		"since":  fmt.Sprintf("%d.%09d", sinceTime.Unix(), sinceTime.Nanosecond()),
+		"until":  fmt.Sprintf("%d.%09d", untilTime.Unix(), untilTime.Nanosecond()),
 	})
 
 	c.Assert(len(allLogs), check.Equals, 1)

@@ -2,9 +2,11 @@ package volume
 
 import (
 	"fmt"
+	"path"
 	"reflect"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/kmutex"
 	metastore "github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	volerr "github.com/alibaba/pouch/storage/volume/error"
@@ -18,12 +20,17 @@ import (
 type Core struct {
 	Config
 	store *metastore.Store
+	lock  *kmutex.KMutex
 }
 
 // NewCore returns Core struct instance with volume config.
 func NewCore(cfg Config) (*Core, error) {
-	c := &Core{Config: cfg}
+	c := &Core{
+		Config: cfg,
+		lock:   kmutex.New(),
+	}
 
+	// initialize volume driver alias.
 	if cfg.DriverAlias != "" {
 		parts := strings.Split(cfg.DriverAlias, ";")
 		for _, p := range parts {
@@ -38,6 +45,7 @@ func NewCore(cfg Config) (*Core, error) {
 		}
 	}
 
+	// initialize volume metadata store.
 	volumeStore, err := metastore.NewStore(metastore.Config{
 		Driver:  "boltdb",
 		BaseDir: cfg.VolumeMetaPath,
@@ -52,14 +60,28 @@ func NewCore(cfg Config) (*Core, error) {
 		logrus.Errorf("failed to create volume meta store: %v", err)
 		return nil, err
 	}
-
 	c.store = volumeStore
+
+	// set configure into each driver
+	driverConfig := map[string]interface{}{
+		"volume-meta-dir": path.Dir(cfg.VolumeMetaPath),
+		"volume-timeout":  cfg.Timeout,
+	}
+	drivers, err := driver.GetAll()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get all volume driver")
+	}
+	for _, dv := range drivers {
+		if d, ok := dv.(driver.Conf); ok {
+			d.Config(driver.Contexts(), driverConfig)
+		}
+	}
 
 	return c, nil
 }
 
-// GetVolume return a volume's info with specified name, If not errors.
-func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
+// getVolume return a volume's info with specified name, If not errors.
+func (c *Core) getVolume(id types.VolumeID) (*types.Volume, error) {
 	ctx := driver.Contexts()
 
 	// first, try to get volume from local store.
@@ -123,9 +145,22 @@ func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
 	return nil, volerr.ErrVolumeNotFound
 }
 
-// ExistVolume return 'true' if volume be found and not errors.
-func (c *Core) ExistVolume(id types.VolumeID) (bool, error) {
-	_, err := c.GetVolume(id)
+// getVolumeDriver return the backend driver and volume with specified volume's id.
+func (c *Core) getVolumeDriver(id types.VolumeID) (*types.Volume, driver.Driver, error) {
+	v, err := c.getVolume(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	dv, err := driver.Get(v.Spec.Backend)
+	if err != nil {
+		return nil, nil, errors.Errorf("failed to get backend driver %s: %v", v.Spec.Backend, err)
+	}
+	return v, dv, nil
+}
+
+// existVolume return 'true' if volume be found and not errors.
+func (c *Core) existVolume(id types.VolumeID) (bool, error) {
+	_, err := c.getVolume(id)
 	if err != nil {
 		if ec, ok := err.(volerr.CoreError); ok && ec.IsVolumeNotFound() {
 			return false, nil
@@ -135,9 +170,20 @@ func (c *Core) ExistVolume(id types.VolumeID) (bool, error) {
 	return true, nil
 }
 
+// GetVolume return a volume's info with specified name, If not errors.
+func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error) {
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	return c.getVolume(id)
+}
+
 // CreateVolume use to create a volume, if failed, will return error info.
 func (c *Core) CreateVolume(id types.VolumeID) (*types.Volume, error) {
-	exist, err := c.ExistVolume(id)
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	exist, err := c.existVolume(id)
 	if err != nil {
 		return nil, err
 	} else if exist {
@@ -265,7 +311,10 @@ func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
 
 // RemoveVolume remove volume from storage and meta information, if not success return error.
 func (c *Core) RemoveVolume(id types.VolumeID) error {
-	v, dv, err := c.GetVolumeDriver(id)
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	v, dv, err := c.getVolumeDriver(id)
 	if err != nil {
 		return errors.Wrap(err, "Remove volume: "+id.String())
 	}
@@ -285,7 +334,10 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 
 // VolumePath return the path of volume on node host.
 func (c *Core) VolumePath(id types.VolumeID) (string, error) {
-	v, dv, err := c.GetVolumeDriver(id)
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	v, dv, err := c.getVolumeDriver(id)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("Get volume: %s path", id.String()))
 	}
@@ -293,22 +345,12 @@ func (c *Core) VolumePath(id types.VolumeID) (string, error) {
 	return c.volumePath(v, dv)
 }
 
-// GetVolumeDriver return the backend driver and volume with specified volume's id.
-func (c *Core) GetVolumeDriver(id types.VolumeID) (*types.Volume, driver.Driver, error) {
-	v, err := c.GetVolume(id)
-	if err != nil {
-		return nil, nil, err
-	}
-	dv, err := driver.Get(v.Spec.Backend)
-	if err != nil {
-		return nil, nil, errors.Errorf("failed to get backend driver %s: %v", v.Spec.Backend, err)
-	}
-	return v, dv, nil
-}
-
 // AttachVolume to enable a volume on local host.
 func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error) {
-	v, dv, err := c.GetVolumeDriver(id)
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	v, dv, err := c.getVolumeDriver(id)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +378,10 @@ func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.
 
 // DetachVolume to disable a volume on local host.
 func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error) {
-	v, dv, err := c.GetVolumeDriver(id)
+	c.lock.Lock(id.Name)
+	defer c.lock.Unlock(id.Name)
+
+	v, dv, err := c.getVolumeDriver(id)
 	if err != nil {
 		return nil, err
 	}

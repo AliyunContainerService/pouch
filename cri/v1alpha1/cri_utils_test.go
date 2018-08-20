@@ -1,17 +1,55 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
+	"sort"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/utils"
+
+	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
+
+func Test_getSELinuxSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{"All Empty Test", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "", Role: "", Type: "", Level: ""}}}, nil, false},
+		{"User Not Empty Test", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "foo", Role: "", Type: "", Level: ""}}}, nil, false},
+		{"Type And Level Empty Test", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "foo", Role: "foo", Type: "", Level: ""}}}, nil, false},
+		{"Level Empty Test", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "foo", Role: "foo", Type: "foo", Level: ""}}}, nil, false},
+		{"All Not Empty Test", args{&runtime.LinuxContainerSecurityContext{SelinuxOptions: &runtime.SELinuxOption{User: "foo", Role: "foo", Type: "foo", Level: "foo"}}}, []string{"label=user:foo", "label=role:foo", "label=type:foo", "label=level:foo"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSELinuxSecurityOpts(tt.args.sc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getSELinuxSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			sort.Strings(got)
+			sort.Strings(tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSELinuxSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func Test_parseUint32(t *testing.T) {
 	type args struct {
@@ -341,7 +379,92 @@ func Test_toCriSandbox(t *testing.T) {
 		want    *runtime.PodSandbox
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				c: &mgr.Container{
+					ID:    "fakeID",
+					State: &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:  "k8s_fakeID_fakeSandbox_ns_uid_7",
+					Config: &apitypes.ContainerConfig{Labels: map[string]string{
+						containerTypeLabelKey: "internal_type",
+						"annotation.ann":      "ann",
+						"testLabel":           "test",
+					}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want: &runtime.PodSandbox{
+				Id: "fakeID",
+				Metadata: &runtime.PodSandboxMetadata{
+					Name:      "fakeSandbox",
+					Namespace: "ns",
+					Uid:       "uid",
+					Attempt:   7,
+				},
+				State:       runtime.PodSandboxState_SANDBOX_READY,
+				CreatedAt:   1532977506000000000,
+				Labels:      map[string]string{"testLabel": "test"},
+				Annotations: map[string]string{"ann": "ann"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "illegal part num test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "fake_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal prefix test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "pouch_fakeID_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal format test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "k8s_fakeID_fakeSandbox_ns_uid_ss",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-30T19:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal timestamp test",
+			args: args{
+				c: &mgr.Container{
+					ID:      "fakeID",
+					State:   &apitypes.ContainerState{Status: apitypes.StatusRunning},
+					Name:    "k8s_fakeID_fakeSandbox_ns_uid_7",
+					Config:  &apitypes.ContainerConfig{Labels: map[string]string{}},
+					Created: "2018-07-3019:05:06.000Z",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -451,6 +574,32 @@ func Test_parseContainerName(t *testing.T) {
 	for _, test := range testCases {
 		_, actualError := parseContainerName(test.input)
 		assert.EqualError(t, actualError, test.expectedError)
+	}
+}
+
+func Test_makeupLogPath(t *testing.T) {
+	testCases := []struct {
+		logDirectory  string
+		containerMeta *runtime.ContainerMetadata
+		expected      string
+	}{
+		{
+			logDirectory:  "/var/log/pods/099f1c2b79126109140a1f77e211df00",
+			containerMeta: &runtime.ContainerMetadata{"kube-scheduler", 0},
+			expected:      "/var/log/pods/099f1c2b79126109140a1f77e211df00/kube-scheduler_0.log",
+		},
+		{
+			logDirectory:  "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/",
+			containerMeta: &runtime.ContainerMetadata{"kube-proxy", 10},
+			expected:      "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/kube-proxy_10.log",
+		},
+	}
+
+	for _, test := range testCases {
+		logPath := makeupLogPath(test.logDirectory, test.containerMeta)
+		if !reflect.DeepEqual(test.expected, logPath) {
+			t.Fatalf("unexpected logPath returned by makeupLogPath")
+		}
 	}
 }
 
@@ -577,12 +726,294 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+		want apitypes.HostConfig
 	}{
-	// TODO: Add test cases.
+		{
+			name: "normal test",
+			args: args{
+				nsOpts:       &runtime.NamespaceOption{true, true, false},
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "host", IpcMode: "container:fakeSandBoxID", NetworkMode: "host"},
+		},
+		{
+			name: "nil test",
+			args: args{
+				nsOpts:       nil,
+				podSandboxID: "fakeSandBoxID",
+				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
+			},
+			want: apitypes.HostConfig{PidMode: "container:fakeSandBoxID", IpcMode: "container:fakeSandBoxID", NetworkMode: "container:fakeSandBoxID"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			modifyContainerNamespaceOptions(tt.args.nsOpts, tt.args.podSandboxID, tt.args.hostConfig)
+			if !reflect.DeepEqual(*tt.args.hostConfig, tt.want) {
+				t.Errorf("modifyContainerNamespaceOptions() = %v, want %v", *tt.args.hostConfig, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifyHostConfig(t *testing.T) {
+	supplementalGroups := []int64{1, 2, 3}
+	groupAdd := []string{}
+	for _, group := range supplementalGroups {
+		groupAdd = append(groupAdd, strconv.FormatInt(group, 10))
+	}
+
+	type args struct {
+		sc         *runtime.LinuxContainerSecurityContext
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name           string
+		args           args
+		wantHostConfig *apitypes.HostConfig
+		wantErr        error
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "SupplementalGroups Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					Privileged:     true,
+					ReadonlyRootfs: true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Capabilities Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				SecurityOpt:    []string{"no-new-privileges"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetSeccompSecurityOpts Err Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: "foo",
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: fmt.Errorf("failed to generate seccomp security options: %v", fmt.Errorf("undefault profile %q should prefix with %q", "foo", mgr.ProfileNamePrefix)),
+		},
+		{
+			name: "GetAppArmorSecurityOpts Err Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    "foo",
+					NoNewPrivs:         true,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: fmt.Errorf("failed to generate appArmor security options: %v", fmt.Errorf("undefault profile name should prefix with %q", mgr.ProfileNamePrefix)),
+		},
+		{
+			name: "NoNewPrivs False Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SupplementalGroups: supplementalGroups,
+					Privileged:         true,
+					ReadonlyRootfs:     true,
+					Capabilities: &runtime.Capability{
+						AddCapabilities:  []string{"fooAdd1", "fooAdd2"},
+						DropCapabilities: []string{"fooDrop1", "fooDrop2"},
+					},
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+					ApparmorProfile:    mgr.ProfileRuntimeDefault,
+					NoNewPrivs:         false,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{
+				GroupAdd:       groupAdd,
+				Privileged:     true,
+				ReadonlyRootfs: true,
+				CapAdd:         []string{"fooAdd1", "fooAdd2"},
+				CapDrop:        []string{"fooDrop1", "fooDrop2"},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				hostConfig: &apitypes.HostConfig{},
+			},
+			wantHostConfig: &apitypes.HostConfig{},
+			wantErr:        nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := modifyHostConfig(tt.args.sc, tt.args.hostConfig)
+			if !reflect.DeepEqual(tt.args.hostConfig, tt.wantHostConfig) {
+				t.Errorf("modifyHostConfig() hostConfig = %v, wantHostConfig %v", tt.args.hostConfig, tt.wantHostConfig)
+				return
+			}
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("modifyHostConfig() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_modifyContainerConfig(t *testing.T) {
+	runAsUser := &runtime.Int64Value{int64(1)}
+	configUser := strconv.FormatInt(1, 10)
+
+	type args struct {
+		sc     *runtime.LinuxContainerSecurityContext
+		config *apitypes.ContainerConfig
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantConfig *apitypes.ContainerConfig
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUser:     runAsUser,
+					RunAsUsername: "foo",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: "foo",
+			},
+		},
+		{
+			name: "RunAsUser Nil Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUsername: "foo",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: "foo",
+			},
+		},
+		{
+			name: "RunAsUsername Empty Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUser:     runAsUser,
+					RunAsUsername: "",
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{
+				User: configUser,
+			},
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifyContainerConfig(tt.args.sc, tt.args.config)
+			if !reflect.DeepEqual(tt.args.config, tt.wantConfig) {
+				t.Errorf("modifyContainerConfig() config = %v, wantConfig %v", tt.args.config, tt.wantConfig)
+				return
+			}
 		})
 	}
 }
@@ -643,6 +1074,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 }
 
 func Test_toCriContainer(t *testing.T) {
+	_, timeParseErr := time.Parse(utils.TimeLayout, "foo")
 	type args struct {
 		c *mgr.Container
 	}
@@ -650,19 +1082,159 @@ func Test_toCriContainer(t *testing.T) {
 		name    string
 		args    args
 		want    *runtime.Container
-		wantErr bool
+		wantErr error
 	}{
-	// TODO: Add test cases.
+		{
+			name: "Normal Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "k8s_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "2018-01-12T07:38:32.245589846Z",
+				},
+			},
+			want: &runtime.Container{
+				Id:           "cid",
+				PodSandboxId: "sid",
+				Metadata: &runtime.ContainerMetadata{
+					Name:    "cname",
+					Attempt: uint32(3),
+				},
+				Image:     &runtime.ImageSpec{Image: "image"},
+				ImageRef:  "imageRef",
+				State:     runtime.ContainerState_CONTAINER_RUNNING,
+				CreatedAt: int64(1515742712245589846),
+				Labels: map[string]string{
+					"aa": "bb",
+					"cc": "dd",
+				},
+				Annotations: map[string]string{
+					"aaa": "bbb",
+					"ccc": "ddd",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ParseContainerName Error Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "kubernetes_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "2018-01-12T07:38:32.245589846Z",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("container is not managed by kubernetes: %q", "kubernetes_cname_sname_namespace_uid_3"),
+		},
+		{
+			name: "ToCriTimestamp Error Test",
+			args: args{
+				c: &mgr.Container{
+					ID: "cid",
+					State: &apitypes.ContainerState{
+						Status: apitypes.StatusRunning,
+					},
+					Image: "imageRef",
+					Name:  "k8s_cname_sname_namespace_uid_3",
+					Config: &apitypes.ContainerConfig{
+						Image: "image",
+						Labels: map[string]string{
+							containerTypeLabelKey: "b",
+							sandboxIDLabelKey:     "sid",
+							"aa":                  "bb",
+							"cc":                  "dd",
+							annotationPrefix + "aaa": "bbb",
+							annotationPrefix + "ccc": "ddd",
+						},
+					},
+					Created: "foo",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("failed to parse create timestamp for container %q: %v", "cid", timeParseErr),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := toCriContainer(tt.args.c)
-			if (err != nil) != tt.wantErr {
+			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("toCriContainer() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("toCriContainer() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_containerNetns(t *testing.T) {
+	type args struct {
+		container *mgr.Container
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				container: &mgr.Container{
+					State: &apitypes.ContainerState{
+						Pid: int64(1001),
+					},
+				},
+			},
+			want: fmt.Sprintf("/proc/%v/ns/net", 1001),
+		},
+		{
+			name: "Pid EQ -1 Test",
+			args: args{
+				container: &mgr.Container{
+					State: &apitypes.ContainerState{
+						Pid: int64(-1),
+					},
+				},
+			},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := containerNetns(tt.args.container); got != tt.want {
+				t.Errorf("containerNetns() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -679,7 +1251,236 @@ func Test_imageToCriImage(t *testing.T) {
 		want    *runtime.Image
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		{
+			"case1",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "xiaoming",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: 0},
+				Username:    "xiaoming",
+			},
+			false,
+		},
+		{
+			"case2",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case3",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case4",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        1024,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       1024,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case5",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "1",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "1",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case6",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"asdlkfej", "vwoeifo"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"asdlkfej", "vwoeifo"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case7",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case8",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        -2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       18446744073709549568,
+				Uid:         &runtime.Int64Value{Value: int64(123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case9",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "-123456:dev",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"sldkfeio", "civlme"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"sldkfeio", "civlme"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(-123456)},
+				Username:    "",
+			},
+			false,
+		},
+		{
+			"case10",
+			args{
+				&apitypes.ImageInfo{
+					Config: &apitypes.ContainerConfig{
+						User: "",
+					},
+					ID:          "abc",
+					RepoDigests: []string{"1238", "4820940"},
+					RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
+					Size:        2048,
+				},
+			},
+			&runtime.Image{
+				Id:          "abc",
+				RepoTags:    []string{"xcuvk2", "cuvkwej23095489"},
+				RepoDigests: []string{"1238", "4820940"},
+				Size_:       2048,
+				Uid:         &runtime.Int64Value{Value: int64(0)},
+				Username:    "",
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -765,6 +1566,410 @@ func Test_parseUserFromImageUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseUserFromImageUser(tt.args.id); got != tt.want {
 				t.Errorf("parseUserFromImageUser() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getAppArmorSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr error
+	}{
+		{
+			name: "AppArmorSecurityOptsDefault",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileRuntimeDefault,
+				},
+			},
+			want:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "AppArmorSecurityOptsUnconfined",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileNameUnconfined,
+				},
+			},
+			want: []string{
+				fmt.Sprintf("apparmor=%s", mgr.ProfileNameUnconfined),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "AppArmorSecurityOptsWithoutPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: "abcd",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("undefault profile name should prefix with %q", mgr.ProfileNamePrefix),
+		},
+		{
+			name: "AppArmorSecurityOptsWithPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					ApparmorProfile: mgr.ProfileNamePrefix + "abcd",
+				},
+			},
+			want: []string{
+				"apparmor=abcd",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getAppArmorSecurityOpts(tt.args.sc)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("getAppArmorSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getAppArmorSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getSeccompSecurityOpts(t *testing.T) {
+	type args struct {
+		sc *runtime.LinuxContainerSecurityContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr error
+	}{
+		{
+			name: "getSeccompSecurityOptsUnconfined",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileNameUnconfined,
+				},
+			},
+			want: []string{
+				fmt.Sprintf("seccomp=%s", mgr.ProfileNameUnconfined),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "getSeccompSecurityOptsDefault",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileDockerDefault,
+				},
+			},
+			want:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "getSeccompSecurityOptsWithoutPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: "abcd",
+				},
+			},
+			want:    nil,
+			wantErr: fmt.Errorf("undefault profile %q should prefix with %q", "abcd", mgr.ProfileNamePrefix),
+		},
+		{
+			name: "getSeccompSecurityOptsWithPrefix",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					SeccompProfilePath: mgr.ProfileNamePrefix + "abcd",
+				},
+			},
+			want: []string{
+				"seccomp=abcd",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSeccompSecurityOpts(tt.args.sc)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("getSeccompSecurityOpts() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSeccompSecurityOpts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseResourcesFromCRI(t *testing.T) {
+	var (
+		resources = apitypes.Resources{
+			CPUPeriod:  1000,
+			CPUQuota:   1000,
+			CPUShares:  1000,
+			Memory:     1000,
+			CpusetCpus: "0",
+			CpusetMems: "0",
+		}
+		linuxContainerResources = runtime.LinuxContainerResources{
+			CpuPeriod:          1000,
+			CpuQuota:           1000,
+			CpuShares:          1000,
+			MemoryLimitInBytes: 1000,
+			CpusetCpus:         "0",
+			CpusetMems:         "0",
+		}
+	)
+	type args struct {
+		runtimeResources *runtime.LinuxContainerResources
+	}
+	tests := []struct {
+		name string
+		args args
+		want apitypes.Resources
+	}{
+		{
+			name: "normal test",
+			args: args{
+				runtimeResources: &linuxContainerResources,
+			},
+			want: resources,
+		},
+		{
+			name: "nil test",
+			args: args{
+				runtimeResources: &runtime.LinuxContainerResources{},
+			},
+			want: apitypes.Resources{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseResourcesFromCRI(tt.args.runtimeResources); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseResourcesFromCRI() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_generateMountBindings(t *testing.T) {
+	type args struct {
+		mounts []*runtime.Mount
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "propagation_private test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       true,
+						SelinuxRelabel: true,
+						Propagation:    runtime.MountPropagation_PROPAGATION_PRIVATE,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:ro,Z"},
+		},
+		{
+			name: "propagation_bidirectinal test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       true,
+						SelinuxRelabel: false,
+						Propagation:    runtime.MountPropagation_PROPAGATION_BIDIRECTIONAL,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:ro,rshared"},
+		},
+		{
+			name: "propagation_host_to_container test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       false,
+						SelinuxRelabel: true,
+						Propagation:    runtime.MountPropagation_PROPAGATION_HOST_TO_CONTAINER,
+					},
+				},
+			},
+			want: []string{"host_path:container_path:Z,rslave"},
+		},
+		{
+			name: "no_attrs test",
+			args: args{
+				mounts: []*runtime.Mount{
+					{
+						ContainerPath:  "container_path",
+						HostPath:       "host_path",
+						Readonly:       false,
+						SelinuxRelabel: false,
+					},
+				},
+			},
+			want: []string{"host_path:container_path"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateMountBindings(tt.args.mounts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateMountBindings() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_modifySandboxNamespaceOptions(t *testing.T) {
+	type args struct {
+		nsOpts     *runtime.NamespaceOption
+		hostConfig *apitypes.HostConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want *apitypes.HostConfig
+	}{
+		{
+			name: "nil test",
+			args: args{
+				nsOpts: nil,
+				hostConfig: &apitypes.HostConfig{
+					PidMode:     namespaceModeHost,
+					IpcMode:     namespaceModeHost,
+					NetworkMode: namespaceModeHost,
+				},
+			},
+			want: &apitypes.HostConfig{
+				PidMode:     namespaceModeHost,
+				IpcMode:     namespaceModeHost,
+				NetworkMode: namespaceModeHost,
+			},
+		},
+		{
+			name: "normal test",
+			args: args{
+				nsOpts: &runtime.NamespaceOption{
+					HostIpc:     true,
+					HostPid:     true,
+					HostNetwork: false,
+				},
+				hostConfig: &apitypes.HostConfig{},
+			},
+			want: &apitypes.HostConfig{
+				PidMode: namespaceModeHost,
+				IpcMode: namespaceModeHost,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			modifySandboxNamespaceOptions(tt.args.nsOpts, tt.args.hostConfig)
+			if !reflect.DeepEqual(tt.args.hostConfig, tt.want) {
+				t.Errorf("modifySandboxNamespaceOptions() = %v, want %v", tt.args.hostConfig, tt.want)
+			}
+		})
+	}
+}
+
+// CNI Network related unit tests.
+func Test_toCNIPortMappings(t *testing.T) {
+	criNormalTCP := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_TCP,
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIp:        "192.168.1.101",
+	}
+	pouchNormalTCP := ocicni.PortMapping{
+		Protocol:      "tcp",
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIP:        "192.168.1.101",
+	}
+	criNormalUDP := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_UDP,
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIp:        "192.168.1.102",
+	}
+	pouchNormalUDP := ocicni.PortMapping{
+		Protocol:      "udp",
+		ContainerPort: 8080,
+		HostPort:      80,
+		HostIP:        "192.168.1.102",
+	}
+	criHostPortLEZero := &runtime.PortMapping{
+		Protocol:      runtime.Protocol_TCP,
+		ContainerPort: 8080,
+		HostPort:      0,
+		HostIp:        "192.168.1.100",
+	}
+
+	type args struct {
+		criPortMappings []*runtime.PortMapping
+	}
+	tests := []struct {
+		name string
+		args args
+		want []ocicni.PortMapping
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{
+					criNormalTCP,
+					criNormalUDP,
+				},
+			},
+			want: []ocicni.PortMapping{
+				pouchNormalTCP,
+				pouchNormalUDP,
+			},
+		},
+		{
+			name: "HostPort LE Zero Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{
+					criNormalTCP,
+					criNormalUDP,
+					criHostPortLEZero,
+				},
+			},
+			want: []ocicni.PortMapping{
+				pouchNormalTCP,
+				pouchNormalUDP,
+			},
+		},
+		{
+			name: "Nil Test",
+			args: args{
+				criPortMappings: []*runtime.PortMapping{},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toCNIPortMappings(tt.args.criPortMappings); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("toCNIPortMappings() = %v, want %v", got, tt.want)
 			}
 		})
 	}

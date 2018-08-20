@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/docker/docker/daemon/caps"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 )
 
 // setupProcess setups spec process.
@@ -62,6 +62,9 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 		return err
 	}
 
+	if err := setupNvidiaEnv(ctx, c, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -73,24 +76,11 @@ func createEnvironment(c *Container) []string {
 }
 
 func setupUser(ctx context.Context, c *Container, s *specs.Spec) (err error) {
-	// container rootfs is created by containerd, pouch just creates a snapshot
-	// id and keeps it in memory. If container is in start process, we can not
-	// find if user if exist in container image, so we do some simple check.
-	var uid, gid uint32
-
-	if c.Config.User != "" {
-		if _, err := os.Stat(c.BaseFS); err != nil {
-			logrus.Infof("snapshot %s is not exist, maybe in start process.", c.BaseFS)
-			uid, gid = user.GetIntegerID(c.Config.User)
-		} else {
-			uid, gid, err = user.Get(c.BaseFS, c.Config.User)
-			if err != nil {
-				return err
-			}
-		}
+	uid, gid, additionalGids, err := user.Get(c.GetSpecificBasePath(user.PasswdFile),
+		c.GetSpecificBasePath(user.GroupFile), c.Config.User, c.HostConfig.GroupAdd)
+	if err != nil {
+		return err
 	}
-
-	additionalGids := user.GetAdditionalGids(c.HostConfig.GroupAdd)
 
 	s.Process.User = specs.User{
 		UID:            uid,
@@ -175,5 +165,15 @@ func setupRlimits(ctx context.Context, hostConfig *types.HostConfig, s *specs.Sp
 	}
 
 	s.Process.Rlimits = rlimits
+	return nil
+}
+
+func setupNvidiaEnv(ctx context.Context, c *Container, s *specs.Spec) error {
+	n := c.HostConfig.NvidiaConfig
+	if n == nil {
+		return nil
+	}
+	s.Process.Env = append(s.Process.Env, fmt.Sprintf("NVIDIA_DRIVER_CAPABILITIES=%s", n.NvidiaDriverCapabilities))
+	s.Process.Env = append(s.Process.Env, fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=%s", n.NvidiaVisibleDevices))
 	return nil
 }

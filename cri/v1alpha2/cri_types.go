@@ -1,7 +1,7 @@
 package v1alpha2
 
 import (
-	runtime "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
+	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 )
 
 // SandboxMeta represents the sandbox's meta data.
@@ -14,6 +14,9 @@ type SandboxMeta struct {
 
 	// NetNSPath is the network namespace used by the sandbox.
 	NetNSPath string
+
+	// Runtime is the runtime of sandbox
+	Runtime string
 }
 
 // Key returns sandbox's id.

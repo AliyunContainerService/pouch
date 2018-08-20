@@ -3,7 +3,6 @@ package main
 import (
 	"net/url"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -20,6 +19,7 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerStopSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -28,18 +28,16 @@ func (suite *APIContainerStopSuite) TestStopOk(c *check.C) {
 	cname := "TestStopOk"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
 	StartContainerOk(c, cname)
-
-	resp, err := request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
-
-	DelContainerForceMultyTime(c, cname)
+	StopContainerOk(c, cname)
 }
 
 // TestNonExistingContainer tests stop a non-existing container return 404.
 func (suite *APIContainerStopSuite) TestNonExistingContainer(c *check.C) {
 	cname := "TestNonExistingContainer"
+
 	resp, err := request.Post("/containers/" + cname + "/stop")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
@@ -50,6 +48,7 @@ func (suite *APIContainerStopSuite) TestStopWait(c *check.C) {
 	cname := "TestStopOk"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 	StartContainerOk(c, cname)
 
 	q := url.Values{}
@@ -59,14 +58,12 @@ func (suite *APIContainerStopSuite) TestStopWait(c *check.C) {
 	resp, err := request.Post("/containers/"+cname+"/stop", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 204)
-
-	DelContainerForceMultyTime(c, cname)
 }
 
 // TestInvalidParam tests using invalid parameter return.
 func (suite *APIContainerStopSuite) TestInvalidParam(c *check.C) {
-	//TODO
-	// 1. invalid timeout value
+	// TODO: missing case
+	helpwantedForMissingCase(c, "container api stop bad request case")
 }
 
 // TestStopPausedContainer tests stop a paused container.
@@ -74,26 +71,10 @@ func (suite *APIContainerStopSuite) TestStopPausedContainer(c *check.C) {
 	cname := "TestStopPausedContainer"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
 	StartContainerOk(c, cname)
-
-	// pause the container
 	PauseContainerOk(c, cname)
-
-	// stop the container
-	resp, err := request.Post("/containers/" + cname + "/stop")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
-
-	// check the container status
-	resp, err = request.Get("/containers/" + cname + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-	defer resp.Body.Close()
-
-	got := types.ContainerJSON{}
-	err = request.DecodeBody(&got, resp.Body)
-	c.Assert(err, check.IsNil)
-	c.Assert(string(got.State.Status), check.Equals, "stopped")
-
-	DelContainerForceMultyTime(c, cname)
+	StopContainerOk(c, cname)
+	CheckContainerStatus(c, cname, "stopped")
 }

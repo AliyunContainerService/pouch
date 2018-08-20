@@ -247,7 +247,7 @@ func (suite *PouchStartSuite) TestStartWithPrivilege(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithAnnotation(c *check.C) {
 	name := "start-annotation"
 
-	res := command.PouchRun("create", "--name", name, "--annotation", "a=b", busyboxImage)
+	res := command.PouchRun("create", "--name", name, "--annotation", "a=b", busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
@@ -279,7 +279,8 @@ func (suite *PouchStartSuite) TestStartWithExitCode(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
 	name := "start-ulimit"
 
-	res := command.PouchRun("create", "--name", name, "--ulimit", "nproc=256", busyboxImage)
+	res := command.PouchRun("create", "--name", name,
+		"--ulimit", "nproc=256", busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
@@ -290,12 +291,34 @@ func (suite *PouchStartSuite) TestStartWithUlimit(c *check.C) {
 func (suite *PouchStartSuite) TestStartWithPidsLimit(c *check.C) {
 	name := "TestStartWithPidsLimit"
 	pidfile := "/sys/fs/cgroup/pids/pids.max"
-	res := command.PouchRun("create", "--pids-limit", "10", "--name", name, busyboxImage, "cat", pidfile)
+	res := command.PouchRun("create", "--pids-limit", "10",
+		"--name", name, busyboxImage, "cat", pidfile)
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+/* comment on this after alibaba/runc project fixed can not restore bug
+// TestStartFromCheckpoint tests start a container from a checkpoint
+func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
+	SkipIfFalse(c, environment.IsCRIUExist)
+	name := "TestStartFromCheckpoint"
+	defer DelContainerForceMultyTime(c, name)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	tmpDir, err := ioutil.TempDir("", "checkpoint")
+	c.Assert(err, check.IsNil)
+	defer os.RemoveAll(tmpDir)
+	checkpoint := "cp0"
+	command.PouchRun("checkpoint", "create", "--checkpoint-dir", tmpDir, name, checkpoint).Assert(c, icmd.Success)
+
+	restoredContainer := "restoredContainer"
+	defer DelContainerForceMultyTime(c, restoredContainer)
+	command.PouchRun("create", "--name", restoredContainer, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("start", "--checkpoint-dir", tmpDir, "--checkpoint", checkpoint, restoredContainer).Assert(c, icmd.Success)
+}
+*/
 
 // TestStartMultiContainers tries to start more than one container.
 func (suite *PouchStartSuite) TestStartMultiContainers(c *check.C) {

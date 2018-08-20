@@ -28,6 +28,13 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 		return nil, false, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "you must choose at least one stream")
 	}
 
+	if c.HostConfig.LogConfig.LogDriver != types.LogConfigLogDriverJSONFile {
+		return nil, false, pkgerrors.Wrapf(
+			errtypes.ErrInvalidParam,
+			"only support for the %v log driver", types.LogConfigLogDriverJSONFile,
+		)
+	}
+
 	cfg, err := convContainerLogsOptionsToReadConfig(logOpt)
 	if err != nil {
 		return nil, false, err

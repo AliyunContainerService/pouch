@@ -49,6 +49,10 @@ type SystemInfo struct {
 	//
 	ContainersStopped int64 `json:"ContainersStopped,omitempty"`
 
+	// Indicates if pouchd has accepted flag --enable-cri and enables cri part.
+	//
+	CriEnabled bool `json:"CriEnabled,omitempty"`
+
 	// Indicates if the daemon is running in debug-mode / with debug-level logging enabled.
 	Debug bool `json:"Debug,omitempty"`
 
@@ -226,6 +230,8 @@ type SystemInfo struct {
 /* polymorph SystemInfo ContainersRunning false */
 
 /* polymorph SystemInfo ContainersStopped false */
+
+/* polymorph SystemInfo CriEnabled false */
 
 /* polymorph SystemInfo Debug false */
 

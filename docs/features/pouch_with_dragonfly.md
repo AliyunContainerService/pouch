@@ -1,4 +1,4 @@
-# Pouch with Dragonfly
+# PouchContainer with Dragonfly
 
 Container technology is helpful to facilitate IT operation and maintenance, but the distribution of images has brought a huge challenge at the same time. The images can be as large as several Gibs, pulling images will be very slow, not to mention the situation lots of pulling requests simultaneously or low network bandwidth. Dragonfly can play an important role here, as a P2P technology, it provides very efficient distribution, avoiding images distribution as a bottleneck in container technology.
 
@@ -35,7 +35,7 @@ address=nodeIp1,nodeIp2,...
 
 about detail install information, you can find in [install dragonfly client](https://github.com/alibaba/Dragonfly/blob/master/docs/install_client.md)
 
-## Run pouch with dragonfly
+## Run PouchContainer with dragonfly
 
 1.start dragonfly proxy
 
@@ -44,7 +44,7 @@ directory `~/.small-dragonfly/logs`.
 
 More dragonfly usage information you can find in [dragonfly usage](https://github.com/alibaba/Dragonfly/blob/master/docs/usage.md)
 
-2.add the following configuration in pouch config file `/etc/pouch/config.json`
+2.add the following configuration in PouchContainer config file `/etc/pouch/config.json`
 
 ```
 {

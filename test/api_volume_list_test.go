@@ -23,19 +23,17 @@ func (suite *APIVolumeListSuite) SetUpTest(c *check.C) {
 // TestVolumeListOk tests if list volumes is OK.
 func (suite *APIVolumeListSuite) TestVolumeListOk(c *check.C) {
 	// Create a volume with the name "TestVolume1".
-	err := CreateVolume(c, "TestVolume1", "local", nil)
-	c.Assert(err, check.IsNil)
-	defer RemoveVolume(c, "TestVolume1")
+	CreateVolumeOK(c, "TestVolume1", "local", nil)
+	defer RemoveVolumeOK(c, "TestVolume1")
 
 	// Create a volume with the name "TestVolume2".
-	err = CreateVolume(c, "TestVolume2", "local", nil)
-	c.Assert(err, check.IsNil)
-	defer RemoveVolume(c, "TestVolume2")
+	CreateVolumeOK(c, "TestVolume2", "local", nil)
+	defer RemoveVolumeOK(c, "TestVolume2")
 
 	// Create a volume with the name "TestVolume3".
 	options := map[string]string{"mountpoint": "/data/TestVolume3"}
-	err = CreateVolume(c, "TestVolume3", "local", options)
-	c.Assert(err, check.IsNil)
+	CreateVolumeOK(c, "TestVolume3", "local", options)
+	defer RemoveVolumeOK(c, "TestVolume3")
 
 	// Test volume list feature.
 	path := "/volumes"

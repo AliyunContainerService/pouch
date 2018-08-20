@@ -2,6 +2,7 @@ package ctrd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"runtime"
@@ -13,11 +14,16 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 
 	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
+	"github.com/containerd/containerd/archive"
+	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
 	"github.com/docker/docker/pkg/stdcopy"
+	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -38,8 +44,40 @@ type containerPack struct {
 	skipStopHooks bool
 }
 
+// ContainerStats returns stats of the container.
+func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
+	metric, err := c.containerStats(ctx, id)
+	if err != nil {
+		return metric, convertCtrdErr(err)
+	}
+	return metric, nil
+}
+
+// containerStats returns stats of the container.
+func (c *Client) containerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
+	if !c.lock.Trylock(id) {
+		return nil, errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return pack.task.Metrics(ctx)
+}
+
 // ExecContainer executes a process in container.
 func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
+	if err := c.execContainer(ctx, process); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// execContainer executes a process in container.
+func (c *Client) execContainer(ctx context.Context, process *Process) error {
 	pack, err := c.watch.get(process.ContainerID)
 	if err != nil {
 		return err
@@ -105,8 +143,33 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 	return nil
 }
 
+// ResizeExec changes the size of the TTY of the exec process running
+// in the container to the given height and width.
+func (c *Client) ResizeExec(ctx context.Context, id string, execid string, opts types.ResizeOptions) error {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	execProcess, err := pack.task.LoadProcess(ctx, execid, nil)
+	if err != nil {
+		return err
+	}
+
+	return execProcess.Resize(ctx, uint32(opts.Width), uint32(opts.Height))
+}
+
 // ContainerPID returns the container's init process id.
 func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
+	pid, err := c.containerPID(ctx, id)
+	if err != nil {
+		return pid, convertCtrdErr(err)
+	}
+	return pid, nil
+}
+
+// containerPID returns the container's init process id.
+func (c *Client) containerPID(ctx context.Context, id string) (int, error) {
 	pack, err := c.watch.get(id)
 	if err != nil {
 		return -1, err
@@ -116,6 +179,15 @@ func (c *Client) ContainerPID(ctx context.Context, id string) (int, error) {
 
 // ContainerPIDs returns the all processes's ids inside the container.
 func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
+	pids, err := c.containerPIDs(ctx, id)
+	if err != nil {
+		return pids, convertCtrdErr(err)
+	}
+	return pids, nil
+}
+
+// containerPIDs returns the all processes's ids inside the container.
+func (c *Client) containerPIDs(ctx context.Context, id string) ([]int, error) {
 	if !c.lock.Trylock(id) {
 		return nil, errtypes.ErrLockfailed
 	}
@@ -162,6 +234,14 @@ func (c *Client) ProbeContainer(ctx context.Context, id string, timeout time.Dur
 
 // RecoverContainer reload the container from metadata and watch it, if program be restarted.
 func (c *Client) RecoverContainer(ctx context.Context, id string, io *containerio.IO) error {
+	if err := c.recoverContainer(ctx, id, io); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// recoverContainer reload the container from metadata and watch it, if program be restarted.
+func (c *Client) recoverContainer(ctx context.Context, id string, io *containerio.IO) error {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -210,6 +290,15 @@ func (c *Client) RecoverContainer(ctx context.Context, id string, io *containeri
 
 // DestroyContainer kill container and delete it.
 func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
+	msg, err := c.destroyContainer(ctx, id, timeout)
+	if err != nil {
+		return msg, convertCtrdErr(err)
+	}
+	return msg, nil
+}
+
+// DestroyContainer kill container and delete it.
+func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
 	// TODO(ziren): if we just want to stop a container,
 	// we may need lease to lock the snapshot of container,
 	// in case, it be deleted by gc.
@@ -278,8 +367,16 @@ clean:
 	return msg, c.watch.remove(ctx, id)
 }
 
-// PauseContainer pause container.
+// PauseContainer pauses container.
 func (c *Client) PauseContainer(ctx context.Context, id string) error {
+	if err := c.pauseContainer(ctx, id); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// pauseContainer pause container.
+func (c *Client) pauseContainer(ctx context.Context, id string) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -301,8 +398,16 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-// UnpauseContainer unpauses a container.
+// UnpauseContainer unpauses container.
 func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
+	if err := c.unpauseContainer(ctx, id); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// unpauseContainer unpauses a container.
+func (c *Client) unpauseContainer(ctx context.Context, id string) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -325,7 +430,7 @@ func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
 }
 
 // CreateContainer create container and start process.
-func (c *Client) CreateContainer(ctx context.Context, container *Container) error {
+func (c *Client) CreateContainer(ctx context.Context, container *Container, checkpointDir string) error {
 	var (
 		ref = container.Image
 		id  = container.ID
@@ -336,44 +441,58 @@ func (c *Client) CreateContainer(ctx context.Context, container *Container) erro
 	}
 	defer c.lock.Unlock(id)
 
-	return c.createContainer(ctx, ref, id, container)
+	if err := c.createContainer(ctx, ref, id, checkpointDir, container); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
 }
 
-func (c *Client) createContainer(ctx context.Context, ref, id string, container *Container) (err0 error) {
+func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir string, container *Container) (err0 error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	// get image
-	img, err := wrapperCli.client.GetImage(ctx, ref)
-	if err != nil {
-		if errdefs.IsNotFound(err) {
-			return errors.Wrapf(errtypes.ErrNotfound, "image %s", ref)
+	// if creating the container by specify rootfs, we no need use the image
+	if !container.RootFSProvided {
+		// get image
+		img, err := wrapperCli.client.GetImage(ctx, ref)
+		if err != nil {
+			if errdefs.IsNotFound(err) {
+				return errors.Wrapf(errtypes.ErrNotfound, "image %s", ref)
+			}
+			return errors.Wrapf(err, "failed to get image %s", ref)
 		}
-		return errors.Wrapf(err, "failed to get image %s", ref)
-	}
 
-	logrus.Infof("success to get image %s, container id %s", img.Name(), id)
+		logrus.Infof("success to get image %s, container id %s", img.Name(), id)
+	}
 
 	// create container
-	specOptions := []oci.SpecOpts{
-		oci.WithRootFSPath("rootfs"),
-	}
-
 	options := []containerd.NewContainerOpts{
-		containerd.WithSpec(container.Spec, specOptions...),
+		containerd.WithContainerLabels(container.Labels),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
 			Runtime:     container.Runtime,
 			RuntimeRoot: runtimeRoot,
 		}),
 	}
 
-	// check snapshot exist or not.
-	if _, err := c.GetSnapshot(ctx, id); err != nil {
-		return errors.Wrapf(err, "failed to create container %s", id)
+	rootFSPath := "rootfs"
+	// if container is taken over by pouch, not created by pouch
+	if container.RootFSProvided {
+		rootFSPath = container.BaseFS
+	} else { // containers created by pouch must first create snapshot
+		// check snapshot exist or not.
+		if _, err := c.GetSnapshot(ctx, id); err != nil {
+			return errors.Wrapf(err, "failed to create container %s", id)
+		}
+		options = append(options, containerd.WithSnapshot(id))
 	}
-	options = append(options, containerd.WithSnapshot(id))
+
+	// specify Spec for new container
+	specOptions := []oci.SpecOpts{
+		oci.WithRootFSPath(rootFSPath),
+	}
+	options = append(options, containerd.WithSpec(container.Spec, specOptions...))
 
 	nc, err := wrapperCli.client.NewContainer(ctx, id, options...)
 	if err != nil {
@@ -390,7 +509,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	logrus.Infof("success to new container: %s", id)
 
 	// create task
-	pack, err := c.createTask(ctx, id, nc, container)
+	pack, err := c.createTask(ctx, id, checkpointDir, nc, container, wrapperCli.client)
 	if err != nil {
 		return err
 	}
@@ -403,13 +522,27 @@ func (c *Client) createContainer(ctx context.Context, ref, id string, container 
 	return nil
 }
 
-func (c *Client) createTask(ctx context.Context, id string, container containerd.Container, cc *Container) (p *containerPack, err0 error) {
+func (c *Client) createTask(ctx context.Context, id, checkpointDir string, container containerd.Container, cc *Container, client *containerd.Client) (p *containerPack, err0 error) {
 	var pack *containerPack
 
 	io := containerio.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, cc.Spec.Process.Terminal, cc.IO.Stdin != nil)
 
+	checkpoint, err := createCheckpointDescriptor(ctx, checkpointDir, client)
+	if err != nil {
+		return pack, errors.Wrapf(err, "failed to create checkpoint descriptor")
+	}
+	defer func() {
+		if checkpoint != nil {
+			// remove the checkpoint blob after task start
+			err := client.ContentStore().Delete(context.Background(), checkpoint.Digest)
+			if err != nil {
+				logrus.Warnf("failed to delete temporary checkpoint entry: %s", err)
+			}
+		}
+	}()
+
 	// create task
-	task, err := container.NewTask(ctx, io)
+	task, err := container.NewTask(ctx, io, withCheckpointOpt(checkpoint))
 	if err != nil {
 		return pack, errors.Wrapf(err, "failed to create task for container(%s)", id)
 	}
@@ -445,28 +578,16 @@ func (c *Client) createTask(ctx context.Context, id string, container containerd
 	return pack, nil
 }
 
-func (c *Client) listContainerStore(ctx context.Context) ([]string, error) {
-	wrapperCli, err := c.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
-	}
-
-	containers, err := wrapperCli.client.ContainerService().List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var cs []string
-
-	for _, c := range containers {
-		cs = append(cs, c.ID)
-	}
-
-	return cs, nil
-}
-
 // UpdateResources updates the configurations of a container.
 func (c *Client) UpdateResources(ctx context.Context, id string, resources types.Resources) error {
+	if err := c.updateResources(ctx, id, resources); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// updateResources updates the configurations of a container.
+func (c *Client) updateResources(ctx context.Context, id string, resources types.Resources) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -488,6 +609,15 @@ func (c *Client) UpdateResources(ctx context.Context, id string, resources types
 // ResizeContainer changes the size of the TTY of the init process running
 // in the container to the given height and width.
 func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
+	if err := c.resizeContainer(ctx, id, opts); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// resizeContainer changes the size of the TTY of the init process running
+// in the container to the given height and width.
+func (c *Client) resizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
 	if !c.lock.Trylock(id) {
 		return errtypes.ErrLockfailed
 	}
@@ -498,11 +628,20 @@ func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.Resi
 		return err
 	}
 
-	return pack.task.Resize(ctx, uint32(opts.Height), uint32(opts.Width))
+	return pack.task.Resize(ctx, uint32(opts.Width), uint32(opts.Height))
 }
 
 // WaitContainer waits until container's status is stopped.
 func (c *Client) WaitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error) {
+	waitBody, err := c.waitContainer(ctx, id)
+	if err != nil {
+		return waitBody, convertCtrdErr(err)
+	}
+	return waitBody, nil
+}
+
+// waitContainer waits until container's status is stopped.
+func (c *Client) waitContainer(ctx context.Context, id string) (types.ContainerWaitOKBody, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return types.ContainerWaitOKBody{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -531,4 +670,115 @@ func (c *Client) WaitContainer(ctx context.Context, id string) (types.ContainerW
 		Error:      errMsg,
 		StatusCode: int64(msg.ExitCode()),
 	}, nil
+}
+
+// CreateCheckpoint create a checkpoint from a running container
+func (c *Client) CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error {
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+	client := wrapperCli.client
+
+	var opts []containerd.CheckpointTaskOpts
+	if exit {
+		opts = append(opts, containerd.WithExit)
+	}
+	checkpoint, err := pack.task.Checkpoint(ctx, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to checkpoint: %s", err)
+	}
+	// delete image since it is a checkpoint-format image, can not
+	// distinguished when load images.
+	defer client.ImageService().Delete(ctx, checkpoint.Name())
+
+	return applyCheckpointImage(ctx, client, checkpoint, checkpointDir)
+}
+
+func applyCheckpointImage(ctx context.Context, client *containerd.Client, checkpoint containerd.Image, checkpointDir string) error {
+	b, err := content.ReadBlob(ctx, client.ContentStore(), checkpoint.Target().Digest)
+	if err != nil {
+		return errors.Wrapf(err, "failed to retrieve checkpoint data")
+	}
+	var index imagespec.Index
+	if err := json.Unmarshal(b, &index); err != nil {
+		return errors.Wrapf(err, "failed to decode checkpoint data")
+	}
+
+	var cpDesc *imagespec.Descriptor
+	for _, m := range index.Manifests {
+		if m.MediaType == images.MediaTypeContainerd1Checkpoint {
+			cpDesc = &m
+			break
+		}
+	}
+	if cpDesc == nil {
+		return errors.Wrapf(err, "invalid checkpoint")
+	}
+
+	rat, err := client.ContentStore().ReaderAt(ctx, cpDesc.Digest)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get checkpoint reader")
+	}
+	defer rat.Close()
+	_, err = archive.Apply(ctx, checkpointDir, content.NewReader(rat))
+	if err != nil {
+		return errors.Wrapf(err, "failed to read checkpoint reader")
+	}
+
+	return nil
+}
+
+func writeContent(ctx context.Context, mediaType, ref string, r io.Reader, client *containerd.Client) (*containerdtypes.Descriptor, error) {
+	writer, err := client.ContentStore().Writer(ctx, ref, 0, "")
+	if err != nil {
+		return nil, err
+	}
+	defer writer.Close()
+	size, err := io.Copy(writer, r)
+	if err != nil {
+		return nil, err
+	}
+	labels := map[string]string{
+		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339),
+	}
+	if err := writer.Commit(ctx, 0, "", content.WithLabels(labels)); err != nil {
+		return nil, err
+	}
+	return &containerdtypes.Descriptor{
+		MediaType: mediaType,
+		Digest:    writer.Digest(),
+		Size_:     size,
+	}, nil
+
+}
+
+func createCheckpointDescriptor(ctx context.Context, checkpointDir string, client *containerd.Client) (*containerdtypes.Descriptor, error) {
+	if checkpointDir == "" {
+		return nil, nil
+	}
+
+	// create a checkpoint blob
+	tar := archive.Diff(ctx, "", checkpointDir)
+	checkpoint, err := writeContent(ctx, images.MediaTypeContainerd1Checkpoint, checkpointDir, tar, client)
+	if err := tar.Close(); err != nil {
+		return nil, errors.Wrap(err, "failed to close checkpoint tar stream")
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to upload checkpoint to containerd")
+	}
+
+	return checkpoint, nil
+}
+
+func withCheckpointOpt(checkpoint *containerdtypes.Descriptor) containerd.NewTaskOpts {
+	return func(_ context.Context, _ *containerd.Client, t *containerd.TaskInfo) error {
+		t.Checkpoint = checkpoint
+		return nil
+	}
 }

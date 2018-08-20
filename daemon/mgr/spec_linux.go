@@ -251,7 +251,7 @@ func setupCPU(ctx context.Context, r types.Resources, s *specs.Spec) {
 // setupResource creates linux memory resource spec.
 func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 	memory := &specs.LinuxMemory{}
-	if r.Memory != 0 {
+	if r.Memory > 0 {
 		v := r.Memory
 		memory.Limit = &v
 	}
@@ -261,7 +261,7 @@ func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 		memory.Swap = &v
 	}
 
-	if r.MemorySwappiness != nil {
+	if r.MemorySwappiness != nil && *r.MemorySwappiness != -1 {
 		v := uint64(*r.MemorySwappiness)
 		memory.Swappiness = &v
 	}

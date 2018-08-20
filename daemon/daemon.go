@@ -12,12 +12,15 @@ import (
 	criservice "github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
+	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 
+	systemddaemon "github.com/coreos/go-systemd/daemon"
+	systemdutil "github.com/coreos/go-systemd/util"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -36,6 +39,7 @@ type Daemon struct {
 	server          server.Server
 	containerPlugin plugins.ContainerPlugin
 	daemonPlugin    plugins.DaemonPlugin
+	eventsService   *events.Events
 }
 
 // router represents the router of daemon.
@@ -66,12 +70,14 @@ func NewDaemon(cfg *config.Config) *Daemon {
 	if cfg.ContainerdPath != "" {
 		containerdBinaryFile = cfg.ContainerdPath
 	}
+
 	containerd, err := ctrd.NewClient(cfg.HomeDir,
 		ctrd.WithDebugLog(cfg.Debug),
 		ctrd.WithStartDaemon(true),
 		ctrd.WithContainerdBinary(containerdBinaryFile),
 		ctrd.WithRPCAddr(cfg.ContainerdAddr),
 		ctrd.WithOOMScoreAdjust(cfg.OOMScoreAdjust),
+		ctrd.WithDefaultNamespace(cfg.DefaultNamespace),
 	)
 	if err != nil {
 		logrus.Errorf("failed to new containerd's client: %v", err)
@@ -145,6 +151,13 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
+	// initializes runtimes real path.
+	if err := initialRuntime(d.config.HomeDir, d.config.Runtimes); err != nil {
+		return err
+	}
+
+	d.eventsService = events.NewEvents()
+
 	imageMgr, err := internal.GenImageMgr(d.config, d)
 	if err != nil {
 		return err
@@ -169,18 +182,16 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
+	if err := containerMgr.Restore(ctx); err != nil {
+		return err
+	}
+
 	networkMgr, err := internal.GenNetworkMgr(d.config, d)
 	if err != nil {
 		return err
 	}
 	d.networkMgr = networkMgr
 	containerMgr.(*mgr.ContainerManager).NetworkMgr = networkMgr
-
-	// Notes(ziren): we must call containerMgr.Restore after NetworkMgr initialized,
-	// otherwize will panic
-	if err := containerMgr.Restore(ctx); err != nil {
-		return err
-	}
 
 	if err := d.addSystemLabels(); err != nil {
 		return err
@@ -205,16 +216,30 @@ func (d *Daemon) Run() error {
 	// set image proxy
 	ctrd.SetImageProxy(d.config.ImageProxy)
 
+	httpReadyCh := make(chan bool)
+	criReadyCh := make(chan bool)
+
 	httpServerCloseCh := make(chan struct{})
 	go func() {
-		if err := d.server.Start(); err != nil {
+		if err := d.server.Start(httpReadyCh); err != nil {
 			logrus.Errorf("failed to start http server: %v", err)
 		}
 		close(httpServerCloseCh)
 	}()
 
 	criStopCh := make(chan error)
-	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh)
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, criStopCh, criReadyCh)
+
+	httpReady := <-httpReadyCh
+	criReady := <-criReadyCh
+
+	if httpReady && criReady {
+		notifySystemd()
+	}
+
+	// close the ready channel
+	close(httpReadyCh)
+	close(criReadyCh)
 
 	err = <-criStopCh
 	if err != nil {
@@ -285,7 +310,7 @@ func (d *Daemon) MetaStore() *meta.Store {
 }
 
 func (d *Daemon) networkInit(ctx context.Context) error {
-	return mode.NetworkModeInit(ctx, d.config.NetworkConfg, d.networkMgr)
+	return mode.NetworkModeInit(ctx, d.config.NetworkConfig, d.networkMgr)
 }
 
 // ContainerPlugin returns the container plugin fetched from shared file
@@ -302,6 +327,11 @@ func (d *Daemon) ShutdownPlugin() error {
 		}
 	}
 	return nil
+}
+
+// EventsService gets Events instance
+func (d *Daemon) EventsService() *events.Events {
+	return d.eventsService
 }
 
 // addSystemLabels adds some system labels to daemon's config.
@@ -323,4 +353,19 @@ func (d *Daemon) addSystemLabels() error {
 	d.config.Labels = append(d.config.Labels, fmt.Sprintf("SN=%s", serialNo))
 
 	return nil
+}
+
+func notifySystemd() {
+	if !systemdutil.IsRunningSystemd() {
+		return
+	}
+
+	sent, err := systemddaemon.SdNotify(false, "READY=1")
+	if err != nil {
+		logrus.Errorf("failed to notify systemd for readiness: %v", err)
+	}
+
+	if !sent {
+		logrus.Errorf("forgot to set Type=notify in systemd service file?")
+	}
 }

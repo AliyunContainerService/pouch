@@ -48,6 +48,14 @@ func WithQuery(query url.Values) Option {
 	}
 }
 
+// WithRawData sets the input data with raw data
+func WithRawData(data io.ReadCloser) Option {
+	return func(r *http.Request) error {
+		r.Body = data
+		return nil
+	}
+}
+
 // WithJSONBody encodes the input data to JSON and sets it to the body in http.Request
 func WithJSONBody(obj interface{}) Option {
 	return func(r *http.Request) error {
@@ -68,7 +76,6 @@ func WithJSONBody(obj interface{}) Option {
 
 // DecodeBody decodes body to obj.
 func DecodeBody(obj interface{}, body io.ReadCloser) error {
-	// TODO: this fuction could only be called once
 	defer body.Close()
 	return json.NewDecoder(body).Decode(obj)
 }

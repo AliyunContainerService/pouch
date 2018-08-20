@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -32,23 +33,31 @@ func (suite *PouchRunUserSuite) TearDownTest(c *check.C) {
 
 // TestRunWithUser is to verify run container with user.
 func (suite *PouchRunUserSuite) TestRunWithUser(c *check.C) {
-	user := "1001"
-	name := "run-user"
+	namePrefix := "run-user"
 
-	{
+	for idx, user := range []string{
+		"1001", "1001:1001", "root", "root:root", "1001:root", "root:1001",
+	} {
+		name := fmt.Sprintf("%s-%d", namePrefix, idx)
 		res := command.PouchRun("run", "-d", "--name", name,
 			"--user", user, busyboxImage, "top")
-		defer DelContainerForceMultyTime(c, name)
 		res.Assert(c, icmd.Success)
+		DelContainerForceMultyTime(c, name)
 	}
+}
 
-	{
-		res := command.PouchRun("exec", name, "id", "-u")
-		res.Assert(c, icmd.Success)
-		if !strings.Contains(res.Stdout(), user) {
-			c.Fatalf("failed to run a container with user: %s",
-				res.Stdout())
-		}
+// TestRunWithUserFail is to verify run container with wrong user will fails.
+func (suite *PouchRunUserSuite) TestRunWithUserFail(c *check.C) {
+	namePrefix := "run-user-fail"
+
+	for idx, user := range []string{
+		"wrong-user", "wrong-user:wrong-group", "1001:wrong-group", "wrong-user:1001",
+	} {
+		name := fmt.Sprintf("%s-%d", namePrefix, idx)
+		res := command.PouchRun("run", "-d", "--name", name,
+			"--user", user, busyboxImage, "top")
+		c.Assert(res.Stderr(), check.NotNil)
+		DelContainerForceMultyTime(c, name)
 	}
 }
 

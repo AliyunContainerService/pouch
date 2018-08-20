@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/pkg/httputils"
 
 	"github.com/gorilla/mux"
+	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,7 +49,7 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 		}
 	}
 	// Error information has be sent to client, so no need call resp.Write
-	if err := s.ImageMgr.PullImage(ctx, image, &authConfig, rw); err != nil {
+	if err := s.ImageMgr.PullImage(ctx, image, &authConfig, newWriteFlusher(rw)); err != nil {
 		logrus.Errorf("failed to pull image %s: %v", image, err)
 		return nil
 	}
@@ -98,16 +100,26 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 		return err
 	}
 
-	containers, err := s.ContainerMgr.List(ctx, func(c *mgr.Container) bool {
-		return c.Image == image.ID
-	}, &mgr.ContainerListOption{All: true})
+	refs, err := s.ImageMgr.ListReferences(ctx, digest.Digest(image.ID))
 	if err != nil {
 		return err
 	}
 
 	isForce := httputils.BoolValue(req, "force")
-	if !isForce && len(containers) > 0 {
-		return fmt.Errorf("Unable to remove the image %q (must force) - container (%s, %s) is using this image", image.ID, containers[0].ID, containers[0].Name)
+	// We only should check the image whether used by container when there is only one primary reference.
+	if len(refs) == 1 {
+		containers, err := s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
+			All: true,
+			FilterFunc: func(c *mgr.Container) bool {
+				return c.Image == image.ID
+			}})
+		if err != nil {
+			return err
+		}
+
+		if !isForce && len(containers) > 0 {
+			return fmt.Errorf("Unable to remove the image %q (must force) - container (%s, %s) is using this image", image.ID, containers[0].ID, containers[0].Name)
+		}
 	}
 
 	if err := s.ImageMgr.RemoveImage(ctx, name, isForce); err != nil {
@@ -148,4 +160,36 @@ func (s *Server) loadImage(ctx context.Context, rw http.ResponseWriter, req *htt
 
 	rw.WriteHeader(http.StatusOK)
 	return nil
+}
+
+// saveImage saves an image by http tar stream.
+func (s *Server) saveImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	imageName := req.FormValue("name")
+
+	rw.Header().Set("Content-Type", "application/x-tar")
+
+	r, err := s.ImageMgr.SaveImage(ctx, imageName)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	output := newWriteFlusher(rw)
+	if _, err := io.Copy(output, r); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getImageHistory gets image history.
+func (s *Server) getImageHistory(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	imageName := mux.Vars(req)["name"]
+
+	history, err := s.ImageMgr.ImageHistory(ctx, imageName)
+	if err != nil {
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, history)
 }

@@ -1,13 +1,13 @@
-# Pouch with Diskquota
+# PouchContainer with Diskquota
 
 ## What is diskquota
 
 Diskquota is one kind of technology which is used to restrict filesystem's disk
-usage. Pouch uses diskquota to limit filesystem disk space. We all know that
+usage. PouchContainer uses diskquota to limit filesystem disk space. We all know that
 the way based on block devices could directly help limit disk space usage
 easily via setting size of block device. While the way based on filesystem can
 hardly do this. Diskquota is designed for limitting filesystem disk usage.
-Currently Pouch supports diskquota which is based on graphdriver overlayfs.
+Currently PouchContainer supports diskquota which is based on graphdriver overlayfs.
 
 Currently in underlying filesystems only ext4 and xfs support diskquota. In
 addition, there are three ways to make it: **user quota**, **group quota** and
@@ -18,11 +18,11 @@ There are two dimensions to limit disk usage:
 * usage quota(block quota): setting disk usage limit for a filesystem directory(not for inode number);
 * file quota(inode quota): restrict file or inode allocation.
 
-Pouch only supports block quota now with no inode support temporarily.
+PouchContainer only supports block quota now with no inode support temporarily.
 
-## Diskquota in Pouch
+## Diskquota in PouchContainer
 
-Diskquota in Pouch relies on kernel version Pouch runs on. Here is a table
+Diskquota in PouchContainer relies on kernel version PouchContainer runs on. Here is a table
 describing when each filesystem supports diskquota.
 
 || user/group quota | project quota|
@@ -32,14 +32,14 @@ describing when each filesystem supports diskquota.
 
 Although each filesystem in related kernel version supports diskquota, user
 still needs to install [quota-tools-4.04](https://nchc.dl.sourceforge.net/project/linuxquota/quota-tools/4.04/quota-4.04.tar.gz).
-This quota tool has not packaged into Pouch rpm yet. We will do this in the
+This quota tool has not packaged into PouchContainer rpm yet. We will do this in the
 future.
 
 ## Get Started
 
-There are two ways in Pouch for a container to get involved in underlying
+There are two ways in PouchContainer for a container to get involved in underlying
 filesystems. One is container rootfs, the other is container volume bind from
-host(outside of container) to inside. Both two dimensions are covered in Pouch.
+host(outside of container) to inside. Both two dimensions are covered in PouchContainer.
 
 ### Container Rootfs diskquota
 

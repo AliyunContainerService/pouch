@@ -2,10 +2,12 @@ package environment
 
 import (
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
 	"github.com/alibaba/pouch/client"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -41,6 +43,30 @@ var (
 	// Subnet default subnet for test
 	Subnet = "192.168.1.0/24"
 )
+
+// the following check funtions provide cgroup file avaible check
+var (
+	cgroupInfo *system.CgroupInfo
+
+	// IsMemorySupport checks if memory cgroup is avaible
+	IsMemorySupport = func() bool {
+		return cgroupInfo.Memory.MemoryLimit
+	}
+
+	// IsMemorySwapSupport checks if memory swap cgroup is avaible
+	IsMemorySwapSupport = func() bool {
+		return cgroupInfo.Memory.MemorySwap
+	}
+
+	// IsMemorySwappinessSupport checks if memory swappiness cgroup is avaible
+	IsMemorySwappinessSupport = func() bool {
+		return cgroupInfo.Memory.MemorySwappiness
+	}
+)
+
+func init() {
+	cgroupInfo = system.NewCgroupInfo()
+}
 
 // GetBusybox get image info from test environment variable.
 func GetBusybox() {
@@ -149,6 +175,15 @@ func IsLxcfsEnabled() bool {
 	}
 	cmd := "ps -ef |grep pouchd |grep \"enable\\-lxcfs\""
 	if icmd.RunCommand("sh", "-c", cmd).ExitCode != 0 {
+		return false
+	}
+	return true
+}
+
+// IsCRIUExist checks if criu exist on machine.
+func IsCRIUExist() bool {
+	_, err := exec.LookPath("criu")
+	if err != nil {
 		return false
 	}
 	return true

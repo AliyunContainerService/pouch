@@ -10,6 +10,8 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
+	eventsapi "github.com/containerd/containerd/api/services/events/v1"
+	containerdtypes "github.com/containerd/containerd/api/types"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
@@ -28,7 +30,7 @@ type APIClient interface {
 // ContainerAPIClient provides access to containerd container features.
 type ContainerAPIClient interface {
 	// CreateContainer creates a containerd container and start process.
-	CreateContainer(ctx context.Context, container *Container) error
+	CreateContainer(ctx context.Context, container *Container, checkpointDir string) error
 	// DestroyContainer kill container and delete it.
 	DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error)
 	// ProbeContainer probe the container's status, if timeout <= 0, will block to receive message.
@@ -37,8 +39,13 @@ type ContainerAPIClient interface {
 	ContainerPIDs(ctx context.Context, id string) ([]int, error)
 	// ContainerPID returns the container's init process id.
 	ContainerPID(ctx context.Context, id string) (int, error)
+	// ContainerStats returns stats of the container.
+	ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error)
 	// ExecContainer executes a process in container.
 	ExecContainer(ctx context.Context, process *Process) error
+	// ResizeContainer changes the size of the TTY of the exec process running
+	// in the container to the given height and width.
+	ResizeExec(ctx context.Context, id string, execid string, opts types.ResizeOptions) error
 	// RecoverContainer reload the container from metadata and watch it, if program be restarted.
 	RecoverContainer(ctx context.Context, id string, io *containerio.IO) error
 	// PauseContainer pause container.
@@ -56,6 +63,10 @@ type ContainerAPIClient interface {
 	SetExitHooks(hooks ...func(string, *Message) error)
 	// SetExecExitHooks specified the handlers of exec process exit.
 	SetExecExitHooks(hooks ...func(string, *Message) error)
+	// Events subscribe containerd events through an event subscribe client.
+	Events(ctx context.Context, ef ...string) (eventsapi.Events_SubscribeClient, error)
+	// SetEventsHooks specified the methods to handle the containerd events.
+	SetEventsHooks(hooks ...func(context.Context, string, string, map[string]string) error)
 }
 
 // ImageAPIClient provides access to containerd image features.
@@ -72,6 +83,8 @@ type ImageAPIClient interface {
 	RemoveImage(ctx context.Context, ref string) error
 	// ImportImage creates a set of images by tarstream.
 	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
+	// SaveImage saves image to tarstream
+	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features
@@ -85,4 +98,11 @@ type SnapshotAPIClient interface {
 	// GetMounts returns the mounts for the active snapshot transaction identified
 	// by key.
 	GetMounts(ctx context.Context, id string) ([]mount.Mount, error)
+	// GetSnapshotUsage returns the resource usage of an active or committed snapshot
+	// excluding the usage of parent snapshots.
+	GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error)
+	// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
+	WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error
+	// CreateCheckpoint creates a checkpoint from a running container
+	CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error
 }

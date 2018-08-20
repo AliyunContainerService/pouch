@@ -20,9 +20,12 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 
 ### SEE ALSO
 
+* [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
+* [pouch events](pouch_events.md)	 - Get real time events from the daemon
 * [pouch exec](pouch_exec.md)	 - Exec a process in a running container
 * [pouch gen-doc](pouch_gen-doc.md)	 - Generate docs
+* [pouch history](pouch_history.md)	 - Display history information on image
 * [pouch image](pouch_image.md)	 - Manage image
 * [pouch images](pouch_images.md)	 - List all images
 * [pouch info](pouch_info.md)	 - Display system-wide information
@@ -41,12 +44,14 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rm](pouch_rm.md)	 - Remove one or more containers
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it
+* [pouch save](pouch_save.md)	 - Save an image to a tar archive or STDOUT
 * [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
 * [pouch tag](pouch_tag.md)	 - Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
 * [pouch top](pouch_top.md)	 - Display the running processes of a container
 * [pouch unpause](pouch_unpause.md)	 - Unpause one or more paused container
 * [pouch update](pouch_update.md)	 - Update the configurations of a container
+* [pouch updatedaemon](pouch_updatedaemon.md)	 - Update the configurations of pouchd
 * [pouch upgrade](pouch_upgrade.md)	 - Upgrade a container with new image and args
 * [pouch version](pouch_version.md)	 - Print versions about Pouch CLI and Pouchd
 * [pouch volume](pouch_volume.md)	 - Manage pouch volumes

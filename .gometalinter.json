@@ -1,0 +1,18 @@
+{
+  "Enable": [
+    "gofmt",
+    "goimports",
+    "golint",
+    "misspell",
+    "vet"
+  ],
+  "Deadline": "2m",
+  "Sort": ["linter", "severity", "path", "line"],
+  "Exclude": [
+    ".*\\.pb\\.go",
+	"pkg/jsonstream/image_progress\\.go:.*::error: unrecognized printf verb 'r'"
+  ],
+  "EnableGC": true,
+  "WarnUnmatchedDirective": true,
+  "Vendor": true
+}

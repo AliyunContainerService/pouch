@@ -8,17 +8,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type tCase struct {
-	name     string
-	input    int64
-	expected string
-	err      error
-}
 
 func TestFormatSize(t *testing.T) {
 	assert := assert.New(t)
@@ -34,94 +26,6 @@ func TestFormatSize(t *testing.T) {
 		size := FormatSize(k)
 		assert.Equal(v, size)
 	}
-}
-
-func TestFormatTimeInterval(t *testing.T) {
-
-	for _, tc := range []tCase{
-		{
-			name:     "second",
-			input:    time.Now().Add(0 - Second).UnixNano(),
-			expected: "1 second",
-			err:      nil,
-		}, {
-			name:     "minute",
-			input:    time.Now().Add(0 - Minute).UnixNano(),
-			expected: "1 minute",
-			err:      nil,
-		}, {
-			name:     "hour",
-			input:    time.Now().Add(0 - Hour).UnixNano(),
-			expected: "1 hour",
-			err:      nil,
-		}, {
-			name:     "day",
-			input:    time.Now().Add(0 - Day).UnixNano(),
-			expected: "1 day",
-			err:      nil,
-		}, {
-			name:     "week",
-			input:    time.Now().Add(0 - Week).UnixNano(),
-			expected: "1 week",
-			err:      nil,
-		}, {
-			name:     "month",
-			input:    time.Now().Add(0 - Month).UnixNano(),
-			expected: "1 month",
-			err:      nil,
-		}, {
-			name:     "year",
-			input:    time.Now().Add(0 - Year).UnixNano(),
-			expected: "1 year",
-			err:      nil,
-		},
-		{
-			name:     "seconds",
-			input:    time.Now().Add(0 - Second*3).UnixNano(),
-			expected: "3 seconds",
-			err:      nil,
-		}, {
-			name:     "minutes",
-			input:    time.Now().Add(0 - Minute*3).UnixNano(),
-			expected: "3 minutes",
-			err:      nil,
-		}, {
-			name:     "hours",
-			input:    time.Now().Add(0 - Hour*3).UnixNano(),
-			expected: "3 hours",
-			err:      nil,
-		}, {
-			name:     "days",
-			input:    time.Now().Add(0 - Day*3).UnixNano(),
-			expected: "3 days",
-			err:      nil,
-		}, {
-			name:     "weeks",
-			input:    time.Now().Add(0 - Week*3).UnixNano(),
-			expected: "3 weeks",
-			err:      nil,
-		}, {
-			name:     "months",
-			input:    time.Now().Add(0 - Month*3).UnixNano(),
-			expected: "3 months",
-			err:      nil,
-		}, {
-			name:     "years",
-			input:    time.Now().Add(0 - Year*3).UnixNano(),
-			expected: "3 years",
-			err:      nil,
-		}, {
-			name:     "invalid",
-			input:    time.Now().Add(Second).UnixNano(),
-			expected: "",
-			err:      errInvalid,
-		},
-	} {
-		output, err := FormatTimeInterval(tc.input)
-		assert.Equal(t, tc.err, err, tc.name)
-		assert.Equal(t, tc.expected, output, tc.name)
-	}
-
 }
 
 func TestMerge(t *testing.T) {
@@ -187,12 +91,17 @@ func TestMerge(t *testing.T) {
 		}, {
 			src:      &simple{},
 			dest:     &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
-			expected: &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
+			expected: &simple{Sa: 0, Sb: "hello", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 0}},
 			ok:       true,
 		}, {
 			src:      &simple{Sa: 1, Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo"}},
-			dest:     &simple{Sa: 2, Sb: "world", Sc: false, Sd: map[string]string{"go": "old"}, Se: nestS{Na: 22}, Sf: []string{"foo"}},
-			expected: &simple{Sa: 1, Sb: "world", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
+			dest:     &simple{Sa: 2, Sb: "!", Sc: false, Sd: map[string]string{"go": "old"}, Se: nestS{Na: 22}, Sf: []string{"foo"}},
+			expected: &simple{Sa: 1, Sb: "!", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
+			ok:       true,
+		}, {
+			src:      &simple{Sa: 0, Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo"}},
+			dest:     &simple{Sa: 2, Sb: "world", Sc: true, Sd: map[string]string{"go": "old"}, Se: nestS{Na: 22}, Sf: []string{"foo"}},
+			expected: &simple{Sa: 0, Sb: "world", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
 			ok:       true,
 		}, {
 			src:      &simple{Sd: map[string]string{"go": "gogo", "a": "b"}},
@@ -203,6 +112,18 @@ func TestMerge(t *testing.T) {
 			src:      &simple{Sd: map[string]string{"go": "gogo", "a": "b"}},
 			dest:     &simple{},
 			expected: &simple{Sd: map[string]string{"go": "gogo", "a": "b"}},
+			ok:       true,
+		}, {
+			// empty map should not overwrite
+			src:      &simple{Sd: map[string]string{}},
+			dest:     &simple{Sd: map[string]string{"a": "b"}},
+			expected: &simple{Sd: map[string]string{"a": "b"}},
+			ok:       true,
+		}, {
+			// empty slice should not overwrite
+			src:      &simple{Sf: []string{}},
+			dest:     &simple{Sf: []string{"c"}},
+			expected: &simple{Sf: []string{"c"}},
 			ok:       true,
 		},
 	} {
@@ -398,35 +319,228 @@ func TestCheckPidExist(t *testing.T) {
 	}
 }
 
-func TestParseTimestamp(t *testing.T) {
-	tCases := []struct {
-		val          string
-		defaultSec   int64
-		expectedSec  int64
-		expectedNano int64
-		hasError     bool
-	}{
-		{"20180510", 0, 20180510, 0, false},
-		{"20180510.000000001", 0, 20180510, 1, false},
-		{"20180510.0000000010", 0, 20180510, 1, false},
-		{"20180510.00000001", 0, 20180510, 10, false},
-		{"foo.bar", 0, 0, 0, true},
-		{"20180510.bar", 0, 0, 0, true},
-		{"", -1, -1, 0, false},
+func TestConvertKVStringsToMap(t *testing.T) {
+	type tCases struct {
+		input    []string
+		expected map[string]string
+		hasError bool
 	}
 
-	for _, tc := range tCases {
-		s, n, err := ParseTimestamp(tc.val, tc.defaultSec)
+	for idx, tc := range []tCases{
+		{
+			input:    nil,
+			expected: map[string]string{},
+			hasError: false,
+		}, {
+			input:    []string{"withoutValue"},
+			expected: nil,
+			hasError: true,
+		}, {
+			input: []string{"key=value"},
+			expected: map[string]string{
+				"key": "value",
+			},
+			hasError: false,
+		}, {
+			input: []string{"key=key=value"},
+			expected: map[string]string{
+				"key": "key=value",
+			},
+			hasError: false,
+		}, {
+			input: []string{"test=1", "flag=oops", "test=2"},
+			expected: map[string]string{
+				"test": "2",
+				"flag": "oops",
+			},
+			hasError: false,
+		},
+	} {
+		got, err := ConvertKVStringsToMap(tc.input)
 		if err == nil && tc.hasError {
-			t.Fatal("expected error, but got nothing")
+			t.Fatalf("[%d case] should have error here, but got nothing", idx)
 		}
-
 		if err != nil && !tc.hasError {
-			t.Fatalf("unexpected error %v", err)
+			t.Fatalf("[%d case] should have no error here, but got error(%v)", idx, err)
 		}
 
-		if s != tc.expectedSec || n != tc.expectedNano {
-			t.Fatalf("expected sec %v, nano %v, but got sec %v, nano %v", tc.expectedSec, tc.expectedNano, s, n)
+		if !reflect.DeepEqual(got, tc.expected) {
+			t.Fatalf("[%d case] should have (%v), but got (%v)", idx, tc.expected, got)
+		}
+	}
+}
+
+func TestConvertKVStrToMapWithNoErr(t *testing.T) {
+	type args struct {
+		values []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "normal case",
+			args: args{[]string{"a=b", "c=d"}},
+			want: map[string]string{"a": "b", "c": "d"},
+		},
+		{
+			name: "normal case with empty string",
+			args: args{[]string{"a=b", ""}},
+			want: map[string]string{"a": "b"},
+		},
+		{
+			name: "normal case with duplicated key but with different value",
+			args: args{[]string{"a=b", "a==bb"}},
+			want: map[string]string{"a": "=bb"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ConvertKVStrToMapWithNoErr(tt.args.values); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConvertKVStrToMapWithNoErr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConvertStrToKV(t *testing.T) {
+	type args struct {
+		input string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		want1   string
+		wantErr bool
+	}{
+		{
+			name: "normal case",
+			args: args{
+				input: "a=b",
+			},
+			want:    "a",
+			want1:   "b",
+			wantErr: false,
+		},
+		{
+			name: "normal case",
+			args: args{
+				input: "a=b===",
+			},
+			want:    "a",
+			want1:   "b===",
+			wantErr: false,
+		},
+		{
+			name: "empty failure case",
+			args: args{
+				input: "",
+			},
+			want:    "",
+			want1:   "",
+			wantErr: true,
+		},
+		{
+			name: "no equal mark failure case",
+			args: args{
+				input: "asdfghjk",
+			},
+			want:    "",
+			want1:   "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := ConvertStrToKV(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConvertStrToKV() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ConvertStrToKV() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("ConvertStrToKV() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestIsFileExist(t *testing.T) {
+	assert := assert.New(t)
+	tempDir, err := ioutil.TempDir("/tmp", "")
+	assert.NoError(err)
+	defer os.RemoveAll(tempDir)
+	existPath := make([]string, 0)
+	for _, v := range []string{
+		"a", "b", "c", "d", "e",
+	} {
+		path := filepath.Join(tempDir, v)
+		existPath = append(existPath, path)
+		os.Create(path)
+	}
+
+	for _, t := range []struct {
+		path  string
+		exist bool
+	}{
+		{
+			path:  existPath[0],
+			exist: true,
+		},
+		{
+			path:  existPath[1],
+			exist: true,
+		},
+		{
+			path:  existPath[2],
+			exist: true,
+		},
+		{
+			path:  existPath[3],
+			exist: true,
+		},
+		{
+			path:  existPath[4],
+			exist: true,
+		},
+		{
+			path:  filepath.Join(tempDir, "foo"),
+			exist: false,
+		},
+		{
+			path:  filepath.Join(tempDir, "bar"),
+			exist: false,
+		},
+		{
+			path:  filepath.Join(tempDir, "foo/bar"),
+			exist: false,
+		},
+	} {
+		assert.Equal(IsFileExist(t.path), t.exist)
+	}
+}
+
+func TestStringSliceEqual(t *testing.T) {
+	tests := []struct {
+		s1    []string
+		s2    []string
+		equal bool
+	}{
+		{nil, nil, true},
+		{nil, []string{"a"}, false},
+		{[]string{"a"}, []string{"a"}, true},
+		{[]string{"a"}, []string{"b", "a"}, false},
+		{[]string{"a", "b"}, []string{"b", "a"}, true},
+	}
+
+	for _, test := range tests {
+		result := StringSliceEqual(test.s1, test.s2)
+		if result != test.equal {
+			t.Fatalf("StringSliceEqual(%v, %v) expected: %v, but got %v", test.s1, test.s2, test.equal, result)
 		}
 	}
 }

@@ -8,3 +8,11 @@ type RegExp struct {
 	Path    string
 	Size    string
 }
+
+// OverlayMount represents the parameters of overlay mount.
+type OverlayMount struct {
+	Merged string
+	Lower  string
+	Upper  string
+	Work   string
+}

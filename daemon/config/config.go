@@ -22,19 +22,19 @@ import (
 
 // Config refers to daemon's whole configurations.
 type Config struct {
-	sync.Mutex
+	sync.Mutex `json:"-"`
 
 	//Volume config
-	VolumeConfig volume.Config `json:"volume-config"`
+	VolumeConfig volume.Config `json:"volume-config,omitempty"`
 
 	// Network config
-	NetworkConfg network.Config
+	NetworkConfig network.Config `json:"network-config,omitempty"`
 
 	// Whether enable cri manager.
 	IsCriEnabled bool `json:"enable-cri,omitempty"`
 
 	// CRI config.
-	CriConfig criconfig.Config
+	CriConfig criconfig.Config `json:"cri-config,omitempty"`
 
 	// Server listening address.
 	Listen []string `json:"listen,omitempty"`
@@ -59,10 +59,10 @@ type Config struct {
 
 	// ContainerdPath is the absolute path of containerd binary,
 	// /usr/local/bin is the default.
-	ContainerdPath string `json:"containerd-path"`
+	ContainerdPath string `json:"containerd-path,omitempty"`
 
 	// TLS configuration
-	TLS client.TLSConfig
+	TLS client.TLSConfig `json:"TLS,omitempty"`
 
 	// Default OCI Runtime
 	DefaultRuntime string `json:"default-runtime,omitempty"`
@@ -101,13 +101,19 @@ type Config struct {
 	Pidfile string `json:"pidfile,omitempty"`
 
 	// Default log configuration
-	DefaultLogConfig types.LogConfig `json:"default-log-config, omitempty"`
+	DefaultLogConfig types.LogConfig `json:"default-log-config,omitempty"`
 
 	// RegistryService
-	RegistryService types.RegistryServiceConfig `json:"registry-service, omitempty" `
+	RegistryService types.RegistryServiceConfig `json:"registry-service,omitempty" `
 
 	// oom_score_adj for the daemon
 	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`
+
+	// runtimes config
+	Runtimes map[string]types.Runtime `json:"add-runtime,omitempty"`
+
+	// DefaultNamespace is passed to containerd.
+	DefaultNamespace string `json:"default-namespace,omitempty"`
 }
 
 // Validate validates the user input config.
@@ -128,11 +134,20 @@ func (cfg *Config) Validate() error {
 
 	// TODO: add config validation
 
+	// validates runtimes config
+	if len(cfg.Runtimes) == 0 {
+		cfg.Runtimes = make(map[string]types.Runtime)
+	}
+	if _, exist := cfg.Runtimes[cfg.DefaultRuntime]; !exist {
+		// add default runtime
+		cfg.Runtimes[cfg.DefaultRuntime] = types.Runtime{Path: cfg.DefaultRuntime}
+	}
+
 	return nil
 }
 
 //MergeConfigurations merges flagSet flags and config file flags into Config.
-func (cfg *Config) MergeConfigurations(config *Config, flagSet *pflag.FlagSet) error {
+func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	contents, err := ioutil.ReadFile(cfg.ConfigFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -145,7 +160,6 @@ func (cfg *Config) MergeConfigurations(config *Config, flagSet *pflag.FlagSet) e
 	if err = json.NewDecoder(bytes.NewReader(contents)).Decode(&origin); err != nil {
 		return fmt.Errorf("failed to decode json: %s", err)
 	}
-
 	if len(origin) == 0 {
 		return nil
 	}
@@ -206,7 +220,6 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 				r.Field(i).Set(reflect.MakeSlice(reflect.TypeOf([]string{}), 0, 0))
 			}
 		}
-
 	})
 
 	return cfg
@@ -215,7 +228,7 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 // iterateConfig resolves key-value from config file iteratly.
 func iterateConfig(origin map[string]interface{}, config map[string]interface{}) {
 	for k, v := range origin {
-		if c, ok := v.(map[string]interface{}); ok {
+		if c, ok := v.(map[string]interface{}); ok && k != "add-runtime" {
 			iterateConfig(c, config)
 		} else {
 			config[k] = v

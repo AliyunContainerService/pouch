@@ -1,38 +1,41 @@
 package remotecommand
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
+
+	apitypes "github.com/alibaba/pouch/apis/types"
 )
 
 // Executor knows how to execute a command in a container of the pod.
 type Executor interface {
 	// Exec executes a command in a container of the pod.
-	Exec(containerID string, cmd []string, streamOpts *Options, streams *Streams) (uint32, error)
+	Exec(ctx context.Context, containerID string, cmd []string, resizeChan <-chan apitypes.ResizeOptions, streamOpts *Options, streams *Streams) (uint32, error)
 }
 
 // ServeExec handles requests to execute a command in a container. After
 // creating/receiving the required streams, it delegates the actual execution
 // to the executor.
-func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, container string, cmd []string, streamOpts *Options, supportedProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) {
-	ctx, ok := createStreams(w, req, streamOpts, supportedProtocols, idleTimeout, streamCreationTimeout)
+func ServeExec(ctx context.Context, w http.ResponseWriter, req *http.Request, executor Executor, container string, cmd []string, streamOpts *Options, supportedProtocols []string, idleTimeout time.Duration, streamCreationTimeout time.Duration) {
+	streamCtx, ok := createStreams(w, req, streamOpts, supportedProtocols, idleTimeout, streamCreationTimeout)
 	if !ok {
 		// Error is handled by createStreams.
 		return
 	}
-	defer ctx.conn.Close()
+	defer streamCtx.conn.Close()
 
-	exitCode, err := executor.Exec(container, cmd, streamOpts, &Streams{
-		StdinStream:  ctx.stdinStream,
-		StdoutStream: ctx.stdoutStream,
-		StderrStream: ctx.stderrStream,
+	exitCode, err := executor.Exec(ctx, container, cmd, streamCtx.resizeChan, streamOpts, &Streams{
+		StdinStream:  streamCtx.stdinStream,
+		StdoutStream: streamCtx.stdoutStream,
+		StderrStream: streamCtx.stderrStream,
 	})
 	if err != nil {
 		err = fmt.Errorf("error executing command in container: %v", err)
-		ctx.writeStatus(NewInternalError(err))
+		streamCtx.writeStatus(NewInternalError(err))
 	} else if exitCode != 0 {
-		ctx.writeStatus(&StatusError{ErrStatus: Status{
+		streamCtx.writeStatus(&StatusError{ErrStatus: Status{
 			Status: StatusFailure,
 			Reason: NonZeroExitCodeReason,
 			Details: &StatusDetails{
@@ -46,7 +49,7 @@ func ServeExec(w http.ResponseWriter, req *http.Request, executor Executor, cont
 			Message: fmt.Sprintf("command terminated with non-zero exit code"),
 		}})
 	} else {
-		ctx.writeStatus(&StatusError{ErrStatus: Status{
+		streamCtx.writeStatus(&StatusError{ErrStatus: Status{
 			Status: StatusSuccess,
 		}})
 	}
