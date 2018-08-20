@@ -64,6 +64,20 @@ You might need to modify this file, make sure that all binaries have right path 
 
 With all the steps finish, you can play with kata container.
 
+1. add kata-runtime into config file, restart pouchd, ensure that pouchd know the specified runtime.
+
+```
+{
+    "add-runtime": {
+        "kata-runtime": {
+            "path": "/usr/local/bin/kata-runtime"
+        }
+    }
+}
+```
+
+2. start kata container.
+
 ```shell
 $ pouch run -d --runtime=kata-runtime 8ac48589692a top
 00d1f38250fc76b5e66e7fa05a41d342d1b48202d24e2dbf06b20a113b2a008c
@@ -73,7 +87,7 @@ Name     ID       Status         Created         Image                          
 00d1f3   00d1f3   Up 5 seconds   7 seconds ago   docker.io/library/busybox:latest   kata-runtime
 ```
 
-Enter into the kata container.
+3. enter into the kata container.
 
 ```shell
 $ pouch exec -it 00d1f3 sh
