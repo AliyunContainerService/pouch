@@ -1036,42 +1036,11 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	// Update Env
-	if len(config.Env) > 0 {
-		newEnvMap, err := opts.ParseEnv(config.Env)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse new env")
-		}
-
-		oldEnvMap, err := opts.ParseEnv(c.Config.Env)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse old env")
-		}
-
-		for k, v := range newEnvMap {
-			// key should not be empty
-			if k == "" {
-				continue
-			}
-
-			// add or change an env
-			if v != "" {
-				oldEnvMap[k] = v
-				continue
-			}
-
-			// value is empty, we need delete the env
-			if _, exists := oldEnvMap[k]; exists {
-				delete(oldEnvMap, k)
-			}
-		}
-
-		newEnvSlice := []string{}
-		for k, v := range oldEnvMap {
-			newEnvSlice = append(newEnvSlice, fmt.Sprintf("%s=%s", k, v))
-		}
-
-		c.Config.Env = newEnvSlice
+	newEnvSlice, err := mergeEnvSlice(config.Env, c.Config.Env)
+	if err != nil {
+		return err
 	}
+	c.Config.Env = newEnvSlice
 
 	// If container is not running, update container metadata struct is enough,
 	// resources will be updated when the container is started again,
