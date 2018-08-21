@@ -56,7 +56,7 @@ const (
 
 	// Address and port of stream server.
 	// TODO: specify them in the parameters of pouchd.
-	streamServerAddress = ""
+	streamServerAddress = "0.0.0.0"
 	streamServerPort    = "10010"
 
 	namespaceModeHost = "host"
