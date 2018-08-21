@@ -74,14 +74,15 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 	}
 
 	container := types.ContainerJSON{
-		ID:          c.ID,
-		Name:        c.Name,
-		Image:       c.Config.Image,
-		Created:     c.Created,
-		State:       c.State,
-		Config:      c.Config,
-		HostConfig:  c.HostConfig,
-		Snapshotter: c.Snapshotter,
+		ID:           c.ID,
+		Name:         c.Name,
+		Image:        c.Config.Image,
+		Created:      c.Created,
+		State:        c.State,
+		Config:       c.Config,
+		HostConfig:   c.HostConfig,
+		Snapshotter:  c.Snapshotter,
+		RestartCount: c.RestartCount,
 		GraphDriver: &types.GraphDriverData{
 			Name: c.Snapshotter.Name,
 			Data: c.Snapshotter.Data,

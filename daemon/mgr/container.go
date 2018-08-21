@@ -796,8 +796,20 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 	}
 
 	logrus.Debugf("start container %s when restarting", c.ID)
+
+	//let restartCount++
+	restartCount := c.RestartCount + 1
+
 	// start container
-	return mgr.start(ctx, c, &types.ContainerStartOptions{})
+	err = mgr.start(ctx, c, &types.ContainerStartOptions{})
+	if err != nil {
+		return err
+	}
+
+	c.RestartCount = restartCount
+
+	logrus.Debugf("container %s restartCount is %d", c.ID, c.RestartCount)
+	return c.Write(mgr.Store)
 }
 
 // Pause pauses a running container.
