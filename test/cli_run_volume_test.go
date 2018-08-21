@@ -350,13 +350,6 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaForLog(c *check.C) {
 	c.Assert(err, check.Equals, nil)
 
 	testFile := filepath.Join(containerMetaDir, "diskquota_testfile")
-
-	icmd.RunCommand("groupadd", "quota").Assert(c, icmd.Success)
-	defer icmd.RunCommand("groupdel", "quota").Assert(c, icmd.Success)
-
-	icmd.RunCommand("useradd", "-g", "quota", "quota").Assert(c, icmd.Success)
-	defer icmd.RunCommand("userdel", "quota").Assert(c, icmd.Success)
-
 	expct := icmd.Expected{
 		ExitCode: 1,
 		Err:      "Disk quota exceeded",
