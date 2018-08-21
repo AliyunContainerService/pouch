@@ -56,6 +56,23 @@ func (mgr *ContainerManager) validateConfig(c *Container, update bool) ([]string
 		return warnings, err
 	}
 
+	// validate seccomp, apparmor security parameters
+	sysInfo := system.NewSysInfo()
+	if !sysInfo.Seccomp {
+		if c.SeccompProfile != "" || c.SeccompProfile != ProfileUnconfined {
+			warnings = append(warnings, fmt.Sprintf("Current Kernel does not support seccomp, discard --security-opt seccomp=%s", c.SeccompProfile))
+		}
+		// always set SeccompProfile to unconfined if kernel not support seccomp
+		c.SeccompProfile = ProfileUnconfined
+
+	}
+	if !sysInfo.AppArmor {
+		if c.AppArmorProfile != "" {
+			warnings = append(warnings, fmt.Sprintf("Current Kernel does not support apparmor, discard --security-opt apparmor=%s", c.AppArmorProfile))
+		}
+		c.AppArmorProfile = ""
+	}
+
 	// TODO: validate config
 	return warnings, nil
 }

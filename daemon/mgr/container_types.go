@@ -27,6 +27,9 @@ var (
 
 	// MinMemory is minimal memory container should has
 	MinMemory int64 = 4194304
+
+	// ProfileUnconfined means run a container without the default seccomp profile.
+	ProfileUnconfined = "unconfined"
 )
 
 var (
