@@ -15,9 +15,6 @@ notifications:
     on_error: always
 
 env:
-  - TEST_SUITE=unittest
-  - TEST_SUITE=integrationtest
-  - TEST_SUITE=criv1alpha1test
   - TEST_SUITE=criv1alpha2test
 
 
@@ -46,7 +43,7 @@ script: |
     make coverage
   else
     make build
-    TEST_FLAGS= make build-daemon-integration
+    TEST_FLAGS= BUILDTAGS='seccomp apparmor selinux' make build-daemon-integration
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download-dependencies

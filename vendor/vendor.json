@@ -1543,6 +1543,12 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "gVVY8k2G3ws+V1czsfxfuRs8log=",
+			"path": "github.com/opencontainers/runc/libcontainer/apparmor",
+			"revision": "ab4a8191679806893207d9c1e507a77ff46dafaa",
+			"revisionTime": "2018-01-12T20:11:04Z"
+		},
+		{
 			"checksumSHA1": "s0A2QT/y6WHMQx6djbl4TopB/34=",
 			"path": "github.com/opencontainers/runc/libcontainer/configs",
 			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",

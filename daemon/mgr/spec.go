@@ -3,10 +3,9 @@ package mgr
 import (
 	"context"
 
-	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/oci"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 )
 
 // SpecWrapper wraps the container's specs and add manager operations.
@@ -28,16 +27,8 @@ type SpecWrapper struct {
 func createSpec(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
 	c.Lock()
 	defer c.Unlock()
-	// new a default spec from containerd.
-	s, err := ctrd.NewDefaultSpec(ctx, c.ID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to generate spec: %s", c.ID)
-	}
 
-	// fix https://github.com/opencontainers/runc/issues/705
-	// use ssh connect to container, can't use sudo command.
-	s.Process.NoNewPrivileges = false
-
+	s := oci.NewDefaultSpec()
 	specWrapper.s = s
 
 	s.Hostname = c.Config.Hostname.String()

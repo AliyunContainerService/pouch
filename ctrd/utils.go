@@ -25,6 +25,7 @@ import (
 )
 
 // NewDefaultSpec new a template spec with default.
+// TODO(huamin): remove NewDefaultSpec, pouch use default spec defined in oci package
 func NewDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
 	ctx = namespaces.WithNamespace(ctx, namespaces.Default)
 	return oci.GenerateSpec(ctx, nil, &containers.Container{ID: id})
