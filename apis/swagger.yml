@@ -820,11 +820,11 @@ paths:
       operationId: "ContainerResize"
       parameters:
         - $ref: "#/parameters/id"
-        - name: "height"
+        - name: "h"
           in: "query"
           description: "height of the tty"
           type: "string"
-        - name: "width"
+        - name: "w"
           in: "query"
           description: "width of the tty"
           type: "string"
@@ -835,6 +835,10 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/checkpoints:
@@ -964,6 +968,33 @@ paths:
           description: "Exec instance ID"
           required: true
           type: "string"
+      tags: ["Exec"]
+
+  /exec/{id}/resize:
+    post:
+      summary: "changes the size of the tty for an exec process"
+      operationId: "ExecResize"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "h"
+          in: "query"
+          description: "height of the tty"
+          type: "string"
+        - name: "w"
+          in: "query"
+          description: "width of the tty"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Exec"]
 
   /containers/{id}/attach:
