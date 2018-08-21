@@ -866,6 +866,25 @@ func parseUserFromImageUser(id string) string {
 	return id
 }
 
+func (c *CriManager) attachLog(logPath string, containerID string, openStdin bool) error {
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+	if err != nil {
+		return fmt.Errorf("failed to create container for opening log file failed: %v", err)
+	}
+	// Attach to the container to get log.
+	attachConfig := &mgr.AttachConfig{
+		Stdin:      openStdin,
+		Stdout:     true,
+		Stderr:     true,
+		CriLogFile: f,
+	}
+	err = c.ContainerMgr.Attach(context.Background(), containerID, attachConfig)
+	if err != nil {
+		return fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
+	}
+	return nil
+}
+
 func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Container) (*runtime.ContainerStats, error) {
 	var usedBytes, inodesUsed uint64
 

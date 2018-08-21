@@ -553,19 +553,12 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Get container log.
 	if config.GetLogPath() != "" {
 		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+		// NOTE: If we attach log here, the IO of container will be created
+		// by this function first, so we should decide whether open the stdin
+		// here. It's weird actually, make it more elegant in the future.
+		err := c.attachLog(logPath, containerID, config.Stdin)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create container for opening log file failed: %v", err)
-		}
-		// Attach to the container to get log.
-		attachConfig := &mgr.AttachConfig{
-			Stdout:     true,
-			Stderr:     true,
-			CriLogFile: f,
-		}
-		err = c.ContainerMgr.Attach(context.Background(), containerID, attachConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to attach to container %q to get its log: %v", containerID, err)
+			return nil, err
 		}
 	}
 
