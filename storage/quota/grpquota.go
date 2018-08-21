@@ -175,6 +175,11 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 		return "", false, ""
 	}
 
+	var (
+		mountPoint string
+		fsType     string
+	)
+
 	// Two formats of group quota.
 	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
 	// /dev/sda1 /home/pouch ext4 rw,relatime,data=ordered,jqfmt=vfsv0,grpjquota=aquota.group 0 0
@@ -184,20 +189,22 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 			continue
 		}
 
-		mountPoint := parts[1]
-		fsType := parts[2]
-
-		devID2, _ := system.GetDevID(mountPoint)
+		devID2, _ := system.GetDevID(parts[1])
 		if devID != devID2 {
 			continue
 		}
 
+		// get device's mountpoint and fs type.
+		mountPoint = parts[1]
+		fsType = parts[2]
+
+		// check the device turn on the prpquota or not.
 		if strings.Contains(parts[3], "grpquota") || strings.Contains(parts[3], "grpjquota") {
 			return mountPoint, true, fsType
 		}
 	}
 
-	return "", false, ""
+	return mountPoint, false, fsType
 }
 
 // SetDiskQuota is used to set quota for directory.
