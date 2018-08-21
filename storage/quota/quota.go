@@ -168,33 +168,33 @@ func GetDefaultQuota(quotas map[string]string) string {
 }
 
 // SetRootfsDiskQuota is to set container rootfs dir disk quota.
-func SetRootfsDiskQuota(basefs, size string, quotaID uint32) error {
+func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 	overlayMountInfo, err := getOverlayMountInfo(basefs)
 	if err != nil {
-		return fmt.Errorf("failed to get overlay mount info: %v", err)
+		return 0, fmt.Errorf("failed to get overlay mount info: %v", err)
 	}
 
 	for _, dir := range []string{overlayMountInfo.Upper, overlayMountInfo.Work} {
 		_, err = StartQuotaDriver(dir)
 		if err != nil {
-			return fmt.Errorf("failed to start quota driver: %v", err)
+			return 0, fmt.Errorf("failed to start quota driver: %v", err)
 		}
 
 		quotaID, err = SetSubtree(dir, quotaID)
 		if err != nil {
-			return fmt.Errorf("failed to set subtree: %v", err)
+			return 0, fmt.Errorf("failed to set subtree: %v", err)
 		}
 
 		if err := SetDiskQuota(dir, size, quotaID); err != nil {
-			return fmt.Errorf("failed to set disk quota: %v", err)
+			return 0, fmt.Errorf("failed to set disk quota: %v", err)
 		}
 
 		if err := setQuotaForDir(dir, quotaID); err != nil {
-			return fmt.Errorf("failed to set dir quota: %v", err)
+			return 0, fmt.Errorf("failed to set dir quota: %v", err)
 		}
 	}
 
-	return nil
+	return quotaID, nil
 }
 
 // setQuotaForDir sets file attribute
