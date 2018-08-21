@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -262,7 +263,7 @@ func Test_mergeEnvSlice(t *testing.T) {
 				t.Errorf("mergeEnvSlice() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !utils.StringSliceEqual(got, tt.want) {
 				t.Errorf("mergeEnvSlice() = %v, want %v", got, tt.want)
 			}
 		})
