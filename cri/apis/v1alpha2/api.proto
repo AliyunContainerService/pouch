@@ -750,7 +750,9 @@ message ContainerConfig {
 	// Configuration specific to Windows containers.
 	WindowsContainerConfig windows = 16;
 	// NetPriority of the container
-	int64  net_priority = 100;
+	int64 net_priority = 100;
+	// QuotaId of the container
+	string quota_id = 101;
 }
 
 message CreateContainerRequest {
@@ -907,6 +909,8 @@ message ContainerStatus {
 	map<string,  Volume> volumes= 100;
 	// Resources specification for the container
 	LinuxContainerResources resources = 101;
+	// QuotaId of the container
+	string quota_id = 102;
 }
 
 message Volume {
