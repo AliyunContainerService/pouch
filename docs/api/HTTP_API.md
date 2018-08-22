@@ -588,8 +588,8 @@ POST /containers/{id}/resize
 |Type|Name|Description|Schema|
 |---|---|---|---|
 |**Path**|**id**  <br>*required*|ID or name of the container|string|
-|**Query**|**height**  <br>*optional*|height of the tty|string|
-|**Query**|**width**  <br>*optional*|width of the tty|string|
+|**Query**|**h**  <br>*optional*|height of the tty|string|
+|**Query**|**w**  <br>*optional*|width of the tty|string|
 
 
 #### Responses
@@ -598,6 +598,8 @@ POST /containers/{id}/resize
 |---|---|---|
 |**200**|no error|No Content|
 |**400**|bad parameter|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -660,6 +662,53 @@ POST /containers/{id}/start
 |**404**|An unexpected 404 error occurred.|[Error](#error)|
 |**409**|container is paused|[Error](#error)|
 |**500**|An unexpected server error occurred.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
+<a name="containerstats"></a>
+### Get container stats based on resource usage
+```
+GET /containers/{id}/stats
+```
+
+
+#### Description
+This endpoint returns a live stream of a container’s resource usage
+statistics.
+
+The `precpu_stats` is the CPU statistic of the *previous* read, and is
+used to calculate the CPU usage percentage. It is not an exact copy
+of the `cpu_stats` field.
+
+If either `precpu_stats.online_cpus` or `cpu_stats.online_cpus` is
+nil then for compatibility with older daemons the length of the
+corresponding `cpu_usage.percpu_usage` array should be used.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|Default|
+|---|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string||
+|**Query**|**stream**  <br>*optional*|Stream the output. If false, the stats will be output once and then it will disconnect.|boolean|`"true"`|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|container stats|[ContainerStats](#containerstats)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
+
+
+#### Produces
+
+* `application/json`
 
 
 #### Tags
@@ -951,6 +1000,37 @@ Return low-level information about an exec instance.
 #### Produces
 
 * `application/json`
+
+
+#### Tags
+
+* Exec
+
+
+<a name="execresize"></a>
+### changes the size of the tty for an exec process
+```
+POST /exec/{id}/resize
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**h**  <br>*optional*|height of the tty|string|
+|**Query**|**w**  <br>*optional*|width of the tty|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**400**|bad parameter|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
 
 
 #### Tags
@@ -1786,6 +1866,62 @@ The response returned by login to a registry
 |**Status**  <br>*required*|The status of the authentication|string|
 
 
+<a name="blkiostatentry"></a>
+### BlkioStatEntry
+BlkioStatEntry is one small entity to store a piece of Blkio stats
+
+
+|Name|Schema|
+|---|---|
+|**major**  <br>*optional*|integer (uint64)|
+|**minor**  <br>*optional*|integer (uint64)|
+|**op**  <br>*optional*|string|
+|**value**  <br>*optional*|integer (uint64)|
+
+
+<a name="blkiostats"></a>
+### BlkioStats
+BlkioStats stores All IO service stats for data read and write.
+
+
+|Name|Schema|
+|---|---|
+|**io_merged_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_queue_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_service_bytes_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_service_time_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_serviced_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_time_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**io_wait_time_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+|**sectors_recursive**  <br>*optional*|< [BlkioStatEntry](#blkiostatentry) > array|
+
+
+<a name="cpustats"></a>
+### CPUStats
+CPUStats aggregates and wraps all CPU related info of container
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**cpu_usage**  <br>*optional*||[CPUUsage](#cpuusage)|
+|**online_cpus**  <br>*optional*|onine CPUs|integer (uint32)|
+|**syetem_cpu_usage**  <br>*optional*|System CPU Usage|integer (uint64)|
+|**throttling_data**  <br>*optional*||[ThrottlingData](#throttlingdata)|
+
+
+<a name="cpuusage"></a>
+### CPUUsage
+CPUUsage stores All CPU stats aggregated since container inception.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**percpu_usage**  <br>*optional*|Total CPU time consumed per core (Linux).|< integer (uint64) > array|
+|**total_usage**  <br>*optional*|Total CPU time consumed.|integer (uint64)|
+|**usage_in_kernelmode**  <br>*optional*|Time spent by tasks of the cgroup in kernel mode (Linux).<br>Units, nanoseconds (Linux)|integer (uint64)|
+|**usage_in_usermode**  <br>*optional*|Time spent by tasks of the cgroup in user mode (Linux).<br>Units, nanoseconds (Linux)|integer (uint64)|
+
+
 <a name="checkpoint"></a>
 ### Checkpoint
 describe a created checkpoint, include container name and checkpoint name
@@ -2110,6 +2246,24 @@ options of starting container
 |**Running**  <br>*optional*|Whether this container is running.<br><br>Note that a running container can be _paused_. The `Running` and `Paused`<br>booleans are not mutually exclusive:<br><br>When pausing a container (on Linux), the cgroups freezer is used to suspend<br>all processes in the container. Freezing the process requires the process to<br>be running. As a result, paused containers are both `Running` _and_ `Paused`.<br><br>Use the `Status` field instead to determine if a container's state is "running".|boolean|
 |**StartedAt**  <br>*required*|The time when this container was last started.|string|
 |**Status**  <br>*optional*||[Status](#status)|
+
+
+<a name="containerstats"></a>
+### ContainerStats
+container stats almost from cgroup resource usage.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**blkio_stats**  <br>*optional*||[BlkioStats](#blkiostats)|
+|**cpu_stats**  <br>*optional*||[CPUStats](#cpustats)|
+|**id**  <br>*optional*|container id|string|
+|**memory_stats**  <br>*optional*||[MemoryStats](#memorystats)|
+|**name**  <br>*optional*|container name|string|
+|**networks**  <br>*optional*||< string, [NetworkStats](#networkstats) > map|
+|**pids_stats**  <br>*optional*||[PidsStats](#pidsstats)|
+|**precpu_stats**  <br>*optional*||[CPUStats](#cpustats)|
+|**read**  <br>*optional*|read time of container stats.|string (date-time)|
 
 
 <a name="containerupgradeconfig"></a>
@@ -2518,6 +2672,20 @@ The logging configuration for this container
 |**Type**  <br>*optional*|enum (json-file, syslog, journald, gelf, fluentd, awslogs, splunk, etwlogs, none)|
 
 
+<a name="memorystats"></a>
+### MemoryStats
+MemoryStats aggregates all memory stats since container inception on Linux.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**failcnt**  <br>*optional*|number of times memory usage hits limits.|integer (uint64)|
+|**limit**  <br>*optional*|xxx|integer (uint64)|
+|**max_usage**  <br>*optional*|maximum usage ever recorded.|integer (uint64)|
+|**stats**  <br>*optional*|all the stats exported via memory.stat.|< string, integer (uint64) > map|
+|**usage**  <br>*optional*|current res_counter usage for memory|integer (uint64)|
+
+
 <a name="mountpoint"></a>
 ### MountPoint
 A mount point inside a container
@@ -2664,6 +2832,25 @@ NetworkSettings exposes the network settings in the API.
 |**SecondaryIPv6Addresses**  <br>*optional*||< [IPAddress](#ipaddress) > array|
 
 
+<a name="networkstats"></a>
+### NetworkStats
+container stats almost from cgroup resource usage.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**endpoint_id**  <br>*optional*|Endpoint ID.|string|
+|**instance_id**  <br>*optional*|Instance ID.|string|
+|**rx_bytes**  <br>*optional*|Bytes received.|integer (uint64)|
+|**rx_dropped**  <br>*optional*|Incoming packets dropped.|integer (uint64)|
+|**rx_errors**  <br>*optional*|Received errors.|integer (uint64)|
+|**rx_packets**  <br>*optional*|Packets received.|integer (uint64)|
+|**tx_bytes**  <br>*optional*|Bytes sent.|integer (uint64)|
+|**tx_dropped**  <br>*optional*|Outgoing packets dropped.|integer (uint64)|
+|**tx_errors**  <br>*optional*|Sent errors.|integer (uint64)|
+|**tx_packets**  <br>*optional*|Packets sent.|integer (uint64)|
+
+
 <a name="networkingconfig"></a>
 ### NetworkingConfig
 Configuration for a network used to create a container.
@@ -2678,6 +2865,17 @@ Configuration for a network used to create a container.
 |---|---|---|
 |**NvidiaDriverCapabilities**  <br>*optional*|NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container  <br>**Example** : `"Possible values\ncompute,video, graphics,utility …: a comma-separated list of driver features the container needs.\nall: enable all available driver capabilities.\n"`|string|
 |**NvidiaVisibleDevices**  <br>*optional*|NvidiaVisibleDevices controls which GPUs will be made accessible inside the container  <br>**Example** : `"Possible values.\n0,1,2, GPU-fef8089b …: a comma-separated list of GPU UUID(s) or index(es).\nall: all GPUs will be accessible, this is the default value in our container images.\nnone: no GPU will be accessible, but driver capabilities will be enabled.\n"`|string|
+
+
+<a name="pidsstats"></a>
+### PidsStats
+PidsStats contains the stats of a container's pids
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**current**  <br>*optional*|Current is the number of pids in the cgroup|integer (uint64)|
+|**limit**  <br>*optional*|Limit is the hard limit on the number of pids in the cgroup.<br>A "Limit" of 0 means that there is no limit.|integer (uint64)|
 
 
 <a name="portbinding"></a>
@@ -2911,6 +3109,18 @@ The status of the container. For example, "running" or "exited".
 |---|---|---|
 |**Path**  <br>*optional*|Device path|string|
 |**Rate**  <br>*optional*|Rate  <br>**Minimum value** : `0`|integer (uint64)|
+
+
+<a name="throttlingdata"></a>
+### ThrottlingData
+ThrottlingData stores CPU throttling stats of one running container.
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**periods**  <br>*optional*|Number of periods with throttling active.|integer (uint64)|
+|**throttled_periods**  <br>*optional*|Number of periods when the container hits its throttling limit.|integer (uint64)|
+|**throttled_time**  <br>*optional*|Aggregate time the container was throttled for in nanoseconds.|integer (uint64)|
 
 
 <a name="ulimit"></a>
