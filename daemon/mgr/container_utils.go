@@ -116,14 +116,15 @@ func (mgr *ContainerManager) getRuntime(runtime string) (string, error) {
 
 	// it is ok to use runtime name as a path.
 	rPath := runtime
-	if len(r.RuntimeArgs) > 0 {
-		rPath = filepath.Join(mgr.Config.HomeDir, RuntimeDir, runtime)
-	}
-
 	// generally speaking, path is not be empty, but we not forbid empty path
 	// in config set, since name can be a path too.
 	if r.Path != "" {
 		rPath = r.Path
+	}
+
+	// if Runtime has args, use script path as runtime path.
+	if len(r.RuntimeArgs) > 0 {
+		rPath = filepath.Join(mgr.Config.HomeDir, RuntimeDir, runtime)
 	}
 
 	return rPath, nil
