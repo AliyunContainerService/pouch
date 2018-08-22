@@ -286,7 +286,20 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 		c.store.Put(v)
 
 		retVolumes = append(retVolumes, v)
+	}
 
+	// filter volumes if specify labels
+	if len(labels) != 0 {
+		filteredVolumes := make([]*types.Volume, 0)
+		for k, v := range labels {
+			for _, vol := range retVolumes {
+				if val, ok := vol.Labels[k]; ok && val == v {
+					filteredVolumes = append(filteredVolumes, vol)
+				}
+			}
+		}
+
+		return filteredVolumes, nil
 	}
 
 	return retVolumes, nil
