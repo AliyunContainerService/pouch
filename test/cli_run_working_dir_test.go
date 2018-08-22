@@ -38,7 +38,7 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithExistWorkingDir(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySupport)
 
 	cname := "TestRunWithExistWorkingDir"
-	res := command.PouchRun("run", "-d", "-m", "100m", "-w", "/root", "--name", cname, busyboxImage, "top")
+	res := command.PouchRun("run", "-d", "-w", "/root", "--name", cname, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -59,7 +59,7 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithNotExistWorkingDir(c *check.C) 
 	SkipIfFalse(c, environment.IsMemorySupport)
 
 	cname := "TestRunWithNotExistWorkingDir"
-	res := command.PouchRun("run", "-d", "-m", "100m", "-w", "/tmp/notexist/dir", "--name", cname, busyboxImage, "top")
+	res := command.PouchRun("run", "-d", "-w", "/tmp/notexist/dir", "--name", cname, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -81,7 +81,7 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithWorkingDir(c *check.C) {
 	dir := "/tmp/testworkingdir"
 
 	cname := "TestRunWithNotExistWorkingDir"
-	res := command.PouchRun("run", "-m", "100m", "-w", dir, "--name", cname, busyboxImage, "pwd")
+	res := command.PouchRun("run", "-w", dir, "--name", cname, busyboxImage, "pwd")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -99,7 +99,7 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithWorkingDirExistAndIsFile(c *che
 	dir := "/bin/cat"
 
 	cname := "TestRunWithWorkingDirExistAndIsFile"
-	res := command.PouchRun("run", "-m", "100m", "-w", dir, "--name", cname, busyboxImage, "pwd")
+	res := command.PouchRun("run", "-w", dir, "--name", cname, busyboxImage, "pwd")
 	defer DelContainerForceMultyTime(c, cname)
 	c.Assert(res.Stderr(), check.NotNil)
 
