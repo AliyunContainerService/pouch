@@ -8,7 +8,7 @@ other one is using daemon config file, and of course, you can use them simultane
 ## Support daemon flags
 
 We list some flags pouchd supports, for the detail flags explanations, you
-can find in [pouchd flags](https://github.com/alibaba/pouch/blob/master/docs/commandline/pouch.md).
+can find in [pouchd flags](https://github.com/alibaba/pouch/blob/master/docs/commandline/pouchd.md).
 
 | Flag                  | Description                             |
 |-----------------------|-----------------------------------------|

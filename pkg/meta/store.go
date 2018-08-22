@@ -248,6 +248,10 @@ func (s *Store) GetWithPrefix(prefix string) ([]Object, error) {
 func (s *Store) KeysWithPrefix(prefix string) ([]string, error) {
 	var keys []string
 
+	if len(prefix) == 0 {
+		return keys, nil
+	}
+
 	fn := func(prefix patricia.Prefix, item patricia.Item) error {
 		keys = append(keys, string(prefix))
 		return nil

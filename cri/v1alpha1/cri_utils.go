@@ -23,6 +23,7 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -311,6 +312,44 @@ func toCriSandbox(c *mgr.Container) (*runtime.PodSandbox, error) {
 		Labels:      labels,
 		Annotations: annotations,
 	}, nil
+}
+
+// It has the possibility that we failed to run the sandbox and it is not being cleaned up.
+// Kubelet will use list to get the sandboxes, but will not get the status of the failed pod
+// whose meta data has not been put into the Sandbox Store. And Kubelet will keep trying to
+// get the status of the failed pod and won't create a new one to replace it. It's a DEAD LOCK.
+// Actually Kubelet should not know the existence of invalid pod whose meta data won't be in the
+// Sandbox Store. So we could avoid the DEAD LOCK mentioned above.
+func (c *CriManager) filterInvalidSandboxes(ctx context.Context, sandboxes []*mgr.Container) ([]*mgr.Container, error) {
+	validSandboxes, err := c.SandboxStore.Keys()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*mgr.Container
+	for _, sandbox := range sandboxes {
+		exist := false
+		for _, id := range validSandboxes {
+			if sandbox.ID == id {
+				exist = true
+				break
+			}
+		}
+		if exist {
+			result = append(result, sandbox)
+			continue
+		}
+
+		status := sandbox.State.Status
+		// NOTE: what if the worst case that we failed to remove the sandbox and
+		// it is still running?
+		if status != apitypes.StatusRunning && status != apitypes.StatusCreated {
+			// Remove invalid sandbox.
+			logrus.Warnf("filterInvalidSandboxes: remove invalid sandbox %v", sandbox.ID)
+			c.ContainerMgr.Remove(ctx, sandbox.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+		}
+	}
+	return result, nil
 }
 
 func filterCRISandboxes(sandboxes []*runtime.PodSandbox, filter *runtime.PodSandboxFilter) []*runtime.PodSandbox {

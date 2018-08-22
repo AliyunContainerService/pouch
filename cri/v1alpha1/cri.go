@@ -212,7 +212,10 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		// If running sandbox failed, clean up the container.
 		if retErr != nil {
-			c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+			err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+			if err != nil {
+				logrus.Errorf("failed to remove the container when running sandbox failed: %v", err)
+			}
 		}
 	}()
 
@@ -303,7 +306,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	for _, container := range containers {
 		err = c.ContainerMgr.Stop(ctx, container.ID, defaultStopTimeout)
 		if err != nil {
-			// TODO: log an error message or break?
+			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 	}
 
@@ -368,7 +371,7 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	for _, container := range containers {
 		err = c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 		if err != nil {
-			// TODO: log an error message or break?
+			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 	}
 
@@ -465,6 +468,11 @@ func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 	sandboxList, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sandbox: %v", err)
+	}
+
+	sandboxList, err = c.filterInvalidSandboxes(ctx, sandboxList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter invalid sandboxes: %v", err)
 	}
 
 	sandboxes := make([]*runtime.PodSandbox, 0, len(sandboxList))
@@ -710,11 +718,16 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 
 	labels, annotations := extractLabels(container.Config.Labels)
 
-	imageRef := container.Image
-	imageInfo, err := c.ImageMgr.GetImage(ctx, imageRef)
+	// FIXME(fuwei): if user repush image with the same reference, the image
+	// ID will be changed. For now, pouch daemon will remove the old image ID
+	// so that CRI fails to fetch the running container. Before upgrade
+	// pouch daemon image manager, we use reference to get image instead of
+	// id.
+	imageInfo, err := c.ImageMgr.GetImage(ctx, container.Config.Image)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get image %s: %v", imageRef, err)
+		return nil, fmt.Errorf("failed to get image %s: %v", container.Config.Image, err)
 	}
+	imageRef := imageInfo.ID
 	if len(imageInfo.RepoDigests) > 0 {
 		imageRef = imageInfo.RepoDigests[0]
 	}

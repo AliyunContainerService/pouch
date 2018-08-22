@@ -27,11 +27,11 @@ func TestImageInspectServerError(t *testing.T) {
 
 func TestImageInspectNotFoundError(t *testing.T) {
 	client := &APIClient{
-		HTTPCli: newMockClient(errorMockResponse(http.StatusConflict, "Not Found")),
+		HTTPCli: newMockClient(errorMockResponse(http.StatusNotFound, "Not Found")),
 	}
 	_, err := client.ImageInspect(context.Background(), "no image")
 	if err == nil || !strings.Contains(err.Error(), "Not Found") {
-		t.Fatalf("expected a Server Error, got %v", err)
+		t.Fatalf("expected a Not Found Error, got %v", err)
 	}
 }
 

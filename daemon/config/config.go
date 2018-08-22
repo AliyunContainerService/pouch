@@ -110,13 +110,10 @@ type Config struct {
 	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`
 
 	// runtimes config
-	// TODO(Ace-Tang): runtime args is not support, since containerd is not support,
-	// add a resolution later if it needed.
 	Runtimes map[string]types.Runtime `json:"add-runtime,omitempty"`
 
-	// Namespace is passed to containerd, Namespace is not a daemon flag,
-	// do not marshal this field to config file.
-	Namespace string `json:"-"`
+	// DefaultNamespace is passed to containerd.
+	DefaultNamespace string `json:"default-namespace,omitempty"`
 }
 
 // Validate validates the user input config.
@@ -141,11 +138,10 @@ func (cfg *Config) Validate() error {
 	if len(cfg.Runtimes) == 0 {
 		cfg.Runtimes = make(map[string]types.Runtime)
 	}
-	if _, exist := cfg.Runtimes[cfg.DefaultRuntime]; exist {
-		return fmt.Errorf("default runtime %s cannot be re-register", cfg.DefaultRuntime)
+	if _, exist := cfg.Runtimes[cfg.DefaultRuntime]; !exist {
+		// add default runtime
+		cfg.Runtimes[cfg.DefaultRuntime] = types.Runtime{Path: cfg.DefaultRuntime}
 	}
-	// add default runtime
-	cfg.Runtimes[cfg.DefaultRuntime] = types.Runtime{Path: cfg.DefaultRuntime}
 
 	return nil
 }

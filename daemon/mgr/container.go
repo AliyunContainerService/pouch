@@ -258,7 +258,22 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
-func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (*types.ContainerCreateResp, error) {
+func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (resp *types.ContainerCreateResp, err error) {
+	// cleanup allocated resources when failed
+	cleanups := []func() error{}
+	defer func() {
+		// do cleanup
+		if err != nil {
+			logrus.Infof("start to rollback allocated resources of container %v.", name)
+			for _, f := range cleanups {
+				nerr := f()
+				if nerr != nil {
+					logrus.Errorf("fail to cleanup allocated resource, error is %v.", nerr)
+				}
+			}
+		}
+	}()
+
 	imgID, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
 	if err != nil {
 		return nil, err
@@ -303,6 +318,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
 		return nil, err
 	}
+	cleanups = append(cleanups, func() error {
+		logrus.Infof("start to cleanup snapshot, id is %v.", id)
+		return mgr.Client.RemoveSnapshot(ctx, id)
+	})
 
 	// set lxcfs binds
 	if config.HostConfig.EnableLxcfs && lxcfs.IsLxcfsEnabled {
@@ -337,16 +356,22 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	mgr.setBaseFS(ctx, container, id)
 
 	if err := mgr.Mount(ctx, container); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to mount container: (%s) rootfs: (%s)", id, container.MountFS)
 	}
 
 	// parse volume config
 	if err := mgr.generateMountPoints(ctx, container); err != nil {
+		if err = mgr.Unmount(ctx, container); err != nil {
+			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+		}
 		return nil, errors.Wrap(err, "failed to parse volume argument")
 	}
 
 	// set mount point disk quota
 	if err := mgr.setMountPointDiskQuota(ctx, container); err != nil {
+		if err = mgr.Unmount(ctx, container); err != nil {
+			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+		}
 		return nil, errors.Wrap(err, "failed to set mount point disk quota")
 	}
 
@@ -356,7 +381,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	if err := mgr.Unmount(ctx, container); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
 	}
 
 	// set network settings
@@ -638,12 +663,17 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return errors.Wrap(err, "failed to open io")
 	}
 
+	runtime, err := mgr.getRuntime(c.HostConfig.Runtime)
+	if err != nil {
+		return err
+	}
+
 	c.Lock()
 	ctrdContainer := &ctrd.Container{
 		ID:             c.ID,
 		Image:          c.Config.Image,
 		Labels:         c.Config.Labels,
-		Runtime:        c.HostConfig.Runtime,
+		Runtime:        runtime,
 		Spec:           sw.s,
 		IO:             io,
 		RootFSProvided: c.RootFSProvided,
@@ -1951,7 +1981,7 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container, id str
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	c.Lock()
-	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.Namespace, info.Name, "rootfs")
+	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.DefaultNamespace, info.Name, "rootfs")
 	c.Unlock()
 }
 

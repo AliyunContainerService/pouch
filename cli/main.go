@@ -32,6 +32,7 @@ func main() {
 	cli.AddCommand(base, &TagCommand{})
 	cli.AddCommand(base, &LoadCommand{})
 	cli.AddCommand(base, &SaveCommand{})
+	cli.AddCommand(base, &HistoryCommand{})
 
 	cli.AddCommand(base, &InspectCommand{})
 	cli.AddCommand(base, &RenameCommand{})

@@ -20,10 +20,3 @@ func ParseAnnotation(annotations []string) (map[string]string, error) {
 
 	return specAnnotation, nil
 }
-
-// ValidateAnnotation validate the correctness of spec annotation param of a container.
-func ValidateAnnotation(annotations map[string]string) error {
-	// TODO
-
-	return nil
-}

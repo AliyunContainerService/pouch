@@ -7,9 +7,6 @@ type Option struct {
 }
 
 var (
-	// APIVersion defines control server api version.
-	APIVersion = "/api/v1"
-
 	// OptionRef defines the reference of containers.
 	OptionRef = "ref"
 

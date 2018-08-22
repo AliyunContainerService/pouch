@@ -48,9 +48,19 @@ var (
 var (
 	cgroupInfo *system.CgroupInfo
 
+	// IsMemorySupport checks if memory cgroup is avaible
+	IsMemorySupport = func() bool {
+		return cgroupInfo.Memory.MemoryLimit
+	}
+
 	// IsMemorySwapSupport checks if memory swap cgroup is avaible
 	IsMemorySwapSupport = func() bool {
 		return cgroupInfo.Memory.MemorySwap
+	}
+
+	// IsMemorySwappinessSupport checks if memory swappiness cgroup is avaible
+	IsMemorySwappinessSupport = func() bool {
+		return cgroupInfo.Memory.MemorySwappiness
 	}
 )
 

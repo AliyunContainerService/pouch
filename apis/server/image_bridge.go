@@ -181,3 +181,15 @@ func (s *Server) saveImage(ctx context.Context, rw http.ResponseWriter, req *htt
 
 	return nil
 }
+
+// getImageHistory gets image history.
+func (s *Server) getImageHistory(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	imageName := mux.Vars(req)["name"]
+
+	history, err := s.ImageMgr.ImageHistory(ctx, imageName)
+	if err != nil {
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, history)
+}

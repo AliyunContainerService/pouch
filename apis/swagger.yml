@@ -243,7 +243,7 @@ paths:
 
   /images/{imageid}/json:
     get:
-      summary: "Inspect a image"
+      summary: "Inspect an image"
       description: "Return the information about image"
       operationId: "ImageInspect"
       produces:
@@ -268,6 +268,27 @@ paths:
           examples:
             application/json:
               message: "No such image: e216a057b1cb"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - $ref: "#/parameters/imageid"
+
+  /images/{imageid}/history:
+    get:
+      summary: "Get an image's history"
+      description: "Return the history of each layer of image"
+      operationId: "ImageHistory"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/HistoryResultItem"
+        404:
+          $ref: "#/responses/404ErrorResponse"
         500:
           $ref: "#/responses/500ErrorResponse"
       parameters:
@@ -2926,6 +2947,42 @@ definitions:
           BaseLayer:
             description: "the base layer content hash."
             type: "string"
+
+  HistoryResultItem:
+    description: "An object containing image history at API side."
+    type: "object"
+    required: [ID, Created, CreatedBy, Author, Comment, EmptyLayer, Size]
+    properties:
+      ID:
+        description: "ID of each layer image."
+        type: "string"
+        x-nullable: false
+      Created:
+        description: "the combined date and time at which the layer was created."
+        type: "integer"
+        format: "int64"
+        x-nullable: false
+      CreatedBy:
+        description: "the command which created the layer."
+        type: "string"
+        x-nullable: false
+      Author:
+        description: "the author of the build point."
+        type: "string"
+        x-nullable: false
+      Comment:
+        description: "a custom message set when creating the layer."
+        type: "string"
+        x-nullable: false
+      EmptyLayer:
+        description: "mark whether the history item created a filesystem diff or not."
+        type: "boolean"
+        x-nullable: false
+      Size:
+        description: "size of each layer image."
+        type: "integer"
+        format: "int64"
+        x-nullable: false
 
   SearchResultItem:
     type: "object"
