@@ -178,3 +178,20 @@ func (suite *PouchExecSuite) TestExecUser(c *check.C) {
 		c.Fatalf("failed to run a container with expected user: %s, but got %s", "1001", res.Stdout())
 	}
 }
+
+// TestExecWithWorkingDir test working directory of exec process
+func (suite *PouchExecSuite) TestExecWithWorkingDir(c *check.C) {
+	cname := "TestExecWithWorkingDir"
+
+	dir := "/tmp/testworkingdir"
+
+	res := command.PouchRun("run", "-d", "--name", cname, "-w", dir, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "pwd")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), dir) {
+		c.Fatalf("failed to run exec with specified working directory: %s, but got %s", dir, res.Stdout())
+	}
+}

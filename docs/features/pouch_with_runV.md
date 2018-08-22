@@ -93,6 +93,18 @@ With runv related tools installed, we need to start pouchd. Then we can create h
 
 We can create hypervisor-based container by adding a flag `--runtime` in create command. And we can also use `pouch ps` to list containers including hypervisor-based containers whose runtime type is `runv` and runc-based containerd whose runtime type is `runc`.
 
+First, add runv into config file, restart pouchd, ensure that pouchd know the specified runtime.
+
+```
+{
+    "add-runtime": {
+        "runv": {
+            "path": "/usr/local/bin/runv"
+        }
+    }
+}
+```
+
 ``` shell
 $ pouch create --name hypervisor --runtime runv docker.io/library/busybox:latest
 container ID: 95c8d52154515e58ab267f3c33ef74ff84c901ad77ab18ee6428a1ffac12400d, name: hypervisor

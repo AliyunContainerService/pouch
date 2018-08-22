@@ -65,7 +65,12 @@ func (c *Client) containerStats(ctx context.Context, id string) (*containerdtype
 		return nil, err
 	}
 
-	return pack.task.Metrics(ctx)
+	metrics, err := pack.task.Metrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return metrics, nil
 }
 
 // ExecContainer executes a process in container.

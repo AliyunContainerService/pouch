@@ -30,6 +30,7 @@ import (
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
+	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
@@ -76,8 +77,11 @@ type ContainerMgr interface {
 	// Unpause a container.
 	Unpause(ctx context.Context, name string) error
 
+	// Using a stream to get stats of a container.
+	StreamStats(ctx context.Context, name string, config *ContainerStatsConfig) error
+
 	// Stats of a container.
-	Stats(ctx context.Context, name string) (*containerdtypes.Metric, error)
+	Stats(ctx context.Context, name string) (*containerdtypes.Metric, *cgroups.Metrics, error)
 
 	// Attach a container.
 	Attach(ctx context.Context, name string, attach *AttachConfig) error
@@ -355,33 +359,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// after create options passed to containerd.
 	mgr.setBaseFS(ctx, container, id)
 
-	if err := mgr.Mount(ctx, container); err != nil {
-		return nil, errors.Wrapf(err, "failed to mount container: (%s) rootfs: (%s)", id, container.MountFS)
-	}
-
-	// parse volume config
-	if err := mgr.generateMountPoints(ctx, container); err != nil {
-		if err = mgr.Unmount(ctx, container); err != nil {
-			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
-		}
-		return nil, errors.Wrap(err, "failed to parse volume argument")
-	}
-
-	// set mount point disk quota
-	if err := mgr.setMountPointDiskQuota(ctx, container); err != nil {
-		if err = mgr.Unmount(ctx, container); err != nil {
-			err = errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
-		}
-		return nil, errors.Wrap(err, "failed to set mount point disk quota")
-	}
-
-	// set rootfs disk quota
-	if err := mgr.setRootfsQuota(ctx, container); err != nil {
-		logrus.Warnf("failed to set rootfs disk quota, err: %v", err)
-	}
-
-	if err := mgr.Unmount(ctx, container); err != nil {
-		return nil, errors.Wrapf(err, "failed to umount container: (%s) rootfs: (%s)", id, container.MountFS)
+	// init container storage module, such as: set volumes, set diskquota, set /etc/mtab, copy image's data to volume.
+	if err := mgr.initContainerStorage(ctx, container); err != nil {
+		return nil, errors.Wrapf(err, "failed to init container storage, id: (%s)", container.ID)
 	}
 
 	// set network settings
@@ -872,23 +852,6 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	return nil
 }
 
-// Stats gets the stat of a container.
-func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*containerdtypes.Metric, error) {
-	var (
-		err error
-		c   *Container
-	)
-
-	if c, err = mgr.container(name); err != nil {
-		return nil, err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	return mgr.Client.ContainerStats(ctx, c.ID)
-}
-
 // Attach attachs a container's io.
 func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *AttachConfig) error {
 	c, err := mgr.container(name)
@@ -1036,42 +999,11 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 
 	// Update Env
-	if len(config.Env) > 0 {
-		newEnvMap, err := opts.ParseEnv(config.Env)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse new env")
-		}
-
-		oldEnvMap, err := opts.ParseEnv(c.Config.Env)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse old env")
-		}
-
-		for k, v := range newEnvMap {
-			// key should not be empty
-			if k == "" {
-				continue
-			}
-
-			// add or change an env
-			if v != "" {
-				oldEnvMap[k] = v
-				continue
-			}
-
-			// value is empty, we need delete the env
-			if _, exists := oldEnvMap[k]; exists {
-				delete(oldEnvMap, k)
-			}
-		}
-
-		newEnvSlice := []string{}
-		for k, v := range oldEnvMap {
-			newEnvSlice = append(newEnvSlice, fmt.Sprintf("%s=%s", k, v))
-		}
-
-		c.Config.Env = newEnvSlice
+	newEnvSlice, err := mergeEnvSlice(config.Env, c.Config.Env)
+	if err != nil {
+		return err
 	}
+	c.Config.Env = newEnvSlice
 
 	// If container is not running, update container metadata struct is enough,
 	// resources will be updated when the container is started again,
@@ -1193,15 +1125,36 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 	}
 	// update container rootfs disk quota
 	// TODO: add lock for container?
+	rootfs := ""
 	if c.IsRunningOrPaused() && c.Snapshotter != nil {
 		basefs, ok := c.Snapshotter.Data["MergedDir"]
 		if !ok || basefs == "" {
 			return fmt.Errorf("Container is running, but MergedDir is missing")
 		}
-
-		if err := quota.SetRootfsDiskQuota(basefs, defaultQuota, qid); err != nil {
-			return errors.Wrapf(err, "failed to set container rootfs diskquota")
+		rootfs = basefs
+	} else {
+		if err := mgr.Mount(ctx, c); err != nil {
+			return errors.Wrapf(err, "failed to mount rootfs: (%s)", c.MountFS)
 		}
+		rootfs = c.MountFS
+
+		defer func() {
+			if err := mgr.Unmount(ctx, c); err != nil {
+				logrus.Errorf("failed to umount rootfs: (%s), err: (%v)", c.MountFS, err)
+			}
+		}()
+	}
+	newID, err := quota.SetRootfsDiskQuota(rootfs, defaultQuota, qid)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set container rootfs diskquota")
+	}
+
+	// set container's metadata directory diskquota, for limit the size of container's logs
+	metaDir := mgr.Store.Path(c.ID)
+	err = quota.SetDiskQuota(metaDir, defaultQuota, newID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set container's log quota, dir: (%s), quota: (%s), quota id: (%d)",
+			metaDir, defaultQuota, newID)
 	}
 
 	return nil

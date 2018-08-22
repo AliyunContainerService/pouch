@@ -814,17 +814,55 @@ paths:
           default: "all"
       tags: ["Container"]
 
+  /containers/{id}/stats:
+    get:
+      summary: "Get container stats based on resource usage"
+      description: |
+        This endpoint returns a live stream of a container’s resource usage
+        statistics.
+
+        The `precpu_stats` is the CPU statistic of the *previous* read, and is
+        used to calculate the CPU usage percentage. It is not an exact copy
+        of the `cpu_stats` field.
+
+        If either `precpu_stats.online_cpus` or `cpu_stats.online_cpus` is
+        nil then for compatibility with older daemons the length of the
+        corresponding `cpu_usage.percpu_usage` array should be used.
+      operationId: "ContainerStats"
+      produces: ["application/json"]
+      responses:
+        200:
+          description: container stats
+          schema:
+            $ref: "#/definitions/ContainerStats"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "stream"
+          in: "query"
+          description: "Stream the output. If false, the stats will be output once and then it will disconnect."
+          type: "boolean"
+          default: true
+      tags: ["Container"]
+
   /containers/{id}/resize:
     post:
       summary: "changes the size of the tty for a container"
       operationId: "ContainerResize"
       parameters:
         - $ref: "#/parameters/id"
-        - name: "height"
+        - name: "h"
           in: "query"
           description: "height of the tty"
           type: "string"
-        - name: "width"
+        - name: "w"
           in: "query"
           description: "width of the tty"
           type: "string"
@@ -835,6 +873,10 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
   /containers/{id}/checkpoints:
@@ -964,6 +1006,33 @@ paths:
           description: "Exec instance ID"
           required: true
           type: "string"
+      tags: ["Exec"]
+
+  /exec/{id}/resize:
+    post:
+      summary: "changes the size of the tty for an exec process"
+      operationId: "ExecResize"
+      parameters:
+        - $ref: "#/parameters/id"
+        - name: "h"
+          in: "query"
+          description: "height of the tty"
+          type: "string"
+        - name: "w"
+          in: "query"
+          description: "width of the tty"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
       tags: ["Exec"]
 
   /containers/{id}/attach:
@@ -3351,6 +3420,7 @@ definitions:
         x-nullable: false
 
   ContainerLogsOptions:
+    description: The parameters to filter the log.
     type: "object"
     properties:
       ShowStdout:
@@ -3379,8 +3449,233 @@ definitions:
         type: "boolean"
 
 
-    description: The parameters to filter the log.
+  ContainerStats:
+    description: container stats almost from cgroup resource usage.
+    type: "object"
+    properties:
+      read:
+        description: read time of container stats.
+        type: "string"
+        format: date-time
+      id: 
+        description: container id
+        type: "string"
+      name:
+        description: container name
+        type: "string"
+      pids_stats:
+        $ref: "#/definitions/PidsStats"
+      networks:
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/NetworkStats"
+      memory_stats:
+        $ref: "#/definitions/MemoryStats"
+      blkio_stats:
+        $ref: "#/definitions/BlkioStats"
+      cpu_stats:
+        $ref: "#/definitions/CPUStats"
+      precpu_stats:
+        $ref: "#/definitions/CPUStats"
 
+  PidsStats:
+    description: PidsStats contains the stats of a container's pids
+    type: "object"
+    properties:
+      current:
+        description: Current is the number of pids in the cgroup
+        type: "integer"
+        format: "uint64"
+      limit:
+        description: |
+          Limit is the hard limit on the number of pids in the cgroup.
+          A "Limit" of 0 means that there is no limit.
+        type: "integer"
+        format: uint64
+
+  CPUStats:
+    description: CPUStats aggregates and wraps all CPU related info of container
+    type: "object"
+    properties:
+      cpu_usage:
+        $ref: "#/definitions/CPUUsage"
+      syetem_cpu_usage:
+        description: System CPU Usage
+        type: "integer"
+        format: "uint64"
+      online_cpus: 
+        description: onine CPUs
+        type: "integer"
+        format: "uint32"
+      throttling_data:
+        $ref: "#/definitions/ThrottlingData"
+
+  CPUUsage:
+    description: CPUUsage stores All CPU stats aggregated since container inception.
+    type: "object"
+    properties:
+      total_usage:
+        description: Total CPU time consumed.
+        type: "integer"
+        format: "uint64"
+      percpu_usage:
+        description: Total CPU time consumed per core (Linux).
+        type: "array"
+        items:
+          type: "integer"
+          format: "uint64"
+      usage_in_kernelmode:
+        description:  |
+          Time spent by tasks of the cgroup in kernel mode (Linux).
+          Units, nanoseconds (Linux)
+        type: "integer"
+        format: "uint64"
+      usage_in_usermode: 
+        description: |
+          Time spent by tasks of the cgroup in user mode (Linux).
+          Units, nanoseconds (Linux)
+        type: "integer"
+        format: "uint64"
+        
+  ThrottlingData:
+    description: ThrottlingData stores CPU throttling stats of one running container.
+    type: "object"
+    properties:
+      periods:
+        description: Number of periods with throttling active.
+        type: "integer"
+        format: "uint64"
+      throttled_periods:
+        description: Number of periods when the container hits its throttling limit.
+        type: "integer"
+        format: "uint64"
+      throttled_time:
+        description: Aggregate time the container was throttled for in nanoseconds.
+        type: "integer"
+        format: "uint64"
+
+  BlkioStats:
+    description: BlkioStats stores All IO service stats for data read and write.
+    type: "object"
+    properties:
+      io_service_bytes_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_serviced_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_queue_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_service_time_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_wait_time_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_merged_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      io_time_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+      sectors_recursive:
+        type: "array"
+        items:
+          $ref: "#/definitions/BlkioStatEntry"
+
+  BlkioStatEntry:
+    description: BlkioStatEntry is one small entity to store a piece of Blkio stats
+    type: "object"
+    properties:
+      major:
+        type: "integer"
+        format: "uint64" 
+      minor:
+        type: "integer"
+        format: "uint64"
+      op:
+        type: "string"
+      value:
+        type: "integer"
+        format: "uint64"
+
+  MemoryStats:
+    description: MemoryStats aggregates all memory stats since container inception on Linux.
+    type: "object"
+    properties:
+      usage:
+        description: current res_counter usage for memory
+        type: "integer"
+        format: "uint64"
+      max_usage:
+        description: maximum usage ever recorded.
+        type: "integer"
+        format: "uint64"
+      stats:
+        description: all the stats exported via memory.stat.
+        type: "object"
+        additionalProperties:
+          type: "integer"
+          format: "uint64"
+      failcnt:
+        description: number of times memory usage hits limits.
+        type: "integer"
+        format: "uint64"
+      limit:
+        description: xxx
+        type: "integer"
+        format: "uint64"
+
+  NetworkStats:
+    description: container stats almost from cgroup resource usage.
+    type: "object"
+    properties:
+      rx_bytes:
+        description: Bytes received.
+        type: "integer"
+        format: "uint64"
+      rx_packets:
+        description: Packets received.
+        type: "integer"
+        format: "uint64"
+      rx_errors:
+        description: Received errors.
+        type: "integer"
+        format: "uint64"
+      rx_dropped:
+        description: Incoming packets dropped. 
+        type: "integer"
+        format: "uint64"
+      tx_bytes:
+        description: Bytes sent.
+        type: "integer"
+        format: "uint64"
+      tx_packets:
+        description: Packets sent.
+        type: "integer"
+        format: "uint64"
+      tx_errors:
+        description: Sent errors.
+        type: "integer"
+        format: "uint64"
+      tx_dropped:
+        description: Outgoing packets dropped.
+        type: "integer"
+        format: "uint64"
+      endpoint_id:
+        description: Endpoint ID.
+        type: "string"
+      instance_id:
+        description: Instance ID.
+        type: "string"
 
   Status:
     description: The status of the container. For example, "running" or "exited".

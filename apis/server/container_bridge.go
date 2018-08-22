@@ -351,6 +351,27 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 	return nil
 }
 
+func (s *Server) statsContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+
+	var stream bool
+	if _, ok := req.Form["stream"]; !ok {
+		stream = true
+	}
+	stream = httputils.BoolValue(req, "stream")
+
+	if !stream {
+		rw.Header().Set("Content-Type", "application/json")
+	}
+
+	config := &mgr.ContainerStatsConfig{
+		Stream:    stream,
+		OutStream: rw,
+	}
+
+	return s.ContainerMgr.StreamStats(ctx, name, config)
+}
+
 func (s *Server) resizeContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	height, err := strconv.Atoi(req.FormValue("h"))
 	if err != nil {

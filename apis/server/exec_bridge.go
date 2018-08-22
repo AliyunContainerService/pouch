@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -92,4 +93,31 @@ func (s *Server) getExecInfo(ctx context.Context, rw http.ResponseWriter, req *h
 		return err
 	}
 	return EncodeResponse(rw, http.StatusOK, execInfo)
+}
+
+func (s *Server) resizeExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	height, err := strconv.Atoi(req.FormValue("h"))
+	if err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	width, err := strconv.Atoi(req.FormValue("w"))
+	if err != nil {
+		return httputils.NewHTTPError(err, http.StatusBadRequest)
+	}
+
+	opts := types.ResizeOptions{
+		Height: int64(height),
+		Width:  int64(width),
+	}
+
+	name := mux.Vars(req)["name"]
+
+	if err := s.ContainerMgr.ResizeExec(ctx, name, opts); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	return nil
+
 }

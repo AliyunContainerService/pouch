@@ -563,7 +563,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Get container log.
 	if config.GetLogPath() != "" {
 		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		err := c.attachLog(logPath, containerID)
+		// NOTE: If we attach log here, the IO of container will be created
+		// by this function first, so we should decide whether open the stdin
+		// here. It's weird actually, make it more elegant in the future.
+		err := c.attachLog(logPath, containerID, config.Stdin)
 		if err != nil {
 			return nil, err
 		}

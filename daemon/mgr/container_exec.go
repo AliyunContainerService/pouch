@@ -100,10 +100,15 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		return err
 	}
 
+	cwd := c.Config.WorkingDir
+	if cwd == "" {
+		cwd = "/"
+	}
+
 	process := &specs.Process{
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
-		Cwd:      "/",
+		Cwd:      cwd,
 		Env:      c.Config.Env,
 		User: specs.User{
 			UID:            uid,

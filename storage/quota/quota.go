@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -167,33 +168,33 @@ func GetDefaultQuota(quotas map[string]string) string {
 }
 
 // SetRootfsDiskQuota is to set container rootfs dir disk quota.
-func SetRootfsDiskQuota(basefs, size string, quotaID uint32) error {
+func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 	overlayMountInfo, err := getOverlayMountInfo(basefs)
 	if err != nil {
-		return fmt.Errorf("failed to get overlay mount info: %v", err)
+		return 0, fmt.Errorf("failed to get overlay mount info: %v", err)
 	}
 
 	for _, dir := range []string{overlayMountInfo.Upper, overlayMountInfo.Work} {
 		_, err = StartQuotaDriver(dir)
 		if err != nil {
-			return fmt.Errorf("failed to start quota driver: %v", err)
+			return 0, fmt.Errorf("failed to start quota driver: %v", err)
 		}
 
 		quotaID, err = SetSubtree(dir, quotaID)
 		if err != nil {
-			return fmt.Errorf("failed to set subtree: %v", err)
+			return 0, fmt.Errorf("failed to set subtree: %v", err)
 		}
 
 		if err := SetDiskQuota(dir, size, quotaID); err != nil {
-			return fmt.Errorf("failed to set disk quota: %v", err)
+			return 0, fmt.Errorf("failed to set disk quota: %v", err)
 		}
 
 		if err := setQuotaForDir(dir, quotaID); err != nil {
-			return fmt.Errorf("failed to set dir quota: %v", err)
+			return 0, fmt.Errorf("failed to set dir quota: %v", err)
 		}
 	}
 
-	return nil
+	return quotaID, nil
 }
 
 // setQuotaForDir sets file attribute
@@ -289,9 +290,10 @@ func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
 	quotaIDs := make(map[uint32]struct{}, 0)
 
 	minID := QuotaMinID
-	_, output, _, err := exec.Run(0, "repquota", repquotaOpt)
+	exit, output, stderr, err := exec.Run(0, "repquota", repquotaOpt)
 	if err != nil {
-		return nil, minID, err
+		return nil, 0, errors.Wrapf(err, "failed to execute [repquota %s], stdout: (%s), stderr: (%s), exit: (%d)",
+			repquotaOpt, output, stderr, exit)
 	}
 
 	lines := strings.Split(string(output), "\n")

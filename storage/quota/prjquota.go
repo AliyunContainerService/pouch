@@ -185,6 +185,11 @@ func (quota *PrjQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 		return "", false, ""
 	}
 
+	var (
+		mountPoint string
+		fsType     string
+	)
+
 	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
@@ -192,14 +197,16 @@ func (quota *PrjQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 			continue
 		}
 
-		mountPoint := parts[1]
-		fsType := parts[2]
-
-		devID2, _ := system.GetDevID(mountPoint)
+		devID2, _ := system.GetDevID(parts[1])
 		if devID != devID2 {
 			continue
 		}
 
+		// get device's mountpoint and fs type.
+		mountPoint = parts[1]
+		fsType = parts[2]
+
+		// check the device turn on the prjquota or not.
 		for _, value := range strings.Split(parts[3], ",") {
 			if value == "prjquota" {
 				return mountPoint, true, fsType
@@ -207,7 +214,7 @@ func (quota *PrjQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 		}
 	}
 
-	return "", false, ""
+	return mountPoint, false, fsType
 }
 
 // setQuota uses system tool "setquota" to set project quota for binding of limit and mountpoint and quotaID.

@@ -17,6 +17,7 @@ import (
 
 	"github.com/containerd/containerd/mount"
 	"github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -24,8 +25,11 @@ var (
 	// time unit is minute.
 	GCExecProcessTick = 5
 
-	// MinMemory is minimal memory container should has
+	// MinMemory is minimal memory container should has.
 	MinMemory int64 = 4194304
+
+	// DefaultStatsInterval is the interval configured for stats.
+	DefaultStatsInterval = time.Duration(time.Second)
 )
 
 var (
@@ -145,6 +149,13 @@ type ContainerListOption struct {
 	All        bool
 	Filter     map[string][]string
 	FilterFunc ContainerFilter
+}
+
+// ContainerStatsConfig contains all configs on stats interface.
+// This struct is only used in daemon side.
+type ContainerStatsConfig struct {
+	Stream    bool
+	OutStream io.Writer
 }
 
 // Container represents the container's meta data.
@@ -287,11 +298,13 @@ func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 		}
 		c.Config.Entrypoint = config.Entrypoint
 	}
-	if c.Config.Env == nil {
-		c.Config.Env = config.Env
-	} else {
-		c.Config.Env = append(c.Config.Env, config.Env...)
+
+	// ContainerConfig.Env is new, and the ImageConfig.Env is old
+	newEnvSlice, err := mergeEnvSlice(c.Config.Env, config.Env)
+	if err != nil {
+		return err
 	}
+	c.Config.Env = newEnvSlice
 	if c.Config.WorkingDir == "" {
 		c.Config.WorkingDir = config.WorkingDir
 	}
@@ -386,15 +399,17 @@ func (c *Container) SetSnapshotterMeta(mounts []mount.Mount) {
 // GetSpecificBasePath accepts a given path, look for whether the path is exist
 // within container, if has, returns container base path like BaseFS, if not, return empty string
 func (c *Container) GetSpecificBasePath(path string) string {
-	// first try container BaseFS, it is a general view,
-	if utils.IsFileExist(filepath.Join(c.BaseFS, path)) {
-		return c.BaseFS
-	}
+	logrus.Debugf("GetSpecificBasePath, snapshotter data: (%v)", c.Snapshotter.Data)
 
-	// then try lower and upper directory, since overlay filesystem support only.
-	for _, prefixPath := range c.Snapshotter.Data {
-		if utils.IsFileExist(filepath.Join(prefixPath, path)) {
-			return prefixPath
+	// try lower and upper directory, since overlay filesystem support only.
+	for _, key := range []string{"MergedDir", "UpperDir", "LowerDir"} {
+		if prefixPath, ok := c.Snapshotter.Data[key]; ok && prefixPath != "" {
+			for _, p := range strings.Split(prefixPath, ":") {
+				absPath := filepath.Join(p, path)
+				if utils.IsFileExist(absPath) {
+					return absPath
+				}
+			}
 		}
 	}
 

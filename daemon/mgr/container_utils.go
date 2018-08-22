@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
 	networktypes "github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -255,4 +256,46 @@ func amendContainerSettings(config *types.ContainerConfig, hostConfig *types.Hos
 	if r.Memory > 0 && r.MemorySwap == 0 {
 		r.MemorySwap = 2 * r.Memory
 	}
+}
+
+func mergeEnvSlice(newEnv, oldEnv []string) ([]string, error) {
+	// if newEnv is empty, return old env slice
+	if len(newEnv) == 0 {
+		return oldEnv, nil
+	}
+
+	newEnvMap, err := opts.ParseEnv(newEnv)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse new env")
+	}
+
+	oldEnvMap, err := opts.ParseEnv(oldEnv)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse old env")
+	}
+
+	for k, v := range newEnvMap {
+		// key should not be empty
+		if k == "" {
+			continue
+		}
+
+		// add or change an env
+		if v != "" {
+			oldEnvMap[k] = v
+			continue
+		}
+
+		// value is empty, we need delete the env
+		if _, exists := oldEnvMap[k]; exists {
+			delete(oldEnvMap, k)
+		}
+	}
+
+	newEnvSlice := []string{}
+	for k, v := range oldEnvMap {
+		newEnvSlice = append(newEnvSlice, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return newEnvSlice, nil
 }

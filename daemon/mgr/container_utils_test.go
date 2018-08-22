@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -183,6 +184,87 @@ func Test_parsePSOutput(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parsePSOutput() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_mergeEnvSlice(t *testing.T) {
+	type args struct {
+		newEnv []string
+		oldEnv []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				newEnv: []string{"a=b"},
+				oldEnv: []string{"c=d"},
+			},
+			want:    []string{"c=d", "a=b"},
+			wantErr: false,
+		},
+		{
+			name: "test2",
+			args: args{
+				newEnv: []string{"test=false"},
+				oldEnv: []string{"test=true"},
+			},
+			want:    []string{"test=false"},
+			wantErr: false,
+		},
+		{
+			name: "test3",
+			args: args{
+				newEnv: []string{"wrong-format"},
+				oldEnv: []string{"c=d"},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "test4",
+			args: args{
+				newEnv: []string{},
+				oldEnv: []string{"c=d"},
+			},
+			want:    []string{"c=d"},
+			wantErr: false,
+		},
+		{
+			name: "test5",
+			args: args{
+				newEnv: []string{"a=b"},
+				oldEnv: []string{},
+			},
+			want:    []string{"a=b"},
+			wantErr: false,
+		},
+		{
+			name: "test6",
+			args: args{
+				newEnv: []string{"a="},
+				oldEnv: []string{"a=b"},
+			},
+			want:    []string{},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := mergeEnvSlice(tt.args.newEnv, tt.args.oldEnv)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("mergeEnvSlice() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !utils.StringSliceEqual(got, tt.want) {
+				t.Errorf("mergeEnvSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

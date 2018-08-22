@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
+	"github.com/pkg/errors"
 )
 
 // PouchRunVolumeSuite is the test suite for run CLI.
@@ -330,4 +332,59 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuota(c *check.C) {
 	}
 
 	c.Assert(found, check.Equals, true)
+}
+
+// TestRunWithDiskQuotaForLog tests limit the size of container's log.
+func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaForLog(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+
+	cname := "TestRunWithDiskQuotaForLog"
+	command.PouchRun("run", "-d", "--disk-quota", "10m",
+		"--name", cname, busyboxImage, "top").Assert(c, icmd.Success)
+
+	defer DelContainerForceMultyTime(c, cname)
+
+	containerMetaDir, err := getContainerMetaDir(cname)
+	c.Assert(err, check.Equals, nil)
+
+	testFile := filepath.Join(containerMetaDir, "diskquota_testfile")
+	expct := icmd.Expected{
+		ExitCode: 1,
+		Err:      "Disk quota exceeded",
+	}
+	err = icmd.RunCommand("dd", "if=/dev/zero", "of="+testFile, "bs=1M", "count=20", "oflag=direct").Compare(expct)
+	c.Assert(err, check.IsNil)
+}
+
+func getContainerMetaDir(name string) (string, error) {
+	ret := command.PouchRun("inspect", name)
+
+	mergedDir := ""
+	for _, line := range strings.Split(ret.Stdout(), "\n") {
+		if strings.Contains(line, "MergedDir") {
+			mergedDir = strings.Split(line, "\"")[3]
+			break
+		}
+	}
+
+	var (
+		graph string
+		cid   string
+	)
+	if mergedDir == "" {
+		return "", errors.Errorf("failed to get container metadata directory")
+	}
+
+	parts := strings.Split(mergedDir, "/")
+	for i, part := range parts {
+		if part == "containerd" {
+			graph = "/" + filepath.Join(parts[:i]...)
+			cid = parts[i+4]
+			break
+		}
+	}
+
+	return filepath.Join(graph, "containers", cid), nil
 }

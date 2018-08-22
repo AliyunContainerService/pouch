@@ -15,6 +15,7 @@ import (
 
 // HistoryResultItem An object containing image history at API side.
 // swagger:model HistoryResultItem
+
 type HistoryResultItem struct {
 
 	// the author of the build point.
@@ -37,14 +38,28 @@ type HistoryResultItem struct {
 	// Required: true
 	EmptyLayer bool `json:"EmptyLayer"`
 
-	// ID of every layer image.
+	// ID of each layer image.
 	// Required: true
 	ID string `json:"ID"`
 
-	// size of every layer image.
+	// size of each layer image.
 	// Required: true
 	Size int64 `json:"Size"`
 }
+
+/* polymorph HistoryResultItem Author false */
+
+/* polymorph HistoryResultItem Comment false */
+
+/* polymorph HistoryResultItem Created false */
+
+/* polymorph HistoryResultItem CreatedBy false */
+
+/* polymorph HistoryResultItem EmptyLayer false */
+
+/* polymorph HistoryResultItem ID false */
+
+/* polymorph HistoryResultItem Size false */
 
 // Validate validates this history result item
 func (m *HistoryResultItem) Validate(formats strfmt.Registry) error {
