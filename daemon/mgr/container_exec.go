@@ -77,7 +77,6 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 			exitCode := 126
 			execConfig.ExitCode = int64(exitCode)
 		}
-		mgr.ExecProcesses.Put(execid, execConfig)
 	}()
 
 	if attach != nil {
