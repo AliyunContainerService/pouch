@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/pkg/exec"
@@ -37,11 +36,6 @@ type PrjQuotaDriver struct {
 	// value: the mountpoint of the device in the filesystem
 	mountPoints map[uint64]string
 
-	// devLimits saves all the limit of device.
-	// key: device ID
-	// value: the storage upper limit size of the device(unit:B)
-	devLimits map[uint64]uint64
-
 	// lastID is used to mark last used quota ID.
 	// quota ID is allocated increasingly by sequence one by one.
 	lastID uint32
@@ -57,7 +51,7 @@ func (quota *PrjQuotaDriver) EnforceQuota(dir string) (string, error) {
 	}
 
 	// set limit of dir's device in driver
-	if _, err = quota.setDevLimit(dir, devID); err != nil {
+	if _, err = setDevLimit(dir, devID); err != nil {
 		return "", errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
 	}
 
@@ -150,13 +144,13 @@ func (quota *PrjQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 		return errors.Errorf("failed to find quota id to set subtree")
 	}
 
+	// transfer limit from kbyte to byte
 	limit, err := bytefmt.ToKilobytes(size)
 	if err != nil {
 		return errors.Wrapf(err, "failed to change size: (%s) to kilobytes", size)
 	}
 
-	// transfer limit from kbyte to byte
-	if err := quota.checkDevLimit(dir, limit*1024); err != nil {
+	if err := checkDevLimit(dir, limit*1024); err != nil {
 		return errors.Wrapf(err, "failed to check device limit, dir: (%s), limit: (%d)kb", dir, limit)
 	}
 
@@ -313,50 +307,4 @@ func (quota *PrjQuotaDriver) GetNextQuotaID() (uint32, error) {
 
 	logrus.Debugf("get next project quota id: %d", id)
 	return id, nil
-}
-
-// setDevLimit sets device storage upper limit in quota driver according to inpur dir.
-func (quota *PrjQuotaDriver) setDevLimit(dir string, devID uint64) (uint64, error) {
-	if limit, exist := quota.devLimits[devID]; exist {
-		return limit, nil
-	}
-
-	// get storage upper limit of the device which the dir is on.
-	var stfs syscall.Statfs_t
-	if err := syscall.Statfs(dir, &stfs); err != nil {
-		logrus.Errorf("failed to get path: (%s) limit, err: (%v)", dir, err)
-		return 0, errors.Wrapf(err, "failed to get path: (%s) limit", dir)
-	}
-	limit := stfs.Blocks * uint64(stfs.Bsize)
-
-	quota.lock.Lock()
-	quota.devLimits[devID] = limit
-	quota.lock.Unlock()
-
-	logrus.Debugf("SetDevLimit: dir %s limit is %v B", dir, limit)
-	return limit, nil
-}
-
-// checkDevLimit checks if the device on which the input dir lies has already been recorded in driver.
-func (quota *PrjQuotaDriver) checkDevLimit(dir string, size uint64) error {
-	devID, err := system.GetDevID(dir)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get device id, dir: (%s)", dir)
-	}
-
-	limit, exist := quota.devLimits[devID]
-	if !exist {
-		// if has not recorded, just add (dir, device, limit) to driver.
-		if limit, err = quota.setDevLimit(dir, devID); err != nil {
-			return errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
-		}
-	}
-
-	if limit < size {
-		return fmt.Errorf("dir %s quota limit %v must be less than %v", dir, size, limit)
-	}
-
-	logrus.Debugf("succeeded in checkDevLimit (dir %s quota limit %v B) with size %v B", dir, limit, size)
-
-	return nil
 }

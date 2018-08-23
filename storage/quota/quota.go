@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
+	"github.com/alibaba/pouch/pkg/system"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -26,11 +29,19 @@ const (
 	procMountFile = "/proc/mounts"
 )
 
-var hasQuota bool
-
 var (
+	hasQuota bool
+
 	// GQuotaDriver represents global quota driver.
 	GQuotaDriver = NewQuotaDriver("")
+
+	// devLimits saves all the limit of device.
+	// key: device ID
+	// value: the storage upper limit size of the device(unit:B)
+	devLimits = make(map[uint64]uint64)
+
+	// the lock for devLimits
+	lock sync.Mutex
 )
 
 // BaseQuota defines the quota operation interface.
@@ -80,7 +91,6 @@ func NewQuotaDriver(name string) BaseQuota {
 		quota = &PrjQuotaDriver{
 			quotaIDs:    make(map[uint32]struct{}),
 			mountPoints: make(map[uint64]string),
-			devLimits:   make(map[uint64]uint64),
 		}
 	default:
 		kernelVersion, err := kernel.GetKernelVersion()
@@ -88,7 +98,6 @@ func NewQuotaDriver(name string) BaseQuota {
 			quota = &PrjQuotaDriver{
 				quotaIDs:    make(map[uint32]struct{}),
 				mountPoints: make(map[uint64]string),
-				devLimits:   make(map[uint64]uint64),
 			}
 		} else {
 			quota = &GrpQuotaDriver{
@@ -319,4 +328,104 @@ func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
 	}
 	logrus.Infof("Load repquota ids: %d, list: %v", len(quotaIDs), quotaIDs)
 	return quotaIDs, minID, nil
+}
+
+func getMountpoint(dir string) (string, error) {
+	var (
+		mountPoint string
+	)
+
+	output, err := ioutil.ReadFile(procMountFile)
+	if err != nil {
+		logrus.Warnf("failed to read file: (%s), err: (%v)", procMountFile, err)
+		return "", errors.Wrapf(err, "failed to read file: (%s)", procMountFile)
+	}
+
+	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
+	for _, line := range strings.Split(string(output), "\n") {
+		parts := strings.Split(line, " ")
+		if len(parts) != 6 {
+			continue
+		}
+
+		// only check xfs/ext3/ext4 file system
+		if parts[2] != "xfs" && parts[2] != "ext3" && parts[2] != "ext4" {
+			continue
+		}
+
+		// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
+		// /dev/sdb2 /home/pouch/overlay ext4 rw,relatime,prjquota,data=ordered 0 0
+		// we will choose the longest match string, /home/pouch/overlay.
+		if strings.HasPrefix(dir, parts[1]) && len(parts[1]) > len(mountPoint) {
+			mountPoint = parts[1]
+		}
+	}
+
+	if mountPoint == "" {
+		return "", errors.Errorf("failed to get mount point of directory: (%s)", dir)
+	}
+
+	return mountPoint, nil
+}
+
+// setDevLimit sets device storage upper limit in quota driver according to inpur dir.
+func setDevLimit(dir string, devID uint64) (uint64, error) {
+	lock.Lock()
+	limit, exist := devLimits[devID]
+	lock.Unlock()
+	if exist {
+		return limit, nil
+	}
+
+	mp, err := getMountpoint(dir)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
+	}
+
+	newDevID, _ := system.GetDevID(mp)
+	if newDevID != devID {
+		return 0, errors.Errorf("failed to set device limit, no such device id: (%d), checked id: (%d)",
+			devID, newDevID)
+	}
+
+	// get storage upper limit of the device which the dir is on.
+	var stfs syscall.Statfs_t
+	if err := syscall.Statfs(mp, &stfs); err != nil {
+		logrus.Errorf("failed to get path: (%s) limit, err: (%v)", mp, err)
+		return 0, errors.Wrapf(err, "failed to get path: (%s) limit", mp)
+	}
+	limit = stfs.Blocks * uint64(stfs.Bsize)
+
+	lock.Lock()
+	devLimits[devID] = limit
+	lock.Unlock()
+
+	logrus.Debugf("SetDevLimit: dir: (%s), mountpoint: (%s), limit: (%v) B", dir, mp, limit)
+	return limit, nil
+}
+
+// checkDevLimit checks if the device on which the input dir lies has already been recorded in driver.
+func checkDevLimit(dir string, size uint64) error {
+	devID, err := system.GetDevID(dir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get device id, dir: (%s)", dir)
+	}
+
+	lock.Lock()
+	limit, exist := devLimits[devID]
+	lock.Unlock()
+	if !exist {
+		// if has not recorded, just add (dir, device, limit) to driver.
+		if limit, err = setDevLimit(dir, devID); err != nil {
+			return errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
+		}
+	}
+
+	if limit < size {
+		return fmt.Errorf("dir %s quota limit %v must be less than %v", dir, size, limit)
+	}
+
+	logrus.Debugf("succeeded in checkDevLimit (dir %s quota limit %v B) with size %v B", dir, limit, size)
+
+	return nil
 }

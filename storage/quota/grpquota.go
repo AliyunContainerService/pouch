@@ -50,6 +50,11 @@ func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
 		return "", errors.Wrapf(err, "failed to get deivce id for directory: (%s)", dir)
 	}
 
+	// set limit of dir's device in driver
+	if _, err = setDevLimit(dir, devID); err != nil {
+		return "", errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
+	}
+
 	quota.lock.Lock()
 	defer quota.lock.Unlock()
 
@@ -227,9 +232,14 @@ func (quota *GrpQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 		return errors.Errorf("failed to find quota id to set subtree")
 	}
 
+	// transfer limit from kbyte to byte
 	limit, err := bytefmt.ToKilobytes(size)
 	if err != nil {
 		return errors.Wrapf(err, "failed to change size: (%s) to kilobytes", size)
+	}
+
+	if err := checkDevLimit(dir, limit*1024); err != nil {
+		return err
 	}
 
 	return quota.setQuota(id, limit, mountPoint)
