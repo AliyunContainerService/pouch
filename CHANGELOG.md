@@ -1,5 +1,176 @@
 # CHANGELOG
 
+## 1.0.0-rc2 (2018-08-23)
+
+__IMPORTANT__: In PouchContainer 1.0.0-rc2 makes runtime stable and introduces:
+
+* Image Manager supports history functionality
+* Syslog Driver supports lazy connection
+* Support nvidia-container 2.0 to enable GPU access
+* CRI supports exec resize
+
+### __Pouch Daemon__
+
+* bugfix: fix runtime script may be covered [\#2141](https://github.com/alibaba/pouch/pull/2141) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: fix failed to run a container with specifying a non-exist workdir [\#2127](https://github.com/alibaba/pouch/pull/2127) ([HusterWan](https://github.com/HusterWan))
+* \[bugfix\] we should parse env params when create container [\#2121](https://github.com/alibaba/pouch/pull/2121) ([HusterWan](https://github.com/HusterWan))
+* bugfix: can't use sudo command [\#2120](https://github.com/alibaba/pouch/pull/2120) ([rudyfly](https://github.com/rudyfly))
+* bugfix: fix that list volumes sets hostname as default label filter [\#2119](https://github.com/alibaba/pouch/pull/2119) ([xiaoxubeii](https://github.com/xiaoxubeii))
+* feature: add stats api in daemon side [\#2112](https://github.com/alibaba/pouch/pull/2112) ([allencloud](https://github.com/allencloud))
+* bugfix: extend reference separator [\#2117](https://github.com/alibaba/pouch/pull/2117) ([fuweid](https://github.com/fuweid))
+* refactor: support specify Namespace by user [\#2106](https://github.com/alibaba/pouch/pull/2106) ([HusterWan](https://github.com/HusterWan))
+* feature: add exec resize router [\#2105](https://github.com/alibaba/pouch/pull/2105) ([HusterWan](https://github.com/HusterWan))
+* bugfix: fix meta store return all item when empty prefix [\#2104](https://github.com/alibaba/pouch/pull/2104) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: add disk quota for container metadata directory [\#2102](https://github.com/alibaba/pouch/pull/2102) ([rudyfly](https://github.com/rudyfly))
+* bugfix: skip empty container dirs [\#2098](https://github.com/alibaba/pouch/pull/2098) ([HusterWan](https://github.com/HusterWan))
+* refactor: reduce repeat validate code [\#2093](https://github.com/alibaba/pouch/pull/2093) ([Ace-Tang](https://github.com/Ace-Tang))
+* cgroup: enable memory swappiness equal to -1 [\#2092](https://github.com/alibaba/pouch/pull/2092) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: populate volume error [\#2087](https://github.com/alibaba/pouch/pull/2087) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: fix that ListVolumes did not implement filter by labels [\#2083](https://github.com/alibaba/pouch/pull/2083) ([xiaoxubeii](https://github.com/xiaoxubeii))
+* feature: support runtime args [\#2085](https://github.com/alibaba/pouch/pull/2085) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: remove duplicate TypeUrl initialize [\#2082](https://github.com/alibaba/pouch/pull/2082) ([HusterWan](https://github.com/HusterWan))
+* bugfix: fix that ContainerManager.Create wouldn't remove snapshot when failed [\#2080](https://github.com/alibaba/pouch/pull/2080) ([xiaoxubeii](https://github.com/xiaoxubeii))
+* bugfix: do umount rootfs when failed to operate volumes [\#2078](https://github.com/alibaba/pouch/pull/2078) ([rudyfly](https://github.com/rudyfly))
+* bugfix: remove blobs and snapshot when remove image [\#2075](https://github.com/alibaba/pouch/pull/2075) ([fuweid](https://github.com/fuweid))
+* bugfix: cannot remove image reference by specified reference when other references are used [\#2074](https://github.com/alibaba/pouch/pull/2074) ([xiaoxubeii](https://github.com/xiaoxubeii))
+* api: checkpoint api optimization [\#2072](https://github.com/alibaba/pouch/pull/2072) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: events service logic code of all links [\#2071](https://github.com/alibaba/pouch/pull/2071) ([HusterWan](https://github.com/HusterWan))
+* feature: lazy connect to syslog server [\#2068](https://github.com/alibaba/pouch/pull/2068) ([fuweid](https://github.com/fuweid))
+* feature: add pouch history functionality [\#2066](https://github.com/alibaba/pouch/pull/2066) ([xiechengsheng](https://github.com/xiechengsheng))
+* refactor: move functions from pre-start hook to pouchd [\#2064](https://github.com/alibaba/pouch/pull/2064) ([rudyfly](https://github.com/rudyfly))
+* feature: support event service [\#2053](https://github.com/alibaba/pouch/pull/2053) ([HusterWan](https://github.com/HusterWan))
+* bugfix: cpu params json name compatibility with moby [\#2041](https://github.com/alibaba/pouch/pull/2041) ([HusterWan](https://github.com/HusterWan))
+* bugfix: failed to start container when /etc/mtab is symbol link [\#2035](https://github.com/alibaba/pouch/pull/2035) ([rudyfly](https://github.com/rudyfly))
+* bugfix: convert container err into pouchd manager error [\#2034](https://github.com/alibaba/pouch/pull/2034) ([allencloud](https://github.com/allencloud))
+* feature: support nvidia-container 2.0 to enable GPU access [\#2029](https://github.com/alibaba/pouch/pull/2029) ([CodeJuan](https://github.com/CodeJuan))
+* bugfix: fix container can't ping outside and resolve domain names [\#2025](https://github.com/alibaba/pouch/pull/2025) ([rudyfly](https://github.com/rudyfly))
+* fix: add more details in the NotFound error [\#1960](https://github.com/alibaba/pouch/pull/1960) ([allencloud](https://github.com/allencloud))
+* bugfix: add ErrorMessage in jsonstream [\#1927](https://github.com/alibaba/pouch/pull/1927) ([fuweid](https://github.com/fuweid))
+* bugfix: don't set mount tab when rootfs diskquota is null [\#1926](https://github.com/alibaba/pouch/pull/1926) ([rudyfly](https://github.com/rudyfly))
+* bugfix: add --name following container name in cmd [\#1924](https://github.com/alibaba/pouch/pull/1924) ([fuweid](https://github.com/fuweid))
+* bugfix: create fifo is not exist [\#1766](https://github.com/alibaba/pouch/pull/1766) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: avoid task exit channel exit unexpected [\#1765](https://github.com/alibaba/pouch/pull/1765) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: pull non-exist image in container create [\#1764](https://github.com/alibaba/pouch/pull/1764) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: pouch pull should handle space input as an error [\#1753](https://github.com/alibaba/pouch/pull/1753) ([xiechengsheng](https://github.com/xiechengsheng))
+* feature: populate empty volumes when creating container [\#1745](https://github.com/alibaba/pouch/pull/1745) ([shaloulcy](https://github.com/shaloulcy))
+* bugfix: modify volume error messages [\#1744](https://github.com/alibaba/pouch/pull/1744) ([rudyfly](https://github.com/rudyfly))
+* fix: ensure daemon start successfully after update damon offline [\#1743](https://github.com/alibaba/pouch/pull/1743) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: support checkpoint [\#1740](https://github.com/alibaba/pouch/pull/1740) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: remove InstanceInfo from container env [\#1738](https://github.com/alibaba/pouch/pull/1738) ([allencloud](https://github.com/allencloud))
+* refactor: make all quota implementation logic clear [\#1736](https://github.com/alibaba/pouch/pull/1736) ([allencloud](https://github.com/allencloud))
+* fix: fix swagger generate not consistent [\#1734](https://github.com/alibaba/pouch/pull/1734) ([Ace-Tang](https://github.com/Ace-Tang))
+
+### __Storage__
+
+* bugfix: can't quota on disk quota [\#2133](https://github.com/alibaba/pouch/pull/2133) ([rudyfly](https://github.com/rudyfly))
+* bugfix: fail to execute repquota [\#2123](https://github.com/alibaba/pouch/pull/2123) ([rudyfly](https://github.com/rudyfly))
+* refactor: remove unused code from storage [\#2079](https://github.com/alibaba/pouch/pull/2079) ([rudyfly](https://github.com/rudyfly))
+* refactor: add more error information [\#2055](https://github.com/alibaba/pouch/pull/2055) ([rudyfly](https://github.com/rudyfly))
+* bug: fix judgement for SetRootfsDiskQuota [\#2028](https://github.com/alibaba/pouch/pull/2028) ([Ace-Tang](https://github.com/Ace-Tang))
+* refactor: rm deadcode in storage/volume [\#2027](https://github.com/alibaba/pouch/pull/2027) ([allencloud](https://github.com/allencloud))
+
+### __Kubernetes__
+
+* bugfix: distinguish NotFound error with others about image [\#2139](https://github.com/alibaba/pouch/pull/2139) ([Starnop](https://github.com/Starnop))
+* feature: extend cri apis for support quotaID [\#2138](https://github.com/alibaba/pouch/pull/2138) ([Starnop](https://github.com/Starnop))
+* bugfix: attach hanging of cri container [\#2130](https://github.com/alibaba/pouch/pull/2130) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: return error when remove/stop containers of sandbox failed [\#2109](https://github.com/alibaba/pouch/pull/2109) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: use image reference during ContainerStatus [\#2096](https://github.com/alibaba/pouch/pull/2096) ([fuweid](https://github.com/fuweid))
+* bugfix: avoid the deadlock when failed to remove invalid sandbox [\#2073](https://github.com/alibaba/pouch/pull/2073) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* feature: update the version of cri-o/ocicni [\#2065](https://github.com/alibaba/pouch/pull/2065) ([Starnop](https://github.com/Starnop))
+* feature: support resize the tty of cri exec process [\#2063](https://github.com/alibaba/pouch/pull/2063) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: makeup logpath from sandbox & container mata [\#2054](https://github.com/alibaba/pouch/pull/2054) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: fix stdin hang when `kubectl exec` [\#2044](https://github.com/alibaba/pouch/pull/2044) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: data race in pkg cri/stream [\#1925](https://github.com/alibaba/pouch/pull/1925) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* feature: add CriEnabled field in api and show this in cli [\#1918](https://github.com/alibaba/pouch/pull/1918) ([allencloud](https://github.com/allencloud))
+* feature: complete the function of runtime status [\#1898](https://github.com/alibaba/pouch/pull/1898) ([Starnop](https://github.com/Starnop))
+* \[bug\]: roolback the code about CRI of version v1alpha1 [\#1755](https://github.com/alibaba/pouch/pull/1755) ([Starnop](https://github.com/Starnop))
+
+### __Documentation__
+
+* docs: add disk quota requirement restriction to be much more clear [\#2142](https://github.com/alibaba/pouch/pull/2142) ([allencloud](https://github.com/allencloud))
+* docs: add runtime format in config doc [\#2110](https://github.com/alibaba/pouch/pull/2110) ([Ace-Tang](https://github.com/Ace-Tang))
+* docs: fix wrong link of pouchd config [\#2107](https://github.com/alibaba/pouch/pull/2107) ([zjumoon01](https://github.com/zjumoon01))
+* docs: update pull request template about test [\#2091](https://github.com/alibaba/pouch/pull/2091) ([allencloud](https://github.com/allencloud))
+* docs: add eleme in adoptors [\#2077](https://github.com/alibaba/pouch/pull/2077) ([allencloud](https://github.com/allencloud))
+* docs: update install step in INSTALLATION.md [\#2045](https://github.com/alibaba/pouch/pull/2045) ([xiechengsheng](https://github.com/xiechengsheng))
+* bugfix: move function getListener\(\) to pkg/net/listener.go [\#2040](https://github.com/alibaba/pouch/pull/2040) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* docs: add adoptors.md for PouchContainer project [\#2038](https://github.com/alibaba/pouch/pull/2038) ([allencloud](https://github.com/allencloud))
+* doc: fix spelling error [\#1961](https://github.com/alibaba/pouch/pull/1961) ([Shallownight](https://github.com/Shallownight))
+* docs: update kubernetes deploying document [\#1917](https://github.com/alibaba/pouch/pull/1917) ([allencloud](https://github.com/allencloud))
+* docs: add code coverage icon on README [\#1893](https://github.com/alibaba/pouch/pull/1893) ([allencloud](https://github.com/allencloud))
+* bugfix: a typo in CONTRIBUTTING.md [\#1775](https://github.com/alibaba/pouch/pull/1775) ([JeromeTan1997](https://github.com/JeromeTan1997))
+* style: alert the name of struct context to streamContext  [\#1741](https://github.com/alibaba/pouch/pull/1741) ([Starnop](https://github.com/Starnop))
+
+### __Testing__
+
+* test: make TestRunWithWorkingDir test case happy [\#2140](https://github.com/alibaba/pouch/pull/2140) ([HusterWan](https://github.com/HusterWan))
+* bugfix: fix diskquota test case [\#2134](https://github.com/alibaba/pouch/pull/2134) ([rudyfly](https://github.com/rudyfly))
+* test: make Test\_mergeEnvSlice test case happy [\#2131](https://github.com/alibaba/pouch/pull/2131) ([HusterWan](https://github.com/HusterWan))
+* bugfix: make rpm package script works [\#2100](https://github.com/alibaba/pouch/pull/2100) ([chuanchang](https://github.com/chuanchang))
+* test: add unit test for storage module [\#2089](https://github.com/alibaba/pouch/pull/2089) ([rudyfly](https://github.com/rudyfly))
+* test: add test cases about modifyContainerConfig&containerNetns [\#2062](https://github.com/alibaba/pouch/pull/2062) ([Starnop](https://github.com/Starnop))
+* test: add test cases about modifyHostConfig [\#2056](https://github.com/alibaba/pouch/pull/2056) ([Starnop](https://github.com/Starnop))
+* test: add test cases about toCNIPortMappings [\#2050](https://github.com/alibaba/pouch/pull/2050) ([Starnop](https://github.com/Starnop))
+* bugfix: fast fail if the exit code of script is not zero [\#2049](https://github.com/alibaba/pouch/pull/2049) ([fuweid](https://github.com/fuweid))
+* test: fix typo in TestAliKernelDiskQuotaWorks [\#2048](https://github.com/alibaba/pouch/pull/2048) ([chuanchang](https://github.com/chuanchang))
+* refactor: make the API case clear and stable [\#2042](https://github.com/alibaba/pouch/pull/2042) ([fuweid](https://github.com/fuweid))
+* test: add test cases about toCriContainer [\#2039](https://github.com/alibaba/pouch/pull/2039) ([Starnop](https://github.com/Starnop))
+* bugfix: cri Test\_getSELinuxSecurityOpts [\#2031](https://github.com/alibaba/pouch/pull/2031) ([Starnop](https://github.com/Starnop))
+* test: add test cases about CRI image [\#2030](https://github.com/alibaba/pouch/pull/2030) ([Starnop](https://github.com/Starnop))
+* test: add unit-test for getSELinuxSecurityOpts method which locate on cri/v… [\#2023](https://github.com/alibaba/pouch/pull/2023) ([Coordinate36](https://github.com/Coordinate36))
+* test: add unit-test for toCriSandbox [\#2002](https://github.com/alibaba/pouch/pull/2002) ([MarkLux](https://github.com/MarkLux))
+* Test\_imageToCriImage [\#1990](https://github.com/alibaba/pouch/pull/1990) ([KevinLeung-nice](https://github.com/KevinLeung-nice))
+* BJ266-4: Add unit-test for apis/opts/ports.go, fix \#1906  [\#1976](https://github.com/alibaba/pouch/pull/1976) ([devily](https://github.com/devily))
+* test: add unit-test for apis/opts/portbindings.go [\#1951](https://github.com/alibaba/pouch/pull/1951) ([yuannauy123](https://github.com/yuannauy123))
+* test: add unit-test for getAppArmorSecurityOpts and getSeccompSecurityOpts [\#1948](https://github.com/alibaba/pouch/pull/1948) ([kaizizhu](https://github.com/kaizizhu))
+* add unit test for modifyContainerNamespaceOptions [\#1945](https://github.com/alibaba/pouch/pull/1945) ([MarkLux](https://github.com/MarkLux))
+* bugfix: fix panic for AttachVolume unittests [\#1923](https://github.com/alibaba/pouch/pull/1923) ([shaloulcy](https://github.com/shaloulcy))
+* test: unit test for cri/stream/errors.go [\#1909](https://github.com/alibaba/pouch/pull/1909) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* test: run with volume whose destination is not empty [\#1899](https://github.com/alibaba/pouch/pull/1899) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: remove duplicate package in test file [\#1896](https://github.com/alibaba/pouch/pull/1896) ([fuweid](https://github.com/fuweid))
+* test: add test cases about parse object [\#1895](https://github.com/alibaba/pouch/pull/1895) ([Starnop](https://github.com/Starnop))
+* test: unit test for cri/stream/httpstream/httpstream.go [\#1892](https://github.com/alibaba/pouch/pull/1892) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* test: add unit-test for daemon/config/getConfigurations [\#1851](https://github.com/alibaba/pouch/pull/1851) ([SeaRise](https://github.com/SeaRise))
+* test: Add unit-test for Volume Core's DetachVolume method [\#1824](https://github.com/alibaba/pouch/pull/1824) ([panzaiyu](https://github.com/panzaiyu))
+* test: fix incorrect error judging in core\_test.go [\#1823](https://github.com/alibaba/pouch/pull/1823) ([jiapengcs](https://github.com/jiapengcs))
+* test: add unit test for func storage/volume/ListVolumeName [\#1810](https://github.com/alibaba/pouch/pull/1810) ([btlcmr0702](https://github.com/btlcmr0702))
+* test: add unit-test for daemon/config/getUnknownFlags [\#1808](https://github.com/alibaba/pouch/pull/1808) ([cyrann](https://github.com/cyrann))
+* add unit-test for Volume Core's VolumePath method [\#1788](https://github.com/alibaba/pouch/pull/1788) ([gfl699468](https://github.com/gfl699468))
+* test: add unit test cases for image\_proxy\_util.go [\#1786](https://github.com/alibaba/pouch/pull/1786) ([JeromeTan1997](https://github.com/JeromeTan1997))
+* test: add unit test for generateMountBindings and modifySandboxNamespaceOptions [\#1768](https://github.com/alibaba/pouch/pull/1768) ([ZouRui89](https://github.com/ZouRui89))
+* test: unit test for request cache of stream server [\#1767](https://github.com/alibaba/pouch/pull/1767) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* test: add api tests for some commands  [\#1747](https://github.com/alibaba/pouch/pull/1747) ([xiechengsheng](https://github.com/xiechengsheng))
+
+### __Contrib__
+
+* bash completion: first commit for bash completion [\#2059](https://github.com/alibaba/pouch/pull/2059) ([Ace-Tang](https://github.com/Ace-Tang))
+* makefile: simplify makefile output [\#1921](https://github.com/alibaba/pouch/pull/1921) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: Add missing document in Makefile [\#1757](https://github.com/alibaba/pouch/pull/1757) ([chuanchang](https://github.com/chuanchang))
+* refactor: reorder hack scripts [\#1750](https://github.com/alibaba/pouch/pull/1750) ([fuweid](https://github.com/fuweid))
+
+### __New Contributors__
+
+Here is the list of new contributors:
+
+* [CodeJuan](https://github.com/CodeJuan)
+* [btlcmr0702](https://github.com/btlcmr0702)
+* [Coordinate36](https://github.com/Coordinate36)
+* [devily](https://github.com/devily)
+* [Erhuan](https://github.com/cyrann)
+* [fanglin](https://github.com/gfl699468)
+* [Jerome Tan](https://github.com/JeromeTan1997)
+* [jiapengcs](https://github.com/jiapengcs)
+* [kaizizhu](https://github.com/kaizizhu)
+* [MarkLux](https://github.com/MarkLux)
+* [SeaRise](https://github.com/SeaRise)
+* [shanbo.lkw](https://github.com/KevinLeung-nice)
+* [Tardis Xu](https://github.com/xiaoxubeii)
+* [Wangrui](https://github.com/zjumoon01)
+* [yuannauy123](https://github.com/yuannauy123)
+* [yuchuan](https://github.com/Shallownight)
+* [panzaiyu](https://github.com/panzaiyu)
+
 ## 1.0.0-rc1 (2018-07-13)
 
 __IMPORTANT__: In PouchContainer 1.0.0-rc1 we have done many things that important to all users of PouchContainer:
