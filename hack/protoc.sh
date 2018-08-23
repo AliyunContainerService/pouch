@@ -39,7 +39,6 @@ generateproto(){
 }
 
 main(){
-    API_ROOT="${DIR}/cri/apis/v1alpha1" YEAR_TIME=" $(date '+%Y')" generateproto
     API_ROOT="${DIR}/cri/apis/v1alpha2" YEAR_TIME="" generateproto
 }
 main "$@"

@@ -14,7 +14,7 @@ import (
 )
 
 // RunCriService start cri service if pouchd is specified with --enable-cri.
-func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, stopCh chan error, readyCh chan bool) {
+func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr, stopCh chan error, readyCh chan bool) {
 	var err error
 
 	defer func() {
@@ -30,7 +30,7 @@ func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, i
 	case "v1alpha1":
 		err = runv1alpha1(daemonconfig, containerMgr, imageMgr, readyCh)
 	case "v1alpha2":
-		err = runv1alpha2(daemonconfig, containerMgr, imageMgr, readyCh)
+		err = runv1alpha2(daemonconfig, containerMgr, imageMgr, volumeMgr, readyCh)
 	default:
 		readyCh <- false
 		err = fmt.Errorf("invalid CRI version,failed to start CRI service")
@@ -79,9 +79,9 @@ func runv1alpha1(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 }
 
 // Start CRI service with CRI version: v1alpha2
-func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, readyCh chan bool) error {
+func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr, readyCh chan bool) error {
 	logrus.Infof("Start CRI service with CRI version: v1alpha2")
-	criMgr, err := criv1alpha2.NewCriManager(daemonconfig, containerMgr, imageMgr)
+	criMgr, err := criv1alpha2.NewCriManager(daemonconfig, containerMgr, imageMgr, volumeMgr)
 	if err != nil {
 		readyCh <- false
 		return fmt.Errorf("failed to get CriManager with error: %v", err)

@@ -400,3 +400,16 @@ func (c *CriWrapper) ImageFsInfo(ctx context.Context, r *runtime.ImageFsInfoRequ
 	}()
 	return c.CriManager.ImageFsInfo(ctx, r)
 }
+
+// RemoveVolume removes the volume.
+func (c *CriWrapper) RemoveVolume(ctx context.Context, r *runtime.RemoveVolumeRequest) (res *runtime.RemoveVolumeResponse, err error) {
+	logrus.Infof("RemoveVolume %q", r.GetVolumeName())
+	defer func() {
+		if err != nil {
+			logrus.Errorf("RemoveVolume %q failed, error: %v", r.GetVolumeName(), err)
+		} else {
+			logrus.Infof("RemoveVolume %q returns successfully", r.GetVolumeName())
+		}
+	}()
+	return c.CriManager.RemoveVolume(ctx, r)
+}

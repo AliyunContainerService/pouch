@@ -26,6 +26,7 @@ func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 
 	runtime.RegisterRuntimeServiceServer(s.server, s.criMgr)
 	runtime.RegisterImageServiceServer(s.server, s.criMgr)
+	runtime.RegisterVolumeServiceServer(s.server, s.criMgr)
 
 	return s, nil
 }
