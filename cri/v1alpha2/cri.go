@@ -533,6 +533,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			SpecAnnotation: specAnnotation,
 			NetPriority:    config.NetPriority,
 			DiskQuota:      resources.GetDiskQuota(),
+			QuotaID:        config.GetQuotaId(),
 		},
 		HostConfig: &apitypes.HostConfig{
 			Binds:     generateMountBindings(config.GetMounts()),
@@ -764,6 +765,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		LogPath:     logPath,
 		Volumes:     parseVolumesFromPouch(container.Config.Volumes),
 		Resources:   parseResourcesFromPouch(resources, diskQuota),
+		QuotaId:     container.Config.QuotaID,
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil
