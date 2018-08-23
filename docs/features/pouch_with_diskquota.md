@@ -1,4 +1,4 @@
-# PouchContainer with Diskquota
+# Diskquota
 
 ## What is diskquota
 
@@ -38,8 +38,36 @@ future.
 ## Get Started
 
 There are two ways in PouchContainer for a container to get involved in underlying
-filesystems. One is container rootfs, the other is container volume bind from
-host(outside of container) to inside. Both two dimensions are covered in PouchContainer.
+filesystems:
+
+* container rootfs (container filesystem root directory and logfile of container)
+* container volume bind from host(outside of container) to inside.
+
+Both two dimensions are covered in PouchContainer's diskquota.
+
+### Parameter Details
+
+Flag `--disk-quota` is used to restrict diskquota of container's corresponding directory. The input type is `string`.
+
+There are three ways to identify the input format:
+
+* `.*=10GB` maps container rootfs and all potential volumes binded inside;
+* `/=10GB` : maps only container rootfs without any volume binded directory in container;
+* `/=10GB,/a=10GB`: the front part maps container rootfs, and the back one maps the volume which is binded to directory `/a` inside container.
+
+Flag `--quota-id` is used to pick an existent quota ID to specify the newly input disk quota. The input type is `string` as well. If input `quota-id` is less than 0, pouchd will automatically generate one brand new quotaid and return this ID. If input `quota-id` is 0, pouchd will not set quotaid. If `quota-id` is larger than 0, pouchd will use the input quota ID to set disk quota.
+
+> valid `quota-id` which is larger than 0 is only used in `upgrade` interface. In this scenario of triggering `upgrade` interface, pouchd will remove the old container and use the new image to take place of old container's image, and create a new container which should inherit the original diskquota. Then user can pass an original `quota-id` of original container to take effect on newly created container.
+
+The effect taken by `disk-quota` and `quota-id` is like the following sheet:
+
+| disk-quota | quota-id(<0) | quota-id(=0) | quota-id(>0)|
+| :--------: | :--------:| :--: |:--: |
+| .*=10GB  | auto gen quota-id and return，rootfs+n\*volume(total 10GB)|no setting quotaID，rootfs 10GB，each volume 10GB| setting as input quota-id, rootfs+n\*volume(total 10GB) |
+| /=10GB   | auto gen quota-id and return，only rootfs 10GB)|no setting quotaID，only rootfs 10GB| setting as input quota-id, only rootfs 10GB|
+| /=10GB,/a=10GB      | invalid |no setting quotaID，rootfs=10GB, only volume mapped to `/a` 10GB| invalid |
+
+Pouchd created local volume with disk quota if user requests to create a volume with size option. If this volume is already set a disk quota rule, then no matter what directory inside container this volume is binded to, and no matter what disk quota user adds to the inside directory again, this volume will be under the original disk quota which is set at the very beginning.
 
 ### Container Rootfs diskquota
 
@@ -49,7 +77,7 @@ successfully, we can see rootfs size is 10GB via command `df -h`. And it shows
 that diskquota has taken effects.
 
 ```bash
-$ pouch run -ti --disk-quota 10g registry.hub.docker.com/library/busybox:latest df -h
+$ pouch run -ti --disk-quota /=10g registry.hub.docker.com/library/busybox:latest df -h
 Filesystem                Size      Used Available Use% Mounted on
 overlay                  10.0G     24.0K     10.0G   0% /
 tmpfs                    64.0M         0     64.0M   0% /dev
