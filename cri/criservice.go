@@ -33,7 +33,7 @@ func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, i
 		err = runv1alpha2(daemonconfig, containerMgr, imageMgr, volumeMgr, readyCh)
 	default:
 		readyCh <- false
-		err = fmt.Errorf("invalid CRI version,failed to start CRI service")
+		err = fmt.Errorf("failed to start CRI service: invalid CRI version %s, expected to be v1alpha1 or v1alpha2", daemonconfig.CriConfig.CriVersion)
 	}
 	return
 }
