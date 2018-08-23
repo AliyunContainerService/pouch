@@ -16,6 +16,7 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/cgroups"
@@ -822,17 +823,19 @@ func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
 // ensureSandboxImageExists pulls the image when it's not present.
 func (c *CriManager) ensureSandboxImageExists(ctx context.Context, imageRef string) error {
 	_, _, _, err := c.ImageMgr.CheckReference(ctx, imageRef)
-	// TODO: maybe we should distinguish NotFound error with others.
 	if err == nil {
 		return nil
 	}
 
-	err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))
-	if err != nil {
-		return fmt.Errorf("pull sandbox image %q failed: %v", imageRef, err)
+	if errtypes.IsNotfound(err) {
+		err = c.ImageMgr.PullImage(ctx, imageRef, nil, bytes.NewBuffer([]byte{}))
+		if err != nil {
+			return fmt.Errorf("failed to pull sandbox image %q: %v", imageRef, err)
+		}
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("failed to check sandbox image %q: %v", imageRef, err)
 }
 
 // getUserFromImageUser gets uid or user name of the image user.

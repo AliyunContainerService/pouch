@@ -990,7 +990,8 @@ func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesReques
 	return &runtime.ListImagesResponse{Images: images}, nil
 }
 
-// ImageStatus returns the status of the image, returns nil if the image isn't present.
+// ImageStatus returns the status of the image. If the image is not present,
+// returns a response with ImageStatusResponse.Image set to nil.
 func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (*runtime.ImageStatusResponse, error) {
 	imageRef := r.GetImage().GetImage()
 	ref, err := reference.Parse(imageRef)
@@ -1000,9 +1001,10 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 
 	imageInfo, err := c.ImageMgr.GetImage(ctx, ref.String())
 	if err != nil {
-		// TODO: separate ErrImageNotFound with others.
-		// Now we just return empty if the error occurred.
-		return &runtime.ImageStatusResponse{}, nil
+		if errtypes.IsNotfound(err) {
+			return &runtime.ImageStatusResponse{}, nil
+		}
+		return nil, err
 	}
 
 	image, err := imageToCriImage(imageInfo)
@@ -1046,8 +1048,7 @@ func (c *CriManager) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequ
 
 	if err := c.ImageMgr.RemoveImage(ctx, imageRef, false); err != nil {
 		if errtypes.IsNotfound(err) {
-			// TODO: separate ErrImageNotFound with others.
-			// Now we just return empty if the error occurred.
+			// Now we just return empty if the ErrorNotFound occurred.
 			return &runtime.RemoveImageResponse{}, nil
 		}
 		return nil, err
