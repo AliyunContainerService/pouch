@@ -130,6 +130,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		HTTPProxy:         mgr.config.ImageProxy,
 		// HTTPSProxy: ,
 		// ID: ,
+		CgroupDriver:       mgr.config.GetCgroupDriver(),
 		Images:             int64(len(images)),
 		IndexServerAddress: "https://index.docker.io/v1/",
 		DefaultRegistry:    mgr.config.DefaultRegistry,
