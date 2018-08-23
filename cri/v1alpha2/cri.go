@@ -279,7 +279,9 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		NetNSPath: netnsPath,
 		Runtime:   config.Annotations[anno.KubernetesRuntime],
 	}
-	c.SandboxStore.Put(sandboxMeta)
+	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+		return nil, err
+	}
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
 }
