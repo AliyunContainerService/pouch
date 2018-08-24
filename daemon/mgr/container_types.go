@@ -285,7 +285,7 @@ func (c *Container) StopTimeout() int64 {
 func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 	c.Lock()
 	defer c.Unlock()
-	config, err := getconfig()
+	imageConf, err := getconfig()
 	if err != nil {
 		return err
 	}
@@ -294,19 +294,66 @@ func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 	// Otherwise use the image's configuration to fill it.
 	if len(c.Config.Entrypoint) == 0 {
 		if len(c.Config.Cmd) == 0 {
-			c.Config.Cmd = config.Cmd
+			c.Config.Cmd = imageConf.Cmd
 		}
-		c.Config.Entrypoint = config.Entrypoint
+		c.Config.Entrypoint = imageConf.Entrypoint
 	}
 
 	// ContainerConfig.Env is new, and the ImageConfig.Env is old
-	newEnvSlice, err := mergeEnvSlice(c.Config.Env, config.Env)
+	newEnvSlice, err := mergeEnvSlice(c.Config.Env, imageConf.Env)
 	if err != nil {
 		return err
 	}
 	c.Config.Env = newEnvSlice
 	if c.Config.WorkingDir == "" {
-		c.Config.WorkingDir = config.WorkingDir
+		c.Config.WorkingDir = imageConf.WorkingDir
+	}
+
+	// merge user from image image config.
+	if c.Config.User == "" {
+		c.Config.User = imageConf.User
+	}
+
+	// merge stop signal from image config.
+	if c.Config.StopSignal == "" {
+		c.Config.StopSignal = imageConf.StopSignal
+	}
+
+	// merge label from image image config, if same label key exist,
+	// use container config.
+	if imageConf.Labels != nil {
+		if c.Config.Labels == nil {
+			c.Config.Labels = make(map[string]string)
+		}
+		for k, v := range c.Config.Labels {
+			imageConf.Labels[k] = v
+		}
+		c.Config.Labels = imageConf.Labels
+	}
+
+	// merge exposed ports from image config, if same label key exist,
+	// use container config.
+	if len(imageConf.ExposedPorts) > 0 {
+		if c.Config.ExposedPorts == nil {
+			c.Config.ExposedPorts = make(map[string]interface{})
+		}
+		for k, v := range imageConf.ExposedPorts {
+			if _, exist := c.Config.ExposedPorts[k]; !exist {
+				c.Config.ExposedPorts[k] = interface{}(v)
+			}
+		}
+	}
+
+	// merge volumes from image config.
+	if len(imageConf.Volumes) > 0 {
+		if c.Config.Volumes == nil {
+			c.Config.Volumes = make(map[string]interface{})
+		}
+		for k, v := range imageConf.Volumes {
+			if _, exist := c.Config.Volumes[k]; !exist {
+				c.Config.Volumes[k] = interface{}(v)
+			}
+		}
 	}
 
 	return nil

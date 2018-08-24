@@ -355,6 +355,21 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		HostConfig: config.HostConfig,
 	}
 
+	// merge image's config into container
+	if err := container.merge(func() (ocispec.ImageConfig, error) {
+		img, err := mgr.Client.GetImage(ctx, config.Image)
+		if err != nil {
+			return ocispec.ImageConfig{}, err
+		}
+		ociImage, err := containerdImageToOciImage(ctx, img)
+		if err != nil {
+			return ocispec.ImageConfig{}, err
+		}
+		return ociImage.Config, nil
+	}); err != nil {
+		return nil, err
+	}
+
 	// set container basefs, basefs is not created in pouchd, it will created
 	// after create options passed to containerd.
 	mgr.setBaseFS(ctx, container, id)
@@ -379,18 +394,6 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	if err := parseSecurityOpts(container, config.HostConfig.SecurityOpt); err != nil {
-		return nil, err
-	}
-
-	// merge image's config into container
-	if err := container.merge(func() (ocispec.ImageConfig, error) {
-		img, err := mgr.Client.GetImage(ctx, config.Image)
-		ociImage, err := containerdImageToOciImage(ctx, img)
-		if err != nil {
-			return ocispec.ImageConfig{}, err
-		}
-		return ociImage.Config, nil
-	}); err != nil {
 		return nil, err
 	}
 
