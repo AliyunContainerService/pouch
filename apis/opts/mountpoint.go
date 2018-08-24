@@ -2,6 +2,7 @@ package opts
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -105,8 +106,9 @@ func ParseBindMode(mp *types.MountPoint, mode string) error {
 
 // CheckDuplicateMountPoint is used to check duplicate mount point
 func CheckDuplicateMountPoint(mounts []*types.MountPoint, destination string) bool {
+	destination = filepath.Clean(destination)
 	for _, sm := range mounts {
-		if sm.Destination == destination {
+		if filepath.Clean(sm.Destination) == destination {
 			return true
 		}
 	}
