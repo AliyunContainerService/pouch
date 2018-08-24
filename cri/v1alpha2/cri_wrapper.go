@@ -20,24 +20,22 @@ func NewCriWrapper(c *CriManager) *CriWrapper {
 // StreamServerStart starts the stream server of CRI.
 func (c *CriWrapper) StreamServerStart() (err error) {
 	logrus.Infof("StreamServerStart starts stream server of cri manager")
-	defer func() {
-		if err != nil {
-			logrus.Errorf("failed to start StreamServer: %v", err)
-		} else {
-			logrus.Infof("success to start StreamServer of cri manager")
-		}
-	}()
+	if err != nil {
+		logrus.Errorf("failed to start StreamServer: %v", err)
+	} else {
+		logrus.Infof("success to start StreamServer of cri manager")
+	}
 	return c.CriManager.StreamServerStart()
 }
 
 // Version returns the runtime name, runtime version and runtime API version.
 func (c *CriWrapper) Version(ctx context.Context, r *runtime.VersionRequest) (res *runtime.VersionResponse, err error) {
-	logrus.Infof("Version shows the basic information of cri Manager")
+	logrus.Debugf("Version shows the basic information of cri Manager")
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get version: %v", err)
 		} else {
-			logrus.Infof("success to get version")
+			logrus.Debugf("success to get version")
 		}
 	}()
 	return c.CriManager.Version(ctx, r)
@@ -101,13 +99,13 @@ func (c *CriWrapper) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 
 // ListPodSandbox returns a list of Sandbox.
 func (c *CriWrapper) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandboxRequest) (res *runtime.ListPodSandboxResponse, err error) {
-	logrus.Infof("ListPodSandbox with filter %+v", r.GetFilter())
+	logrus.Debugf("ListPodSandbox with filter %+v", r.GetFilter())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to ListPodSandbox: %v", err)
 		} else {
 			// NOTE: maybe log detailed sandbox items with higher log level.
-			logrus.Infof("success to ListPodSandbox: %+v", res.Items)
+			logrus.Debugf("success to ListPodSandbox: %+v", res.Items)
 		}
 	}()
 	return c.CriManager.ListPodSandbox(ctx, r)
@@ -171,13 +169,13 @@ func (c *CriWrapper) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 // ListContainers lists all containers matching the filter.
 func (c *CriWrapper) ListContainers(ctx context.Context, r *runtime.ListContainersRequest) (res *runtime.ListContainersResponse, err error) {
-	logrus.Infof("ListContainers with filter %+v", r.GetFilter())
+	logrus.Debugf("ListContainers with filter %+v", r.GetFilter())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to list containers with filter %+v: %v", r.GetFilter(), err)
 		} else {
 			// NOTE: maybe log detailed container items with higher log level.
-			logrus.Infof("success to list containers with filter: %+v", r.GetFilter())
+			logrus.Debugf("success to list containers with filter: %+v", r.GetFilter())
 		}
 	}()
 	return c.CriManager.ListContainers(ctx, r)
@@ -188,7 +186,7 @@ func (c *CriWrapper) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 	logrus.Infof("ContainerStatus for %q", r.GetContainerId())
 	defer func() {
 		if err != nil {
-			logrus.Errorf("failed to get ContainerStatus: %q, %v", r.GetContainerId(), err)
+			logrus.Warnf("failed to get ContainerStatus: %q, %v", r.GetContainerId(), err)
 		} else {
 			logrus.Infof("success to get ContainerStatus: %q, %+v", r.GetContainerId(), res.GetStatus())
 		}
@@ -212,12 +210,12 @@ func (c *CriWrapper) ContainerStats(ctx context.Context, r *runtime.ContainerSta
 
 // ListContainerStats returns stats of all running containers.
 func (c *CriWrapper) ListContainerStats(ctx context.Context, r *runtime.ListContainerStatsRequest) (res *runtime.ListContainerStatsResponse, err error) {
-	logrus.Infof("ListContainerStats with filter %+v", r.GetFilter())
+	logrus.Debugf("ListContainerStats with filter %+v", r.GetFilter())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get ListContainerStats: %v", err)
 		} else {
-			logrus.Infof("success to get ListContainerStats: %+v", res.GetStats())
+			logrus.Debugf("success to get ListContainerStats: %+v", res.GetStats())
 		}
 	}()
 	return c.CriManager.ListContainerStats(ctx, r)
@@ -335,13 +333,13 @@ func (c *CriWrapper) Status(ctx context.Context, r *runtime.StatusRequest) (res 
 
 // ListImages lists existing images.
 func (c *CriWrapper) ListImages(ctx context.Context, r *runtime.ListImagesRequest) (res *runtime.ListImagesResponse, err error) {
-	logrus.Infof("ListImages with filter %+v", r.GetFilter())
+	logrus.Debugf("ListImages with filter %+v", r.GetFilter())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to list images with filter %+v: %v", r.GetFilter(), err)
 		} else {
 			// NOTE: maybe log detailed image items with higher log level.
-			logrus.Infof("success to list images with filter: %+v", r.GetFilter())
+			logrus.Debugf("success to list images with filter: %+v", r.GetFilter())
 		}
 	}()
 	return c.CriManager.ListImages(ctx, r)

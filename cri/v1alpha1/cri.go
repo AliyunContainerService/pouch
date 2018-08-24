@@ -621,7 +621,7 @@ func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContaine
 	for _, c := range containerList {
 		container, err := toCriContainer(c)
 		if err != nil {
-			// TODO: log an error message?
+			logrus.Warnf("failed to translate container %v to cri container in ListContainers: %v", c.ID, err)
 			continue
 		}
 		containers = append(containers, container)
