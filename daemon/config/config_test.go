@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIterateConfig(t *testing.T) {
+func TestFlattenConfig(t *testing.T) {
 	assert := assert.New(t)
 	origin := map[string]interface{}{
 		"a": "a",
@@ -26,22 +26,24 @@ func TestIterateConfig(t *testing.T) {
 	}
 
 	expect := map[string]interface{}{
-		"a":    "a",
-		"b":    "b",
-		"c":    "c",
-		"i1":   "i1",
-		"i2":   "i2",
-		"iii1": "iii1",
-		"iii2": "iii2",
+		"a":  "a",
+		"b":  "b",
+		"c":  "c",
+		"i1": "i1",
+		"i2": "i2",
+		"ii1": map[string]interface{}{
+			"iii1": "iii1",
+			"iii2": "iii2",
+		},
 	}
 
 	config := make(map[string]interface{})
-	iterateConfig(origin, config)
+	flattenConfig(origin, config)
 	assert.Equal(config, expect)
 
 	// test nil map will not cause panic
 	config = make(map[string]interface{})
-	iterateConfig(nil, config)
+	flattenConfig(nil, config)
 	assert.Equal(config, map[string]interface{}{})
 }
 
@@ -77,47 +79,4 @@ func TestGetConflictConfigurations(t *testing.T) {
 	flags.Parse([]string{"--a=a1"})
 	assert.Equal("found conflict flags in command line and config file: from flag: a1 and from config file: a1",
 		getConflictConfigurations(flags, fileflags).Error())
-}
-
-func TestGetUnknownFlags(t *testing.T) {
-
-	flagSet := new(pflag.FlagSet)
-	flagSet.String("a", "a", "a")
-	flagSet.Bool("b", false, "b")
-	flagSet.Int("c", -500, "c")
-
-	flagSetNil := new(pflag.FlagSet)
-
-	assert := assert.New(t)
-
-	fileFlagsKnown := map[string]interface{}{
-		"a": "a",
-		"b": true,
-	}
-
-	fileFlagsUnknown := map[string]interface{}{
-		"c": 100,
-		"d": "d",
-	}
-
-	fileFlagsNil := map[string]interface{}{}
-
-	error := getUnknownFlags(flagSet, fileFlagsKnown)
-	assert.Equal(error, nil)
-
-	error = getUnknownFlags(flagSet, fileFlagsUnknown)
-	assert.NotNil(error)
-
-	error = getUnknownFlags(flagSet, fileFlagsNil)
-	assert.Equal(error, nil)
-
-	error = getUnknownFlags(flagSetNil, fileFlagsUnknown)
-	assert.NotNil(error)
-
-	error = getUnknownFlags(flagSetNil, fileFlagsKnown)
-	assert.NotNil(error)
-
-	error = getUnknownFlags(flagSetNil, fileFlagsNil)
-	assert.Equal(error, nil)
-
 }

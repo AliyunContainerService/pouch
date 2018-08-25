@@ -165,12 +165,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	}
 
 	fileFlags := make(map[string]interface{}, 0)
-	iterateConfig(origin, fileFlags)
-
-	// check if invalid or unknown flag exist in config file
-	if err = getUnknownFlags(flagSet, fileFlags); err != nil {
-		return err
-	}
+	flattenConfig(origin, fileFlags)
 
 	// check conflict in command line flags and config file
 	if err = getConflictConfigurations(flagSet, fileFlags); err != nil {
@@ -225,33 +220,17 @@ func (cfg *Config) delValue(flagSet *pflag.FlagSet, fileFlags map[string]interfa
 	return cfg
 }
 
-// iterateConfig resolves key-value from config file iteratly.
-func iterateConfig(origin map[string]interface{}, config map[string]interface{}) {
+// flattenConfig flattens key-value config.
+func flattenConfig(origin map[string]interface{}, config map[string]interface{}) {
 	for k, v := range origin {
-		if c, ok := v.(map[string]interface{}); ok && k != "add-runtime" {
-			iterateConfig(c, config)
+		if c, ok := v.(map[string]interface{}); ok {
+			for fk, fv := range c {
+				config[fk] = fv
+			}
 		} else {
 			config[k] = v
 		}
 	}
-}
-
-// find unknown flag in config file
-func getUnknownFlags(flagSet *pflag.FlagSet, fileFlags map[string]interface{}) error {
-	var unknownFlags []string
-
-	for k := range fileFlags {
-		f := flagSet.Lookup(k)
-		if f == nil {
-			unknownFlags = append(unknownFlags, k)
-		}
-	}
-
-	if len(unknownFlags) > 0 {
-		return fmt.Errorf("unknown flags: %s", strings.Join(unknownFlags, ", "))
-	}
-
-	return nil
 }
 
 // find conflict in command line flags and config file, note that if flag value
