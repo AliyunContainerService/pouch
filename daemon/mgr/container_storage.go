@@ -99,13 +99,20 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 		return errors.Wrap(err, "failed to get mount point from volumes")
 	}
 
-	// 5. populate the volumes
+	// do filepath clean
+	for i := range c.Mounts {
+		m := c.Mounts[i]
+		m.Source = filepath.Clean(m.Source)
+		m.Destination = filepath.Clean(m.Destination)
+	}
+
+	// populate the volumes
 	err = mgr.populateVolumes(ctx, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to populate volumes")
 	}
 
-	// 6. set volumes into /etc/mtab in container
+	// set volumes into /etc/mtab in container
 	err = mgr.setMountTab(ctx, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to set mount tab")
