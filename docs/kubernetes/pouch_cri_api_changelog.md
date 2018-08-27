@@ -27,7 +27,10 @@ Kubernetes Version: V1.10.0+
 3. Support to the ability to acquire the volumes of the Container.
     - Scenario:
         - In the Upgrade process, the volumes of the new container needs to remain consistent with that of the old container, so the volumes of the old container needs to be read.
-
+4. Support to the ability to acquire the envs of the Container.
+     - Scenario:
+        - In the Upgrade process, the env of the new container needs to remain consistent with that of the old container, so the envs of the old container needs to be read.
+   
 # The Changes Of CRI API
 
 ## UpdateContainerResources
@@ -38,7 +41,7 @@ Kubernetes Version: V1.10.0+
 
 ### Modification
 
-+ Add the DiskQuota field in LinuxContainerResources, referring to the definition of Resources in [moby](https://github.com/moby/moby/blob/master/api/types/container/host_config.go) for better compatibility. The new fields are as follows：
++ Add the `DiskQuota` field in `LinuxContainerResources`, referring to the definition of Resources in [moby](https://github.com/moby/moby/blob/master/api/types/container/host_config.go) for better compatibility. The new fields are as follows：
 
 ```
 type LinuxContainerResources struct {
@@ -149,12 +152,14 @@ message Ulimit {
 + Support to the ability to acquire the volumes of the Container.
 + Support to the ability to acquire the Resource of the Container.
 + Pass the quotaID generated when the container is created for disk reuse.
++ Support to the ability to acquire the envs of the Container.
 
 ### Modification
 
-+ The ContainerStatus struct is used only in ContainerStatusResponse in CRI, so the volumes of the container can be obtained by directly adding volume field  to the ContainerStatus struct.
++ The `ContainerStatus` struct is used only in `ContainerStatusResponse` in CRI, so the volumes of the container can be obtained by directly adding `volume` field  to the `ContainerStatus` struct.
 + Add Resources field to support the retrieval of container's resource.
-+ When get ContainerStatus, the return object of ContainerStatusResponse will contain the field of QuotaId .
++ When get ContainerStatus, the return object of `ContainerStatusResponse` will contain the field of `QuotaId` .
++ When get ContainerStatus, the return object of `ContainerStatusResponse` will contain the field of `Envs` .
 
 ```
 // ContainerStatus represents the status of a container.
@@ -167,6 +172,8 @@ type ContainerStatus struct {
     Resources *LinuxContainerResources `protobuf:"bytes,101,opt,name=resources" json:"resources,omitempty"` 
     // QuotaId of the container
     QuotaId string `protobuf:"bytes,102,opt,name=quota_id,json=quotaId,proto3" json:"quota_id,omitempty"`
+    // List of environment variable to set in the container.
+    Envs []*KeyValue `protobuf:"bytes,103,rep,name=envs" json:"envs,omitempty"`
 }
 ```
 
@@ -183,6 +190,8 @@ message ContainerStatus {
     LinuxContainerResources resources = 101;
     // QuotaId of the container
     string quota_id = 102;
+    // List of environment variable to set in the container.
+    repeated KeyValue envs = 103;
 }
 
 message Volume {
@@ -197,7 +206,7 @@ message Volume {
 
 ### Modification
 
-+ Add volumes field in the Image struct.
++ Add `volumes` field in the Image struct.
 
 ```
 // Basic information about a container image.
@@ -230,7 +239,7 @@ message Image {
 
 ### Modification
 
-+ LinuxContainerConfig contains LinuxContainerResources, which have changed in UpdateContainerResources().So after changing LinuxContainerResources, the Create process already supports the setting of DiskQuota.
++ `LinuxContainerConfig` contains `LinuxContainerResources`, which have changed in UpdateContainerResources().So after changing LinuxContainerResources, the Create process already supports the setting of DiskQuota.
 + For missing fields are as follows (not all):
     + NetPriority : Set network priorities
 + QuotaId : When creating container, pass parameters of the DiskQuota and QuotaId. (When QuotaId is -1, QuotaId will be automatically generated)

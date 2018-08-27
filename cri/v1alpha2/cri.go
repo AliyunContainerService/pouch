@@ -785,6 +785,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Volumes:     parseVolumesFromPouch(container.Config.Volumes),
 		Resources:   parseResourcesFromPouch(resources, diskQuota),
 		QuotaId:     container.Config.QuotaID,
+		Envs:        parseEnvsFromPouch(container.Config.Env),
 	}
 
 	return &runtime.ContainerStatusResponse{Status: status}, nil

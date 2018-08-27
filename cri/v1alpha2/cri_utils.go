@@ -1087,6 +1087,22 @@ func parseVolumesFromPouch(containerVolumes map[string]interface{}) map[string]*
 	return volumes
 }
 
+// parseEnvsFromPouch parse Envs from []string to []*runtime.KeyValue
+func parseEnvsFromPouch(pouchEnvs []string) (criEnvs []*runtime.KeyValue) {
+	for _, env := range pouchEnvs {
+		runtimeEnv := &runtime.KeyValue{}
+		if strings.Contains(env, "=") {
+			envItem := strings.SplitN(env, "=", 2)
+			runtimeEnv.Key = envItem[0]
+			runtimeEnv.Value = envItem[1]
+		} else {
+			runtimeEnv.Key = env
+		}
+		criEnvs = append(criEnvs, runtimeEnv)
+	}
+	return
+}
+
 // CNI Network related tool functions.
 
 // toCNIPortMappings converts CRI port mappings to CNI.

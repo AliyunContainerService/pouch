@@ -919,6 +919,8 @@ message ContainerStatus {
 	LinuxContainerResources resources = 101;
 	// QuotaId of the container
 	string quota_id = 102;
+	// List of environment variable to set in the container.
+	repeated KeyValue envs = 103;
 }
 
 message Volume {
