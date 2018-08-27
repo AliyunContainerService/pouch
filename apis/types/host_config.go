@@ -34,9 +34,11 @@ type HostConfig struct {
 	Binds []string `json:"Binds"`
 
 	// A list of kernel capabilities to add to the container.
+	// Unique: true
 	CapAdd []string `json:"CapAdd"`
 
 	// A list of kernel capabilities to drop from the container.
+	// Unique: true
 	CapDrop []string `json:"CapDrop"`
 
 	// Cgroup to use for the container.
@@ -51,12 +53,15 @@ type HostConfig struct {
 	ContainerIDFile string `json:"ContainerIDFile,omitempty"`
 
 	// A list of DNS servers for the container to use.
+	// Unique: true
 	DNS []string `json:"Dns"`
 
 	// A list of DNS options.
+	// Unique: true
 	DNSOptions []string `json:"DnsOptions"`
 
 	// A list of DNS search domains.
+	// Unique: true
 	DNSSearch []string `json:"DnsSearch"`
 
 	// Whether to enable lxcfs.
@@ -64,9 +69,11 @@ type HostConfig struct {
 
 	// A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.
 	//
+	// Unique: true
 	ExtraHosts []string `json:"ExtraHosts"`
 
 	// A list of additional groups that the container process will run as.
+	// Unique: true
 	GroupAdd []string `json:"GroupAdd"`
 
 	// Initial script executed in container. The script will be executed before entrypoint or command
@@ -133,6 +140,7 @@ type HostConfig struct {
 	Runtime string `json:"Runtime,omitempty"`
 
 	// A list of string values to customize labels for MLS systems, such as SELinux.
+	// Unique: true
 	SecurityOpt []string `json:"SecurityOpt"`
 
 	// Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.
@@ -141,6 +149,7 @@ type HostConfig struct {
 
 	// Storage driver options for this container, in the form `{"size": "120G"}`.
 	//
+	// Unique: true
 	StorageOpt map[string]string `json:"StorageOpt,omitempty"`
 
 	// A list of kernel parameters (sysctls) to set in the container. For example: `{"net.ipv4.ip_forward": "1"}`
@@ -580,6 +589,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateStorageOpt(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateVolumesFrom(formats); err != nil {
 		res = append(res, err)
 	}
@@ -609,6 +622,10 @@ func (m *HostConfig) validateCapAdd(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := validate.UniqueItems("CapAdd", "body", m.CapAdd); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -616,6 +633,10 @@ func (m *HostConfig) validateCapDrop(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.CapDrop) { // not required
 		return nil
+	}
+
+	if err := validate.UniqueItems("CapDrop", "body", m.CapDrop); err != nil {
+		return err
 	}
 
 	return nil
@@ -658,6 +679,10 @@ func (m *HostConfig) validateDNS(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := validate.UniqueItems("Dns", "body", m.DNS); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -665,6 +690,10 @@ func (m *HostConfig) validateDNSOptions(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.DNSOptions) { // not required
 		return nil
+	}
+
+	if err := validate.UniqueItems("DnsOptions", "body", m.DNSOptions); err != nil {
+		return err
 	}
 
 	return nil
@@ -676,6 +705,10 @@ func (m *HostConfig) validateDNSSearch(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := validate.UniqueItems("DnsSearch", "body", m.DNSSearch); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -685,6 +718,10 @@ func (m *HostConfig) validateExtraHosts(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := validate.UniqueItems("ExtraHosts", "body", m.ExtraHosts); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -692,6 +729,10 @@ func (m *HostConfig) validateGroupAdd(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.GroupAdd) { // not required
 		return nil
+	}
+
+	if err := validate.UniqueItems("GroupAdd", "body", m.GroupAdd); err != nil {
+		return err
 	}
 
 	return nil
@@ -835,6 +876,10 @@ func (m *HostConfig) validateSecurityOpt(formats strfmt.Registry) error {
 		return nil
 	}
 
+	if err := validate.UniqueItems("SecurityOpt", "body", m.SecurityOpt); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -846,6 +891,19 @@ func (m *HostConfig) validateShmSize(formats strfmt.Registry) error {
 
 	if err := validate.MinimumInt("ShmSize", "body", int64(*m.ShmSize), 0, false); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *HostConfig) validateStorageOpt(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.StorageOpt) { // not required
+		return nil
+	}
+
+	if swag.IsZero(m.StorageOpt) { // not required
+		return nil
 	}
 
 	return nil
