@@ -182,23 +182,6 @@ func (suite *PouchDaemonSuite) TestDaemonSliceFlagNotConflict(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
-// TestDaemonConfigFileUnknownFlag tests start daemon with unknown flags in configure file.
-func (suite *PouchDaemonSuite) TestDaemonConfigFileUnknownFlag(c *check.C) {
-	path := "/tmp/pouch.json"
-	cfg := struct {
-		Adsj string `json:"adsj"`
-	}{
-		Adsj: "xxx",
-	}
-	err := CreateConfigFile(path, cfg)
-	c.Assert(err, check.IsNil)
-	defer os.Remove(path)
-
-	dcfg, err := StartDefaultDaemon("--debug", "--config-file="+path)
-	c.Assert(err, check.NotNil)
-	dcfg.KillDaemon()
-}
-
 // TestDaemonConfigFileAndCli tests start daemon with configure file and CLI .
 func (suite *PouchDaemonSuite) TestDaemonConfigFileAndCli(c *check.C) {
 	// Check default configure file could work
