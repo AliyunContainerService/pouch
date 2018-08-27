@@ -351,3 +351,11 @@ func MergeMap(m1 map[string]interface{}, m2 map[string]interface{}) (map[string]
 
 	return m1, nil
 }
+
+// StringDefault return default value if s is empty, otherwise return s.
+func StringDefault(s string, val string) string {
+	if s != "" {
+		return s
+	}
+	return val
+}
