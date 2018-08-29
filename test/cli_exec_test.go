@@ -144,12 +144,23 @@ func (suite *PouchExecSuite) TestExecExitCode(c *check.C) {
 	command.PouchRun("exec", name, "sh", "-c", "exit 0").Assert(c, icmd.Success)
 }
 
-// TestExecFail test exec fail should not hang.
+// TestExecFail test exec fail should not hang, and test failed exec exit code should not be zero.
 func (suite *PouchExecSuite) TestExecFail(c *check.C) {
 	name := "TestExecFail"
 	res := command.PouchRun("run", "-d", "--name", name, "-u", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	c.Assert(res.Stderr(), check.NotNil)
+
+	// test a 'executable file not found' fail should get exit code 126.
+	name = "TestExecFailCode"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	command.PouchRun("exec", name, "shouldnotexit").Assert(c, icmd.Expected{ExitCode: 126})
+
+	// test a 'ls /nosuchfile' fail should get exit code not equal to 0.
+	res = command.PouchRun("exec", name, "ls", "/nosuchfile")
+	if res.ExitCode == 0 {
+		c.Fatalf("failed exec process exit code should not be 0")
+	}
 }
 
 // TestExecUser test exec with user.
