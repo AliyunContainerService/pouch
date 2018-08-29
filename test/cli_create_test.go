@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"runtime"
 	"strings"
 
@@ -140,10 +141,20 @@ func (suite *PouchCreateSuite) TestCreateInWrongWay(c *check.C) {
 
 // TestCreateWithLabels tries to test create a container with label.
 func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
-	label := "abc=123"
-	name := "create-label"
+	name := "test-create-with-labels"
 
-	res := command.PouchRun("create", "--name", name, "-l", label, busyboxImage)
+	expectedLabels := map[string]string{
+		"abc": "123",
+		"ABC": "123,456,789",
+	}
+
+	res := command.PouchRun("create",
+		"--name", name,
+		"-l", "abc=123",
+		"-l", "ABC=123,456,789",
+		busyboxImage,
+	)
+
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -153,10 +164,10 @@ func (suite *PouchCreateSuite) TestCreateWithLabels(c *check.C) {
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result[0].Config.Labels, check.NotNil)
 
-	if result[0].Config.Labels["abc"] != "123" {
-		c.Errorf("failed to set label: %s", label)
+	c.Assert(result[0].Config.Labels, check.NotNil)
+	if !reflect.DeepEqual(result[0].Config.Labels, expectedLabels) {
+		c.Fatalf("expected %v, but got %v", expectedLabels, result[0].Config.Labels)
 	}
 }
 
