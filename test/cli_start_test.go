@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -299,7 +301,6 @@ func (suite *PouchStartSuite) TestStartWithPidsLimit(c *check.C) {
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
 
-/* comment on this after alibaba/runc project fixed can not restore bug
 // TestStartFromCheckpoint tests start a container from a checkpoint
 func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
 	SkipIfFalse(c, environment.IsCRIUExist)
@@ -315,10 +316,13 @@ func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
 
 	restoredContainer := "restoredContainer"
 	defer DelContainerForceMultyTime(c, restoredContainer)
-	command.PouchRun("create", "--name", restoredContainer, busyboxImage).Assert(c, icmd.Success)
+	// image busybox not have /proc directory, we need to start busybox image and stop it
+	// make /proc exist, then we can restore successful
+	command.PouchRun("run", "-d", "--name", restoredContainer, busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("stop", restoredContainer).Assert(c, icmd.Success)
+
 	command.PouchRun("start", "--checkpoint-dir", tmpDir, "--checkpoint", checkpoint, restoredContainer).Assert(c, icmd.Success)
 }
-*/
 
 // TestStartMultiContainers tries to start more than one container.
 func (suite *PouchStartSuite) TestStartMultiContainers(c *check.C) {
