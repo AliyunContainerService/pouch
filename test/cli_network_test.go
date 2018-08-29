@@ -341,7 +341,7 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 		image).Assert(c, icmd.Success)
 
 	time.Sleep(10 * time.Second)
-	err := icmd.RunCommand("curl", "localhost:9999").Compare(expct)
+	err := icmd.RunCommand("timeout", "5", "curl", "localhost:9999").Compare(expct)
 	c.Assert(err, check.IsNil)
 
 	command.PouchRun("rm", "-f", funcname)
