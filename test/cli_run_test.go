@@ -443,3 +443,14 @@ func (suite *PouchRunSuite) TestRunWithMtab(c *check.C) {
 	}
 	c.Assert(found, check.Equals, true)
 }
+
+func (suite *PouchRunSuite) TestRunWithEnv(c *check.C) {
+	res := command.PouchRun("run", "--rm",
+		"--env", "A=a,b,c", // should not split args by comma
+		"--env", "B=b1",
+		"docker.io/library/alpine",
+		"sh", "-c", "echo ${A}-${B}",
+	)
+	res.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(res.Stdout()), check.Equals, "a,b,c-b1")
+}
