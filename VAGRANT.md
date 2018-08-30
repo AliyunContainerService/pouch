@@ -1,13 +1,13 @@
 # Vagrant support for pouch
 
-You can using Vagrant to quickly experience pouch or cross compile on non-linux.
+You can using [Vagrant](https://www.vagrantup.com) to quickly experience pouch or cross compile on non-linux.
 
 ## Requirements
 
 * Vagrant 1.9.x or newer
 * VirtuaBox
 
-## Get started
+## Getting Started
 
 ```bash
 vagrant up
@@ -21,7 +21,6 @@ curl http://localhost
 ## Build pouch with vagrant
 
 ```bash
-
 # On MacOS or Linux
 export POUCH_BUILD=true
 vagrant up
