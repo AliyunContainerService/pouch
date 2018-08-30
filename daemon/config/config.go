@@ -20,6 +20,11 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	// CgroupfsDriverType refers to daemon's cgroup driver.
+	CgroupfsDriverType = "cgroupfs"
+)
+
 // Config refers to daemon's whole configurations.
 type Config struct {
 	sync.Mutex `json:"-"`
@@ -114,6 +119,14 @@ type Config struct {
 
 	// DefaultNamespace is passed to containerd.
 	DefaultNamespace string `json:"default-namespace,omitempty"`
+}
+
+// GetCgroupDriver gets cgroup driver used in runc.
+func (cfg *Config) GetCgroupDriver() string {
+	// current pouchd only supports directly managing cgroupfs.
+	// TODO: add 'systemd' to make systemd manage cgroupfs rather than directly using it.
+	// In the future we will support this config in the daemon configuration.
+	return CgroupfsDriverType
 }
 
 // Validate validates the user input config.
