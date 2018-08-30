@@ -647,7 +647,7 @@ func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContaine
 	for _, c := range containerList {
 		container, err := toCriContainer(c)
 		if err != nil {
-			// TODO: log an error message?
+			logrus.Warnf("failed to translate container %v to cri container in ListContainers: %v", c.ID, err)
 			continue
 		}
 		containers = append(containers, container)
@@ -826,7 +826,7 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 	for _, container := range containers {
 		cs, err := c.getContainerMetrics(ctx, container)
 		if err != nil {
-			logrus.Errorf("failed to decode metrics of container %q: %v", container.ID, err)
+			logrus.Warnf("failed to decode metrics of container %q: %v", container.ID, err)
 			continue
 		}
 
