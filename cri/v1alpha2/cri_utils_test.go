@@ -1736,6 +1736,72 @@ func Test_parseVolumesFromPouch(t *testing.T) {
 	}
 }
 
+func Test_parseEnvsFromPouch(t *testing.T) {
+	type args struct {
+		pouchEnvs []string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantCriEnvs []*runtime.KeyValue
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				pouchEnvs: []string{"key1=value1", "key2=value2"},
+			},
+			wantCriEnvs: []*runtime.KeyValue{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+				{
+					Key:   "key2",
+					Value: "value2",
+				},
+			},
+		},
+		{
+			name: "Multiple Equals Sign Test",
+			args: args{
+				pouchEnvs: []string{"key1=value1", "key2=foo=value2"},
+			},
+			wantCriEnvs: []*runtime.KeyValue{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+				{
+					Key:   "key2",
+					Value: "foo=value2",
+				},
+			},
+		},
+		{
+			name: "No Equals Sign Test",
+			args: args{
+				pouchEnvs: []string{"key1=value1", "key2"},
+			},
+			wantCriEnvs: []*runtime.KeyValue{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+				{
+					Key: "key2",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotCriEnvs := parseEnvsFromPouch(tt.args.pouchEnvs); !reflect.DeepEqual(gotCriEnvs, tt.wantCriEnvs) {
+				t.Errorf("parseEnvsFromPouch() = %v, want %v", gotCriEnvs, tt.wantCriEnvs)
+			}
+		})
+	}
+}
+
 func Test_generateMountBindings(t *testing.T) {
 	type args struct {
 		mounts []*runtime.Mount
