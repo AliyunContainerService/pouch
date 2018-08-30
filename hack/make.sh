@@ -121,8 +121,6 @@ function install_criu
 	if grep -qi "ubuntu" /etc/issue ; then
 		apt-get update
 		apt-get install -y criu
-	else
-		yum install criu
 	fi
 }
 

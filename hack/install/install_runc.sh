@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly RUNC_VERSION="1.0.0-rc4-1"
+readonly RUNC_VERSION="1.0.0-rc4-2"
 
 # runc::check_version checks the command and the version.
 runc::check_version() {
