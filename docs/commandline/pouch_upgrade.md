@@ -42,7 +42,7 @@ test1
       --disk-quota strings           Set disk quota for container
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
-  -e, --env strings                  Set environment variables for container
+  -e, --env stringArray              Set environment variables for container
       --expose strings               Set expose container's ports
       --group-add strings            Add additional groups to join
   -h, --help                         help for upgrade
@@ -50,7 +50,7 @@ test1
       --initscript string            Initial script executed in container
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
       --ipc string                   IPC namespace to use
-  -l, --label strings                Set labels for a container
+  -l, --label stringArray            Set labels for a container
       --log-driver string            Logging driver for the container (default "json-file")
       --log-opt stringArray          Log driver options
   -m, --memory string                Memory limit

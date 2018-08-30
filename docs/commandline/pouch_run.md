@@ -54,7 +54,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --disk-quota strings           Set disk quota for container
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
-  -e, --env strings                  Set environment variables for container
+  -e, --env stringArray              Set environment variables for container
       --expose strings               Set expose container's ports
       --group-add strings            Add additional groups to join
   -h, --help                         help for run
@@ -63,7 +63,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --intel-rdt-l3-cbm string      Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
   -i, --interactive                  Attach container's STDIN
       --ipc string                   IPC namespace to use
-  -l, --label strings                Set labels for a container
+  -l, --label stringArray            Set labels for a container
       --log-driver string            Logging driver for the container (default "json-file")
       --log-opt stringArray          Log driver options
   -m, --memory string                Memory limit
