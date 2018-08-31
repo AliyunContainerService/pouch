@@ -95,7 +95,6 @@ package-dependencies: ## install containerd, runc and lxcfs dependencies for pac
 	hack/install/install_containerd.sh
 	hack/install/install_lxcfs.sh
 	hack/install/install_runc.sh
-	hack/install/install_criu.sh
 
 .PHONY: download-dependencies
 download-dependencies: package-dependencies ## install dumb-init, local-persist, nsenter and CI tools dependencies
@@ -104,6 +103,7 @@ download-dependencies: package-dependencies ## install dumb-init, local-persist,
 	hack/install/install_dumb_init.sh
 	hack/install/install_local_persist.sh
 	hack/install/install_nsenter.sh
+	hack/install/install_criu.sh
 
 .PHONY: clean
 clean: ## clean to remove bin/* and files created by module
