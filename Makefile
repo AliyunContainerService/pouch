@@ -22,7 +22,7 @@ DEST_DIR=/usr/local
 API_VERSION="1.24"
 
 # VERSION is used for daemon Release Version in go build.
-VERSION ?= "1.0.0-rc2"
+VERSION ?= "1.0.0"
 
 # GIT_COMMIT is used for daemon GitCommit in go build.
 GIT_COMMIT=$(shell git describe --dirty --always --tags 2> /dev/null || true)
