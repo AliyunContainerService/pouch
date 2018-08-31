@@ -8,7 +8,7 @@ GOPATH=$BUILDPATH
 
 
 # Go parameters
-VERSION="1.0.0-rc1"
+VERSION="1.0.0"
 APIVERSION="1.24"
 GITCOMMIT=$(git describe --dirty --always --tags 2> /dev/null || true)
 BUILDTIME=$(date --rfc-3339 s 2> /dev/null | sed -e 's/ /T/')
