@@ -20,7 +20,6 @@ env:
   - TEST_SUITE=criv1alpha1test
   - TEST_SUITE=criv1alpha2test
 
-
 script: |
   set -e # fast fail
   if [[ "${TEST_SUITE}" = "unittest" ]]; then

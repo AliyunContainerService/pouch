@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## 1.0.0 (2018-08-31)
+
+__IMPORTANT__: The PouchContainer is general availability right now. Thanks for all the contributors!
+
+### __Pouch Daemon__
+
+* bugfix: cli should not split args by comma for env/labels [\#2171](https://github.com/alibaba/pouch/pull/2171) ([fuweid](https://github.com/fuweid))
+* refactor: delete update specific code [\#2165](https://github.com/alibaba/pouch/pull/2165) ([HusterWan](https://github.com/HusterWan))
+* config: remove check unknown flag in config file [\#2161](https://github.com/alibaba/pouch/pull/2161) ([Ace-Tang](https://github.com/Ace-Tang))
+* enhance: clean filepath in mountpoint [\#2157](https://github.com/alibaba/pouch/pull/2157) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: missing merge some config from image [\#2156](https://github.com/alibaba/pouch/pull/2156) ([Ace-Tang](https://github.com/Ace-Tang))
+* bugfix: set device limit by the mountpoint [\#2154](https://github.com/alibaba/pouch/pull/2154) ([rudyfly](https://github.com/rudyfly))
+* bugfix: avoid data race in set exec exit status [\#2152](https://github.com/alibaba/pouch/pull/2152) ([Ace-Tang](https://github.com/Ace-Tang))
+* feature: add cgroupfs in Info API [\#2148](https://github.com/alibaba/pouch/pull/2148) ([allencloud](https://github.com/allencloud))
+
+### __Kubernetes__
+
+* feature: extend cri apis for get envs [\#2163](https://github.com/alibaba/pouch/pull/2163) ([Starnop](https://github.com/Starnop))
+* bugfix: make the output of some list operations optional [\#2158](https://github.com/alibaba/pouch/pull/2158) ([YaoZengzeng](https://github.com/YaoZengzeng))
+* bugfix: handle the error returned by SandboxStore.Put [\#2151](https://github.com/alibaba/pouch/pull/2151) ([Starnop](https://github.com/Starnop))
+* style: format cri logs [\#2147](https://github.com/alibaba/pouch/pull/2147) ([Starnop](https://github.com/Starnop))
+
+### __Documentation__
+
+* docs: add CRI enhancement into document [\#2159](https://github.com/alibaba/pouch/pull/2159) ([Starnop](https://github.com/Starnop))
+
+### __Testing__
+
+* test: remove the criu install from package dependency [\#2186](https://github.com/alibaba/pouch/pull/2186) ([fuweid](https://github.com/fuweid))
+* package: update runc version [\#2183](https://github.com/alibaba/pouch/pull/2183) ([Ace-Tang](https://github.com/Ace-Tang))
+* test: install criu in ci test [\#2175](https://github.com/alibaba/pouch/pull/2175) ([Ace-Tang](https://github.com/Ace-Tang))
+* test: fix TestNetworkDefault failure on Ubuntu [\#2170](https://github.com/alibaba/pouch/pull/2170) ([chuanchang](https://github.com/chuanchang))
+* add timeout for curl to prevent from hanging [\#2169](https://github.com/alibaba/pouch/pull/2169) ([sunyuan3](https://github.com/sunyuan3))
+
+### __Contrib__
+
+* Add vagrant support for pouch [\#2168](https://github.com/alibaba/pouch/pull/2168) ([manlge](https://github.com/manlge))
+
+### __New Contributors__
+
+Here is the list of new contributors:
+
+* [manlge](https://github.com/manlge)
+
 ## 1.0.0-rc2 (2018-08-23)
 
 __IMPORTANT__: In PouchContainer 1.0.0-rc2 makes runtime stable and introduces:
