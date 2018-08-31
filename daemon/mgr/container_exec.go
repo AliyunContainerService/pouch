@@ -69,13 +69,14 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 				stdout = stdcopy.NewStdWriter(stdout, stdcopy.Stdout)
 			}
 			stdout.Write([]byte(err.Error() + "\r\n"))
-			// close io to make hijack connection exit
-			eio.Close()
-			mgr.IOs.Remove(execid)
 			// set exec exit status
 			execConfig.Running = false
 			exitCode := 126
 			execConfig.ExitCode = int64(exitCode)
+
+			// close io to make hijack connection exit
+			eio.Close()
+			mgr.IOs.Remove(execid)
 		}
 	}()
 

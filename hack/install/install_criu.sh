@@ -8,16 +8,16 @@ source "./check.sh"
 # criu::ubuntu::install_dependencies will install dependencies packages.
 criu::ubuntu::install_dependencies() {
   apt-get install -y -q \
-	  build-essential \
-	  libnet1-dev \
-	  libprotobuf-dev \
-	  libprotobuf-c0-dev \
-	  protobuf-c-compiler \
-	  protobuf-compiler \
-	  python-protobuf \
-	  libnl-3-dev \
-	  libcap-dev \
-	  asciidoc
+    build-essential \
+    libnet1-dev \
+    libprotobuf-dev \
+    libprotobuf-c0-dev \
+    protobuf-c-compiler \
+    protobuf-compiler \
+    python-protobuf \
+    libnl-3-dev \
+    libcap-dev \
+    asciidoc
 }
 
 # criu::ubuntu::install will install criu from source.
@@ -49,6 +49,9 @@ main() {
   if [[ "${os_dist}" = "Ubuntu" ]]; then
     criu::ubuntu::install_dependencies > /dev/null
     criu::ubuntu::install > /dev/null
+  else
+    echo "will support redhat soon"
+    exit 0
   fi
 
   # final check
