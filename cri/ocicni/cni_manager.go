@@ -19,7 +19,7 @@ type CniManager struct {
 // NewCniManager initializes a brand new cni manager.
 // If initialize failed, return NoopCniManager, we should not make pouchd creashed
 // because of the failure of cni manager.
-func NewCniManager(cfg *config.Config) CniMgr {
+func NewCniManager(cfg *config.Config) (CniMgr, error) {
 	networkPluginBinDir := cfg.NetworkPluginBinDir
 	networkPluginConfDir := cfg.NetworkPluginConfDir
 
@@ -28,20 +28,18 @@ func NewCniManager(cfg *config.Config) CniMgr {
 	if err != nil && os.IsNotExist(err) {
 		err = os.MkdirAll(networkPluginConfDir, 0666)
 		if err != nil {
-			logrus.Errorf("failed to create configuration directory for CNI: %v", err)
-			return &NoopCniManager{}
+			return nil, err
 		}
 	}
 
 	plugin, err := ocicni.InitCNI(networkPluginConfDir, networkPluginBinDir)
 	if err != nil {
-		logrus.Errorf("failed to initialize cni manager: %v", err)
-		return &NoopCniManager{}
+		return nil, err
 	}
 
 	return &CniManager{
 		plugin: plugin,
-	}
+	}, nil
 }
 
 // Name returns the plugin's name. This will be used when searching

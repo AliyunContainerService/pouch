@@ -129,11 +129,14 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 	c := &CriManager{
 		ContainerMgr:   ctrMgr,
 		ImageMgr:       imgMgr,
-		CniMgr:         cni.NewCniManager(&config.CriConfig),
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 		SandboxImage:   config.CriConfig.SandboxImage,
 		SnapshotStore:  mgr.NewSnapshotStore(),
+	}
+	c.CniMgr, err = cni.NewCniManager(&config.CriConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cni manager: %v", err)
 	}
 
 	c.SandboxStore, err = meta.NewStore(meta.Config{
