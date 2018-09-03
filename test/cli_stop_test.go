@@ -126,3 +126,36 @@ func (suite *PouchStopSuite) TestStopMultiContainers(c *check.C) {
 	c.Assert(string(result[0].State.Status), check.Equals, "stopped")
 
 }
+
+// TestStopPidValue ensure stopped container's pid is 0
+func (suite *PouchStopSuite) TestStopPidValue(c *check.C) {
+	name := "test-stop-pid-value"
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// test stop a created container
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Pid, check.Equals, int64(0))
+}
+
+// TestAutoStopPidValue ensure stopped container's pid is 0
+func (suite *PouchStopSuite) TestAutoStopPidValue(c *check.C) {
+	name := "test-auto-stop-pid-value"
+
+	command.PouchRun("run", "--name", name, busyboxImage, "echo", "hi").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Pid, check.Equals, int64(0))
+}

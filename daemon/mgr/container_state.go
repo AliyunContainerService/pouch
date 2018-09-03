@@ -105,7 +105,7 @@ func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
 	defer c.Unlock()
 	c.State.Status = types.StatusStopped
 	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
-	c.State.Pid = -1
+	c.State.Pid = 0
 	c.State.ExitCode = exitCode
 	c.State.Error = errMsg
 	c.setStatusFlags(types.StatusStopped)
@@ -117,7 +117,7 @@ func (c *Container) SetStatusExited(exitCode int64, errMsg string) {
 	defer c.Unlock()
 	c.State.Status = types.StatusExited
 	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
-	c.State.Pid = -1
+	c.State.Pid = 0
 	c.State.ExitCode = exitCode
 	c.State.Error = errMsg
 	c.setStatusFlags(types.StatusExited)
