@@ -1061,12 +1061,15 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	}
 
 	// if creating the container by specify rootfs,
-	// there is no snapshot for this container.
-	if !c.RootFSProvided {
-		// remove snapshot
-		if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-			logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
+	// we should umount the rootfs when delete the container.
+	if c.RootFSProvided {
+		if err := mount.Unmount(c.BaseFS, 0); err != nil {
+			logrus.Errorf("failed to umount rootfs when remove the container %s: %v", c.ID, err)
 		}
+	} else if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
+		// if the container is created by normal method, remove the
+		// snapshot when delete it.
+		logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
 	}
 
 	// When removing a container, we have set up such rule for object removing sequences:
