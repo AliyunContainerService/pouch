@@ -2,11 +2,10 @@ package mgr
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/pkg/errtypes"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -16,7 +15,7 @@ import (
 // Commit commits a image from a container.
 func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *types.ContainerCommitOptions) (*types.ContainerCommitResp, error) {
 	if options.Repository == "" {
-		return nil, fmt.Errorf("not allow empty image reference")
+		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "not allow empty image reference")
 	}
 	if options.Tag == "" {
 		options.Tag = "latest"
@@ -60,7 +59,7 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 		Image:           ociImage,
 	}
 
-	imageID, err := mgr.Client.Commit(ctx, commitConfig)
+	imageDigest, err := mgr.Client.Commit(ctx, commitConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to commit container (%s)", name)
 	}
@@ -80,6 +79,6 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 	}
 
 	// return 12 bits image id as a result
-	id := strings.TrimPrefix(imageID, "sha256:")
-	return &types.ContainerCommitResp{string(id[:12])}, nil
+	imageID := imageDigest.Hex()
+	return &types.ContainerCommitResp{string(imageID[:12])}, nil
 }

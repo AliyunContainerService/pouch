@@ -4236,12 +4236,16 @@ definitions:
     properties:
       Repository:
         type: "string"
+        description: "repository is the image name"
       Tag:
         type: "string"
+        description: "tag is the image tag"
       Comment:
         type: "string"
+        description: "comment is external information add for the image"
       Author:
         type: "string"
+        description: "author is the one build the image"
 
   ContainerCommitResp:
     type: "object"

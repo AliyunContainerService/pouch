@@ -60,15 +60,15 @@ type CommitConfig struct {
 	// repository
 	Repository string
 
-	//
+	// containerd format image
 	CImage containerd.Image
 
-	//
+	// image-spec format image
 	Image ocispec.Image
 }
 
-// Commit commits a image from a container.
-func (c *Client) Commit(ctx context.Context, config *CommitConfig) (imageID string, err0 error) {
+// Commit commits an image from a container.
+func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Digest, err0 error) {
 	// get a containerd client
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
@@ -143,20 +143,12 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (imageID stri
 	}
 
 	// new manifest descriptor
-	mfst := struct {
-		// MediaType is reserved in the OCI spec but
-		// excluded from go types.
-		MediaType string `json:"mediaType,omitempty"`
-		ocispec.Manifest
-	}{
-		MediaType: manifestType,
-		Manifest: ocispec.Manifest{
-			Versioned: specs.Versioned{
-				SchemaVersion: 2,
-			},
-			Config: configDesc,
-			Layers: layers,
+	mfst := ocispec.Manifest{
+		Versioned: specs.Versioned{
+			SchemaVersion: 2,
 		},
+		Config: configDesc,
+		Layers: layers,
 	}
 
 	mfstJSON, err := json.MarshalIndent(mfst, "", "   ")
@@ -168,16 +160,6 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (imageID stri
 	mfstDesc := ocispec.Descriptor{
 		Digest: mfstDigest,
 		Size:   int64(len(mfstJSON)),
-	}
-
-	// write manifest content
-	if err := content.WriteBlob(ctx, cs, mfstDigest.String(), bytes.NewReader(mfstJSON), mfstDesc.Size, mfstDesc.Digest, content.WithLabels(labels)); err != nil {
-		return "", errors.Wrapf(err, "error writing manifest blob %s", mfstDigest)
-	}
-
-	// write config content
-	if err := content.WriteBlob(ctx, cs, configDesc.Digest.String(), bytes.NewReader(imgJSON), configDesc.Size, configDesc.Digest); err != nil {
-		return "", errors.Wrap(err, "error writing config blob")
 	}
 
 	desc := ocispec.Descriptor{
@@ -203,21 +185,33 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (imageID stri
 		}
 	}
 
+	// write manifest content
+	if err := content.WriteBlob(ctx, cs, mfstDigest.String(), bytes.NewReader(mfstJSON), mfstDesc.Size, mfstDesc.Digest, content.WithLabels(labels)); err != nil {
+		return "", errors.Wrapf(err, "error writing manifest blob %s", mfstDigest)
+	}
+
+	// write config content
+	if err := content.WriteBlob(ctx, cs, configDesc.Digest.String(), bytes.NewReader(imgJSON), configDesc.Size, configDesc.Digest); err != nil {
+		return "", errors.Wrap(err, "error writing config blob")
+	}
+
 	// pouch record config descriptor digest as image id.
-	return configDesc.Digest.String(), nil
+	return configDesc.Digest, nil
 }
 
 // export a new layer from a container
 func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, differ diff.Differ) (ocispec.Descriptor, string, error) {
 	// export new layer
-	rwDesc, err := rootfs.Diff(ctx, name, sn, differ)
+	rwDesc, err := rootfs.Diff(ctx, name, sn, differ, diff.WithLabels(map[string]string{
+		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339Nano),
+	}))
 	if err != nil {
 		return ocispec.Descriptor{}, "", fmt.Errorf("failed to diff: %s", err)
 	}
 
 	info, err := cs.Info(ctx, rwDesc.Digest)
 	if err != nil {
-		return ocispec.Descriptor{}, "", err
+		return ocispec.Descriptor{}, "", fmt.Errorf("failed to get exported layer info: %s", err)
 	}
 	diffIDStr, ok := info.Labels[containerdUncompressed]
 	if !ok {
@@ -269,13 +263,19 @@ func newSnapshot(ctx context.Context, pImg ocispec.Image, sn snapshots.Snapshott
 	parent := identity.ChainID(diffIDs).String()
 
 	key := randomid.Generate()
-	mount, err := sn.Prepare(ctx, key, parent)
+	// avoid active snapshots cleaned by containerd 1.0.3 gc
+	opt := snapshots.WithLabels(map[string]string{
+		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339),
+	})
+	mount, err := sn.Prepare(ctx, key, parent, opt)
 	if err != nil {
 		return err
 	}
 
 	// apply diff
-	_, err = differ.Apply(ctx, layer, mount)
+	if _, err = differ.Apply(ctx, layer, mount); err != nil {
+		return fmt.Errorf("failed to apply layer: %s", err)
+	}
 
 	withLabels := func(info *snapshots.Info) error {
 		info.Labels = map[string]string{
@@ -291,7 +291,6 @@ func newSnapshot(ctx context.Context, pImg ocispec.Image, sn snapshots.Snapshott
 		}
 
 		// Destination already exists, cleanup key and return without error
-		err = nil
 		if err := sn.Remove(ctx, key); err != nil {
 			return fmt.Errorf("failed to cleanup aborted apply %s: %s", key, err)
 		}

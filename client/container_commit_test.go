@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/alibaba/pouch/apis/types"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,18 +32,19 @@ func TestCommit(t *testing.T) {
 		if !strings.HasPrefix(req.URL.Path, expectedURL) {
 			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 		}
-		if req.Header.Get("Content-Type") == "application/json" {
-			options := types.ContainerCommitOptions{}
-			if err := json.NewDecoder(req.Body).Decode(&options); err != nil {
-				return nil, fmt.Errorf("failed to parse json: %v", err)
-			}
+		if req.Header.Get("Content-Type") != "application/json" {
+			return nil, fmt.Errorf("expected application/json set in header")
+		}
+		options := types.ContainerCommitOptions{}
+		if err := json.NewDecoder(req.Body).Decode(&options); err != nil {
+			return nil, fmt.Errorf("failed to parse json: %v", err)
+		}
 
-			if options.Repository != "foo" {
-				return nil, fmt.Errorf("expected Repository %s, obtain %s", "foo", options.Repository)
-			}
-			if options.Tag != "bar" {
-				return nil, fmt.Errorf("expected Tag %s, obtain %s", "bar", options.Tag)
-			}
+		if options.Repository != "foo" {
+			return nil, fmt.Errorf("expected Repository %s, obtain %s", "foo", options.Repository)
+		}
+		if options.Tag != "bar" {
+			return nil, fmt.Errorf("expected Tag %s, obtain %s", "bar", options.Tag)
 		}
 
 		resp := types.ContainerCommitResp{

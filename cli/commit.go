@@ -12,8 +12,7 @@ import (
 )
 
 // commitDescription is used to describe commit command in detail and auto generate command doc.
-// TODO: add description
-var commitDescription = ""
+var commitDescription = "commit an image from a container."
 
 // CommitCommand is used to implement 'commit' command.
 type CommitCommand struct {
@@ -26,8 +25,8 @@ type CommitCommand struct {
 func (cc *CommitCommand) Init(c *Cli) {
 	cc.cli = c
 	cc.cmd = &cobra.Command{
-		Use:   "commit [OPTIONS] CONTAINER [REPOSITORY[:TAG]]",
-		Short: "Commit a image from a container",
+		Use:   "commit [OPTIONS] CONTAINER REPOSITORY[:TAG]",
+		Short: "Commit an image from a container",
 		Long:  commitDescription,
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

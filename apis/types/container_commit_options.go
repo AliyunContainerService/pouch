@@ -17,16 +17,16 @@ import (
 
 type ContainerCommitOptions struct {
 
-	// author
+	// author is the one build the image
 	Author string `json:"Author,omitempty"`
 
-	// comment
+	// comment is external information add for the image
 	Comment string `json:"Comment,omitempty"`
 
-	// repository
+	// repository is the image name
 	Repository string `json:"Repository,omitempty"`
 
-	// tag
+	// tag is the image tag
 	Tag string `json:"Tag,omitempty"`
 }
 
