@@ -157,8 +157,14 @@ cri-v1alpha2-test: ## run v1 alpha2 cri-v1alpha2-test
 	@mkdir -p coverage
 	./hack/testing/run_daemon_cri_integration.sh v1alpha2
 
+.PHONY: cri-e2e-test
+cri-e2e-test: ## run cri-e2e-test
+	@echo $@
+	@mkdir -p coverage
+	./hack/testing/run_daemon_cri_e2e.sh v1alpha2
+
 .PHONY: test
-test: unit-test integration-test cri-v1alpha1-test cri-v1alpha2-test ## run the unit-test, integration-test , cri-v1alpha1-test and cri-v1alpha2-test
+test: unit-test integration-test cri-v1alpha1-test cri-v1alpha2-test cri-e2e-test ## run the unit-test, integration-test , cri-v1alpha1-test , cri-v1alpha2-test and cri-e2e-test
 
 .PHONY: coverage
 coverage: ## combine coverage after test

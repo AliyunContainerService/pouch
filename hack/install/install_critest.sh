@@ -46,15 +46,7 @@ critest::install() {
 
 # critest::install_ginkgo installs ginkgo if missing.
 critest::install_ginkgo() {
-  local has_installed pkg
-
-  pkg="github.com/onsi/ginkgo/ginkgo"
-  has_installed="$(command -v ginkgo || echo false)"
-  if [[ "${has_installed}" = "false" ]]; then
-    go get -u "${pkg}"
-  fi
-
-  command -v ginkgo > /dev/null
+  hack/install/install_ginkgo.sh
 }
 
 main() {
@@ -79,7 +71,6 @@ main() {
   critest::install
 
   command -v critest > /dev/null
-  command -v ginkgo > /dev/null
 }
 
 main "$@"
