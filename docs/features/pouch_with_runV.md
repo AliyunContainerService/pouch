@@ -47,10 +47,9 @@ sudo yum install -y qemu qemu-kvm
 First, clone version v1.0.0 of runv project from GitHub:
 
 ```
-mkdir -p $Home/go/src/github.com/hyperhq
-cd $Home/go/src/github.com/hyperhq
+mkdir -p $HOME/go/src/github.com/hyperhq
+cd $HOME/go/src/github.com/hyperhq
 git clone --branch v1.0.0 https://github.com/hyperhq/runv.git
-export GOPATH=$HOME/go
 ```
 
 Second, build runv from source code:
@@ -61,7 +60,7 @@ sudo apt-get install automake
 cd runv
 ./autogen.sh
 ./configure
-sudo make
+make
 sudo make install
 ```
 
@@ -72,7 +71,7 @@ Then binary runv will be located in your PATH.
 [hyperstart](https://github.com/hyperhq/hyperstart) provides init task for hypervisor-based containers. We need to build guest kernel and initrd.img from source code version v1.0.0 as well:
 
 ```
-cd $Home/go/src/github.com/hyperhq
+cd $HOME/go/src/github.com/hyperhq
 git clone --branch v1.0.0 https://github.com/hyperhq/hyperstart.git
 cd hyperstart
 ./autogen.sh
@@ -136,7 +135,7 @@ It turns out that in experiment above kernel in host physical machine is 4.4.0-1
 
 ## Run legacy kernels
 
-runV(now kataconatiners) provides a general way to provide an isolated Linux kernel still based on OCI-compatible images. To be honest, Linux kernel running in Guest OS provisioned by runV is quite advanced and new. However, how to make legacy Linux kernel run in Guest OS is still a really huge challenge for the industry when using runV.
+runV(now kata containers) provides a general way to provide an isolated Linux kernel still based on OCI-compatible images. To be honest, Linux kernel running in Guest OS provisioned by runV is quite advanced and new. However, how to make legacy Linux kernel run in Guest OS is still a really huge challenge for the industry when using runV.
 
 ### Scenario
 
