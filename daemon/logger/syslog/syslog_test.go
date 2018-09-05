@@ -42,7 +42,7 @@ func TestParseOptions(t *testing.T) {
 
 	// check formatter and framer
 	if !isSameFunc(opts.formatter, srslog.RFC3164Formatter) || !isSameFunc(opts.framer, srslog.DefaultFramer) {
-		t.Fatalf("expect formatter(%v) & framer(%v), but got formatter(%v) & framer(%v)",
+		t.Fatalf("expect formatter(%T) & framer(%T), but got formatter(%T) & framer(%T)",
 			srslog.RFC3164Formatter, srslog.DefaultFramer, opts.formatter, opts.framer,
 		)
 	}
