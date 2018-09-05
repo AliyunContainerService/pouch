@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -108,7 +110,7 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		mounts = append(mounts, generateNetworkMounts(c)...)
 	}
 
-	s.Mounts = mounts
+	s.Mounts = sortMounts(mounts)
 
 	if c.HostConfig.Privileged {
 		if !s.Root.Readonly {
@@ -174,4 +176,31 @@ func trySetupNetworkMount(mount *types.MountPoint, c *Container) bool {
 	}
 
 	return false
+}
+
+// mounts defines how to sort specs.Mount.
+type mounts []specs.Mount
+
+// Len returns the number of mounts.
+func (m mounts) Len() int {
+	return len(m)
+}
+
+// Less returns true if the destination of mount i < destination of mount j
+// in lexicographic order.
+func (m mounts) Less(i, j int) bool {
+	return filepath.Clean(m[i].Destination) < filepath.Clean(m[j].Destination)
+}
+
+// Swap swaps two items in an array of mounts.
+func (m mounts) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+// sortMounts sorts an array of mounts in lexicographic order. This ensure that
+// the mount like /etc/resolv.conf will not mount before /etc, so /etc will
+// not shadow /etc/resolv.conf
+func sortMounts(m []specs.Mount) []specs.Mount {
+	sort.Stable(mounts(m))
+	return m
 }
