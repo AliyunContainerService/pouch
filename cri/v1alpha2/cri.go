@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	goruntime "runtime"
+	"strconv"
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -279,6 +280,15 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		NetNSPath: netnsPath,
 		Runtime:   config.Annotations[anno.KubernetesRuntime],
 	}
+
+	if _, ok := config.Annotations[anno.LxcfsEnabled]; ok {
+		enableLxcfs, err := strconv.ParseBool(config.Annotations[anno.LxcfsEnabled])
+		if err != nil {
+			return nil, err
+		}
+		sandboxMeta.LxcfsEnabled = enableLxcfs
+	}
+
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 		return nil, err
 	}

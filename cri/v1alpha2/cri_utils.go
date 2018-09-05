@@ -685,6 +685,8 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		createConfig.HostConfig.Runtime = sandboxMeta.Runtime
 	}
 
+	createConfig.HostConfig.EnableLxcfs = sandboxMeta.LxcfsEnabled
+
 	if lc := config.GetLinux(); lc != nil {
 		resources := lc.GetResources()
 		if resources != nil {

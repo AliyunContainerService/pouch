@@ -16,4 +16,7 @@ const (
 
 	// KubernetesRuntime is the runtime
 	KubernetesRuntime = "io.kubernetes.runtime"
+
+	// LxcfsEnabled whether to enable lxcfs for a container
+	LxcfsEnabled = "io.kubernetes.lxcfs.enabled"
 )
