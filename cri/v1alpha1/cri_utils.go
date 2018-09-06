@@ -897,7 +897,7 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 	}
 
 	// snapshot key may not equals container ID later
-	sn, err := c.SnapshotStore.Get(meta.ID)
+	sn, err := c.SnapshotStore.Get(meta.SnapshotID)
 	if err == nil {
 		usedBytes = sn.Size
 		inodesUsed = sn.Inodes

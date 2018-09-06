@@ -10,78 +10,86 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
-// ContainerUpgradeConfig ContainerUpgradeConfig is used for API "POST /containers/upgrade".
-// It wraps all kinds of config used in container upgrade.
-// It can be used to encode client params in client and unmarshal request body in daemon side.
+// ContainerUpgradeConfig ContainerUpgradeConfig is used for API "POST /containers/{name:.*}/upgrade". when upgrade a container,
+// we must specify new image used to create a new container, and also can specify `Cmd` and `Entrypoint` for
+// new container. There is all parameters that upgrade a container, if want to change other parameters, i
+// think you should use `update` API interface.
 //
 // swagger:model ContainerUpgradeConfig
 
 type ContainerUpgradeConfig struct {
-	ContainerConfig
 
-	// host config
-	HostConfig *HostConfig `json:"HostConfig,omitempty"`
+	// Execution commands and args
+	Cmd []string `json:"Cmd"`
+
+	// The entrypoint for the container as a string or an array of strings.
+	// If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.
+	//
+	Entrypoint []string `json:"Entrypoint"`
+
+	// image
+	// Required: true
+	Image string `json:"Image"`
 }
 
-// UnmarshalJSON unmarshals this object from a JSON structure
-func (m *ContainerUpgradeConfig) UnmarshalJSON(raw []byte) error {
+/* polymorph ContainerUpgradeConfig Cmd false */
 
-	var aO0 ContainerConfig
-	if err := swag.ReadJSON(raw, &aO0); err != nil {
-		return err
-	}
-	m.ContainerConfig = aO0
+/* polymorph ContainerUpgradeConfig Entrypoint false */
 
-	var data struct {
-		HostConfig *HostConfig `json:"HostConfig,omitempty"`
-	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
-		return err
-	}
-
-	m.HostConfig = data.HostConfig
-
-	return nil
-}
-
-// MarshalJSON marshals this object to a JSON structure
-func (m ContainerUpgradeConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
-
-	aO0, err := swag.WriteJSON(m.ContainerConfig)
-	if err != nil {
-		return nil, err
-	}
-	_parts = append(_parts, aO0)
-
-	var data struct {
-		HostConfig *HostConfig `json:"HostConfig,omitempty"`
-	}
-
-	data.HostConfig = m.HostConfig
-
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
-	}
-	_parts = append(_parts, jsonData)
-
-	return swag.ConcatJSON(_parts...), nil
-}
+/* polymorph ContainerUpgradeConfig Image false */
 
 // Validate validates this container upgrade config
 func (m *ContainerUpgradeConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.ContainerConfig.Validate(formats); err != nil {
+	if err := m.validateCmd(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateEntrypoint(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateImage(formats); err != nil {
+		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ContainerUpgradeConfig) validateCmd(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Cmd) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *ContainerUpgradeConfig) validateEntrypoint(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Entrypoint) { // not required
+		return nil
+	}
+
+	return nil
+}
+
+func (m *ContainerUpgradeConfig) validateImage(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("Image", "body", string(m.Image)); err != nil {
+		return err
+	}
+
 	return nil
 }
 

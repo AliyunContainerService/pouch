@@ -261,6 +261,9 @@ type Container struct {
 
 	// MountFS is used to mark the directory of mount overlayfs for pouch daemon to operate the image.
 	MountFS string `json:"-"`
+
+	// SnapshotID specify id of the snapshot that container using.
+	SnapshotID string
 }
 
 // Key returns container's id.
@@ -268,6 +271,25 @@ func (c *Container) Key() string {
 	c.Lock()
 	defer c.Unlock()
 	return c.ID
+}
+
+// SnapshotKey returns id of container's snapshot
+func (c *Container) SnapshotKey() string {
+	c.Lock()
+	defer c.Unlock()
+	// for old container, SnapshotKey equals to Container ID
+	if c.SnapshotID == "" {
+		return c.ID
+	}
+
+	return c.SnapshotID
+}
+
+// SetSnapshotID sets the snapshot id of container
+func (c *Container) SetSnapshotID(snapID string) {
+	c.Lock()
+	defer c.Unlock()
+	c.SnapshotID = snapID
 }
 
 // Write writes container's meta data into meta store.
