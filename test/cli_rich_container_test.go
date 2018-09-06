@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -240,4 +241,37 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
 	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemdd"), check.Equals, true)
 	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+}
+
+// TestRichContainerUpdateEnvFile check update env and env file successfully.
+func (suite *PouchRichContainerSuite) TestRichContainerUpdateEnvFile(c *check.C) {
+	name := "TestRichContainerUpdateEnvFile"
+
+	res := command.PouchRun("run", "-d", "--name", name, centosImage, "sleep", "100")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	command.PouchRun("update", "--env", "foo=bar", name).Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
+		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
+	}
+
+	// check foo="bar" should exist in /etc/profile.d/pouchenv.sh
+	output = command.PouchRun("exec", name, "cat", "/etc/profile.d/pouchenv.sh").Stdout()
+	if !strings.Contains(output, "foo=\"bar\"") {
+		c.Errorf("failed to update /etc/profile.d/pouchenv.sh, got content: %s", output)
+	}
+
+	// check env foo=bar update successfully.
+	output = command.PouchRun("exec", name, "env").Stdout()
+	if !strings.Contains(output, "foo=bar") {
+		c.Errorf("failed to update env, got content: %s", output)
+	}
 }

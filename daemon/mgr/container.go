@@ -989,6 +989,13 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	}
 	c.Unlock()
 
+	// Update Env
+	newEnvSlice, err := mergeEnvSlice(config.Env, c.Config.Env)
+	if err != nil {
+		return err
+	}
+	c.Config.Env = newEnvSlice
+
 	// update env when container is running, default snapshotter driver
 	// is overlayfs
 	if c.IsRunningOrPaused() && len(config.Env) > 0 && c.Snapshotter != nil {
@@ -999,14 +1006,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}
 
-	// Update Env
-	newEnvSlice, err := mergeEnvSlice(config.Env, c.Config.Env)
-	if err != nil {
-		return err
-	}
-	c.Config.Env = newEnvSlice
-
-	if mgr.containerPlugin != nil {
+	if mgr.containerPlugin != nil && len(config.Env) > 0 {
 		if err = mgr.containerPlugin.PostUpdate(c.BaseFS, c.Config.Env); err != nil {
 			return err
 		}
