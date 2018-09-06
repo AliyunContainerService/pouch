@@ -70,7 +70,7 @@ func stopExample() string {
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Running   docker.io/library/busybox:latest   runc
 $ pouch stop foo
-$ pouch ps
+$ pouch ps -a
 Name     ID       Status    Image                              Runtime
 foo      71b9c1   Stopped   docker.io/library/busybox:latest   runc`
 }
