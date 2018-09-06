@@ -20,7 +20,11 @@ func SetImageProxy(p string) {
 }
 
 func proxyFromEnvironment(req *http.Request) (*url.URL, error) {
-	if proxy == "" || req.URL.Scheme == "https" {
+	// ignore https request.
+	if req.URL.Scheme == "https" {
+		return http.ProxyFromEnvironment(req)
+	}
+	if proxy == "" {
 		return nil, nil
 	}
 	if !useProxy(canonicalAddr(req.URL)) {
@@ -63,7 +67,6 @@ func canonicalAddr(url *url.URL) string {
 	return net.JoinHostPort(addr, port)
 }
 
-// change no_proxy to noProxy for avoid fail in go lint check
 var (
 	noProxyEnv = &envOnce{
 		names: []string{"NO_PROXY", "no_proxy"},
@@ -94,7 +97,7 @@ func (e *envOnce) init() {
 }
 
 // useProxy reports whether requests to addr should use a proxy,
-// according to the NO_PROXY or noProxy environment variable.
+// according to the NO_PROXY or no_proxy environment variable.
 // addr is always a canonicalAddr with a host and port.
 func useProxy(addr string) bool {
 	if len(addr) == 0 {
@@ -139,11 +142,11 @@ func useProxy(addr string) bool {
 			continue
 		}
 		if p[0] == '.' && (strings.HasSuffix(addr, p) || addr == p[1:]) {
-			// noProxy ".foo.com" matches "bar.foo.com" or "foo.com"
+			// no_proxy ".foo.com" matches "bar.foo.com" or "foo.com"
 			return false
 		}
 		if p[0] != '.' && strings.HasSuffix(addr, p) && addr[len(addr)-len(p)-1] == '.' {
-			// noProxy "foo.com" matches "bar.foo.com"
+			// no_proxy "foo.com" matches "bar.foo.com"
 			return false
 		}
 	}
