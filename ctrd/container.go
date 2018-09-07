@@ -259,9 +259,9 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 	lc, err := wrapperCli.client.LoadContainer(ctx, id)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			return errors.Wrap(errtypes.ErrNotfound, "container")
+			return errors.Wrapf(errtypes.ErrNotfound, "container %s", id)
 		}
-		return errors.Wrap(err, "failed to load container")
+		return errors.Wrapf(err, "failed to load container(%s)", id)
 	}
 
 	task, err := lc.Task(ctx, containerio.WithAttach(io.Stdin, io.Stdout, io.Stderr))

@@ -115,7 +115,7 @@ func (store *imageStore) GetPrimaryReference(ref reference.Named) (reference.Nam
 	if p, ok := store.primaryRefIndexByRef[trimRef.String()]; ok {
 		return p, nil
 	}
-	return nil, errtypes.ErrNotfound
+	return nil, pkgerrors.Wrapf(errtypes.ErrNotfound, "image reference %s", ref.String())
 }
 
 // Search returns the imageID, reference.Named by the given reference.Named.
@@ -167,7 +167,7 @@ func (store *imageStore) searchIDs(refID string) (digest.Digest, error) {
 		}
 
 		if len(ids) > 1 {
-			return pkgerrors.Wrap(errtypes.ErrTooMany, "image: "+refID)
+			return pkgerrors.Wrapf(errtypes.ErrTooMany, "image %s", refID)
 		}
 		return nil
 	}
@@ -177,7 +177,7 @@ func (store *imageStore) searchIDs(refID string) (digest.Digest, error) {
 	}
 
 	if len(ids) == 0 {
-		return "", pkgerrors.Wrap(errtypes.ErrNotfound, "image: "+refID)
+		return "", pkgerrors.Wrapf(errtypes.ErrNotfound, "image %s", refID)
 	}
 	return ids[0], nil
 }

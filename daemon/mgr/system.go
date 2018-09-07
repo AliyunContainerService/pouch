@@ -2,7 +2,6 @@ package mgr
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -194,7 +193,7 @@ func (mgr *SystemManager) Auth(auth *types.AuthConfig) (string, error) {
 // UpdateDaemon updates config of daemon, only label and image proxy are allowed.
 func (mgr *SystemManager) UpdateDaemon(cfg *types.DaemonUpdateConfig) error {
 	if cfg == nil || (len(cfg.Labels) == 0 && cfg.ImageProxy == "") {
-		return errors.Wrap(errtypes.ErrInvalidParam, fmt.Sprintf("daemon update config cannot be empty"))
+		return errors.Wrap(errtypes.ErrInvalidParam, "daemon update config cannot be empty")
 	}
 
 	daemonCfg := mgr.config

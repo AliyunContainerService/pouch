@@ -31,13 +31,13 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 	// name is the container's prefix of the id.
 	objs, err := mgr.Store.GetWithPrefix(nameOrPrefix)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get container info with prefix: %s", nameOrPrefix)
+		return "", errors.Wrapf(err, "failed to get container info with prefix %s", nameOrPrefix)
 	}
 	if len(objs) > 1 {
-		return "", errors.Wrap(errtypes.ErrTooMany, "container: "+nameOrPrefix)
+		return "", errors.Wrapf(errtypes.ErrTooMany, "container %s", nameOrPrefix)
 	}
 	if len(objs) == 0 {
-		return "", errors.Wrap(errtypes.ErrNotfound, "container: "+nameOrPrefix)
+		return "", errors.Wrapf(errtypes.ErrNotfound, "container %s", nameOrPrefix)
 	}
 	obj = objs[0]
 
@@ -66,7 +66,7 @@ func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) 
 		return res.(*Container), nil
 	}
 
-	return nil, errors.Wrap(errtypes.ErrNotfound, "container "+nameOrPrefix)
+	return nil, errors.Wrapf(errtypes.ErrNotfound, "container %s", nameOrPrefix)
 }
 
 // generateID generates an ID for newly created container. We must ensure that

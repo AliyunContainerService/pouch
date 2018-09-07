@@ -25,7 +25,7 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 	}
 
 	if !(logOpt.ShowStdout || logOpt.ShowStderr) {
-		return nil, false, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "you must choose at least one stream")
+		return nil, false, pkgerrors.Wrap(errtypes.ErrInvalidParam, "you must choose at least one stream")
 	}
 
 	if c.HostConfig.LogConfig.LogDriver != types.LogConfigLogDriverJSONFile {

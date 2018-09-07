@@ -83,7 +83,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 				return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
 			}})
 	if err != nil {
-		logrus.Errorf("failed to new network manager, can not get container list")
+		logrus.Errorf("failed to new network manager: cannot get container list")
 		return nil, errors.Wrap(err, "failed to get container list")
 	}
 	cfg.NetworkConfig.ActiveSandboxes = make(map[string]interface{})
@@ -126,7 +126,7 @@ func (nm *NetworkManager) Create(ctx context.Context, create apitypes.NetworkCre
 	}
 
 	if net, err := nm.controller.NetworkByName(name); err == nil && net != nil {
-		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, fmt.Sprintf("network %s already exists", name))
+		return nil, errors.Wrapf(errtypes.ErrAlreadyExisted, "network %s", name)
 	}
 
 	net, err := nm.controller.NewNetwork(driver, name, id, nwOptions...)
@@ -235,10 +235,10 @@ func (nm *NetworkManager) GetNetworkByPartialID(partialID string) (*types.Networ
 	}
 	matchedNetworks := nm.GetNetworksByPartialID(partialID)
 	if len(matchedNetworks) == 0 {
-		return nil, errors.Wrap(errtypes.ErrNotfound, "network: "+partialID)
+		return nil, errors.Wrapf(errtypes.ErrNotfound, "network %s", partialID)
 	}
 	if len(matchedNetworks) > 1 {
-		return nil, errors.Wrap(errtypes.ErrTooMany, "network: "+partialID)
+		return nil, errors.Wrapf(errtypes.ErrTooMany, "network %s", partialID)
 	}
 	return matchedNetworks[0], nil
 }
@@ -278,7 +278,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 
 	logrus.Debugf("create endpoint for container [%s] on network [%s]", containerID, network)
 	if networkConfig == nil || endpointConfig == nil {
-		return "", fmt.Errorf("networkConfig or endpointConfig can not be nil")
+		return "", errors.Wrap(errtypes.ErrInvalidParam, "networkConfig or endpointConfig cannot be empty")
 	}
 
 	n, err := nm.controller.NetworkByName(network)
@@ -310,7 +310,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	defer func() {
 		if err != nil {
 			if err := ep.Delete(true); err != nil {
-				logrus.Errorf("could not delete endpoint %s after failing to create endpoint(%v)", ep.Name(), err)
+				logrus.Errorf("failed to delete endpoint %s after failing to create endpoint(%v)", ep.Name(), err)
 			}
 		}
 	}()
@@ -435,7 +435,7 @@ func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.En
 	eplist = sb.Endpoints()
 	if len(eplist) == 0 {
 		if err := sb.Delete(); err != nil {
-			logrus.Errorf("failed to delete sandbox id(%s), err(%v)", sid, err)
+			logrus.Errorf("failed to delete sandbox id(%s): %v", sid, err)
 			return errors.Wrapf(err, "failed to delete sandbox id(%s)", sid)
 		}
 	}
@@ -535,7 +535,7 @@ func getIpamConfig(data []apitypes.IPAMConfig) ([]*libnetwork.IpamConf, []*libne
 		iCfg.AuxAddresses = d.AuxAddress
 		ip, _, err := net.ParseCIDR(d.Subnet)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Invalid subnet(%s), err(%v)", d.Subnet, err)
+			return nil, nil, fmt.Errorf("failed to parse invalid subnet(%s): %v", d.Subnet, err)
 		}
 		if ip.To4() != nil {
 			ipamV4Cfg = append(ipamV4Cfg, &iCfg)
@@ -694,7 +694,7 @@ func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]lib
 				portStart, portEnd, err = newP.Range()
 			}
 			if err != nil {
-				return nil, fmt.Errorf("failed to parsing HostPort value(%s):%v", binding[i].HostPort, err)
+				return nil, fmt.Errorf("failed to parsing HostPort value(%s): %v", binding[i].HostPort, err)
 			}
 			pbCopy.HostPort = uint16(portStart)
 			pbCopy.HostPortEnd = uint16(portEnd)

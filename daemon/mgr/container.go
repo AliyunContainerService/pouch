@@ -240,17 +240,17 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		// recover the running or paused container.
 		io, err := mgr.openContainerIO(container)
 		if err != nil {
-			logrus.Errorf("failed to recover container: %s,  %v", id, err)
+			logrus.Errorf("failed to recover container %s: %v", id, err)
 		}
 
 		err = mgr.Client.RecoverContainer(ctx, id, io)
 		if err != nil && strings.Contains(err.Error(), "not found") {
-			logrus.Infof("container %s not found, executes mark stopped and release resources", id)
+			logrus.Infof("failed to recover container %s (not found, executes mark stopped and release resources): %v", id, err)
 			if err := mgr.markStoppedAndRelease(container, nil); err != nil {
 				logrus.Errorf("failed to mark container %s stop status: %v", id, err)
 			}
 		} else if err != nil {
-			logrus.Errorf("failed to recover container: %s,  %v", id, err)
+			logrus.Errorf("failed to recover container %s: %v", id, err)
 			// release io
 			io.Close()
 			mgr.IOs.Remove(id)
@@ -268,11 +268,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	defer func() {
 		// do cleanup
 		if err != nil {
-			logrus.Infof("start to rollback allocated resources of container %v.", name)
+			logrus.Infof("start to rollback allocated resources of container %v", name)
 			for _, f := range cleanups {
 				nerr := f()
 				if nerr != nil {
-					logrus.Errorf("fail to cleanup allocated resource, error is %v.", nerr)
+					logrus.Errorf("fail to cleanup allocated resource, error is %v", nerr)
 				}
 			}
 		}
@@ -285,10 +285,10 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	// TODO: check request validate.
 	if config.HostConfig == nil {
-		return nil, fmt.Errorf("HostConfig cannot be nil")
+		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "HostConfig cannot be empty")
 	}
 	if config.NetworkingConfig == nil {
-		return nil, fmt.Errorf("NetworkingConfig cannot be nil")
+		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "NetworkingConfig cannot be empty")
 	}
 
 	id, err := mgr.generateID()
@@ -299,7 +299,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if name == "" {
 		name = mgr.generateName(id)
 	} else if mgr.NameToID.Get(name).Exist() {
-		return nil, errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+name)
+		return nil, errors.Wrapf(errtypes.ErrAlreadyExisted, "container name %s", name)
 	}
 
 	// set hostname.
@@ -314,7 +314,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 
 	if _, exist := mgr.Config.Runtimes[config.HostConfig.Runtime]; !exist {
-		return nil, fmt.Errorf("unknown runtime %s", config.HostConfig.Runtime)
+		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "unknown runtime %s", config.HostConfig.Runtime)
 	}
 
 	config.Image = primaryRef.String()
@@ -323,7 +323,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, err
 	}
 	cleanups = append(cleanups, func() error {
-		logrus.Infof("start to cleanup snapshot, id is %v.", id)
+		logrus.Infof("start to cleanup snapshot, id is %v", id)
 		return mgr.Client.RemoveSnapshot(ctx, id)
 	})
 
@@ -401,7 +401,8 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	mounts, err := mgr.Client.GetMounts(ctx, id)
 	if err != nil {
 		return nil, err
-	} else if len(mounts) != 1 {
+	}
+	if len(mounts) != 1 {
 		return nil, fmt.Errorf("failed to get snapshot %s mounts: not equals one", id)
 	}
 	container.SetSnapshotterMeta(mounts)
@@ -470,7 +471,7 @@ func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, 
 // Start a pre created Container.
 func (mgr *ContainerManager) Start(ctx context.Context, id string, options *types.ContainerStartOptions) (err error) {
 	if id == "" {
-		return errors.Wrap(errtypes.ErrInvalidParam, "either container name or id is required")
+		return errors.Wrap(errtypes.ErrInvalidParam, "container ID cannot empty")
 	}
 
 	c, err := mgr.container(id)
@@ -885,7 +886,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 // Rename renames a container.
 func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string) error {
 	if mgr.NameToID.Get(newName).Exist() {
-		return errors.Wrap(errtypes.ErrAlreadyExisted, "container name: "+newName)
+		return errors.Wrapf(errtypes.ErrAlreadyExisted, "container name %s", newName)
 	}
 
 	c, err := mgr.container(oldName)
@@ -1286,12 +1287,12 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	// If DestroyContainer failed, we think the old container
 	// not changed, so just return error, no need recover it.
 	if _, err := mgr.Client.DestroyContainer(ctx, c.ID, 3); err != nil {
-		return errors.Wrapf(err, "failed to destroy container")
+		return errors.Wrapf(err, "failed to destroy container %s", c.ID)
 	}
 
 	// remove snapshot of old container
 	if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-		return errors.Wrap(err, "failed to remove snapshot")
+		return errors.Wrapf(err, "failed to remove snapshot of container %s", c.ID)
 	}
 
 	// wait util old snapshot to be deleted
@@ -1418,7 +1419,7 @@ func (mgr *ContainerManager) Wait(ctx context.Context, name string) (types.Conta
 func (mgr *ContainerManager) Connect(ctx context.Context, name string, networkIDOrName string, epConfig *types.EndpointSettings) error {
 	c, err := mgr.container(name)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get container: %s", name)
+		return errors.Wrapf(err, "failed to get container %s", name)
 	}
 
 	n, err := mgr.NetworkMgr.Get(context.Background(), networkIDOrName)
