@@ -17,4 +17,8 @@ type Config struct {
 	SandboxImage string `json:"sandbox-image,omitempty"`
 	// CriVersion is the cri version
 	CriVersion string `json:"cri-version,omitempty"`
+	// StreamServerPort is the port which cri stream server is listening on.
+	StreamServerPort string `json:"stream-server-port,omitempty"`
+	// StreamServerReusePort specify whether cri stream server share port with pouchd.
+	StreamServerReusePort bool
 }

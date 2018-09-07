@@ -28,6 +28,9 @@ type Server interface {
 
 	// Start starts the stream server.
 	Start() error
+
+	// Router is the Stream Server's handlers which we should export.
+	stream.Router
 }
 
 type server struct {
@@ -45,20 +48,13 @@ func NewServer(config stream.Config, runtime stream.Runtime) (Server, error) {
 		cache:   stream.NewRequestCache(),
 	}
 
-	if s.config.BaseURL == nil {
-		s.config.BaseURL = &url.URL{
-			Scheme: "http",
-			Host:   s.config.Address,
-		}
-	}
-
 	endpoints := []struct {
 		path    string
 		handler http.HandlerFunc
 	}{
-		{"/exec/{token}", s.serveExec},
-		{"/attach/{token}", s.serveAttach},
-		{"/portforward/{token}", s.servePortForward},
+		{"/exec/{token}", s.ServeExec},
+		{"/attach/{token}", s.ServeAttach},
+		{"/portforward/{token}", s.ServePortForward},
 	}
 
 	r := mux.NewRouter()
@@ -81,7 +77,7 @@ func (s *server) Start() error {
 	return s.server.ListenAndServe()
 }
 
-func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
+func (s *server) ServeExec(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	token := mux.Vars(r)["token"]
@@ -117,7 +113,7 @@ func (s *server) serveExec(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
+func (s *server) ServeAttach(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	token := mux.Vars(r)["token"]
@@ -151,7 +147,7 @@ func (s *server) serveAttach(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (s *server) servePortForward(w http.ResponseWriter, r *http.Request) {
+func (s *server) ServePortForward(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	token := mux.Vars(r)["token"]

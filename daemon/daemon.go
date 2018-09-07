@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
 	criservice "github.com/alibaba/pouch/cri"
+	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
@@ -197,16 +198,6 @@ func (d *Daemon) Run() error {
 		return err
 	}
 
-	d.server = server.Server{
-		Config:          d.config,
-		ContainerMgr:    containerMgr,
-		SystemMgr:       systemMgr,
-		ImageMgr:        imageMgr,
-		VolumeMgr:       volumeMgr,
-		NetworkMgr:      networkMgr,
-		ContainerPlugin: d.containerPlugin,
-	}
-
 	// init base network
 	err = d.networkInit(ctx)
 	if err != nil {
@@ -216,19 +207,33 @@ func (d *Daemon) Run() error {
 	// set image proxy
 	ctrd.SetImageProxy(d.config.ImageProxy)
 
-	httpReadyCh := make(chan bool)
+	criStreamRouterCh := make(chan stream.Router)
 	criReadyCh := make(chan bool)
+	criStopCh := make(chan error)
 
-	httpServerCloseCh := make(chan struct{})
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, d.volumeMgr, criStreamRouterCh, criStopCh, criReadyCh)
+
+	streamRouter := <-criStreamRouterCh
+
+	d.server = server.Server{
+		Config:          d.config,
+		ContainerMgr:    containerMgr,
+		SystemMgr:       systemMgr,
+		ImageMgr:        imageMgr,
+		VolumeMgr:       volumeMgr,
+		NetworkMgr:      networkMgr,
+		StreamRouter:    streamRouter,
+		ContainerPlugin: d.containerPlugin,
+	}
+
+	httpReadyCh := make(chan bool)
+	httpCloseCh := make(chan struct{})
 	go func() {
 		if err := d.server.Start(httpReadyCh); err != nil {
 			logrus.Errorf("failed to start http server: %v", err)
 		}
-		close(httpServerCloseCh)
+		close(httpCloseCh)
 	}()
-
-	criStopCh := make(chan error)
-	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, d.volumeMgr, criStopCh, criReadyCh)
 
 	httpReady := <-httpReadyCh
 	criReady := <-criReadyCh
@@ -247,7 +252,7 @@ func (d *Daemon) Run() error {
 	}
 
 	// Stop pouchd if the server stopped
-	<-httpServerCloseCh
+	<-httpCloseCh
 	logrus.Infof("HTTP server stopped")
 
 	return nil
