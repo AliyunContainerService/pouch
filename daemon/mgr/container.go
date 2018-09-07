@@ -1054,6 +1054,20 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}()
 
+	if config.Hostname != "" {
+		if c.HostConfig.NetworkMode == NetworkModeHost {
+			return fmt.Errorf("cannot update hostname of container %s in host network mode", c.ID)
+		}
+
+		c.Config.Hostname = strfmt.Hostname(config.Hostname)
+		if c.IsRunning() {
+			if err = updateHostnameForRunningContainer(config.Hostname, c); err != nil {
+				return err
+			}
+			logrus.Infof("update hostname of running container %s is successful", c.ID)
+		}
+	}
+
 	if c.IsRunning() && config.Resources.KernelMemory != 0 {
 		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID)
 	}

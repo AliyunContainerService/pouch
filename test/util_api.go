@@ -336,3 +336,39 @@ func GetMetric(c *check.C, key string, keySuccess string) (int, int) {
 
 	return iCount, iCountSuccess
 }
+
+// UpdateContaineHostnamerOK update container and check resp is ok
+func UpdateContaineHostnamerOK(c *check.C, cname string, hostname string) {
+	updateConfig := map[string]interface{}{
+		"hostname": hostname,
+	}
+
+	resp, err := request.Post("/containers/"+cname+"/update", request.WithJSONBody(updateConfig))
+	c.Assert(err, check.IsNil)
+
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 200)
+}
+
+// CreateExecHostnameOk exec process's environment with "hostname" CMD.
+func CreateExecHostnameOk(c *check.C, cname string) string {
+	obj := map[string]interface{}{
+		"Cmd":          []string{"hostname"},
+		"Detach":       true,
+		"AttachStderr": true,
+		"AttachStdout": true,
+		"AttachStdin":  true,
+		"Privileged":   false,
+		"User":         "",
+	}
+
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post("/containers/"+cname+"/exec", body)
+
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	var got types.ExecCreateResp
+	c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+	return got.ID
+}

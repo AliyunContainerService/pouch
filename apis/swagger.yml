@@ -2487,6 +2487,9 @@ definitions:
             x-nullable: true
             additionalProperties:
               type: "string"
+          Hostname:
+            type: "string"
+            description: "update hostname for container"
 
   ContainerUpgradeConfig:
     description: |

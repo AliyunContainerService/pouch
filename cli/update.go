@@ -51,6 +51,7 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 	flagSet.StringSliceVar(&uc.diskQuota, "disk-quota", nil, "Update disk quota for container(/=10g)")
+	flagSet.StringVar(&uc.hostname, "hostname", "", "Update hostname")
 }
 
 // updateRun is the entry of update command.
@@ -95,6 +96,7 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 		RestartPolicy: restartPolicy,
 		Resources:     resource,
 		DiskQuota:     diskQuota,
+		Hostname:      uc.hostname,
 	}
 
 	apiClient := uc.cli.Client()

@@ -23,6 +23,9 @@ type UpdateConfig struct {
 	//
 	Env []string `json:"Env"`
 
+	// update hostname for container
+	Hostname string `json:"Hostname,omitempty"`
+
 	// List of labels set to container.
 	Label []string `json:"Label"`
 
@@ -45,6 +48,8 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 
 		Env []string `json:"Env"`
 
+		Hostname string `json:"Hostname,omitempty"`
+
 		Label []string `json:"Label"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
@@ -56,6 +61,8 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	m.DiskQuota = dataAO1.DiskQuota
 
 	m.Env = dataAO1.Env
+
+	m.Hostname = dataAO1.Hostname
 
 	m.Label = dataAO1.Label
 
@@ -79,6 +86,8 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 
 		Env []string `json:"Env"`
 
+		Hostname string `json:"Hostname,omitempty"`
+
 		Label []string `json:"Label"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
@@ -87,6 +96,8 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	dataAO1.DiskQuota = m.DiskQuota
 
 	dataAO1.Env = m.Env
+
+	dataAO1.Hostname = m.Hostname
 
 	dataAO1.Label = m.Label
 

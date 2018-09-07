@@ -387,7 +387,7 @@ func setupNamespaces(ctx context.Context, c *Container, specWrapper *SpecWrapper
 
 // isHost indicates whether the container shares the host's corresponding namespace.
 func isHost(mode string) bool {
-	return mode == "host"
+	return mode == NetworkModeHost
 }
 
 // isContainer indicates whether the container uses another container's corresponding namespace.

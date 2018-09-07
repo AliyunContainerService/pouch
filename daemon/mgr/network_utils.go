@@ -9,6 +9,11 @@ import (
 	"github.com/docker/libnetwork"
 )
 
+const (
+	// NetworkModeHost means container network mode is host
+	NetworkModeHost = "host"
+)
+
 // IsContainer is used to check if network mode is container mode.
 func IsContainer(mode string) bool {
 	parts := strings.SplitN(mode, ":", 2)
@@ -17,7 +22,7 @@ func IsContainer(mode string) bool {
 
 // IsHost is used to check if network mode is host mode.
 func IsHost(mode string) bool {
-	return mode == "host"
+	return mode == NetworkModeHost
 }
 
 // IsNone is used to check if network mode is none mode.

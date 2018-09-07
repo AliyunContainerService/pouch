@@ -1487,6 +1487,12 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
+			"checksumSHA1": "5sA8fmTdySRJUW2EvJoq/Lz2ol0=",
+			"path": "github.com/opencontainers/runc/libcontainer",
+			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
+			"revisionTime": "2017-12-15T16:47:07Z"
+		},
+		{
 			"checksumSHA1": "gVVY8k2G3ws+V1czsfxfuRs8log=",
 			"path": "github.com/opencontainers/runc/libcontainer/apparmor",
 			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
@@ -1505,6 +1511,12 @@
 			"revisionTime": "2017-12-15T16:47:07Z"
 		},
 		{
+			"checksumSHA1": "klDr+R6CJJbkCxpScifrtMLtL6Q=",
+			"path": "github.com/opencontainers/runc/libcontainer/nsenter",
+			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
+			"revisionTime": "2017-12-15T16:47:07Z"
+		},
+		{
 			"checksumSHA1": "tsnOAtUqj1ZRWilpG3Ovq/IyPDk=",
 			"path": "github.com/opencontainers/runc/libcontainer/system",
 			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
@@ -1513,6 +1525,12 @@
 		{
 			"checksumSHA1": "2qNNJI8F5B8fG9RU4cxrJy43I8s=",
 			"path": "github.com/opencontainers/runc/libcontainer/user",
+			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
+			"revisionTime": "2017-12-15T16:47:07Z"
+		},
+		{
+			"checksumSHA1": "Sb296YW4V+esieanrx4Nzt2L5lU=",
+			"path": "github.com/opencontainers/runc/libcontainer/utils",
 			"revision": "e6516b3d5dc780cb57a976013c242a9a93052543",
 			"revisionTime": "2017-12-15T16:47:07Z"
 		},

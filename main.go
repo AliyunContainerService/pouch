@@ -35,6 +35,10 @@ var (
 	logOpts      []string
 )
 
+func init() {
+	reexec.Register("nsexec", reexecRunNsExec)
+}
+
 var cfg = &config.Config{}
 
 func main() {
