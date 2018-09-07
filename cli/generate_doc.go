@@ -9,15 +9,14 @@ import (
 )
 
 // genDocDescription is used to describe gen-doc command in detail and auto generate command doc.
-// TODO: add description
-var genDocDescription = ""
+var genDocDescription = "Generate docs for cli command"
 
-// GenDocCommand is used to implement 'exec' command.
+// GenDocCommand is used to implement 'gen-doc' command.
 type GenDocCommand struct {
 	baseCommand
 }
 
-// Init initializes ExecCommand command.
+// Init initializes GenDocCommand command.
 func (g *GenDocCommand) Init(c *Cli) {
 	g.cli = c
 	g.cmd = &cobra.Command{
@@ -48,7 +47,6 @@ func (g *GenDocCommand) runGenDoc(args []string) error {
 }
 
 // genDocExample shows examples in genDoc command, and is used in auto-generated cli docs.
-// TODO: add example
 func genDocExample() string {
-	return ""
+	return "$ pouch gen-doc"
 }

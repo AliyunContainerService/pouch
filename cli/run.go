@@ -171,12 +171,12 @@ func (rc *RunCommand) runRun(args []string) error {
 func runExample() string {
 	return `$ pouch run --name test registry.hub.docker.com/library/busybox:latest echo "hi"
 hi
-$ pouch ps
+$ pouch ps -a
 Name   ID       Status    Image                                            Runtime   Created
 test   23f852   stopped   registry.hub.docker.com/library/busybox:latest   runc      4 seconds ago
 $ pouch run -d --name test registry.hub.docker.com/library/busybox:latest
 90719b5f9a455b3314a49e72e3ecb9962f215e0f90153aa8911882acf2ba2c84
-$ pouch ps
+$ pouch ps -a
 Name   ID       Status    Image                                            Runtime   Created
 test   90719b   stopped   registry.hub.docker.com/library/busybox:latest   runc      5 seconds ago
 $ pouch run --device /dev/zero:/dev/testDev:rwm --name test registry.hub.docker.com/library/busybox:latest ls -l /dev/testDev

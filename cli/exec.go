@@ -16,8 +16,7 @@ import (
 )
 
 // execDescription is used to describe exec command in detail and auto generate command doc.
-// TODO: add description
-var execDescription = ""
+var execDescription = "Run a command in a running container"
 
 // ExecCommand is used to implement 'exec' command.
 type ExecCommand struct {
@@ -33,7 +32,7 @@ func (e *ExecCommand) Init(c *Cli) {
 	e.cli = c
 	e.cmd = &cobra.Command{
 		Use:   "exec [OPTIONS] CONTAINER COMMAND [ARG...]",
-		Short: "Exec a process in a running container",
+		Short: "Run a command in a running container",
 		Long:  execDescription,
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
