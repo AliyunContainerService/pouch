@@ -560,7 +560,15 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
 	createConfig.HostConfig.Binds = append(createConfig.HostConfig.Binds, generateContainerMounts(sandboxRootDir)...)
 
-	// TODO: devices and security option configurations.
+	var devices []*apitypes.DeviceMapping
+	for _, device := range config.Devices {
+		devices = append(devices, &apitypes.DeviceMapping{
+			PathOnHost:        device.HostPath,
+			PathInContainer:   device.ContainerPath,
+			CgroupPermissions: device.Permissions,
+		})
+	}
+	createConfig.HostConfig.Resources.Devices = devices
 
 	containerName := makeContainerName(sandboxConfig, config)
 
