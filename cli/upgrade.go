@@ -8,7 +8,7 @@ import (
 )
 
 // upgradeDescription is used to describe upgrade command in detail and auto generate command doc.
-var upgradeDescription = ""
+var upgradeDescription = "Upgrade a container with new image and args"
 
 // UpgradeCommand use to implement 'upgrade' command, it is used to upgrade a container.
 type UpgradeCommand struct {

@@ -17,7 +17,7 @@ var validDrivers = map[string]bool{
 }
 
 // logsDescription is used to describe logs command in detail and auto generate command doc.
-var logsDescription = ""
+var logsDescription = "Get container's logs"
 
 // LogsCommand use to implement 'logs' command, it is used to print a container's logs
 type LogsCommand struct {
@@ -97,5 +97,18 @@ func (lc *LogsCommand) runLogs(args []string) error {
 
 // logsExample shows examples in logs command, and is used in auto-generated cli docs.
 func logsExample() string {
-	return ``
+	return `$ pouch ps 
+Name     ID       Status      Created      Image                                          Runtime
+073f29   073f29   Up 1 day    2 days ago   registry.hub.docker.com/library/redis:latest   runc
+$ pouch logs 073f29
+1:C 04 Sep 05:42:01.600 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 04 Sep 05:42:01.601 # Redis version=4.0.11, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 04 Sep 05:42:01.601 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1:M 04 Sep 05:42:01.601 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+1:M 04 Sep 05:42:01.602 * Running mode=standalone, port=6379.
+1:M 04 Sep 05:42:01.602 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+1:M 04 Sep 05:42:01.602 # Server initialized
+1:M 04 Sep 05:42:01.602 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+1:M 04 Sep 05:42:01.602 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+1:M 04 Sep 05:42:01.602 * Ready to accept connections`
 }
