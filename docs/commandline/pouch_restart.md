@@ -13,7 +13,13 @@ pouch restart [OPTION] CONTAINER [CONTAINER...]
 ### Examples
 
 ```
-//TODO
+$ pouch ps -a
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Stopped   docker.io/library/busybox:latest   runc
+$ pouch restart foo
+$ pouch ps
+Name     ID       Status    Image                              Runtime
+foo      71b9c1   Running   docker.io/library/busybox:latest   runc
 ```
 
 ### Options
