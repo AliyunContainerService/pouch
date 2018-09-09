@@ -1,10 +1,10 @@
 ## pouch exec
 
-Exec a process in a running container
+Run a command in a running container
 
 ### Synopsis
 
-Exec a process in a running container
+Run a command in a running container
 
 ```
 pouch exec [OPTIONS] CONTAINER COMMAND [ARG...]

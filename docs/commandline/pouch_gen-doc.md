@@ -4,10 +4,16 @@ Generate docs
 
 ### Synopsis
 
-Generate docs
+Generate docs for cli command
 
 ```
 pouch gen-doc
+```
+
+### Examples
+
+```
+$ pouch gen-doc
 ```
 
 ### Options
