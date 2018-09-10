@@ -17,6 +17,9 @@ type SandboxMeta struct {
 
 	// Runtime is the runtime of sandbox
 	Runtime string
+
+	// Runtime whether to enable lxcfs for a container
+	LxcfsEnabled bool
 }
 
 // Key returns sandbox's id.
