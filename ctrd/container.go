@@ -122,13 +122,18 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 			exitTime: status.ExitTime(),
 		}
 
-		// run hook if not got fail here
-		if err := <-fail; err == nil {
-			for _, hook := range c.hooks {
-				if err := hook(process.ExecID, msg); err != nil {
-					logrus.Errorf("failed to execute the exec exit hooks: %v", err)
-					break
-				}
+		if err := <-fail; err != nil {
+			msg.err = err
+			// exit code should not be zero when exec get failed.
+			if msg.exitCode == 0 {
+				msg.exitCode = 126
+			}
+		}
+		// XXX: if exec process get run, io should be closed in this function,
+		for _, hook := range c.hooks {
+			if err := hook(process.ExecID, msg); err != nil {
+				logrus.Errorf("failed to execute the exec exit hooks: %v", err)
+				break
 			}
 		}
 
@@ -141,7 +146,6 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 	// start the exec process
 	if err := execProcess.Start(ctx); err != nil {
 		fail <- err
-		return errors.Wrap(err, "failed to exec process")
 	}
 
 	return nil
