@@ -232,17 +232,6 @@ func (suite *PouchRunSuite) TestRunWithoutCapability(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 }
 
-// TestRunWithPrivilege is to verify run container with privilege.
-func (suite *PouchRunSuite) TestRunWithPrivilege(c *check.C) {
-	name := "run-privilege"
-
-	res := command.PouchRun("run", "--name", name, "--privileged",
-		busyboxImage, "brctl", "addbr", "foobar")
-	defer DelContainerForceMultyTime(c, name)
-
-	res.Assert(c, icmd.Success)
-}
-
 // checkFileContains checks the content of fname contains expt
 func checkFileContains(c *check.C, fname string, expt string) {
 	cmdResult := icmd.RunCommand("cat", fname)
