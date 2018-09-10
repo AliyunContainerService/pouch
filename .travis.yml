@@ -19,6 +19,7 @@ env:
   - TEST_SUITE=integrationtest
   - TEST_SUITE=criv1alpha1test
   - TEST_SUITE=criv1alpha2test
+  - TEST_SUITE=nodee2etest
 
 script: |
   set -e # fast fail
@@ -43,13 +44,21 @@ script: |
     sudo env "PATH=$PATH" make download-dependencies
     sudo env "PATH=$PATH" make cri-v1alpha1-test
     make coverage
-  else
+  elif [[ "${TEST_SUITE}" = "criv1alpha2test" ]]; then
     make build
     TEST_FLAGS= make build-daemon-integration
     sudo env "PATH=$PATH" make install
 
     sudo env "PATH=$PATH" make download-dependencies
     sudo env "PATH=$PATH" make cri-v1alpha2-test
+    make coverage
+  else
+    make build
+    TEST_FLAGS= make build-daemon-integration
+    sudo env "PATH=$PATH" make install
+
+    sudo env "PATH=$PATH" make download-dependencies
+    sudo env "PATH=$PATH" make cri-e2e-test
     make coverage
   fi
   
