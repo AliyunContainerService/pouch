@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
@@ -579,12 +580,22 @@ func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwo
 		}
 	}
 
+	// generate genric endpoint options
 	genericOption := options.Generic{}
+	if len(endpoint.GenericParams) > 0 {
+		genericOption, _ = utils.MergeMap(genericOption, endpoint.GenericParams)
+	}
+
+	if n.Name() == endpoint.NetworkMode && endpoint.MacAddress != "" {
+		mac, err := net.ParseMAC(endpoint.MacAddress)
+		if err != nil {
+			return nil, err
+		}
+		genericOption, _ = utils.MergeMap(genericOption, options.Generic{netlabel.MacAddress: mac})
+		logrus.Debugf("generate endpoint macaddress: (%s)", endpoint.MacAddress)
+	}
 	createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(genericOption))
 
-	if len(endpoint.GenericParams) > 0 {
-		createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(endpoint.GenericParams))
-	}
 	if endpoint.DisableResolver {
 		createOptions = append(createOptions, libnetwork.CreateOptionDisableResolution())
 	}

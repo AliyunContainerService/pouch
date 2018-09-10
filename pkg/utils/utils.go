@@ -330,3 +330,24 @@ func StringSliceEqual(s1, s2 []string) bool {
 
 	return true
 }
+
+// MergeMap merges the m2 into m1, if it has the same keys, m2 will overwrite m1.
+func MergeMap(m1 map[string]interface{}, m2 map[string]interface{}) (map[string]interface{}, error) {
+	if m1 == nil && m2 == nil {
+		return nil, fmt.Errorf("all of maps are nil")
+	}
+
+	if m1 == nil {
+		return m2, nil
+	}
+
+	if m2 == nil {
+		return m1, nil
+	}
+
+	for k, v := range m2 {
+		m1[k] = v
+	}
+
+	return m1, nil
+}

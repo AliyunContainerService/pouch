@@ -544,3 +544,35 @@ func TestStringSliceEqual(t *testing.T) {
 		}
 	}
 }
+
+func TestMergeMap(t *testing.T) {
+	type Expect struct {
+		err   error
+		key   string
+		value interface{}
+	}
+	tests := []struct {
+		m1     map[string]interface{}
+		m2     map[string]interface{}
+		expect Expect
+	}{
+		{nil, nil, Expect{fmt.Errorf("all of maps are nil"), "", nil}},
+		{nil, map[string]interface{}{"a": "a"}, Expect{nil, "a", "a"}},
+		{map[string]interface{}{"a": "a"}, nil, Expect{nil, "a", "a"}},
+		{map[string]interface{}{"a": "a"}, map[string]interface{}{"a": "b"}, Expect{nil, "a", "b"}},
+		{map[string]interface{}{"a": "a"}, map[string]interface{}{"b": "b"}, Expect{nil, "b", "b"}},
+	}
+
+	for _, test := range tests {
+		m3, err := MergeMap(test.m1, test.m2)
+		if err != nil {
+			if test.expect.err.Error() != err.Error() {
+				t.Fatalf("MergeMap(%v, %v) expected: %v, but got %v", test.m1, test.m2, test.expect.err, err)
+			}
+		} else {
+			if m3[test.expect.key] != test.expect.value {
+				t.Fatalf("MergeMap(%v, %v) expected: %v, but got %v", test.m1, test.m2, test.expect.value, m3[test.expect.key])
+			}
+		}
+	}
+}

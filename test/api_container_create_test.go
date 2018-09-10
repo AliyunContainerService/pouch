@@ -3,12 +3,15 @@ package main
 import (
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
 	"github.com/go-check/check"
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // APIContainerCreateSuite is the test suite for container create API.
@@ -228,6 +231,51 @@ func (suite *APIContainerCreateSuite) TestCreateNvidiaConfig(c *check.C) {
 
 	c.Assert(got.HostConfig.Resources.NvidiaConfig.NvidiaVisibleDevices, check.Equals, "none")
 	c.Assert(got.HostConfig.Resources.NvidiaConfig.NvidiaDriverCapabilities, check.Equals, "all")
+
+	DelContainerForceMultyTime(c, cname)
+}
+
+func (suite *APIContainerCreateSuite) TestCreateWithMacAddress(c *check.C) {
+	cname := "TestCreateWithMacAddress"
+	mac := "00:16:3e:02:00:b7"
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+
+	obj := map[string]interface{}{
+		"Entrypoint":  []string{"top"},
+		"Image":       busyboxImage,
+		"MacAddress":  mac,
+		"NetworkMode": "bridge",
+	}
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	q = url.Values{}
+	q.Add("detachKeys", "EOF")
+	query = request.WithQuery(q)
+
+	resp, err = request.Post("/containers/"+cname+"/start", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
+
+	ret := command.PouchRun("exec", cname, "ip", "addr", "show", "eth0")
+	ret.Assert(c, icmd.Success)
+
+	found := false
+	for _, line := range strings.Split(ret.Stdout(), "\n") {
+		if strings.Contains(line, "link/ether") {
+			if mac == strings.Fields(line)[1] {
+				found = true
+				break
+			}
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
 
 	DelContainerForceMultyTime(c, cname)
 }
