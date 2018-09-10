@@ -231,3 +231,28 @@ func (suite *APIContainerCreateSuite) TestCreateNvidiaConfig(c *check.C) {
 
 	DelContainerForceMultyTime(c, cname)
 }
+
+// TestCreateWithNonUniqueOptions creates a container with duplicate
+// items which is invalid in container request body.
+func (suite *APIContainerCreateSuite) TestCreateWithNonUniqueOptions(c *check.C) {
+	cname := "TestCreateWithNonUniqueOptions"
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+
+	obj := map[string]interface{}{
+		"Image": busyboxImage,
+		"HostConfig": map[string]interface{}{
+			"CapAdd": []string{
+				"SYS_PTRACE",
+				"SYS_PTRACE",
+				"SYS_ADMIN",
+			},
+		},
+	}
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 400)
+}

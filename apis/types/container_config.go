@@ -56,6 +56,7 @@ type ContainerConfig struct {
 
 	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
 	//
+	// Unique: true
 	Env []string `json:"Env"`
 
 	// An object mapping ports to an empty object in the form:`{<port>/<tcp|udp>: {}}`
@@ -276,6 +277,10 @@ func (m *ContainerConfig) validateEnv(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Env) { // not required
 		return nil
+	}
+
+	if err := validate.UniqueItems("Env", "body", m.Env); err != nil {
+		return err
 	}
 
 	return nil

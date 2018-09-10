@@ -2108,11 +2108,13 @@ definitions:
         type: "array"
         items:
           type: "string"
+        uniqueItems: true
       Cmd:
         description: "Command to run specified an array of strings."
         type: "array"
         items:
           type: "string"
+        uniqueItems: false
       ArgsEscaped:
         description: "Command is already escaped (Windows only)"
         type: "boolean"
@@ -2139,6 +2141,7 @@ definitions:
         type: "array"
         items:
           type: "string"
+        uniqueItems: false
       NetworkDisabled:
         description: "Disable networking for the container."
         type: "boolean"
@@ -2169,6 +2172,7 @@ definitions:
         type: "array"
         items:
           type: "string"
+        uniqueItems: false
       Rich:
         type: "boolean"
         description: "Whether to start container in rich container mode. (default false)"
@@ -2280,37 +2284,44 @@ definitions:
             description: "A list of kernel capabilities to add to the container."
             items:
               type: "string"
+            uniqueItems: true
           CapDrop:
             type: "array"
             description: "A list of kernel capabilities to drop from the container."
             items:
               type: "string"
+            uniqueItems: true
           Dns:
             type: "array"
             description: "A list of DNS servers for the container to use."
             items:
               type: "string"
+            uniqueItems: true
           DnsOptions:
             type: "array"
             description: "A list of DNS options."
             items:
               type: "string"
+            uniqueItems: true
           DnsSearch:
             type: "array"
             description: "A list of DNS search domains."
             items:
               type: "string"
+            uniqueItems: true
           ExtraHosts:
             type: "array"
             description: |
               A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.
             items:
               type: "string"
+            uniqueItems: true
           GroupAdd:
             type: "array"
             description: "A list of additional groups that the container process will run as."
             items:
               type: "string"
+            uniqueItems: true
           IpcMode:
             type: "string"
             description: |
@@ -2360,12 +2371,14 @@ definitions:
             description: "A list of string values to customize labels for MLS systems, such as SELinux."
             items:
               type: "string"
+            uniqueItems: true
           StorageOpt:
             type: "object"
             description: |
               Storage driver options for this container, in the form `{"size": "120G"}`.
             additionalProperties:
               type: "string"
+            uniqueItems: true
           Tmpfs:
             type: "object"
             description: |
