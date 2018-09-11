@@ -17,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -131,6 +132,10 @@ func (cfg *Config) GetCgroupDriver() string {
 
 // Validate validates the user input config.
 func (cfg *Config) Validate() error {
+	// for debug config file.
+	b, _ := json.Marshal(cfg)
+	logrus.Debugf("daemon config: (%s)", string(b))
+
 	// deduplicated elements in slice if there is any.
 	cfg.Listen = utils.DeDuplicate(cfg.Listen)
 	cfg.Labels = utils.DeDuplicate(cfg.Labels)
@@ -191,9 +196,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	}
 
 	// merge configurations from command line flags and config file
-	err = mergeConfigurations(fileConfig, cfg.delValue(flagSet, fileFlags))
-	return err
-
+	return mergeConfigurations(fileConfig, cfg.delValue(flagSet, fileFlags))
 }
 
 // delValue deleles value in config, since we do not do conflict check for slice

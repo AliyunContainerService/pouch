@@ -122,6 +122,8 @@ func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
 	case reflect.Uintptr:
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
