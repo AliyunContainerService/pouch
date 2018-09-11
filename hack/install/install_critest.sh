@@ -3,6 +3,7 @@
 set -euo pipefail
 
 CRITEST_VERSION=1.0.0-beta.0
+CRITEST_BRANCH=tools-dev
 
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
@@ -31,15 +32,26 @@ critest::check_version() {
 
 # critest::install downloads the package and build.
 critest::install() {
-  local workdir pkg
+  local workdir pkg cri_runtime CRITOOLS_REPO
+  cri_runtime=$1
 
-  pkg="github.com/kubernetes-incubator/cri-tools"
+  pkg="github.com/kubernetes-sigs/cri-tools"
+  CRITOOLS_REPO="github.com/alibaba/cri-tools"
   workdir="${GOPATH}/src/${pkg}"
 
-  go get -d "${pkg}"/...
+  if [ ! -d "${workdir}" ]; then
+    mkdir -p "${workdir}"
+    cd "${workdir}"
+    git clone https://${CRITOOLS_REPO} .
+  fi
+
   cd "${workdir}"
   git fetch --all
-  git checkout "v${CRITEST_VERSION}"
+  if [[ "${cri_runtime}" == "v1alpha1" ]]; then
+      git checkout "v${CRITEST_VERSION}"
+  else
+      git checkout "${CRITEST_BRANCH}"
+  fi
   make
   cd -
 }
@@ -68,7 +80,7 @@ main() {
   fi
 
   echo ">>>> install critest-${CRITEST_VERSION} <<<<"
-  critest::install
+  critest::install "${cri_runtime}"
 
   command -v critest > /dev/null
 }
