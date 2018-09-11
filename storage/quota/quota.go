@@ -15,7 +15,6 @@ import (
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/pkg/system"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -122,12 +121,21 @@ func StartQuotaDriver(dir string) (string, error) {
 
 // SetSubtree is used to set quota id for directory.
 func SetSubtree(dir string, qid uint32) (uint32, error) {
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		logrus.Debugf("set quota skip not regular file: %s", dir)
+		return 0, err
+	}
+
 	return GQuotaDriver.SetSubtree(dir, qid)
 }
 
 // SetDiskQuota is used to set quota for directory.
 func SetDiskQuota(dir string, size string, quotaID uint32) error {
 	logrus.Infof("set disk quota, dir: (%s), size: (%s), quotaID: (%d)", dir, size, quotaID)
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		logrus.Debugf("set quota skip not regular file: %s", dir)
+		return err
+	}
 	return GQuotaDriver.SetDiskQuota(dir, size, quotaID)
 }
 
@@ -143,11 +151,21 @@ func GetQuotaIDInFileAttr(dir string) uint32 {
 
 // SetQuotaIDInFileAttr is used to set file attributes of quota ID.
 func SetQuotaIDInFileAttr(dir string, id uint32) error {
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		logrus.Debugf("set quota skip not regular file: %s", dir)
+		return err
+	}
+
 	return GQuotaDriver.SetQuotaIDInFileAttr(dir, id)
 }
 
 // SetQuotaIDInFileAttrNoOutput is used to set file attribute of quota ID without error.
 func SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		logrus.Debugf("set quota skip not regular file: %s", dir)
+		return
+	}
+
 	GQuotaDriver.SetQuotaIDInFileAttrNoOutput(dir, quotaID)
 }
 
@@ -215,6 +233,22 @@ func SetQuotaForDir(src string, quotaID uint32) error {
 	})
 
 	return nil
+}
+
+// CheckRegularFile is used to check the file is regular file or directory.
+func CheckRegularFile(file string) (bool, error) {
+	fd, err := os.Lstat(file)
+	if err != nil {
+		logrus.Warnf("failed to check file: %s, err: %v", file, err)
+		return false, err
+	}
+
+	mode := fd.Mode()
+	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) == 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // getOverlayMountInfo gets overlayFS informantion from /proc/mounts.
