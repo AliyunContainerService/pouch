@@ -307,7 +307,7 @@ func setupDevices(ctx context.Context, c *Container, s *specs.Spec) error {
 	}
 
 	s.Linux.Devices = append(s.Linux.Devices, devs...)
-	s.Linux.Resources.Devices = append(s.Linux.Resources.Devices, devPermissions...)
+	s.Linux.Resources.Devices = devPermissions
 	return nil
 }
 
