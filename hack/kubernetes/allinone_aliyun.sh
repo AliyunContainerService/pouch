@@ -5,47 +5,61 @@
 # This file is not responsible for CNI network configuration, you need to do it by yourself.
 
 set -o errexit
-set -o nounset
+#set -o nounset
 
-echo "----------------------------------"
-echo "Please choose the version of kubernetes:"
-echo "(1) kubernetes 1.9"
-echo "(2) kubernetes 1.10"
-echo "(0) exit"
-echo "----------------------------------"
-read input
-case $input in
-    1)
-    KUBERNETES_VERSION="1.9"
-    CRI_VERSION="v1alpha1"
-    RELEASE_UBUNTU="v1.9.4"
-    RELEASE_CENTOS="1.9.4-0.x86_64";;
-    2)
-    KUBERNETES_VERSION="1.10"
-    CRI_VERSION="v1alpha2"
-    RELEASE_UBUNTU="v1.10.2"
-    RELEASE_CENTOS="1.10.2-0.x86_64";;
-    0)
-    exit;;
-esac
+# users can set environments to enable silent installation.
+# for example
+# export KUBERNETES_VERSION=1.10 CRI_VERSION=v1alpha2 RELEASE_UBUNTU=v1.10.2 MASTER_NODE=true INSTALL_FLANNEL=true INSTALL_SAMPLE=true
+
+if [ -z "$KUBERNETES_VERSION" ] || [ -z "$CRI_VERSION" ]; then
+    echo "----------------------------------"
+    echo "Please choose the version of kubernetes:"
+    echo "(1) kubernetes 1.9"
+    echo "(2) kubernetes 1.10"
+    echo "(0) exit"
+    echo "----------------------------------"
+    read input
+    case $input in
+        1)
+        KUBERNETES_VERSION="1.9"
+        CRI_VERSION="v1alpha1"
+        RELEASE_UBUNTU="v1.9.4"
+        RELEASE_CENTOS="1.9.4-0.x86_64";;
+        2)
+        KUBERNETES_VERSION="1.10"
+        CRI_VERSION="v1alpha2"
+        RELEASE_UBUNTU="v1.10.2"
+        RELEASE_CENTOS="1.10.2-0.x86_64";;
+        0)
+        exit;;
+    esac
+fi
+
 echo "KUBERNETES_VERSION:" $KUBERNETES_VERSION
 
-echo "----------------------------------"
-echo "Is it the master node?"
-echo "(Y/y) Y"
-echo "(N/n) N"
-echo "(0) exit"
-echo "----------------------------------"
-read input
-case $input in
-    Y | y )
-    MASTER_NODE="true";;
-    N | n)
-    MASTER_NODE="false";;
-    0)
-    exit;;
-esac
+if [ -z "$MASTER_NODE" ]; then
+    echo "----------------------------------"
+    echo "Is it the master node?"
+    echo "(Y/y) Y"
+    echo "(N/n) N"
+    echo "(0) exit"
+    echo "----------------------------------"
+    read input
+    case $input in
+        Y | y )
+        MASTER_NODE="true";;
+        N | n)
+        MASTER_NODE="false";;
+        0)
+        exit;;
+    esac
+fi
 echo "MASTER_NODE:"$MASTER_NODE
+
+if [ -z "$CRI_VERSION" ]; then
+    echo "CRI_VERSION can't be null" >&2
+    exit 1
+fi
 
 MASTER_CIDR="10.244.0.0/16"
 CNI_VERSION="v0.6.0"
@@ -71,7 +85,12 @@ install_pouch_centos() {
 }
 
 config_pouch_ubuntu() {
-    sed -i "s/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true --cri-version=$CRI_VERSION/g" /usr/lib/systemd/system/pouch.service
+    mkdir -p /etc/systemd/system/pouch.service.d
+    cat > /etc/systemd/system/pouch.service.d/pouch.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/pouchd --enable-cri=true --cri-version=$CRI_VERSION
+EOF
     systemctl daemon-reload
     systemctl restart pouch
 }
@@ -96,19 +115,28 @@ EOF
 }
 
 install_kubelet_ubuntu() {
+    if [ -z "$RELEASE_UBUNTU" ]; then
+        echo "RELEASE_UBUNTU can't be null" >&2
+        exit 1
+    fi
     KUBE_URL="https://storage.googleapis.com/kubernetes-release/release/$RELEASE_UBUNTU/bin/linux/amd64"
-    wget "$KUBE_URL/kubeadm" -O /usr/bin/kubeadm
-    wget "$KUBE_URL/kubelet" -O /usr/bin/kubelet
-    wget "$KUBE_URL/kubectl" -O /usr/bin/kubectl
+    wget --progress=bar:force:noscroll "$KUBE_URL/kubeadm" -O /usr/bin/kubeadm
+    wget --progress=bar:force:noscroll "$KUBE_URL/kubelet" -O /usr/bin/kubelet
+    wget --progress=bar:force:noscroll "$KUBE_URL/kubectl" -O /usr/bin/kubectl
     chmod +x /usr/bin/kubeadm /usr/bin/kubelet /usr/bin/kubectl
 
     KUBELET_URL="https://raw.githubusercontent.com/kubernetes/kubernetes/$RELEASE_UBUNTU/build/debs"
     mkdir -p /etc/systemd/system/kubelet.service.d
-    wget "$KUBELET_URL/kubelet.service" -O /etc/systemd/system/kubelet.service
-    wget "$KUBELET_URL/10-kubeadm.conf" -O /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    curl -sS "$KUBELET_URL/kubelet.service" -o /etc/systemd/system/kubelet.service
+    curl -sS "$KUBELET_URL/10-kubeadm.conf" -o /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 }
 
 install_kubelet_centos() {
+    if [ -z "$RELEASE_CENTOS" ]; then
+        echo "RELEASE_CENTOS can't be null" >&2
+        exit 1
+    fi
+
     yum -y install kubelet-$RELEASE_CENTOS kubeadm-$RELEASE_CENTOS kubectl-$RELEASE_CENTOS
     systemctl disable firewalld && systemctl stop firewalld
     systemctl enable kubelet
@@ -116,7 +144,7 @@ install_kubelet_centos() {
 
 install_cni_ubuntu() {
     mkdir -p /opt/cni/bin
-    curl -L "https://github.com/containernetworking/plugins/releases/download/$CNI_VERSION/cni-plugins-amd64-$CNI_VERSION.tgz" | tar -C /opt/cni/bin -xz
+    wget -O- --read-timeout=20 --progress=bar:force:noscroll "https://github.com/containernetworking/plugins/releases/download/$CNI_VERSION/cni-plugins-amd64-$CNI_VERSION.tgz" | tar -C /opt/cni/bin -xz
 }
 
 install_cni_centos() {
@@ -127,6 +155,7 @@ install_cni_centos() {
 kubelet_config() {
     sed -i '2 i\Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
     systemctl daemon-reload
+    systemctl enable kubelet
     systemctl start kubelet
 }
 
@@ -134,16 +163,103 @@ setup_imagerepository() {
    cat <<EOF > kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1alpha1
 kind: MasterConfiguration
+kubernetesVersion: $RELEASE_UBUNTU
+api:
+  bindPort: 6443
+certificatesDir: /etc/kubernetes/pki
+clusterName: pouch
 imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
-kubernetes-version: stable-$KUBERNETES_VERSION
 networking:
+  dnsDomain: cluster.local
+  serviceSubnet: 10.96.0.0/12
   podSubnet: $MASTER_CIDR
+nodeRegistration:
+  criSocket: /var/run/pouchcri.sock
 EOF
 }
 
 setup_master() {
     kubeadm init --config kubeadm.conf --ignore-preflight-errors=all
+
+    # Config default kubeconfig for kubectl
+    mkdir -p "${HOME}/.kube"
+    cat /etc/kubernetes/admin.conf > "${HOME}/.kube/config"
+    chown "$(id -u):$(id -g)" "${HOME}/.kube/config"
+
+    until kubectl get nodes &> /dev/null; do echo "Waiting kubernetes api server for a second..."; sleep 1; done
+    # Enable master node scheduling
+    kubectl taint nodes --all  node-role.kubernetes.io/master-
+    if $INSTALL_FLANNEL; then
+        install_flannel
+    fi
 }
+
+# Install flannel for the cluster
+install_flannel(){
+    kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+}
+
+# create a sample
+create_sample(){
+    kubectl apply -f - <<EOF
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        args:
+        env:
+          - name: OWNER
+            value: "Pouch"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  selector:
+    app: nginx
+EOF
+}
+
 
 command_exists() {
     command -v "$@" > /dev/null 2>&1
@@ -179,6 +295,9 @@ case "$lsb_dist" in
         setup_imagerepository
         if $MASTER_NODE; then
             setup_master
+            if $INSTALL_SAMPLE; then
+                create_sample
+            fi
         fi
     ;;
 

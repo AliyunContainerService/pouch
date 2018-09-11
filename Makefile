@@ -1,3 +1,17 @@
+# Copyright The PouchContainer Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # TEST_FLAGS used as flags of go test.
 TEST_FLAGS ?= -v --race
 
@@ -15,6 +29,13 @@ INTEGRATION_TESTCASE_BINARY_NAME=pouchd-integration-test
 
 # DEST_DIR is base path used to install pouch & pouchd
 DEST_DIR=/usr/local
+
+# PREFIX is base path to install pouch & pouchd
+# PREFIX will override the value of DEST_DIR when specified
+# example: make install PREFIX=/usr
+ifdef PREFIX
+	DEST_DIR := $(PREFIX)
+endif
 
 # the following variables used for the daemon build
 
