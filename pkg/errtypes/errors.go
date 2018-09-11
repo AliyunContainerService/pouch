@@ -34,6 +34,9 @@ var (
 
 	// ErrVolumeNotFound represents that no such volume.
 	ErrVolumeNotFound = errorType{codeNotFound, "no such volume"}
+
+	// ErrNotModified represents that the resource is not modified
+	ErrNotModified = errorType{codeNotModified, "not modified"}
 )
 
 const (
@@ -46,6 +49,7 @@ const (
 	codeLockfailed
 	codeNotImplemented
 	codeInUse
+	codeNotModified
 )
 
 type errorType struct {
@@ -80,6 +84,11 @@ func IsTimeout(err error) bool {
 // IsInUse checks the error is using by others or not.
 func IsInUse(err error) bool {
 	return checkError(err, codeInUse)
+}
+
+// IsNotModified checks the error is not modified erro or not.
+func IsNotModified(err error) bool {
+	return checkError(err, codeNotModified)
 }
 
 func checkError(err error, code int) bool {

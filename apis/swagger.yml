@@ -588,6 +588,8 @@ paths:
       responses:
         204:
           description: "no error"
+        304:
+          description: "container already started"
         404:
           $ref: "#/responses/404ErrorResponse"
         409:

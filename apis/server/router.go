@@ -226,6 +226,8 @@ func HandleErrorResponse(w http.ResponseWriter, err error) {
 		code = http.StatusBadRequest
 	} else if errtypes.IsAlreadyExisted(err) {
 		code = http.StatusConflict
+	} else if errtypes.IsNotModified(err) {
+		code = http.StatusNotModified
 	}
 
 	w.Header().Set("Content-Type", "application/json")

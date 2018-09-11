@@ -92,3 +92,18 @@ func (suite *APIContainerStartSuite) TestInvalidParam(c *check.C) {
 	// TODO: missing case
 	helpwantedForMissingCase(c, "container api start bad request")
 }
+
+// TestStartAlreadyRunningContainer tests starting a running container
+func (suite *APIContainerStartSuite) TestStartAlreadyRunningContainer(c *check.C) {
+	cname := "TestStartAlreadyRunningContainer"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
+	StartContainerOk(c, cname)
+
+	resp, err := request.Post("/containers/" + cname + "/start")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 304)
+
+}

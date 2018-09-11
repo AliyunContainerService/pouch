@@ -159,3 +159,12 @@ func (suite *PouchStopSuite) TestAutoStopPidValue(c *check.C) {
 	}
 	c.Assert(result[0].State.Pid, check.Equals, int64(0))
 }
+
+// TestStartContainerTwice tries to start a container twice
+func (suite *PouchStartSuite) TestStartContainerTwice(c *check.C) {
+	name := "TestStartContainerTwice"
+
+	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}

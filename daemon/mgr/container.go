@@ -479,6 +479,11 @@ func (mgr *ContainerManager) Start(ctx context.Context, id string, options *type
 		return err
 	}
 
+	// check if container's status is running
+	if c.IsRunning() {
+		return errors.Wrapf(errtypes.ErrNotModified, "container already started")
+	}
+
 	return mgr.start(ctx, c, options)
 }
 
