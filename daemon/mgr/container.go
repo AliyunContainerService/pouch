@@ -3,6 +3,7 @@ package mgr
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -34,6 +35,7 @@ import (
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	"github.com/imdario/mergo"
@@ -1860,17 +1862,21 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	execConfig.Running = false
 	execConfig.Error = m.RawError()
 
-	io := mgr.IOs.Get(id)
-	if io == nil {
+	eio := mgr.IOs.Get(id)
+	if eio == nil {
 		return nil
 	}
 
 	if err := m.RawError(); err != nil {
-		fmt.Fprintf(io.Stdout, "%v\n", err)
+		var stdout io.Writer = eio.Stdout
+		if !execConfig.Tty && !eio.MuxDisabled {
+			stdout = stdcopy.NewStdWriter(stdout, stdcopy.Stdout)
+		}
+		stdout.Write([]byte(err.Error() + "\r\n"))
 	}
 
 	// close io
-	io.Close()
+	eio.Close()
 	mgr.IOs.Remove(id)
 
 	return nil
