@@ -659,6 +659,7 @@ POST /containers/{id}/start
 |HTTP Code|Description|Schema|
 |---|---|---|
 |**204**|no error|No Content|
+|**304**|container already started|No Content|
 |**404**|An unexpected 404 error occurred.|[Error](#error)|
 |**409**|container is paused|[Error](#error)|
 |**500**|An unexpected server error occurred.|[Error](#error)|
