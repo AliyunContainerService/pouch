@@ -76,7 +76,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 	container := types.ContainerJSON{
 		ID:           c.ID,
 		Name:         c.Name,
-		Image:        c.Config.Image,
+		Image:        c.Image,
 		Created:      c.Created,
 		State:        c.State,
 		Config:       c.Config,
@@ -134,6 +134,7 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 			ID:              c.ID,
 			Names:           []string{c.Name},
 			Image:           c.Config.Image,
+			ImageID:         c.Image,
 			Command:         strings.Join(c.Config.Cmd, " "),
 			Status:          status,
 			Created:         t.UnixNano(),
