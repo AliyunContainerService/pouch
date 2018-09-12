@@ -62,6 +62,23 @@ func CreateBusyboxContainer(cname string, cmd ...string) (*http.Response, error)
 	return request.Post(path, query, body)
 }
 
+// CreateBusybox125Container creates busybox with cmd.
+func CreateBusybox125Container(cname string, cmd ...string) (*http.Response, error) {
+	q := url.Values{}
+	q.Add("name", cname)
+
+	obj := map[string]interface{}{
+		"Image":      busyboxImage125,
+		"Cmd":        cmd,
+		"HostConfig": map[string]interface{}{},
+	}
+
+	path := "/containers/create"
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+	return request.Post(path, query, body)
+}
+
 // StartContainerOk starts the container and asserts success.
 func StartContainerOk(c *check.C, cname string) {
 	resp, err := request.Post("/containers/" + cname + "/start")

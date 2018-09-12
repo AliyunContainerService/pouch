@@ -22,6 +22,7 @@ func (suite *APIContainerInspectSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
 	PullImage(c, busyboxImage)
+	PullImage(c, busyboxImage125)
 }
 
 // TestInspectNoSuchContainer tests inspecting a container that doesn't exits return error.
@@ -35,10 +36,13 @@ func (suite *APIContainerInspectSuite) TestInspectNoSuchContainer(c *check.C) {
 func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	cname := "TestInpectOk"
 
-	CreateBusyboxContainerOk(c, cname)
+	resp, err := CreateBusybox125Container(cname, "top")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
 	defer DelContainerForceMultyTime(c, cname)
 
-	resp, err := request.Get("/containers/" + cname + "/json")
+	resp, err = request.Get("/containers/" + cname + "/json")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
@@ -49,8 +53,9 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	// TODO: missing case
 	//
 	// add more field checker
-	c.Assert(got.Image, check.Equals, busyboxImage)
 	c.Assert(got.Name, check.Equals, cname)
+	c.Assert(got.Image, check.Equals, busyboxImage125ID)
+	c.Assert(got.Config.Image, check.Equals, busyboxImage125)
 	c.Assert(got.Created, check.NotNil)
 	// StartedAt time should be 0001-01-01T00:00:00Z for a non-started container
 	c.Assert(got.State.StartedAt, check.Equals, time.Time{}.UTC().Format(time.RFC3339Nano))
