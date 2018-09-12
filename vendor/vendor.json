@@ -1440,12 +1440,6 @@
 			"revisionTime": "2018-05-30T15:59:58Z"
 		},
 		{
-			"checksumSHA1": "/MbkohdDPqGPeAkHq6ZkInB/WD0=",
-			"path": "github.com/imdario/mergo",
-			"revision": "0d4b488675fdec1dde48751b05ab530cf0b630e1",
-			"revisionTime": "2018-01-26T22:59:47Z"
-		},
-		{
 			"checksumSHA1": "Ex8204BJkD9d0nd8mLqw5YrTpNU=",
 			"path": "github.com/ishidawataru/sctp",
 			"revision": "07191f837fedd2f13d1ec7b5f885f0f3ec54b1cb",

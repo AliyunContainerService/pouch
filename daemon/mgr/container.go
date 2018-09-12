@@ -481,7 +481,12 @@ func (mgr *ContainerManager) Start(ctx context.Context, id string, options *type
 		return errors.Wrapf(errtypes.ErrNotModified, "container already started")
 	}
 
-	return mgr.start(ctx, c, options)
+	err = mgr.start(ctx, c, options)
+	if err == nil {
+		mgr.LogContainerEvent(ctx, c, "start")
+	}
+
+	return err
 }
 
 func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *types.ContainerStartOptions) error {
@@ -525,8 +530,6 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *t
 	if err = mgr.createContainerdContainer(ctx, c, options.CheckpointDir, options.CheckpointID); err != nil {
 		return errors.Wrapf(err, "failed to create container(%s) on containerd", c.ID)
 	}
-
-	mgr.LogContainerEvent(ctx, c, "start")
 
 	return nil
 }

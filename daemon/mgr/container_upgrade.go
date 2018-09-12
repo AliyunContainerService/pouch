@@ -16,6 +16,7 @@ import (
 // we only support specify cmd and entrypoint. if you want to change other
 // parameters of the container, you should think about the update API first.
 func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
+	var err error
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
@@ -26,10 +27,13 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		oldConfig     = *c.Config
 		oldHostconfig = *c.HostConfig
 		oldImage      = c.Image
+		oldSnapID     = c.SnapshotKey()
+		IsRunning     = false
 	)
 
+	// use err to determine if we should recover old container configure.
 	defer func() {
-		if !needRollback {
+		if err == nil {
 			return
 		}
 
@@ -38,9 +42,15 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		c.Config = &oldConfig
 		c.HostConfig = &oldHostconfig
 		c.Image = oldImage
+		c.SnapshotID = oldSnapID
 		c.Unlock()
 
-		if err := mgr.createContainerdContainer(ctx, c, "", ""); err != nil {
+		// even if the err is not nil, we may still no need to rollback the container
+		if !needRollback {
+			return
+		}
+
+		if err := mgr.start(ctx, c, &types.ContainerStartOptions{}); err != nil {
 			logrus.Errorf("failed to rollback upgrade action: %s", err.Error())
 			if err := mgr.markStoppedAndRelease(c, nil); err != nil {
 				logrus.Errorf("failed to mark container %s stop status: %s", c.ID, err.Error())
@@ -49,19 +59,22 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	}()
 
 	// merge image config to container config
-	if err := mgr.mergeImageConfigForUpgrade(ctx, c, config); err != nil {
+	err = mgr.mergeImageConfigForUpgrade(ctx, c, config)
+	if err != nil {
 		return errors.Wrap(err, "failed to upgrade container")
 	}
 
 	// if the container is running, we need first stop it.
 	if c.IsRunning() {
-		if _, err := mgr.Client.DestroyContainer(ctx, c.Key(), 10); err != nil {
-			return errors.Wrapf(err, "failed to destroy container")
+		IsRunning = true
+		err = mgr.stop(ctx, c, 10)
+		if err != nil {
+			return errors.Wrapf(err, "failed to stop container %s when upgrade", c.Key())
 		}
+		needRollback = true
 	}
 
 	// prepare new snapshot for the new container
-	oldSnapID := c.SnapshotKey()
 	newSnapID, err := mgr.prepareSnapshotForUpgrade(ctx, c.Key(), c.SnapshotKey(), config.Image)
 	if err != nil {
 		return err
@@ -69,21 +82,22 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	c.SetSnapshotID(newSnapID)
 
 	// initialize container storage config before container started
-	if err := mgr.initContainerStorage(ctx, c); err != nil {
+	err = mgr.initContainerStorage(ctx, c)
+	if err != nil {
 		return errors.Wrapf(err, "failed to init container storage, id: (%s)", c.Key())
 	}
 
 	// If container is running, we also should start the container
 	// after recreate it.
-	if c.IsRunning() {
-		if err := mgr.createContainerdContainer(ctx, c, "", ""); err != nil {
-			needRollback = true
+	if IsRunning {
+		err = mgr.start(ctx, c, &types.ContainerStartOptions{})
+		if err != nil {
 			if err := mgr.Client.RemoveSnapshot(ctx, newSnapID); err != nil {
 				logrus.Errorf("failed to remove snapshot %s: %v", newSnapID, err)
 			}
-
-			return errors.Wrap(err, "failed to create new container")
 		}
+
+		return errors.Wrap(err, "failed to create new container")
 	}
 
 	// Upgrade success, remove snapshot of old container
@@ -105,14 +119,14 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 }
 
 func (mgr *ContainerManager) prepareContainerEntrypointForUpgrade(ctx context.Context, c *Container, config *types.ContainerUpgradeConfig) error {
-	// first, use the entrypoint specified by ContainerUpgradeConfig
-	if len(config.Entrypoint) > 0 {
+	// Firstly, try to use the entrypoint specified by ContainerUpgradeConfig
+	if len(config.Entrypoint) > 0 || len(config.Cmd) > 0 {
 		return nil
 	}
 
-	// secondly, use the entrypoint of the old container
+	// Secondly, try to use the entrypoint of the old container.
 	// because of the entrypoints of old container's CreateConfig and old image being merged,
-	// we cannot decide the old container's entrypoint belongs which, so just check if the old
+	// so we cannot decide which config that the old container's entrypoint belongs to, so just check if the old
 	// container's entrypoint is different with the old image.
 	c.Lock()
 	defer c.Unlock()
@@ -121,6 +135,9 @@ func (mgr *ContainerManager) prepareContainerEntrypointForUpgrade(ctx context.Co
 	if err != nil {
 		return err
 	}
+
+	// if the entrypoints of old container and the old image is empty, we should use to CMD of old container,
+	// else if entrypoints are different, we use the CMD of old container.
 	if (c.Config.Entrypoint == nil && oldImgConfig.Entrypoint == nil) || !utils.StringSliceEqual(c.Config.Entrypoint, oldImgConfig.Entrypoint) {
 		config.Entrypoint = c.Config.Entrypoint
 		if len(config.Cmd) == 0 {
@@ -130,7 +147,7 @@ func (mgr *ContainerManager) prepareContainerEntrypointForUpgrade(ctx context.Co
 		return nil
 	}
 
-	// thirdly, use the entrypoint of the new image
+	// Thirdly, just use the entrypoint of the new image
 	newImgConfig, err := mgr.ImageMgr.GetOCIImageConfig(ctx, config.Image)
 	if err != nil {
 		return err
