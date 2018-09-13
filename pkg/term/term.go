@@ -7,6 +7,9 @@ import (
 	"github.com/pkg/term/termios"
 )
 
+// The default escape key sequence: ctrl-p, ctrl-q
+var DefaultEscapeKeys = []byte{16, 17}
+
 // StdinEcho enable or disable echoing standard terminal input.
 func StdinEcho(echo bool) error {
 	return TerminalEcho(os.Stdin.Fd(), echo)

@@ -9,7 +9,10 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/ioutils"
+	pterm "github.com/alibaba/pouch/pkg/term"
 
+	iout "github.com/docker/docker/pkg/ioutils"
+	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
 
@@ -130,13 +133,26 @@ func (rc *RunCommand) runRun(args []string) error {
 		}
 		defer conn.Close()
 
+		escapeKeys := pterm.DefaultEscapeKeys
+		if rc.detachKeys != "" {
+			customEscapeKeys, err := term.ToBytes(rc.detachKeys)
+			if err != nil {
+				fmt.Printf("invalid detach escape keys, using default: %s", err)
+			} else {
+				escapeKeys = customEscapeKeys
+			}
+		}
+
 		go func() {
 			io.Copy(os.Stdout, br)
 			wait <- struct{}{}
 		}()
 		go func() {
-			io.Copy(conn, os.Stdin)
-			// close write if receive CTRL-D
+			reader := iout.NewReadCloserWrapper(term.NewEscapeProxy(os.Stdin, escapeKeys), conn.Close)
+			io.Copy(conn, reader)
+			reader.Close()
+
+			// close write
 			if cw, ok := conn.(ioutils.CloseWriter); ok {
 				cw.CloseWrite()
 			}
