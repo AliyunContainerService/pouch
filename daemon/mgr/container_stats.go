@@ -59,10 +59,15 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 			if err != nil {
 				return err
 			}
-			containerStat := toContainerStats(metrics.Timestamp, stats)
 
-			if err := enc.Encode(containerStat); err != nil {
-				return err
+			// metrics may be nil if the container is not running,
+			// so just ignore it and try get the metrics next time.
+			if metrics != nil {
+				containerStat := toContainerStats(metrics.Timestamp, stats)
+
+				if err := enc.Encode(containerStat); err != nil {
+					return err
+				}
 			}
 
 			time.Sleep(DefaultStatsInterval)
@@ -80,6 +85,11 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	c.Lock()
 	ID := c.ID
 	c.Unlock()
+
+	// only get metrics when the container is running
+	if !(c.IsRunning() || c.IsPaused()) {
+		return nil, nil, nil
+	}
 
 	metric, err := mgr.Client.ContainerStats(ctx, ID)
 	if err != nil {
