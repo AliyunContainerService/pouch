@@ -47,7 +47,7 @@ ci_related::install_swagger() {
 }
 
 main() {
-  echo "instsall CI related tools..."
+  echo "install CI related tools..."
   ci_related::install_gometalinter
   ci_related::install_gocovmerge
   ci_related::install_swagger
