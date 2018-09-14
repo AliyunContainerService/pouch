@@ -299,6 +299,14 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
 }
 
+// StartPodSandbox restart a sandbox pod which was stopped by accident
+// and we should reconfigure it with network plugin which will make sure it reacquire its original network configuration,
+// like IP address.
+func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSandboxRequest) (*runtime.StartPodSandboxResponse, error) {
+	// TODO Complete the details of function.
+	return &runtime.StartPodSandboxResponse{}, nil
+}
+
 // StopPodSandbox stops the sandbox. If there are any running containers in the
 // sandbox, they should be forcibly terminated.
 func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (*runtime.StopPodSandboxResponse, error) {

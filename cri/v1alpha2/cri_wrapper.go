@@ -56,6 +56,21 @@ func (c *CriWrapper) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	return c.CriManager.RunPodSandbox(ctx, r)
 }
 
+// StartPodSandbox restart a sandbox pod which was stopped by accident
+// and we should reconfigure it with network plugin which will make sure it reacquire its original network configuration,
+// like IP address.
+func (c *CriWrapper) StartPodSandbox(ctx context.Context, r *runtime.StartPodSandboxRequest) (res *runtime.StartPodSandboxResponse, err error) {
+	logrus.Infof("StartPodSandbox for %q", r.GetPodSandboxId())
+	defer func() {
+		if err != nil {
+			logrus.Errorf("failed to start PodSandbox: %q, %v", r.GetPodSandboxId(), err)
+		} else {
+			logrus.Infof("success to start PodSandbox: %q", r.GetPodSandboxId())
+		}
+	}()
+	return c.CriManager.StartPodSandbox(ctx, r)
+}
+
 // StopPodSandbox stops the sandbox. If there are any running containers in the
 // sandbox, they should be forcibly terminated.
 func (c *CriWrapper) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (res *runtime.StopPodSandboxResponse, err error) {
