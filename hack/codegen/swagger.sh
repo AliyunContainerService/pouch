@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly SWAGGER_VERSION=0.12.0
+readonly SWAGGER_VERSION=dev
 
 # swagger::check_version checks the command and the version.
 swagger::check_version() {
@@ -26,8 +26,7 @@ swagger::check_version() {
 swagger::install() {
   echo ">>>> install swagger-${SWAGGER_VERSION} <<<<"
   local url
-  url="https://github.com/go-swagger/go-swagger/releases/download"
-  url="${url}/${SWAGGER_VERSION}/swagger_linux_amd64"
+  url="https://raw.githubusercontent.com/pouchcontainer/tools/master/bin/swagger"
 
   wget --quiet -O /usr/local/bin/swagger "${url}"
   chmod +x /usr/local/bin/swagger
