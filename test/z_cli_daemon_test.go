@@ -169,7 +169,7 @@ func (suite *PouchDaemonSuite) TestDaemonNestObjectConflict(c *check.C) {
 func (suite *PouchDaemonSuite) TestDaemonSliceFlagNotConflict(c *check.C) {
 	path := "/tmp/pouch_slice.json"
 	cfg := struct {
-		Labels []string `json:"label"`
+		Labels []string `json:"labels"`
 	}{
 		Labels: []string{"a=a", "b=b"},
 	}
@@ -177,7 +177,7 @@ func (suite *PouchDaemonSuite) TestDaemonSliceFlagNotConflict(c *check.C) {
 	c.Assert(err, check.IsNil)
 	defer os.Remove(path)
 
-	dcfg, err := StartDefaultDaemon("--label", "c=d", "--config-file="+path)
+	dcfg, err := StartDefaultDaemon("--labels", "c=d", "--config-file="+path)
 	dcfg.KillDaemon()
 	c.Assert(err, check.IsNil)
 }
@@ -187,7 +187,7 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileAndCli(c *check.C) {
 	// Check default configure file could work
 	path := "/etc/pouch/config.json"
 	cfg := struct {
-		Labels []string `json:"label,omitempty"`
+		Labels []string `json:"labels,omitempty"`
 	}{
 		Labels: []string{"a=b"},
 	}
@@ -318,7 +318,7 @@ func (suite *PouchDaemonSuite) TestDaemonRestartWithPausedContainer(c *check.C) 
 
 // TestDaemonLabel tests start daemon with label works.
 func (suite *PouchDaemonSuite) TestDaemonLabel(c *check.C) {
-	dcfg, err := StartDefaultDaemonDebug("--label", "a=b")
+	dcfg, err := StartDefaultDaemonDebug("--labels", "a=b")
 	// Start a test daemon with test args.
 	if err != nil {
 		c.Skip("deamon start failed.")
@@ -333,7 +333,7 @@ func (suite *PouchDaemonSuite) TestDaemonLabel(c *check.C) {
 
 // TestDaemonLabelDup tests start daemon with duplicated label works.
 func (suite *PouchDaemonSuite) TestDaemonLabelDup(c *check.C) {
-	dcfg, err := StartDefaultDaemonDebug("--label", "a=b", "--label", "a=b")
+	dcfg, err := StartDefaultDaemonDebug("--labels", "a=b", "--labels", "a=b")
 	// Start a test daemon with test args.
 	if err != nil {
 		c.Skip("deamon start failed.")
@@ -351,7 +351,7 @@ func (suite *PouchDaemonSuite) TestDaemonLabelDup(c *check.C) {
 
 // TestDaemonLabelNeg tests start daemon with wrong label could not work.
 func (suite *PouchDaemonSuite) TestDaemonLabelNeg(c *check.C) {
-	_, err := StartDefaultDaemon("--label", "adsf")
+	_, err := StartDefaultDaemon("--labels", "adsf")
 	c.Assert(err, check.NotNil)
 }
 
