@@ -448,6 +448,32 @@ func setupSandboxFiles(sandboxRootDir string, config *runtime.PodSandboxConfig) 
 	return nil
 }
 
+// setupPodNetwork sets up the network of PodSandbox and return the netnsPath of PodSandbox
+// and do nothing when networkNamespaceMode equals runtime.NamespaceMode_NODE.
+func (c *CriManager) setupPodNetwork(ctx context.Context, id string, config *runtime.PodSandboxConfig) (string, error) {
+	container, err := c.ContainerMgr.Get(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	netnsPath := containerNetns(container)
+	if netnsPath == "" {
+		return "", fmt.Errorf("failed to find network namespace path for sandbox %q", id)
+	}
+
+	err = c.CniMgr.SetUpPodNetwork(&ocicni.PodNetwork{
+		Name:         config.GetMetadata().GetName(),
+		Namespace:    config.GetMetadata().GetNamespace(),
+		ID:           id,
+		NetNS:        netnsPath,
+		PortMappings: toCNIPortMappings(config.GetPortMappings()),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return netnsPath, nil
+}
+
 // Container related tool functions.
 
 func makeContainerName(s *runtime.PodSandboxConfig, c *runtime.ContainerConfig) string {

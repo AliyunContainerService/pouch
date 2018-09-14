@@ -268,29 +268,28 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	// Step 4: Setup networking for the sandbox.
 	var netnsPath string
-	securityContext := config.GetLinux().GetSecurityContext()
-	hostNet := securityContext.GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
+	networkNamespaceMode := config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
 	// If it is in host network, no need to configure the network of sandbox.
-	if !hostNet {
-		container, err := c.ContainerMgr.Get(ctx, id)
+	if networkNamespaceMode != runtime.NamespaceMode_NODE {
+		netnsPath, err = c.setupPodNetwork(ctx, id, config)
 		if err != nil {
 			return nil, err
 		}
-		netnsPath = containerNetns(container)
-		if netnsPath == "" {
-			return nil, fmt.Errorf("failed to find network namespace path for sandbox %q", id)
-		}
-
-		err = c.CniMgr.SetUpPodNetwork(&ocicni.PodNetwork{
-			Name:         config.GetMetadata().GetName(),
-			Namespace:    config.GetMetadata().GetNamespace(),
-			ID:           id,
-			NetNS:        netnsPath,
-			PortMappings: toCNIPortMappings(config.GetPortMappings()),
-		})
-		if err != nil {
-			return nil, err
-		}
+		defer func() {
+			// Teardown network if an error is returned.
+			if retErr != nil {
+				teardownNetErr := c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
+					Name:         config.GetMetadata().GetName(),
+					Namespace:    config.GetMetadata().GetNamespace(),
+					ID:           id,
+					NetNS:        netnsPath,
+					PortMappings: toCNIPortMappings(config.GetPortMappings()),
+				})
+				if teardownNetErr != nil {
+					logrus.Errorf("failed to destroy network for sandbox %q: %v", id, teardownNetErr)
+				}
+			}
+		}()
 	}
 
 	sandboxMeta := &SandboxMeta{
@@ -319,7 +318,64 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 // and we should reconfigure it with network plugin which will make sure it reacquire its original network configuration,
 // like IP address.
 func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSandboxRequest) (*runtime.StartPodSandboxResponse, error) {
-	// TODO Complete the details of function.
+	podSandboxID := r.GetPodSandboxId()
+
+	// start PodSandbox.
+	startErr := c.ContainerMgr.Start(ctx, podSandboxID, &apitypes.ContainerStartOptions{})
+	if startErr != nil {
+		return nil, fmt.Errorf("failed to start podSandbox %q: %v", podSandboxID, startErr)
+	}
+
+	var err error
+	defer func() {
+		if err != nil {
+			stopErr := c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
+			if stopErr != nil {
+				logrus.Errorf("failed to stop sandbox %q: %v", podSandboxID, stopErr)
+			}
+		}
+	}()
+
+	// get the sandbox's meta data.
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*SandboxMeta)
+
+	// setup networking for the sandbox.
+	var netnsPath string
+	networkNamespaceMode := sandboxMeta.Config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
+	// If it is in host network, no need to configure the network of sandbox.
+	if networkNamespaceMode != runtime.NamespaceMode_NODE {
+		netnsPath, err = c.setupPodNetwork(ctx, podSandboxID, sandboxMeta.Config)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			// Teardown network if an error is returned.
+			if err != nil {
+				teardownNetErr := c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
+					Name:         sandboxMeta.Config.GetMetadata().GetName(),
+					Namespace:    sandboxMeta.Config.GetMetadata().GetNamespace(),
+					ID:           podSandboxID,
+					NetNS:        netnsPath,
+					PortMappings: toCNIPortMappings(sandboxMeta.Config.GetPortMappings()),
+				})
+				if teardownNetErr != nil {
+					logrus.Errorf("failed to destroy network for sandbox %q: %v", podSandboxID, teardownNetErr)
+				}
+			}
+		}()
+	}
+
+	// update sandboxMeta
+	sandboxMeta.NetNSPath = netnsPath
+	err = c.SandboxStore.Put(sandboxMeta)
+	if err != nil {
+		return nil, err
+	}
+
 	return &runtime.StartPodSandboxResponse{}, nil
 }
 
