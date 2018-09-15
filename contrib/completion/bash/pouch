@@ -996,6 +996,15 @@ _pouch_container_remount_lxcfs() {
     return 0
 }
 
+_pouch_container_events() {
+    case "$cur" in
+        -*)
+            COMPREPLY=( $( compgen -W "--help -h --filter -f --since -s --until -u" -- "$cur" ) )
+            ;;
+    esac
+    return 0
+}
+
 _pouch_daemon() {
     local options_with_args="
         --add-runtime
@@ -1438,6 +1447,10 @@ _pouch_remount_lxcfs() {
     _pouch_container_remount_lxcfs
 }
 
+_pouch_events() {
+    _pouch_container_events
+}
+
 _pouch_version() {
     case "$cur" in
         -*)
@@ -1559,6 +1572,7 @@ _pouch() {
        volume        
        wait 
        checkpoint
+       events
    )
 
    local global_options="
