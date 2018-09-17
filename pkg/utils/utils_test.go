@@ -91,7 +91,7 @@ func TestMerge(t *testing.T) {
 		}, {
 			src:      &simple{},
 			dest:     &simple{Sa: 1, Sb: "hello", Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
-			expected: &simple{Sa: 0, Sb: "hello", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 0}},
+			expected: &simple{Sa: 1, Sb: "hello", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 22}},
 			ok:       true,
 		}, {
 			src:      &simple{Sa: 1, Sc: true, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo"}},
@@ -101,7 +101,7 @@ func TestMerge(t *testing.T) {
 		}, {
 			src:      &simple{Sa: 0, Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo"}},
 			dest:     &simple{Sa: 2, Sb: "world", Sc: true, Sd: map[string]string{"go": "old"}, Se: nestS{Na: 22}, Sf: []string{"foo"}},
-			expected: &simple{Sa: 0, Sb: "world", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
+			expected: &simple{Sa: 2, Sb: "world", Sc: false, Sd: map[string]string{"go": "gogo"}, Se: nestS{Na: 11}, Sf: []string{"foo", "foo"}},
 			ok:       true,
 		}, {
 			src:      &simple{Sd: map[string]string{"go": "gogo", "a": "b"}},
