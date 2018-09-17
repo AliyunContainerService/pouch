@@ -491,7 +491,9 @@ func (mgr *ContainerManager) Start(ctx context.Context, id string, options *type
 
 func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *types.ContainerStartOptions) error {
 	var err error
-	c.DetachKeys = options.DetachKeys
+	if len(options.DetachKeys) > 0 {
+		c.DetachKeys = options.DetachKeys
+	}
 
 	attachedVolumes := map[string]struct{}{}
 	defer func() {
