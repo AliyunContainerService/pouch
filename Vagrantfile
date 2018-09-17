@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
     end
 
     pouch.vm.provision "shell", inline: <<-SHELL
-      until apt-get update &> /dev/null; do echo "Waiting apt-get for 3 seconds..."; sleep 3; done
+      until apt-get update; do echo "Waiting apt-get for 3 seconds..."; sleep 3; done
       apt-get --no-install-recommends install lxcfs
       apt-get --no-install-recommends install curl apt-transport-https ca-certificates software-properties-common
       curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | apt-key add -
@@ -34,18 +34,20 @@ Vagrant.configure("2") do |config|
       pouch.vm.provision "shell", inline: <<-SHELL
         # configring environments for pouch
         GO_VERSION=1.9.1
+        GOROOT=/opt/go
         GOPATH=/root/go
         apt-get install -y --no-install-recommends build-essential
         wget --progress=bar:force:noscroll https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz -O /tmp/go$GO_VERSION.linux-amd64.tar.gz
         tar xf /tmp/go$GO_VERSION.linux-amd64.tar.gz -C /opt/
-        echo "export GOROOT=/opt/go" >> ~/.bashrc
+        echo "export GOROOT=$GOROOT" >> ~/.bashrc
         echo "export GOPATH=$GOPATH" >> ~/.bashrc
-        cd /usr/bin && find /opt/go/bin -type f | xargs -n1 ln -f -s
+        echo "export PATH=$PATH:$GOROOT/bin:$GOPATH/bin" >> ~/.bashrc
 
+        export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
         mkdir -p $GOPATH/src/github.com/alibaba
-        ln -s /vagrant $GOPATH/src/github.com/alibaba/pouch
+        ln -s -f /vagrant $GOPATH/src/github.com/alibaba/pouch
         cd $GOPATH/src/github.com/alibaba/pouch
-        make PREFIX=/usr install
+        make && make PREFIX=/usr install
         systemctl restart pouch
       SHELL
     end
