@@ -68,15 +68,25 @@ COVERAGE_PACKAGES=$(shell go list ./... | \
 
 COVERAGE_PACKAGES_LIST=$(shell echo $(COVERAGE_PACKAGES) | tr " " ",")
 
+CLI_SOURCES=$(shell find cli client apis pkg -name "*.go" | grep -v "_test.go")
+
+DAEMON_SOURCES=$(shell find lxcfs credential apis test plugins network ctrd internal \
+				   storage daemon version registry cri main.go pkg \
+				   -name "*.go" | grep -v "_test.go")
+
 build: build-daemon build-cli ## build PouchContainer both daemon and cli binaries
 
-build-daemon: modules ## build PouchContainer daemon binary
-	@echo "$@: bin/${DAEMON_BINARY_NAME}"
+build-daemon: modules bin/${DAEMON_BINARY_NAME} ## build PouchContainer daemon binary
+
+bin/${DAEMON_BINARY_NAME}: $(DAEMON_SOURCES)
+	@echo "build-daemon:" $@
 	@mkdir -p bin
 	@GOOS=linux go build -ldflags ${DEFAULT_LDFLAGS} -o bin/${DAEMON_BINARY_NAME} -tags 'selinux'
 
-build-cli: ## build PouchContainer cli binary
-	@echo "$@: bin/${CLI_BINARY_NAME}"
+build-cli: bin/${CLI_BINARY_NAME} ## build PouchContainer cli binary
+
+bin/${CLI_BINARY_NAME}: $(CLI_SOURCES)
+	@echo "build-cli: " $@
 	@mkdir -p bin
 	@go build -o bin/${CLI_BINARY_NAME} github.com/alibaba/pouch/cli
 
@@ -93,13 +103,15 @@ build-integration-test: modules ## build PouchContainer integration test-case bi
 	go test -c \
 		-o bin/${INTEGRATION_TESTCASE_BINARY_NAME} github.com/alibaba/pouch/test
 
-modules: ## run modules to generate volume related code
-	@echo "build volume $@"
+modules: volume_build.go ## run modules to generate volume related code
+
+volume_build.go:
+	@echo "build volume modules"
 	@./hack/module --clean
 	@./hack/module --add-volume=github.com/alibaba/pouch/storage/volume/modules/tmpfs
 	@./hack/module --add-volume=github.com/alibaba/pouch/storage/volume/modules/local
 
-install: ## install pouch and pouchd binary into /usr/local/bin
+install: build ## install pouch and pouchd binary into /usr/local/bin
 	@echo $@
 	@mkdir -p $(DEST_DIR)/bin
 	install bin/$(CLI_BINARY_NAME) $(DEST_DIR)/bin
