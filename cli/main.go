@@ -18,6 +18,7 @@ func main() {
 	cli.AddCommand(base, &PullCommand{})
 	cli.AddCommand(base, &CreateCommand{})
 	cli.AddCommand(base, &StartCommand{})
+	cli.AddCommand(base, &AttachCommand{})
 	cli.AddCommand(base, &StopCommand{})
 	cli.AddCommand(base, &PsCommand{})
 	cli.AddCommand(base, &RmCommand{})
