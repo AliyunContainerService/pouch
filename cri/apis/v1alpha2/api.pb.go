@@ -4398,8 +4398,9 @@ type RuntimeServiceServer interface {
 	UpdateRuntimeConfig(context.Context, *UpdateRuntimeConfigRequest) (*UpdateRuntimeConfigResponse, error)
 	// Status returns the status of the runtime.
 	Status(context.Context, *StatusRequest) (*StatusResponse, error)
-	// Start a sandbox pod which was forced to stop by external factors.
-	// Network plugin returns same IPs when input same pod names and namespaces
+	// StartPodSandbox restart a sandbox pod which was stopped by accident
+	// and we should reconfigure it with network plugin which will make sure it reacquire its original network configuration,
+	// like IP address.
 	StartPodSandbox(context.Context, *StartPodSandboxRequest) (*StartPodSandboxResponse, error)
 }
 
@@ -5623,7 +5624,7 @@ func (m *LinuxPodSandboxConfig) MarshalTo(dAtA []byte) (int, error) {
 		i += n7
 	}
 	if len(m.Sysctls) > 0 {
-		for k, _ := range m.Sysctls {
+		for k := range m.Sysctls {
 			dAtA[i] = 0x1a
 			i++
 			v := m.Sysctls[k]
@@ -5743,7 +5744,7 @@ func (m *PodSandboxConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x32
 			i++
 			v := m.Labels[k]
@@ -5760,7 +5761,7 @@ func (m *PodSandboxConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x3a
 			i++
 			v := m.Annotations[k]
@@ -6101,7 +6102,7 @@ func (m *PodSandboxStatus) MarshalTo(dAtA []byte) (int, error) {
 		i += n16
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x3a
 			i++
 			v := m.Labels[k]
@@ -6118,7 +6119,7 @@ func (m *PodSandboxStatus) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x42
 			i++
 			v := m.Annotations[k]
@@ -6163,7 +6164,7 @@ func (m *PodSandboxStatusResponse) MarshalTo(dAtA []byte) (int, error) {
 		i += n17
 	}
 	if len(m.Info) > 0 {
-		for k, _ := range m.Info {
+		for k := range m.Info {
 			dAtA[i] = 0x12
 			i++
 			v := m.Info[k]
@@ -6237,7 +6238,7 @@ func (m *PodSandboxFilter) MarshalTo(dAtA []byte) (int, error) {
 		i += n18
 	}
 	if len(m.LabelSelector) > 0 {
-		for k, _ := range m.LabelSelector {
+		for k := range m.LabelSelector {
 			dAtA[i] = 0x1a
 			i++
 			v := m.LabelSelector[k]
@@ -6326,7 +6327,7 @@ func (m *PodSandbox) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintApi(dAtA, i, uint64(m.CreatedAt))
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x2a
 			i++
 			v := m.Labels[k]
@@ -6343,7 +6344,7 @@ func (m *PodSandbox) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x32
 			i++
 			v := m.Annotations[k]
@@ -6499,7 +6500,7 @@ func (m *LinuxContainerResources) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.CpusetMems)
 	}
 	if len(m.DiskQuota) > 0 {
-		for k, _ := range m.DiskQuota {
+		for k := range m.DiskQuota {
 			dAtA[i] = 0xa2
 			i++
 			dAtA[i] = 0x6
@@ -7230,7 +7231,7 @@ func (m *ContainerConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x4a
 			i++
 			v := m.Labels[k]
@@ -7247,7 +7248,7 @@ func (m *ContainerConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x52
 			i++
 			v := m.Annotations[k]
@@ -7599,7 +7600,7 @@ func (m *ContainerFilter) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.PodSandboxId)
 	}
 	if len(m.LabelSelector) > 0 {
-		for k, _ := range m.LabelSelector {
+		for k := range m.LabelSelector {
 			dAtA[i] = 0x22
 			i++
 			v := m.LabelSelector[k]
@@ -7710,7 +7711,7 @@ func (m *Container) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintApi(dAtA, i, uint64(m.CreatedAt))
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x42
 			i++
 			v := m.Labels[k]
@@ -7727,7 +7728,7 @@ func (m *Container) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x4a
 			i++
 			v := m.Annotations[k]
@@ -7895,7 +7896,7 @@ func (m *ContainerStatus) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.Message)
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x62
 			i++
 			v := m.Labels[k]
@@ -7912,7 +7913,7 @@ func (m *ContainerStatus) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x6a
 			i++
 			v := m.Annotations[k]
@@ -7947,7 +7948,7 @@ func (m *ContainerStatus) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.LogPath)
 	}
 	if len(m.Volumes) > 0 {
-		for k, _ := range m.Volumes {
+		for k := range m.Volumes {
 			dAtA[i] = 0xa2
 			i++
 			dAtA[i] = 0x6
@@ -8057,7 +8058,7 @@ func (m *ContainerStatusResponse) MarshalTo(dAtA []byte) (int, error) {
 		i += n46
 	}
 	if len(m.Info) > 0 {
-		for k, _ := range m.Info {
+		for k := range m.Info {
 			dAtA[i] = 0x12
 			i++
 			v := m.Info[k]
@@ -8593,7 +8594,7 @@ func (m *Image) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.Username)
 	}
 	if len(m.Volumes) > 0 {
-		for k, _ := range m.Volumes {
+		for k := range m.Volumes {
 			dAtA[i] = 0xa2
 			i++
 			dAtA[i] = 0x6
@@ -8719,7 +8720,7 @@ func (m *ImageStatusResponse) MarshalTo(dAtA []byte) (int, error) {
 		i += n55
 	}
 	if len(m.Info) > 0 {
-		for k, _ := range m.Info {
+		for k := range m.Info {
 			dAtA[i] = 0x12
 			i++
 			v := m.Info[k]
@@ -9138,7 +9139,7 @@ func (m *StatusResponse) MarshalTo(dAtA []byte) (int, error) {
 		i += n62
 	}
 	if len(m.Info) > 0 {
-		for k, _ := range m.Info {
+		for k := range m.Info {
 			dAtA[i] = 0x12
 			i++
 			v := m.Info[k]
@@ -9413,7 +9414,7 @@ func (m *ContainerStatsFilter) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.PodSandboxId)
 	}
 	if len(m.LabelSelector) > 0 {
-		for k, _ := range m.LabelSelector {
+		for k := range m.LabelSelector {
 			dAtA[i] = 0x1a
 			i++
 			v := m.LabelSelector[k]
@@ -9494,7 +9495,7 @@ func (m *ContainerAttributes) MarshalTo(dAtA []byte) (int, error) {
 		i += n68
 	}
 	if len(m.Labels) > 0 {
-		for k, _ := range m.Labels {
+		for k := range m.Labels {
 			dAtA[i] = 0x1a
 			i++
 			v := m.Labels[k]
@@ -9511,7 +9512,7 @@ func (m *ContainerAttributes) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if len(m.Annotations) > 0 {
-		for k, _ := range m.Annotations {
+		for k := range m.Annotations {
 			dAtA[i] = 0x22
 			i++
 			v := m.Annotations[k]
@@ -11839,7 +11840,7 @@ func (this *LinuxPodSandboxConfig) String() string {
 		return "nil"
 	}
 	keysForSysctls := make([]string, 0, len(this.Sysctls))
-	for k, _ := range this.Sysctls {
+	for k := range this.Sysctls {
 		keysForSysctls = append(keysForSysctls, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForSysctls)
@@ -11874,7 +11875,7 @@ func (this *PodSandboxConfig) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -11884,7 +11885,7 @@ func (this *PodSandboxConfig) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12010,7 +12011,7 @@ func (this *PodSandboxStatus) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -12020,7 +12021,7 @@ func (this *PodSandboxStatus) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12047,7 +12048,7 @@ func (this *PodSandboxStatusResponse) String() string {
 		return "nil"
 	}
 	keysForInfo := make([]string, 0, len(this.Info))
-	for k, _ := range this.Info {
+	for k := range this.Info {
 		keysForInfo = append(keysForInfo, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForInfo)
@@ -12078,7 +12079,7 @@ func (this *PodSandboxFilter) String() string {
 		return "nil"
 	}
 	keysForLabelSelector := make([]string, 0, len(this.LabelSelector))
-	for k, _ := range this.LabelSelector {
+	for k := range this.LabelSelector {
 		keysForLabelSelector = append(keysForLabelSelector, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabelSelector)
@@ -12110,7 +12111,7 @@ func (this *PodSandbox) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -12120,7 +12121,7 @@ func (this *PodSandbox) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12176,7 +12177,7 @@ func (this *LinuxContainerResources) String() string {
 		return "nil"
 	}
 	keysForDiskQuota := make([]string, 0, len(this.DiskQuota))
-	for k, _ := range this.DiskQuota {
+	for k := range this.DiskQuota {
 		keysForDiskQuota = append(keysForDiskQuota, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForDiskQuota)
@@ -12349,7 +12350,7 @@ func (this *ContainerConfig) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -12359,7 +12360,7 @@ func (this *ContainerConfig) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12486,7 +12487,7 @@ func (this *ContainerFilter) String() string {
 		return "nil"
 	}
 	keysForLabelSelector := make([]string, 0, len(this.LabelSelector))
-	for k, _ := range this.LabelSelector {
+	for k := range this.LabelSelector {
 		keysForLabelSelector = append(keysForLabelSelector, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabelSelector)
@@ -12519,7 +12520,7 @@ func (this *Container) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -12529,7 +12530,7 @@ func (this *Container) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12578,7 +12579,7 @@ func (this *ContainerStatus) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -12588,7 +12589,7 @@ func (this *ContainerStatus) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
@@ -12598,7 +12599,7 @@ func (this *ContainerStatus) String() string {
 	}
 	mapStringForAnnotations += "}"
 	keysForVolumes := make([]string, 0, len(this.Volumes))
-	for k, _ := range this.Volumes {
+	for k := range this.Volumes {
 		keysForVolumes = append(keysForVolumes, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForVolumes)
@@ -12645,7 +12646,7 @@ func (this *ContainerStatusResponse) String() string {
 		return "nil"
 	}
 	keysForInfo := make([]string, 0, len(this.Info))
-	for k, _ := range this.Info {
+	for k := range this.Info {
 		keysForInfo = append(keysForInfo, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForInfo)
@@ -12800,7 +12801,7 @@ func (this *Image) String() string {
 		return "nil"
 	}
 	keysForVolumes := make([]string, 0, len(this.Volumes))
-	for k, _ := range this.Volumes {
+	for k := range this.Volumes {
 		keysForVolumes = append(keysForVolumes, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForVolumes)
@@ -12847,7 +12848,7 @@ func (this *ImageStatusResponse) String() string {
 		return "nil"
 	}
 	keysForInfo := make([]string, 0, len(this.Info))
-	for k, _ := range this.Info {
+	for k := range this.Info {
 		keysForInfo = append(keysForInfo, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForInfo)
@@ -12996,7 +12997,7 @@ func (this *StatusResponse) String() string {
 		return "nil"
 	}
 	keysForInfo := make([]string, 0, len(this.Info))
-	for k, _ := range this.Info {
+	for k := range this.Info {
 		keysForInfo = append(keysForInfo, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForInfo)
@@ -13099,7 +13100,7 @@ func (this *ContainerStatsFilter) String() string {
 		return "nil"
 	}
 	keysForLabelSelector := make([]string, 0, len(this.LabelSelector))
-	for k, _ := range this.LabelSelector {
+	for k := range this.LabelSelector {
 		keysForLabelSelector = append(keysForLabelSelector, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabelSelector)
@@ -13131,7 +13132,7 @@ func (this *ContainerAttributes) String() string {
 		return "nil"
 	}
 	keysForLabels := make([]string, 0, len(this.Labels))
-	for k, _ := range this.Labels {
+	for k := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
@@ -13141,7 +13142,7 @@ func (this *ContainerAttributes) String() string {
 	}
 	mapStringForLabels += "}"
 	keysForAnnotations := make([]string, 0, len(this.Annotations))
-	for k, _ := range this.Annotations {
+	for k := range this.Annotations {
 		keysForAnnotations = append(keysForAnnotations, k)
 	}
 	github_com_gogo_protobuf_sortkeys.Strings(keysForAnnotations)
