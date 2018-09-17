@@ -18,6 +18,7 @@ import (
 	anno "github.com/alibaba/pouch/cri/annotations"
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	cni "github.com/alibaba/pouch/cri/ocicni"
+	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -54,11 +55,6 @@ const (
 
 	// nameDelimiter is used to construct pouch container names.
 	nameDelimiter = "_"
-
-	// Address and port of stream server.
-	// TODO: specify them in the parameters of pouchd.
-	streamServerAddress = ""
-	streamServerPort    = "10011"
 
 	namespaceModeHost = "host"
 	namespaceModeNone = "none"
@@ -97,6 +93,9 @@ type CriMgr interface {
 
 	// StreamServerStart starts the stream server of CRI.
 	StreamServerStart() error
+
+	// StreamStart returns the router of Stream Server.
+	StreamRouter() stream.Router
 }
 
 // CriManager is an implementation of interface CriMgr.
@@ -127,7 +126,19 @@ type CriManager struct {
 
 // NewCriManager creates a brand new cri manager.
 func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr) (CriMgr, error) {
-	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort)
+	var streamServerAddress string
+	streamServerPort := config.CriConfig.StreamServerPort
+	// If stream server reuse the pouchd's port, extract the ip and port from pouchd's listening addresses.
+	if config.CriConfig.StreamServerReusePort {
+		streamServerAddress, streamServerPort = extractIPAndPortFromAddresses(config.Listen)
+		if streamServerPort == "" {
+			return nil, fmt.Errorf("failed to extract stream server's port from pouchd's listening addresses")
+		}
+	}
+
+	// If the reused pouchd's port is https, the url that stream server return should be with https scheme.
+	reuseHTTPSPort := config.CriConfig.StreamServerReusePort && config.TLS.Key != "" && config.TLS.Cert != ""
+	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort, reuseHTTPSPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
 	}
@@ -175,6 +186,11 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 // StreamServerStart starts the stream server of CRI.
 func (c *CriManager) StreamServerStart() error {
 	return c.StreamServer.Start()
+}
+
+// StreamRouter returns the router of Stream Server.
+func (c *CriManager) StreamRouter() stream.Router {
+	return c.StreamServer
 }
 
 // TODO: Move the underlying functions to their respective files in the future.

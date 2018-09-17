@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/apis/plugins"
+	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
@@ -24,6 +25,7 @@ type Server struct {
 	ImageMgr         mgr.ImageMgr
 	VolumeMgr        mgr.VolumeMgr
 	NetworkMgr       mgr.NetworkMgr
+	StreamRouter     stream.Router
 	listeners        []net.Listener
 	ContainerPlugin  plugins.ContainerPlugin
 	ManagerWhiteList map[string]struct{}

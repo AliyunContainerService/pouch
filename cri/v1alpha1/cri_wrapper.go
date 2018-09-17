@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"github.com/alibaba/pouch/cri/stream"
+
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -27,6 +29,11 @@ func (c *CriWrapper) StreamServerStart() (err error) {
 		}
 	}()
 	return c.CriManager.StreamServerStart()
+}
+
+// StreamRouter returns the router of Stream Server.
+func (c *CriWrapper) StreamRouter() stream.Router {
+	return c.CriManager.StreamRouter()
 }
 
 // Version returns the runtime name, runtime version and runtime API version.

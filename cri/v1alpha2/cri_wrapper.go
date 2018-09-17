@@ -2,6 +2,7 @@ package v1alpha2
 
 import (
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
+	"github.com/alibaba/pouch/cri/stream"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -20,12 +21,19 @@ func NewCriWrapper(c *CriManager) *CriWrapper {
 // StreamServerStart starts the stream server of CRI.
 func (c *CriWrapper) StreamServerStart() (err error) {
 	logrus.Infof("StreamServerStart starts stream server of cri manager")
-	if err != nil {
-		logrus.Errorf("failed to start StreamServer: %v", err)
-	} else {
-		logrus.Infof("success to start StreamServer of cri manager")
-	}
+	defer func() {
+		if err != nil {
+			logrus.Errorf("failed to start StreamServer: %v", err)
+		} else {
+			logrus.Infof("success to start StreamServer of cri manager")
+		}
+	}()
 	return c.CriManager.StreamServerStart()
+}
+
+// StreamRouter returns the router of Stream Server.
+func (c *CriWrapper) StreamRouter() stream.Router {
+	return c.CriManager.StreamRouter()
 }
 
 // Version returns the runtime name, runtime version and runtime API version.
