@@ -116,7 +116,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		Args:     execConfig.Cmd,
 		Terminal: execConfig.Tty,
 		Cwd:      cwd,
-		Env:      c.Config.Env,
+		Env:      execConfig.Env,
 		User: specs.User{
 			UID:            uid,
 			GID:            gid,

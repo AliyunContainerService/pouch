@@ -41,6 +41,27 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecOk(c *check.C) {
 	CheckRespStatus(c, resp, 201)
 }
 
+// TestContainerCreateExecWithEnvs tests execing containers with Envs.
+func (suite *APIContainerExecSuite) TestContainerCreateExecWithEnvs(c *check.C) {
+	cname := "TestContainerCreateExecWithEnvs"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
+	StartContainerOk(c, cname)
+
+	obj := map[string]interface{}{
+		"Cmd":    []string{"Env"},
+		"Detach": true,
+		"Env":    []string{"Test=OK"},
+	}
+
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post("/containers/"+cname+"/exec", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+}
+
 // TestContainerCreateExecNoCmd tests execing containers is OK.
 func (suite *APIContainerExecSuite) TestContainerCreateExecNoCmd(c *check.C) {
 	cname := "TestContainerCreateExecNoCmd"
