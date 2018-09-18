@@ -12,7 +12,7 @@ import (
 	"github.com/alibaba/pouch/pkg/user"
 
 	"github.com/docker/docker/pkg/stdcopy"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
 
@@ -27,11 +27,18 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 		return "", fmt.Errorf("container %s is not running", c.ID)
 	}
 
+	envs, err := mergeEnvSlice(c.Config.Env, config.Env)
+
+	if err != nil {
+		return "", err
+	}
+
 	execid := randomid.Generate()
 	execConfig := &ContainerExecConfig{
 		ExecID:           execid,
 		ExecCreateConfig: *config,
 		ContainerID:      c.ID,
+		Env:              envs,
 	}
 
 	mgr.ExecProcesses.Put(execid, execConfig)
