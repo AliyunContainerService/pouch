@@ -8,6 +8,7 @@
     * [ImageStatus](#imagestatus "ImageStatus()")
     * [CreateContainer](#createcontainer "CreateContainer()")
     * [RemoveVolume](#removevolume "RemoveVolume()")
+    * [StartPodSandbox](#startpodsandbox "StartPodSandbox()")
 * [Pull Request](#pull-request)
 
 ## Overview
@@ -30,7 +31,10 @@ Kubernetes Version: V1.10.0+
 4. Support to the ability to acquire the envs of the Container.
      - Scenario:
         - In the Upgrade process, the env of the new container needs to remain consistent with that of the old container, so the envs of the old container needs to be read.
-   
+5. Support to the ability to start the PodSandbox specified and setup the network.
+     - Scenario:
+        - It will fail to get IP after PodSandbox restarts  because of the external factors such as shutdown the host.
+  
 # The Changes Of CRI API
 
 ## UpdateContainerResources
@@ -278,7 +282,8 @@ message ContainerConfig {
 
 + Provides an interface for removing volume.
 + The containerstatus interface supports querying volume by name.
-+ The changes need to be made in the proto file are as follows:
+
+The changes need to be made in the proto file are as follows:
 
 ```
 service VolumeService {
@@ -306,9 +311,40 @@ message Mount {
 
 ```
 
+## StartPodSandbox
+
+### What To Solve?
+
++ StartPodSandbox restarts a sandbox pod which was stopped by accident and setup the network with network plugin.
+
+### Modification
+
++ Provides an interface for starting PodSandbox specified.
+
+The changes need to be made in the proto file are as follows:
+
+```
+service RuntimeService {
+...
+    // Start a sandbox pod which was forced to stop by external factors.
+    // Network plugin returns same IPs when input same pod names and namespaces
+    rpc StartPodSandbox(StartPodSandboxRequest) returns (StartPodSandboxResponse) {}
+...
+}
+
+message StartPodSandboxRequest {
+    // ID of the PodSandbox to start.
+    string pod_sandbox_id = 1;
+}
+
+message StartPodSandboxResponse {}
+```
+
 ## Pull Request
 
 + feature: extend cri apis for special needs [#1617](https://github.com/alibaba/pouch/pull/1617)
 + feature: extend cri apis for remove volume [#2124](https://github.com/alibaba/pouch/pull/2124)
 + feature: extend cri apis for support quotaID [#2138](https://github.com/alibaba/pouch/pull/2138)
 + feature: extend cri apis for get envs [#2163](https://github.com/alibaba/pouch/pull/2163)
++ feature: extend cri apis for support StartPodSandbox [#2242](https://github.com/alibaba/pouch/pull/2242)
+
