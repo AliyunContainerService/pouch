@@ -2449,6 +2449,7 @@ is a small subset of the Config struct that holds the configuration.
 |**Cmd**  <br>*optional*|Execution commands and args|< string > array|
 |**Detach**  <br>*optional*|Execute in detach mode|boolean|
 |**DetachKeys**  <br>*optional*|Escape keys for detach|string|
+|**Env**  <br>*optional*|envs for exec command in container|< string > array|
 |**Privileged**  <br>*optional*|Is the container in privileged mode|boolean|
 |**Tty**  <br>*optional*|Attach standard streams to a tty|boolean|
 |**User**  <br>*optional*|User that will run the command|string|

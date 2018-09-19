@@ -23,11 +23,12 @@ PID   USER     TIME  COMMAND
 ### Options
 
 ```
-  -d, --detach        Run the process in the background
-  -h, --help          help for exec
-  -i, --interactive   Open container's STDIN
-  -t, --tty           Allocate a tty device
-  -u, --user string   Username or UID (format: <name|uid>[:<group|gid>])
+  -d, --detach            Run the process in the background
+  -e, --env stringArray   Set environment variables
+  -h, --help              help for exec
+  -i, --interactive       Open container's STDIN
+  -t, --tty               Allocate a tty device
+  -u, --user string       Username or UID (format: <name|uid>[:<group|gid>])
 ```
 
 ### Options inherited from parent commands
