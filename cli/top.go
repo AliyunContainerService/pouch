@@ -33,6 +33,13 @@ func (top *TopCommand) Init(c *Cli) {
 		},
 		Example: topExamples(),
 	}
+	top.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (top *TopCommand) addFlags() {
+	flagSet := top.cmd.Flags()
+	flagSet.SetInterspersed(false)
 }
 
 // runTop is the entry of top command.

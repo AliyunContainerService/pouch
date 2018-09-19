@@ -650,7 +650,7 @@ paths:
       tags: ["Container"]
 
   /containers/{id}/top:
-    post:
+    get:
       summary: "Display the running processes of a container"
       operationId: "ContainerTop"
       parameters:

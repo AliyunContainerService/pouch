@@ -320,7 +320,8 @@ func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, r
 func (s *Server) topContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
-	procList, err := s.ContainerMgr.Top(ctx, name, req.Form.Get("ps_args"))
+	query := req.URL.Query()
+	procList, err := s.ContainerMgr.Top(ctx, name, query.Get("ps_args"))
 	if err != nil {
 		return err
 	}
