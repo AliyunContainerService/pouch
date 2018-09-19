@@ -63,7 +63,32 @@ func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	expectString := "UIDPIDPPID"
-	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.Contains(out, expectString) {
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasPrefix(out, expectString) {
+		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	}
+	expectString = "top"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasSuffix(out, expectString) {
+		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	}
+}
+
+// TestTopContainerWithOptions is to verify the correctness of pouch top command with ps options.
+func (suite *PouchTopSuite) TestTopContainerWithOptions(c *check.C) {
+	name := "TestTopContainerWithOptions"
+
+	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("top", name, "-aux")
+	res.Assert(c, icmd.Success)
+
+	expectString := "USERPID"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasPrefix(out, expectString) {
+		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	}
+	expectString = "top"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasSuffix(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
 }
