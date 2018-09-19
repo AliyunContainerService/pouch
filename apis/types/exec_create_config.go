@@ -37,6 +37,9 @@ type ExecCreateConfig struct {
 	// Escape keys for detach
 	DetachKeys string `json:"DetachKeys,omitempty"`
 
+	// Env for commands
+	Env []string `json:"Env"`
+
 	// Is the container in privileged mode
 	Privileged bool `json:"Privileged,omitempty"`
 
@@ -59,6 +62,8 @@ type ExecCreateConfig struct {
 
 /* polymorph ExecCreateConfig DetachKeys false */
 
+/* polymorph ExecCreateConfig Env false */
+
 /* polymorph ExecCreateConfig Privileged false */
 
 /* polymorph ExecCreateConfig Tty false */
@@ -70,6 +75,11 @@ func (m *ExecCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCmd(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateEnv(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -90,6 +100,15 @@ func (m *ExecCreateConfig) validateCmd(formats strfmt.Registry) error {
 
 	if err := validate.MinItems("Cmd", "body", iCmdSize, 1); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *ExecCreateConfig) validateEnv(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Env) { // not required
+		return nil
 	}
 
 	return nil

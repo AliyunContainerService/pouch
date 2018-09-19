@@ -116,6 +116,9 @@ type ContainerExecConfig struct {
 
 	// WaitForClean means exec process can be removed.
 	WaitForClean bool
+
+	// Environment variables
+	Env []string
 }
 
 // AttachConfig wraps some infos of attaching.

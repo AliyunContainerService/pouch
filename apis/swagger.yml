@@ -3193,6 +3193,11 @@ definitions:
         minItems: 1
         items:
           type: "string"
+      Env:
+        type: "array"
+        description: "envs for exec command in container"
+        items:
+          type: "string"
   ContainerProcessList:
     description: OK Response to ContainerTop operation
     type: "object"

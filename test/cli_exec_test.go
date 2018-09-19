@@ -71,6 +71,21 @@ func (suite *PouchExecSuite) TestExecMultiCommands(c *check.C) {
 	}
 }
 
+// TestExecWithEnvs is to verify Exec with Envs.
+func (suite *PouchExecSuite) TestExecWithEnvs(c *check.C) {
+	name := "exec-normal3"
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000")
+	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", "-e \"Test=OK\"", name, "env")
+
+	if out := res.Combined(); !strings.Contains(out, "Test=OK") {
+		c.Fatalf("unexpected output %s expected %s\n", out, name)
+	}
+}
+
 // TestExecEcho tests exec prints the output.
 func (suite *PouchExecSuite) TestExecEcho(c *check.C) {
 	name := "TestExecEcho"
