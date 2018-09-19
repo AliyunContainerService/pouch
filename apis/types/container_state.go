@@ -19,29 +19,36 @@ import (
 type ContainerState struct {
 
 	// Whether this container is dead.
-	Dead bool `json:"Dead,omitempty"`
+	// Required: true
+	Dead bool `json:"Dead"`
 
 	// The error message of this container
-	Error string `json:"Error,omitempty"`
+	// Required: true
+	Error string `json:"Error"`
 
 	// The last exit code of this container
-	ExitCode int64 `json:"ExitCode,omitempty"`
+	// Required: true
+	ExitCode int64 `json:"ExitCode"`
 
 	// The time when this container last exited.
 	// Required: true
 	FinishedAt string `json:"FinishedAt"`
 
 	// Whether this container has been killed because it ran out of memory.
-	OOMKilled bool `json:"OOMKilled,omitempty"`
+	// Required: true
+	OOMKilled bool `json:"OOMKilled"`
 
 	// Whether this container is paused.
-	Paused bool `json:"Paused,omitempty"`
+	// Required: true
+	Paused bool `json:"Paused"`
 
 	// The process ID of this container
-	Pid int64 `json:"Pid,omitempty"`
+	// Required: true
+	Pid int64 `json:"Pid"`
 
 	// Whether this container is restarting.
-	Restarting bool `json:"Restarting,omitempty"`
+	// Required: true
+	Restarting bool `json:"Restarting"`
 
 	// Whether this container is running.
 	//
@@ -54,14 +61,16 @@ type ContainerState struct {
 	//
 	// Use the `Status` field instead to determine if a container's state is "running".
 	//
-	Running bool `json:"Running,omitempty"`
+	// Required: true
+	Running bool `json:"Running"`
 
 	// The time when this container was last started.
 	// Required: true
 	StartedAt string `json:"StartedAt"`
 
 	// status
-	Status Status `json:"Status,omitempty"`
+	// Required: true
+	Status Status `json:"Status"`
 }
 
 /* polymorph ContainerState Dead false */
@@ -90,7 +99,47 @@ type ContainerState struct {
 func (m *ContainerState) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateDead(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateError(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateExitCode(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
 	if err := m.validateFinishedAt(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateOOMKilled(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validatePaused(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validatePid(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRestarting(formats); err != nil {
+		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRunning(formats); err != nil {
 		// prop
 		res = append(res, err)
 	}
@@ -111,9 +160,81 @@ func (m *ContainerState) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *ContainerState) validateDead(formats strfmt.Registry) error {
+
+	if err := validate.Required("Dead", "body", bool(m.Dead)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateError(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("Error", "body", string(m.Error)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateExitCode(formats strfmt.Registry) error {
+
+	if err := validate.Required("ExitCode", "body", int64(m.ExitCode)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *ContainerState) validateFinishedAt(formats strfmt.Registry) error {
 
 	if err := validate.RequiredString("FinishedAt", "body", string(m.FinishedAt)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateOOMKilled(formats strfmt.Registry) error {
+
+	if err := validate.Required("OOMKilled", "body", bool(m.OOMKilled)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validatePaused(formats strfmt.Registry) error {
+
+	if err := validate.Required("Paused", "body", bool(m.Paused)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validatePid(formats strfmt.Registry) error {
+
+	if err := validate.Required("Pid", "body", int64(m.Pid)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateRestarting(formats strfmt.Registry) error {
+
+	if err := validate.Required("Restarting", "body", bool(m.Restarting)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerState) validateRunning(formats strfmt.Registry) error {
+
+	if err := validate.Required("Running", "body", bool(m.Running)); err != nil {
 		return err
 	}
 
@@ -130,10 +251,6 @@ func (m *ContainerState) validateStartedAt(formats strfmt.Registry) error {
 }
 
 func (m *ContainerState) validateStatus(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Status) { // not required
-		return nil
-	}
 
 	if err := m.Status.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
