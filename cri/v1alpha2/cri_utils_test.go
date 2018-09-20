@@ -937,7 +937,8 @@ func Test_modifyHostConfig(t *testing.T) {
 
 func Test_modifyContainerConfig(t *testing.T) {
 	runAsUser := &runtime.Int64Value{int64(1)}
-	configUser := strconv.FormatInt(1, 10)
+	runAsGroup := &runtime.Int64Value{int64(1)}
+	formatResult := strconv.FormatInt(1, 10)
 
 	type args struct {
 		sc     *runtime.LinuxContainerSecurityContext
@@ -947,31 +948,36 @@ func Test_modifyContainerConfig(t *testing.T) {
 		name       string
 		args       args
 		wantConfig *apitypes.ContainerConfig
+		wantErr    bool
 	}{
 		{
-			name: "Normal Test",
+			name: "No nil Test",
 			args: args{
 				sc: &runtime.LinuxContainerSecurityContext{
 					RunAsUser:     runAsUser,
 					RunAsUsername: "foo",
+					RunAsGroup:    runAsGroup,
 				},
 				config: &apitypes.ContainerConfig{},
 			},
 			wantConfig: &apitypes.ContainerConfig{
-				User: "foo",
+				User: "foo" + ":" + formatResult,
 			},
+			wantErr: false,
 		},
 		{
 			name: "RunAsUser Nil Test",
 			args: args{
 				sc: &runtime.LinuxContainerSecurityContext{
 					RunAsUsername: "foo",
+					RunAsGroup:    runAsGroup,
 				},
 				config: &apitypes.ContainerConfig{},
 			},
 			wantConfig: &apitypes.ContainerConfig{
-				User: "foo",
+				User: "foo" + ":" + formatResult,
 			},
+			wantErr: false,
 		},
 		{
 			name: "RunAsUsername Empty Test",
@@ -979,12 +985,26 @@ func Test_modifyContainerConfig(t *testing.T) {
 				sc: &runtime.LinuxContainerSecurityContext{
 					RunAsUser:     runAsUser,
 					RunAsUsername: "",
+					RunAsGroup:    runAsGroup,
 				},
 				config: &apitypes.ContainerConfig{},
 			},
 			wantConfig: &apitypes.ContainerConfig{
-				User: configUser,
+				User: formatResult + ":" + formatResult,
 			},
+			wantErr: false,
+		},
+		{
+			name: "RunAsUser And RunAsUsername All Empty Test",
+			args: args{
+				sc: &runtime.LinuxContainerSecurityContext{
+					RunAsUsername: "",
+					RunAsGroup:    runAsGroup,
+				},
+				config: &apitypes.ContainerConfig{},
+			},
+			wantConfig: &apitypes.ContainerConfig{},
+			wantErr:    true,
 		},
 		{
 			name: "Nil Test",
@@ -992,11 +1012,15 @@ func Test_modifyContainerConfig(t *testing.T) {
 				config: &apitypes.ContainerConfig{},
 			},
 			wantConfig: &apitypes.ContainerConfig{},
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			modifyContainerConfig(tt.args.sc, tt.args.config)
+			err := modifyContainerConfig(tt.args.sc, tt.args.config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("modifyContainerConfig() error = %v, wantErr %v", err, tt.wantErr)
+			}
 			if !reflect.DeepEqual(tt.args.config, tt.wantConfig) {
 				t.Errorf("modifyContainerConfig() config = %v, wantConfig %v", tt.args.config, tt.wantConfig)
 				return

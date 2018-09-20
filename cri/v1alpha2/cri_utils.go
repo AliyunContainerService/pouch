@@ -205,14 +205,19 @@ func applySandboxSecurityContext(lc *runtime.LinuxPodSandboxConfig, config *apit
 		sc = &runtime.LinuxContainerSecurityContext{
 			SupplementalGroups: lc.SecurityContext.SupplementalGroups,
 			RunAsUser:          lc.SecurityContext.RunAsUser,
+			RunAsGroup:         lc.SecurityContext.RunAsGroup,
 			ReadonlyRootfs:     lc.SecurityContext.ReadonlyRootfs,
 			SelinuxOptions:     lc.SecurityContext.SelinuxOptions,
 			NamespaceOptions:   lc.SecurityContext.NamespaceOptions,
 		}
 	}
 
-	modifyContainerConfig(sc, config)
-	err := modifyHostConfig(sc, hc)
+	err := modifyContainerConfig(sc, config)
+	if err != nil {
+		return err
+	}
+
+	err = modifyHostConfig(sc, hc)
 	if err != nil {
 		return err
 	}
@@ -673,28 +678,53 @@ func modifyHostConfig(sc *runtime.LinuxContainerSecurityContext, hostConfig *api
 }
 
 // modifyContainerConfig applies container security context config to pouch's Config.
-func modifyContainerConfig(sc *runtime.LinuxContainerSecurityContext, config *apitypes.ContainerConfig) {
+func modifyContainerConfig(sc *runtime.LinuxContainerSecurityContext, config *apitypes.ContainerConfig) error {
 	if sc == nil {
-		return
+		return nil
 	}
+
+	var userStr, groupStr string
+
 	if sc.RunAsUser != nil {
-		config.User = strconv.FormatInt(sc.GetRunAsUser().Value, 10)
+		userStr = strconv.FormatInt(sc.RunAsUser.GetValue(), 10)
 	}
 	if sc.RunAsUsername != "" {
-		config.User = sc.RunAsUsername
+		userStr = sc.RunAsUsername
 	}
+	if sc.RunAsGroup != nil {
+		groupStr = strconv.FormatInt(sc.RunAsGroup.GetValue(), 10)
+	}
+
+	if userStr == "" {
+		// run_as_group should only be specified when run_as_user or run_as_username is specified;
+		// otherwise, the runtime MUST error.
+		if groupStr != "" {
+			return fmt.Errorf("user group %q is specified without user", groupStr)
+		}
+		return nil
+	}
+	if groupStr != "" {
+		userStr = userStr + ":" + groupStr
+	}
+
+	config.User = userStr
+	return nil
 }
 
 // applyContainerSecurityContext updates pouch container options according to security context.
 func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxID string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
-	modifyContainerConfig(lc.SecurityContext, config)
-
-	err := modifyHostConfig(lc.SecurityContext, hc)
+	sc := lc.SecurityContext
+	err := modifyContainerConfig(sc, config)
 	if err != nil {
 		return err
 	}
 
-	modifyContainerNamespaceOptions(lc.SecurityContext.GetNamespaceOptions(), podSandboxID, hc)
+	err = modifyHostConfig(sc, hc)
+	if err != nil {
+		return err
+	}
+
+	modifyContainerNamespaceOptions(sc.GetNamespaceOptions(), podSandboxID, hc)
 
 	return nil
 }
