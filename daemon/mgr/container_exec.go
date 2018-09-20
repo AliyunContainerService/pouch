@@ -64,6 +64,11 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		return err
 	}
 
+	// FIXME(fuweid): make attachConfig consistent with execConfig
+	if attach != nil {
+		attach.Stdin = execConfig.AttachStdin
+	}
+
 	eio, err := mgr.openExecIO(execid, attach)
 	if err != nil {
 		return err
@@ -86,10 +91,6 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 			mgr.IOs.Remove(execid)
 		}
 	}()
-
-	if attach != nil {
-		attach.Stdin = execConfig.AttachStdin
-	}
 
 	c, err := mgr.container(execConfig.ContainerID)
 	if err != nil {
