@@ -17,7 +17,7 @@ func TestReadLogMessagesWithRemoveFileInFollowMode(t *testing.T) {
 	defer f.Close()
 	defer os.RemoveAll(f.Name())
 
-	jf, err := NewJSONLogFile(f.Name(), 0640, nil)
+	jf, err := NewJSONLogFile(f.Name(), 0640, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error during create JSONLogFile: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestReadLogMessagesForEmptyFileWithoutFollow(t *testing.T) {
 	defer f.Close()
 	defer os.RemoveAll(f.Name())
 
-	jf, err := NewJSONLogFile(f.Name(), 0644, nil)
+	jf, err := NewJSONLogFile(f.Name(), 0644, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error during create JSONLogFile: %v", err)
 	}
