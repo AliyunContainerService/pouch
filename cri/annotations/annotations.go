@@ -14,6 +14,9 @@ const (
 	// SandboxName is the sandbox name annotation
 	SandboxName = "io.kubernetes.cri-o.SandboxName"
 
+	// SandboxID is the sandbox id annotation
+	SandboxID = "io.kubernetes.cri-o.SandboxID"
+
 	// KubernetesRuntime is the runtime
 	KubernetesRuntime = "io.kubernetes.runtime"
 
