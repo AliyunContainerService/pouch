@@ -749,7 +749,7 @@ POST /containers/{id}/stop
 <a name="containertop"></a>
 ### Display the running processes of a container
 ```
-POST /containers/{id}/top
+GET /containers/{id}/top
 ```
 
 
