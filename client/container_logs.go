@@ -46,6 +46,10 @@ func (client *APIClient) ContainerLogs(ctx context.Context, name string, options
 	if options.Follow {
 		query.Set("follow", "1")
 	}
+
+	if options.Details {
+		query.Set("details", "1")
+	}
 	query.Set("tail", options.Tail)
 
 	resp, err := client.get(ctx, "/containers/"+name+"/logs", query, nil)

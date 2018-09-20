@@ -10,8 +10,8 @@ type LogMessage struct {
 	Source    string    // Source means stdin, stdout or stderr
 	Line      []byte    // Line means the log content, but it maybe partial
 	Timestamp time.Time // Timestamp means the created time of line
-
-	Err error
+	Attrs     map[string]string
+	Err       error
 }
 
 // LogWatcher is used to pass the log message to the reader.
@@ -48,8 +48,9 @@ func (w *LogWatcher) WatchClose() <-chan struct{} {
 
 // ReadConfig is used to
 type ReadConfig struct {
-	Since  time.Time
-	Until  time.Time
-	Tail   int
-	Follow bool
+	Since   time.Time
+	Until   time.Time
+	Tail    int
+	Follow  bool
+	Details bool
 }

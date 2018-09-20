@@ -24,6 +24,8 @@ func init() {
 func (suite *PouchLogsSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
+	environment.PruneAllContainers(apiClient)
+
 	PullImage(c, busyboxImage)
 }
 
@@ -37,6 +39,30 @@ func (suite *PouchLogsSuite) TestCreatedContainerLogIsEmpty(c *check.C) {
 	res := command.PouchRun("logs", cname)
 	res.Assert(c, icmd.Success)
 	c.Assert(res.Combined(), check.Equals, "")
+}
+
+func (suite *PouchLogsSuite) TestLogsSeparateStderr(c *check.C) {
+	cname := "TestLogsSeparateStderr"
+	msg := "stderr_log"
+	command.PouchRun("run", "-d", "--name", cname, busyboxImage, "sh", "-c", fmt.Sprintf("echo %s 1>&2", msg)).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	command.PouchRun("logs", cname).Assert(c, icmd.Expected{
+		Out: "",
+		Err: msg,
+	})
+}
+
+func (suite *PouchLogsSuite) TestLogsStderrInStdout(c *check.C) {
+	cname := "TestLogsStderrInStdout"
+	msg := "stderr_log"
+	command.PouchRun("run", "-d", "-t", "--name", cname, busyboxImage, "sh", "-c", fmt.Sprintf("echo %s 1>&2", msg)).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	command.PouchRun("logs", cname).Assert(c, icmd.Expected{
+		Out: msg,
+		Err: "",
+	})
 }
 
 // TestSinceAndUntil tests the since and until.
@@ -93,7 +119,7 @@ func (suite *PouchLogsSuite) TestTimestamp(c *check.C) {
 // TestTailMode tests follow mode.
 func (suite *PouchLogsSuite) TestTailLine(c *check.C) {
 	cname := "TestCLILogs_tail_line"
-	DelContainerForceMultyTime(c, cname)
+
 	totalLine := 100
 
 	command.PouchRun(
@@ -103,6 +129,7 @@ func (suite *PouchLogsSuite) TestTailLine(c *check.C) {
 		busyboxImage,
 		"sh", "-c", fmt.Sprintf("for i in $(seq 1 %v); do echo hello-$i; done;", totalLine),
 	).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
 
 	for _, tc := range []struct {
 		input    string
@@ -168,6 +195,38 @@ func (suite *PouchLogsSuite) TestLogsOpt(c *check.C) {
 	)
 	c.Assert(result.Error, check.NotNil)
 	defer DelContainerForceMultyTime(c, cnameOfUnsupported)
+}
+
+// TestLogsWithDetails tests details opt.
+func (suite *PouchLogsSuite) TestLogsWithDetails(c *check.C) {
+	cname := "TestLogsWithDetails"
+
+	res := command.PouchRun("run", "--name", cname, "--label", "foo=bar", "-e", "baz=qux", "--log-opt", "labels=foo", "--log-opt", "env=baz", "busybox", "echo", "hello")
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	out := suite.syncLogs(c, cname, "--details")
+	c.Assert(len(out), check.Equals, 1)
+	logFields := strings.Split(out[0], " ")
+
+	details := strings.Split(logFields[0], ",")
+
+	c.Assert(len(details), check.Equals, 2)
+	c.Assert(details[0], check.Equals, "baz=qux")
+	c.Assert(details[1], check.Equals, "foo=bar")
+
+	cnameOfEmptyDetails := "TestLogsWithEmptyDetails"
+
+	command.PouchRun("run",
+		"--name", cnameOfEmptyDetails,
+		"busybox",
+		"echo", "hello",
+	).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cnameOfEmptyDetails)
+
+	logs := suite.syncLogs(c, cnameOfEmptyDetails, "--details")
+	c.Assert(len(logs), check.Equals, 1)
+	c.Assert(logs[0], check.Equals, "hello")
 }
 
 func (suite *PouchLogsSuite) syncLogs(c *check.C, cname string, flags ...string) []string {

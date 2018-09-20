@@ -12,9 +12,10 @@ import (
 )
 
 type jsonLog struct {
-	Stream    string    `json:"stream,omitempty"`
-	Log       string    `json:"log,omitempty"`
-	Timestamp time.Time `json:"time"`
+	Stream    string            `json:"stream,omitempty"`
+	Log       string            `json:"log,omitempty"`
+	Timestamp time.Time         `json:"time"`
+	Attrs     map[string]string `json:"attrs,omitempty"`
 }
 
 func newUnmarshal(r io.Reader) func() (*logger.LogMessage, error) {
@@ -30,11 +31,13 @@ func newUnmarshal(r io.Reader) func() (*logger.LogMessage, error) {
 			Source:    jl.Stream,
 			Line:      []byte(jl.Log),
 			Timestamp: jl.Timestamp,
+			Attrs:     jl.Attrs,
 		}, nil
 	}
 }
 
-func marshal(msg *logger.LogMessage) ([]byte, error) {
+//Marshal used to marshal LogMessage to byte[]
+func Marshal(msg *logger.LogMessage, rawAttrs []byte) ([]byte, error) {
 	var (
 		first = true
 		buf   bytes.Buffer
@@ -62,6 +65,13 @@ func marshal(msg *logger.LogMessage) ([]byte, error) {
 
 	buf.WriteString(`"time":`)
 	buf.WriteString(msg.Timestamp.UTC().Format(`"` + utils.TimeLayout + `"`))
+
+	if len(rawAttrs) > 0 {
+		buf.WriteString(`,`)
+		buf.WriteString(`"attrs":`)
+		buf.Write(rawAttrs)
+	}
+
 	buf.WriteString(`}`)
 
 	// NOTE: add newline here to make the decoder easier

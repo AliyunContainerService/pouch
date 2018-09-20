@@ -396,9 +396,7 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 		Until:      req.Form.Get("until"),
 		Follow:     httputils.BoolValue(req, "follow"),
 		Timestamps: httputils.BoolValue(req, "timestamps"),
-
-		// TODO: support the details
-		// Details:    httputils.BoolValue(r, "details"),
+		Details:    httputils.BoolValue(req, "details"),
 	}
 
 	name := mux.Vars(req)["name"]
@@ -406,7 +404,6 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 	if err != nil {
 		return err
 	}
-
 	writeLogStream(ctx, rw, tty, opts, msgCh)
 	return nil
 }

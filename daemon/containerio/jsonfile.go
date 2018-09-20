@@ -2,6 +2,7 @@ package containerio
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -43,7 +44,25 @@ func (jf *jsonFile) Init(opt *Option) error {
 	}
 
 	logPath := filepath.Join(rootDir, jsonFilePathName)
-	w, err := jsonfile.NewJSONLogFile(logPath, 0644)
+	attrs, err := opt.info.ExtraAttributes(nil)
+	if err != nil {
+		return err
+	}
+
+	var extra []byte
+	if len(attrs) > 0 {
+		var err error
+		extra, err = json.Marshal(attrs)
+		if err != nil {
+			return err
+		}
+	}
+
+	marshalFunc := func(msg *logger.LogMessage) ([]byte, error) {
+		return jsonfile.Marshal(msg, extra)
+	}
+
+	w, err := jsonfile.NewJSONLogFile(logPath, 0644, marshalFunc)
 	if err != nil {
 		return err
 	}
