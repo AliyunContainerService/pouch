@@ -12,6 +12,7 @@ func main() {
 	cli.SetFlags()
 
 	base := &baseCommand{cmd: cli.rootCmd, cli: cli}
+	base.Cmd().SilenceErrors = true
 
 	// Add all subcommands.
 	cli.AddCommand(base, &PullCommand{})
