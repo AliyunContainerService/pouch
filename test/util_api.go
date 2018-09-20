@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -305,4 +307,42 @@ func discardPullStatus(r io.ReadCloser) error {
 		}
 	}
 	return nil
+}
+
+// GetMetric get metrics from prometheus server, return total count and success count.
+func GetMetric(c *check.C, key string, keySuccess string) (int, int) {
+	resp, err := request.Get("/metrics")
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+	scanner := bufio.NewScanner(resp.Body)
+	value := ""
+	valueSuccess := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, key) {
+			kv := strings.Split(line, " ")
+			if len(kv) == 2 {
+				value = kv[1]
+			}
+		} else if strings.Contains(line, keySuccess) {
+			kv := strings.Split(line, " ")
+			if len(kv) == 2 {
+				valueSuccess = kv[1]
+			}
+		}
+	}
+
+	iCount := 0
+	if value != "" {
+		iCount, err = strconv.Atoi(value)
+		c.Assert(err, check.IsNil)
+	}
+
+	iCountSuccess := 0
+	if valueSuccess != "" {
+		iCountSuccess, err = strconv.Atoi(valueSuccess)
+		c.Assert(err, check.IsNil)
+	}
+
+	return iCount, iCountSuccess
 }

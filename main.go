@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/apis/metrics"
 	"github.com/alibaba/pouch/apis/opts"
 	optscfg "github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/apis/types"
@@ -150,7 +151,7 @@ func runDaemon(cmd *cobra.Command) error {
 		fmt.Printf("pouchd version: %s, build: %s, build at: %s\n", version.Version, version.GitCommit, version.BuildTime)
 		return nil
 	}
-
+	metrics.EngineVersion.WithLabelValues(version.GitCommit).Set(1)
 	// initialize log.
 	initLog()
 
