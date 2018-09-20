@@ -10,6 +10,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/alibaba/pouch/pkg/ioutils"
+
 	containerdio "github.com/containerd/containerd/cio"
 	"github.com/containerd/fifo"
 )
@@ -70,9 +72,12 @@ func NewFifos(id string, stdin bool) (*containerdio.FIFOSet, error) {
 	return fifos, nil
 }
 
-type ioSet struct {
-	in       io.Reader
-	out, err io.Writer
+// Stream is used to configure the stream from client side
+type Stream struct {
+	Stdin    io.Reader
+	Stdout   io.Writer
+	Stderr   io.Writer
+	Terminal bool
 }
 
 type wgCloser struct {
@@ -100,127 +105,186 @@ func (g *wgCloser) Cancel() {
 	g.cancel()
 }
 
-func copyIO(fifos *containerdio.FIFOSet, ioset *ioSet, tty bool) (_ *wgCloser, err error) {
+type pipes struct {
+	Stdin  io.WriteCloser
+	Stdout io.ReadCloser
+	Stderr io.ReadCloser
+}
+
+func openPipes(ctx context.Context, fifos *containerdio.FIFOSet) (pipes, error) {
 	var (
-		f           io.ReadWriteCloser
-		set         []io.Closer
-		ctx, cancel = context.WithCancel(context.Background())
-		wg          = &sync.WaitGroup{}
+		err error
+		p   pipes
 	)
+
+	if fifos.In != "" {
+		if p.Stdin, err = fifo.OpenFifo(ctx, fifos.In, syscall.O_WRONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
+			return p, err
+		}
+
+		defer func() {
+			if err != nil && p.Stdin != nil {
+				p.Stdin.Close()
+			}
+		}()
+	}
+
+	if p.Stdout, err = fifo.OpenFifo(ctx, fifos.Out, syscall.O_RDONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
+		return p, err
+	}
+	defer func() {
+		if err != nil && p.Stdout != nil {
+			p.Stdout.Close()
+		}
+	}()
+
+	if p.Stderr, err = fifo.OpenFifo(ctx, fifos.Err, syscall.O_RDONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
+		return p, err
+	}
+	return p, nil
+}
+
+func copyStream(fifoset *containerdio.FIFOSet, stream *Stream, closeStdin func() error) (*wgCloser, error) {
+	// if fifos directory is not exist, create fifo will fails,
+	// also in case of fifo directory lost in container recovery process.
+	if _, err := os.Stat(fifoset.Dir); err != nil && os.IsNotExist(err) {
+		os.MkdirAll(fifoset.Dir, 0700)
+	}
+
+	var (
+		err     error
+		pipe    pipes
+		closers []io.Closer
+		wg      = &sync.WaitGroup{}
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	if pipe, err = openPipes(ctx, fifoset); err != nil {
+		cancel()
+		return nil, err
+	}
+
 	defer func() {
 		if err != nil {
-			for _, f := range set {
+			for _, f := range closers {
 				f.Close()
 			}
 			cancel()
 		}
 	}()
 
-	// if fifos directory is not exist, create fifo will fails,
-	// also in case of fifo directory lost in container recovery process.
-	if _, err := os.Stat(fifos.Dir); err != nil && os.IsNotExist(err) {
-		os.MkdirAll(fifos.Dir, 0700)
-	}
+	if pipe.Stdin != nil {
+		if !fifoset.Terminal && closeStdin != nil {
+			var (
+				closeStdinOnce sync.Once
+				werr           error
+			)
 
-	if fifos.In != "" {
-		if f, err = fifo.OpenFifo(ctx, fifos.In, syscall.O_WRONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
-			return nil, err
+			oldStdin := pipe.Stdin
+			pipe.Stdin = ioutils.NewWriteCloserWrapper(oldStdin, func() error {
+				closeStdinOnce.Do(func() {
+					werr = oldStdin.Close()
+					if werr != nil {
+						return
+					}
+
+					werr = closeStdin()
+				})
+				return werr
+			})
+
 		}
-		set = append(set, f)
+
+		closers = append(closers, pipe.Stdin)
 		go func(w io.WriteCloser) {
-			io.Copy(w, ioset.in)
+			io.Copy(w, stream.Stdin)
 			w.Close()
-		}(f)
+		}(pipe.Stdin)
 	}
 
-	if f, err = fifo.OpenFifo(ctx, fifos.Out, syscall.O_RDONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
-		return nil, err
-	}
-	set = append(set, f)
 	wg.Add(1)
+	closers = append(closers, pipe.Stdout)
 	go func(r io.ReadCloser) {
-		io.Copy(ioset.out, r)
+		defer wg.Done()
+		io.Copy(stream.Stdout, r)
 		r.Close()
-		wg.Done()
-	}(f)
+	}(pipe.Stdout)
 
-	if f, err = fifo.OpenFifo(ctx, fifos.Err, syscall.O_RDONLY|syscall.O_CREAT|syscall.O_NONBLOCK, 0700); err != nil {
-		return nil, err
-	}
-	set = append(set, f)
-
-	if !tty {
+	if !fifoset.Terminal {
 		wg.Add(1)
+		closers = append(closers, pipe.Stderr)
 		go func(r io.ReadCloser) {
-			io.Copy(ioset.err, r)
+			defer wg.Done()
+			io.Copy(stream.Stderr, r)
 			r.Close()
-			wg.Done()
-		}(f)
+		}(pipe.Stderr)
 	}
+
 	return &wgCloser{
 		wg:     wg,
-		dir:    fifos.Dir,
-		set:    set,
+		dir:    fifoset.Dir,
+		set:    closers,
 		cancel: cancel,
 	}, nil
 }
 
 // NewIOWithTerminal creates a new io set with the provied io.Reader/Writers for use with a terminal
-func NewIOWithTerminal(stdin io.Reader, stdout, stderr io.Writer, terminal bool, stdinEnable bool) containerdio.Creation {
-	return func(id string) (_ containerdio.IO, err error) {
-		paths, err := NewFifos(id, stdinEnable)
+func NewIOWithTerminal(stream *Stream, enableStdin bool, closeStdin func() error) containerdio.Creation {
+	return func(id string) (containerdio.IO, error) {
+		var (
+			fifoset *containerdio.FIFOSet
+			err     error
+		)
+
+		fifoset, err = NewFifos(id, enableStdin)
 		if err != nil {
 			return nil, err
 		}
+		fifoset.Terminal = stream.Terminal
+
 		defer func() {
-			if err != nil && paths.Dir != "" {
-				os.RemoveAll(paths.Dir)
+			if err != nil && fifoset.Dir != "" {
+				os.RemoveAll(fifoset.Dir)
 			}
 		}()
+
 		cfg := containerdio.Config{
-			Terminal: terminal,
-			Stdout:   paths.Out,
-			Stderr:   paths.Err,
-			Stdin:    paths.In,
+			Terminal: fifoset.Terminal,
+			Stdout:   fifoset.Out,
+			Stderr:   fifoset.Err,
+			Stdin:    fifoset.In,
 		}
+
 		i := &cio{config: cfg}
-		set := &ioSet{
-			in:  stdin,
-			out: stdout,
-			err: stderr,
-		}
-		closer, err := copyIO(paths, set, cfg.Terminal)
-		if err != nil {
+		if i.closer, err = copyStream(fifoset, stream, closeStdin); err != nil {
 			return nil, err
 		}
-		i.closer = closer
 		return i, nil
 	}
 }
 
 // WithAttach attaches the existing io for a task to the provided io.Reader/Writers
-func WithAttach(stdin io.Reader, stdout, stderr io.Writer) containerdio.Attach {
-	return func(paths *containerdio.FIFOSet) (containerdio.IO, error) {
-		if paths == nil {
+func WithAttach(stream *Stream) containerdio.Attach {
+	return func(fifoset *containerdio.FIFOSet) (containerdio.IO, error) {
+		var err error
+		if fifoset == nil {
 			return nil, fmt.Errorf("cannot attach to existing fifos")
 		}
+
 		cfg := containerdio.Config{
-			Terminal: paths.Terminal,
-			Stdout:   paths.Out,
-			Stderr:   paths.Err,
-			Stdin:    paths.In,
+			Terminal: fifoset.Terminal,
+			Stdout:   fifoset.Out,
+			Stderr:   fifoset.Err,
+			Stdin:    fifoset.In,
 		}
+
 		i := &cio{config: cfg}
-		set := &ioSet{
-			in:  stdin,
-			out: stdout,
-			err: stderr,
-		}
-		closer, err := copyIO(paths, set, cfg.Terminal)
-		if err != nil {
+		// FIXME(fuweid): should we add closeStdin for recovery container
+		// like NewIOWithTerminal? if we don't set closeStdin, the attach
+		// action can't close the IO.
+		if i.closer, err = copyStream(fifoset, stream, nil); err != nil {
 			return nil, err
 		}
-		i.closer = closer
 		return i, nil
 	}
 }

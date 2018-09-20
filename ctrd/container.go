@@ -81,6 +81,35 @@ func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
 	return nil
 }
 
+// closeStdinIO is used to close the write side of fifo in containerd-shim.
+//
+// FIXME(fuweid): before start task, we need to save the pack into cache.
+// otherwise, the c.watch.get(containerID) will return 404.
+//
+// we should not use client to make rpc call directly, because it might cause
+// the different state between cache and containerd.
+func (c *Client) closeStdinIO(containerID, processID string) error {
+	ctx := context.Background()
+	pack, err := c.watch.get(containerID)
+	if err != nil {
+		logrus.Warnf("failed to get container %v from watch: %v", containerID, err)
+		if errtypes.IsNotfound(err) {
+			return nil
+		}
+		return err
+	}
+
+	p, err := pack.task.LoadProcess(ctx, processID, nil)
+	if err != nil {
+		logrus.Warnf("failed to load process %v from task: %v", processID, err)
+		if errdefs.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	return p.CloseIO(ctx, containerd.WithStdinCloser)
+}
+
 // execContainer executes a process in container.
 func (c *Client) execContainer(ctx context.Context, process *Process) error {
 	pack, err := c.watch.get(process.ContainerID)
@@ -89,8 +118,10 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 	}
 
 	var (
-		pStdout io.Writer = process.IO.Stdout
-		pStderr io.Writer = process.IO.Stderr
+		containerID, processID           = pack.container.ID(), process.ExecID
+		pStdin                 io.Reader = process.IO.Stdin
+		pStdout                io.Writer = process.IO.Stdout
+		pStderr                io.Writer = process.IO.Stderr
 	)
 
 	if !process.P.Terminal && !process.IO.MuxDisabled {
@@ -98,7 +129,15 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 		pStderr = stdcopy.NewStdWriter(pStderr, stdcopy.Stderr)
 	}
 
-	io := containerio.NewIOWithTerminal(process.IO.Stdin, pStdout, pStderr, process.P.Terminal, process.IO.Stdin != nil)
+	stream := &containerio.Stream{
+		Stdin:    pStdin,
+		Stdout:   pStdout,
+		Stderr:   pStderr,
+		Terminal: process.P.Terminal,
+	}
+	io := containerio.NewIOWithTerminal(stream, process.IO.Stdin != nil, func() error {
+		return c.closeStdinIO(containerID, processID)
+	})
 
 	// create exec process in container
 	execProcess, err := pack.task.Exec(ctx, process.ExecID, process.P, io)
@@ -268,7 +307,11 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		return errors.Wrapf(err, "failed to load container(%s)", id)
 	}
 
-	task, err := lc.Task(ctx, containerio.WithAttach(io.Stdin, io.Stdout, io.Stderr))
+	task, err := lc.Task(ctx, containerio.WithAttach(&containerio.Stream{
+		Stdin:  io.Stdin,
+		Stdout: io.Stdout,
+		Stderr: io.Stderr,
+	}))
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
@@ -533,7 +576,15 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 func (c *Client) createTask(ctx context.Context, id, checkpointDir string, container containerd.Container, cc *Container, client *containerd.Client) (p *containerPack, err0 error) {
 	var pack *containerPack
 
-	io := containerio.NewIOWithTerminal(cc.IO.Stdin, cc.IO.Stdout, cc.IO.Stderr, cc.Spec.Process.Terminal, cc.IO.Stdin != nil)
+	stream := &containerio.Stream{
+		Stdin:    cc.IO.Stdin,
+		Stdout:   cc.IO.Stdout,
+		Stderr:   cc.IO.Stderr,
+		Terminal: cc.Spec.Process.Terminal,
+	}
+	io := containerio.NewIOWithTerminal(stream, cc.IO.Stdin != nil, func() error {
+		return c.closeStdinIO(id, id)
+	})
 
 	checkpoint, err := createCheckpointDescriptor(ctx, checkpointDir, client)
 	if err != nil {

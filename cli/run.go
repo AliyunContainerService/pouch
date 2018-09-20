@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/ioutils"
 
 	"github.com/spf13/cobra"
 )
@@ -123,14 +124,21 @@ func (rc *RunCommand) runRun(args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
-		defer conn.Close()
 
 		go func() {
 			io.Copy(os.Stdout, br)
 			wait <- struct{}{}
 		}()
+
 		go func() {
-			io.Copy(conn, os.Stdin)
+			if rc.stdin {
+				io.Copy(conn, os.Stdin)
+			}
+
+			// NOTE: close write side and still wait for read side
+			if cw, ok := conn.(ioutils.CloseWriter); ok {
+				cw.CloseWrite()
+			}
 		}()
 	}
 
@@ -142,6 +150,8 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 
 	// wait the io to finish
+	// FIXME(fuweid): we should refactor this part and use same function
+	// to copy stream and handle connection close action gracefully.
 	if rc.attach || rc.stdin {
 		<-wait
 	} else {

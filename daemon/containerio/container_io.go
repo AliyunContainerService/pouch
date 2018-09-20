@@ -106,7 +106,11 @@ func (cio *ContainerIO) add(opt *Option, typ stdioType, backends map[string]cont
 				cio.backends = append(cio.backends, b)
 				go func(b containerBackend) {
 					cio.converge(b.backend.Name(), opt.id, b.backend.In())
-					b.backend.Close()
+
+					// NOTE: if one backend closes, the whole stdin containerio
+					// will close and the container or process in container
+					// will stop.
+					cio.Close()
 				}(b)
 				break
 			}
@@ -134,7 +138,11 @@ func create(opt *Option, typ stdioType, backends map[string]containerBackend) *C
 				go func(b containerBackend) {
 					// For backend with stdin, close it if stdin finished.
 					io.converge(b.backend.Name(), opt.id, b.backend.In())
-					b.backend.Close()
+
+					// NOTE: if one backend closes, the whole stdin containerio
+					// will close and the container or process in container
+					// will stop.
+					io.Close()
 				}(b)
 				break
 			}
@@ -276,6 +284,8 @@ func (cio *ContainerIO) Close() error {
 	if cio.typ == stdin && cio.ring != nil {
 		// NOTE: let converge goroutine quit
 		cio.ring.Close()
+		cio.closed = true
+		return nil
 	}
 
 	for _, b := range cio.backends {

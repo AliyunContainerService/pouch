@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
@@ -116,7 +120,46 @@ func (suite *PouchExecSuite) TestExecStoppedContainer(c *check.C) {
 
 // TestExecInteractive test "-i" option works.
 func (suite *PouchExecSuite) TestExecInteractive(c *check.C) {
-	//TODO
+	name := "TestExecInteractiveContainer"
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	// use pipe to act interactive
+	stdinR, stdinW := io.Pipe()
+	stdoutR, stdoutW := io.Pipe()
+	defer stdoutW.Close()
+
+	// need to start command before write
+	cmd := command.PouchCmd("exec", "-i", name, "cat")
+	cmd.Stdin = stdinR
+	cmd.Stdout = stdoutW
+	res = icmd.StartCmd(cmd)
+
+	// send bye to cat
+	//
+	// FIXME(fuweid): when we remove ringbuffer, we can remove the
+	// stdoutW, stdoutR pipe.
+	fmt.Fprintf(stdinW, "bye\n")
+	got, _, err := bufio.NewReader(stdoutR).ReadLine()
+	c.Assert(err, check.IsNil)
+	c.Assert(string(got), check.Equals, "bye")
+
+	// send the EOF to stdin
+	//
+	// FIXME(fuweid): remove the timeout when we remove ringbuffer
+	stdinW.Close()
+	res = icmd.WaitOnCmd(10*time.Second, res)
+	res.Assert(c, icmd.Success)
+
+	// check process has gone
+	{
+		res := command.PouchRun("exec", name, "ps")
+		res.Assert(c, icmd.Success)
+		if strings.Contains(res.Combined(), "cat") {
+			c.Errorf("cat process should be gone, but got \n%s\n", res.Combined())
+		}
+	}
 }
 
 // TestExecAfterContainerRestart test exec in a restart container should work.
