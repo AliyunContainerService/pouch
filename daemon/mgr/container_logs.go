@@ -50,7 +50,7 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 
 	fileName := filepath.Join(mgr.Store.Path(c.ID), "json.log")
 
-	jf, err := jsonfile.NewJSONLogFile(fileName, 0640, nil)
+	jf, err := jsonfile.NewJSONLogFile(fileName, 0640, nil, nil)
 
 	if err != nil {
 		return nil, false, err
