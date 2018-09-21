@@ -3,8 +3,6 @@ package mgr
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -38,7 +36,6 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 	if !c.HostConfig.Privileged {
 		s.Process.SelinuxLabel = c.ProcessLabel
 		s.Process.NoNewPrivileges = c.NoNewPrivileges
-
 	}
 
 	if err := setupUser(ctx, c, s); err != nil {
@@ -107,47 +104,6 @@ func setupCapabilities(ctx context.Context, hostConfig *types.HostConfig, s *spe
 	capabilities.Inheritable = caplist
 
 	s.Process.Capabilities = capabilities
-	return nil
-}
-
-// isAppArmorEnabled returns true if apparmor is enabled for the host.
-// This function is forked from
-// https://github.com/opencontainers/runc/blob/1a81e9ab1f138c091fe5c86d0883f87716088527/libcontainer/apparmor/apparmor.go
-// to avoid the libapparmor dependency.
-func isAppArmorEnabled() bool {
-	if _, err := os.Stat("/sys/kernel/security/apparmor"); err == nil && os.Getenv("container") == "" {
-		if _, err = os.Stat("/sbin/apparmor_parser"); err == nil {
-			buf, err := ioutil.ReadFile("/sys/module/apparmor/parameters/enabled")
-			return err == nil && len(buf) > 1 && buf[0] == 'Y'
-		}
-	}
-	return false
-}
-
-func setupAppArmor(ctx context.Context, c *Container, s *specs.Spec) error {
-	if !isAppArmorEnabled() {
-		// Return if the apparmor is disabled.
-		return nil
-	}
-
-	appArmorProfile := c.AppArmorProfile
-	switch appArmorProfile {
-	case ProfileNameUnconfined:
-		return nil
-	case ProfileRuntimeDefault:
-		// TODO: handle runtime default case.
-		return nil
-	case "":
-		if c.HostConfig.Privileged {
-			return nil
-		}
-		// TODO: if user does not specify the AppArmor and the container is not in privilege mode,
-		// we need to specify it as default case, handle it later.
-		return nil
-	default:
-		s.Process.ApparmorProfile = appArmorProfile
-	}
-
 	return nil
 }
 
