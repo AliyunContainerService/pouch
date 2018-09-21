@@ -10,7 +10,7 @@ func ParseAnnotation(annotations []string) (map[string]string, error) {
 	specAnnotation := make(map[string]string)
 
 	for _, annotation := range annotations {
-		splits := strings.Split(annotation, "=")
+		splits := strings.SplitN(annotation, "=", 2)
 		if len(splits) != 2 || splits[0] == "" || splits[1] == "" {
 			return nil, fmt.Errorf("invalid format for spec annotation: %s, correct format should be key=value, neither should be nil", annotation)
 		}
