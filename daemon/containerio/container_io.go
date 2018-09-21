@@ -356,7 +356,16 @@ func (cio *ContainerIO) converge(name, id string, in io.Reader) {
 			break
 		}
 
-		cover, err := cio.ring.Push(data[:n])
+		// FIXME(fuwei): In case that the data slice is reused by the writer,
+		// we should copy the data before we push it into the ringbuffer.
+		// The previous data shares the same address with the coming data.
+		// If we don't copy the data and the previous data isn't consumed by
+		// ringbuf pop action, the incoming data will override the previous data
+		// in the ringbuf.
+		copyData := make([]byte, n)
+		copy(copyData, data[:n])
+
+		cover, err := cio.ring.Push(copyData)
 		if err != nil {
 			break
 		}
