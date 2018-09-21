@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -12,10 +13,48 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
 // file to check to determine Operating System
 const etcOsRelease = "/etc/os-release"
+
+// Info defines system info on current machine
+type Info struct {
+	AppArmor bool
+	Seccomp  bool
+
+	*CgroupInfo
+}
+
+// NewInfo creates a system info about current machine.
+func NewInfo() *Info {
+	info := &Info{CgroupInfo: NewCgroupInfo()}
+
+	// Check if AppArmor is supported.
+	// isAppArmorEnabled returns true if apparmor is enabled for the host.
+	// This function is forked from
+	// https://github.com/opencontainers/runc/blob/1a81e9ab1f138c091fe5c86d0883f87716088527/libcontainer/apparmor/apparmor.go
+	// to avoid the libapparmor dependency.
+	if _, err := os.Stat("/sys/kernel/security/apparmor"); err == nil && os.Getenv("container") == "" {
+		if _, err = os.Stat("/sbin/apparmor_parser"); err == nil {
+			buf, err := ioutil.ReadFile("/sys/module/apparmor/parameters/enabled")
+			if err == nil && len(buf) > 1 && buf[0] == 'Y' {
+				info.AppArmor = true
+			}
+		}
+	}
+
+	// Check if Seccomp is supported, via CONFIG_SECCOMP.
+	if err := unix.Prctl(unix.PR_GET_SECCOMP, 0, 0, 0, 0); err != unix.EINVAL {
+		// Make sure the kernel has CONFIG_SECCOMP_FILTER.
+		if err := unix.Prctl(unix.PR_SET_SECCOMP, unix.SECCOMP_MODE_FILTER, 0, 0, 0); err != unix.EINVAL {
+			info.Seccomp = true
+		}
+	}
+
+	return info
+}
 
 // getSysInfo gets sysinfo.
 func getSysInfo() (*syscall.Sysinfo_t, error) {

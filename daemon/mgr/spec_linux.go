@@ -2,9 +2,7 @@ package mgr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,7 +12,6 @@ import (
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
 
-	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -82,37 +79,6 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 	}
 
 	return setupNamespaces(ctx, c, specWrapper)
-}
-
-// setupSeccomp creates seccomp security settings spec.
-func setupSeccomp(ctx context.Context, c *Container, s *specs.Spec) error {
-	if c.HostConfig.Privileged {
-		return nil
-	}
-
-	if s.Linux.Seccomp == nil {
-		s.Linux.Seccomp = &specs.LinuxSeccomp{}
-	}
-
-	// TODO: check whether seccomp is enable in your kernel, if not, cannot run a custom seccomp prifle.
-	seccompProfile := c.SeccompProfile
-	switch seccompProfile {
-	case ProfileNameUnconfined:
-		return nil
-	case ProfilePouchDefault, "":
-		s.Linux.Seccomp = seccomp.DefaultProfile(s)
-	default:
-		data, err := ioutil.ReadFile(seccompProfile)
-		if err != nil {
-			return fmt.Errorf("failed to load seccomp profile %q: %v", seccompProfile, err)
-		}
-		err = json.Unmarshal(data, s.Linux.Seccomp)
-		if err != nil {
-			return fmt.Errorf("failed to decode seccomp profile %q: %v", seccompProfile, err)
-		}
-	}
-
-	return nil
 }
 
 // setupResource creates linux resource spec.
