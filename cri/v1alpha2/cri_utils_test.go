@@ -1207,11 +1207,11 @@ func Test_containerNetns(t *testing.T) {
 			want: fmt.Sprintf("/proc/%v/ns/net", 1001),
 		},
 		{
-			name: "Pid EQ -1 Test",
+			name: "Pid EQ 0 Test",
 			args: args{
 				container: &mgr.Container{
 					State: &apitypes.ContainerState{
-						Pid: int64(-1),
+						Pid: int64(0),
 					},
 				},
 			},

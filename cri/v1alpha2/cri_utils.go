@@ -817,8 +817,8 @@ func filterCRIContainers(containers []*runtime.Container, filter *runtime.Contai
 // containerNetns returns the network namespace of the given container.
 func containerNetns(container *mgr.Container) string {
 	pid := container.State.Pid
-	if pid == -1 {
-		// Pouch reports pid -1 for an exited container.
+	if pid == 0 {
+		// Pouch reports pid 0 for an exited container.
 		return ""
 	}
 
