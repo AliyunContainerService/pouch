@@ -3379,7 +3379,7 @@ definitions:
 
   ContainerState:
     type: "object"
-    required: [StartedAt, FinishedAt]
+    required: [StartedAt, FinishedAt, Pid, ExitCode, Error, OOMKilled, Dead, Paused, Restarting, Running, Status]
     properties:
       Status:
         $ref: "#/definitions/Status"
@@ -3396,27 +3396,35 @@ definitions:
 
           Use the `Status` field instead to determine if a container's state is "running".
         type: "boolean"
+        x-nullable: false
       Paused:
         description: "Whether this container is paused."
         type: "boolean"
+        x-nullable: false
       Restarting:
         description: "Whether this container is restarting."
         type: "boolean"
+        x-nullable: false
       OOMKilled:
         description: "Whether this container has been killed because it ran out of memory."
         type: "boolean"
+        x-nullable: false
       Dead:
         description: "Whether this container is dead."
         type: "boolean"
+        x-nullable: false
       Pid:
+        x-nullable: false
         description: "The process ID of this container"
         type: "integer"
       ExitCode:
+        x-nullable: false
         description: "The last exit code of this container"
         type: "integer"
       Error:
         description: "The error message of this container"
         type: "string"
+        x-nullable: false
       StartedAt:
         description: "The time when this container was last started."
         type: "string"

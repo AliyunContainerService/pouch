@@ -37,7 +37,7 @@ type ExecCreateConfig struct {
 	// Escape keys for detach
 	DetachKeys string `json:"DetachKeys,omitempty"`
 
-	// Env for commands
+	// envs for exec command in container
 	Env []string `json:"Env"`
 
 	// Is the container in privileged mode

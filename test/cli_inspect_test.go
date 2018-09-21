@@ -37,7 +37,7 @@ func (suite *PouchInspectSuite) TearDownTest(c *check.C) {
 func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 	name := "inspect-format-print"
 
-	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage)
+	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -61,7 +61,7 @@ func (suite *PouchInspectSuite) TestInspectFormat(c *check.C) {
 func (suite *PouchInspectSuite) TestInspectWrongFormat(c *check.C) {
 	name := "inspect-wrong-format-print"
 
-	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage)
+	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -82,7 +82,7 @@ func (suite *PouchInspectSuite) TestMultiInspect(c *check.C) {
 	}
 	setUp := func() {
 		for _, name := range names {
-			command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage).Assert(c, icmd.Success)
+			command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 		}
 	}
 	cleanUp := func() {
@@ -100,7 +100,6 @@ func (suite *PouchInspectSuite) TestMultiInspect(c *check.C) {
 
 // TestMultiInspect is to verify inspect command with multiple args.
 func (suite *PouchInspectSuite) TestMultiInspectErrors(c *check.C) {
-
 	errorCases := []struct {
 		containers     []string
 		args           []string
@@ -139,4 +138,36 @@ func (suite *PouchInspectSuite) TestMultiInspectErrors(c *check.C) {
 		output := res.Combined()
 		c.Assert(output, check.Equals, errCase.expectedOutput)
 	}
+}
+
+//
+func (suite *PouchInspectSuite) TestContainerInspectState(c *check.C) {
+	// 1. /bin/sh will exit immediately
+	name := "TestContainerInspectStateAutoExit"
+	res := command.PouchRun("run", "--name", name, busyboxImage, "/bin/sh")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", "-f", "{{.State.Pid}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "0")
+	output = command.PouchRun("inspect", "-f", "{{.State.ExitCode}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "0")
+	output = command.PouchRun("inspect", "-f", "{{.State.Status}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "exited")
+
+	// 2. stop a container and check the exit code and
+	name = "TestContainerInspectStateManullyStop"
+	res = command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+	// stop container
+	res = command.PouchRun("stop", "-t", "0", name)
+	res.Assert(c, icmd.Success)
+
+	output = command.PouchRun("inspect", "-f", "{{.State.Pid}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "0")
+	output = command.PouchRun("inspect", "-f", "{{.State.ExitCode}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Not(check.Equals), "0")
+	output = command.PouchRun("inspect", "-f", "{{.State.Status}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "stopped")
 }
