@@ -918,9 +918,9 @@ func (c *CriManager) attachLog(logPath string, containerID string, openStdin boo
 func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Container) (*runtime.ContainerStats, error) {
 	var usedBytes, inodesUsed uint64
 
-	stats, _, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	metadata, err := parseContainerName(meta.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
+		return nil, fmt.Errorf("failed to get metadata of container %q: %v", meta.ID, err)
 	}
 
 	sn, err := c.SnapshotStore.Get(meta.ID)
@@ -938,12 +938,6 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 		UsedBytes:  &runtime.UInt64Value{usedBytes},
 		InodesUsed: &runtime.UInt64Value{inodesUsed},
 	}
-
-	metadata, err := parseContainerName(meta.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of container %q: %v", meta.ID, err)
-	}
-
 	labels, annotations := extractLabels(meta.Config.Labels)
 
 	cs.Attributes = &runtime.ContainerAttributes{
@@ -951,6 +945,11 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 		Metadata:    metadata,
 		Labels:      labels,
 		Annotations: annotations,
+	}
+
+	stats, _, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
 	}
 
 	if stats != nil {
