@@ -19,7 +19,8 @@ func TestParseAnnotation(t *testing.T) {
 		{name: "test1", args: args{annotations: []string{""}}, want: nil, wantErr: true},
 		{name: "test2", args: args{annotations: []string{"=foo"}}, want: nil, wantErr: true},
 		{name: "test3", args: args{annotations: []string{"key="}}, want: nil, wantErr: true},
-		{name: "test4", args: args{annotations: []string{"key=foo=bar"}}, want: nil, wantErr: true},
+		{name: "test4", args: args{annotations: []string{"key=foo=bar"}}, want: map[string]string{"key": "foo=bar"}, wantErr: false},
+		{name: "test5", args: args{annotations: []string{"foo=bar"}}, want: map[string]string{"foo": "bar"}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
