@@ -3,10 +3,13 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"io"
 	"net"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -44,6 +47,62 @@ func checkEchoSuccess(c *check.C, tty bool, conn net.Conn, br *bufio.Reader, exp
 	}
 	c.Assert(err, check.IsNil)
 	c.Assert(strings.TrimSpace(buf.String()), check.Equals, exp, check.Commentf("Expected %s, got %s", exp, buf.String()))
+}
+
+func (suite *APIContainerExecStartSuite) TestContainerExecWithLongInput(c *check.C) {
+	cname := "TestContainerExecWithLongInput"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
+
+	var execID string
+
+	// create exec
+	{
+		// echo the input
+		obj := map[string]interface{}{
+			"Cmd":          []string{"cat"},
+			"AttachStderr": true,
+			"AttachStdout": true,
+			"AttachStdin":  true,
+			"Tty":          true, // avoid to use docker stdcopy
+		}
+
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/"+cname+"/exec", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 201)
+
+		var got types.ExecCreateResp
+		c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+		execID = got.ID
+	}
+
+	// start exec
+	{
+		obj := map[string]interface{}{
+			"Tty": true, // avoid to use docker stdcopy
+		}
+		resp, conn, br, err := request.Hijack("/exec/"+execID+"/start", request.WithJSONBody(obj))
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 200)
+		defer conn.Close()
+
+		// input 256 chars
+		input := make([]byte, 256)
+		_, err = rand.Read(input)
+		c.Assert(err, check.IsNil)
+		content := hex.EncodeToString(input)
+
+		_, err = conn.Write([]byte(content + "\n"))
+		c.Assert(err, check.IsNil)
+
+		reader := bufio.NewReader(br)
+		got, _, err := reader.ReadLine()
+		c.Assert(err, check.IsNil)
+		c.Assert(string(got), check.Equals, content)
+	}
 }
 
 // TestContainerExecStartWithoutUpgrade tests start exec without upgrade which will return 200 OK.
