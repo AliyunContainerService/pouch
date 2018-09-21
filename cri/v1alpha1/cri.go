@@ -329,6 +329,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		if err != nil {
 			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
+		logrus.Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
 	container, err := c.ContainerMgr.Get(ctx, podSandboxID)
@@ -360,6 +361,8 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 			}
 		} else if !os.IsNotExist(err) {
 			return nil, fmt.Errorf("failed to stat network namespace file %s of sandbox %s: %v", sandboxMeta.NetNSPath, podSandboxID, err)
+		} else {
+			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", sandboxMeta.NetNSPath, podSandboxID)
 		}
 	}
 
@@ -394,6 +397,7 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 		if err != nil {
 			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
+		logrus.Infof("success remove container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
 	// Remove the sandbox container.
@@ -572,9 +576,8 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	containerName := makeContainerName(sandboxConfig, config)
 
-	var createErr error
-	createResp, createErr := c.ContainerMgr.Create(ctx, containerName, createConfig)
-	if createErr != nil {
+	createResp, err := c.ContainerMgr.Create(ctx, containerName, createConfig)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create container for sandbox %q: %v", podSandboxID, err)
 	}
 
@@ -582,10 +585,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	defer func() {
 		// If the container failed to be created, clean up the container.
-		if createErr != nil {
-			err := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+		if err != nil {
+			removeErr := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 			if err != nil {
-				logrus.Errorf("failed to remove the container when creating container failed: %v", err)
+				logrus.Errorf("failed to remove the container when creating container failed: %v", removeErr)
 			}
 		}
 	}()
@@ -596,7 +599,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		// NOTE: If we attach log here, the IO of container will be created
 		// by this function first, so we should decide whether open the stdin
 		// here. It's weird actually, make it more elegant in the future.
-		err := c.attachLog(logPath, containerID, config.Stdin)
+		err = c.attachLog(logPath, containerID, config.Stdin)
 		if err != nil {
 			return nil, err
 		}

@@ -20,5 +20,5 @@ type Config struct {
 	// StreamServerPort is the port which cri stream server is listening on.
 	StreamServerPort string `json:"stream-server-port,omitempty"`
 	// StreamServerReusePort specify whether cri stream server share port with pouchd.
-	StreamServerReusePort bool
+	StreamServerReusePort bool `json:"stream-server-reuse-port,omitempty"`
 }
