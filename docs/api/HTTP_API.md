@@ -2236,17 +2236,17 @@ options of starting container
 
 |Name|Description|Schema|
 |---|---|---|
-|**Dead**  <br>*optional*|Whether this container is dead.|boolean|
-|**Error**  <br>*optional*|The error message of this container|string|
-|**ExitCode**  <br>*optional*|The last exit code of this container|integer|
+|**Dead**  <br>*required*|Whether this container is dead.|boolean|
+|**Error**  <br>*required*|The error message of this container|string|
+|**ExitCode**  <br>*required*|The last exit code of this container|integer|
 |**FinishedAt**  <br>*required*|The time when this container last exited.|string|
-|**OOMKilled**  <br>*optional*|Whether this container has been killed because it ran out of memory.|boolean|
-|**Paused**  <br>*optional*|Whether this container is paused.|boolean|
-|**Pid**  <br>*optional*|The process ID of this container|integer|
-|**Restarting**  <br>*optional*|Whether this container is restarting.|boolean|
-|**Running**  <br>*optional*|Whether this container is running.<br><br>Note that a running container can be _paused_. The `Running` and `Paused`<br>booleans are not mutually exclusive:<br><br>When pausing a container (on Linux), the cgroups freezer is used to suspend<br>all processes in the container. Freezing the process requires the process to<br>be running. As a result, paused containers are both `Running` _and_ `Paused`.<br><br>Use the `Status` field instead to determine if a container's state is "running".|boolean|
+|**OOMKilled**  <br>*required*|Whether this container has been killed because it ran out of memory.|boolean|
+|**Paused**  <br>*required*|Whether this container is paused.|boolean|
+|**Pid**  <br>*required*|The process ID of this container|integer|
+|**Restarting**  <br>*required*|Whether this container is restarting.|boolean|
+|**Running**  <br>*required*|Whether this container is running.<br><br>Note that a running container can be _paused_. The `Running` and `Paused`<br>booleans are not mutually exclusive:<br><br>When pausing a container (on Linux), the cgroups freezer is used to suspend<br>all processes in the container. Freezing the process requires the process to<br>be running. As a result, paused containers are both `Running` _and_ `Paused`.<br><br>Use the `Status` field instead to determine if a container's state is "running".|boolean|
 |**StartedAt**  <br>*required*|The time when this container was last started.|string|
-|**Status**  <br>*optional*||[Status](#status)|
+|**Status**  <br>*required*||[Status](#status)|
 
 
 <a name="containerstats"></a>
