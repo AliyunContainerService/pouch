@@ -1,4 +1,4 @@
-// To regenerate api.pb.go run hack/protoc.sh
+// To regenerate api.pb.go run hack/protoc/protoc.sh gen_proto
 syntax = 'proto3';
 
 package runtime.v1alpha2;
