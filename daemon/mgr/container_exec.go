@@ -27,7 +27,7 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 		return "", fmt.Errorf("container %s is not running", c.ID)
 	}
 
-	envs, err := mergeEnvSlice(c.Config.Env, config.Env)
+	envs, err := mergeEnvSlice(config.Env, c.Config.Env)
 
 	if err != nil {
 		return "", err
