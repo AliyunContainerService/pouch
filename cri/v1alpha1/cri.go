@@ -17,6 +17,7 @@ import (
 	anno "github.com/alibaba/pouch/cri/annotations"
 	cni "github.com/alibaba/pouch/cri/ocicni"
 	"github.com/alibaba/pouch/cri/stream"
+	criutils "github.com/alibaba/pouch/cri/utils"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -822,6 +823,20 @@ func (c *CriManager) ContainerStats(ctx context.Context, r *runtime.ContainerSta
 func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListContainerStatsRequest) (*runtime.ListContainerStatsResponse, error) {
 	opts := &mgr.ContainerListOption{All: true}
 	filter := func(c *mgr.Container) bool {
+		if c.Config.Labels[containerTypeLabelKey] != containerTypeLabelContainer {
+			return false
+		}
+
+		if r.GetFilter().GetId() != "" && c.ID != r.GetFilter().GetId() {
+			return false
+		}
+		if r.GetFilter().GetPodSandboxId() != "" && c.Config.Labels[sandboxIDLabelKey] != r.GetFilter().GetPodSandboxId() {
+			return false
+		}
+		if r.GetFilter().GetLabelSelector() != nil &&
+			!criutils.MatchLabelSelector(r.GetFilter().GetLabelSelector(), c.Config.Labels) {
+			return false
+		}
 		return true
 	}
 	opts.FilterFunc = filter
