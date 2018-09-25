@@ -86,6 +86,27 @@ func (suite *PouchExecSuite) TestExecWithEnvs(c *check.C) {
 	}
 }
 
+// TestExecWithReplaceEnvs is to verify New Envs will replace old Envs.
+func (suite *PouchExecSuite) TestExecWithReplaceEnvs(c *check.C) {
+	name := "exec-normal4"
+	res := command.PouchRun("run", "-d", "-e", "Test=Old", "--name", name, busyboxImage, "sleep", "100000")
+	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", name, "env")
+
+	if out := res.Combined(); !strings.Contains(out, "Test=Old") {
+		c.Fatalf("unexpected output %s expected %s\n", out, name)
+	}
+
+	res = command.PouchRun("exec", "-e \"Test=New\"", name, "env")
+
+	if out := res.Combined(); !strings.Contains(out, "Test=New") {
+		c.Fatalf("unexpected output %s expected %s\n", out, name)
+	}
+}
+
 // TestExecEcho tests exec prints the output.
 func (suite *PouchExecSuite) TestExecEcho(c *check.C) {
 	name := "TestExecEcho"
