@@ -94,15 +94,24 @@ type eventProcessor func(event types.EventsMessage, err error) error
 // Each output includes the event type, actor id, name and action.
 // Actor attributes are printed at the end if the actor has any.
 func printOutput(event types.EventsMessage, output io.Writer) {
+	// skip empty event message
+	if event == (types.EventsMessage{}) {
+		return
+	}
+
 	if event.TimeNano != 0 {
 		fmt.Fprintf(output, "%s ", time.Unix(0, event.TimeNano).Format(utils.RFC3339NanoFixed))
 	} else if event.Time != 0 {
 		fmt.Fprintf(output, "%s ", time.Unix(event.Time, 0).Format(utils.RFC3339NanoFixed))
 	}
 
-	fmt.Fprintf(output, "%s %s %s", event.Type, event.Action, event.Actor.ID)
+	id := ""
+	if event.Actor != nil {
+		id = event.Actor.ID
+	}
+	fmt.Fprintf(output, "%s %s %s", event.Type, event.Action, id)
 
-	if len(event.Actor.Attributes) > 0 {
+	if event.Actor != nil && len(event.Actor.Attributes) > 0 {
 		var attrs []string
 		var keys []string
 		for k := range event.Actor.Attributes {
