@@ -588,7 +588,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		// If the container failed to be created, clean up the container.
 		if err != nil {
 			removeErr := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
-			if err != nil {
+			if removeErr != nil {
 				logrus.Errorf("failed to remove the container when creating container failed: %v", removeErr)
 			}
 		}
