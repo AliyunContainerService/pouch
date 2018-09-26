@@ -3,8 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -112,4 +116,102 @@ func CreateConfigFile(path string, cfg interface{}) error {
 
 	defer file.Close()
 	return nil
+}
+
+// RunCommandWithOutput runs the specified command and returns the combined output (stdout/stderr)
+// with the exitCode different from 0 and the error if something bad happened
+func RunCommandWithOutput(cmd *exec.Cmd) (output string, exitCode int, err error) {
+	exitCode = 0
+	out, err := cmd.CombinedOutput()
+	exitCode = ProcessExitCode(err)
+	output = string(out)
+	return
+}
+
+// ProcessExitCode process the specified error and returns the exit status code
+// if the error was of type exec.ExitError, returns nothing otherwise.
+func ProcessExitCode(err error) (exitCode int) {
+	if err != nil {
+		var exiterr error
+		if exitCode, exiterr = GetExitCode(err); exiterr != nil {
+			// TODO: Fix this so we check the error's text.
+			// we've failed to retrieve exit code, so we set it to 127
+			exitCode = 127
+		}
+	}
+	return
+}
+
+// GetExitCode returns the ExitStatus of the specified error if its type is
+// exec.ExitError, returns 0 and an error otherwise.
+func GetExitCode(err error) (int, error) {
+	exitCode := 0
+	if exiterr, ok := err.(*exec.ExitError); ok {
+		if procExit, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+			return procExit.ExitStatus(), nil
+		}
+	}
+	return exitCode, fmt.Errorf("failed to get exit code")
+}
+
+// RunCommandPipelineWithOutput runs the array of commands with the output
+// of each pipelined with the following (like cmd1 | cmd2 | cmd3 would do).
+// It returns the final output, the exitCode different from 0 and the error
+// if something bad happened.
+func RunCommandPipelineWithOutput(cmds ...*exec.Cmd) (output string, exitCode int, err error) {
+	if len(cmds) < 2 {
+		return "", 0, fmt.Errorf("pipeline does not have multiple cmds")
+	}
+
+	// connect stdin of each cmd to stdout pipe of previous cmd
+	for i, cmd := range cmds {
+		if i > 0 {
+			prevCmd := cmds[i-1]
+			cmd.Stdin, err = prevCmd.StdoutPipe()
+
+			if err != nil {
+				return "", 0, fmt.Errorf("cannot set stdout pipe for %s: %v", cmd.Path, err)
+			}
+		}
+	}
+
+	// start all cmds except the last
+	for _, cmd := range cmds[:len(cmds)-1] {
+		if err = cmd.Start(); err != nil {
+			return "", 0, fmt.Errorf("starting %s failed with error: %v", cmd.Path, err)
+		}
+	}
+
+	var pipelineError error
+	defer func() {
+		// wait all cmds except the last to release their resources
+		for _, cmd := range cmds[:len(cmds)-1] {
+			if err := cmd.Wait(); err != nil {
+				pipelineError = fmt.Errorf("command %s failed with error: %v", cmd.Path, err)
+				break
+			}
+		}
+	}()
+	if pipelineError != nil {
+		return "", 0, pipelineError
+	}
+
+	// wait on last cmd
+	return RunCommandWithOutput(cmds[len(cmds)-1])
+}
+
+func readContainerFile(containerID, filename string) ([]byte, error) {
+	rootPath := "/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/"
+	f, err := os.Open(filepath.Join(rootPath, containerID, "rootfs", filename))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }

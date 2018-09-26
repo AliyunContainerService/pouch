@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,9 @@ import (
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/mount"
+	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/idtools"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/go-units"
 	"github.com/go-openapi/strfmt"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -165,6 +169,12 @@ type ContainerMgr interface {
 
 	// Commit commits an image from a container.
 	Commit(ctx context.Context, name string, options *types.ContainerCommitOptions) (*types.ContainerCommitResp, error)
+
+	ContainerStatPath(ctx context.Context, name string, path string) (stat *types.ContainerPathStat, err error)
+
+	ContainerArchivePath(ctx context.Context, name string, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error)
+
+	ContainerExtractToDir(ctx context.Context, name, path string, noOverwriteDirNonDir bool, content io.Reader) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
@@ -1329,6 +1339,378 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	}
 
 	return nil
+}
+
+// ContainerExtractToDir extracts the given archive to the specified location
+// in the filesystem of the container identified by the given name. The given
+// path must be of a directory in the container. If it is not, the error will
+// be ErrExtractPointNotDirectory. If noOverwriteDirNonDir is true then it will
+// be an error if unpacking the given content would cause an existing directory
+// to be replaced with a non-directory and vice versa.
+func (mgr *ContainerManager) ContainerExtractToDir(ctx context.Context, name, path string, noOverwriteDirNonDir bool, content io.Reader) error {
+	container, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	return mgr.containerExtractToDir(ctx, container, path, noOverwriteDirNonDir, content)
+}
+
+func setupRemappedRoot(config *config.Config) ([]idtools.IDMap, []idtools.IDMap, error) {
+	if runtime.GOOS != "linux" {
+		return nil, nil, fmt.Errorf("User namespaces are only supported on Linux")
+	}
+
+	// if the daemon was started with remapped root option, parse
+	// the config option to the int uid,gid values
+	var (
+		uidMaps, gidMaps []idtools.IDMap
+	)
+	//if config.RemappedRoot != "" {
+	//	username, groupname, err := parseRemappedRoot(config.RemappedRoot)
+	//	if err != nil {
+	//		return nil, nil, err
+	//	}
+	//	if username == "root" {
+	//		// Cannot setup user namespaces with a 1-to-1 mapping; "--root=0:0" is a no-op
+	//		// effectively
+	//		logrus.Warn("User namespaces: root cannot be remapped with itself; user namespaces are OFF")
+	//		return uidMaps, gidMaps, nil
+	//	}
+	//	logrus.Infof("User namespaces: ID ranges will be mapped to subuid/subgid ranges of: %s:%s", username, groupname)
+	//	// update remapped root setting now that we have resolved them to actual names
+	//	config.RemappedRoot = fmt.Sprintf("%s:%s", username, groupname)
+	//
+	//	uidMaps, gidMaps, err = idtools.CreateIDMappings(username, groupname)
+	//	if err != nil {
+	//		return nil, nil, fmt.Errorf("Can't create ID mappings: %v", err)
+	//	}
+	//}
+	return uidMaps, gidMaps, nil
+}
+
+// GetRemappedUIDGID returns the current daemon's uid and gid values
+// if user namespaces are in use for this daemon instance.  If not
+// this function will return "real" root values of 0, 0.
+func (mgr *ContainerManager) GetRemappedUIDGID() (int, int) {
+	uidMaps, gidMaps, _ := setupRemappedRoot(mgr.Config)
+	uid, gid, _ := idtools.GetRootUIDGID(uidMaps, gidMaps)
+	return uid, gid
+}
+
+// containerExtractToDir extracts the given tar archive to the specified location in the
+// filesystem of this container. The given path must be of a directory in the
+// container. If it is not, the error will be ErrExtractPointNotDirectory. If
+// noOverwriteDirNonDir is true then it will be an error if unpacking the
+// given content would cause an existing directory to be replaced with a non-
+// directory and vice versa.
+func (mgr *ContainerManager) containerExtractToDir(ctx context.Context, container *Container, path string, noOverwriteDirNonDir bool, content io.Reader) (err error) {
+	container.Lock()
+	defer container.Unlock()
+
+	if err := mgr.Mount(ctx, container); err != nil {
+		return err
+	}
+	defer mgr.Unmount(ctx, container)
+
+	attachedVolumes := map[string]struct{}{}
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		// release the container resources(network and containerio)
+		err = mgr.releaseContainerResources(container)
+		if err != nil {
+			logrus.Errorf("failed to release container(%s) resources: %v", container.ID, err)
+		}
+
+		// detach the volumes
+		for name := range attachedVolumes {
+			if _, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: container.ID}); err != nil {
+				logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback: %v", name, container.ID, err)
+			}
+		}
+	}()
+
+	for _, mp := range container.Mounts {
+		if mp.Name == "" {
+			continue
+		}
+		if _, err = mgr.VolumeMgr.Attach(ctx, mp.Name, map[string]string{volumetypes.OptionRef: container.ID}); err != nil {
+			return errors.Wrapf(err, "failed to attach volume(%s)", mp.Name)
+		}
+		attachedVolumes[mp.Name] = struct{}{}
+	}
+
+	// The destination path needs to be resolved to a host path, with all
+	// symbolic links followed in the scope of the container's rootfs. Note
+	// that we do not use `container.ResolvePath(path)` here because we need
+	// to also evaluate the last path element if it is a symlink. This is so
+	// that you can extract an archive to a symlink that points to a directory.
+
+	// Consider the given path as an absolute path in the container.
+	absPath := archive.PreserveTrailingDotOrSeparator(filepath.Join(string(filepath.Separator), path), path)
+
+	// This will evaluate the last path element if it is a symlink.
+	resolvedPath, err := container.GetResourcePath(absPath)
+
+	if err != nil {
+		return err
+	}
+
+	stat, err := os.Lstat(resolvedPath)
+	if err != nil {
+		return err
+	}
+
+	if !stat.IsDir() {
+		return archive.ErrExtractPointNotDirectory
+	}
+
+	// Need to check if the path is in a volume. If it is, it cannot be in a
+	// read-only volume. If it is not in a volume, the container cannot be
+	// configured with a read-only rootfs.
+
+	// Use the resolved path relative to the container rootfs as the new
+	// absPath. This way we fully follow any symlinks in a volume that may
+	// lead back outside the volume.
+	//
+	// The Windows implementation of filepath.Rel in golang 1.4 does not
+	// support volume style file path semantics. On Windows when using the
+	// filter driver, we are guaranteed that the path will always be
+	// a volume file path.
+	var baseRel string
+	if strings.HasPrefix(resolvedPath, `\\?\Volume{`) {
+		if strings.HasPrefix(resolvedPath, container.BaseFS) {
+			baseRel = resolvedPath[len(container.BaseFS):]
+			if baseRel[:1] == `\` {
+				baseRel = baseRel[1:]
+			}
+		}
+	} else {
+		baseRel, err = filepath.Rel(container.BaseFS, resolvedPath)
+	}
+	if err != nil {
+		return err
+	}
+	// Make it an absolute path.
+	// absPath = filepath.Join(string(filepath.Separator), baseRel)
+
+	//toVolume, err := checkIfPathIsInAVolume(container, absPath)
+	//if err != nil {
+	//	return err
+	//}
+
+	if container.HostConfig.ReadonlyRootfs {
+		return fmt.Errorf("container rootfs is marked read-only")
+	}
+
+	uid, gid := mgr.GetRemappedUIDGID()
+	options := &archive.TarOptions{
+		NoOverwriteDirNonDir: noOverwriteDirNonDir,
+		ChownOpts: &archive.TarChownOptions{
+			UID: uid, GID: gid, // TODO: should all ownership be set to root (either real or remapped)?
+		},
+	}
+	if err := archive.Untar(content, resolvedPath, options); err != nil {
+		return err
+	}
+
+	mgr.LogContainerEvent(ctx, container, "extract-to-dir")
+
+	return nil
+}
+
+// ContainerArchivePath creates an archive of the filesystem resource at the
+// specified path in the container identified by the given name. Returns a
+// tar archive of the resource and whether it was a directory or a single file.
+func (mgr *ContainerManager) ContainerArchivePath(ctx context.Context, name string, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error) {
+	container, err := mgr.container(name)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return mgr.containerArchivePath(ctx, container, path)
+}
+
+// containerArchivePath creates an archive of the filesystem resource at the specified
+// path in this container. Returns a tar archive of the resource and stat info
+// about the resource.
+func (mgr *ContainerManager) containerArchivePath(ctx context.Context, container *Container, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error) {
+	container.Lock()
+	defer container.Unlock()
+	resolvedPath, absPath, err := ResolvePath(container, path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	stat, err = container.StatPath(resolvedPath, absPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := mgr.Mount(ctx, container); err != nil {
+		return nil, nil, err
+	}
+	defer mgr.Unmount(ctx, container)
+
+	attachedVolumes := map[string]struct{}{}
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		// release the container resources(network and containerio)
+		err = mgr.releaseContainerResources(container)
+		if err != nil {
+			logrus.Errorf("failed to release container(%s) resources: %v", container.ID, err)
+		}
+
+		// detach the volumes
+		for name := range attachedVolumes {
+			if _, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: container.ID}); err != nil {
+				logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback: %v", name, container.ID, err)
+			}
+		}
+	}()
+
+	for _, mp := range container.Mounts {
+		if mp.Name == "" {
+			continue
+		}
+		if _, err = mgr.VolumeMgr.Attach(ctx, mp.Name, map[string]string{volumetypes.OptionRef: container.ID}); err != nil {
+			return nil, nil, errors.Wrapf(err, "failed to attach volume(%s)", mp.Name)
+		}
+		attachedVolumes[mp.Name] = struct{}{}
+	}
+
+	// We need to rebase the archive entries if the last element of the
+	// resolved path was a symlink that was evaluated and is now different
+	// than the requested path. For example, if the given path was "/foo/bar/",
+	// but it resolved to "/var/lib/pouch/containers/{id}/foo/baz/", we want
+	// to ensure that the archive entries start with "bar" and not "baz". This
+	// also catches the case when the root directory of the container is
+	// requested: we want the archive entries to start with "/" and not the
+	// container ID.
+	data, err := archive.TarResourceRebase(resolvedPath, filepath.Base(absPath))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	content = ioutils.NewReadCloserWrapper(data, func() error {
+		err := data.Close()
+		return err
+	})
+
+	mgr.LogContainerEvent(ctx, container, "archive-path")
+
+	return content, stat, nil
+}
+
+// ResolvePath resolves the given path in the container to a resource on the
+// host. Returns a resolved path (absolute path to the resource on the host),
+// the absolute path to the resource relative to the container's baseFS, and
+// an error if the path points to outside the container's baseFS.
+func ResolvePath(container *Container, path string) (resolvedPath, absPath string, err error) {
+	absPath = archive.PreserveTrailingDotOrSeparator(filepath.Join(string(filepath.Separator), path), path)
+
+	// Split the absPath into its Directory and Base components. We will
+	// resolve the dir in the scope of the container then append the base.
+	dirPath, basePath := filepath.Split(absPath)
+
+	resolvedDirPath, err := container.GetResourcePath(dirPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	// resolvedDirPath will have been cleaned (no trailing path separators) so
+	// we can manually join it with the base path element.
+	resolvedPath = resolvedDirPath + string(filepath.Separator) + basePath
+
+	return resolvedPath, absPath, nil
+}
+
+// ContainerStatPath stats the filesystem resource at the specified path in the
+// container identified by the given name.
+func (mgr *ContainerManager) ContainerStatPath(ctx context.Context, name string, path string) (stat *types.ContainerPathStat, err error) {
+	container, err := mgr.container(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return mgr.containerStatPath(ctx, container, path)
+}
+
+// containerStatPath stats the filesystem resource at the specified path in this
+// container. Returns stat info about the resource.
+func (mgr *ContainerManager) containerStatPath(ctx context.Context, c *Container, path string) (stat *types.ContainerPathStat, err error) {
+	//There is a dead lock head
+	//c.Lock()
+	//defer c.Unlock()
+
+	if err := mgr.Mount(ctx, c); err != nil {
+		return nil, err
+	}
+	defer mgr.Unmount(ctx, c)
+
+	attachedVolumes := map[string]struct{}{}
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		// release the container resources(network and containerio)
+		err = mgr.releaseContainerResources(c)
+		if err != nil {
+			logrus.Errorf("failed to release container(%s) resources: %v", c.ID, err)
+		}
+
+		// detach the volumes
+		for name := range attachedVolumes {
+			if _, err = mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
+				logrus.Errorf("failed to detach volume(%s) when start container(%s) rollback: %v", name, c.ID, err)
+			}
+		}
+	}()
+
+	for _, mp := range c.Mounts {
+		if mp.Name == "" {
+			continue
+		}
+		if _, err = mgr.VolumeMgr.Attach(ctx, mp.Name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
+			return nil, errors.Wrapf(err, "failed to attach volume(%s)", mp.Name)
+		}
+		attachedVolumes[mp.Name] = struct{}{}
+	}
+
+	resolvedPath, absPath, err := mgr.ResolvePath(path, c)
+
+	return c.StatPath(resolvedPath, absPath)
+}
+
+// ResolvePath resolves the given path in the container to a resource on the
+// host. Returns a resolved path (absolute path to the resource on the host),
+// the absolute path to the resource relative to the container's baseFS, and
+// an error if the path points to outside the container's baseFS.
+func (mgr *ContainerManager) ResolvePath(path string, c *Container) (resolvedPath, absPath string, err error) {
+	// Consider the given path as an absolute path in the container.
+	absPath = archive.PreserveTrailingDotOrSeparator(filepath.Join(string(filepath.Separator), path), path)
+
+	// Split the absPath into its Directory and Base components. We will
+	// resolve the dir in the scope of the container then append the base.
+	dirPath, basePath := filepath.Split(absPath)
+
+	resolvedDirPath, err := c.GetResourcePath(dirPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	// resolvedDirPath will have been cleaned (no trailing path separators) so
+	// we can manually join it with the base path element.
+	resolvedPath = resolvedDirPath + string(filepath.Separator) + basePath
+
+	return resolvedPath, absPath, nil
 }
 
 // Top lists the processes running inside of the given container

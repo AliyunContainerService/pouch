@@ -951,6 +951,92 @@ paths:
           $ref: "#/responses/500ErrorResponse"
       tags: ["Container"]
 
+  /containers/{id}/archive:
+    head:
+      summary: "Get information about files in a container"
+      description: "A response header `X-Pouch-Container-Path-Stat` is return containing a base64 - encoded JSON object with some filesystem header information about the path."
+      operationId: "ContainerArchiveInfo"
+      responses:
+        200:
+          description: "no error"
+          headers:
+            X-Pouch-Container-Path-Stat:
+              type: "string"
+              description: "A base64 - encoded JSON object with some filesystem header information about the path"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "SRCPATH"
+          in: "header"
+          required: true
+          description: "Resource in the container’s filesystem to archive."
+          type: "string"
+      tags: ["Container"]
+    get:
+      summary: "Get an archive of a filesystem resource in a container"
+      description: "Get a tar archive of a resource in the filesystem of container id."
+      operationId: "ContainerArchive"
+      produces: ["application/x-tar"]
+      responses:
+        200:
+          description: "no error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "SRCPATH"
+          in: "header"
+          required: true
+          description: "Resource in the container’s filesystem to archive."
+          type: "string"
+      tags: ["Container"]
+    put:
+      summary: "Extract an archive of files or folders to a directory in a container"
+      operationId: "PutContainerArchive"
+      consumes: ["application/x-tar", "application/octet-stream"]
+      responses:
+        200:
+          description: "The content was extracted successfully"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "SRCPATH"
+          in: "header"
+          required: true
+          description: "Path to a directory in the container to extract the archive’s contents into. "
+          type: "string"
+        - name: "noOverwriteDirNonDir"
+          in: "query"
+          description: "If “1”, “true”, or “True” then it will be an error if unpacking the given content would cause an existing directory to be replaced with a non-directory and vice versa."
+          type: "string"
+        - name: "inputStream"
+          in: "body"
+          required: true
+          description: "The input stream must be a tar archive compressed with one of the following algorithms: identity (no compression), gzip, bzip2, xz."
+          schema:
+            type: "string"
+      tags: ["Container"]
+
   /exec/{id}/start:
     post:
       summary: "Start an exec instance"
@@ -4317,6 +4403,23 @@ definitions:
         type: "string"
         description: "ID uniquely identifies an image committed by a container"
 
+  ContainerPathStat:
+    description: "ContainerPathStat is used to describe the stat of file"
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      size:
+        type: "string"
+      mode:
+        type: "integer"
+        format: "uint32"
+      mtime:
+        description: "modification time."
+        type: "string"
+        format: date-time
+      linkTarget:
+        type: "string"
 
 parameters:
   id:

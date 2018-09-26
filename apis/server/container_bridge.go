@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -515,6 +516,67 @@ func (s *Server) waitContainer(ctx context.Context, rw http.ResponseWriter, req 
 	}
 
 	return EncodeResponse(rw, http.StatusOK, &waitStatus)
+}
+
+func (s *Server) headContainersArchive(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	path := req.Header.Get("SRCPATH")
+	stat, err := s.ContainerMgr.ContainerStatPath(ctx, name, path)
+	if err != nil {
+		return err
+	}
+
+	statJSON, err := json.Marshal(stat)
+	if err != nil {
+		return err
+	}
+
+	rw.Header().Set(
+		"X-Pouch-Container-Path-Stat",
+		base64.StdEncoding.EncodeToString(statJSON),
+	)
+
+	rw.WriteHeader(http.StatusCreated)
+	return nil
+}
+
+func (s *Server) putContainersArchive(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+
+	noOverwriteDirNonDir := httputils.BoolValue(req, "noOverwriteDirNonDir")
+	path := req.Header.Get("SRCPATH")
+	name := mux.Vars(req)["name"]
+
+	return s.ContainerMgr.ContainerExtractToDir(ctx, name, path, noOverwriteDirNonDir, req.Body)
+}
+
+func (s *Server) getContainersArchive(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	path := req.Header.Get("SRCPATH")
+
+	tarArchive, stat, err := s.ContainerMgr.ContainerArchivePath(ctx, name, path)
+	if err != nil {
+		return err
+	}
+	defer tarArchive.Close()
+
+	statJSON, err := json.Marshal(stat)
+	if err != nil {
+		return err
+	}
+	rw.Header().Set(
+		"X-Pouch-Container-Path-Stat",
+		base64.StdEncoding.EncodeToString(statJSON),
+	)
+
+	rw.Header().Set("Content-Type", "application/x-tar")
+	_, err = io.Copy(rw, tarArchive)
+
+	if err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusCreated)
+	return nil
 }
 
 func (s *Server) createContainerCheckpoint(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
