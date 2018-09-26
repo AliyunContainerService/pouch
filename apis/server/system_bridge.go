@@ -14,6 +14,7 @@ import (
 
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) ping(context context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
@@ -69,9 +70,6 @@ func (s *Server) auth(ctx context.Context, rw http.ResponseWriter, req *http.Req
 }
 
 func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	rw.Header().Set("Content-Type", "application/json")
 	output := ioutils.NewWriteFlusher(rw)
 	defer output.Close()
@@ -128,6 +126,7 @@ func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.R
 		select {
 		case ev := <-eventq:
 			if err := enc.Encode(ev); err != nil {
+				logrus.Errorf("encode events got an error: %v", err)
 				return err
 			}
 		case err := <-errq:
@@ -136,6 +135,9 @@ func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.R
 			}
 			return nil
 		case <-timeout:
+			return nil
+		case <-ctx.Done():
+			logrus.Debug("client context is cancelled, stop sending events")
 			return nil
 		}
 	}
