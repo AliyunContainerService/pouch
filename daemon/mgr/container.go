@@ -1168,17 +1168,9 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 			}
 		}()
 	}
-	newID, err := quota.SetRootfsDiskQuota(rootfs, defaultQuota, qid)
+	_, err := quota.SetRootfsDiskQuota(rootfs, defaultQuota, qid)
 	if err != nil {
 		return errors.Wrapf(err, "failed to set container rootfs diskquota")
-	}
-
-	// set container's metadata directory diskquota, for limit the size of container's logs
-	metaDir := mgr.Store.Path(c.ID)
-	err = quota.SetDiskQuota(metaDir, defaultQuota, newID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to set container's log quota, dir: (%s), quota: (%s), quota id: (%d)",
-			metaDir, defaultQuota, newID)
 	}
 
 	return nil

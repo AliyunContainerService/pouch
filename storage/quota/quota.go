@@ -197,17 +197,13 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 		if err := SetDiskQuota(dir, size, quotaID); err != nil {
 			return 0, fmt.Errorf("failed to set disk quota: %v", err)
 		}
-
-		if err := setQuotaForDir(dir, quotaID); err != nil {
-			return 0, fmt.Errorf("failed to set dir quota: %v", err)
-		}
 	}
 
 	return quotaID, nil
 }
 
-// setQuotaForDir sets file attribute
-func setQuotaForDir(src string, quotaID uint32) error {
+// SetQuotaForDir sets file attribute
+func SetQuotaForDir(src string, quotaID uint32) error {
 	filepath.Walk(src, func(path string, fd os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("setQuota walk dir %s get error %v", path, err)
@@ -341,6 +337,12 @@ func getMountpoint(dir string) (string, error) {
 		return "", errors.Wrapf(err, "failed to read file: (%s)", procMountFile)
 	}
 
+	devID, err := system.GetDevID(dir)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get device id for dir: (%s)", dir)
+	}
+	logrus.Debugf("get directory(%s) device id: (%d)", dir, devID)
+
 	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
 	for _, line := range strings.Split(string(output), "\n") {
 		parts := strings.Split(line, " ")
@@ -353,17 +355,26 @@ func getMountpoint(dir string) (string, error) {
 			continue
 		}
 
+		newDevID, err := system.GetDevID(parts[1])
+		if err != nil {
+			continue
+		}
+
 		// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
-		// /dev/sdb2 /home/pouch/overlay ext4 rw,relatime,prjquota,data=ordered 0 0
-		// we will choose the longest match string, /home/pouch/overlay.
-		if strings.HasPrefix(dir, parts[1]) && len(parts[1]) > len(mountPoint) {
+		// /dev/sdb1 /home/pouch/overlay ext4 rw,relatime,prjquota,data=ordered 0 0
+		// we will choose the shortest match string, /home/pouch
+		if devID == newDevID && strings.HasPrefix(dir, parts[1]) &&
+			(mountPoint == "" || len(parts[1]) < len(mountPoint)) {
 			mountPoint = parts[1]
+			devID = newDevID
 		}
 	}
 
 	if mountPoint == "" {
 		return "", errors.Errorf("failed to get mount point of directory: (%s)", dir)
 	}
+
+	logrus.Debugf("get the directory: (%s) mountpoint: (%s)", dir, mountPoint)
 
 	return mountPoint, nil
 }

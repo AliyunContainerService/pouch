@@ -181,8 +181,9 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 	}
 
 	var (
-		mountPoint string
-		fsType     string
+		enableQuota bool
+		mountPoint  string
+		fsType      string
 	)
 
 	// Two formats of group quota.
@@ -199,17 +200,25 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 			continue
 		}
 
+		// check the shortest mountpoint.
+		if mountPoint != "" && len(mountPoint) < len(parts[1]) && strings.Contains(parts[1], mountPoint) {
+			continue
+		}
+
 		// get device's mountpoint and fs type.
 		mountPoint = parts[1]
 		fsType = parts[2]
 
-		// check the device turn on the prpquota or not.
+		// check the device turn on the grpquota or not.
 		if strings.Contains(parts[3], "grpquota") || strings.Contains(parts[3], "grpjquota") {
-			return mountPoint, true, fsType
+			enableQuota = true
 		}
 	}
 
-	return mountPoint, false, fsType
+	logrus.Debugf("check device: (%d), mountpoint: (%s), enableQuota: (%v), fsType: (%s)",
+		devID, mountPoint, enableQuota, fsType)
+
+	return mountPoint, enableQuota, fsType
 }
 
 // SetDiskQuota is used to set quota for directory.
