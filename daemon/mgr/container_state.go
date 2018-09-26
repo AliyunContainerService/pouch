@@ -97,7 +97,7 @@ func (c *Container) SetStatusRunning(pid int64) {
 // When a container's status turns to StatusStopped, the following fields need updated:
 // Status -> StatusStopped
 // FinishedAt -> time.Now()
-// Pid -> -1
+// Pid -> 0
 // ExitCode -> input param
 // Error -> input param
 func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
