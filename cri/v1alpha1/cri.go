@@ -61,9 +61,6 @@ const (
 	// resolvConfPath is the abs path of resolv.conf on host or container.
 	resolvConfPath = "/etc/resolv.conf"
 
-	// statsCollectPeriod is the time duration (in time.Second)  we sync stats from containerd.
-	statsCollectPeriod = 10
-
 	// defaultSnapshotterName is the default Snapshotter name.
 	defaultSnapshotterName = "overlayfs"
 
@@ -170,11 +167,19 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		return nil, fmt.Errorf("failed to get imagefs uuid of %q: %v", imageFSPath, err)
 	}
 
-	snapshotsSyncer := ctrMgr.NewSnapshotsSyncer(
-		c.SnapshotStore,
-		time.Duration(statsCollectPeriod)*time.Second,
-	)
-	snapshotsSyncer.Start()
+	if !config.CriConfig.DisableCriStatsCollect {
+		period := config.CriConfig.CriStatsCollectPeriod
+		if period <= 0 {
+			return nil, fmt.Errorf("cri stats collect period should > 0")
+		}
+		snapshotsSyncer := ctrMgr.NewSnapshotsSyncer(
+			c.SnapshotStore,
+			time.Duration(period)*time.Second,
+		)
+		snapshotsSyncer.Start()
+	} else {
+		logrus.Infof("disable cri to collect stats from containerd periodically")
+	}
 
 	return NewCriWrapper(c), nil
 }

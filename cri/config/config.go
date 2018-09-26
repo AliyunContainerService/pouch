@@ -21,4 +21,8 @@ type Config struct {
 	StreamServerPort string `json:"stream-server-port,omitempty"`
 	// StreamServerReusePort specify whether cri stream server share port with pouchd.
 	StreamServerReusePort bool `json:"stream-server-reuse-port,omitempty"`
+	// CriStatsCollectPeriod specify the time duration (in time.Second) cri collect stats from containerd.
+	CriStatsCollectPeriod int `json:"cri-stats-collect-period,omitempty"`
+	// DisableCriStatsCollect specify whether cri collect stats from containerd.
+	DisableCriStatsCollect bool `json:"disable-cri-stats-collect,omitempty"`
 }
