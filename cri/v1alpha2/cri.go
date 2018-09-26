@@ -74,6 +74,12 @@ const (
 
 	// networkNotReadyReason is the reason reported when network is not ready.
 	networkNotReadyReason = "NetworkPluginNotReady"
+
+	// passthruKey to specify whether a interface is passthru to qemu
+	passthruKey = "io.alibaba.pouch.runv.passthru"
+
+	// passthruIP is the IP for container
+	passthruIP = "io.alibaba.pouch.runv.passthru.ip"
 )
 
 var (
@@ -606,6 +612,10 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 			// Maybe the pod has been stopped.
 			logrus.Warnf("failed to get ip of sandbox %q: %v", podSandboxID, err)
 		}
+	}
+
+	if v, exist := annotations[passthruKey]; exist && v == "true" {
+		ip = annotations[passthruIP]
 	}
 
 	status := &runtime.PodSandboxStatus{
