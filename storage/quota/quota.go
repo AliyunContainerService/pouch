@@ -198,7 +198,7 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 			return 0, fmt.Errorf("failed to set disk quota: %v", err)
 		}
 
-		if err := setQuotaForDir(dir, quotaID); err != nil {
+		if err := SetQuotaForDir(dir, quotaID); err != nil {
 			return 0, fmt.Errorf("failed to set dir quota: %v", err)
 		}
 	}
@@ -206,8 +206,8 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 	return quotaID, nil
 }
 
-// setQuotaForDir sets file attribute
-func setQuotaForDir(src string, quotaID uint32) error {
+// SetQuotaForDir sets file attribute
+func SetQuotaForDir(src string, quotaID uint32) error {
 	filepath.Walk(src, func(path string, fd os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("setQuota walk dir %s get error %v", path, err)
