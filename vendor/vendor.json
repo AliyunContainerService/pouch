@@ -564,40 +564,11 @@
 			"revisionTime": "2017-09-11T20:35:56Z"
 		},
 		{
-			"checksumSHA1": "ym448FWZpZNMLeS6bDFqG+3X5FE=",
-			"path": "github.com/containernetworking/cni/libcni",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
-		},
-		{
-			"checksumSHA1": "Kh/msV2XTuYy0UB63hhoKcKfkyY=",
-			"path": "github.com/containernetworking/cni/pkg/invoke",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
-		},
-		{
-			"checksumSHA1": "kgSp8eemMPHCvxZdxva5OU94jIo=",
-			"path": "github.com/containernetworking/cni/pkg/types",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
-		},
-		{
-			"checksumSHA1": "lmLYXYR/twmBu+6U678QNF+BQlQ=",
-			"path": "github.com/containernetworking/cni/pkg/types/020",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
-		},
-		{
-			"checksumSHA1": "r6qX7lyz4pweijiXjWMcxvm4wQQ=",
-			"path": "github.com/containernetworking/cni/pkg/types/current",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
-		},
-		{
-			"checksumSHA1": "Y9KLxL9fFDnFHaDGOUfDkcbyV0U=",
-			"path": "github.com/containernetworking/cni/pkg/version",
-			"revision": "9ded5d186f6c16013fa34c611d9b1be751169aaa",
-			"revisionTime": "2018-01-10T16:53:04Z"
+			"checksumSHA1": "kjLThM+U4qeDQE0GLNd+rJPt7HA=",
+			"path": "github.com/containernetworking/cni",
+			"revision": "96343561e0363c7dcc5f94bef655a8ddbb0b3e5c",
+			"revisionTime": "2018-06-21T05:42:04Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "tkdJGOYqk/F/YIDedKl5CllvbYA=",
@@ -673,10 +644,10 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "2/jWygRyq/dGS2wMjuK6cYiSvPY=",
+			"checksumSHA1": "Qlh/kXGRId3PZQSyFQjaTX+8QJU=",
 			"path": "github.com/cri-o/ocicni/pkg/ocicni",
-			"revision": "2a19a0093d927d3ecc0e305b522c48e2213b22fd",
-			"revisionTime": "2018-02-02T23:36:03Z"
+			"revision": "0df475a8ba44e465783db50823eb4a0e226c4bf6",
+			"revisionTime": "2018-07-12T15:06:23Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
