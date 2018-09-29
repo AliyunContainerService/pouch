@@ -29,18 +29,13 @@ func New() *KMutex {
 		for {
 			<-ticker.C
 
-			var removes []string
-
 			m.Mutex.Lock()
 
 			for k, v := range m.keys {
 				if v.waits == 0 {
-					removes = append(removes, k)
+					delete(m.keys, k)
 					close(v.c)
 				}
-			}
-			for _, k := range removes {
-				delete(m.keys, k)
 			}
 
 			m.Mutex.Unlock()
