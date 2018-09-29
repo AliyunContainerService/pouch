@@ -1,6 +1,8 @@
 package mgr
 
 import (
+	"path/filepath"
+
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/logger"
@@ -47,4 +49,19 @@ func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info
 		ContainerRootDir: mgr.Store.Path(c.ID),
 		DaemonName:       "pouchd",
 	}
+}
+
+// SetContainerLogPath sets the log path of container.
+// LogPath would be as a field in `Inspect` response.
+func (mgr *ContainerManager) SetContainerLogPath(c *Container) {
+	if c.HostConfig.LogConfig == nil {
+		return
+	}
+
+	// If the logdriver is json-file, the LogPath should be like
+	// /var/lib/pouch/containers/5804ee42e505a5d9f30128848293fcb72d8cbc7517310bd24895e82a618fa454/json.log
+	if c.HostConfig.LogConfig.LogDriver == "json-file" {
+		c.LogPath = filepath.Join(mgr.Config.HomeDir, "containers", c.ID, "json.log")
+	}
+	return
 }
