@@ -654,6 +654,9 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return errors.Wrap(err, "failed to open io")
 	}
 
+	// set container's LogPath
+	mgr.SetContainerLogPath(c)
+
 	runtime, err := mgr.getRuntime(c.HostConfig.Runtime)
 	if err != nil {
 		return err

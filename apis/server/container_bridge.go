@@ -81,6 +81,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		State:        c.State,
 		Config:       c.Config,
 		HostConfig:   c.HostConfig,
+		LogPath:      c.LogPath,
 		Snapshotter:  c.Snapshotter,
 		RestartCount: c.RestartCount,
 		GraphDriver: &types.GraphDriverData{
