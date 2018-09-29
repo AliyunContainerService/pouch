@@ -479,6 +479,7 @@ func (nd *NetworkDisconnectCommand) Init(c *Cli) {
 		Use:   "disconnect [OPTIONS] NETWORK CONTAINER",
 		Short: "Disconnect a container from a network",
 		Args:  cobra.ExactArgs(2),
+		Long:  networkDisconnectDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nd.runNetworkDisconnect(args)
 		},

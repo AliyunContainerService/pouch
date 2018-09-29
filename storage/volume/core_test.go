@@ -166,7 +166,7 @@ func TestListVolumes(t *testing.T) {
 		volmap[volName] = v
 	}
 
-	volarray, err := core.ListVolumes(nil)
+	volarray, _ := core.ListVolumes(nil)
 	for k := 0; k < len(volarray); k++ {
 		vol := volarray[k]
 		_, found := volmap[vol.Name]

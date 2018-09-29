@@ -3,6 +3,7 @@
     "gofmt",
     "goimports",
     "golint",
+    "ineffassign",
     "misspell",
     "vet"
   ],

@@ -11,7 +11,6 @@ type ContentType string
 const (
 	// ContentTypeJSON is a json ContentType.
 	ContentTypeJSON ContentType = "application/json"
-	defaultType                 = "application/json"
 )
 
 // String return ContentType as string type.

@@ -357,11 +357,7 @@ func (s *Server) logsContainer(ctx context.Context, rw http.ResponseWriter, req 
 func (s *Server) statsContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
 
-	var stream bool
-	if _, ok := req.Form["stream"]; !ok {
-		stream = true
-	}
-	stream = httputils.BoolValue(req, "stream")
+	stream := httputils.BoolValue(req, "stream")
 
 	if !stream {
 		rw.Header().Set("Content-Type", "application/json")
