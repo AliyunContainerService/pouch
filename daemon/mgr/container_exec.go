@@ -82,9 +82,11 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 			}
 			stdout.Write([]byte(err.Error() + "\r\n"))
 			// set exec exit status
+			execConfig.Lock()
 			execConfig.Running = false
 			exitCode := 126
 			execConfig.ExitCode = int64(exitCode)
+			execConfig.Unlock()
 
 			// close io to make hijack connection exit
 			eio.Close()
@@ -99,7 +101,9 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 
 	// set exec process user, user decided by exec config
 	if execConfig.User == "" {
+		execConfig.Lock()
 		execConfig.User = c.Config.User
+		execConfig.Unlock()
 	}
 
 	uid, gid, additionalGids, err := user.Get(c.GetSpecificBasePath(user.PasswdFile),
@@ -130,7 +134,9 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		return err
 	}
 
+	execConfig.Lock()
 	execConfig.Running = true
+	execConfig.Unlock()
 
 	err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,

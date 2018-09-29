@@ -96,6 +96,9 @@ type ContainerFilter func(*Container) bool
 
 // ContainerExecConfig is the config a process exec.
 type ContainerExecConfig struct {
+	// Mutex lock
+	sync.Mutex
+
 	// ExecID identifies the ID of this exec
 	ExecID string
 
