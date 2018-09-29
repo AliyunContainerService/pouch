@@ -1,20 +1,17 @@
 # Deploy Kubernetes With PouchContainer, Powered By Aliyun
 
-Updated: 2018.6.1
-
-- [PouchContainer deploying](#pouch-with-kubernetes-deploying)
+- [PouchContainer deploying](#pouchcontainer-deploying)
   - [Overview](#overview)
   - [Restriction](#restriction)
   - [Install and Configure](#install-and-configure)
-    - [Install PouchContainer](#install-pouch)
+    - [Install PouchContainer](#install-pouchcontainer)
     - [Setup Repo](#setup-repo)
     - [Install Kubernetes Components](#install-kubernetes-components)
     - [Install CNI](#install-cni)
+    - [Using custom configurations](#using-custom-configurations)
     - [Setting up the master node](#setting-up-the-master-node)
-    - [Setting up ImageRepository](#setting-up-imagerepository)
     - [Setting up the minion nodes](#setting-up-the-minion-nodes)
   - [Run and Verify](#run-and-verify)
-  - [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -46,11 +43,15 @@ You can easily setup a basic PouchContainer environment, see [INSTALLATION.md](.
 
 On Ubuntu 16.04+:
 
-NOTE: If you'd like to use Kubernetes 1.10+, CRI_VERSION should be "v1alpha2"
+NOTE:
+
+- If you'd like to use Kubernetes 1.10+, CRI_VERSION should be "v1alpha2"
+- If you'd like to use Kubernetes 1.11+, CONTAINERD_ADDR should be "/run/containerd/containerd.sock"
 
 ```
 CRI_VERSION="v1alpha1"
-sed -i 's/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true --cri-version=${CRI_VERSION}/g' /usr/lib/systemd/system/pouch.service
+CONTAINERD_ADDR="/var/run/containerd/containerd.sock"
+sed -i 's/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true --cri-version=${CRI_VERSION} --containerd=${CONTAINERD_ADDR}/g' /usr/lib/systemd/system/pouch.service
 systemctl daemon-reload
 systemctl restart pouch
 ```
@@ -108,13 +109,6 @@ RELEASE="1.9.4-0.x86_64"
 yum -y install kubelet-${RELEASE} kubeadm-${RELEASE} kubectl-${RELEASE}
 ```
 
-Configure kubelet with PouchContainer as its runtime:
-
-```sh
-sed -i '2 i\Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-systemctl daemon-reload
-```
-
 For more details, please check [install kubelet](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl).
 
 ### Install CNI
@@ -134,17 +128,32 @@ setenforce 0
 yum install -y kubernetes-cni
 ```
 
-### Setting up ImageRepository
+### Using custom configurations
+
+Configure kubelet with PouchContainer as its runtime:
+
+``` shell
+cat <<EOF > /etc/systemd/system/kubelet.service.d/0-pouch.conf
+[Service]
+Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"
+EOF
+
+sudo systemctl daemon-reload
+```
+
+Using custom ImageRepository
 
 ```
 # cat kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1alpha1
 kind: MasterConfiguration
 imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
-kubernetes-version: stable-1.9
+kubernetesVersion: stable-1.9
 networking:
   podSubnet: 10.244.0.0/16
 ```
+
+For more details, please check [kubeadm init](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/).
 
 ### Setting up the master node
 
@@ -154,10 +163,12 @@ For more detailed Kubernetes cluster installation, please check [Using kubeadm t
 kubeadm init --config kubeadm.conf --ignore-preflight-errors=all
 ```
 
-Set the KUBECONFIG environment variable
+To start using your cluster, you need to run the following as a regular user:
 
-```sh
-export KUBECONFIG=/etc/kubernetes/admin.conf
+``` shell
+mkdir -p ~/.kube
+sudo cp -i /etc/kubernetes/admin.conf  ~/.kube/config
+sudo chown $(id -u):$(id -g) ~/.kube/config
 ```
 
 Configure CNI network plugin with [flannel](https://github.com/coreos/flannel)
@@ -253,15 +264,3 @@ Commercial support is available at
 </body>
 </html>
 ```
-
-## Troubleshooting
-
-- Because `kubeadm` still assumes docker as the only container runtime which can be used with kubernetes. When you use `kubeadm` to initialize the master node or join the minion node to the cluster, you may encounter the following error message:`[ERROR SystemVerification]: failed to get docker info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?`. Use the flag `--ignore-preflight-errors=all` to skip the check, like `kubeadm init --ignore-preflight-errors=all`.
-
-- By default PouchContainer will support CRI v1alpha2,which means that using a version of Kubernetes prior to 1.10 will not work. As the NOTE mentioned above, we could start pouchd with the configuration like `pouchd --cri-version v1alpha1` to specify the version of CRI to support the version of Kubernetes below 1.10.
-
-- By default PouchContainer will not enable the CRI. If you'd like to deploy Kubernetes with PouchContainer, you should start pouchd with the configuration like `pouchd --enable-cri`.
-
-- By default PouchContainer will use `registry.cn-hangzhou.aliyuncs.com/google-containers/pause-amd64:3.0` as the image of infra container. If you'd like use image other than that, you could start pouchd with the configuration like `pouchd --enable-cri --sandbox-image XXX`.
-
-- Any other troubles? Make an issue to connect with us!
