@@ -197,3 +197,8 @@ func convertCtrdErr(err error) error {
 
 	return err
 }
+
+// LockFailedError is constructing a much more readable lock failed error.
+func LockFailedError(containerID string) error {
+	return errors.Wrapf(errtypes.ErrLockfailed, "container %s is accessed by other request and please try again", containerID)
+}
