@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -40,9 +42,15 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySwapSupport)
 
 	cname := "TestRunWithMemoryswap"
-	res := command.PouchRun("run", "-d", "-m", "100m",
-		"--memory-swap", "200m",
-		"--name", cname, busyboxImage, "sleep", "10000")
+	m := 1024 * 1024
+	memory := "100m"
+	memSwap := "200m"
+	expected := 200 * m
+	sleep := "10000"
+
+	res := command.PouchRun("run", "-d", "-m", memory,
+		"--memory-swap", memSwap,
+		"--name", cname, busyboxImage, "sleep", sleep)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -54,19 +62,30 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(209715200))
+	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(expected))
 
 	// test if cgroup has record the real value
 	containerID := result[0].ID
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
 		containerID)
-	checkFileContains(c, path, "209715200")
+	checkFileContains(c, path, strconv.Itoa(expected))
+
+	// test if the value is correct in container
+	memSwapLimitFile := "/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes"
+	res = command.PouchRun("exec", cname, "cat", memSwapLimitFile)
+	res.Assert(c, icmd.Success)
+
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, strconv.Itoa(expected))
 
 	// test memory swap should be 2x memory if not specify it.
 	cname = "TestRunWithMemoryswap2x"
-	res = command.PouchRun("run", "-d", "-m", "10m",
-		"--name", cname, busyboxImage, "sleep", "10000")
+	memory = "10m"
+	expected = 2 * 10 * m
+
+	res = command.PouchRun("run", "-d", "-m", memory,
+		"--name", cname, busyboxImage, "sleep", sleep)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -78,14 +97,21 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(20971520))
+	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(expected))
 
 	// test if cgroup has record the real value
 	containerID = result[0].ID
 	path = fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
 		containerID)
-	checkFileContains(c, path, "20971520")
+	checkFileContains(c, path, strconv.Itoa(expected))
+
+	// test if the value is correct in container
+	res = command.PouchRun("exec", cname, "cat", memSwapLimitFile)
+	res.Assert(c, icmd.Success)
+
+	out = strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, strconv.Itoa(expected))
 }
 
 // TestRunWithMemoryswappiness is to verify the valid running container
@@ -102,9 +128,14 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	cname = "TestRunWithMemoryswappiness"
-	res = command.PouchRun("run", "-d", "-m", "100m",
-		"--memory-swappiness", "70",
-		"--name", cname, busyboxImage, "sleep", "10000")
+	memory := "100m"
+	memSwappiness := "70"
+	expected, _ := strconv.Atoi(memSwappiness)
+	sleep := "10000"
+
+	res = command.PouchRun("run", "-d", "-m", memory,
+		"--memory-swappiness", memSwappiness,
+		"--name", cname, busyboxImage, "sleep", sleep)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -117,13 +148,21 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 	c.Assert(int64(*result[0].HostConfig.MemorySwappiness),
-		check.Equals, int64(70))
+		check.Equals, int64(expected))
 
 	// test if cgroup has record the real value
 	containerID := result[0].ID
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.swappiness", containerID)
-	checkFileContains(c, path, "70")
+	checkFileContains(c, path, memSwappiness)
+
+	// test if the value is correct in container
+	memSwappinessFile := "/sys/fs/cgroup/memory/memory.swappiness"
+	res = command.PouchRun("exec", cname, "cat", memSwappinessFile)
+	res.Assert(c, icmd.Success)
+
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, memSwappiness)
 }
 
 // TestRunWithLimitedMemory is to verify the valid running container with -m
@@ -131,7 +170,11 @@ func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySupport)
 
 	cname := "TestRunWithLimitedMemory"
-	res := command.PouchRun("run", "-d", "-m", "100m",
+	m := 1024 * 1024
+	memory := "100m"
+	expected := 100 * m
+
+	res := command.PouchRun("run", "-d", "-m", memory,
 		"--name", cname, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
@@ -144,14 +187,22 @@ func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
-	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(104857600))
+	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(expected))
 
 	// test if cgroup has record the real value
 	containerID := result[0].ID
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
 
-	checkFileContains(c, path, "104857600")
+	checkFileContains(c, path, strconv.Itoa(expected))
+
+	// test if the value is correct in container
+	memLimitFile := "/sys/fs/cgroup/memory/memory.limit_in_bytes"
+	res = command.PouchRun("exec", cname, "cat", memLimitFile)
+	res.Assert(c, icmd.Success)
+
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, strconv.Itoa(expected))
 }
 
 // TestRunMemoryOOM is to verify return value when a container is OOM.
