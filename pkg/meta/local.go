@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -67,17 +68,25 @@ func (s *localStore) Put(fileName, key string, value []byte) error {
 		return err
 	}
 
+	// write new content write into a new target file, rename it to meta.json
+	// after sueecssful, avoid origin data file broken in case of some problem.
 	name := filepath.Join(dir, fileName)
-	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|os.O_SYNC, 0644)
+	target := fmt.Sprintf("%s.%d", name, time.Now().Unix())
+
+	f, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|os.O_SYNC, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %s, %v", name, err)
+		return fmt.Errorf("failed to open file: %s, %v", target, err)
 	}
 	defer f.Close()
 
 	if _, err := f.Write(value); err != nil {
-		return fmt.Errorf("failed to write file: %s, %v", name, err)
+		return fmt.Errorf("failed to write file: %s, %v", target, err)
 	}
 	f.Sync()
+
+	if err := os.Rename(target, name); err != nil {
+		return fmt.Errorf("failed to rename file %s to %s: %s", target, name, err)
+	}
 
 	// NOTICE: cache the key-value.
 	s.cache[key+"/"+fileName] = value
