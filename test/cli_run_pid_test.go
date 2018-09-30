@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -55,13 +57,15 @@ func (suite *PouchRunPidSuite) TestRunWithPidsLimit(c *check.C) {
 	})
 
 	cname := "TestRunWithPidsLimit"
-	pidfile := "/sys/fs/cgroup/pids/pids.max"
-	res := command.PouchRun("run", "--pids-limit", "10",
-		"--name", cname, busyboxImage, "cat", pidfile)
+	res := command.PouchRun("run", "-d", "--pids-limit", "10",
+		"--name", cname, busyboxImage, "top")
 	res.Assert(c, icmd.Success)
 
-	out := res.Stdout()
-	c.Assert(out, check.Equals, "10\n")
+	cid := strings.TrimSpace(res.Stdout())
+	path := fmt.Sprintf(
+		"/sys/fs/cgroup/pids/default/%s/pids.max",
+		cid)
+	checkFileContains(c, path, "10")
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
