@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
 // WaitTimeout wait at most timeout nanoseconds,
@@ -53,4 +55,14 @@ func TrimAllSpaceAndNewline(input string) string {
 	}
 
 	return output
+}
+
+// GetMajMinNumOfDevice is used for getting major:minor device number
+func GetMajMinNumOfDevice(device string) (string, bool) {
+	cmd := fmt.Sprintf("lsblk -d -o MAJ:MIN %s | sed /MAJ:MIN/d | awk '{print $1}'", device)
+	number := icmd.RunCommand("bash", "-c", cmd).Stdout()
+	if number != "" {
+		return strings.Trim(number, "\n"), true
+	}
+	return "", false
 }
