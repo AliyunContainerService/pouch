@@ -11,11 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var validDrivers = map[string]bool{
-	"json-file": true,
-	"journald":  true,
-}
-
 // logsDescription is used to describe logs command in detail and auto generate command doc.
 var logsDescription = "Get container's logs"
 

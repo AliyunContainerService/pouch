@@ -38,6 +38,8 @@ func (suite *APIDaemonUpdateSuite) TestUpdateDaemon(c *check.C) {
 	CheckRespStatus(c, resp, 200)
 
 	resp, err = request.Get("/info", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
 
 	info := types.SystemInfo{}
 	err = request.DecodeBody(&info, resp.Body)

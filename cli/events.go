@@ -36,6 +36,7 @@ func (e *EventsCommand) Init(c *Cli) {
 		Use:   "events [OPTIONS]",
 		Short: "Get real time events from the daemon",
 		Args:  cobra.NoArgs,
+		Long:  eventsDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return e.runEvents()
 		},

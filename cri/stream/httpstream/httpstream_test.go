@@ -53,27 +53,27 @@ func TestHandshake(t *testing.T) {
 	serverProtocls := []string{}
 
 	// clientProtocols and serverProtocls both are empty.
-	protocol, err := Handshake(w, req, serverProtocls)
+	protocol, _ := Handshake(w, req, serverProtocls)
 	if protocol != "" {
 		t.Fatalf("clientProtocols and serverProtocls both are empty, returned protocol should be empty")
 	}
 
 	// clientProtocols is empty.
 	serverProtocls = []string{constant.StreamProtocolV3Name}
-	protocol, err = Handshake(w, req, serverProtocls)
+	protocol, _ = Handshake(w, req, serverProtocls)
 	if protocol != "" {
 		t.Fatalf("clientProtocols is empty, returned protocol should be empty")
 	}
 
 	// serverProtocls is empty.
 	req.Header.Add(http.CanonicalHeaderKey(HeaderProtocolVersion), constant.StreamProtocolV1Name)
-	protocol, err = Handshake(w, req, []string{})
+	protocol, _ = Handshake(w, req, []string{})
 	if protocol != "" {
 		t.Fatalf("serverProtocls is empty, returned protocol should be empty")
 	}
 
 	// clientProtocols and serverProtocls have no common protocol.
-	protocol, err = Handshake(w, req, serverProtocls)
+	protocol, _ = Handshake(w, req, serverProtocls)
 	if protocol != "" {
 		t.Fatalf("no common protocol, returned protocol should be empty")
 	}
@@ -89,7 +89,7 @@ func TestHandshake(t *testing.T) {
 	serverProtocls = []string{constant.StreamProtocolV2Name, constant.StreamProtocolV3Name}
 	req.Header.Add(http.CanonicalHeaderKey(HeaderProtocolVersion), constant.StreamProtocolV2Name)
 
-	protocol, err = Handshake(w, req, serverProtocls)
+	protocol, _ = Handshake(w, req, serverProtocls)
 	if protocol != constant.StreamProtocolV2Name {
 		t.Fatalf("Handshake should return the common protocol")
 	}

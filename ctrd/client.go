@@ -372,8 +372,8 @@ func (c *Client) collectContainerdEvents() {
 			continue
 		}
 		var (
-			action      = ""
-			containerID = ""
+			action      string
+			containerID string
 			attributes  = map[string]string{}
 		)
 

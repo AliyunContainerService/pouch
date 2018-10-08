@@ -194,7 +194,7 @@ func seekOffsetByTailLines(rs io.ReadSeeker, n int) (int64, error) {
 		left  = int64(0)
 		b     []byte
 
-		readN = int64(0)
+		readN int64
 	)
 
 	for {

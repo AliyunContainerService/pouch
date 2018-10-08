@@ -124,4 +124,5 @@ func (suite *APIContainerCheckpointSuite) TestCheckpointDelAPI(c *check.C) {
 
 	resp, err = request.Delete("/containers/" + cname + "/checkpoints/" + "cp0")
 	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 204)
 }

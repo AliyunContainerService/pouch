@@ -28,6 +28,7 @@ func (v *InfoCommand) Init(c *Cli) {
 		Use:   "info [OPTIONS]",
 		Short: "Display system-wide information",
 		Args:  cobra.NoArgs,
+		Long:  infoDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runInfo()
 		},

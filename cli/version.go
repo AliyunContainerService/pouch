@@ -23,6 +23,7 @@ func (v *VersionCommand) Init(c *Cli) {
 		Use:   "version",
 		Short: "Print versions about Pouch CLI and Pouchd",
 		Args:  cobra.NoArgs,
+		Long:  versionDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return v.runVersion()
 		},

@@ -53,7 +53,7 @@ func Parse(filter []string) (map[string][]string, error) {
 		}
 
 		if v, exist := parsed[name]; exist {
-			v = append(v, strings.TrimSpace(splits[1]))
+			parsed[name] = append(v, strings.TrimSpace(splits[1]))
 		} else {
 			parsed[name] = []string{strings.TrimSpace(splits[1])}
 		}
