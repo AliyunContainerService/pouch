@@ -1469,7 +1469,7 @@ paths:
 
   /commit:
     post:
-      summary: "Create a image from a container"
+      summary: "Create an image from a container"
       operationId: "Commit"
       consumes: ["application/json"]
       produces: ["application/json"]
@@ -1477,9 +1477,18 @@ paths:
         201:
           description: "The image was created successfully"
           schema:
-            $ref: "#/definitions/ContainerCommitOptions"
+            $ref: "#/definitions/ContainerCommitResp"
         404:
           $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "ContainerCommitOptions"
+          in: "body"
+          required: true
+          description: "options of commit an image from a container"
+          schema:
+            $ref: "#/definitions/ContainerCommitOptions"
 
 definitions:
   Error:
@@ -4231,7 +4240,7 @@ definitions:
         type: "string"
 
   ContainerCommitOptions:
-    description: "options of committing a container into a image"
+    description: "options of committing a container into an image"
     type: "object"
     properties:
       Repository:
@@ -4253,7 +4262,7 @@ definitions:
     properties:
       Id:
         type: "string"
-        description: "ID uniquely identifies a image committed by a container"
+        description: "ID uniquely identifies an image committed by a container"
 
 
 parameters:

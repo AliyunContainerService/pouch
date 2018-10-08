@@ -17,7 +17,7 @@ import (
 
 type ContainerCommitResp struct {
 
-	// ID uniquely identifies a image committed by a container
+	// ID uniquely identifies an image committed by a container
 	ID string `json:"Id,omitempty"`
 }
 

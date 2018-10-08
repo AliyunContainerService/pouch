@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ContainerCommitOptions options of committing a container into a image
+// ContainerCommitOptions options of committing a container into an image
 // swagger:model ContainerCommitOptions
 
 type ContainerCommitOptions struct {

@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Commit commits a image from a container.
+// Commit commits an image from a container.
 func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *types.ContainerCommitOptions) (*types.ContainerCommitResp, error) {
 	if options.Repository == "" {
 		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "not allow empty image reference")

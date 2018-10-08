@@ -7,7 +7,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 )
 
-// ContainerCommit creates a image from a container.
+// ContainerCommit creates an image from a container.
 func (client *APIClient) ContainerCommit(ctx context.Context, name string, options types.ContainerCommitOptions) (*types.ContainerCommitResp, error) {
 	q := url.Values{}
 	q.Set("container", name)
