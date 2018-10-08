@@ -12,9 +12,9 @@ import (
 )
 
 type jsonLog struct {
-	Source    string    `json:"source,omitempty"`
-	Line      string    `json:"line,omitempty"`
-	Timestamp time.Time `json:"timestamp,omitempty"`
+	Stream    string    `json:"stream,omitempty"`
+	Log       string    `json:"log,omitempty"`
+	Timestamp time.Time `json:"time"`
 }
 
 func newUnmarshal(r io.Reader) func() (*logger.LogMessage, error) {
@@ -27,8 +27,8 @@ func newUnmarshal(r io.Reader) func() (*logger.LogMessage, error) {
 		}
 
 		return &logger.LogMessage{
-			Source:    jl.Source,
-			Line:      []byte(jl.Line),
+			Source:    jl.Stream,
+			Line:      []byte(jl.Log),
 			Timestamp: jl.Timestamp,
 		}, nil
 	}
@@ -43,7 +43,7 @@ func marshal(msg *logger.LogMessage) ([]byte, error) {
 	buf.WriteString("{")
 	if len(msg.Source) != 0 {
 		first = false
-		buf.WriteString(`"source":`)
+		buf.WriteString(`"stream":`)
 		bytesIntoJSONString(&buf, []byte(msg.Source))
 	}
 
@@ -52,7 +52,7 @@ func marshal(msg *logger.LogMessage) ([]byte, error) {
 			buf.WriteString(`,`)
 		}
 		first = false
-		buf.WriteString(`"line":`)
+		buf.WriteString(`"log":`)
 		bytesIntoJSONString(&buf, msg.Line)
 	}
 
@@ -60,7 +60,7 @@ func marshal(msg *logger.LogMessage) ([]byte, error) {
 		buf.WriteString(`,`)
 	}
 
-	buf.WriteString(`"timestamp":`)
+	buf.WriteString(`"time":`)
 	buf.WriteString(msg.Timestamp.UTC().Format(`"` + utils.TimeLayout + `"`))
 	buf.WriteString(`}`)
 
