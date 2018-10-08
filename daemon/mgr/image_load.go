@@ -44,7 +44,7 @@ func (mgr *ImageManager) LoadImage(ctx context.Context, imageName string, tarstr
 	// may fail to load after restart.
 	merrs := new(multierror.Multierrors)
 	for _, img := range imgs {
-		if err := mgr.storeImageReference(ctx, img); err != nil {
+		if err := mgr.StoreImageReference(ctx, img); err != nil {
 			merrs.Append(fmt.Errorf("fail to store reference: %s: %v", img.Name(), err))
 		}
 	}

@@ -1467,6 +1467,29 @@ paths:
             $ref: "#/definitions/NetworkDisconnect"
       tags: ["Network"]
 
+  /commit:
+    post:
+      summary: "Create an image from a container"
+      operationId: "Commit"
+      consumes: ["application/json"]
+      produces: ["application/json"]
+      responses:
+        201:
+          description: "The image was created successfully"
+          schema:
+            $ref: "#/definitions/ContainerCommitResp"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "ContainerCommitOptions"
+          in: "body"
+          required: true
+          description: "options of commit an image from a container"
+          schema:
+            $ref: "#/definitions/ContainerCommitOptions"
+
 definitions:
   Error:
     type: "object"
@@ -4215,6 +4238,32 @@ definitions:
         type: "string"
       CheckpointName:
         type: "string"
+
+  ContainerCommitOptions:
+    description: "options of committing a container into an image"
+    type: "object"
+    properties:
+      Repository:
+        type: "string"
+        description: "repository is the image name"
+      Tag:
+        type: "string"
+        description: "tag is the image tag"
+      Comment:
+        type: "string"
+        description: "comment is external information add for the image"
+      Author:
+        type: "string"
+        description: "author is the one build the image"
+
+  ContainerCommitResp:
+    type: "object"
+    description: "response of commit container for the remote API: POST /commit"
+    properties:
+      Id:
+        type: "string"
+        description: "ID uniquely identifies an image committed by a container"
+
 
 parameters:
   id:

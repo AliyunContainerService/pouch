@@ -488,3 +488,19 @@ func (s *Server) deleteContainerCheckpoint(ctx context.Context, rw http.Response
 	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
+
+func (s *Server) commitContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	options := &types.ContainerCommitOptions{
+		Repository: req.FormValue("repo"),
+		Tag:        req.FormValue("tag"),
+		Author:     req.FormValue("author"),
+		Comment:    req.FormValue("comment"),
+	}
+
+	id, err := s.ContainerMgr.Commit(ctx, req.FormValue("container"), options)
+	if err != nil {
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusCreated, id)
+}

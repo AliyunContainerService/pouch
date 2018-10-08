@@ -15,6 +15,7 @@ import (
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
+	digest "github.com/opencontainers/go-digest"
 )
 
 // APIClient defines common methods of containerd api client
@@ -85,6 +86,8 @@ type ImageAPIClient interface {
 	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
 	// SaveImage saves image to tarstream
 	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
+	// Commit commits an image from a container.
+	Commit(ctx context.Context, config *CommitConfig) (digest.Digest, error)
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features
