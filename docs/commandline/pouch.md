@@ -21,6 +21,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 ### SEE ALSO
 
 * [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
+* [pouch commit](pouch_commit.md)	 - Commit an image from a container
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
 * [pouch events](pouch_events.md)	 - Get real time events from the daemon
 * [pouch exec](pouch_exec.md)	 - Run a command in a running container
