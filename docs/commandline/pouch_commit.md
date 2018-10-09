@@ -1,34 +1,29 @@
-## pouch version
+## pouch commit
 
-Print versions about Pouch CLI and Pouchd
+Commit an image from a container
 
 ### Synopsis
 
-Display the version information of pouch client and daemon， including GoVersion, KernelVersion, Os, Version, APIVersion, Arch, BuildTime and GitCommit.
+commit an image from a container.
 
 ```
-pouch version
+pouch commit [OPTIONS] CONTAINER REPOSITORY[:TAG]
 ```
 
 ### Examples
 
 ```
-$ pouch version
-GoVersion:       go1.9.1
-KernelVersion:   3.10.0-693.11.6.el7.x86_64
-Os:              linux
-Version:         0.1.0-dev
-APIVersion:      1.24
-Arch:            amd64
-BuildTime:       2017-12-18T07:48:56.348129663Z
-GitCommit:
+$ pouch commit 25bf50 test:image
+1c7e415csa333
 
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -a, --author string    Image author, eg.(name <email@email.com>)
+  -h, --help             help for commit
+  -m, --message string   Commit message
 ```
 
 ### Options inherited from parent commands

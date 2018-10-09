@@ -88,6 +88,39 @@ Validate credentials for a registry and, if available, get an identity token for
 * `application/json`
 
 
+<a name="commit"></a>
+### Create an image from a container
+```
+POST /commit
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Body**|**ContainerCommitOptions**  <br>*required*|options of commit an image from a container|[ContainerCommitOptions](#containercommitoptions)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**201**|The image was created successfully|[ContainerCommitResp](#containercommitresp)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
+
+
+#### Consumes
+
+* `application/json`
+
+
+#### Produces
+
+* `application/json`
+
+
 <a name="containers-create-post"></a>
 ### Create a container
 ```
@@ -2002,6 +2035,29 @@ GET "/containers/json"
 |**SizeRw**  <br>*optional*||integer (int64)|
 |**State**  <br>*optional*||string|
 |**Status**  <br>*optional*||string|
+
+
+<a name="containercommitoptions"></a>
+### ContainerCommitOptions
+options of committing a container into an image
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Author**  <br>*optional*|author is the one build the image|string|
+|**Comment**  <br>*optional*|comment is external information add for the image|string|
+|**Repository**  <br>*optional*|repository is the image name|string|
+|**Tag**  <br>*optional*|tag is the image tag|string|
+
+
+<a name="containercommitresp"></a>
+### ContainerCommitResp
+response of commit container for the remote API: POST /commit
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**Id**  <br>*optional*|ID uniquely identifies an image committed by a container|string|
 
 
 <a name="containerconfig"></a>

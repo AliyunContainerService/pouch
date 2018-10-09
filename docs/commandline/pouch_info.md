@@ -4,7 +4,7 @@ Display system-wide information
 
 ### Synopsis
 
-Display system-wide information
+Display the information of pouch, including Containers, Images, Storage Driver, Execution Driver, Logging Driver, Kernel Version,Operating System, CPUs, Total Memory, Name, ID.
 
 ```
 pouch info [OPTIONS]
