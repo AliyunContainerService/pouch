@@ -9,9 +9,12 @@ import (
 	"github.com/alibaba/pouch/pkg/reference"
 
 	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/tchap/go-patricia/patricia"
 )
+
+var errCtrdImageInfoNotExist = fmt.Errorf("ctrd image info does not exist")
 
 // imageStore stores the relationship between references.
 //
@@ -62,6 +65,18 @@ type imageStore struct {
 
 	// primaryRefsIndexByID stores primay references, index by image ID
 	primaryRefsIndexByID map[digest.Digest]referenceMap
+
+	// cache size, ociImage to avoid open stream grpc to connect containerd,
+	// because it's too expensive if open/read file too often
+	// cache index by image ID
+	imageInfoCache map[digest.Digest]CtrdImageInfo
+}
+
+// CtrdImageInfo is used to cache the id, size and oci image information.
+type CtrdImageInfo struct {
+	ID      digest.Digest
+	Size    int64
+	OCISpec ocispec.Image
 }
 
 // referenceMap represents reference string to corresponding reference.Named
@@ -76,6 +91,8 @@ func newImageStore() (*imageStore, error) {
 
 		primaryRefsIndexByID:  make(map[digest.Digest]referenceMap),
 		refsIndexByPrimaryRef: make(map[string]referenceMap),
+
+		imageInfoCache: make(map[digest.Digest]CtrdImageInfo),
 	}, nil
 }
 
@@ -276,23 +293,43 @@ func (store *imageStore) RemoveReference(id digest.Digest, ref reference.Named) 
 	return nil
 }
 
-// RemoveAllReferences removes all the reference by the given imageID.
-func (store *imageStore) RemoveAllReferences(id digest.Digest) error {
+// ListCtrdImageInfo returns all the CtrdImageInfo.
+func (store *imageStore) ListCtrdImageInfo() []CtrdImageInfo {
 	store.Lock()
 	defer store.Unlock()
 
-	for pRefStr := range store.primaryRefsIndexByID[id] {
-		for ref := range store.refsIndexByPrimaryRef[pRefStr] {
-			delete(store.primaryRefIndexByRef, ref)
-		}
-
-		delete(store.refsIndexByPrimaryRef, pRefStr)
-		delete(store.idIndexByPrimaryRef, pRefStr)
+	res := make([]CtrdImageInfo, 0, len(store.imageInfoCache))
+	for _, val := range store.imageInfoCache {
+		res = append(res, val)
 	}
+	return res
+}
 
-	delete(store.primaryRefsIndexByID, id)
-	store.idSet.Delete(patricia.Prefix(id.String()))
-	return nil
+// GetCtrdImageInfo returns CtrdImageInfo by specific id.
+func (store *imageStore) GetCtrdImageInfo(id digest.Digest) (CtrdImageInfo, error) {
+	store.Lock()
+	defer store.Unlock()
+
+	if i, ok := store.imageInfoCache[id]; ok {
+		return i, nil
+	}
+	return CtrdImageInfo{}, errCtrdImageInfoNotExist
+}
+
+// CacheCtrdImageInfo caches the oci image by image ID.
+func (store *imageStore) CacheCtrdImageInfo(id digest.Digest, img CtrdImageInfo) {
+	store.Lock()
+	defer store.Unlock()
+
+	store.imageInfoCache[id] = img
+}
+
+// ClearCtrdImageInfo caches the oci image by image ID.
+func (store *imageStore) ClearCtrdImageInfo(id digest.Digest) {
+	store.Lock()
+	defer store.Unlock()
+
+	delete(store.imageInfoCache, id)
 }
 
 // getLastComponentInReferenceName will return the last component in the reference.Named().

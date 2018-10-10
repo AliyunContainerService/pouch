@@ -145,17 +145,12 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 
 // GetImage returns imageInfo by reference.
 func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error) {
-	_, _, ref, err := mgr.CheckReference(ctx, idOrRef)
+	id, _, _, err := mgr.CheckReference(ctx, idOrRef)
 	if err != nil {
 		return nil, err
 	}
 
-	img, err := mgr.client.GetImage(ctx, ref.String())
-	if err != nil {
-		return nil, err
-	}
-
-	imgInfo, err := mgr.containerdImageToImageInfo(ctx, img)
+	imgInfo, err := mgr.containerdImageToImageInfo(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -164,34 +159,17 @@ func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.I
 
 // ListImages lists images stored by containerd.
 func (mgr *ImageManager) ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error) {
-	imgs, err := mgr.client.ListImages(ctx, filter...)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: support filter functionality
+	ctrdImageInfos := mgr.localStore.ListCtrdImageInfo()
+	imgInfos := make([]types.ImageInfo, 0, len(ctrdImageInfos))
 
-	imgInfosIndexByID := make(map[string]types.ImageInfo)
-	for _, img := range imgs {
-		imgCfg, err := img.Config(ctx)
+	for _, img := range ctrdImageInfos {
+		imgInfo, err := mgr.containerdImageToImageInfo(ctx, img.ID)
 		if err != nil {
-			logrus.Warnf("failed to get image config info during list images: %v", err)
+			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.ID, err)
 			continue
 		}
-
-		if _, ok := imgInfosIndexByID[imgCfg.Digest.String()]; ok {
-			continue
-		}
-
-		imgInfo, err := mgr.containerdImageToImageInfo(ctx, img)
-		if err != nil {
-			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.Name(), err)
-			continue
-		}
-		imgInfosIndexByID[imgInfo.ID] = imgInfo
-	}
-
-	imgInfos := make([]types.ImageInfo, 0, len(imgInfosIndexByID))
-	for _, v := range imgInfosIndexByID {
-		imgInfos = append(imgInfos, v)
+		imgInfos = append(imgInfos, imgInfo)
 	}
 	return imgInfos, nil
 }
@@ -210,6 +188,16 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 	if err != nil {
 		return err
 	}
+
+	// since there is no rollback functionality, no guarantee that the
+	// containerd.RemoveImage must success. so if the localStore has been
+	// remove all the primary references, we should clear the CtrdImageInfo
+	// cache.
+	defer func() {
+		if len(mgr.localStore.GetPrimaryReferences(id)) == 0 {
+			mgr.localStore.ClearCtrdImageInfo(id)
+		}
+	}()
 
 	// should remove all the references if the reference is ID (Named Only)
 	// or Digest ID (Tagged Named)
@@ -462,7 +450,26 @@ func (mgr *ImageManager) StoreImageReference(ctx context.Context, img containerd
 		return err
 	}
 
-	return mgr.addReferenceIntoStore(imgCfg.Digest, namedRef, img.Target().Digest)
+	size, err := img.Size(ctx)
+	if err != nil {
+		return err
+	}
+
+	ociImage, err := containerdImageToOciImage(ctx, img)
+	if err != nil {
+		return err
+	}
+
+	if err := mgr.addReferenceIntoStore(imgCfg.Digest, namedRef, img.Target().Digest); err != nil {
+		return err
+	}
+
+	mgr.localStore.CacheCtrdImageInfo(imgCfg.Digest, CtrdImageInfo{
+		ID:      imgCfg.Digest,
+		Size:    size,
+		OCISpec: ociImage,
+	})
+	return nil
 }
 
 func (mgr *ImageManager) addReferenceIntoStore(id digest.Digest, ref reference.Named, dig digest.Digest) error {
@@ -486,28 +493,22 @@ func (mgr *ImageManager) addReferenceIntoStore(id digest.Digest, ref reference.N
 	return nil
 }
 
-func (mgr *ImageManager) containerdImageToImageInfo(ctx context.Context, img containerd.Image) (types.ImageInfo, error) {
-	desc, err := img.Config(ctx)
+func (mgr *ImageManager) containerdImageToImageInfo(ctx context.Context, id digest.Digest) (types.ImageInfo, error) {
+	ctrdImageInfo, err := mgr.localStore.GetCtrdImageInfo(id)
 	if err != nil {
-		return types.ImageInfo{}, err
-	}
-
-	size, err := img.Size(ctx)
-	if err != nil {
-		return types.ImageInfo{}, err
-	}
-
-	ociImage, err := containerdImageToOciImage(ctx, img)
-	if err != nil {
+		if err == errCtrdImageInfoNotExist {
+			return types.ImageInfo{}, pkgerrors.Wrapf(errtypes.ErrNotfound, "failed to get ctrd image info from cache by imageID: %v", id)
+		}
 		return types.ImageInfo{}, err
 	}
 
 	var (
+		ociImage    = ctrdImageInfo.OCISpec
 		repoTags    = make([]string, 0)
 		repoDigests = make([]string, 0)
 	)
 
-	for _, ref := range mgr.localStore.GetReferences(desc.Digest) {
+	for _, ref := range mgr.localStore.GetReferences(ctrdImageInfo.ID) {
 		switch ref.(type) {
 		case reference.Tagged:
 			repoTags = append(repoTags, ref.String())
@@ -520,7 +521,7 @@ func (mgr *ImageManager) containerdImageToImageInfo(ctx context.Context, img con
 		Architecture: ociImage.Architecture,
 		Config:       getImageInfoConfigFromOciImage(ociImage),
 		CreatedAt:    ociImage.Created.Format(utils.TimeLayout),
-		ID:           desc.Digest.String(),
+		ID:           ctrdImageInfo.ID.String(),
 		Os:           ociImage.OS,
 		RepoDigests:  repoDigests,
 		RepoTags:     repoTags,
@@ -528,7 +529,7 @@ func (mgr *ImageManager) containerdImageToImageInfo(ctx context.Context, img con
 			Type:   ociImage.RootFS.Type,
 			Layers: digestSliceToStringSlice(ociImage.RootFS.DiffIDs),
 		},
-		Size: size,
+		Size: ctrdImageInfo.Size,
 	}, nil
 }
 
