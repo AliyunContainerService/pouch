@@ -201,7 +201,7 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 		}
 
 		// check the shortest mountpoint.
-		if mountPoint != "" && len(mountPoint) < len(parts[1]) && strings.Contains(parts[1], mountPoint) {
+		if mountPoint != "" && len(mountPoint) < len(parts[1]) {
 			continue
 		}
 
