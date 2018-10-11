@@ -29,7 +29,7 @@ func (suite *PouchRunNetworkSuite) TestRunWithPing(c *check.C) {
 	name := "TestRunWithPing"
 
 	res := command.PouchRun("run", "--name", name,
-		busyboxImage, "ping", "-c", "10", "www.taobao.com")
+		busyboxImage, "ping", "-c", "3", "www.taobao.com")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 }

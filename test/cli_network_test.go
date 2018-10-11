@@ -321,12 +321,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 }
 
 func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	cname := "TestNetworkPortMapping"
 
 	ret := icmd.RunCommand("which", "curl")
 	if ret.ExitCode != 0 {
@@ -342,15 +337,22 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 
 	command.PouchRun("pull", image).Assert(c, icmd.Success)
 	command.PouchRun("run", "-d",
-		"--name", funcname,
+		"--name", cname,
 		"-p", "9999:80",
 		image).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
 
-	time.Sleep(10 * time.Second)
-	err := icmd.RunCommand("timeout", "5", "curl", "localhost:9999").Compare(expct)
-	c.Assert(err, check.IsNil)
+	success := false
+	for i := 0; i < 60; i++ {
+		err := icmd.RunCommand("timeout", "5", "curl", "localhost:9999").Compare(expct)
+		if err == nil {
+			success = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
 
-	command.PouchRun("rm", "-f", funcname)
+	c.Assert(success, check.Equals, true)
 }
 
 func createBridge(bridgeName string) (netlink.Link, error) {
