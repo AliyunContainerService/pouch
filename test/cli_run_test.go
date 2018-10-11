@@ -443,3 +443,44 @@ func (suite *PouchRunSuite) TestRunWithEnv(c *check.C) {
 	res.Assert(c, icmd.Success)
 	c.Assert(strings.TrimSpace(res.Stdout()), check.Equals, "a,b,c-b1")
 }
+
+func (suite *PouchRunSuite) TestRunQuotaId(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+	name := "TestRunQuotaId"
+
+	res := command.PouchRun("run", "-d", "--name", name, "--label", "QuotaId=16777216", busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", "-f", "{{.Config.Labels.QuotaId}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "16777216")
+
+}
+
+func (suite *PouchRunSuite) TestRunAutoQuotaId(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+	name := "TestRunAutoQuotaId"
+
+	res := command.PouchRun("run", "-d", "--name", name, "--label", "AutoQuotaId=true", busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", "-f", "{{.Config.Labels.AutoQuotaId}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "true")
+
+	// This is a bug. Can't get quotaid by pouch inspect -f {{.Config.Labels.QuotaId}} $containerid
+	//output = command.PouchRun("inspect", "-f", "{{.Config.Labels.QuotaId}}", name).Stdout()
+	//id, err := strconv.Atoi(output)
+
+	//if err != nil {
+	//	c.Fatalf("Atoi err:%v", err)
+	//}
+
+	//if id <= 0 {
+	//	c.Fatalf("id should have been great than zero, id=%d", id)
+	//}
+}
