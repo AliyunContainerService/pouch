@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/gorilla/mux"
 	"github.com/opencontainers/go-digest"
@@ -39,7 +40,7 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 
 	// record the time spent during image pull procedure.
 	defer func(start time.Time) {
-		metrics.ImagePullSummary.WithLabelValues(image).Observe(metrics.SinceInMicroseconds(start))
+		metrics.ImagePullSummary.WithLabelValues(image).Observe(util_metrics.SinceInMicroseconds(start))
 		metrics.ImageActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
 

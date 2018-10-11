@@ -1368,6 +1368,12 @@
 			"revisionTime": "2017-11-07T15:27:38Z"
 		},
 		{
+			"checksumSHA1": "3iVD2sJv4uYnA8YgkR8yzZiUF7o=",
+			"path": "github.com/grpc-ecosystem/go-grpc-prometheus",
+			"revision": "93bf4626fba73b751b0f3cdf2649be4ce0c420cd",
+			"revisionTime": "2018-08-20T15:04:22Z"
+		},
+		{
 			"checksumSHA1": "cZw5u6BGWe3gjJxmXT6J0Tfn6Mw=",
 			"path": "github.com/hashicorp/consul/api",
 			"revision": "5f3d20c5cfbc2859f0dda44d0c14826f00c4a277",
