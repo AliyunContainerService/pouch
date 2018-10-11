@@ -1,7 +1,5 @@
 # Deploy Kubernetes With PouchContainer
 
-Updated: July 26th, 2018
-
 - [Overview](#overview)
 - [Prerequisite](#Prerequisite)
   - [Software Version Requirement](#software-version-requirement)
@@ -161,8 +159,11 @@ $ sudo yum install -y kubelet-${RELEASE} kubeadm-${RELEASE} kubectl-${RELEASE}
 After downloading all essential packages, there are some configurations which needs update. For kubelet, configure it to choose PouchContainer as its container runtime. Since PouchContainer makes use of a UNIX socket `unix:///var/run/pouchcri.sock`, this socket path must be delivered to kubelet. Update command is exactly the following one:
 
 ``` shell
-sudo sed -i '2 i\Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-sudo systemctl daemon-reload
+$ sudo cat <<EOF > /etc/systemd/system/kubelet.service.d/0-pouch.conf
+[Service]
+Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/pouchcri.sock --image-service-endpoint=unix:///var/run/pouchcri.sock"
+EOF
+$ sudo systemctl daemon-reload
 ```
 
 ### Setup Kubernetes Cluster
@@ -177,7 +178,7 @@ sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --ignore-preflight-errors=all
 
 After executing the command above, Kubernetes master and kubelet are both running on this node.  As a result, **a complete Kubernetes cluster on a singe node has been setup.**
 
-Before experiencing service provided by Kubernetes, user must execute three commands **on master node** to make it:
+To start using your cluster, you need to run the following as a regular user:
 
 ``` shell
 mkdir -p ~/.kube

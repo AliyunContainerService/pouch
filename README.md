@@ -16,7 +16,7 @@
 - [Features](#features)
 - [Architecture](#architecture)
 - [Getting Started](#getting-started)
-- [Deploying Kubernetes with PouchContainer](#deploying-kubernetes-with-pouch)
+- [Deploying Kubernetes with PouchContainer](#deploying-kubernetes-with-pouchcontainer)
 - User Manual
   - [CLI Manual](docs/commandline)
   - [API Manual](docs/api)
