@@ -64,7 +64,10 @@ func (s *Syslog) Name() string {
 // WriteLogMessage will write the LogMessage.
 func (s *Syslog) WriteLogMessage(msg *logger.LogMessage) error {
 	line := string(msg.Line)
-	if msg.Source == "stderr" {
+	source := msg.Source
+	logger.PutMessage(msg)
+
+	if source == "stderr" {
 		return s.logError(line)
 	}
 	return s.logInfo(line)

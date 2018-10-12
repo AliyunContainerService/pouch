@@ -78,6 +78,7 @@ func (lf *JSONLogFile) WriteLogMessage(msg *logger.LogMessage) error {
 	if err != nil {
 		return err
 	}
+	logger.PutMessage(msg)
 
 	lf.mu.Lock()
 	defer lf.mu.Unlock()

@@ -70,11 +70,11 @@ func (lc *LogCopier) copy(source string, reader io.Reader) {
 			bs = append(bs, '\n')
 		}
 
-		if err = lc.dst.WriteLogMessage(&LogMessage{
-			Source:    source,
-			Line:      bs,
-			Timestamp: createdTime,
-		}); err != nil {
+		logMessage := NewMessage()
+		logMessage.Source = source
+		logMessage.Line = bs
+		logMessage.Timestamp = createdTime
+		if err = lc.dst.WriteLogMessage(logMessage); err != nil {
 			logrus.WithError(err).Errorf("failed to copy into %v-%v", lc.dst.Name(), source)
 		}
 	}
