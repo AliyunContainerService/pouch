@@ -107,10 +107,6 @@ func CopyWithTar(src, dst string) error {
 		return err
 	}
 
-	if err := untarToDir(dst, buf); err != nil {
-		return err
-	}
-
-	return nil
+	return untarToDir(dst, buf)
 
 }

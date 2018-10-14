@@ -62,10 +62,7 @@ func setupProcess(ctx context.Context, c *Container, s *specs.Spec) error {
 		return err
 	}
 
-	if err := setupNvidiaEnv(ctx, c, s); err != nil {
-		return err
-	}
-	return nil
+	return setupNvidiaEnv(ctx, c, s)
 }
 
 func createEnvironment(c *Container) []string {

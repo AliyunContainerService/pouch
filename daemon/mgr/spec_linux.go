@@ -81,12 +81,7 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 		return err
 	}
 
-	// stat to setup linux namespace
-	if err := setupNamespaces(ctx, c, specWrapper); err != nil {
-		return err
-	}
-
-	return nil
+	return setupNamespaces(ctx, c, specWrapper)
 }
 
 // setupSeccomp creates seccomp security settings spec.
@@ -409,11 +404,7 @@ func setupNamespaces(ctx context.Context, c *Container, specWrapper *SpecWrapper
 	}
 
 	// create uts namespace spec
-	if err := setupUtsNamespace(ctx, c, specWrapper); err != nil {
-		return err
-	}
-
-	return nil
+	return setupUtsNamespace(ctx, c, specWrapper)
 }
 
 // isEmpty indicates whether namespace mode is empty.

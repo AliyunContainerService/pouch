@@ -221,11 +221,7 @@ func validateNvidiaConfig(r *types.Resources) error {
 		return err
 	}
 
-	if err := validateNvidiaDevice(r); err != nil {
-		return err
-	}
-
-	return nil
+	return validateNvidiaDevice(r)
 }
 
 func validateNvidiaDriver(r *types.Resources) error {

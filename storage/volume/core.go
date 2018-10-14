@@ -337,12 +337,7 @@ func (c *Core) RemoveVolume(id types.VolumeID) error {
 		return err
 	}
 
-	// delete the meta
-	if err := c.store.Remove(id.Name); err != nil {
-		return err
-	}
-
-	return nil
+	return c.store.Remove(id.Name)
 }
 
 // VolumePath return the path of volume on node host.
