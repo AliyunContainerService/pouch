@@ -148,6 +148,28 @@ func (suite *PouchLogsSuite) TestFollowMode(c *check.C) {
 	}
 }
 
+// TestLogsOpt tests if log options could work.
+func (suite *PouchLogsSuite) TestLogsOpt(c *check.C) {
+	cname := "TestCLILogs_LogsOpt"
+	command.PouchRun(
+		"run",
+		"--log-opt", "env=test",
+		"--name", cname,
+		busyboxImage,
+	).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	cnameOfUnsupported := "TestCLILogs_LogsOpt_Unsupported"
+	result := command.PouchRun(
+		"run",
+		"--log-opt", "env1=test",
+		"--name", cnameOfUnsupported,
+		busyboxImage,
+	)
+	c.Assert(result.Error, check.NotNil)
+	defer DelContainerForceMultyTime(c, cnameOfUnsupported)
+}
+
 func (suite *PouchLogsSuite) syncLogs(c *check.C, cname string, flags ...string) []string {
 	args := append([]string{"logs"}, flags...)
 

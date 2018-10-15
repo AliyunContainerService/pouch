@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
 	"github.com/alibaba/pouch/pkg/system"
 
@@ -202,7 +203,7 @@ func (mgr *ContainerManager) validateLogConfig(c *Container) error {
 
 	switch logCfg.LogDriver {
 	case types.LogConfigLogDriverNone, types.LogConfigLogDriverJSONFile:
-		return nil
+		return jsonfile.ValidateLogOpt(logCfg.LogOpts)
 	case types.LogConfigLogDriverSyslog:
 		info := mgr.convContainerToLoggerInfo(c)
 		return syslog.ValidateSyslogOption(info)
