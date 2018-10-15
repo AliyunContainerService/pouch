@@ -2,6 +2,7 @@ package service
 
 import (
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
+	"github.com/alibaba/pouch/cri/metrics"
 	cri "github.com/alibaba/pouch/cri/v1alpha2"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/netutils"
@@ -20,13 +21,23 @@ type Service struct {
 func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 	s := &Service{
 		config: cfg,
-		server: grpc.NewServer(),
+		server: grpc.NewServer(
+			grpc.StreamInterceptor(metrics.GRPCMetrics.StreamServerInterceptor()),
+			grpc.UnaryInterceptor(metrics.GRPCMetrics.UnaryServerInterceptor()),
+		),
 		criMgr: criMgr,
 	}
 
 	runtime.RegisterRuntimeServiceServer(s.server, s.criMgr)
 	runtime.RegisterImageServiceServer(s.server, s.criMgr)
 	runtime.RegisterVolumeServiceServer(s.server, s.criMgr)
+
+	// EnableHandlingTimeHistogram turns on recording of handling time
+	// of RPCs. Histogram metrics can be very expensive for Prometheus
+	// to retain and query.
+	metrics.GRPCMetrics.EnableHandlingTimeHistogram()
+	// Initialize all metrics.
+	metrics.GRPCMetrics.InitializeMetrics(s.server)
 
 	return s, nil
 }
