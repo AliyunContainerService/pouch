@@ -1848,17 +1848,15 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error 
 // execExitedAndRelease be register into ctrd as a callback function, when the exec process in a container
 // exited, "ctrd" will call it to release resource and so on.
 func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) error {
-	v, ok := mgr.ExecProcesses.Get(id).Result()
-	if !ok {
-		return errors.Wrapf(errtypes.ErrNotfound, "exec process %s", id)
+	execConfig, err := mgr.GetExecConfig(context.TODO(), id)
+	if err != nil {
+		return err
 	}
-	execConfig, ok := v.(*ContainerExecConfig)
-	if !ok {
-		return fmt.Errorf("invalid exec config type")
-	}
+	execConfig.Lock()
 	execConfig.ExitCode = int64(m.ExitCode())
 	execConfig.Running = false
 	execConfig.Error = m.RawError()
+	execConfig.Unlock()
 
 	eio := mgr.IOs.Get(id)
 	if eio == nil {
