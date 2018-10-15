@@ -6,6 +6,7 @@ import (
 
 	"github.com/alibaba/pouch/cri/config"
 
+	cnicurrent "github.com/containernetworking/cni/pkg/types/current"
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/sirupsen/logrus"
 )
@@ -32,7 +33,8 @@ func NewCniManager(cfg *config.Config) (CniMgr, error) {
 		}
 	}
 
-	plugin, err := ocicni.InitCNI(networkPluginConfDir, networkPluginBinDir)
+	// If defaultNetName is empty, a network name will be automatically selected be used as the default CNI network.
+	plugin, err := ocicni.InitCNI("", networkPluginConfDir, networkPluginBinDir)
 	if err != nil {
 		return nil, err
 	}
@@ -87,11 +89,26 @@ func (c *CniManager) GetPodNetworkStatus(netnsPath string) (string, error) {
 		NetNS: netnsPath,
 	}
 
-	ip, err := c.plugin.GetPodNetworkStatus(podNetwork)
+	var err error
+	results, err := c.plugin.GetPodNetworkStatus(podNetwork)
 	if err != nil {
 		return "", fmt.Errorf("failed to get pod network status: %v", err)
 	}
 
+	if len(results) == 0 {
+		return "", fmt.Errorf("failed to get pod network status for nil result")
+	}
+
+	result, ok := results[0].(*cnicurrent.Result)
+	if !ok {
+		return "", fmt.Errorf("failed to get pod network status for wrong result: %+v", results[0])
+	}
+
+	if len(result.IPs) == 0 {
+		return "", fmt.Errorf("failed to get pod network status for nil IP")
+	}
+
+	ip := result.IPs[0].Address.IP.String()
 	return ip, nil
 }
 
