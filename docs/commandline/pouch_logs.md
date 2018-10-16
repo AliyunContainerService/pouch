@@ -32,6 +32,7 @@ $ pouch logs 073f29
 ### Options
 
 ```
+      --details        Show extra details provided to logs
   -f, --follow         Follow log output
   -h, --help           help for logs
       --since string   Show logs since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)
