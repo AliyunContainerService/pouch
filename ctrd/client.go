@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/alibaba/pouch/pkg/scheduler"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -29,6 +30,10 @@ const (
 	defaultGrpcClientPoolCapacity = 5
 	defaultMaxStreamsClient       = 100
 	containerdShutdownTimeout     = 15 * time.Second
+
+	// trylock and lock with timeout is a policy used when accessing containerd object in ctrd.
+	// To avoid infinite block and directly return, we add a timeout to support object lock.
+	containerdObjectLockTimeout = time.Duration(5 * time.Second)
 )
 
 // ErrGetCtrdClient is an error returned when failed to get a containerd grpc client from clients pool.
@@ -38,7 +43,9 @@ var ErrGetCtrdClient = errors.New("failed to get a containerd grpc client")
 type Client struct {
 	mu    sync.RWMutex
 	watch *watch
-	lock  *containerLock
+
+	// lock ensures that only one caller of client can get access to the same object in containerd.
+	lock *kmutex.KMutex
 
 	daemonPid      int
 	homeDir        string
@@ -72,9 +79,7 @@ func NewClient(homeDir string, opts ...ClientOpt) (APIClient, error) {
 	}
 
 	client := &Client{
-		lock: &containerLock{
-			ids: make(map[string]struct{}),
-		},
+		lock: kmutex.New(),
 		watch: &watch{
 			containers: make(map[string]*containerPack),
 		},
@@ -415,4 +420,14 @@ func (c *Client) collectContainerdEvents() {
 			}
 		}
 	}
+}
+
+// Trylock tries to lock the object in containerd.
+func (c *Client) Trylock(id string) bool {
+	return c.lock.LockWithTimeout(id, containerdObjectLockTimeout)
+}
+
+// Unlock unlocks the object in containerd.
+func (c *Client) Unlock(id string) {
+	c.lock.Unlock(id)
 }
