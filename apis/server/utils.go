@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/logger"
@@ -73,6 +75,21 @@ func writeLogStream(ctx context.Context, w io.Writer, tty bool, opt *types.Conta
 			}
 
 			logLine := msg.Line
+
+			if opt.Details && len(msg.Attrs) > 0 {
+				var ss []string
+				for k, v := range msg.Attrs {
+					ss = append(ss, k+"="+v)
+				}
+				// keep the log attrs sorted
+				sort.Slice(ss, func(i, j int) bool {
+					keyI := strings.Split(ss[i], "=")
+					keyJ := strings.Split(ss[j], "=")
+					return keyI[0] < keyJ[0]
+				})
+				logLine = append([]byte(strings.Join(ss, ",")+" "), logLine...)
+			}
+
 			if opt.Timestamps {
 				logLine = append([]byte(msg.Timestamp.Format(utils.TimeLayout)+" "), logLine...)
 			}

@@ -49,7 +49,9 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 	}
 
 	fileName := filepath.Join(mgr.Store.Path(c.ID), "json.log")
-	jf, err := jsonfile.NewJSONLogFile(fileName, 0640)
+
+	jf, err := jsonfile.NewJSONLogFile(fileName, 0640, nil)
+
 	if err != nil {
 		return nil, false, err
 	}
@@ -137,9 +139,10 @@ func convContainerLogsOptionsToReadConfig(logOpt *types.ContainerLogsOptions) (*
 	}
 
 	return &logger.ReadConfig{
-		Since:  since,
-		Until:  until,
-		Follow: logOpt.Follow,
-		Tail:   lines,
+		Since:   since,
+		Until:   until,
+		Follow:  logOpt.Follow,
+		Tail:    lines,
+		Details: logOpt.Details,
 	}, nil
 }

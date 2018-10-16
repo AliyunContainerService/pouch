@@ -2,6 +2,7 @@ package jsonfile
 
 import (
 	"bytes"
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -10,13 +11,20 @@ import (
 )
 
 func TestMarshalAndUnmarshal(t *testing.T) {
+
+	attrs := map[string]string{"env": "test"}
+	extra, err := json.Marshal(attrs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	expectedMsg := &logger.LogMessage{
 		Source:    "stdout",
 		Line:      []byte("hello pouch"),
 		Timestamp: time.Now().UTC(),
+		Attrs:     attrs,
 	}
 
-	bs, err := marshal(expectedMsg)
+	bs, err := Marshal(expectedMsg, extra)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
