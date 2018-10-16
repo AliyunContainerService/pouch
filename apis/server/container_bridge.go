@@ -31,13 +31,6 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 
 	config := &types.ContainerCreateConfig{}
 	reader := req.Body
-	var ex error
-	if s.ContainerPlugin != nil {
-		logrus.Infof("invoke container pre-create hook in plugin")
-		if reader, ex = s.ContainerPlugin.PreCreate(req.Body); ex != nil {
-			return errors.Wrapf(ex, "pre-create plugin point execute failed")
-		}
-	}
 	// decode request body
 	if err := json.NewDecoder(reader).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)

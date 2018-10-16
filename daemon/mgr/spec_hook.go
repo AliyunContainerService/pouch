@@ -6,9 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 )
 
 //setup hooks specified by user via plugins, if set rich mode and init-script exists set init-script

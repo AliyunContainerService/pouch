@@ -268,6 +268,13 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (resp *types.ContainerCreateResp, err error) {
+	if mgr.containerPlugin != nil {
+		logrus.Infof("invoke container pre-create hook in plugin")
+		if ex := mgr.containerPlugin.PreCreate(config); ex != nil {
+			return nil, errors.Wrapf(ex, "pre-create plugin point execute failed")
+		}
+	}
+
 	// cleanup allocated resources when failed
 	cleanups := []func() error{}
 	defer func() {
