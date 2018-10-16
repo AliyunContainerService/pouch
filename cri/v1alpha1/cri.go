@@ -855,7 +855,7 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 	for _, container := range containers {
 		cs, err := c.getContainerMetrics(ctx, container)
 		if err != nil {
-			logrus.Errorf("failed to decode metrics of container %q: %v", container.ID, err)
+			logrus.Warnf("failed to decode metrics of container %q: %v", container.ID, err)
 			continue
 		}
 

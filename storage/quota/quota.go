@@ -127,6 +127,7 @@ func SetSubtree(dir string, qid uint32) (uint32, error) {
 
 // SetDiskQuota is used to set quota for directory.
 func SetDiskQuota(dir string, size string, quotaID uint32) error {
+	logrus.Infof("set disk quota, dir: (%s), size: (%s), quotaID: (%d)", dir, size, quotaID)
 	return GQuotaDriver.SetDiskQuota(dir, size, quotaID)
 }
 

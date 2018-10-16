@@ -109,12 +109,12 @@ func (c *CriWrapper) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 // PodSandboxStatus returns the status of the PodSandbox.
 func (c *CriWrapper) PodSandboxStatus(ctx context.Context, r *runtime.PodSandboxStatusRequest) (res *runtime.PodSandboxStatusResponse, err error) {
-	logrus.Infof("PodSandboxStatus for %q", r.GetPodSandboxId())
+	logrus.Debugf("PodSandboxStatus for %q", r.GetPodSandboxId())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get PodSandboxStatus: %q, %v", r.GetPodSandboxId(), err)
 		} else {
-			logrus.Infof("success to get PodSandboxStatus: %q, %+v", r.GetPodSandboxId(), res.GetStatus())
+			logrus.Debugf("success to get PodSandboxStatus: %q, %+v", r.GetPodSandboxId(), res.GetStatus())
 		}
 	}()
 	return c.CriManager.PodSandboxStatus(ctx, r)
@@ -206,12 +206,12 @@ func (c *CriWrapper) ListContainers(ctx context.Context, r *runtime.ListContaine
 
 // ContainerStatus inspects the container and returns the status.
 func (c *CriWrapper) ContainerStatus(ctx context.Context, r *runtime.ContainerStatusRequest) (res *runtime.ContainerStatusResponse, err error) {
-	logrus.Infof("ContainerStatus for %q", r.GetContainerId())
+	logrus.Debugf("ContainerStatus for %q", r.GetContainerId())
 	defer func() {
 		if err != nil {
 			logrus.Warnf("failed to get ContainerStatus: %q, %v", r.GetContainerId(), err)
 		} else {
-			logrus.Infof("success to get ContainerStatus: %q, %+v", r.GetContainerId(), res.GetStatus())
+			logrus.Debugf("success to get ContainerStatus: %q, %+v", r.GetContainerId(), res.GetStatus())
 		}
 	}()
 	return c.CriManager.ContainerStatus(ctx, r)
@@ -220,12 +220,12 @@ func (c *CriWrapper) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 // ContainerStats returns stats of the container. If the container does not
 // exist, the call returns an error.
 func (c *CriWrapper) ContainerStats(ctx context.Context, r *runtime.ContainerStatsRequest) (res *runtime.ContainerStatsResponse, err error) {
-	logrus.Infof("ContainerStats for %q", r.GetContainerId())
+	logrus.Debugf("ContainerStats for %q", r.GetContainerId())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get ContainerStats: %q, %v", r.GetContainerId(), err)
 		} else {
-			logrus.Infof("success to get ContainerStats: %q, %+v", r.GetContainerId(), res.GetStats())
+			logrus.Debugf("success to get ContainerStats: %q, %+v", r.GetContainerId(), res.GetStats())
 		}
 	}()
 	return c.CriManager.ContainerStats(ctx, r)
@@ -343,12 +343,12 @@ func (c *CriWrapper) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateR
 
 // Status returns the status of the runtime.
 func (c *CriWrapper) Status(ctx context.Context, r *runtime.StatusRequest) (res *runtime.StatusResponse, err error) {
-	logrus.Infof("Status of cri manager")
+	logrus.Debugf("Status of cri manager")
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get status: %v", err)
 		} else {
-			logrus.Infof("success to get status: %+v", res.GetStatus())
+			logrus.Debugf("success to get status: %+v", res.GetStatus())
 		}
 	}()
 	return c.CriManager.Status(ctx, r)
@@ -370,12 +370,12 @@ func (c *CriWrapper) ListImages(ctx context.Context, r *runtime.ListImagesReques
 
 // ImageStatus returns the status of the image, returns nil if the image isn't present.
 func (c *CriWrapper) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequest) (res *runtime.ImageStatusResponse, err error) {
-	logrus.Infof("ImageStatus for %q", r.GetImage().GetImage())
+	logrus.Debugf("ImageStatus for %q", r.GetImage().GetImage())
 	defer func() {
 		if err != nil {
 			logrus.Errorf("failed to get ImageStatus: %q, %v", r.GetImage().GetImage(), err)
 		} else {
-			logrus.Infof("success to get ImageStatus: %q, %+v",
+			logrus.Debugf("success to get ImageStatus: %q, %+v",
 				r.GetImage().GetImage(), res.GetImage())
 		}
 	}()
@@ -411,12 +411,12 @@ func (c *CriWrapper) RemoveImage(ctx context.Context, r *runtime.RemoveImageRequ
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
 func (c *CriWrapper) ImageFsInfo(ctx context.Context, r *runtime.ImageFsInfoRequest) (res *runtime.ImageFsInfoResponse, err error) {
-	logrus.Infof("ImageFsInfo of cri manager")
+	logrus.Debugf("ImageFsInfo of cri manager")
 	defer func() {
 		if err != nil {
 			logrus.Errorf("faild to get ImageFsInfo: %v", err)
 		} else {
-			logrus.Infof("success to get ImageFsInfo, return filesystem info %+v", res.GetImageFilesystems())
+			logrus.Debugf("success to get ImageFsInfo, return filesystem info %+v", res.GetImageFilesystems())
 		}
 	}()
 	return c.CriManager.ImageFsInfo(ctx, r)
