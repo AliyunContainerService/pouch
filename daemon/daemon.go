@@ -40,6 +40,7 @@ type Daemon struct {
 	server          server.Server
 	containerPlugin plugins.ContainerPlugin
 	daemonPlugin    plugins.DaemonPlugin
+	volumePlugin    plugins.VolumePlugin
 	eventsService   *events.Events
 }
 
@@ -110,7 +111,7 @@ func (d *Daemon) loadPlugin() error {
 			return errors.Wrapf(err, "load plugin at %s error", d.config.PluginPath)
 		}
 
-		//load container plugin if exist
+		//load daemon plugin if exist
 		if s, err = loadSymbolByName(p, "DaemonPlugin"); err != nil {
 			return err
 		}
@@ -118,7 +119,7 @@ func (d *Daemon) loadPlugin() error {
 			logrus.Infof("setup daemon plugin from %s", d.config.PluginPath)
 			d.daemonPlugin = daemonPlugin
 		} else if s != nil {
-			return fmt.Errorf("not a container plugin at %s %q", d.config.PluginPath, s)
+			return fmt.Errorf("not a daemon plugin at %s %q", d.config.PluginPath, s)
 		}
 
 		//load container plugin if exist
@@ -130,6 +131,17 @@ func (d *Daemon) loadPlugin() error {
 			d.containerPlugin = containerPlugin
 		} else if s != nil {
 			return fmt.Errorf("not a container plugin at %s %q", d.config.PluginPath, s)
+		}
+
+		// load volume plugin if exist
+		if s, err = loadSymbolByName(p, "VolumePlugin"); err != nil {
+			return err
+		}
+		if volumePlugin, ok := s.(plugins.VolumePlugin); ok {
+			logrus.Infof("setup volume plugin from %s", d.config.PluginPath)
+			d.volumePlugin = volumePlugin
+		} else if s != nil {
+			return fmt.Errorf("not a volume plugin at %s %q", d.config.PluginPath, s)
 		}
 	}
 
