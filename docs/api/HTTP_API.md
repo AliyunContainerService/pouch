@@ -24,6 +24,7 @@ API is an HTTP API served by Pouch Engine.
 ### Produces
 
 * `application/json`
+* `text/plain`
 
 
 
@@ -195,6 +196,7 @@ GET /containers/json
 |Type|Name|Description|Schema|Default|
 |---|---|---|---|---|
 |**Query**|**all**  <br>*optional*|Return all containers. By default, only running containers are shown|boolean|`"false"`|
+|**Query**|**filters**  <br>*optional*|Filters encoded as JSON string(type map[string][]string in Golang). This API will list containers match all of the filters. For example, `{"status": ["paused"]}` will only return paused containers.<br>Available filters:<br>- `id=<ID>` container ID filter, support regular expression.<br>- `name=<name>` container name filter, support regular expression.<br>- `status=<status>` container status filter, support regular expression.<br>- `label=<key>=<value>` container label filter, support equal and unequal operator. such as `label=[k=a,k!=b]`.|string||
 
 
 #### Responses
