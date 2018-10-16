@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/test/environment"
+
 	"github.com/go-check/check"
 )
 

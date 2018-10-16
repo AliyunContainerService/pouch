@@ -16,8 +16,6 @@ info:
   description: |
     API is an HTTP API served by Pouch Engine.
 
-produces:
-        - "application/json"
 paths:
   /_ping:
     get:
@@ -518,6 +516,16 @@ paths:
           description: "Return all containers. By default, only running containers are shown"
           type: "boolean"
           default: false
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters encoded as JSON string(type map[string][]string in Golang). This API will list containers match all of the filters. For example, `{"status": ["paused"]}` will only return paused containers.
+            Available filters:
+            - `id=<ID>` container ID filter, support regular expression.
+            - `name=<name>` container name filter, support regular expression.
+            - `status=<status>` container status filter, support regular expression.
+            - `label=<key>=<value>` container label filter, support equal and unequal operator. such as `label=[k=a,k!=b]`.
+          type: "string"
 
   /containers/{id}/rename:
     post:
@@ -2356,7 +2364,6 @@ definitions:
             items:
               type: "string"
           OomScoreAdj:
-            type: "integer"
             description: |
                 An integer value containing the score given to the container in order to tune OOM killer preferences.
                 The range is in [-1000, 1000].
@@ -2696,7 +2703,6 @@ definitions:
         description: "ScheLatSwitch enables scheduler latency count in cpuacct"
         type: "integer"
         format: "int64"
-        x-nullable: false
         minimum: 0
         maximum: 1
         x-nullable: false
