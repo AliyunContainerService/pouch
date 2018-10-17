@@ -269,12 +269,18 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		}
 	}()
 
+	// applies the runtime of container specified by the caller.
+	if err := c.applySandboxRuntimeHandler(sandboxMeta, r.GetRuntimeHandler(), config.Annotations); err != nil {
+		return nil, err
+	}
+
 	// applies the annotations extended.
 	if err := c.applySandboxAnnotations(sandboxMeta, config.Annotations); err != nil {
 		return nil, err
 	}
 
-	createConfig, err := makeSandboxPouchConfig(config, image)
+	createConfig, err := makeSandboxPouchConfig(config, sandboxMeta.Runtime, image)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
 	}
@@ -287,7 +293,6 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
 	}
 
-	// once sandbox container created, we are obligated to store it.
 	sandboxMeta.Config = config
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 		return nil, err
@@ -317,7 +322,6 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		// If running sandbox failed, clean up the sandbox directory.
 		if retErr != nil {
-
 			if err := os.RemoveAll(sandboxRootDir); err != nil {
 				logrus.Errorf("failed to clean up the directory of sandbox %q: %v", id, err)
 			}
@@ -715,6 +719,8 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			NetPriority:    config.NetPriority,
 			DiskQuota:      resources.GetDiskQuota(),
 			QuotaID:        config.GetQuotaId(),
+			MaskedPaths:    config.GetLinux().GetSecurityContext().GetMaskedPaths(),
+			ReadonlyPaths:  config.GetLinux().GetSecurityContext().GetReadonlyPaths(),
 		},
 		HostConfig: &apitypes.HostConfig{
 			Binds:     generateMountBindings(config.GetMounts()),

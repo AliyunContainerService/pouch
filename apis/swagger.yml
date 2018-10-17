@@ -2236,7 +2236,17 @@ definitions:
           MaxLength: 64
           The characters of given id should be in 0123456789abcdef.
           By default, given id is unnecessary.
- 
+      MaskedPaths:
+        description: "Masks over the provided paths inside the container."
+        type: "array"
+        items:
+          type: "string"
+      ReadonlyPaths:
+        description: "Set the provided paths as RO inside the container."
+        type: "array"
+        items:
+          type: "string"
+
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
     type: "object"

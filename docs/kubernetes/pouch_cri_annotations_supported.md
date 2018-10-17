@@ -24,14 +24,14 @@ So, we need to accomplish the following things:
 * define the specific naming in annotations for each feature;
 * implement the transformation in CRI manager and pass them to container manager.
 
-Kubernetes Version: V1.10.0+
-
 ## The Annotations Supported
 
-| Requirement                       | Field definition                             | Pull Request                               |
-|-----------------------------------|----------------------------------------------|--------------------------------------------|
-| make runtime choosing supported   | KubernetesRuntime = "io.kubernetes.runtime"  | https://github.com/alibaba/pouch/pull/1593 |
-| make lxcfs configurable supported | LxcfsEnabled = "io.kubernetes.lxcfs.enabled" | https://github.com/alibaba/pouch/pull/2210 |
+| Requirement                       | Field definition                             | Supported Kubernetes Version | Pull Request                               |
+|-----------------------------------|----------------------------------------------|------------------------------|-------------------------------------------|
+| make runtime choosing supported   | KubernetesRuntime = "io.kubernetes.runtime"  | V1.6 +                     | https://github.com/alibaba/pouch/pull/1593 |
+| make lxcfs configurable supported | LxcfsEnabled = "io.kubernetes.lxcfs.enabled" | V1.10 +                    | https://github.com/alibaba/pouch/pull/2210 |
+
+NOTES: The way to specify runtime using **KubernetesRuntime annotation is Deprecated**. It is recommended to use [RuntimeClass](https://v1-12.docs.kubernetes.io/docs/concepts/containers/runtime-class) which is an alpha feature for selecting the container runtime configuration to use to run a pod’s containers.
 
 ### Make runtime choosing supported
 

@@ -68,6 +68,18 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 		s.Linux.MaskedPaths = nil
 	}
 
+	// Apply masked paths if specified.
+	if c.MaskedPaths != nil {
+		s.Linux.MaskedPaths = make([]string, len(c.MaskedPaths))
+		copy(s.Linux.MaskedPaths, c.MaskedPaths)
+	}
+
+	// Apply readonly paths if specified.
+	if c.ReadonlyPaths != nil {
+		s.Linux.ReadonlyPaths = make([]string, len(c.ReadonlyPaths))
+		copy(s.Linux.ReadonlyPaths, c.ReadonlyPaths)
+	}
+
 	// start to setup linux seccomp
 	if err := setupSeccomp(ctx, c, s); err != nil {
 		return err

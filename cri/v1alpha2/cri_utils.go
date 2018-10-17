@@ -264,16 +264,26 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 	return nil
 }
 
+// applySandboxRuntimeHandler applies the runtime of container specified by the caller.
+func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *SandboxMeta, runtimehandler string, annotations map[string]string) error {
+	if runtimehandler == "" {
+		// apply the annotation of io.kubernetes.runtime which specify the runtime of container.
+		// NOTE: Deprecated
+		runtime, ok := annotations[anno.KubernetesRuntime]
+		if !ok {
+			return nil
+		}
+		runtimehandler = runtime
+	}
+	sandboxMeta.Runtime = runtimehandler
+	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+		return err
+	}
+	return nil
+}
+
 // applySandboxAnnotations applies the annotations extended.
 func (c *CriManager) applySandboxAnnotations(sandboxMeta *SandboxMeta, annotations map[string]string) error {
-	// apply the annotation of io.kubernetes.runtime which specify the runtime of container.
-	if runtime, ok := annotations[anno.KubernetesRuntime]; ok {
-		sandboxMeta.Runtime = runtime
-		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
-			return err
-		}
-	}
-
 	// apply the annotation of io.kubernetes.lxcfs.enabled
 	// which specify whether to enable lxcfs for a container.
 	if lxcfsEnabled, ok := annotations[anno.LxcfsEnabled]; ok {
@@ -290,7 +300,7 @@ func (c *CriManager) applySandboxAnnotations(sandboxMeta *SandboxMeta, annotatio
 }
 
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtime.PodSandboxConfig.
-func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
+func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, runtimehandler, image string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
@@ -299,9 +309,8 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*ap
 	hc := &apitypes.HostConfig{}
 
 	// Apply runtime options.
-	if annotations := config.GetAnnotations(); annotations != nil {
-		hc.Runtime = annotations[anno.KubernetesRuntime]
-	}
+	// NOTE: whether to add UntrustedWorkload
+	hc.Runtime = runtimehandler
 
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
@@ -765,9 +774,7 @@ func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxI
 // Apply Linux-specific options if applicable.
 func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, sandboxMeta *SandboxMeta) error {
 	// Apply runtime options.
-	if sandboxMeta.Runtime != "" {
-		createConfig.HostConfig.Runtime = sandboxMeta.Runtime
-	}
+	createConfig.HostConfig.Runtime = sandboxMeta.Runtime
 
 	createConfig.HostConfig.EnableLxcfs = sandboxMeta.LxcfsEnabled
 

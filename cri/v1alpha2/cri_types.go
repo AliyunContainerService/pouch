@@ -12,7 +12,7 @@ type SandboxMeta struct {
 	// Config is CRI sandbox config.
 	Config *runtime.PodSandboxConfig
 
-	// Runtime is the runtime of sandbox
+	// Runtime is the runtime handler name of the pod.
 	Runtime string
 
 	// Runtime whether to enable lxcfs for a container
