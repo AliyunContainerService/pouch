@@ -490,10 +490,10 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 		rootFSPath = container.BaseFS
 	} else { // containers created by pouch must first create snapshot
 		// check snapshot exist or not.
-		if _, err := c.GetSnapshot(ctx, id); err != nil {
+		if _, err := c.GetSnapshot(ctx, container.SnapshotID); err != nil {
 			return errors.Wrapf(err, "failed to create container %s", id)
 		}
-		options = append(options, containerd.WithSnapshot(id))
+		options = append(options, containerd.WithSnapshot(container.SnapshotID))
 	}
 
 	// specify Spec for new container

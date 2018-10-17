@@ -33,12 +33,10 @@ import (
 
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
-	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/mount"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
-	"github.com/imdario/mergo"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -294,6 +292,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if err != nil {
 		return nil, err
 	}
+	config.Image = primaryRef.String()
 
 	// TODO: check request validate.
 	if config.HostConfig == nil {
@@ -329,9 +328,9 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "unknown runtime %s", config.HostConfig.Runtime)
 	}
 
-	config.Image = primaryRef.String()
+	snapID := id
 	// create a snapshot with image.
-	if err := mgr.Client.CreateSnapshot(ctx, id, config.Image); err != nil {
+	if err := mgr.Client.CreateSnapshot(ctx, snapID, config.Image); err != nil {
 		return nil, err
 	}
 	cleanups = append(cleanups, func() error {
@@ -365,26 +364,19 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Config:     &config.ContainerConfig,
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
+		SnapshotID: snapID,
 	}
 
 	// merge image's config into container
 	if err := container.merge(func() (ocispec.ImageConfig, error) {
-		img, err := mgr.Client.GetImage(ctx, config.Image)
-		if err != nil {
-			return ocispec.ImageConfig{}, err
-		}
-		ociImage, err := containerdImageToOciImage(ctx, img)
-		if err != nil {
-			return ocispec.ImageConfig{}, err
-		}
-		return ociImage.Config, nil
+		return mgr.ImageMgr.GetOCIImageConfig(ctx, config.Image)
 	}); err != nil {
 		return nil, err
 	}
 
 	// set container basefs, basefs is not created in pouchd, it will created
 	// after create options passed to containerd.
-	mgr.setBaseFS(ctx, container, id)
+	mgr.setBaseFS(ctx, container)
 
 	// init container storage module, such as: set volumes, set diskquota, set /etc/mtab, copy image's data to volume.
 	if err := mgr.initContainerStorage(ctx, container); err != nil {
@@ -496,7 +488,12 @@ func (mgr *ContainerManager) Start(ctx context.Context, id string, options *type
 		return errors.Wrapf(errtypes.ErrNotModified, "container already started")
 	}
 
-	return mgr.start(ctx, c, options)
+	err = mgr.start(ctx, c, options)
+	if err == nil {
+		mgr.LogContainerEvent(ctx, c, "start")
+	}
+
+	return err
 }
 
 func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *types.ContainerStartOptions) error {
@@ -540,8 +537,6 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *t
 	if err = mgr.createContainerdContainer(ctx, c, options.CheckpointDir, options.CheckpointID); err != nil {
 		return errors.Wrapf(err, "failed to create container(%s) on containerd", c.ID)
 	}
-
-	mgr.LogContainerEvent(ctx, c, "start")
 
 	return nil
 }
@@ -682,6 +677,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		IO:             io,
 		RootFSProvided: c.RootFSProvided,
 		BaseFS:         c.BaseFS,
+		SnapshotID:     c.SnapshotID,
 	}
 	c.Unlock()
 
@@ -1087,7 +1083,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 		if err := mount.Unmount(c.BaseFS, 0); err != nil {
 			logrus.Errorf("failed to umount rootfs when remove the container %s: %v", c.ID, err)
 		}
-	} else if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
+	} else if err := mgr.Client.RemoveSnapshot(ctx, c.SnapshotKey()); err != nil {
 		// if the container is created by normal method, remove the
 		// snapshot when delete it.
 		logrus.Errorf("failed to remove snapshot of container %s: %v", c.ID, err)
@@ -1223,132 +1219,6 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	}
 	if resources.KernelMemory != 0 {
 		cResources.KernelMemory = resources.KernelMemory
-	}
-
-	return nil
-}
-
-// Upgrade upgrades a container with new image and args.
-func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
-	c, err := mgr.container(name)
-	if err != nil {
-		return err
-	}
-
-	// check the image existed or not, and convert image id to image ref
-	_, _, primaryRef, err := mgr.ImageMgr.CheckReference(ctx, config.Image)
-	if err != nil {
-		return errors.Wrap(err, "failed to get image")
-	}
-	config.Image = primaryRef.String()
-
-	// Nothing changed, no need upgrade.
-	if config.Image == c.Config.Image {
-		return fmt.Errorf("failed to upgrade container: image not changed")
-	}
-
-	var (
-		needRollback = false
-		// FIXME: do a deep copy of container?
-		backupContainer = c
-	)
-
-	defer func() {
-		if needRollback {
-			c = backupContainer
-			if err := mgr.Client.CreateSnapshot(ctx, c.ID, c.Image); err != nil {
-				logrus.Errorf("failed to create snapshot when rollback upgrade action: %v", err)
-				return
-			}
-			// FIXME: create new containerd container may failed
-			_ = mgr.createContainerdContainer(ctx, c, "", "")
-		}
-	}()
-
-	// FIXME(ziren): mergo.Merge() use AppendSlice to merge slice.
-	// that is to say, t1 = ["a", "b"], t2 = ["a", "c"], the merge
-	// result will be ["a", "b", "a", "c"]
-	// This may occur errors, just take notes to record this.
-	if err := mergo.MergeWithOverwrite(c.Config, config.ContainerConfig); err != nil {
-		return errors.Wrapf(err, "failed to merge ContainerConfig")
-	}
-	if err := mergo.MergeWithOverwrite(c.HostConfig, config.HostConfig); err != nil {
-		return errors.Wrapf(err, "failed to merge HostConfig")
-	}
-	c.Image = config.Image
-
-	// If container is not running, we just store this data.
-	if c.State.Status != types.StatusRunning {
-		// Works fine, store new container info to disk.
-		if err := c.Write(mgr.Store); err != nil {
-			logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
-			return err
-		}
-		return nil
-	}
-	// If container is running,  we need change
-	// configuration and recreate it. Else we just store new meta
-	// into disk, next time when starts container, the new configurations
-	// will take effect.
-
-	// Inherit volume configurations from old container,
-	// New volume configurations may cover the old one.
-	// c.VolumesFrom = []string{c.ID}
-
-	// FIXME(ziren): here will forcely stop container afer 3s.
-	// If DestroyContainer failed, we think the old container
-	// not changed, so just return error, no need recover it.
-	if _, err := mgr.Client.DestroyContainer(ctx, c.ID, 3); err != nil {
-		return errors.Wrapf(err, "failed to destroy container %s", c.ID)
-	}
-
-	// remove snapshot of old container
-	if err := mgr.Client.RemoveSnapshot(ctx, c.ID); err != nil {
-		return errors.Wrapf(err, "failed to remove snapshot of container %s", c.ID)
-	}
-
-	// wait util old snapshot to be deleted
-	wait := make(chan struct{})
-	go func() {
-		for {
-			// FIXME(ziren) Ensure the removed snapshot be removed
-			// by garbage collection.
-			time.Sleep(100 * time.Millisecond)
-
-			_, err := mgr.Client.GetSnapshot(ctx, c.ID)
-			if err != nil && errdefs.IsNotFound(err) {
-				close(wait)
-				return
-			}
-		}
-	}()
-
-	select {
-	case <-wait:
-		// TODO delete snapshot succeeded
-	case <-time.After(30 * time.Second):
-		needRollback = true
-		return fmt.Errorf("failed to deleted old snapshot: wait old snapshot %s to be deleted timeout(30s)", c.ID)
-	}
-
-	// create a snapshot with image for new container.
-	if err := mgr.Client.CreateSnapshot(ctx, c.ID, config.Image); err != nil {
-		needRollback = true
-		return errors.Wrap(err, "failed to create snapshot")
-	}
-
-	if err := mgr.createContainerdContainer(ctx, c, "", ""); err != nil {
-		needRollback = true
-		return errors.Wrap(err, "failed to create new container")
-	}
-
-	// Upgrade succeeded, refresh the cache
-	mgr.cache.Put(c.ID, c)
-
-	// Works fine, store new container info to disk.
-	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
-		return err
 	}
 
 	return nil
@@ -1952,16 +1822,17 @@ func (mgr *ContainerManager) buildContainerEndpoint(c *Container) *networktypes.
 }
 
 // setBaseFS keeps container basefs in meta.
-func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container, id string) {
-	info, err := mgr.Client.GetSnapshot(ctx, id)
+func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container) {
+	snapshotID := c.SnapshotKey()
+	_, err := mgr.Client.GetSnapshot(ctx, snapshotID)
 	if err != nil {
-		logrus.Infof("failed to get container %s snapshot", id)
+		logrus.Errorf("failed to get container %s snapshot %s: %v", c.Key(), snapshotID, err)
 		return
 	}
 
 	// io.containerd.runtime.v1.linux as a const used by runc
 	c.Lock()
-	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.DefaultNamespace, info.Name, "rootfs")
+	c.BaseFS = filepath.Join(mgr.Config.HomeDir, "containerd/state", "io.containerd.runtime.v1.linux", mgr.Config.DefaultNamespace, c.ID, "rootfs")
 	c.Unlock()
 }
 

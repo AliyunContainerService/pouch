@@ -2,9 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"os"
-	"os/exec"
-	"reflect"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -29,7 +26,7 @@ func (suite *PouchUpgradeSuite) SetUpSuite(c *check.C) {
 	environment.PruneAllContainers(apiClient)
 
 	PullImage(c, busyboxImage)
-	command.PouchRun("pull", busyboxImage125).Assert(c, icmd.Success)
+	PullImage(c, busyboxImage125)
 }
 
 // TearDownTest does cleanup work in the end of each test.
@@ -41,15 +38,27 @@ func (suite *PouchUpgradeSuite) TeadDownTest(c *check.C) {
 func (suite *PouchUpgradeSuite) TestPouchUpgrade(c *check.C) {
 	name := "TestPouchUpgrade"
 
-	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
 
-	res = command.PouchRun("upgrade", "--name", name, busyboxImage125)
+	res := command.PouchRun("upgrade", "--image", busyboxImage125, name)
 	res.Assert(c, icmd.Success)
-
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output: %s, expected: %s", out, name)
+	}
+
+	// check if the new container is running after upgade a running container
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Running, check.Equals, true)
+
+	// double check if container is running by executing a exec command
+	out := command.PouchRun("exec", name, "echo", "test").Stdout()
+	if !strings.Contains(out, "test") {
+		c.Errorf("failed to exec in container, expected test got %s", out)
 	}
 }
 
@@ -61,7 +70,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeNoChange(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	res = command.PouchRun("upgrade", "--name", name, busyboxImage)
+	res = command.PouchRun("upgrade", "--image", busyboxImage, name)
 	c.Assert(res.Stderr(), check.NotNil)
 
 	expectedStr := "failed to upgrade container: image not changed"
@@ -74,96 +83,71 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeNoChange(c *check.C) {
 func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	name := "TestPouchUpgradeStoppedContainer"
 
-	res := command.PouchRun("create", "--name", name, busyboxImage)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
 
-	res = command.PouchRun("upgrade", "--name", name, busyboxImage125)
+	command.PouchRun("stop", name).Assert(c, icmd.Success)
+
+	res := command.PouchRun("upgrade", "--image", busyboxImage125, name)
 	res.Assert(c, icmd.Success)
 
 	if out := res.Combined(); !strings.Contains(out, name) {
 		c.Fatalf("unexpected output: %s, expected %s", out, name)
 	}
 
+	// check if the new container is running after upgade a running container
+	output := command.PouchRun("inspect", name).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	c.Assert(result[0].State.Status, check.Equals, types.StatusStopped)
+
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
 
-// TestPouchUpgradeContainerMemCpu is to verify pouch upgrade container's memory
-func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerMemCpu(c *check.C) {
-	name := "TestPouchUpgradeContainerMemCpu"
-
-	res := command.PouchRun("run", "-d", "-m", "300m",
-		"--cpu-shares", "20", "--name", name, busyboxImage, "top")
+// TestPouchUpgradeWithDifferentImage is to verify pouch upgrade command.
+func (suite *PouchUpgradeSuite) TestPouchUpgradeWithDifferentImage(c *check.C) {
+	name := "TestPouchUpgradeWithDifferentImage"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage).Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
 
-	command.PouchRun("upgrade", "-m", "500m",
-		"--cpu-shares", "40", "--name", name, busyboxImage125).Assert(c, icmd.Success)
-
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
-
-	// Check if metajson has changed
-	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(524288000))
-	c.Assert(result[0].HostConfig.CPUShares, check.Equals, int64(40))
-
-	// Check if cgroup file has changed
-	memFile := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
-	if _, err := os.Stat(memFile); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
-	}
-
-	out, err := exec.Command("cat", memFile).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
-	}
-
-	if !strings.Contains(string(out), "524288000") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
-	}
-
-	cpuFile := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.shares"
-	if _, err := os.Stat(cpuFile); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
-	}
-
-	out, err = exec.Command("cat", cpuFile).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
-	}
-
-	if !strings.Contains(string(out), "40") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "40")
+	res := command.PouchRun("upgrade", "--image", helloworldImage, name, "/hello")
+	c.Assert(res.Error, check.IsNil)
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("unexpected output: %s, expected: %s", out, name)
 	}
 }
 
-// TestPouchUpgradeContainerLabels is to verify pouch upgrade container's labels
-func (suite *PouchUpgradeSuite) TestPouchUpgradeContainerLabels(c *check.C) {
-	name := "TestPouchUpgradeContainerLabels"
+// TestPouchUpgradeCheckVolume is to verify if inherit old container's volume
+// after upgrade a container
+func (suite *PouchUpgradeSuite) TestPouchUpgradeCheckVolume(c *check.C) {
+	name := "TestPouchUpgradeCheckVolume"
 
-	res := command.PouchRun("run", "-d", "--label", "test=foo", "--name", name, busyboxImage, "top")
+	// create container with a /data volume
+	command.PouchRun("run", "-d", "-v", "/data", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
+
+	// create a file in volume and write some data to the file
+	command.PouchRun("exec", name, "sh", "-c", "echo '5678' >> /data/test").Assert(c, icmd.Success)
+
+	res := command.PouchRun("upgrade", "--image", busyboxImage125, name)
 	res.Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, name) {
+		c.Fatalf("unexpected output: %s, expected: %s", out, name)
+	}
 
-	command.PouchRun("upgrade", "--label", "test1=bar",
-		"--name", name, busyboxImage125).Assert(c, icmd.Success)
-
+	// check if the new container is running after upgade a running container
 	output := command.PouchRun("inspect", name).Stdout()
 	result := []types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
+	c.Assert(result[0].State.Running, check.Equals, true)
 
-	labels := map[string]string{
-		"test":  "foo",
-		"test1": "bar",
-	}
-
-	if !reflect.DeepEqual(result[0].Config.Labels, labels) {
-		c.Errorf("unexpected output: %s, expected: %s", result[0].Config.Labels, labels)
+	// double check if container is running by executing a exec command
+	out := command.PouchRun("exec", name, "cat", "/data/test").Stdout()
+	if !strings.Contains(out, "5678") {
+		c.Errorf("failed to exec in container, expected 5678 got %s", out)
 	}
 }

@@ -11,12 +11,13 @@ import (
 // then create container by specifying the snapshot;
 // The other is create container by specify container rootfs, we use `RootFSProvided` flag to mark it,
 type Container struct {
-	ID      string
-	Image   string
-	Runtime string
-	Labels  map[string]string
-	IO      *containerio.IO
-	Spec    *specs.Spec
+	ID         string
+	Image      string
+	Runtime    string
+	Labels     map[string]string
+	IO         *containerio.IO
+	Spec       *specs.Spec
+	SnapshotID string
 
 	// BaseFS is rootfs used by containerd container
 	BaseFS string

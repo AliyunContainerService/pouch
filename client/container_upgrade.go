@@ -8,12 +8,8 @@ import (
 )
 
 // ContainerUpgrade upgrade a container with new image and args.
-func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config types.ContainerConfig, hostConfig *types.HostConfig) error {
-	upgradeConfig := types.ContainerUpgradeConfig{
-		ContainerConfig: config,
-		HostConfig:      hostConfig,
-	}
-	resp, err := client.post(ctx, "/containers/"+name+"/upgrade", url.Values{}, upgradeConfig, nil)
+func (client *APIClient) ContainerUpgrade(ctx context.Context, name string, config *types.ContainerUpgradeConfig) error {
+	resp, err := client.post(ctx, "/containers/"+name+"/upgrade", url.Values{}, config, nil)
 	ensureCloseReader(resp)
 
 	return err

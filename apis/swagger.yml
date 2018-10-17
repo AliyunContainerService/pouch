@@ -2486,15 +2486,27 @@ definitions:
 
   ContainerUpgradeConfig:
     description: |
-      ContainerUpgradeConfig is used for API "POST /containers/upgrade".
-      It wraps all kinds of config used in container upgrade.
-      It can be used to encode client params in client and unmarshal request body in daemon side.
-    allOf:
-      - $ref: "#/definitions/ContainerConfig"
-      - type: "object"
-        properties:
-          HostConfig:
-            $ref: "#/definitions/HostConfig"
+      ContainerUpgradeConfig is used for API "POST /containers/{name:.*}/upgrade". when upgrade a container,
+      we must specify new image used to create a new container, and also can specify `Cmd` and `Entrypoint` for
+      new container. There is all parameters that upgrade a container, if want to change other parameters, i
+      think you should use `update` API interface.
+    required: [Image]
+    properties:
+      Image:
+        type: "string"
+        x-nullable: false
+      Cmd:
+        type: "array"
+        description: "Execution commands and args"
+        items:
+          type: "string"
+      Entrypoint:
+        description: |
+          The entrypoint for the container as a string or an array of strings.
+          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.
+        type: "array"
+        items:
+          type: "string"
 
   LogConfig:
     description: "The logging configuration for this container"

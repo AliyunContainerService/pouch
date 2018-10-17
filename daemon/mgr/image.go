@@ -66,6 +66,9 @@ type ImageMgr interface {
 
 	// StoreImageReference update image reference.
 	StoreImageReference(ctx context.Context, img containerd.Image) error
+
+	// GetOCIImageConfig returns the image config of OCI
+	GetOCIImageConfig(ctx context.Context, image string) (ocispec.ImageConfig, error)
 }
 
 // ImageManager is an implementation of interface ImageMgr.
@@ -418,6 +421,19 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 func (mgr *ImageManager) ListReferences(ctx context.Context, imageID digest.Digest) ([]reference.Named, error) {
 	// NOTE: we just keep ctx and error for further expansion
 	return mgr.localStore.GetPrimaryReferences(imageID), nil
+}
+
+// GetOCIImageConfig returns the image config of OCI
+func (mgr *ImageManager) GetOCIImageConfig(ctx context.Context, image string) (ocispec.ImageConfig, error) {
+	img, err := mgr.client.GetImage(ctx, image)
+	if err != nil {
+		return ocispec.ImageConfig{}, err
+	}
+	ociImage, err := containerdImageToOciImage(ctx, img)
+	if err != nil {
+		return ocispec.ImageConfig{}, err
+	}
+	return ociImage.Config, nil
 }
 
 // updateLocalStore updates the local store.
