@@ -411,13 +411,15 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 			StartedAt:  time.Time{}.UTC().Format(utils.TimeLayout),
 			FinishedAt: time.Time{}.UTC().Format(utils.TimeLayout),
 		},
-		ID:         id,
-		Image:      imgID.String(),
-		Name:       name,
-		Config:     &config.ContainerConfig,
-		Created:    time.Now().UTC().Format(utils.TimeLayout),
-		HostConfig: config.HostConfig,
-		SnapshotID: snapID,
+		ID:            id,
+		Image:         imgID.String(),
+		Name:          name,
+		Config:        &config.ContainerConfig,
+		Created:       time.Now().UTC().Format(utils.TimeLayout),
+		HostConfig:    config.HostConfig,
+		SnapshotID:    snapID,
+		ReadonlyPaths: config.ReadonlyPaths,
+		MaskedPaths:   config.MaskedPaths,
 	}
 
 	if _, err := mgr.initContainerIO(container); err != nil {

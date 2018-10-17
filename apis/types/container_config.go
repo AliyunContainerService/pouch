@@ -77,6 +77,9 @@ type ContainerConfig struct {
 	// MAC address of the container.
 	MacAddress string `json:"MacAddress,omitempty"`
 
+	// Masks over the provided paths inside the container.
+	MaskedPaths []string `json:"MaskedPaths"`
+
 	// net priority.
 	NetPriority int64 `json:"NetPriority,omitempty"`
 
@@ -94,6 +97,9 @@ type ContainerConfig struct {
 	// By default, a quota ID is mapped to only one container. And one quota ID can include several mountpoint.
 	//
 	QuotaID string `json:"QuotaID,omitempty"`
+
+	// Set the provided paths as RO inside the container.
+	ReadonlyPaths []string `json:"ReadonlyPaths"`
 
 	// Whether to start container in rich container mode. (default false)
 	Rich bool `json:"Rich,omitempty"`
