@@ -1,10 +1,53 @@
 package ctrd
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_containerLock_TrylockWithRetry(t *testing.T) {
+	l := &containerLock{
+		ids: make(map[string]struct{}),
+	}
+
+	// basically, if the releaseTimeout < the tryLockTimeout,
+	// TrylockWithTimeout will lock successfully. If not, it will fail.
+	runTrylockWithT := func(tryLockTimeout, releaseTimeout time.Duration) bool {
+		id := "c"
+		assert.Equal(t, l.Trylock(id), true)
+		defer l.Unlock(id)
+
+		var (
+			releaseCh = make(chan struct{})
+			waitCh    = make(chan bool)
+			res       bool
+		)
+
+		go func() {
+			close(releaseCh)
+			ctx, cancel := context.WithTimeout(context.TODO(), tryLockTimeout)
+			defer cancel()
+			waitCh <- l.TrylockWithRetry(ctx, id)
+		}()
+
+		<-releaseCh
+		time.Sleep(releaseTimeout)
+		l.Unlock(id)
+
+		select {
+		case <-time.After(3 * time.Second):
+			t.Fatalf("timeout to get the Trylock result")
+		case res = <-waitCh:
+		}
+		return res
+	}
+
+	assert.Equal(t, true, runTrylockWithT(5*time.Second, 200*time.Millisecond))
+	assert.Equal(t, false, runTrylockWithT(200*time.Millisecond, 500*time.Millisecond))
+}
 
 func Test_containerLock_Trylock(t *testing.T) {
 	l := &containerLock{
