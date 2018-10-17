@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"path/filepath"
 	"plugin"
 	"reflect"
 
@@ -12,6 +13,7 @@ import (
 	criservice "github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/ctrd/supervisord"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -29,9 +31,14 @@ import (
 
 // Daemon refers to a daemon.
 type Daemon struct {
-	config          *config.Config
-	containerStore  *meta.Store
-	containerd      ctrd.APIClient
+	config         *config.Config
+	containerStore *meta.Store
+
+	// ctrdDaemon controls containerd process
+	ctrdDaemon *supervisord.Daemon
+
+	// ctrdClient is grpc client connecting to the containerd
+	ctrdClient      ctrd.APIClient
 	containerMgr    mgr.ContainerMgr
 	systemMgr       mgr.SystemMgr
 	imageMgr        mgr.ImageMgr
@@ -67,18 +74,33 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		return nil
 	}
 
-	// New containerd client
-	containerdBinaryFile := "containerd"
-	if cfg.ContainerdPath != "" {
-		containerdBinaryFile = cfg.ContainerdPath
+	// start containerd
+	ctrdDaemonOpts := []supervisord.Opt{
+		supervisord.WithOOMScore(cfg.OOMScoreAdjust),
+		supervisord.WithGRPCAddress(cfg.ContainerdAddr),
 	}
 
-	containerd, err := ctrd.NewClient(cfg.HomeDir,
-		ctrd.WithDebugLog(cfg.Debug),
-		ctrd.WithStartDaemon(true),
-		ctrd.WithContainerdBinary(containerdBinaryFile),
+	if cfg.ContainerdPath != "" {
+		ctrdDaemonOpts = append(ctrdDaemonOpts, supervisord.WithContainerdBinary(cfg.ContainerdPath))
+	}
+
+	if cfg.Debug {
+		ctrdDaemonOpts = append(ctrdDaemonOpts, supervisord.WithLogLevel("debug"))
+	}
+
+	ctrdDaemon, err := supervisord.Start(context.TODO(),
+		filepath.Join(cfg.HomeDir, "containerd/root"),
+		filepath.Join(cfg.HomeDir, "containerd/state"),
+		ctrdDaemonOpts...,
+	)
+	if err != nil {
+		logrus.Errorf("failed to start containerd: %v", err)
+		return nil
+	}
+
+	// create containerd client
+	ctrdClient, err := ctrd.NewClient(
 		ctrd.WithRPCAddr(cfg.ContainerdAddr),
-		ctrd.WithOOMScoreAdjust(cfg.OOMScoreAdjust),
 		ctrd.WithDefaultNamespace(cfg.DefaultNamespace),
 	)
 	if err != nil {
@@ -88,7 +110,8 @@ func NewDaemon(cfg *config.Config) *Daemon {
 
 	return &Daemon{
 		config:         cfg,
-		containerd:     containerd,
+		ctrdClient:     ctrdClient,
+		ctrdDaemon:     ctrdDaemon,
 		containerStore: containerStore,
 	}
 }
@@ -279,15 +302,17 @@ func (d *Daemon) Shutdown() error {
 	}
 
 	logrus.Debugf("Start cleanup containerd...")
+	if err := d.ctrdClient.Cleanup(); err != nil {
+		errMsg = fmt.Sprintf("%s\n", err.Error())
+	}
 
-	if err := d.containerd.Cleanup(); err != nil {
+	if err := d.ctrdDaemon.Stop(); err != nil {
 		errMsg = fmt.Sprintf("%s\n", err.Error())
 	}
 
 	if errMsg != "" {
 		return fmt.Errorf("failed to shutdown pouchd: %s", errMsg)
 	}
-
 	return nil
 }
 
@@ -318,7 +343,7 @@ func (d *Daemon) NetMgr() mgr.NetworkMgr {
 
 // Containerd gets containerd client.
 func (d *Daemon) Containerd() ctrd.APIClient {
-	return d.containerd
+	return d.ctrdClient
 }
 
 // MetaStore gets store of meta.

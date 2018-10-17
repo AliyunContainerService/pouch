@@ -308,6 +308,14 @@
 			"versionExact": "v1.0.3"
 		},
 		{
+			"checksumSHA1": "mzTkGvQjjpR4RpFy1d8Eh/xMCso=",
+			"path": "github.com/containerd/containerd/defaults",
+			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
+			"revisionTime": "2018-04-02T20:34:37Z",
+			"version": "v1.0.3",
+			"versionExact": "v1.0.3"
+		},
+		{
 			"checksumSHA1": "HaGYavEIgh2i7/BlY1Cz0BUCzuk=",
 			"path": "github.com/containerd/containerd/dialer",
 			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
