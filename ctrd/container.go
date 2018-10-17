@@ -29,7 +29,8 @@ import (
 )
 
 var (
-	runtimeRoot = "/run"
+	runtimeRoot           = "/run"
+	defaultTrylockTimeout = 5 * time.Second
 )
 
 type containerPack struct {
@@ -55,7 +56,7 @@ func (c *Client) ContainerStats(ctx context.Context, id string) (*containerdtype
 
 // containerStats returns stats of the container.
 func (c *Client) containerStats(ctx context.Context, id string) (*containerdtypes.Metric, error) {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return nil, errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -196,7 +197,7 @@ func (c *Client) ContainerPIDs(ctx context.Context, id string) ([]int, error) {
 
 // containerPIDs returns the all processes's ids inside the container.
 func (c *Client) containerPIDs(ctx context.Context, id string) ([]int, error) {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return nil, errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -255,7 +256,7 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -317,7 +318,7 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 
 	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
 
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return nil, errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -385,7 +386,7 @@ func (c *Client) PauseContainer(ctx context.Context, id string) error {
 
 // pauseContainer pause container.
 func (c *Client) pauseContainer(ctx context.Context, id string) error {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -416,7 +417,7 @@ func (c *Client) UnpauseContainer(ctx context.Context, id string) error {
 
 // unpauseContainer unpauses a container.
 func (c *Client) unpauseContainer(ctx context.Context, id string) error {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -444,7 +445,7 @@ func (c *Client) CreateContainer(ctx context.Context, container *Container, chec
 		id  = container.ID
 	)
 
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -596,7 +597,7 @@ func (c *Client) UpdateResources(ctx context.Context, id string, resources types
 
 // updateResources updates the configurations of a container.
 func (c *Client) updateResources(ctx context.Context, id string, resources types.Resources) error {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
@@ -626,7 +627,7 @@ func (c *Client) ResizeContainer(ctx context.Context, id string, opts types.Resi
 // resizeContainer changes the size of the TTY of the init process running
 // in the container to the given height and width.
 func (c *Client) resizeContainer(ctx context.Context, id string, opts types.ResizeOptions) error {
-	if !c.lock.Trylock(id) {
+	if !c.lock.TrylockWithRetry(ctx, id) {
 		return errtypes.ErrLockfailed
 	}
 	defer c.lock.Unlock(id)
