@@ -204,6 +204,10 @@ func WithAttach(stdin io.Reader, stdout, stderr io.Writer) containerdio.Attach {
 		if paths == nil {
 			return nil, fmt.Errorf("cannot attach to existing fifos")
 		}
+		// judge stdin is initial, make logic same with copyIO.
+		if i, ok := stdin.(*ContainerIO); (ok && i == nil) || (stdin == nil) {
+			paths.In = ""
+		}
 		cfg := containerdio.Config{
 			Terminal: paths.Terminal,
 			Stdout:   paths.Out,
