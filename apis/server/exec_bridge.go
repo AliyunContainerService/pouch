@@ -57,6 +57,9 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	name := mux.Vars(req)["name"]
 	_, upgrade := req.Header["Upgrade"]
 
+	ba, _ := json.Marshal(config)
+	logrus.Infof("start exec %s, upgrade: %v, body: %s", name, upgrade, string(ba))
+
 	if err := s.ContainerMgr.CheckExecExist(ctx, name); err != nil {
 		return err
 	}

@@ -2,10 +2,12 @@ package server
 
 import (
 	"crypto/tls"
+	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/cri/stream"
@@ -68,7 +70,14 @@ func (s *Server) Start(readyCh chan bool) (err error) {
 		s.listeners = append(s.listeners, l)
 
 		go func(l net.Listener) {
-			errCh <- http.Serve(l, router)
+			s := &http.Server{
+				Handler:           router,
+				ErrorLog:          log.New(stdFilterLogWriter, "", 0),
+				ReadTimeout:       time.Minute * 10,
+				ReadHeaderTimeout: time.Minute * 10,
+				IdleTimeout:       time.Minute * 10,
+			}
+			errCh <- s.Serve(l)
 		}(l)
 	}
 
