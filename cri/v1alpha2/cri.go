@@ -246,12 +246,36 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
 	}
 	id := createResp.ID
+
+	// once sandbox container created, we are obligated to store it.
+	sandboxMeta := &SandboxMeta{
+		ID:      id,
+		Config:  config,
+		Runtime: config.Annotations[anno.KubernetesRuntime],
+	}
+
+	if _, ok := config.Annotations[anno.LxcfsEnabled]; ok {
+		enableLxcfs, err := strconv.ParseBool(config.Annotations[anno.LxcfsEnabled])
+		if err != nil {
+			return nil, err
+		}
+		sandboxMeta.LxcfsEnabled = enableLxcfs
+	}
+
+	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+		return nil, err
+	}
+
+	// If running sandbox failed, clean up the container.
 	defer func() {
-		// If running sandbox failed, clean up the container.
 		if retErr != nil {
-			err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
-			if err != nil {
-				logrus.Errorf("failed to remove the container when running sandbox failed: %v", err)
+			if err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
+				logrus.Errorf("failed to remove container when running sandbox failed %q: %v", id, err)
+			}
+			// should not remove the sandbox container metadata from sandboxStore
+			// until it was removed by pouchd.
+			if err := c.SandboxStore.Remove(id); err != nil {
+				logrus.Errorf("failed to remove the metadata of container %q from sandboxStore: %v", id, err)
 			}
 		}
 	}()
@@ -270,7 +294,10 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		// If running sandbox failed, clean up the sandbox directory.
 		if retErr != nil {
-			os.RemoveAll(sandboxRootDir)
+
+			if err := os.RemoveAll(sandboxRootDir); err != nil {
+				logrus.Errorf("failed to clean up the directory of sandbox %q: %v", id, err)
+			}
 		}
 	}()
 
@@ -304,25 +331,12 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 				}
 			}
 		}()
-	}
 
-	sandboxMeta := &SandboxMeta{
-		ID:        id,
-		Config:    config,
-		NetNSPath: netnsPath,
-		Runtime:   config.Annotations[anno.KubernetesRuntime],
-	}
-
-	if _, ok := config.Annotations[anno.LxcfsEnabled]; ok {
-		enableLxcfs, err := strconv.ParseBool(config.Annotations[anno.LxcfsEnabled])
-		if err != nil {
+		// update the metadata of sandbox container after network had been set up successfully.
+		sandboxMeta.NetNSPath = netnsPath
+		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 			return nil, err
 		}
-		sandboxMeta.LxcfsEnabled = enableLxcfs
-	}
-
-	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
-		return nil, err
 	}
 
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()
