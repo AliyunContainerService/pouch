@@ -48,6 +48,7 @@ main() {
   os_dist="$(detect_os)"
   if [[ "${os_dist}" = "Ubuntu" ]]; then
     criu::ubuntu::install_dependencies > /dev/null
+    echo ">>>> start to download criu from github repository <<<<"
     criu::ubuntu::install > /dev/null
   else
     echo "will support redhat soon"
