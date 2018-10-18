@@ -17,7 +17,7 @@ func TestContainerUpgradeError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerUpgrade(context.Background(), "nothing", types.ContainerConfig{}, &types.HostConfig{})
+	err := client.ContainerUpgrade(context.Background(), "nothing", &types.ContainerUpgradeConfig{})
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -44,7 +44,7 @@ func TestContainerUpgrade(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: httpClient,
 	}
-	if err := client.ContainerUpgrade(context.Background(), "container_id", types.ContainerConfig{}, &types.HostConfig{}); err != nil {
+	if err := client.ContainerUpgrade(context.Background(), "container_id", &types.ContainerUpgradeConfig{}); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -965,8 +965,8 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 		FsId: &runtime.FilesystemIdentifier{
 			Mountpoint: c.imageFSPath,
 		},
-		UsedBytes:  &runtime.UInt64Value{usedBytes},
-		InodesUsed: &runtime.UInt64Value{inodesUsed},
+		UsedBytes:  &runtime.UInt64Value{Value: usedBytes},
+		InodesUsed: &runtime.UInt64Value{Value: inodesUsed},
 	}
 	labels, annotations := extractLabels(meta.Config.Labels)
 
@@ -991,13 +991,13 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 		if metrics.CPU != nil && metrics.CPU.Usage != nil {
 			cs.Cpu = &runtime.CpuUsage{
 				Timestamp:            stats.Timestamp.UnixNano(),
-				UsageCoreNanoSeconds: &runtime.UInt64Value{metrics.CPU.Usage.Total},
+				UsageCoreNanoSeconds: &runtime.UInt64Value{Value: metrics.CPU.Usage.Total},
 			}
 		}
 		if metrics.Memory != nil && metrics.Memory.Usage != nil {
 			cs.Memory = &runtime.MemoryUsage{
 				Timestamp:       stats.Timestamp.UnixNano(),
-				WorkingSetBytes: &runtime.UInt64Value{metrics.Memory.Usage.Usage},
+				WorkingSetBytes: &runtime.UInt64Value{Value: metrics.Memory.Usage.Usage},
 			}
 		}
 	}

@@ -80,5 +80,5 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 
 	// return 12 bits image id as a result
 	imageID := imageDigest.Hex()
-	return &types.ContainerCommitResp{string(imageID[:12])}, nil
+	return &types.ContainerCommitResp{ID: string(imageID[:12])}, nil
 }
