@@ -16,6 +16,9 @@ import (
 var runDescription = "Create a container object in Pouchd, and start the container. " +
 	"This is useful when you just want to use one command to start a container. "
 
+// The default escape key sequence: ctrl-p, ctrl-q
+var defaultEscapeKeys = []byte{16, 17}
+
 // RunCommand use to implement 'run' command, it creates and starts a container.
 type RunCommand struct {
 	baseCommand
@@ -125,12 +128,33 @@ func (rc *RunCommand) runRun(args []string) error {
 		}
 		defer conn.Close()
 
+		// TODO wait for https://github.com/alibaba/pouch/pull/2258 to merge
+		// escapeKeys := defaultEscapeKeys
+		// // Wrap the input to detect detach escape sequence.
+		// // Use default escape keys if an invalid sequence is given.
+		// if rc.detachKeys != "" {
+		// 	customEscapeKeys, err := term.ToBytes(rc.detachKeys)
+		// 	if err != nil {
+		// 		logrus.Warnf("invalid detach escape keys, using default: %s", err)
+		// 	} else {
+		// 		escapeKeys = customEscapeKeys
+		// 	}
+		// }
+
+		// in := ioutils.NewReadCloserWrapper(term.NewEscapeProxy(os.Stdin, escapeKeys), os.Stdin.Close)
+
 		go func() {
 			io.Copy(os.Stdout, br)
 			wait <- struct{}{}
 		}()
 		go func() {
 			io.Copy(conn, os.Stdin)
+			// TODO wait for https://github.com/alibaba/pouch/pull/2258 to merge
+			// _, err := io.Copy(conn, in)
+			// if _, ok := err.(term.EscapeError); ok {
+			// 	wait <- struct{}{}
+			// 	return
+			// }
 		}()
 	}
 
