@@ -9,6 +9,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 )
 
@@ -126,7 +127,11 @@ func (rc *RunCommand) runRun(args []string) error {
 		defer conn.Close()
 
 		go func() {
-			io.Copy(os.Stdout, br)
+			if !rc.tty {
+				_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, br)
+			} else {
+				_, err = io.Copy(os.Stdout, br)
+			}
 			wait <- struct{}{}
 		}()
 		go func() {

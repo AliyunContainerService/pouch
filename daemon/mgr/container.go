@@ -890,7 +890,7 @@ func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *At
 	if err != nil {
 		return err
 	}
-
+	attach.MuxDisabled = c.Config.Tty
 	_, err = mgr.openAttachIO(c, attach)
 	if err != nil {
 		return err

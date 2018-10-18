@@ -5,6 +5,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
 func init() {
@@ -14,9 +16,10 @@ func init() {
 }
 
 type hijackConn struct {
-	hijack http.Hijacker
-	conn   net.Conn
-	closed bool
+	hijack      http.Hijacker
+	conn        net.Conn
+	closed      bool
+	muxDisabled bool
 }
 
 func createHijackConn() Backend {
@@ -44,11 +47,14 @@ func (h *hijackConn) Init(opt *Option) error {
 
 	h.hijack = opt.hijack
 	h.conn = conn
-
+	h.muxDisabled = opt.muxDisabled
 	return nil
 }
 
 func (h *hijackConn) Out() io.Writer {
+	if !h.muxDisabled {
+		return stdcopy.NewStdWriter(h, stdcopy.Stdout)
+	}
 	return h
 }
 
@@ -57,6 +63,9 @@ func (h *hijackConn) In() io.Reader {
 }
 
 func (h *hijackConn) Err() io.Writer {
+	if !h.muxDisabled {
+		return stdcopy.NewStdWriter(h, stdcopy.Stderr)
+	}
 	return h
 }
 

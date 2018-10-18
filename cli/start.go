@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -80,6 +81,11 @@ func (s *StartCommand) runStart(args []string) error {
 		}()
 
 		container := args[0]
+		c, err := apiClient.ContainerGet(ctx, container)
+		if err != nil {
+			return err
+		}
+
 		conn, br, err := apiClient.ContainerAttach(ctx, container, s.stdin)
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
@@ -88,7 +94,11 @@ func (s *StartCommand) runStart(args []string) error {
 
 		wait = make(chan struct{})
 		go func() {
-			io.Copy(os.Stdout, br)
+			if !c.Config.Tty {
+				stdcopy.StdCopy(os.Stdout, os.Stderr, br)
+			} else {
+				io.Copy(os.Stdout, br)
+			}
 			close(wait)
 		}()
 		go func() {
