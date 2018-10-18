@@ -28,9 +28,9 @@ func (d *Demo) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
 }
 
 // Create a demo volume.
-func (d *Demo) Create(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Infof("Demo create volume: %s", v.Name)
-	return nil
+func (d *Demo) Create(ctx driver.Context, ID types.VolumeID) (*types.Volume, error) {
+	ctx.Log.Infof("Demo create volume: %s", ID)
+	return nil, nil
 }
 
 // Remove a demo volume.

@@ -251,7 +251,7 @@ type Container struct {
 	State *types.ContainerState `json:"State,omitempty"`
 
 	// BaseFS
-	BaseFS string `json:"BaseFS, omitempty"`
+	BaseFS string `json:"BaseFS,omitempty"`
 
 	// Escape keys for detach
 	DetachKeys string
