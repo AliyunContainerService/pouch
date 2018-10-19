@@ -155,6 +155,9 @@ func TestValidateDeviceMode(t *testing.T) {
 		}, {
 			input:    "rxm",
 			expected: false,
+		}, {
+			input:    "",
+			expected: false,
 		},
 	} {
 		isValid := ValidateDeviceMode(modeCase.input)
