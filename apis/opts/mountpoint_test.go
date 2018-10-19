@@ -59,6 +59,8 @@ func TestParseBindMode(t *testing.T) {
 		{mode: "", expectMountPoint: &types.MountPoint{Mode: "", RW: true, CopyData: true}, err: false, expectErr: nil},
 		{mode: "dr,rr", err: true, expectErr: fmt.Errorf("invalid bind mode: dr,rr")},
 		{mode: "unknown", err: true, expectErr: fmt.Errorf("unknown bind mode: unknown")},
+		{mode: "rw", expectMountPoint: &types.MountPoint{Mode: "rw", RW: true, CopyData: true}, err: false, expectErr: nil},
+		{mode: "z,Z", expectMountPoint: &types.MountPoint{Mode: "z,Z", RW: true, CopyData: true}, err: false, expectErr: nil},
 	}
 
 	for _, p := range parseds {
