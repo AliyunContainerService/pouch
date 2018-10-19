@@ -1,6 +1,7 @@
 package opts
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -11,10 +12,11 @@ func TestParseExposedPorts(t *testing.T) {
 		expose   []string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    map[string]interface{}
-		wantErr bool
+		name      string
+		args      args
+		want      map[string]interface{}
+		wantErr   bool
+		expectErr error
 	}{
 		//Correct test case
 		//Use '-' represent multiple addresses
@@ -54,6 +56,27 @@ func TestParseExposedPorts(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: true,
+		},
+		//Input invalid protocol
+		{
+			name: "test4",
+			args: args{
+				portList: []string{"8080-8081/udb", "22"},
+			},
+			want:      nil,
+			wantErr:   true,
+			expectErr: fmt.Errorf("Invalid proto: udb"),
+		},
+		//Input invalid port format of expose
+		{
+			name: "test5",
+			args: args{
+				portList: []string{"8080-8081/udp", "22"},
+				expose:   []string{"0.0.0.0:8080", "0.0.0.0:22"},
+			},
+			want:      nil,
+			wantErr:   true,
+			expectErr: fmt.Errorf("invalid port format for --expose: 0.0.0.0:8080"),
 		},
 	}
 	for _, tt := range tests {
