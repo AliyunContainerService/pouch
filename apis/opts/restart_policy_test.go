@@ -53,6 +53,23 @@ func TestParseRestartPolicy(t *testing.T) {
 			expectedCount: 0,
 			err:           fmt.Errorf("invalid restart policy: %s", "on-failure:1:2"),
 		},
+		{
+			input:         "",
+			expectedName:  "no",
+			expectedCount: 0,
+		},
+		{
+			input:         "on-failure:foo",
+			expectedName:  "on-failure",
+			expectedCount: 0,
+			err:           fmt.Errorf("invalid restart policy: strconv.Atoi: parsing \"foo\": invalid syntax"),
+		},
+		{
+			input:         "default",
+			expectedName:  "nil",
+			expectedCount: 0,
+			err:           fmt.Errorf("invalid restart policy: default"),
+		},
 	}
 
 	for _, cs := range cases {
