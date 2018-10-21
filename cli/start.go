@@ -60,7 +60,6 @@ func (s *StartCommand) addFlags() {
 func (s *StartCommand) runStart(args []string) error {
 	ctx := context.Background()
 	apiClient := s.cli.Client()
-
 	// attach to io.
 	if s.attach || s.stdin {
 		var wait chan struct{}
@@ -69,17 +68,28 @@ func (s *StartCommand) runStart(args []string) error {
 			return fmt.Errorf("cannot start and attach multiple containers at once")
 		}
 
-		in, out, err := setRawMode(s.stdin, false)
-		if err != nil {
-			return fmt.Errorf("failed to set raw mode")
-		}
-		defer func() {
-			if err := restoreMode(in, out); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to restore term mode")
-			}
-		}()
-
 		container := args[0]
+		c, err := apiClient.ContainerGet(ctx, container)
+		if err != nil {
+			return err
+		}
+
+		if err := checkTty(s.attach, c.Config.Tty, os.Stdout.Fd()); err != nil {
+			return err
+		}
+
+		if c.Config.Tty {
+			in, out, err := setRawMode(s.stdin, false)
+			if err != nil {
+				return fmt.Errorf("failed to set raw mode")
+			}
+			defer func() {
+				if err := restoreMode(in, out); err != nil {
+					fmt.Fprintf(os.Stderr, "failed to restore term mode")
+				}
+			}()
+		}
+
 		conn, br, err := apiClient.ContainerAttach(ctx, container, s.stdin)
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
@@ -171,6 +181,15 @@ func restoreMode(in, out *terminal.State) error {
 		if err := terminal.Restore(1, out); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// CheckTty checks if we are trying to attach to a container tty
+// from a non-tty client input stream, and if so, returns an error.
+func checkTty(attachStdin, ttyMode bool, fd uintptr) error {
+	if ttyMode && attachStdin && !terminal.IsTerminal(int(fd)) {
+		return errors.New("the input device is not a TTY")
 	}
 	return nil
 }

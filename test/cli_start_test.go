@@ -15,6 +15,7 @@ import (
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 	"github.com/kr/pty"
+	"github.com/stretchr/testify/assert"
 )
 
 // PouchStartSuite is the test suite for start CLI.
@@ -322,6 +323,18 @@ func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
 	command.PouchRun("stop", restoredContainer).Assert(c, icmd.Success)
 
 	command.PouchRun("start", "--checkpoint-dir", tmpDir, "--checkpoint", checkpoint, restoredContainer).Assert(c, icmd.Success)
+}
+
+// TestStartWithTty tests running container with -tty flag and attach stdin in a non-tty client.
+func (suite *PouchStartSuite) TestStartWithTty(c *check.C) {
+	name := "TestStartWithTty"
+	res := command.PouchRun("create", "-t", "--name", name, busyboxImage, "/bin/sh", "-c", "while true;do echo hello;done")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	attachRes := command.PouchRun("start", "-a", "-i", name)
+	errString := attachRes.Stderr()
+	assert.Equal(c, errString, "Error: the input device is not a TTY\n")
 }
 
 // TestStartMultiContainers tries to start more than one container.
