@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-CRITEST_VERSION=1.0.0-beta.0
-CRITEST_BRANCH=tools-dev
+CRITEST_BRANCH_v1alpha1=release-1.9
+CRITEST_BRANCH_DEFAULT=tools-dev
 
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
@@ -48,9 +48,9 @@ critest::install() {
   cd "${workdir}"
   git fetch --all
   if [[ "${cri_runtime}" == "v1alpha1" ]]; then
-      git checkout "v${CRITEST_VERSION}"
+      git checkout "${CRITEST_BRANCH_v1alpha1}"
   else
-      git checkout "${CRITEST_BRANCH}"
+      git checkout "${CRITEST_BRANCH_DEFAULT}"
   fi
   make
   cd -
