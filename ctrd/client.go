@@ -231,9 +231,14 @@ func (c *Client) collectContainerdEvents() {
 				logrus.Warnf("failed to parse %s event: %#v", TaskExitEventTopic, out)
 				continue
 			}
-			action = "die"
+			if exitEvent.ID == exitEvent.ContainerID {
+				action = "die"
+			} else {
+				action = "exec_die"
+				attributes["execID"] = exitEvent.ID
+			}
 			containerID = exitEvent.ContainerID
-			attributes["exitcode"] = strconv.Itoa(int(exitEvent.ExitStatus))
+			attributes["exitCode"] = strconv.Itoa(int(exitEvent.ExitStatus))
 		case TaskOOMEventTopic:
 			oomEvent, ok := out.(*eventstypes.TaskOOM)
 			if !ok {

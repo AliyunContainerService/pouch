@@ -107,7 +107,7 @@ paths:
       description: |
         Stream real-time events from the server.
         Report various object events of pouchd when something happens to them.
-        Containers report these events: create`, `destroy`, `die`, `oom`, `pause`, `rename`, `resize`, `restart`, `start`, `stop`, `top`, `unpause`, and `update`
+        Containers report these events: create`, `destroy`, `die`, `oom`, `pause`, `rename`, `resize`, `restart`, `start`, `stop`, `top`, `unpause`, `update` and `exec_die`
         Images report these events: `pull`, `untag`
         Volumes report these events: `create`, `destroy`
         Networks report these events: `create`, `connect`, `disconnect`, `destroy`
