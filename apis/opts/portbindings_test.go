@@ -17,7 +17,6 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "testCase1",
 			args: args{ports: []string{"127.0.0.1:80:80"}},
@@ -44,6 +43,15 @@ func TestParsePortBinding(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "invalid container port",
+			args: args{
+				ports: []string{
+					"foo:bar",
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -68,11 +76,64 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-		{name: "testCase1", args: args{portBindings: map[string][]types.PortBinding{"21/ftp": {types.PortBinding{HostIP: "", HostPort: "21"}}}}, wantErr: false},
-		{name: "testCase2", args: args{portBindings: map[string][]types.PortBinding{"65537/tcp": {types.PortBinding{}}}}, wantErr: true},
-		{name: "testCase3", args: args{portBindings: map[string][]types.PortBinding{"0/tcp": {types.PortBinding{}}}}, wantErr: false},
-		{name: "testCase4", args: args{portBindings: map[string][]types.PortBinding{"80/http": {types.PortBinding{}}}}, wantErr: false},
+		{
+			name: "testCase1",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"21/ftp": {
+						types.PortBinding{
+							HostIP:   "",
+							HostPort: "21",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testCase2",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"65537/tcp": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "testCase3",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"0/tcp": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testCase4",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"80/http": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid port specification",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"foo/bar": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
