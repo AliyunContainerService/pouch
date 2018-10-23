@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // SystemVersion system version
 // swagger:model SystemVersion
-
 type SystemVersion struct {
 
 	// Api Version held by daemon
@@ -42,29 +39,8 @@ type SystemVersion struct {
 	Version string `json:"Version,omitempty"`
 }
 
-/* polymorph SystemVersion ApiVersion false */
-
-/* polymorph SystemVersion Arch false */
-
-/* polymorph SystemVersion BuildTime false */
-
-/* polymorph SystemVersion GitCommit false */
-
-/* polymorph SystemVersion GoVersion false */
-
-/* polymorph SystemVersion KernelVersion false */
-
-/* polymorph SystemVersion Os false */
-
-/* polymorph SystemVersion Version false */
-
 // Validate validates this system version
 func (m *SystemVersion) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

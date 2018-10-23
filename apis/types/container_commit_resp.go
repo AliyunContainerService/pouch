@@ -7,29 +7,19 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerCommitResp response of commit container for the remote API: POST /commit
 // swagger:model ContainerCommitResp
-
 type ContainerCommitResp struct {
 
 	// ID uniquely identifies an image committed by a container
 	ID string `json:"Id,omitempty"`
 }
 
-/* polymorph ContainerCommitResp Id false */
-
 // Validate validates this container commit resp
 func (m *ContainerCommitResp) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

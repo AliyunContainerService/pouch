@@ -6,9 +6,8 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
@@ -17,7 +16,6 @@ import (
 // It can be used to encode client params in client and unmarshal request body in daemon side.
 //
 // swagger:model ContainerCreateConfig
-
 type ContainerCreateConfig struct {
 	ContainerConfig
 
@@ -30,32 +28,33 @@ type ContainerCreateConfig struct {
 
 // UnmarshalJSON unmarshals this object from a JSON structure
 func (m *ContainerCreateConfig) UnmarshalJSON(raw []byte) error {
-
+	// AO0
 	var aO0 ContainerConfig
 	if err := swag.ReadJSON(raw, &aO0); err != nil {
 		return err
 	}
 	m.ContainerConfig = aO0
 
-	var data struct {
+	// AO1
+	var dataAO1 struct {
 		HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
 		NetworkingConfig *NetworkingConfig `json:"NetworkingConfig,omitempty"`
 	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
+	if err := swag.ReadJSON(raw, &dataAO1); err != nil {
 		return err
 	}
 
-	m.HostConfig = data.HostConfig
+	m.HostConfig = dataAO1.HostConfig
 
-	m.NetworkingConfig = data.NetworkingConfig
+	m.NetworkingConfig = dataAO1.NetworkingConfig
 
 	return nil
 }
 
 // MarshalJSON marshals this object to a JSON structure
 func (m ContainerCreateConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
+	_parts := make([][]byte, 0, 2)
 
 	aO0, err := swag.WriteJSON(m.ContainerConfig)
 	if err != nil {
@@ -63,21 +62,21 @@ func (m ContainerCreateConfig) MarshalJSON() ([]byte, error) {
 	}
 	_parts = append(_parts, aO0)
 
-	var data struct {
+	var dataAO1 struct {
 		HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
 		NetworkingConfig *NetworkingConfig `json:"NetworkingConfig,omitempty"`
 	}
 
-	data.HostConfig = m.HostConfig
+	dataAO1.HostConfig = m.HostConfig
 
-	data.NetworkingConfig = m.NetworkingConfig
+	dataAO1.NetworkingConfig = m.NetworkingConfig
 
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
+	jsonDataAO1, errAO1 := swag.WriteJSON(dataAO1)
+	if errAO1 != nil {
+		return nil, errAO1
 	}
-	_parts = append(_parts, jsonData)
+	_parts = append(_parts, jsonDataAO1)
 
 	return swag.ConcatJSON(_parts...), nil
 }
@@ -86,7 +85,12 @@ func (m ContainerCreateConfig) MarshalJSON() ([]byte, error) {
 func (m *ContainerCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	// validation for a type composition with ContainerConfig
 	if err := m.ContainerConfig.Validate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateHostConfig(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -100,6 +104,24 @@ func (m *ContainerCreateConfig) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *ContainerCreateConfig) validateHostConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.HostConfig) { // not required
+		return nil
+	}
+
+	if m.HostConfig != nil {
+		if err := m.HostConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("HostConfig")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *ContainerCreateConfig) validateNetworkingConfig(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.NetworkingConfig) { // not required
@@ -107,7 +129,6 @@ func (m *ContainerCreateConfig) validateNetworkingConfig(formats strfmt.Registry
 	}
 
 	if m.NetworkingConfig != nil {
-
 		if err := m.NetworkingConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("NetworkingConfig")

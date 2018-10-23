@@ -6,9 +6,10 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"strconv"
 
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
@@ -16,7 +17,6 @@ import (
 // GET "/containers/{id}/json"
 //
 // swagger:model ContainerJSON
-
 type ContainerJSON struct {
 
 	// app armor profile
@@ -95,112 +95,41 @@ type ContainerJSON struct {
 	State *ContainerState `json:"State,omitempty"`
 }
 
-/* polymorph ContainerJSON AppArmorProfile false */
-
-/* polymorph ContainerJSON Args false */
-
-/* polymorph ContainerJSON Config false */
-
-/* polymorph ContainerJSON Created false */
-
-/* polymorph ContainerJSON Driver false */
-
-/* polymorph ContainerJSON ExecIDs false */
-
-/* polymorph ContainerJSON GraphDriver false */
-
-/* polymorph ContainerJSON HostConfig false */
-
-/* polymorph ContainerJSON HostnamePath false */
-
-/* polymorph ContainerJSON HostsPath false */
-
-/* polymorph ContainerJSON Id false */
-
-/* polymorph ContainerJSON Image false */
-
-/* polymorph ContainerJSON LogPath false */
-
-/* polymorph ContainerJSON MountLabel false */
-
-/* polymorph ContainerJSON Mounts false */
-
-/* polymorph ContainerJSON Name false */
-
-/* polymorph ContainerJSON NetworkSettings false */
-
-/* polymorph ContainerJSON Path false */
-
-/* polymorph ContainerJSON ProcessLabel false */
-
-/* polymorph ContainerJSON ResolvConfPath false */
-
-/* polymorph ContainerJSON RestartCount false */
-
-/* polymorph ContainerJSON SizeRootFs false */
-
-/* polymorph ContainerJSON SizeRw false */
-
-/* polymorph ContainerJSON Snapshotter false */
-
-/* polymorph ContainerJSON State false */
-
 // Validate validates this container JSON
 func (m *ContainerJSON) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateArgs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateConfig(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateExecIds(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateGraphDriver(formats); err != nil {
-		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateHostConfig(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateMounts(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateNetworkSettings(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateSnapshotter(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateState(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *ContainerJSON) validateArgs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Args) { // not required
-		return nil
-	}
-
 	return nil
 }
 
@@ -211,22 +140,12 @@ func (m *ContainerJSON) validateConfig(formats strfmt.Registry) error {
 	}
 
 	if m.Config != nil {
-
 		if err := m.Config.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("Config")
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *ContainerJSON) validateExecIds(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ExecIds) { // not required
-		return nil
 	}
 
 	return nil
@@ -239,10 +158,27 @@ func (m *ContainerJSON) validateGraphDriver(formats strfmt.Registry) error {
 	}
 
 	if m.GraphDriver != nil {
-
 		if err := m.GraphDriver.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("GraphDriver")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *ContainerJSON) validateHostConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.HostConfig) { // not required
+		return nil
+	}
+
+	if m.HostConfig != nil {
+		if err := m.HostConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("HostConfig")
 			}
 			return err
 		}
@@ -257,6 +193,17 @@ func (m *ContainerJSON) validateMounts(formats strfmt.Registry) error {
 		return nil
 	}
 
+	for i := 0; i < len(m.Mounts); i++ {
+
+		if err := m.Mounts[i].Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("Mounts" + "." + strconv.Itoa(i))
+			}
+			return err
+		}
+
+	}
+
 	return nil
 }
 
@@ -267,7 +214,6 @@ func (m *ContainerJSON) validateNetworkSettings(formats strfmt.Registry) error {
 	}
 
 	if m.NetworkSettings != nil {
-
 		if err := m.NetworkSettings.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("NetworkSettings")
@@ -286,7 +232,6 @@ func (m *ContainerJSON) validateSnapshotter(formats strfmt.Registry) error {
 	}
 
 	if m.Snapshotter != nil {
-
 		if err := m.Snapshotter.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("Snapshotter")
@@ -305,7 +250,6 @@ func (m *ContainerJSON) validateState(formats strfmt.Registry) error {
 	}
 
 	if m.State != nil {
-
 		if err := m.State.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("State")

@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // HistoryResultItem An object containing image history at API side.
 // swagger:model HistoryResultItem
-
 type HistoryResultItem struct {
 
 	// the author of the build point.
@@ -47,56 +45,35 @@ type HistoryResultItem struct {
 	Size int64 `json:"Size"`
 }
 
-/* polymorph HistoryResultItem Author false */
-
-/* polymorph HistoryResultItem Comment false */
-
-/* polymorph HistoryResultItem Created false */
-
-/* polymorph HistoryResultItem CreatedBy false */
-
-/* polymorph HistoryResultItem EmptyLayer false */
-
-/* polymorph HistoryResultItem ID false */
-
-/* polymorph HistoryResultItem Size false */
-
 // Validate validates this history result item
 func (m *HistoryResultItem) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateAuthor(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateComment(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateCreated(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateCreatedBy(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateEmptyLayer(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateID(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateSize(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

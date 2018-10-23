@@ -6,15 +6,13 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // CPUStats CPUStats aggregates and wraps all CPU related info of container
 // swagger:model CPUStats
-
 type CPUStats struct {
 
 	// cpu usage
@@ -30,25 +28,15 @@ type CPUStats struct {
 	ThrottlingData *ThrottlingData `json:"throttling_data,omitempty"`
 }
 
-/* polymorph CPUStats cpu_usage false */
-
-/* polymorph CPUStats online_cpus false */
-
-/* polymorph CPUStats syetem_cpu_usage false */
-
-/* polymorph CPUStats throttling_data false */
-
 // Validate validates this CPU stats
 func (m *CPUStats) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCPUUsage(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateThrottlingData(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -65,7 +53,6 @@ func (m *CPUStats) validateCPUUsage(formats strfmt.Registry) error {
 	}
 
 	if m.CPUUsage != nil {
-
 		if err := m.CPUUsage.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("cpu_usage")
@@ -84,7 +71,6 @@ func (m *CPUStats) validateThrottlingData(formats strfmt.Registry) error {
 	}
 
 	if m.ThrottlingData != nil {
-
 		if err := m.ThrottlingData.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("throttling_data")

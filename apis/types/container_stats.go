@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ContainerStats container stats almost from cgroup resource usage.
 // swagger:model ContainerStats
-
 type ContainerStats struct {
 
 	// blkio stats
@@ -43,58 +41,39 @@ type ContainerStats struct {
 	PrecpuStats *CPUStats `json:"precpu_stats,omitempty"`
 
 	// read time of container stats.
+	// Format: date-time
 	Read strfmt.DateTime `json:"read,omitempty"`
 }
-
-/* polymorph ContainerStats blkio_stats false */
-
-/* polymorph ContainerStats cpu_stats false */
-
-/* polymorph ContainerStats id false */
-
-/* polymorph ContainerStats memory_stats false */
-
-/* polymorph ContainerStats name false */
-
-/* polymorph ContainerStats networks false */
-
-/* polymorph ContainerStats pids_stats false */
-
-/* polymorph ContainerStats precpu_stats false */
-
-/* polymorph ContainerStats read false */
 
 // Validate validates this container stats
 func (m *ContainerStats) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateBlkioStats(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateCPUStats(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateMemoryStats(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateNetworks(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validatePidsStats(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validatePrecpuStats(formats); err != nil {
-		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateRead(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -111,7 +90,6 @@ func (m *ContainerStats) validateBlkioStats(formats strfmt.Registry) error {
 	}
 
 	if m.BlkioStats != nil {
-
 		if err := m.BlkioStats.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("blkio_stats")
@@ -130,7 +108,6 @@ func (m *ContainerStats) validateCPUStats(formats strfmt.Registry) error {
 	}
 
 	if m.CPUStats != nil {
-
 		if err := m.CPUStats.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("cpu_stats")
@@ -149,7 +126,6 @@ func (m *ContainerStats) validateMemoryStats(formats strfmt.Registry) error {
 	}
 
 	if m.MemoryStats != nil {
-
 		if err := m.MemoryStats.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("memory_stats")
@@ -167,8 +143,17 @@ func (m *ContainerStats) validateNetworks(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.Required("networks", "body", m.Networks); err != nil {
-		return err
+	for k := range m.Networks {
+
+		if err := validate.Required("networks"+"."+k, "body", m.Networks[k]); err != nil {
+			return err
+		}
+		if val, ok := m.Networks[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -181,7 +166,6 @@ func (m *ContainerStats) validatePidsStats(formats strfmt.Registry) error {
 	}
 
 	if m.PidsStats != nil {
-
 		if err := m.PidsStats.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("pids_stats")
@@ -200,13 +184,25 @@ func (m *ContainerStats) validatePrecpuStats(formats strfmt.Registry) error {
 	}
 
 	if m.PrecpuStats != nil {
-
 		if err := m.PrecpuStats.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("precpu_stats")
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *ContainerStats) validateRead(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Read) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("read", "body", "date-time", m.Read.String(), formats); err != nil {
+		return err
 	}
 
 	return nil

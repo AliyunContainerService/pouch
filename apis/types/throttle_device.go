@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ThrottleDevice throttle device
 // swagger:model ThrottleDevice
-
 type ThrottleDevice struct {
 
 	// Device path
@@ -26,16 +24,11 @@ type ThrottleDevice struct {
 	Rate uint64 `json:"Rate,omitempty"`
 }
 
-/* polymorph ThrottleDevice Path false */
-
-/* polymorph ThrottleDevice Rate false */
-
 // Validate validates this throttle device
 func (m *ThrottleDevice) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateRate(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

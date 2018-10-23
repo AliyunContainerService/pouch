@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ThrottlingData ThrottlingData stores CPU throttling stats of one running container.
 // swagger:model ThrottlingData
-
 type ThrottlingData struct {
 
 	// Number of periods with throttling active.
@@ -27,19 +24,8 @@ type ThrottlingData struct {
 	ThrottledTime uint64 `json:"throttled_time,omitempty"`
 }
 
-/* polymorph ThrottlingData periods false */
-
-/* polymorph ThrottlingData throttled_periods false */
-
-/* polymorph ThrottlingData throttled_time false */
-
 // Validate validates this throttling data
 func (m *ThrottlingData) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

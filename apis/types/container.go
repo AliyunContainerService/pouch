@@ -6,9 +6,10 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"strconv"
 
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
@@ -17,7 +18,6 @@ import (
 // GET "/containers/json"
 //
 // swagger:model Container
-
 type Container struct {
 
 	// command
@@ -68,50 +68,19 @@ type Container struct {
 	Status string `json:"Status,omitempty"`
 }
 
-/* polymorph Container Command false */
-
-/* polymorph Container Created false */
-
-/* polymorph Container HostConfig false */
-
-/* polymorph Container Id false */
-
-/* polymorph Container Image false */
-
-/* polymorph Container ImageID false */
-
-/* polymorph Container Labels false */
-
-/* polymorph Container Mounts false */
-
-/* polymorph Container Names false */
-
-/* polymorph Container NetworkSettings false */
-
-/* polymorph Container SizeRootFs false */
-
-/* polymorph Container SizeRw false */
-
-/* polymorph Container State false */
-
-/* polymorph Container Status false */
-
 // Validate validates this container
 func (m *Container) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateMounts(formats); err != nil {
-		// prop
+	if err := m.validateHostConfig(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateNames(formats); err != nil {
-		// prop
+	if err := m.validateMounts(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateNetworkSettings(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -121,19 +90,39 @@ func (m *Container) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Container) validateHostConfig(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.HostConfig) { // not required
+		return nil
+	}
+
+	if m.HostConfig != nil {
+		if err := m.HostConfig.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("HostConfig")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *Container) validateMounts(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Mounts) { // not required
 		return nil
 	}
 
-	return nil
-}
+	for i := 0; i < len(m.Mounts); i++ {
 
-func (m *Container) validateNames(formats strfmt.Registry) error {
+		if err := m.Mounts[i].Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("Mounts" + "." + strconv.Itoa(i))
+			}
+			return err
+		}
 
-	if swag.IsZero(m.Names) { // not required
-		return nil
 	}
 
 	return nil
@@ -146,7 +135,6 @@ func (m *Container) validateNetworkSettings(formats strfmt.Registry) error {
 	}
 
 	if m.NetworkSettings != nil {
-
 		if err := m.NetworkSettings.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("NetworkSettings")
@@ -178,21 +166,17 @@ func (m *Container) UnmarshalBinary(b []byte) error {
 
 // ContainerNetworkSettings container network settings
 // swagger:model ContainerNetworkSettings
-
 type ContainerNetworkSettings struct {
 
 	// networks
 	Networks map[string]*EndpointSettings `json:"Networks,omitempty"`
 }
 
-/* polymorph ContainerNetworkSettings Networks false */
-
 // Validate validates this container network settings
 func (m *ContainerNetworkSettings) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateNetworks(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -208,8 +192,17 @@ func (m *ContainerNetworkSettings) validateNetworks(formats strfmt.Registry) err
 		return nil
 	}
 
-	if err := validate.Required("NetworkSettings"+"."+"Networks", "body", m.Networks); err != nil {
-		return err
+	for k := range m.Networks {
+
+		if err := validate.Required("NetworkSettings"+"."+"Networks"+"."+k, "body", m.Networks[k]); err != nil {
+			return err
+		}
+		if val, ok := m.Networks[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil

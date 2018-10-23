@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkStats container stats almost from cgroup resource usage.
 // swagger:model NetworkStats
-
 type NetworkStats struct {
 
 	// Endpoint ID.
@@ -48,33 +45,8 @@ type NetworkStats struct {
 	TxPackets uint64 `json:"tx_packets,omitempty"`
 }
 
-/* polymorph NetworkStats endpoint_id false */
-
-/* polymorph NetworkStats instance_id false */
-
-/* polymorph NetworkStats rx_bytes false */
-
-/* polymorph NetworkStats rx_dropped false */
-
-/* polymorph NetworkStats rx_errors false */
-
-/* polymorph NetworkStats rx_packets false */
-
-/* polymorph NetworkStats tx_bytes false */
-
-/* polymorph NetworkStats tx_dropped false */
-
-/* polymorph NetworkStats tx_errors false */
-
-/* polymorph NetworkStats tx_packets false */
-
 // Validate validates this network stats
 func (m *NetworkStats) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

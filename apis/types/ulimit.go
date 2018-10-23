@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // Ulimit A list of resource limits
 // swagger:model Ulimit
-
 type Ulimit struct {
 
 	// Hard limit
@@ -27,19 +24,8 @@ type Ulimit struct {
 	Soft int64 `json:"Soft,omitempty"`
 }
 
-/* polymorph Ulimit Hard false */
-
-/* polymorph Ulimit Name false */
-
-/* polymorph Ulimit Soft false */
-
 // Validate validates this ulimit
 func (m *Ulimit) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

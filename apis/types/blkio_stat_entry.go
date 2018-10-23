@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // BlkioStatEntry BlkioStatEntry is one small entity to store a piece of Blkio stats
 // swagger:model BlkioStatEntry
-
 type BlkioStatEntry struct {
 
 	// major
@@ -30,21 +27,8 @@ type BlkioStatEntry struct {
 	Value uint64 `json:"value,omitempty"`
 }
 
-/* polymorph BlkioStatEntry major false */
-
-/* polymorph BlkioStatEntry minor false */
-
-/* polymorph BlkioStatEntry op false */
-
-/* polymorph BlkioStatEntry value false */
-
 // Validate validates this blkio stat entry
 func (m *BlkioStatEntry) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

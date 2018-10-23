@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerCommitOptions options of committing a container into an image
 // swagger:model ContainerCommitOptions
-
 type ContainerCommitOptions struct {
 
 	// author is the one build the image
@@ -30,21 +27,8 @@ type ContainerCommitOptions struct {
 	Tag string `json:"Tag,omitempty"`
 }
 
-/* polymorph ContainerCommitOptions Author false */
-
-/* polymorph ContainerCommitOptions Comment false */
-
-/* polymorph ContainerCommitOptions Repository false */
-
-/* polymorph ContainerCommitOptions Tag false */
-
 // Validate validates this container commit options
 func (m *ContainerCommitOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

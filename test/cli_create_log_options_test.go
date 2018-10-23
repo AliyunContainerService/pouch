@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -48,7 +47,7 @@ func (suite *PouchCreateLogOptionsSuite) TestFailNotSupportDriver(c *check.C) {
 	cname := "TestCreateLogOptions_Fail_not_support_driver"
 
 	driver := "notyet"
-	expected := fmt.Sprintf("not support (%v) log driver yet", driver)
+	expected := "validation failure"
 
 	args := []string{"create"}
 	args = append(args, getArgsForLogOptions(driver, nil)...)

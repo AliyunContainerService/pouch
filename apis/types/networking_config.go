@@ -6,30 +6,25 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // NetworkingConfig Configuration for a network used to create a container.
 // swagger:model NetworkingConfig
-
 type NetworkingConfig struct {
 
 	// endpoints config
 	EndpointsConfig map[string]*EndpointSettings `json:"EndpointsConfig,omitempty"`
 }
 
-/* polymorph NetworkingConfig EndpointsConfig false */
-
 // Validate validates this networking config
 func (m *NetworkingConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateEndpointsConfig(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -45,8 +40,17 @@ func (m *NetworkingConfig) validateEndpointsConfig(formats strfmt.Registry) erro
 		return nil
 	}
 
-	if err := validate.Required("EndpointsConfig", "body", m.EndpointsConfig); err != nil {
-		return err
+	for k := range m.EndpointsConfig {
+
+		if err := validate.Required("EndpointsConfig"+"."+k, "body", m.EndpointsConfig[k]); err != nil {
+			return err
+		}
+		if val, ok := m.EndpointsConfig[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil

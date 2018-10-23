@@ -6,9 +6,8 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
@@ -16,7 +15,6 @@ import (
 // RegistryServiceConfig RegistryServiceConfig stores daemon registry services configuration.
 //
 // swagger:model RegistryServiceConfig
-
 type RegistryServiceConfig struct {
 
 	// List of IP ranges to which nondistributable artifacts can be pushed,
@@ -99,42 +97,11 @@ type RegistryServiceConfig struct {
 	Mirrors []string `json:"Mirrors,omitempty"`
 }
 
-/* polymorph RegistryServiceConfig AllowNondistributableArtifactsCIDRs false */
-
-/* polymorph RegistryServiceConfig AllowNondistributableArtifactsHostnames false */
-
-/* polymorph RegistryServiceConfig IndexConfigs false */
-
-/* polymorph RegistryServiceConfig InsecureRegistryCIDRs false */
-
-/* polymorph RegistryServiceConfig Mirrors false */
-
 // Validate validates this registry service config
 func (m *RegistryServiceConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAllowNondistributableArtifactsCIDRs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateAllowNondistributableArtifactsHostnames(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateIndexConfigs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateInsecureRegistryCIDRs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateMirrors(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -144,50 +111,23 @@ func (m *RegistryServiceConfig) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *RegistryServiceConfig) validateAllowNondistributableArtifactsCIDRs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.AllowNondistributableArtifactsCIDRs) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *RegistryServiceConfig) validateAllowNondistributableArtifactsHostnames(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.AllowNondistributableArtifactsHostnames) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 func (m *RegistryServiceConfig) validateIndexConfigs(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.IndexConfigs) { // not required
 		return nil
 	}
 
-	if err := validate.Required("IndexConfigs", "body", m.IndexConfigs); err != nil {
-		return err
-	}
+	for k := range m.IndexConfigs {
 
-	return nil
-}
+		if err := validate.Required("IndexConfigs"+"."+k, "body", m.IndexConfigs[k]); err != nil {
+			return err
+		}
+		if val, ok := m.IndexConfigs[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
 
-func (m *RegistryServiceConfig) validateInsecureRegistryCIDRs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.InsecureRegistryCIDRs) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *RegistryServiceConfig) validateMirrors(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Mirrors) { // not required
-		return nil
 	}
 
 	return nil

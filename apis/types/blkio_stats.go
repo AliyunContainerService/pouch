@@ -8,15 +8,13 @@ package types
 import (
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // BlkioStats BlkioStats stores All IO service stats for data read and write.
 // swagger:model BlkioStats
-
 type BlkioStats struct {
 
 	// io merged recursive
@@ -44,63 +42,39 @@ type BlkioStats struct {
 	SectorsRecursive []*BlkioStatEntry `json:"sectors_recursive"`
 }
 
-/* polymorph BlkioStats io_merged_recursive false */
-
-/* polymorph BlkioStats io_queue_recursive false */
-
-/* polymorph BlkioStats io_service_bytes_recursive false */
-
-/* polymorph BlkioStats io_service_time_recursive false */
-
-/* polymorph BlkioStats io_serviced_recursive false */
-
-/* polymorph BlkioStats io_time_recursive false */
-
-/* polymorph BlkioStats io_wait_time_recursive false */
-
-/* polymorph BlkioStats sectors_recursive false */
-
 // Validate validates this blkio stats
 func (m *BlkioStats) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateIoMergedRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoQueueRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoServiceBytesRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoServiceTimeRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoServicedRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoTimeRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateIoWaitTimeRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateSectorsRecursive(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -117,13 +91,11 @@ func (m *BlkioStats) validateIoMergedRecursive(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.IoMergedRecursive); i++ {
-
 		if swag.IsZero(m.IoMergedRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoMergedRecursive[i] != nil {
-
 			if err := m.IoMergedRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_merged_recursive" + "." + strconv.Itoa(i))
@@ -144,13 +116,11 @@ func (m *BlkioStats) validateIoQueueRecursive(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.IoQueueRecursive); i++ {
-
 		if swag.IsZero(m.IoQueueRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoQueueRecursive[i] != nil {
-
 			if err := m.IoQueueRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_queue_recursive" + "." + strconv.Itoa(i))
@@ -171,13 +141,11 @@ func (m *BlkioStats) validateIoServiceBytesRecursive(formats strfmt.Registry) er
 	}
 
 	for i := 0; i < len(m.IoServiceBytesRecursive); i++ {
-
 		if swag.IsZero(m.IoServiceBytesRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoServiceBytesRecursive[i] != nil {
-
 			if err := m.IoServiceBytesRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_service_bytes_recursive" + "." + strconv.Itoa(i))
@@ -198,13 +166,11 @@ func (m *BlkioStats) validateIoServiceTimeRecursive(formats strfmt.Registry) err
 	}
 
 	for i := 0; i < len(m.IoServiceTimeRecursive); i++ {
-
 		if swag.IsZero(m.IoServiceTimeRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoServiceTimeRecursive[i] != nil {
-
 			if err := m.IoServiceTimeRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_service_time_recursive" + "." + strconv.Itoa(i))
@@ -225,13 +191,11 @@ func (m *BlkioStats) validateIoServicedRecursive(formats strfmt.Registry) error 
 	}
 
 	for i := 0; i < len(m.IoServicedRecursive); i++ {
-
 		if swag.IsZero(m.IoServicedRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoServicedRecursive[i] != nil {
-
 			if err := m.IoServicedRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_serviced_recursive" + "." + strconv.Itoa(i))
@@ -252,13 +216,11 @@ func (m *BlkioStats) validateIoTimeRecursive(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.IoTimeRecursive); i++ {
-
 		if swag.IsZero(m.IoTimeRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoTimeRecursive[i] != nil {
-
 			if err := m.IoTimeRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_time_recursive" + "." + strconv.Itoa(i))
@@ -279,13 +241,11 @@ func (m *BlkioStats) validateIoWaitTimeRecursive(formats strfmt.Registry) error 
 	}
 
 	for i := 0; i < len(m.IoWaitTimeRecursive); i++ {
-
 		if swag.IsZero(m.IoWaitTimeRecursive[i]) { // not required
 			continue
 		}
 
 		if m.IoWaitTimeRecursive[i] != nil {
-
 			if err := m.IoWaitTimeRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("io_wait_time_recursive" + "." + strconv.Itoa(i))
@@ -306,13 +266,11 @@ func (m *BlkioStats) validateSectorsRecursive(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.SectorsRecursive); i++ {
-
 		if swag.IsZero(m.SectorsRecursive[i]) { // not required
 			continue
 		}
 
 		if m.SectorsRecursive[i] != nil {
-
 			if err := m.SectorsRecursive[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sectors_recursive" + "." + strconv.Itoa(i))

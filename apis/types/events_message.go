@@ -6,9 +6,8 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
@@ -21,7 +20,6 @@ import (
 // attributes that describe the event.
 //
 // swagger:model EventsMessage
-
 type EventsMessage struct {
 
 	// action
@@ -49,33 +47,15 @@ type EventsMessage struct {
 	Type EventType `json:"type,omitempty"`
 }
 
-/* polymorph EventsMessage action false */
-
-/* polymorph EventsMessage actor false */
-
-/* polymorph EventsMessage from false */
-
-/* polymorph EventsMessage id false */
-
-/* polymorph EventsMessage status false */
-
-/* polymorph EventsMessage time false */
-
-/* polymorph EventsMessage timeNano false */
-
-/* polymorph EventsMessage type false */
-
 // Validate validates this events message
 func (m *EventsMessage) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateActor(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateType(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -92,7 +72,6 @@ func (m *EventsMessage) validateActor(formats strfmt.Registry) error {
 	}
 
 	if m.Actor != nil {
-
 		if err := m.Actor.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("actor")

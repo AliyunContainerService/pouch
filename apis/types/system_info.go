@@ -8,16 +8,14 @@ package types
 import (
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // SystemInfo system info
 // swagger:model SystemInfo
-
 type SystemInfo struct {
 
 	// Hardware architecture of the host, as returned by the Go runtime
@@ -29,6 +27,7 @@ type SystemInfo struct {
 
 	// The driver to use for managing cgroups.
 	//
+	// Enum: [cgroupfs systemd]
 	CgroupDriver string `json:"CgroupDriver,omitempty"`
 
 	// containerd commit
@@ -217,131 +216,27 @@ type SystemInfo struct {
 	VolumeDrivers []string `json:"VolumeDrivers"`
 }
 
-/* polymorph SystemInfo Architecture false */
-
-/* polymorph SystemInfo CgroupDriver false */
-
-/* polymorph SystemInfo ContainerdCommit false */
-
-/* polymorph SystemInfo Containers false */
-
-/* polymorph SystemInfo ContainersPaused false */
-
-/* polymorph SystemInfo ContainersRunning false */
-
-/* polymorph SystemInfo ContainersStopped false */
-
-/* polymorph SystemInfo CriEnabled false */
-
-/* polymorph SystemInfo Debug false */
-
-/* polymorph SystemInfo DefaultRegistry false */
-
-/* polymorph SystemInfo DefaultRuntime false */
-
-/* polymorph SystemInfo Driver false */
-
-/* polymorph SystemInfo DriverStatus false */
-
-/* polymorph SystemInfo ExperimentalBuild false */
-
-/* polymorph SystemInfo HttpProxy false */
-
-/* polymorph SystemInfo HttpsProxy false */
-
-/* polymorph SystemInfo ID false */
-
-/* polymorph SystemInfo Images false */
-
-/* polymorph SystemInfo IndexServerAddress false */
-
-/* polymorph SystemInfo KernelVersion false */
-
-/* polymorph SystemInfo Labels false */
-
-/* polymorph SystemInfo ListenAddresses false */
-
-/* polymorph SystemInfo LiveRestoreEnabled false */
-
-/* polymorph SystemInfo LoggingDriver false */
-
-/* polymorph SystemInfo LxcfsEnabled false */
-
-/* polymorph SystemInfo MemTotal false */
-
-/* polymorph SystemInfo NCPU false */
-
-/* polymorph SystemInfo Name false */
-
-/* polymorph SystemInfo OSType false */
-
-/* polymorph SystemInfo OperatingSystem false */
-
-/* polymorph SystemInfo PouchRootDir false */
-
-/* polymorph SystemInfo RegistryConfig false */
-
-/* polymorph SystemInfo RuncCommit false */
-
-/* polymorph SystemInfo Runtimes false */
-
-/* polymorph SystemInfo SecurityOptions false */
-
-/* polymorph SystemInfo ServerVersion false */
-
-/* polymorph SystemInfo VolumeDrivers false */
-
 // Validate validates this system info
 func (m *SystemInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCgroupDriver(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateContainerdCommit(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateDriverStatus(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateLabels(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateListenAddresses(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRegistryConfig(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRuncCommit(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRuntimes(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateSecurityOptions(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateVolumeDrivers(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -364,8 +259,10 @@ func init() {
 }
 
 const (
+
 	// SystemInfoCgroupDriverCgroupfs captures enum value "cgroupfs"
 	SystemInfoCgroupDriverCgroupfs string = "cgroupfs"
+
 	// SystemInfoCgroupDriverSystemd captures enum value "systemd"
 	SystemInfoCgroupDriverSystemd string = "systemd"
 )
@@ -399,40 +296,12 @@ func (m *SystemInfo) validateContainerdCommit(formats strfmt.Registry) error {
 	}
 
 	if m.ContainerdCommit != nil {
-
 		if err := m.ContainerdCommit.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ContainerdCommit")
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *SystemInfo) validateDriverStatus(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.DriverStatus) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *SystemInfo) validateLabels(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Labels) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *SystemInfo) validateListenAddresses(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ListenAddresses) { // not required
-		return nil
 	}
 
 	return nil
@@ -445,7 +314,6 @@ func (m *SystemInfo) validateRegistryConfig(formats strfmt.Registry) error {
 	}
 
 	if m.RegistryConfig != nil {
-
 		if err := m.RegistryConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("RegistryConfig")
@@ -464,7 +332,6 @@ func (m *SystemInfo) validateRuncCommit(formats strfmt.Registry) error {
 	}
 
 	if m.RuncCommit != nil {
-
 		if err := m.RuncCommit.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("RuncCommit")
@@ -482,26 +349,17 @@ func (m *SystemInfo) validateRuntimes(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.Required("Runtimes", "body", m.Runtimes); err != nil {
-		return err
-	}
+	for k := range m.Runtimes {
 
-	return nil
-}
+		if err := validate.Required("Runtimes"+"."+k, "body", m.Runtimes[k]); err != nil {
+			return err
+		}
+		if val, ok := m.Runtimes[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
 
-func (m *SystemInfo) validateSecurityOptions(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.SecurityOptions) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *SystemInfo) validateVolumeDrivers(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.VolumeDrivers) { // not required
-		return nil
 	}
 
 	return nil

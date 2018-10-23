@@ -8,9 +8,8 @@ package types
 import (
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
@@ -18,20 +17,25 @@ import (
 // Now we only support container, image, network and volume events.
 //
 // swagger:model EventType
-
 type EventType string
 
 const (
+
 	// EventTypeContainer captures enum value "container"
 	EventTypeContainer EventType = "container"
+
 	// EventTypeDaemon captures enum value "daemon"
 	EventTypeDaemon EventType = "daemon"
+
 	// EventTypeImage captures enum value "image"
 	EventTypeImage EventType = "image"
+
 	// EventTypeNetwork captures enum value "network"
 	EventTypeNetwork EventType = "network"
+
 	// EventTypePlugin captures enum value "plugin"
 	EventTypePlugin EventType = "plugin"
+
 	// EventTypeVolume captures enum value "volume"
 	EventTypeVolume EventType = "volume"
 )

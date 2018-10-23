@@ -7,8 +7,6 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
@@ -20,7 +18,6 @@ import (
 // and SELinux.
 //
 // swagger:model Runtime
-
 type Runtime struct {
 
 	// Name and, optional, path, of the OCI executable binary.
@@ -35,31 +32,8 @@ type Runtime struct {
 	RuntimeArgs []string `json:"runtimeArgs"`
 }
 
-/* polymorph Runtime path false */
-
-/* polymorph Runtime runtimeArgs false */
-
 // Validate validates this runtime
 func (m *Runtime) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateRuntimeArgs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *Runtime) validateRuntimeArgs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.RuntimeArgs) { // not required
-		return nil
-	}
-
 	return nil
 }
 

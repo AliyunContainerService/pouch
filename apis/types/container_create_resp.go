@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ContainerCreateResp response returned by daemon when container create successfully
 // swagger:model ContainerCreateResp
-
 type ContainerCreateResp struct {
 
 	// The ID of the created container
@@ -30,23 +28,15 @@ type ContainerCreateResp struct {
 	Warnings []string `json:"Warnings"`
 }
 
-/* polymorph ContainerCreateResp Id false */
-
-/* polymorph ContainerCreateResp Name false */
-
-/* polymorph ContainerCreateResp Warnings false */
-
 // Validate validates this container create resp
 func (m *ContainerCreateResp) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateID(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateWarnings(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

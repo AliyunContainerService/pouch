@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ContainerState container state
 // swagger:model ContainerState
-
 type ContainerState struct {
 
 	// Whether this container is dead.
@@ -73,84 +71,51 @@ type ContainerState struct {
 	Status Status `json:"Status"`
 }
 
-/* polymorph ContainerState Dead false */
-
-/* polymorph ContainerState Error false */
-
-/* polymorph ContainerState ExitCode false */
-
-/* polymorph ContainerState FinishedAt false */
-
-/* polymorph ContainerState OOMKilled false */
-
-/* polymorph ContainerState Paused false */
-
-/* polymorph ContainerState Pid false */
-
-/* polymorph ContainerState Restarting false */
-
-/* polymorph ContainerState Running false */
-
-/* polymorph ContainerState StartedAt false */
-
-/* polymorph ContainerState Status false */
-
 // Validate validates this container state
 func (m *ContainerState) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateDead(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateError(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateExitCode(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateFinishedAt(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateOOMKilled(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validatePaused(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validatePid(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRestarting(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRunning(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateStartedAt(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateStatus(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

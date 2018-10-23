@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkDisconnect Parameters of network disconnect
 // swagger:model NetworkDisconnect
-
 type NetworkDisconnect struct {
 
 	// The ID or name of the container to disconnect from the network.
@@ -24,17 +21,8 @@ type NetworkDisconnect struct {
 	Force bool `json:"Force,omitempty"`
 }
 
-/* polymorph NetworkDisconnect Container false */
-
-/* polymorph NetworkDisconnect Force false */
-
 // Validate validates this network disconnect
 func (m *NetworkDisconnect) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

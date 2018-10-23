@@ -8,32 +8,38 @@ package types
 import (
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // Status The status of the container. For example, "running" or "exited".
 // swagger:model Status
-
 type Status string
 
 const (
+
 	// StatusCreated captures enum value "created"
 	StatusCreated Status = "created"
+
 	// StatusRunning captures enum value "running"
 	StatusRunning Status = "running"
+
 	// StatusStopped captures enum value "stopped"
 	StatusStopped Status = "stopped"
+
 	// StatusPaused captures enum value "paused"
 	StatusPaused Status = "paused"
+
 	// StatusRestarting captures enum value "restarting"
 	StatusRestarting Status = "restarting"
+
 	// StatusRemoving captures enum value "removing"
 	StatusRemoving Status = "removing"
+
 	// StatusExited captures enum value "exited"
 	StatusExited Status = "exited"
+
 	// StatusDead captures enum value "dead"
 	StatusDead Status = "dead"
 )

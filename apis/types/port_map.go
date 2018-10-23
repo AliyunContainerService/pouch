@@ -6,9 +6,10 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"strconv"
 
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
@@ -20,15 +21,29 @@ import (
 // entries are added to the mapping table.
 //
 // swagger:model PortMap
-
 type PortMap map[string][]PortBinding
 
 // Validate validates this port map
 func (m PortMap) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := validate.Required("", "body", PortMap(m)); err != nil {
-		return err
+	for k := range m {
+
+		if err := validate.Required(k, "body", m[k]); err != nil {
+			return err
+		}
+
+		for i := 0; i < len(m[k]); i++ {
+
+			if err := m[k][i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName(k + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+
+		}
+
 	}
 
 	if len(res) > 0 {

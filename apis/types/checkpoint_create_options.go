@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // CheckpointCreateOptions options of creating a checkpoint from a running container, checkpoint is used to restore a container with current state later
 // swagger:model CheckpointCreateOptions
-
 type CheckpointCreateOptions struct {
 
 	// checkpoint dir
@@ -27,19 +24,8 @@ type CheckpointCreateOptions struct {
 	Exit bool `json:"Exit,omitempty"`
 }
 
-/* polymorph CheckpointCreateOptions CheckpointDir false */
-
-/* polymorph CheckpointCreateOptions CheckpointID false */
-
-/* polymorph CheckpointCreateOptions Exit false */
-
 // Validate validates this checkpoint create options
 func (m *CheckpointCreateOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 
