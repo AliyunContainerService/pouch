@@ -74,6 +74,14 @@ func Test_getValidateWeightDevice(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "invalid weight device, and format must be <device-id>:<weight>",
+			args: args{
+				val: "device1",
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -209,7 +217,18 @@ func TestWeightDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "implement WeightDevice as pflag.Value interface",
+			fields: fields{
+				values: []*types.WeightDevice{
+					{
+						Path:   "device1",
+						Weight: uint16(1000),
+					},
+				},
+			},
+			want: "value",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -232,7 +251,31 @@ func TestWeightDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.WeightDevice
 	}{
-		// TODO: Add test cases.
+		{
+			name: "get all values as type WeightDevice",
+			fields: fields{
+				values: []*types.WeightDevice{
+					{
+						Path:   "device1",
+						Weight: uint16(1),
+					},
+					{
+						Path:   "device2",
+						Weight: uint16(1000),
+					},
+				},
+			},
+			want: []*types.WeightDevice{
+				{
+					Path:   "device1",
+					Weight: uint16(1),
+				},
+				{
+					Path:   "device2",
+					Weight: uint16(1000),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -296,6 +339,14 @@ func Test_getValidThrottleDeviceBps(t *testing.T) {
 				Rate: uint64(524288000),
 			},
 			wantErr: false,
+		},
+		{
+			name: "invalid throttle device and format must be <device-id>:<rate>",
+			args: args{
+				val: "device1",
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -432,7 +483,18 @@ func TestThrottleBpsDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "implement ThrottleBpsDevice as pflag.Value interface",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+						Rate: uint64(51200),
+					},
+				},
+			},
+			want: "value",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -455,7 +517,52 @@ func TestThrottleBpsDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.ThrottleDevice
 	}{
-		// TODO: Add test cases.
+		{
+			name: "only set Path or Rate",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+					},
+					{
+						Rate: uint64(51200),
+					},
+				},
+			},
+			want: []*types.ThrottleDevice{
+				{
+					Path: "device1",
+				},
+				{
+					Rate: uint64(51200),
+				},
+			},
+		},
+		{
+			name: "get all values as type ThrottleBpsDevice",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+						Rate: uint64(51200),
+					},
+					{
+						Path: "device2",
+						Rate: uint64(102400),
+					},
+				},
+			},
+			want: []*types.ThrottleDevice{
+				{
+					Path: "device1",
+					Rate: uint64(51200),
+				},
+				{
+					Path: "device2",
+					Rate: uint64(102400),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -519,6 +626,13 @@ func Test_getValidThrottleDeviceIOps(t *testing.T) {
 				Rate: uint64(500),
 			},
 			wantErr: false,
+		},
+		{
+			name: "invalid throttle device and format must be <device-id>:<rate>",
+			args: args{
+				val: "device1",
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -655,7 +769,18 @@ func TestThrottleIOpsDevice_Type(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "implement ThrottleIOpsDevice as pflag.Value interface",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+						Rate: uint64(51200),
+					},
+				},
+			},
+			want: "value",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -678,7 +803,52 @@ func TestThrottleIOpsDevice_value(t *testing.T) {
 		fields fields
 		want   []*types.ThrottleDevice
 	}{
-		// TODO: Add test cases.
+		{
+			name: "only set Path or Rate",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+					},
+					{
+						Rate: uint64(102400),
+					},
+				},
+			},
+			want: []*types.ThrottleDevice{
+				{
+					Path: "device1",
+				},
+				{
+					Rate: uint64(102400),
+				},
+			},
+		},
+		{
+			name: "get all values as type ThrottleIOpsDevice",
+			fields: fields{
+				values: []*types.ThrottleDevice{
+					{
+						Path: "device1",
+						Rate: uint64(51200),
+					},
+					{
+						Path: "device2",
+						Rate: uint64(102400),
+					},
+				},
+			},
+			want: []*types.ThrottleDevice{
+				{
+					Path: "device1",
+					Rate: uint64(51200),
+				},
+				{
+					Path: "device2",
+					Rate: uint64(102400),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
