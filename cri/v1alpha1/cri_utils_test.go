@@ -319,7 +319,7 @@ func Test_makeSandboxPouchConfig(t *testing.T) {
 		want    *apitypes.ContainerCreateConfig
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -585,12 +585,12 @@ func Test_makeupLogPath(t *testing.T) {
 	}{
 		{
 			logDirectory:  "/var/log/pods/099f1c2b79126109140a1f77e211df00",
-			containerMeta: &runtime.ContainerMetadata{"kube-scheduler", 0},
+			containerMeta: &runtime.ContainerMetadata{Name: "kube-scheduler", Attempt: 0},
 			expected:      "/var/log/pods/099f1c2b79126109140a1f77e211df00/kube-scheduler_0.log",
 		},
 		{
 			logDirectory:  "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/",
-			containerMeta: &runtime.ContainerMetadata{"kube-proxy", 10},
+			containerMeta: &runtime.ContainerMetadata{Name: "kube-proxy", Attempt: 10},
 			expected:      "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/kube-proxy_10.log",
 		},
 	}
@@ -706,7 +706,7 @@ func Test_makeContainerName(t *testing.T) {
 		args args
 		want string
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -731,7 +731,7 @@ func Test_modifyContainerNamespaceOptions(t *testing.T) {
 		{
 			name: "normal test",
 			args: args{
-				nsOpts:       &runtime.NamespaceOption{true, true, false},
+				nsOpts:       &runtime.NamespaceOption{HostNetwork: true, HostPid: true, HostIpc: false},
 				podSandboxID: "fakeSandBoxID",
 				hostConfig:   &apitypes.HostConfig{PidMode: "host", IpcMode: "host", NetworkMode: "host"},
 			},
@@ -949,7 +949,7 @@ func Test_modifyHostConfig(t *testing.T) {
 }
 
 func Test_modifyContainerConfig(t *testing.T) {
-	runAsUser := &runtime.Int64Value{int64(1)}
+	runAsUser := &runtime.Int64Value{Value: int64(1)}
 	configUser := strconv.FormatInt(1, 10)
 
 	type args struct {
@@ -1030,7 +1030,7 @@ func Test_applyContainerSecurityContext(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1058,7 +1058,7 @@ func TestCriManager_updateCreateConfig(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1273,7 +1273,7 @@ func Test_imageToCriImage(t *testing.T) {
 				RepoTags:    repoDigests,
 				RepoDigests: repoDigests,
 				Size_:       uint64(1024),
-				Uid:         &runtime.Int64Value{uid},
+				Uid:         &runtime.Int64Value{Value: uid},
 				Username:    "",
 			},
 			wantErr: nil,
@@ -1331,7 +1331,7 @@ func TestCriManager_ensureSandboxImageExists(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-	// TODO: Add test cases.
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -18,8 +18,32 @@ func TestParsePortBinding(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{name: "testCase1", args: args{ports: []string{"127.0.0.1:80:80"}}, want: map[string][]types.PortBinding{"80/tcp": {types.PortBinding{"127.0.0.1", "80"}}}, wantErr: false},
-		{name: "testCase2", args: args{ports: []string{"26:22"}}, want: map[string][]types.PortBinding{"22/tcp": {types.PortBinding{"", "26"}}}, wantErr: false},
+		{
+			name: "testCase1",
+			args: args{ports: []string{"127.0.0.1:80:80"}},
+			want: map[string][]types.PortBinding{
+				"80/tcp": {
+					{
+						HostIP:   "127.0.0.1",
+						HostPort: "80",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testCase2",
+			args: args{ports: []string{"26:22"}},
+			want: map[string][]types.PortBinding{
+				"22/tcp": {
+					{
+						HostIP:   "",
+						HostPort: "26",
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

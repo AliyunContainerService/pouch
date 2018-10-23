@@ -62,7 +62,8 @@ COVERAGE_PACKAGES=$(shell go list ./... | \
 				  grep -v github.com/alibaba/pouch$$ | \
 				  grep -v github.com/alibaba/pouch/storage/volume/examples/demo | \
 				  grep -v github.com/alibaba/pouch/test | \
-				  grep -v github.com/alibaba/pouch/cli | \
+				  grep -v github.com/alibaba/pouch/cli$$ | \
+				  grep -v github.com/alibaba/pouch/cli/ | \
 				  grep -v github.com/alibaba/pouch/cri/apis | \
 				  grep -v github.com/alibaba/pouch/apis/types )
 

@@ -7,7 +7,7 @@ jobs:
     docker:
       # this image is build from Dockerfile located in ./.circleci/Dockerfile
       - image: allencloud/pouchlint:v0.1
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/alibaba/pouch
     steps:
       - checkout
       - run:
@@ -25,8 +25,8 @@ jobs:
 
   code-check:
     docker: 
-      - image: golang:1.9.1
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: golang:1.10.4
+    working_directory: /go/src/github.com/alibaba/pouch
     steps:
       - checkout
       - run: 
