@@ -339,3 +339,13 @@ func (suite *PouchStartSuite) TestStartMultiContainers(c *check.C) {
 	res = command.PouchRun("stop", containernames[0], containernames[1])
 	res.Assert(c, icmd.Success)
 }
+
+// TestStartContainerTwice tries to start a container twice
+func (suite *PouchStartSuite) TestStartContainerTwice(c *check.C) {
+	name := "TestStartContainerTwice"
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+}
