@@ -135,13 +135,13 @@ To enable users other than root can run pouch command directly without `sudo`, p
 If you want the unix socket to be owned by pouch group, make sure it exists or you need to create it.
 
 ```bash
-groupadd pouch
+sudo groupadd pouch
 ```
 
 **2. start pouchd**
 
 ```bash
-service pouch restart
+sudo service pouch restart
 ```
 
 **3. add user to group**
@@ -149,7 +149,7 @@ service pouch restart
 Add user who wants to have access to the pouch group.
 
 ```bash
-gpasswd -a $user pouch
+sudo gpasswd -a $USER pouch
 ```
 
 Remind that you should relogin to make /etc/group take effect, check it by typing groups to see if your shell gets pouch group.
