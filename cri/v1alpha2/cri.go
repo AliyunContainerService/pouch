@@ -271,6 +271,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		if retErr != nil {
 			if err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
 				logrus.Errorf("failed to remove container when running sandbox failed %q: %v", id, err)
+				return
 			}
 			// should not remove the sandbox container metadata from sandboxStore
 			// until it was removed by pouchd.
