@@ -6,9 +6,8 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
@@ -19,7 +18,6 @@ import (
 // think you should use `update` API interface.
 //
 // swagger:model ContainerUpgradeConfig
-
 type ContainerUpgradeConfig struct {
 
 	// Execution commands and args
@@ -35,52 +33,17 @@ type ContainerUpgradeConfig struct {
 	Image string `json:"Image"`
 }
 
-/* polymorph ContainerUpgradeConfig Cmd false */
-
-/* polymorph ContainerUpgradeConfig Entrypoint false */
-
-/* polymorph ContainerUpgradeConfig Image false */
-
 // Validate validates this container upgrade config
 func (m *ContainerUpgradeConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateCmd(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateEntrypoint(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateImage(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *ContainerUpgradeConfig) validateCmd(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Cmd) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *ContainerUpgradeConfig) validateEntrypoint(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Entrypoint) { // not required
-		return nil
-	}
-
 	return nil
 }
 

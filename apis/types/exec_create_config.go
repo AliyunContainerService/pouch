@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ExecCreateConfig is a small subset of the Config struct that holds the configuration.
 // swagger:model ExecCreateConfig
-
 type ExecCreateConfig struct {
 
 	// Attach the standard error
@@ -50,37 +48,11 @@ type ExecCreateConfig struct {
 	User string `json:"User,omitempty"`
 }
 
-/* polymorph ExecCreateConfig AttachStderr false */
-
-/* polymorph ExecCreateConfig AttachStdin false */
-
-/* polymorph ExecCreateConfig AttachStdout false */
-
-/* polymorph ExecCreateConfig Cmd false */
-
-/* polymorph ExecCreateConfig Detach false */
-
-/* polymorph ExecCreateConfig DetachKeys false */
-
-/* polymorph ExecCreateConfig Env false */
-
-/* polymorph ExecCreateConfig Privileged false */
-
-/* polymorph ExecCreateConfig Tty false */
-
-/* polymorph ExecCreateConfig User false */
-
 // Validate validates this exec create config
 func (m *ExecCreateConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCmd(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateEnv(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -100,15 +72,6 @@ func (m *ExecCreateConfig) validateCmd(formats strfmt.Registry) error {
 
 	if err := validate.MinItems("Cmd", "body", iCmdSize, 1); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *ExecCreateConfig) validateEnv(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Env) { // not required
-		return nil
 	}
 
 	return nil

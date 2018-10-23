@@ -12,7 +12,7 @@ readonly cmd="nsenter"
 nsenter::check_version() {
   local has_installed version
 
-  has_installed="$(command -v nsenter1 || echo false)"
+  has_installed="$(command -v nsenter || echo false)"
   if [[ "${has_installed}" = "false" ]]; then
     echo false
     exit 0

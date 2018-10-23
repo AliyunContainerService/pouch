@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // IndexInfo IndexInfo contains information about a registry.
 // swagger:model IndexInfo
-
 type IndexInfo struct {
 
 	// List of mirrors, expressed as URIs.
@@ -45,35 +42,8 @@ type IndexInfo struct {
 	Secure bool `json:"Secure,omitempty"`
 }
 
-/* polymorph IndexInfo Mirrors false */
-
-/* polymorph IndexInfo Name false */
-
-/* polymorph IndexInfo Official false */
-
-/* polymorph IndexInfo Secure false */
-
 // Validate validates this index info
 func (m *IndexInfo) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateMirrors(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *IndexInfo) validateMirrors(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Mirrors) { // not required
-		return nil
-	}
-
 	return nil
 }
 

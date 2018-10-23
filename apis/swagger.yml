@@ -117,7 +117,7 @@ paths:
         200:
           description: "no error"
           schema:
-            $ref: '#definitions/EventsMessage'
+            $ref: '#/definitions/EventsMessage'
         400:
           description: "bad parameter"
           schema:
@@ -895,18 +895,10 @@ paths:
       operationId: "ContainerCheckpointCreate"
       parameters:
         - $ref: "#/parameters/id"
-        - name: "checkpointdir"
-          in: "query"
-          description: "checkpoint directory"
-          type: "string"
-        - name: "checkpointid"
-          in: "query"
-          description: "checkpoint id"
-          type: "string"
-        - name: "exit"
-          in: "query"
-          description: "exit after checkpoint"
-          type: "bool"
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/CheckpointCreateOptions"
       responses:
         201:
           description: "created"
@@ -917,8 +909,6 @@ paths:
         404:
           $ref: "#/responses/404ErrorResponse"
       tags: ["Container"]
-
-  /containers/{id}/checkpoints:
     get:
       summary: "list checkpoints of a container"
       operationId: "ContainerCheckpointList"
@@ -939,19 +929,20 @@ paths:
           $ref: "#/responses/404ErrorResponse"
       tags: ["Container"]
 
-  /containers/{id}/checkpoints/{id}:
+  /containers/{id}/checkpoints/{checkpointId}:
     delete:
       summary: "delete a checkpoint of a container"
       operationId: "ContainerCheckpointDelete"
       parameters:
         - $ref: "#/parameters/id"
-        - name: "checkpointdir"
+        - name: "checkpointId"
+          in: "path"
+          description: "checkpoint id"
+          type: "string"
+          required: true
+        - name: "dir"
           in: "query"
           description: "checkpoint directory"
-          type: "string"
-        - name: "checkpointid"
-          in: "query"
-          description: "checkpoint id"
           type: "string"
       responses:
         204:
@@ -2534,17 +2525,13 @@ definitions:
   Resources:
     description: "A container's resources (cgroups config, ulimits, etc)"
     type: "object"
-    required: [CpuShares, Memory, CgroupParent, BlkioWeight, CpuPeriod, CpuQuota, CpuRealtimePeriod, 
-    CpuRealtimeRuntime, CpusetCpus, CpusetMems, DeviceCgroupRules, KernelMemory, MemoryReservation, 
-    MemorySwap, MemorySwappiness, NanoCpus, OomKillDisable, PidsLimit, CpuCount, CpuPercent, 
-    IOMaximumIOps, IOMaximumBandwidth, IntelRdtL3Cbm, ScheLatSwitch, MemoryWmarkRatio, MemoryExtra, 
-    MemoryForceEmptyCtl]
     properties:
       # Applicable to UNIX platforms
       CgroupParent:
         description: "Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist."
         type: "string"
         x-nullable: false
+        x-omitempty: false
       BlkioWeight:
         description: "Block IO weight (relative weight), need CFQ IO Scheduler enable."
         type: "integer"
@@ -2552,6 +2539,7 @@ definitions:
         x-nullable: false
         minimum: 0
         maximum: 1000
+        x-omitempty: false
       BlkioWeightDevice:
         description: |
           Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.
@@ -2586,6 +2574,7 @@ definitions:
         description: "An integer value representing this container's relative CPU weight versus other containers."
         type: "integer"
         x-nullable: false
+        x-omitempty: false
       CpuPeriod:
         description: |
           CPU CFS (Completely Fair Scheduler) period.
@@ -2595,6 +2584,7 @@ definitions:
         minimum: 1000
         maximum: 1000000
         x-nullable: false
+        x-omitempty: false
       CpuQuota:
         description: |
           CPU CFS (Completely Fair Scheduler) quota.
@@ -2603,25 +2593,30 @@ definitions:
         format: "int64"
         minimum: 1000
         x-nullable: false
+        x-omitempty: false
       CpuRealtimePeriod:
         description: "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       CpuRealtimeRuntime:
         description: "The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       CpusetCpus:
         description: "CPUs in which to allow execution (e.g., `0-3`, `0,1`)"
         type: "string"
         example: "0-3"
         x-nullable: false
+        x-omitempty: false
       CpusetMems:
         description: "Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems."
         type: "string"
         x-nullable: false
+        x-omitempty: false
       Devices:
         description: "A list of devices to add to the container."
         type: "array"
@@ -2638,42 +2633,50 @@ definitions:
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       Memory:
         description: "Memory limit in bytes."
         type: "integer"
         default: 0
         x-nullable: false
+        x-omitempty: false
       MemoryReservation:
         description: "Memory soft limit in bytes."
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       MemorySwap:
         description: "Total memory limit (memory + swap). Set as `-1` to enable unlimited swap."
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       MemorySwappiness:
         description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
         type: "integer"
         format: "int64"
         minimum: 0
         maximum: 100
+        x-omitempty: false
       NanoCpus:
         description: "CPU quota in units of 10<sup>-9</sup> CPUs."
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       OomKillDisable:
         description: "Disable OOM Killer for the container."
         type: "boolean"
         x-nullable: true
+        x-omitempty: false
       PidsLimit:
         description: |
           Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       Ulimits:
         description: |
           A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
@@ -2688,6 +2691,7 @@ definitions:
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       CpuPercent:
         description: |
           The usable percentage of the available CPUs (Windows only).
@@ -2695,20 +2699,24 @@ definitions:
         type: "integer"
         format: "int64"
         x-nullable: false
+        x-omitempty: false
       IOMaximumIOps:
         description: "Maximum IOps for the container system drive (Windows only)"
         type: "integer"
         format: "uint64"
         x-nullable: false
+        x-omitempty: false
       IOMaximumBandwidth:
         description: "Maximum IO in bytes per second for the container system drive (Windows only)"
         type: "integer"
         format: "uint64"
         x-nullable: false
+        x-omitempty: false
       IntelRdtL3Cbm:
         description: "IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available."
         type: "string"
         x-nullable: false
+        x-omitempty: false
 
       # applicable to AliKenerl 4.9
       ScheLatSwitch:
@@ -2718,6 +2726,7 @@ definitions:
         minimum: 0
         maximum: 1
         x-nullable: false
+        x-omitempty: false
       MemoryWmarkRatio:
         description: | 
           MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. 
@@ -2727,6 +2736,7 @@ definitions:
         x-nullable: true
         minimum: 0
         maximum: 100
+        x-omitempty: false
       MemoryExtra:
         description: |
           MemoryExtra is an integer value representing this container's memory high water mark percentage.
@@ -2736,6 +2746,7 @@ definitions:
         x-nullable: true
         minimum: 0
         maximum: 100
+        x-omitempty: false
       MemoryForceEmptyCtl:
         description: "MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup."
         type: "integer"
@@ -2743,6 +2754,7 @@ definitions:
         x-nullable: false
         minimum: 0
         maximum: 1
+        x-omitempty: false
       NvidiaConfig:
         $ref: "#/definitions/NvidiaConfig"
 

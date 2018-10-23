@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // EndpointResource NetworkResource is the body of the "get network" http response message
 // swagger:model EndpointResource
-
 type EndpointResource struct {
 
 	// EndpointID represents the endpoint's id
@@ -33,23 +30,8 @@ type EndpointResource struct {
 	Name string `json:"Name,omitempty"`
 }
 
-/* polymorph EndpointResource EndpointID false */
-
-/* polymorph EndpointResource IPv4Address false */
-
-/* polymorph EndpointResource IPv6Address false */
-
-/* polymorph EndpointResource MacAddress false */
-
-/* polymorph EndpointResource Name false */
-
 // Validate validates this endpoint resource
 func (m *EndpointResource) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

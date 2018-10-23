@@ -8,16 +8,14 @@ package types
 import (
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ContainerConfig Configuration for a container that is portable between hosts
 // swagger:model ContainerConfig
-
 type ContainerConfig struct {
 
 	// Command is already escaped (Windows only)
@@ -63,6 +61,7 @@ type ContainerConfig struct {
 
 	// The hostname to use for the container, as a valid RFC 1123 hostname.
 	// Min Length: 1
+	// Format: hostname
 	Hostname strfmt.Hostname `json:"Hostname,omitempty"`
 
 	// The name of the image to use when creating the container
@@ -100,6 +99,7 @@ type ContainerConfig struct {
 	Rich bool `json:"Rich,omitempty"`
 
 	// Choose one rich container mode.(default dumb-init)
+	// Enum: [dumb-init sbin-init systemd]
 	RichMode string `json:"RichMode,omitempty"`
 
 	// Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.
@@ -130,154 +130,33 @@ type ContainerConfig struct {
 	WorkingDir string `json:"WorkingDir,omitempty"`
 }
 
-/* polymorph ContainerConfig ArgsEscaped false */
-
-/* polymorph ContainerConfig AttachStderr false */
-
-/* polymorph ContainerConfig AttachStdin false */
-
-/* polymorph ContainerConfig AttachStdout false */
-
-/* polymorph ContainerConfig Cmd false */
-
-/* polymorph ContainerConfig DisableNetworkFiles false */
-
-/* polymorph ContainerConfig DiskQuota false */
-
-/* polymorph ContainerConfig Domainname false */
-
-/* polymorph ContainerConfig Entrypoint false */
-
-/* polymorph ContainerConfig Env false */
-
-/* polymorph ContainerConfig ExposedPorts false */
-
-/* polymorph ContainerConfig Hostname false */
-
-/* polymorph ContainerConfig Image false */
-
-/* polymorph ContainerConfig InitScript false */
-
-/* polymorph ContainerConfig Labels false */
-
-/* polymorph ContainerConfig MacAddress false */
-
-/* polymorph ContainerConfig NetPriority false */
-
-/* polymorph ContainerConfig NetworkDisabled false */
-
-/* polymorph ContainerConfig OnBuild false */
-
-/* polymorph ContainerConfig OpenStdin false */
-
-/* polymorph ContainerConfig QuotaID false */
-
-/* polymorph ContainerConfig Rich false */
-
-/* polymorph ContainerConfig RichMode false */
-
-/* polymorph ContainerConfig Shell false */
-
-/* polymorph ContainerConfig SpecAnnotation false */
-
-/* polymorph ContainerConfig StdinOnce false */
-
-/* polymorph ContainerConfig StopSignal false */
-
-/* polymorph ContainerConfig StopTimeout false */
-
-/* polymorph ContainerConfig Tty false */
-
-/* polymorph ContainerConfig User false */
-
-/* polymorph ContainerConfig Volumes false */
-
-/* polymorph ContainerConfig WorkingDir false */
-
 // Validate validates this container config
 func (m *ContainerConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateCmd(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateEntrypoint(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateEnv(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
 	if err := m.validateExposedPorts(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateHostname(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateImage(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateOnBuild(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateRichMode(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateShell(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateVolumes(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *ContainerConfig) validateCmd(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Cmd) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *ContainerConfig) validateEntrypoint(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Entrypoint) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *ContainerConfig) validateEnv(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Env) { // not required
-		return nil
-	}
-
 	return nil
 }
 
@@ -293,6 +172,7 @@ func init() {
 		containerConfigExposedPortsValueEnum = append(containerConfigExposedPortsValueEnum, v)
 	}
 }
+
 func (m *ContainerConfig) validateExposedPortsValueEnum(path, location string, value interface{}) error {
 	if err := validate.Enum(path, location, value, containerConfigExposedPortsValueEnum); err != nil {
 		return err
@@ -306,14 +186,10 @@ func (m *ContainerConfig) validateExposedPorts(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if swag.IsZero(m.ExposedPorts) { // not required
-		return nil
-	}
-
 	for k := range m.ExposedPorts {
 
-		if swag.IsZero(m.ExposedPorts[k]) { // not required
-			continue
+		if err := m.validateExposedPortsValueEnum("ExposedPorts"+"."+k, "body", m.ExposedPorts[k]); err != nil {
+			return err
 		}
 
 	}
@@ -347,15 +223,6 @@ func (m *ContainerConfig) validateImage(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ContainerConfig) validateOnBuild(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.OnBuild) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 var containerConfigTypeRichModePropEnum []interface{}
 
 func init() {
@@ -369,10 +236,13 @@ func init() {
 }
 
 const (
+
 	// ContainerConfigRichModeDumbInit captures enum value "dumb-init"
 	ContainerConfigRichModeDumbInit string = "dumb-init"
+
 	// ContainerConfigRichModeSbinInit captures enum value "sbin-init"
 	ContainerConfigRichModeSbinInit string = "sbin-init"
+
 	// ContainerConfigRichModeSystemd captures enum value "systemd"
 	ContainerConfigRichModeSystemd string = "systemd"
 )
@@ -399,15 +269,6 @@ func (m *ContainerConfig) validateRichMode(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ContainerConfig) validateShell(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Shell) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 // additional properties value enum
 var containerConfigVolumesValueEnum []interface{}
 
@@ -420,6 +281,7 @@ func init() {
 		containerConfigVolumesValueEnum = append(containerConfigVolumesValueEnum, v)
 	}
 }
+
 func (m *ContainerConfig) validateVolumesValueEnum(path, location string, value interface{}) error {
 	if err := validate.Enum(path, location, value, containerConfigVolumesValueEnum); err != nil {
 		return err
@@ -433,14 +295,10 @@ func (m *ContainerConfig) validateVolumes(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if swag.IsZero(m.Volumes) { // not required
-		return nil
-	}
-
 	for k := range m.Volumes {
 
-		if swag.IsZero(m.Volumes[k]) { // not required
-			continue
+		if err := m.validateVolumesValueEnum("Volumes"+"."+k, "body", m.Volumes[k]); err != nil {
+			return err
 		}
 
 	}

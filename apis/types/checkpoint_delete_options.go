@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // CheckpointDeleteOptions options of deleting a checkpoint from a container
 // swagger:model CheckpointDeleteOptions
-
 type CheckpointDeleteOptions struct {
 
 	// checkpoint dir
@@ -24,17 +21,8 @@ type CheckpointDeleteOptions struct {
 	CheckpointID string `json:"CheckpointID,omitempty"`
 }
 
-/* polymorph CheckpointDeleteOptions CheckpointDir false */
-
-/* polymorph CheckpointDeleteOptions CheckpointID false */
-
 // Validate validates this checkpoint delete options
 func (m *CheckpointDeleteOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

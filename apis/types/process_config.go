@@ -6,16 +6,14 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // ProcessConfig ExecProcessConfig holds information about the exec process.
 // swagger:model ProcessConfig
-
 type ProcessConfig struct {
 
 	// arguments
@@ -39,42 +37,27 @@ type ProcessConfig struct {
 	User string `json:"user"`
 }
 
-/* polymorph ProcessConfig arguments false */
-
-/* polymorph ProcessConfig entrypoint false */
-
-/* polymorph ProcessConfig privileged false */
-
-/* polymorph ProcessConfig tty false */
-
-/* polymorph ProcessConfig user false */
-
 // Validate validates this process config
 func (m *ProcessConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateArguments(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateEntrypoint(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validatePrivileged(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateTty(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateUser(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 

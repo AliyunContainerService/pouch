@@ -6,15 +6,13 @@ package types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkConnect contains the request for the remote API: POST /networks/{id:.*}/connect
 // swagger:model NetworkConnect
-
 type NetworkConnect struct {
 
 	// The ID or name of the container to connect to the network.
@@ -24,16 +22,11 @@ type NetworkConnect struct {
 	EndpointConfig *EndpointSettings `json:"EndpointConfig,omitempty"`
 }
 
-/* polymorph NetworkConnect Container false */
-
-/* polymorph NetworkConnect EndpointConfig false */
-
 // Validate validates this network connect
 func (m *NetworkConnect) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateEndpointConfig(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -50,7 +43,6 @@ func (m *NetworkConnect) validateEndpointConfig(formats strfmt.Registry) error {
 	}
 
 	if m.EndpointConfig != nil {
-
 		if err := m.EndpointConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("EndpointConfig")

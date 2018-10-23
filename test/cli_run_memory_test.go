@@ -125,7 +125,7 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 		"--memory-swappiness", "-1",
 		"--name", cname, busyboxImage, "top")
 	DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
+	c.Assert(res.ExitCode, check.Equals, 1)
 
 	cname = "TestRunWithMemoryswappiness"
 	memory := "100m"

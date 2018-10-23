@@ -9,16 +9,14 @@ import (
 	"encoding/json"
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // HostConfig Container configuration that depends on the host we are running on
 // swagger:model HostConfig
-
 type HostConfig struct {
 
 	// Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set.
@@ -84,6 +82,7 @@ type HostConfig struct {
 	IpcMode string `json:"IpcMode,omitempty"`
 
 	// Isolation technology of the container. (Windows only)
+	// Enum: [default process hyperv]
 	Isolation string `json:"Isolation,omitempty"`
 
 	// A list of links for the container in the form `container_name:alias`.
@@ -127,6 +126,7 @@ type HostConfig struct {
 	Rich bool `json:"Rich,omitempty"`
 
 	// Choose one rich container mode.(default dumb-init)
+	// Enum: [dumb-init sbin-init systemd]
 	RichMode string `json:"RichMode,omitempty"`
 
 	// Runtime to use with this container.
@@ -168,33 +168,33 @@ type HostConfig struct {
 
 // UnmarshalJSON unmarshals this object from a JSON structure
 func (m *HostConfig) UnmarshalJSON(raw []byte) error {
-
-	var data struct {
+	// AO0
+	var dataAO0 struct {
 		AutoRemove bool `json:"AutoRemove,omitempty"`
 
-		Binds []string `json:"Binds,omitempty"`
+		Binds []string `json:"Binds"`
 
-		CapAdd []string `json:"CapAdd,omitempty"`
+		CapAdd []string `json:"CapAdd"`
 
-		CapDrop []string `json:"CapDrop,omitempty"`
+		CapDrop []string `json:"CapDrop"`
 
 		Cgroup string `json:"Cgroup,omitempty"`
 
-		ConsoleSize []*int64 `json:"ConsoleSize,omitempty"`
+		ConsoleSize []*int64 `json:"ConsoleSize"`
 
 		ContainerIDFile string `json:"ContainerIDFile,omitempty"`
 
-		DNS []string `json:"Dns,omitempty"`
+		DNS []string `json:"Dns"`
 
-		DNSOptions []string `json:"DnsOptions,omitempty"`
+		DNSOptions []string `json:"DnsOptions"`
 
-		DNSSearch []string `json:"DnsSearch,omitempty"`
+		DNSSearch []string `json:"DnsSearch"`
 
 		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
 
-		ExtraHosts []string `json:"ExtraHosts,omitempty"`
+		ExtraHosts []string `json:"ExtraHosts"`
 
-		GroupAdd []string `json:"GroupAdd,omitempty"`
+		GroupAdd []string `json:"GroupAdd"`
 
 		InitScript string `json:"InitScript,omitempty"`
 
@@ -202,7 +202,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		Isolation string `json:"Isolation,omitempty"`
 
-		Links []string `json:"Links,omitempty"`
+		Links []string `json:"Links"`
 
 		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
@@ -228,7 +228,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		Runtime string `json:"Runtime,omitempty"`
 
-		SecurityOpt []string `json:"SecurityOpt,omitempty"`
+		SecurityOpt []string `json:"SecurityOpt"`
 
 		ShmSize *int64 `json:"ShmSize,omitempty"`
 
@@ -244,88 +244,89 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		VolumeDriver string `json:"VolumeDriver,omitempty"`
 
-		VolumesFrom []string `json:"VolumesFrom,omitempty"`
+		VolumesFrom []string `json:"VolumesFrom"`
 	}
-	if err := swag.ReadJSON(raw, &data); err != nil {
+	if err := swag.ReadJSON(raw, &dataAO0); err != nil {
 		return err
 	}
 
-	m.AutoRemove = data.AutoRemove
+	m.AutoRemove = dataAO0.AutoRemove
 
-	m.Binds = data.Binds
+	m.Binds = dataAO0.Binds
 
-	m.CapAdd = data.CapAdd
+	m.CapAdd = dataAO0.CapAdd
 
-	m.CapDrop = data.CapDrop
+	m.CapDrop = dataAO0.CapDrop
 
-	m.Cgroup = data.Cgroup
+	m.Cgroup = dataAO0.Cgroup
 
-	m.ConsoleSize = data.ConsoleSize
+	m.ConsoleSize = dataAO0.ConsoleSize
 
-	m.ContainerIDFile = data.ContainerIDFile
+	m.ContainerIDFile = dataAO0.ContainerIDFile
 
-	m.DNS = data.DNS
+	m.DNS = dataAO0.DNS
 
-	m.DNSOptions = data.DNSOptions
+	m.DNSOptions = dataAO0.DNSOptions
 
-	m.DNSSearch = data.DNSSearch
+	m.DNSSearch = dataAO0.DNSSearch
 
-	m.EnableLxcfs = data.EnableLxcfs
+	m.EnableLxcfs = dataAO0.EnableLxcfs
 
-	m.ExtraHosts = data.ExtraHosts
+	m.ExtraHosts = dataAO0.ExtraHosts
 
-	m.GroupAdd = data.GroupAdd
+	m.GroupAdd = dataAO0.GroupAdd
 
-	m.InitScript = data.InitScript
+	m.InitScript = dataAO0.InitScript
 
-	m.IpcMode = data.IpcMode
+	m.IpcMode = dataAO0.IpcMode
 
-	m.Isolation = data.Isolation
+	m.Isolation = dataAO0.Isolation
 
-	m.Links = data.Links
+	m.Links = dataAO0.Links
 
-	m.LogConfig = data.LogConfig
+	m.LogConfig = dataAO0.LogConfig
 
-	m.NetworkMode = data.NetworkMode
+	m.NetworkMode = dataAO0.NetworkMode
 
-	m.OomScoreAdj = data.OomScoreAdj
+	m.OomScoreAdj = dataAO0.OomScoreAdj
 
-	m.PidMode = data.PidMode
+	m.PidMode = dataAO0.PidMode
 
-	m.PortBindings = data.PortBindings
+	m.PortBindings = dataAO0.PortBindings
 
-	m.Privileged = data.Privileged
+	m.Privileged = dataAO0.Privileged
 
-	m.PublishAllPorts = data.PublishAllPorts
+	m.PublishAllPorts = dataAO0.PublishAllPorts
 
-	m.ReadonlyRootfs = data.ReadonlyRootfs
+	m.ReadonlyRootfs = dataAO0.ReadonlyRootfs
 
-	m.RestartPolicy = data.RestartPolicy
+	m.RestartPolicy = dataAO0.RestartPolicy
 
-	m.Rich = data.Rich
+	m.Rich = dataAO0.Rich
 
-	m.RichMode = data.RichMode
+	m.RichMode = dataAO0.RichMode
 
-	m.Runtime = data.Runtime
+	m.Runtime = dataAO0.Runtime
 
-	m.SecurityOpt = data.SecurityOpt
+	m.SecurityOpt = dataAO0.SecurityOpt
 
-	m.ShmSize = data.ShmSize
+	m.ShmSize = dataAO0.ShmSize
 
-	m.StorageOpt = data.StorageOpt
+	m.StorageOpt = dataAO0.StorageOpt
 
-	m.Sysctls = data.Sysctls
+	m.Sysctls = dataAO0.Sysctls
 
-	m.Tmpfs = data.Tmpfs
+	m.Tmpfs = dataAO0.Tmpfs
 
-	m.UTSMode = data.UTSMode
+	m.UTSMode = dataAO0.UTSMode
 
-	m.UsernsMode = data.UsernsMode
+	m.UsernsMode = dataAO0.UsernsMode
 
-	m.VolumeDriver = data.VolumeDriver
+	m.VolumeDriver = dataAO0.VolumeDriver
 
-	m.VolumesFrom = data.VolumesFrom
+	m.VolumesFrom = dataAO0.VolumesFrom
 
+	// AO1
 	var aO1 Resources
 	if err := swag.ReadJSON(raw, &aO1); err != nil {
 		return err
@@ -337,34 +338,34 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 // MarshalJSON marshals this object to a JSON structure
 func (m HostConfig) MarshalJSON() ([]byte, error) {
-	var _parts [][]byte
+	_parts := make([][]byte, 0, 2)
 
-	var data struct {
+	var dataAO0 struct {
 		AutoRemove bool `json:"AutoRemove,omitempty"`
 
-		Binds []string `json:"Binds,omitempty"`
+		Binds []string `json:"Binds"`
 
-		CapAdd []string `json:"CapAdd,omitempty"`
+		CapAdd []string `json:"CapAdd"`
 
-		CapDrop []string `json:"CapDrop,omitempty"`
+		CapDrop []string `json:"CapDrop"`
 
 		Cgroup string `json:"Cgroup,omitempty"`
 
-		ConsoleSize []*int64 `json:"ConsoleSize,omitempty"`
+		ConsoleSize []*int64 `json:"ConsoleSize"`
 
 		ContainerIDFile string `json:"ContainerIDFile,omitempty"`
 
-		DNS []string `json:"Dns,omitempty"`
+		DNS []string `json:"Dns"`
 
-		DNSOptions []string `json:"DnsOptions,omitempty"`
+		DNSOptions []string `json:"DnsOptions"`
 
-		DNSSearch []string `json:"DnsSearch,omitempty"`
+		DNSSearch []string `json:"DnsSearch"`
 
 		EnableLxcfs bool `json:"EnableLxcfs,omitempty"`
 
-		ExtraHosts []string `json:"ExtraHosts,omitempty"`
+		ExtraHosts []string `json:"ExtraHosts"`
 
-		GroupAdd []string `json:"GroupAdd,omitempty"`
+		GroupAdd []string `json:"GroupAdd"`
 
 		InitScript string `json:"InitScript,omitempty"`
 
@@ -372,7 +373,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		Isolation string `json:"Isolation,omitempty"`
 
-		Links []string `json:"Links,omitempty"`
+		Links []string `json:"Links"`
 
 		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
@@ -398,7 +399,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		Runtime string `json:"Runtime,omitempty"`
 
-		SecurityOpt []string `json:"SecurityOpt,omitempty"`
+		SecurityOpt []string `json:"SecurityOpt"`
 
 		ShmSize *int64 `json:"ShmSize,omitempty"`
 
@@ -414,90 +415,90 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		VolumeDriver string `json:"VolumeDriver,omitempty"`
 
-		VolumesFrom []string `json:"VolumesFrom,omitempty"`
+		VolumesFrom []string `json:"VolumesFrom"`
 	}
 
-	data.AutoRemove = m.AutoRemove
+	dataAO0.AutoRemove = m.AutoRemove
 
-	data.Binds = m.Binds
+	dataAO0.Binds = m.Binds
 
-	data.CapAdd = m.CapAdd
+	dataAO0.CapAdd = m.CapAdd
 
-	data.CapDrop = m.CapDrop
+	dataAO0.CapDrop = m.CapDrop
 
-	data.Cgroup = m.Cgroup
+	dataAO0.Cgroup = m.Cgroup
 
-	data.ConsoleSize = m.ConsoleSize
+	dataAO0.ConsoleSize = m.ConsoleSize
 
-	data.ContainerIDFile = m.ContainerIDFile
+	dataAO0.ContainerIDFile = m.ContainerIDFile
 
-	data.DNS = m.DNS
+	dataAO0.DNS = m.DNS
 
-	data.DNSOptions = m.DNSOptions
+	dataAO0.DNSOptions = m.DNSOptions
 
-	data.DNSSearch = m.DNSSearch
+	dataAO0.DNSSearch = m.DNSSearch
 
-	data.EnableLxcfs = m.EnableLxcfs
+	dataAO0.EnableLxcfs = m.EnableLxcfs
 
-	data.ExtraHosts = m.ExtraHosts
+	dataAO0.ExtraHosts = m.ExtraHosts
 
-	data.GroupAdd = m.GroupAdd
+	dataAO0.GroupAdd = m.GroupAdd
 
-	data.InitScript = m.InitScript
+	dataAO0.InitScript = m.InitScript
 
-	data.IpcMode = m.IpcMode
+	dataAO0.IpcMode = m.IpcMode
 
-	data.Isolation = m.Isolation
+	dataAO0.Isolation = m.Isolation
 
-	data.Links = m.Links
+	dataAO0.Links = m.Links
 
-	data.LogConfig = m.LogConfig
+	dataAO0.LogConfig = m.LogConfig
 
-	data.NetworkMode = m.NetworkMode
+	dataAO0.NetworkMode = m.NetworkMode
 
-	data.OomScoreAdj = m.OomScoreAdj
+	dataAO0.OomScoreAdj = m.OomScoreAdj
 
-	data.PidMode = m.PidMode
+	dataAO0.PidMode = m.PidMode
 
-	data.PortBindings = m.PortBindings
+	dataAO0.PortBindings = m.PortBindings
 
-	data.Privileged = m.Privileged
+	dataAO0.Privileged = m.Privileged
 
-	data.PublishAllPorts = m.PublishAllPorts
+	dataAO0.PublishAllPorts = m.PublishAllPorts
 
-	data.ReadonlyRootfs = m.ReadonlyRootfs
+	dataAO0.ReadonlyRootfs = m.ReadonlyRootfs
 
-	data.RestartPolicy = m.RestartPolicy
+	dataAO0.RestartPolicy = m.RestartPolicy
 
-	data.Rich = m.Rich
+	dataAO0.Rich = m.Rich
 
-	data.RichMode = m.RichMode
+	dataAO0.RichMode = m.RichMode
 
-	data.Runtime = m.Runtime
+	dataAO0.Runtime = m.Runtime
 
-	data.SecurityOpt = m.SecurityOpt
+	dataAO0.SecurityOpt = m.SecurityOpt
 
-	data.ShmSize = m.ShmSize
+	dataAO0.ShmSize = m.ShmSize
 
-	data.StorageOpt = m.StorageOpt
+	dataAO0.StorageOpt = m.StorageOpt
 
-	data.Sysctls = m.Sysctls
+	dataAO0.Sysctls = m.Sysctls
 
-	data.Tmpfs = m.Tmpfs
+	dataAO0.Tmpfs = m.Tmpfs
 
-	data.UTSMode = m.UTSMode
+	dataAO0.UTSMode = m.UTSMode
 
-	data.UsernsMode = m.UsernsMode
+	dataAO0.UsernsMode = m.UsernsMode
 
-	data.VolumeDriver = m.VolumeDriver
+	dataAO0.VolumeDriver = m.VolumeDriver
 
-	data.VolumesFrom = m.VolumesFrom
+	dataAO0.VolumesFrom = m.VolumesFrom
 
-	jsonData, err := swag.WriteJSON(data)
-	if err != nil {
-		return nil, err
+	jsonDataAO0, errAO0 := swag.WriteJSON(dataAO0)
+	if errAO0 != nil {
+		return nil, errAO0
 	}
-	_parts = append(_parts, jsonData)
+	_parts = append(_parts, jsonDataAO0)
 
 	aO1, err := swag.WriteJSON(m.Resources)
 	if err != nil {
@@ -512,47 +513,11 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateBinds(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCapAdd(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCapDrop(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateConsoleSize(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateDNS(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateDNSOptions(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateDNSSearch(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateExtraHosts(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateGroupAdd(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateIsolation(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateLinks(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -564,6 +529,10 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validatePortBindings(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateRestartPolicy(formats); err != nil {
 		res = append(res, err)
 	}
@@ -572,18 +541,11 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateSecurityOpt(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateShmSize(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateVolumesFrom(formats); err != nil {
-		res = append(res, err)
-	}
-
+	// validation for a type composition with Resources
 	if err := m.Resources.Validate(formats); err != nil {
 		res = append(res, err)
 	}
@@ -591,33 +553,6 @@ func (m *HostConfig) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *HostConfig) validateBinds(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Binds) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateCapAdd(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.CapAdd) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateCapDrop(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.CapDrop) { // not required
-		return nil
-	}
-
 	return nil
 }
 
@@ -638,7 +573,6 @@ func (m *HostConfig) validateConsoleSize(formats strfmt.Registry) error {
 	}
 
 	for i := 0; i < len(m.ConsoleSize); i++ {
-
 		if swag.IsZero(m.ConsoleSize[i]) { // not required
 			continue
 		}
@@ -647,51 +581,6 @@ func (m *HostConfig) validateConsoleSize(formats strfmt.Registry) error {
 			return err
 		}
 
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateDNS(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.DNS) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateDNSOptions(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.DNSOptions) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateDNSSearch(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.DNSSearch) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateExtraHosts(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ExtraHosts) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateGroupAdd(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.GroupAdd) { // not required
-		return nil
 	}
 
 	return nil
@@ -731,15 +620,6 @@ func (m *HostConfig) validateIsolation(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *HostConfig) validateLinks(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Links) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 func (m *HostConfig) validateLogConfig(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.LogConfig) { // not required
@@ -747,7 +627,6 @@ func (m *HostConfig) validateLogConfig(formats strfmt.Registry) error {
 	}
 
 	if m.LogConfig != nil {
-
 		if err := m.LogConfig.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("LogConfig")
@@ -776,6 +655,22 @@ func (m *HostConfig) validateOomScoreAdj(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *HostConfig) validatePortBindings(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.PortBindings) { // not required
+		return nil
+	}
+
+	if err := m.PortBindings.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("PortBindings")
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (m *HostConfig) validateRestartPolicy(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.RestartPolicy) { // not required
@@ -783,7 +678,6 @@ func (m *HostConfig) validateRestartPolicy(formats strfmt.Registry) error {
 	}
 
 	if m.RestartPolicy != nil {
-
 		if err := m.RestartPolicy.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("RestartPolicy")
@@ -829,15 +723,6 @@ func (m *HostConfig) validateRichMode(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *HostConfig) validateSecurityOpt(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.SecurityOpt) { // not required
-		return nil
-	}
-
-	return nil
-}
-
 func (m *HostConfig) validateShmSize(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.ShmSize) { // not required
@@ -846,15 +731,6 @@ func (m *HostConfig) validateShmSize(formats strfmt.Registry) error {
 
 	if err := validate.MinimumInt("ShmSize", "body", int64(*m.ShmSize), 0, false); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *HostConfig) validateVolumesFrom(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.VolumesFrom) { // not required
-		return nil
 	}
 
 	return nil

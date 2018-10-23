@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // IPAddress Address represents an IPv4 or IPv6 IP address.
 // swagger:model IPAddress
-
 type IPAddress struct {
 
 	// IP address.
@@ -24,17 +21,8 @@ type IPAddress struct {
 	PrefixLen int64 `json:"PrefixLen,omitempty"`
 }
 
-/* polymorph IPAddress Addr false */
-
-/* polymorph IPAddress PrefixLen false */
-
 // Validate validates this IP address
 func (m *IPAddress) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // CPUUsage CPUUsage stores All CPU stats aggregated since container inception.
 // swagger:model CPUUsage
-
 type CPUUsage struct {
 
 	// Total CPU time consumed per core (Linux).
@@ -34,35 +31,8 @@ type CPUUsage struct {
 	UsageInUsermode uint64 `json:"usage_in_usermode,omitempty"`
 }
 
-/* polymorph CPUUsage percpu_usage false */
-
-/* polymorph CPUUsage total_usage false */
-
-/* polymorph CPUUsage usage_in_kernelmode false */
-
-/* polymorph CPUUsage usage_in_usermode false */
-
 // Validate validates this CPU usage
 func (m *CPUUsage) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validatePercpuUsage(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *CPUUsage) validatePercpuUsage(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.PercpuUsage) { // not required
-		return nil
-	}
-
 	return nil
 }
 

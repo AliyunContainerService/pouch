@@ -7,8 +7,6 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
@@ -22,7 +20,6 @@ import (
 // - `volume=volume-id`
 //
 // swagger:model ContainerListOptions
-
 type ContainerListOptions struct {
 
 	// all
@@ -41,41 +38,8 @@ type ContainerListOptions struct {
 	Since string `json:"Since,omitempty"`
 }
 
-/* polymorph ContainerListOptions All false */
-
-/* polymorph ContainerListOptions Before false */
-
-/* polymorph ContainerListOptions Filter false */
-
-/* polymorph ContainerListOptions Limit false */
-
-/* polymorph ContainerListOptions Since false */
-
 // Validate validates this container list options
 func (m *ContainerListOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateFilter(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ContainerListOptions) validateFilter(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Filter) { // not required
-		return nil
-	}
-
-	if swag.IsZero(m.Filter) { // not required
-		return nil
-	}
-
 	return nil
 }
 

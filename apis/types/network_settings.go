@@ -8,16 +8,14 @@ package types
 import (
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // NetworkSettings NetworkSettings exposes the network settings in the API.
 // swagger:model NetworkSettings
-
 type NetworkSettings struct {
 
 	// Name of the network'a bridge (for example, `pouch-br`).
@@ -51,42 +49,23 @@ type NetworkSettings struct {
 	SecondaryIPV6Addresses []*IPAddress `json:"SecondaryIPv6Addresses"`
 }
 
-/* polymorph NetworkSettings Bridge false */
-
-/* polymorph NetworkSettings HairpinMode false */
-
-/* polymorph NetworkSettings LinkLocalIPv6Address false */
-
-/* polymorph NetworkSettings LinkLocalIPv6PrefixLen false */
-
-/* polymorph NetworkSettings Networks false */
-
-/* polymorph NetworkSettings Ports false */
-
-/* polymorph NetworkSettings SandboxID false */
-
-/* polymorph NetworkSettings SandboxKey false */
-
-/* polymorph NetworkSettings SecondaryIPAddresses false */
-
-/* polymorph NetworkSettings SecondaryIPv6Addresses false */
-
 // Validate validates this network settings
 func (m *NetworkSettings) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateNetworks(formats); err != nil {
-		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validatePorts(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateSecondaryIPAddresses(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
 	if err := m.validateSecondaryIPV6Addresses(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -102,7 +81,32 @@ func (m *NetworkSettings) validateNetworks(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.Required("Networks", "body", m.Networks); err != nil {
+	for k := range m.Networks {
+
+		if err := validate.Required("Networks"+"."+k, "body", m.Networks[k]); err != nil {
+			return err
+		}
+		if val, ok := m.Networks[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *NetworkSettings) validatePorts(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Ports) { // not required
+		return nil
+	}
+
+	if err := m.Ports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("Ports")
+		}
 		return err
 	}
 
@@ -116,13 +120,11 @@ func (m *NetworkSettings) validateSecondaryIPAddresses(formats strfmt.Registry) 
 	}
 
 	for i := 0; i < len(m.SecondaryIPAddresses); i++ {
-
 		if swag.IsZero(m.SecondaryIPAddresses[i]) { // not required
 			continue
 		}
 
 		if m.SecondaryIPAddresses[i] != nil {
-
 			if err := m.SecondaryIPAddresses[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("SecondaryIPAddresses" + "." + strconv.Itoa(i))
@@ -143,13 +145,11 @@ func (m *NetworkSettings) validateSecondaryIPV6Addresses(formats strfmt.Registry
 	}
 
 	for i := 0; i < len(m.SecondaryIPV6Addresses); i++ {
-
 		if swag.IsZero(m.SecondaryIPV6Addresses[i]) { // not required
 			continue
 		}
 
 		if m.SecondaryIPV6Addresses[i] != nil {
-
 			if err := m.SecondaryIPV6Addresses[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("SecondaryIPv6Addresses" + "." + strconv.Itoa(i))

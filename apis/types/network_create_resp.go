@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // NetworkCreateResp contains the response for the remote API: POST /networks/create
 // swagger:model NetworkCreateResp
-
 type NetworkCreateResp struct {
 
 	// ID is the id of the network.
@@ -24,17 +21,8 @@ type NetworkCreateResp struct {
 	Warning string `json:"Warning,omitempty"`
 }
 
-/* polymorph NetworkCreateResp Id false */
-
-/* polymorph NetworkCreateResp Warning false */
-
 // Validate validates this network create resp
 func (m *NetworkCreateResp) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

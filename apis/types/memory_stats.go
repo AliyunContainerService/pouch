@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // MemoryStats MemoryStats aggregates all memory stats since container inception on Linux.
 // swagger:model MemoryStats
-
 type MemoryStats struct {
 
 	// number of times memory usage hits limits.
@@ -33,23 +30,8 @@ type MemoryStats struct {
 	Usage uint64 `json:"usage,omitempty"`
 }
 
-/* polymorph MemoryStats failcnt false */
-
-/* polymorph MemoryStats limit false */
-
-/* polymorph MemoryStats max_usage false */
-
-/* polymorph MemoryStats stats false */
-
-/* polymorph MemoryStats usage false */
-
 // Validate validates this memory stats
 func (m *MemoryStats) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

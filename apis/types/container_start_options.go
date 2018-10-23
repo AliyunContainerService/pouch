@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // ContainerStartOptions options of starting container
 // swagger:model ContainerStartOptions
-
 type ContainerStartOptions struct {
 
 	// checkpoint dir
@@ -27,19 +24,8 @@ type ContainerStartOptions struct {
 	DetachKeys string `json:"DetachKeys,omitempty"`
 }
 
-/* polymorph ContainerStartOptions CheckpointDir false */
-
-/* polymorph ContainerStartOptions CheckpointID false */
-
-/* polymorph ContainerStartOptions DetachKeys false */
-
 // Validate validates this container start options
 func (m *ContainerStartOptions) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

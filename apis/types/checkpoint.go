@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // Checkpoint describe a created checkpoint, include container name and checkpoint name
 // swagger:model Checkpoint
-
 type Checkpoint struct {
 
 	// checkpoint name
@@ -24,17 +21,8 @@ type Checkpoint struct {
 	ContainerID string `json:"ContainerID,omitempty"`
 }
 
-/* polymorph Checkpoint CheckpointName false */
-
-/* polymorph Checkpoint ContainerID false */
-
 // Validate validates this checkpoint
 func (m *Checkpoint) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

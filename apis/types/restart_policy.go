@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // RestartPolicy Define container's restart policy
 // swagger:model RestartPolicy
-
 type RestartPolicy struct {
 
 	// maximum retry count
@@ -24,17 +21,8 @@ type RestartPolicy struct {
 	Name string `json:"Name,omitempty"`
 }
 
-/* polymorph RestartPolicy MaximumRetryCount false */
-
-/* polymorph RestartPolicy Name false */
-
 // Validate validates this restart policy
 func (m *RestartPolicy) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

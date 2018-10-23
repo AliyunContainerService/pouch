@@ -8,16 +8,14 @@ package types
 import (
 	"encoding/json"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // VolumeInfo Volume represents the configuration of a volume for the container.
 // swagger:model VolumeInfo
-
 type VolumeInfo struct {
 
 	// Date/Time the volume was created.
@@ -44,26 +42,11 @@ type VolumeInfo struct {
 	Status map[string]interface{} `json:"Status,omitempty"`
 }
 
-/* polymorph VolumeInfo CreatedAt false */
-
-/* polymorph VolumeInfo Driver false */
-
-/* polymorph VolumeInfo Labels false */
-
-/* polymorph VolumeInfo Mountpoint false */
-
-/* polymorph VolumeInfo Name false */
-
-/* polymorph VolumeInfo Scope false */
-
-/* polymorph VolumeInfo Status false */
-
 // Validate validates this volume info
 func (m *VolumeInfo) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateStatus(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -85,6 +68,7 @@ func init() {
 		volumeInfoStatusValueEnum = append(volumeInfoStatusValueEnum, v)
 	}
 }
+
 func (m *VolumeInfo) validateStatusValueEnum(path, location string, value interface{}) error {
 	if err := validate.Enum(path, location, value, volumeInfoStatusValueEnum); err != nil {
 		return err
@@ -98,14 +82,10 @@ func (m *VolumeInfo) validateStatus(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if swag.IsZero(m.Status) { // not required
-		return nil
-	}
-
 	for k := range m.Status {
 
-		if swag.IsZero(m.Status[k]) { // not required
-			continue
+		if err := m.validateStatusValueEnum("Status"+"."+k, "body", m.Status[k]); err != nil {
+			return err
 		}
 
 	}

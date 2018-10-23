@@ -7,14 +7,11 @@ package types
 
 import (
 	strfmt "github.com/go-openapi/strfmt"
-
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // EndpointIPAMConfig IPAM configurations for the endpoint
 // swagger:model EndpointIPAMConfig
-
 type EndpointIPAMConfig struct {
 
 	// ipv4 address
@@ -27,33 +24,8 @@ type EndpointIPAMConfig struct {
 	LinkLocalIps []string `json:"LinkLocalIPs"`
 }
 
-/* polymorph EndpointIPAMConfig IPv4Address false */
-
-/* polymorph EndpointIPAMConfig IPv6Address false */
-
-/* polymorph EndpointIPAMConfig LinkLocalIPs false */
-
 // Validate validates this endpoint IP a m config
 func (m *EndpointIPAMConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateLinkLocalIps(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *EndpointIPAMConfig) validateLinkLocalIps(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.LinkLocalIps) { // not required
-		return nil
-	}
-
 	return nil
 }
 
