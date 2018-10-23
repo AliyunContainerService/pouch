@@ -7,6 +7,14 @@ go:
 
 go_import_path: github.com/alibaba/pouch
 
+before_install:
+  |
+    echo $TRAVIS_COMMIT_RANGE
+    git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md$)' || {
+      echo "travis does not run for document-only changed"
+      exit
+    }
+
 notifications:
   webhooks:
     urls:
