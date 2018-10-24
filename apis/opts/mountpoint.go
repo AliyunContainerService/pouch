@@ -10,11 +10,7 @@ import (
 
 // CheckBind is used to check the volume bind information.
 func CheckBind(b string) ([]string, error) {
-	if strings.Count(b, ":") > 2 {
-		return nil, fmt.Errorf("unknown volume bind: %s", b)
-	}
-
-	arr := strings.SplitN(b, ":", 3)
+	arr := strings.Split(b, ":")
 	switch len(arr) {
 	case 1:
 		if arr[0] == "" {
