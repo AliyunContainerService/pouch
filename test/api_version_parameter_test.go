@@ -57,4 +57,5 @@ func (suite *APIVersionSuite) TestNoVersionParamsInURL(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	CheckRespStatus(c, resp, 201)
+	DelContainerForceMultyTime(c, cname)
 }

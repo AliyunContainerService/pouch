@@ -137,12 +137,12 @@ func (suite *APIContainerListSuite) TestListFilterEqual(c *check.C) {
 // TestListFilterUnEqual test label unequal filter.
 func (suite *APIContainerListSuite) TestListFilterUnEqual(c *check.C) {
 	containerA := "TestListFilterUnEqualContainerA"
-	resA := command.PouchRun("run", "-d", "-l", "label="+containerA, busyboxImage125, "top").Assert(c, icmd.Success)
+	resA := command.PouchRun("run", "-d", "--name", containerA, "-l", "label="+containerA, busyboxImage125, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, containerA)
 	containerAID := strings.TrimSpace(resA.Combined())
 
 	containerB := "TestListFilterUnEqualContainerB"
-	resB := command.PouchRun("run", "-d", "-l", "label="+containerB, busyboxImage125, "top").Assert(c, icmd.Success)
+	resB := command.PouchRun("run", "-d", "--name", containerB, "-l", "label="+containerB, busyboxImage125, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, containerB)
 	containerBID := strings.TrimSpace(resB.Combined())
 
