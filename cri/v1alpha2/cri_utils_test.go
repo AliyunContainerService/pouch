@@ -1,7 +1,6 @@
 package v1alpha2
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -380,33 +379,6 @@ func Test_parseSandboxName(t *testing.T) {
 	}
 }
 
-func Test_makeSandboxPouchConfig(t *testing.T) {
-	type args struct {
-		config *runtime.PodSandboxConfig
-		image  string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *apitypes.ContainerCreateConfig
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := makeSandboxPouchConfig(tt.args.config, tt.args.image)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("makeSandboxPouchConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("makeSandboxPouchConfig() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_toCriSandboxState(t *testing.T) {
 	type args struct {
 		status apitypes.Status
@@ -436,32 +408,6 @@ func Test_toCriSandboxState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := toCriSandboxState(tt.args.status); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("toCriSandboxState() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_toCriSandbox(t *testing.T) {
-	type args struct {
-		c *mgr.Container
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *runtime.PodSandbox
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := toCriSandbox(tt.args.c)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("toCriSandbox() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toCriSandbox() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -680,27 +626,6 @@ func Test_filterCRIContainers(t *testing.T) {
 	} {
 		filtered := filterCRIContainers(testContainers, test.filter)
 		assert.Equal(t, test.expect, filtered, desc)
-	}
-}
-
-func Test_makeContainerName(t *testing.T) {
-	type args struct {
-		s *runtime.PodSandboxConfig
-		c *runtime.ContainerConfig
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := makeContainerName(tt.args.s, tt.args.c); got != tt.want {
-				t.Errorf("makeContainerName() = %v, want %v", got, tt.want)
-			}
-		})
 	}
 }
 
@@ -1029,61 +954,6 @@ func Test_modifyContainerConfig(t *testing.T) {
 	}
 }
 
-func Test_applyContainerSecurityContext(t *testing.T) {
-	type args struct {
-		lc           *runtime.LinuxContainerConfig
-		podSandboxID string
-		config       *apitypes.ContainerConfig
-		hc           *apitypes.HostConfig
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := applyContainerSecurityContext(tt.args.lc, tt.args.podSandboxID, tt.args.config, tt.args.hc); (err != nil) != tt.wantErr {
-				t.Errorf("applyContainerSecurityContext() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestCriManager_updateCreateConfig(t *testing.T) {
-	type fields struct {
-		ContainerMgr mgr.ContainerMgr
-		ImageMgr     mgr.ImageMgr
-	}
-	type args struct {
-		createConfig  *apitypes.ContainerCreateConfig
-		config        *runtime.ContainerConfig
-		sandboxConfig *runtime.PodSandboxConfig
-		podSandboxID  string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &CriManager{
-				ContainerMgr: tt.fields.ContainerMgr,
-				ImageMgr:     tt.fields.ImageMgr,
-			}
-			if err := c.updateCreateConfig(tt.args.createConfig, tt.args.config, tt.args.sandboxConfig, tt.args.podSandboxID); (err != nil) != tt.wantErr {
-				t.Errorf("CriManager.updateCreateConfig() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func Test_toCriContainer(t *testing.T) {
 	_, timeParseErr := time.Parse(utils.TimeLayout, "foo")
 	type args struct {
@@ -1328,36 +1198,6 @@ func Test_imageToCriImage(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("imageToCriImage() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestCriManager_ensureSandboxImageExists(t *testing.T) {
-	type fields struct {
-		ContainerMgr mgr.ContainerMgr
-		ImageMgr     mgr.ImageMgr
-	}
-	type args struct {
-		ctx   context.Context
-		image string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &CriManager{
-				ContainerMgr: tt.fields.ContainerMgr,
-				ImageMgr:     tt.fields.ImageMgr,
-			}
-			if err := c.ensureSandboxImageExists(tt.args.ctx, tt.args.image); (err != nil) != tt.wantErr {
-				t.Errorf("CriManager.ensureSandboxImageExists() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

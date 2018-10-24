@@ -20,6 +20,9 @@ type SandboxMeta struct {
 
 	// Runtime whether to enable lxcfs for a container
 	LxcfsEnabled bool
+
+	// Netns is the sandbox's network namespace
+	NetNS string
 }
 
 // Key returns sandbox's id.

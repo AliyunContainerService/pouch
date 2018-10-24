@@ -23,6 +23,7 @@ import (
 	criutils "github.com/alibaba/pouch/cri/utils"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
@@ -104,6 +105,7 @@ type CriManager struct {
 	ImageMgr     mgr.ImageMgr
 	VolumeMgr    mgr.VolumeMgr
 	CniMgr       cni.CniMgr
+	CriPlugin    hookplugins.CriPlugin
 
 	// StreamServer is the stream server of CRI serves container streaming request.
 	StreamServer Server
@@ -125,7 +127,7 @@ type CriManager struct {
 }
 
 // NewCriManager creates a brand new cri manager.
-func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr) (CriMgr, error) {
+func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr, criPlugin hookplugins.CriPlugin) (CriMgr, error) {
 	var streamServerAddress string
 	streamServerPort := config.CriConfig.StreamServerPort
 	// If stream server reuse the pouchd's port, extract the ip and port from pouchd's listening addresses.
@@ -147,6 +149,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		ContainerMgr:   ctrMgr,
 		ImageMgr:       imgMgr,
 		VolumeMgr:      volumeMgr,
+		CriPlugin:      criPlugin,
 		StreamServer:   streamServer,
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 		SandboxImage:   config.CriConfig.SandboxImage,
@@ -683,6 +686,19 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	sandboxConfig := r.GetSandboxConfig()
 	podSandboxID := r.GetPodSandboxId()
 
+	// get sandbox
+	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sandbox %q: %v", podSandboxID, err)
+	}
+
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*SandboxMeta)
+	sandboxMeta.NetNS = containerNetns(sandbox)
+
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply the container type lable.
 	labels[containerTypeLabelKey] = containerTypeLabelContainer
@@ -723,7 +739,8 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		},
 		NetworkingConfig: &apitypes.NetworkingConfig{},
 	}
-	err := c.updateCreateConfig(createConfig, config, sandboxConfig, podSandboxID)
+
+	err = c.updateCreateConfig(createConfig, config, sandboxConfig, sandboxMeta)
 	if err != nil {
 		return nil, err
 	}
@@ -743,6 +760,13 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	createConfig.HostConfig.Resources.Devices = devices
 
 	containerName := makeContainerName(sandboxConfig, config)
+
+	// call cri plugin to update create config
+	if c.CriPlugin != nil {
+		if err := c.CriPlugin.PreCreateContainer(createConfig, sandboxMeta); err != nil {
+			return nil, err
+		}
+	}
 
 	createResp, err := c.ContainerMgr.Create(ctx, containerName, createConfig)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"plugin"
 	"reflect"
 
-	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/apis/server"
 	criservice "github.com/alibaba/pouch/cri"
 	"github.com/alibaba/pouch/cri/stream"
@@ -17,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
 	"github.com/alibaba/pouch/pkg/meta"
@@ -45,9 +45,10 @@ type Daemon struct {
 	volumeMgr       mgr.VolumeMgr
 	networkMgr      mgr.NetworkMgr
 	server          server.Server
-	containerPlugin plugins.ContainerPlugin
-	daemonPlugin    plugins.DaemonPlugin
-	volumePlugin    plugins.VolumePlugin
+	containerPlugin hookplugins.ContainerPlugin
+	daemonPlugin    hookplugins.DaemonPlugin
+	volumePlugin    hookplugins.VolumePlugin
+	criPlugin       hookplugins.CriPlugin
 	eventsService   *events.Events
 }
 
@@ -125,47 +126,26 @@ func loadSymbolByName(p *plugin.Plugin, name string) (plugin.Symbol, error) {
 }
 
 func (d *Daemon) loadPlugin() error {
-	var s plugin.Symbol
 	var err error
 
-	if d.config.PluginPath != "" {
-		p, err := plugin.Open(d.config.PluginPath)
-		if err != nil {
-			return errors.Wrapf(err, "load plugin at %s error", d.config.PluginPath)
-		}
+	// load daemon plugin if exist
+	if daemonPlugin := hookplugins.GetDaemonPlugin(); daemonPlugin != nil {
+		d.daemonPlugin = daemonPlugin
+	}
 
-		//load daemon plugin if exist
-		if s, err = loadSymbolByName(p, "DaemonPlugin"); err != nil {
-			return err
-		}
-		if daemonPlugin, ok := s.(plugins.DaemonPlugin); ok {
-			logrus.Infof("setup daemon plugin from %s", d.config.PluginPath)
-			d.daemonPlugin = daemonPlugin
-		} else if s != nil {
-			return fmt.Errorf("not a daemon plugin at %s %q", d.config.PluginPath, s)
-		}
+	// load container plugin if exist
+	if containerPlugin := hookplugins.GetContainerPlugin(); containerPlugin != nil {
+		d.containerPlugin = containerPlugin
+	}
 
-		//load container plugin if exist
-		if s, err = loadSymbolByName(p, "ContainerPlugin"); err != nil {
-			return err
-		}
-		if containerPlugin, ok := s.(plugins.ContainerPlugin); ok {
-			logrus.Infof("setup container plugin from %s", d.config.PluginPath)
-			d.containerPlugin = containerPlugin
-		} else if s != nil {
-			return fmt.Errorf("not a container plugin at %s %q", d.config.PluginPath, s)
-		}
+	// load volume plugin if exist
+	if volumePlugin := hookplugins.GetVolumePlugin(); volumePlugin != nil {
+		d.volumePlugin = volumePlugin
+	}
 
-		// load volume plugin if exist
-		if s, err = loadSymbolByName(p, "VolumePlugin"); err != nil {
-			return err
-		}
-		if volumePlugin, ok := s.(plugins.VolumePlugin); ok {
-			logrus.Infof("setup volume plugin from %s", d.config.PluginPath)
-			d.volumePlugin = volumePlugin
-		} else if s != nil {
-			return fmt.Errorf("not a volume plugin at %s %q", d.config.PluginPath, s)
-		}
+	// load cri plugin if exist
+	if criPlugin := hookplugins.GetCriPlugin(); criPlugin != nil {
+		d.criPlugin = criPlugin
 	}
 
 	if d.daemonPlugin != nil {
@@ -246,7 +226,7 @@ func (d *Daemon) Run() error {
 	criReadyCh := make(chan bool)
 	criStopCh := make(chan error)
 
-	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, d.volumeMgr, criStreamRouterCh, criStopCh, criReadyCh)
+	go criservice.RunCriService(d.config, d.containerMgr, d.imageMgr, d.volumeMgr, d.criPlugin, criStreamRouterCh, criStopCh, criReadyCh)
 
 	streamRouter := <-criStreamRouterCh
 
@@ -356,7 +336,7 @@ func (d *Daemon) networkInit(ctx context.Context) error {
 }
 
 // ContainerPlugin returns the container plugin fetched from shared file
-func (d *Daemon) ContainerPlugin() plugins.ContainerPlugin {
+func (d *Daemon) ContainerPlugin() hookplugins.ContainerPlugin {
 	return d.containerPlugin
 }
 

@@ -3,7 +3,7 @@ package driver
 import (
 	"errors"
 
-	"github.com/alibaba/pouch/plugins"
+	"github.com/alibaba/pouch/storage/plugins"
 )
 
 // the following const variables is the protocol of remote volume driver.
