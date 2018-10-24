@@ -106,6 +106,10 @@ func (rc *RunCommand) runRun(args []string) error {
 
 	wait := make(chan struct{})
 
+	if err := checkTty(rc.stdin, rc.tty, os.Stdout.Fd()); err != nil {
+		return err
+	}
+
 	if rc.attach || rc.stdin {
 		if rc.tty {
 			in, out, err := setRawMode(rc.stdin, false)
