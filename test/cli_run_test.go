@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
+	"github.com/stretchr/testify/assert"
 )
 
 // PouchRunSuite is the test suite for run CLI.
@@ -442,4 +443,14 @@ func (suite *PouchRunSuite) TestRunWithEnv(c *check.C) {
 	)
 	res.Assert(c, icmd.Success)
 	c.Assert(strings.TrimSpace(res.Stdout()), check.Equals, "a,b,c-b1")
+}
+
+// TestRunWithTty tests running container with -tty flag and attach stdin in a non-tty client.
+func (suite *PouchRunSuite) TestRunWithTty(c *check.C) {
+	name := "TestRunWithTty"
+	res := command.PouchRun("run", "-i", "-t", "--name", name, busyboxImage, "sleep", "100000")
+	defer DelContainerForceMultyTime(c, name)
+
+	errString := res.Stderr()
+	assert.Equal(c, errString, "Error: the input device is not a TTY\n")
 }
