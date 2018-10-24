@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alibaba/pouch/plugins"
+	"github.com/alibaba/pouch/storage/plugins"
 )
 
 func TestRemoteDriverRequestError(t *testing.T) {

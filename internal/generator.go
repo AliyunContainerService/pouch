@@ -4,11 +4,11 @@ import (
 	"context"
 	"path"
 
-	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/pkg/meta"
 )
 
@@ -21,7 +21,7 @@ type DaemonProvider interface {
 	VolMgr() mgr.VolumeMgr
 	NetMgr() mgr.NetworkMgr
 	MetaStore() *meta.Store
-	ContainerPlugin() plugins.ContainerPlugin
+	ContainerPlugin() hookplugins.ContainerPlugin
 	EventsService() *events.Events
 }
 

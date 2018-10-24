@@ -1,148 +1,157 @@
 # PouchContainer with plugin
 
-In order to run custom code provided by users which will be triggered at some point, we support a plugin framework which introduced from golang 1.8. At this time in this plugin framework we enable users to add custom code at file points:
+## Why provide plugin
 
-* pre-start daemon point
-* pre-stop daemon point
-* pre-create container point
-* pre-start container point
-* pre-create-endpoint container point
+There are many scenes to use the container，the different container engine users, in addition to the general process of using the container operation, perhaps they will have their own customized operation scenarios, pouch-container provides users with a situation that does not affect the general scene. A plug-in mechanism for customizable operations to handle container operations for business privatization.
 
-Above four points are organized by two Plugin interfaces, which are DaemonPlugin and ContainerPlugin, defined as follow:
+## Plugin function
+
+The pouch-container plugin provides developers or users with a way to call their own plugin logic, calling plugin logic before or after certain operations to satisfy the specific logic of the plugin implementation.
+
+## Which plugins
+
+Currently pouch-container provides four plugins，they are: `container plugin`，`daemon plugin`，`volume plugin`，`cri plugin`
+
+### container plugin
+
+In order to run custom code provided by users which will be triggered at some point, we support a plugin framework.
+
+* pre-create container point, at this point you can change the input stream by some rules, in some companies they have some stale orchestration system who use env to pass-in some limit which is an attribute in PouchContainer, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig of PouchContainer create api.
+* pre-start container point, at this point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing of the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
+* pre-create-endpoint container point, at this point you can return the priority of this endpoint and if this endpoint need enable resolver and the generic params of this endpoint.
+* pre-update container point, at this point you can change the input stream to your wanted format or rules.
+* post-update container point, at this point you can change the update config into the container's env.
+
+Above five points are organized by container plugins, defined as follow:
 
 ```
-// DaemonPlugin defines in which place does pouchd support plugin
-type DaemonPlugin interface {
-    // PreStartHook is invoked by pouchd before real start, in this hook user could start dfget proxy or other
-    // standalone process plugins
-    PreStartHook() error
-
-    // PreStopHook is invoked by pouchd before daemon process exit, not a promise if daemon is killed, in this
-    // hook user could stop the process or plugin started by PreStartHook
-    PreStopHook() error
-}
-
 // ContainerPlugin defines places where a plugin will be triggered in container lifecycle
 type ContainerPlugin interface {
-  // PreCreate defines plugin point where receives an container create request, in this plugin point user
-  // could change the container create body passed-in by http request body
-  PreCreate(io.ReadCloser) (io.ReadCloser, error)
+	// PreCreate defines plugin point where receives a container create request, in this plugin point user
+	// could change the container create body passed-in by http request body
+	PreCreate(*types.ContainerCreateConfig) error
 
-  // PreStart returns an array of priority and args which will pass to runc, the every priority
-  // used to sort the pre start array that pass to runc, network plugin hook always has priority value 0.
-  PreStart(interface{}) ([]int, [][]string, error)
+	// PreStart returns an array of priority and args which will pass to runc, the every priority
+	// used to sort the pre start array that pass to runc, network plugin hook always has priority value 0.
+	PreStart(interface{}) ([]int, [][]string, error)
 
-  //NetworkGenericParams accepts the container id and env of this container and returns the priority of this endpoint
-  // and if this endpoint should enable resolver and a map which will be used as generic params to create endpoints of
-  // this container
-  PreCreateEndpoint(string, []string) (priority int, disableResolver bool, genericParam map[string]interface{})
-}
+	// PreCreateEndpoint accepts the container id and env of this container, to update the config of container's endpoint.
+	PreCreateEndpoint(string, []string, *networktypes.Endpoint) error
 
-```
+	// PreUpdate defines plugin point where receives a container update request, in this plugin point user
+	// could change the container update body passed-in by http request body
+	PreUpdate(io.ReadCloser) (io.ReadCloser, error)
 
-These two Plugin symbols will be fetch by name `DaemonPlugin` and `ContainerPlugin` from shared object file like this:
-
-```
-p, _ := plugin.Open("path_to_shared_object_file")
-daemonPlugin, _ := p.Lookup("DaemonPlugin")
-containerPlugin, _ := p.Lookup("ContainerPlugin")
-```
-
-## example
-
-define two plugin symbols which only print some logs at correspond point:
-
-```
-package main
-
-import (
-    "fmt"
-    "io"
-)
-
-var ContainerPlugin ContPlugin
-
-type ContPlugin int
-
-var DaemonPlugin DPlugin
-
-type DPlugin int
-
-func (d DPlugin) PreStartHook() error {
-    fmt.Println("pre-start hook in daemon is called")
-    return nil
-}
-
-func (d DPlugin) PreStopHook() error {
-    fmt.Println("pre-stop hook in daemon is called")
-    return nil
-}
-
-func (c ContPlugin) PreCreate(in io.ReadCloser) (io.ReadCloser, error) {
-    fmt.Println("pre create method called")
-    return in, nil
-}
-
-func (c ContPlugin) PreStart(interface{}) ([]int, [][]string, error) {
-    fmt.Println("pre start method called")
-    // make this pre-start hook run after network in container setup
-    return []int{-4}, [][]string{{"/usr/bin/touch", "touch", "/tmp/pre_start_hook"}}, nil
-}
-
-func (c ContPlugin) PreCreateEndpoint(string, []string) (priority int, disableResolver bool, genericParam map[string]interface{}) {
-    fmt.Println("pre create endpoint")
-    return
-}
-
-func main() {
-    fmt.Println(ContainerPlugin, DaemonPlugin)
+	// PostUpdate called after update method successful,
+	// the method accepts the rootfs path and envs of container
+	PostUpdate(string, []string) error
 }
 ```
 
-then build it with command line like:
+### daemon plugin
+
+* pre-start daemon point, at this point you can start assistant processes like network plugins and dfget proxy which need by pouchd and whose life cycle is the same as pouchd.
+* pre-stop daemon point, at this point you can stop the assistant processes gracefully, but the trigger of this point is not a promise, because pouchd may be killed by SIGKILL.
+
+Defined as follow:
 
 ```
-go build -buildmode=plugin -ldflags "-pluginpath=plugins_$(date +%s)" -o hook_plugin.so
+// DaemonPlugin defines places where a plugin will be triggered in pouchd lifecycle
+type DaemonPlugin interface {
+	// PreStartHook is invoked by pouch daemon before real start, in this hook user could start dfget proxy or other
+	// standalone process plugins
+	PreStartHook() error
+
+	// PreStopHook is invoked by pouch daemon before daemon process exit, not a promise if daemon is killed, in this
+	// hook user could stop the process or plugin started by PreStartHook
+	PreStopHook() error
+}
 ```
 
-to use the shared object file generated, start pouchd which flag `--plugin=path_to_hook_plugin.so`, then when you start stop daemon and create container, in the log there will be some logs like:
+### volume plugin
+
+* pre-volume-create volume point, at this point you can change the volume's create config as you want, add your default volume's options.
+
+Defined as follow:
 
 ```
-pre-start hook in daemon is called
-pre create method called
-pre-stop hook in daemon is called
+// VolumePlugin defines places where a plugin will be triggered in volume lifecycle
+type VolumePlugin interface {
+	// PreVolumeCreate defines plugin point where receives an volume create request, in this plugin point user
+	// could change the volume create body passed-in by http request body
+	PreVolumeCreate(*types.VolumeCreateConfig) error
+}
 ```
 
-when you start a container, the config.json file (whose place is $home_dir/containerd/state/io.containerd.runtime.v1.linux/default/$container_id/config.json) will contains the pre-start hook specified in above code, eg:
+### cri plugin
+
+* pre-create-container cri point, at this point you can update the container config what it will be created, such as update the container's envs or labels.
+
+Defined as follow:
 
 ```
-    "hooks": {
-        "prestart": [
-            {
-                "args": [
-                    "libnetwork-setkey",
-                    "f67df14e96fa4b94a6e386d0795bdd2703ca7b01713d48c9567203a37b05ae3d",
-                    "8e3d8db7f72a66edee99d4db6ab911f8d618af057485731e9acf24b3668e25b6"
-                ],
-                "path": "/usr/local/bin/pouchd"
-            },
-            {
-                "args": [
-                    "touch",
-                    "/tmp/pre_start_hook"
-                ],
-                "path": "/usr/bin/touch"
-            }
-        ]
-    }
+// CriPlugin defines places where a plugin will be triggered in CRI api lifecycle
+type CriPlugin interface {
+	// PreCreateContainer defines plugin point where receives a container create request, in this plugin point user
+	// could update the container's config in cri interface.
+	PreCreateContainer(*types.ContainerCreateConfig, interface{}) error
+}
 ```
 
-and if you use the exact code above, every time you start a container the file at /tmp/pre_start_hook will be touched.
+## Example
 
-## usage
+### How to write
 
-* at pre-start daemon point you can start assist processes like network plugins and dfget proxy which need by pouchd and whose life cycle is the same as pouchd.
-* at pre-stop daemon point you can stop the assist processes gracefully, but the trigger of this point is not a promise, because pouchd may be killed by SIGKILL.
-* at pre-create container point you can change the input stream by some rules, in some company they have some stale orchestration system who use env to pass-in some limit which is an attribute in PouchContainer, then you can use this point to convert value in env to attribute in ContainerConfig or HostConfig of PouchContainer create api.
-* at pre-start container point you can set more pre-start hooks to oci spec, where you can do some special thing before container entrypoint start, priority decide the order of executing of the hook. libnetwork hook has priority 0, so if the hook is expected to run before network in container setup you should set priority to a value big then 0, and vice versa.
-* at pre-create-endpoint container point you can return the priority of this endpoint and if this endpoint need enable resolver and the generic params of this endpoint.
+Introduce how to write a daemon plugin.
+
+#### 1. Make your plugin package
+
+You can make your package in directory `hookplugins/daemonplugin` and add a go file `daemon_hook.go`.
+
+#### 2. Define a struct for your plugin
+
+In `daemon_hook.go` define your plugin object, struct is `type daemonPlugin struct{}`.
+
+#### 3. Register your plugin
+
+In `init` function to register your plugin, now we provide 4 plugin to register:
+
+    * `RegisterContainerPlugin`
+    * `RegisterDaemonPlugin`
+    * `RegisterCriPlugin`
+    * `RegisterVolumePlugin`
+
+In my plugin, we use `RegisterDaemonPlugin` to register a daemon plugin into pouch daemon.
+
+```
+func init() {
+	hookplugins.RegisterDaemonPlugin(&daemonPlugin{})
+}
+```
+
+#### 4. Implement the plugin's interface function
+
+We implement the daemon plugin's interface function, we just print some logs.
+
+```
+// DaemonPlugin defines places where a plugin will be triggered in pouchd lifecycle
+type DaemonPlugin interface {
+	// PreStartHook is invoked by pouch daemon before real start, in this hook user could start http proxy or other
+    // standalone process plugins
+	PreStartHook() error
+
+	// PreStopHook is invoked by pouch daemon before daemon process exit, not a promise if daemon is killed, in this
+	// hook user could stop the process or plugin started by PreStartHook
+	PreStopHook() error
+}
+```
+
+### How to build
+
+Use this method to build my daemon plugin:
+
+```
+# hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/daemonplugin
+```
+
+And then `Makefile` will build your plugin into daemon binary, and it will be called when daemon is starting or stopping.

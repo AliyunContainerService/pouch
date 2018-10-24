@@ -1,9 +1,9 @@
 #!/bin/bash
 
-volume_module() {
+function volume_module() {
     # generate "volume_build.go" file
-    if [ ! -f $volume_build ]; then
-    cat << END > $volume_build
+    if [[ ! -f ${volume_build} ]]; then
+    cat << END > ${volume_build}
 // +build linux
 
 // The file is automatically generated, DON'T EDIT.
@@ -13,10 +13,29 @@ package main
 END
     fi
 
-    grep -q $1 $volume_build
-    if [ $? -ne "0" ]
+    grep -q $1 ${volume_build}
+    if [[ $? -ne "0" ]]
     then
-        echo "import _ \"$1\"" >> $volume_build
+        echo "import _ \"$1\"" >> ${volume_build}
+    fi
+}
+
+function hook_plugins_module() {
+    # generate "hook_plugins_build.go" file
+    if [[ ! -f ${hook_plugins_build} ]]; then
+    cat << END > ${hook_plugins_build}
+// +build linux
+
+// The file is automatically generated, DON'T EDIT.
+
+package main
+
+END
+    fi
+
+    grep -q $1 ${hook_plugins_build}
+    if [[ $? -ne "0" ]]; then
+        echo "import _ \"$1\"" >> ${hook_plugins_build}
     fi
 }
 
@@ -24,6 +43,7 @@ help=
 clean=
 gcflags=
 volume_build=volume_build.go
+hook_plugins_build=hook_plugins_build.go
 
 opt=
 for option
@@ -44,7 +64,9 @@ do
         --add-volume=*)
             volume_module $value
         ;;
-
+        --add-plugin=*)
+            hook_plugins_module $value
+        ;;
         *)
             echo "$0: error: invalid option \"$option\""
             exit 1
@@ -52,18 +74,20 @@ do
     esac
 done
 
-if [ "$clean" = "yes" ]; then
-    rm -f $volume_build
+if [[ "${clean}" == "yes" ]]; then
+    rm -f ${volume_build}
+    rm -f ${hook_plugins_build}
     exit 0
 fi
 
-if [ "$help" = "yes" ]; then
+if [[ "${help}" == "yes" ]]; then
     echo "usage:"
     echo "     module [options]"
     echo ""
     echo "options:"
     echo "     --help, -h          Print help information"
     echo "     --add-volume=       Add a volume driver module to compile"
+    echo "     --add-plugin=       Add a hook plugin to compile"
     echo "     --clean             Remove temporary codes, the 'build.go'"
     echo ""
     echo "     ./module            To comiple directly on current codes, include added modules"

@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alibaba/pouch/apis/plugins"
 	"github.com/alibaba/pouch/cri/stream"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/netutils"
 
@@ -29,7 +29,7 @@ type Server struct {
 	NetworkMgr       mgr.NetworkMgr
 	StreamRouter     stream.Router
 	listeners        []net.Listener
-	ContainerPlugin  plugins.ContainerPlugin
+	ContainerPlugin  hookplugins.ContainerPlugin
 	ManagerWhiteList map[string]struct{}
 	lock             sync.RWMutex
 }

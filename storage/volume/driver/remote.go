@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"github.com/alibaba/pouch/plugins"
+	"github.com/alibaba/pouch/storage/plugins"
 	"github.com/alibaba/pouch/storage/volume/types"
 )
 

@@ -94,9 +94,6 @@ type Config struct {
 	// CgroupParent is to set parent cgroup for all containers
 	CgroupParent string `json:"cgroup-parent,omitempty"`
 
-	// PluginPath is set the path where plugin so file put
-	PluginPath string `json:"plugin,omitempty"`
-
 	// Labels is the metadata of daemon
 	Labels []string `json:"label,omitempty"`
 

@@ -71,7 +71,7 @@ COVERAGE_PACKAGES_LIST=$(shell echo $(COVERAGE_PACKAGES) | tr " " ",")
 
 build: build-daemon build-cli ## build PouchContainer both daemon and cli binaries
 
-build-daemon: modules ## build PouchContainer daemon binary
+build-daemon: modules plugin ## build PouchContainer daemon binary
 	@echo "$@: bin/${DAEMON_BINARY_NAME}"
 	@mkdir -p bin
 	@GOOS=linux go build -ldflags ${DEFAULT_LDFLAGS} -o bin/${DAEMON_BINARY_NAME} -tags 'selinux'
@@ -81,14 +81,14 @@ build-cli: ## build PouchContainer cli binary
 	@mkdir -p bin
 	@go build -o bin/${CLI_BINARY_NAME} github.com/alibaba/pouch/cli
 
-build-daemon-integration: modules ## build PouchContainer daemon integration testing binary
+build-daemon-integration: modules plugin ## build PouchContainer daemon integration testing binary
 	@echo $@
 	@mkdir -p bin
 	go test -c ${TEST_FLAGS} \
 		-cover -covermode=atomic -coverpkg ${COVERAGE_PACKAGES_LIST} \
 		-o bin/${DAEMON_INTEGRATION_BINARY_NAME}
 
-build-integration-test: modules ## build PouchContainer integration test-case binary
+build-integration-test: modules plugin ## build PouchContainer integration test-case binary
 	@echo $@
 	@mkdir -p bin
 	go test -c \
@@ -151,7 +151,7 @@ gometalinter: ## run gometalinter for go source code
 
 
 .PHONY: unit-test
-unit-test: modules ## run go unit-test
+unit-test: modules plugin ## run go unit-test
 	@echo $@
 	@mkdir -p coverage
 	@( for pkg in ${COVERAGE_PACKAGES}; do \
@@ -193,6 +193,13 @@ coverage: ## combine coverage after test
 	@echo $@
 	@gocovmerge coverage/* > coverage.txt
 
+.PHONY: plugin
+plugin: ## build hook plugin
+	@echo "build $@"
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/containerplugin
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/daemonplugin
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/criplugin
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/volumeplugin
 
 .PHONY: help
 help: ## this help
