@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"os/exec"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -137,7 +139,30 @@ func (suite *PouchExecSuite) TestExecStoppedContainer(c *check.C) {
 
 // TestExecInteractive test "-i" option works.
 func (suite *PouchExecSuite) TestExecInteractive(c *check.C) {
-	//TODO
+	name := "TestExecInteractive"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	cmd := exec.Command(environment.PouchBinary, "exec", "-i", name, "sh")
+	stdin, err := cmd.StdinPipe()
+	c.Assert(err, check.IsNil)
+	defer stdin.Close()
+	stdout, err := cmd.StdoutPipe()
+	c.Assert(err, check.IsNil)
+	defer stdout.Close()
+	c.Assert(cmd.Start(), check.IsNil)
+	defer func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	}()
+
+	_, err = stdin.Write([]byte("echo hello\n"))
+	c.Assert(err, check.IsNil)
+	out, err := bufio.NewReader(stdout).ReadString('\n')
+	c.Assert(err, check.IsNil)
+	c.Assert(strings.TrimSpace(out), check.Equals, "hello")
+
+	c.Assert(stdin.Close(), check.IsNil)
 }
 
 // TestExecAfterContainerRestart test exec in a restart container should work.
@@ -190,8 +215,9 @@ func (suite *PouchExecSuite) TestExecFail(c *check.C) {
 	// test a 'executable file not found' fail should get exit code 126.
 	name = "TestExecFailCode"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
-	command.PouchRun("exec", name, "shouldnotexit").Assert(c, icmd.Expected{ExitCode: 126})
 
+	command.PouchRun("exec", name, "shouldnotexit").Assert(c, icmd.Expected{ExitCode: 126})
+	defer DelContainerForceMultyTime(c, name)
 	// test a 'ls /nosuchfile' fail should get exit code not equal to 0.
 	res = command.PouchRun("exec", name, "ls", "/nosuchfile")
 	if res.ExitCode == 0 {
