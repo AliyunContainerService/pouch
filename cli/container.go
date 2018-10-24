@@ -25,6 +25,7 @@ type container struct {
 	hostname            string
 	rm                  bool
 	disableNetworkFiles bool
+	specificID          string
 
 	blkioWeight          uint16
 	blkioWeightDevice    config.WeightDevice
@@ -194,6 +195,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			QuotaID:             c.quotaID,
 			SpecAnnotation:      specAnnotation,
 			NetPriority:         c.netPriority,
+			SpecificID:          c.specificID,
 		},
 
 		HostConfig: &types.HostConfig{

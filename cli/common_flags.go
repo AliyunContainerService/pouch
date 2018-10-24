@@ -61,6 +61,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.Int64Var(&c.oomScoreAdj, "oom-score-adj", -500, "Tune host's OOM preferences (-1000 to 1000)")
 
 	flagSet.StringVar(&c.name, "name", "", "Specify name of container")
+	flagSet.StringVar(&c.specificID, "specific-id", "", "Specify id of container, length of id should be 64, characters of id should be in '0123456789abcdef'")
 
 	flagSet.StringSliceVar(&c.networks, "net", nil, "Set networks to container")
 	flagSet.StringSliceVarP(&c.ports, "port", "p", nil, "Set container ports mapping")

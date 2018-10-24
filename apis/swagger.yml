@@ -2233,6 +2233,14 @@ definitions:
         description: "net priority."
         type: "integer"
         default: 0
+      SpecificID:
+        type: "string"
+        description: |
+          Create container with given id.
+          MinLength: 64
+          MaxLength: 64
+          The characters of given id should be in 0123456789abcdef.
+          By default, given id is unnecessary.
  
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
