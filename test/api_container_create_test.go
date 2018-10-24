@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -278,4 +279,115 @@ func (suite *APIContainerCreateSuite) TestCreateWithMacAddress(c *check.C) {
 	c.Assert(found, check.Equals, true)
 
 	DelContainerForceMultyTime(c, cname)
+}
+
+func (suite *APIContainerCreateSuite) TestBasicWithSpecificID(c *check.C) {
+	{
+		specificID := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+		obj := map[string]interface{}{
+			"Image":      busyboxImage,
+			"HostConfig": map[string]interface{}{},
+			"SpecificID": specificID,
+		}
+
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 201)
+
+		// Decode response
+		got := types.ContainerCreateResp{}
+		c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+		c.Assert(got.ID, check.Equals, specificID)
+		c.Assert(got.Name, check.NotNil)
+
+		DelContainerForceMultyTime(c, got.ID)
+	}
+
+	//transfer specific id by url params
+	{
+		specificID := "0123456789fedcbaab0123456789abcdef0123456789abcdef0123456789abcd"
+		q := url.Values{}
+		q.Add("specificId", specificID)
+		query := request.WithQuery(q)
+		obj := map[string]interface{}{
+			"Image":      busyboxImage,
+			"HostConfig": map[string]interface{}{},
+		}
+
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", query, body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 201)
+
+		// Decode response
+		got := types.ContainerCreateResp{}
+		c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+		c.Assert(got.ID, check.Equals, specificID)
+		c.Assert(got.Name, check.NotNil)
+
+		DelContainerForceMultyTime(c, got.ID)
+	}
+}
+
+func (suite *APIContainerCreateSuite) TestInvalidSpecificID(c *check.C) {
+	obj := map[string]interface{}{
+		"Image":      busyboxImage,
+		"HostConfig": map[string]interface{}{},
+	}
+
+	//case1: specificID len is less than 64
+	{
+		obj["SpecificID"] = "123456789ab"
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, http.StatusBadRequest)
+	}
+
+	//case2: specificID len is more than 64
+	{
+		obj["SpecificID"] = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, http.StatusBadRequest)
+	}
+
+	//case3: characters of specificID is not in "0123456789abcdef"
+	{
+		obj["SpecificID"] = "0123456789abcdefhi0123456789abcdef0123456789abcdef0123456789abcd"
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, http.StatusBadRequest)
+	}
+
+	//case4: specificID is conflict with existing one
+	{
+		specificID := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+		obj := map[string]interface{}{
+			"Image":      busyboxImage,
+			"HostConfig": map[string]interface{}{},
+			"SpecificID": specificID,
+		}
+
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 201)
+
+		// Decode response
+		got := types.ContainerCreateResp{}
+		c.Assert(request.DecodeBody(&got, resp.Body), check.IsNil)
+		c.Assert(got.ID, check.Equals, specificID)
+		c.Assert(got.Name, check.NotNil)
+
+		defer DelContainerForceMultyTime(c, got.ID)
+
+		//create container with existing id
+		resp, err = request.Post("/containers/create", body)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, http.StatusConflict)
+	}
 }

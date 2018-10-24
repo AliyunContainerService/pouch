@@ -302,10 +302,18 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "NetworkingConfig cannot be empty")
 	}
 
-	id, err := mgr.generateID()
+	id, err := mgr.generateContainerID(config.SpecificID)
 	if err != nil {
 		return nil, err
 	}
+	//put container id to cache to prevent concurrent containerCreateReq with same specific id
+	mgr.cache.Put(id, nil)
+	defer func() {
+		//clear cache
+		if err != nil {
+			mgr.cache.Remove(id)
+		}
+	}()
 
 	if name == "" {
 		name = mgr.generateName(id)
@@ -1873,4 +1881,25 @@ func (mgr *ContainerManager) execProcessGC() {
 // NewSnapshotsSyncer creates a snapshot syncer.
 func (mgr *ContainerManager) NewSnapshotsSyncer(snapshotStore *SnapshotStore, duration time.Duration) *SnapshotsSyncer {
 	return newSnapshotsSyncer(snapshotStore, mgr.Client, duration)
+}
+
+func (mgr *ContainerManager) generateContainerID(specificID string) (string, error) {
+	if specificID != "" {
+		if len(specificID) != 64 {
+			return "", errors.Wrap(errtypes.ErrInvalidParam, "Container id length should be 64")
+		}
+		//characters of containerID should be in "0123456789abcdef"
+		for _, c := range []byte(specificID) {
+			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+				return "", errors.Wrap(errtypes.ErrInvalidParam, "The characters of container id should be in '0123456789abcdef'")
+			}
+		}
+
+		if mgr.cache.Get(specificID).Exist() {
+			return "", errors.Wrap(errtypes.ErrAlreadyExisted, "container id: "+specificID)
+		}
+		return specificID, nil
+	}
+
+	return mgr.generateID()
 }

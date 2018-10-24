@@ -108,6 +108,14 @@ type ContainerConfig struct {
 	// annotations send to runtime spec.
 	SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
 
+	// Create container with given id.
+	// MinLength: 64
+	// MaxLength: 64
+	// The characters of given id should be in 0123456789abcdef.
+	// By default, given id is unnecessary.
+	//
+	SpecificID string `json:"SpecificID,omitempty"`
+
 	// Close `stdin` after one attached client disconnects
 	StdinOnce bool `json:"StdinOnce,omitempty"`
 
