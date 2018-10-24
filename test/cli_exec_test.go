@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
+	"github.com/stretchr/testify/assert"
 )
 
 // PouchExecSuite is the test suite for exec CLI.
@@ -241,4 +242,14 @@ func (suite *PouchExecSuite) TestExecWithWorkingDir(c *check.C) {
 	if !strings.Contains(res.Stdout(), dir) {
 		c.Fatalf("failed to run exec with specified working directory: %s, but got %s", dir, res.Stdout())
 	}
+}
+
+// TestExecWithTty tests running container with -tty flag and attach stdin in a non-tty client.
+func (suite *PouchExecSuite) TestExecWithTty(c *check.C) {
+	name := "TestExecWithTty"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+	attachRes := command.PouchRun("exec", "-i", "-t", name, "ls")
+	errString := attachRes.Stderr()
+	assert.Equal(c, errString, "Error: the input device is not a TTY\n")
 }
