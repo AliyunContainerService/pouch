@@ -3,6 +3,7 @@ package opts
 import (
 	"fmt"
 	"net"
+	"sort"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -94,7 +95,8 @@ func ValidateNetworks(nwConfig *types.NetworkingConfig) error {
 		for k := range nwConfig.EndpointsConfig {
 			l = append(l, k)
 		}
-
+		// make sure l is sorted
+		sort.Strings(l)
 		return fmt.Errorf("Container cannot be connected to network endpoints: %s", strings.Join(l, ", "))
 	}
 
