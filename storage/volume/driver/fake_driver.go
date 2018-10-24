@@ -29,11 +29,11 @@ func (f *FakeDriver) StoreMode(ctx Context) VolumeStoreMode {
 }
 
 // Create a fake volume
-func (f *FakeDriver) Create(ctx Context, id types.VolumeID) (*types.Volume, error) {
+func (f *FakeDriver) Create(ctx Context, id types.VolumeContext) (*types.Volume, error) {
 	// generate the mountPath
 	mountPath := path.Join("/fake", id.Name)
 
-	return types.NewVolumeFromID(mountPath, "", id), nil
+	return types.NewVolumeFromContext(mountPath, "", id), nil
 }
 
 // Remove a fake volume

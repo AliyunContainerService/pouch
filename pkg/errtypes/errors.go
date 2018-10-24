@@ -29,11 +29,8 @@ var (
 	// ErrNotImplemented represents that the function is not implemented.
 	ErrNotImplemented = errorType{codeNotImplemented, "not implemented"}
 
-	// ErrVolumeInUse represents that volume in use.
-	ErrVolumeInUse = errorType{codeInUse, "volume is in use"}
-
-	// ErrVolumeNotFound represents that no such volume.
-	ErrVolumeNotFound = errorType{codeNotFound, "no such volume"}
+	// ErrInUse represents that object is using.
+	ErrInUse = errorType{codeInUse, "in use"}
 
 	// ErrNotModified represents that the resource is not modified
 	ErrNotModified = errorType{codeNotModified, "not modified"}
@@ -50,6 +47,11 @@ const (
 	codeNotImplemented
 	codeInUse
 	codeNotModified
+
+	// volume error code
+	codeVolumeExisted
+	codeVolumeDriverNotFound
+	codeVolumeMetaNotFound
 )
 
 type errorType struct {

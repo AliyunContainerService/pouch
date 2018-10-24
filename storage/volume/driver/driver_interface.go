@@ -13,7 +13,7 @@ type Driver interface {
 	StoreMode(Context) VolumeStoreMode
 
 	// Create a volume.
-	Create(Context, types.VolumeID) (*types.Volume, error)
+	Create(Context, types.VolumeContext) (*types.Volume, error)
 
 	// Remove a volume.
 	Remove(Context, *types.Volume) error

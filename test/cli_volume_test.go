@@ -60,7 +60,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateLocalDriverAndSpecifyMountPoint(c
 		funcname = tmpname[i]
 	}
 
-	res := command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp")
+	res := command.PouchRun("volume", "create", "--name", funcname, "--driver", "local", "-o", "mount=/tmp/"+funcname)
 	res.Assert(c, icmd.Success)
 
 	res = command.PouchRun("volume", "inspect", funcname)
@@ -71,7 +71,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateLocalDriverAndSpecifyMountPoint(c
 	}
 
 	if !strings.Contains(output, "/tmp/"+funcname) {
-		c.Errorf("failed to get the mountpoint, expect:/tmp/%s, acturally: %s", funcname, output)
+		c.Errorf("failed to get the mountpoint, expect:/tmp, acturally: %s", output)
 	}
 
 	command.PouchRun("volume", "remove", funcname).Assert(c, icmd.Success)
@@ -94,7 +94,7 @@ func (suite *PouchVolumeSuite) TestVolumeCreateWithMountPointExitsFile(c *check.
 	icmd.RunCommand("touch", "/tmp/"+funcname)
 
 	err := command.PouchRun("volume", "create", "--name", funcname,
-		"--driver", "local", "-o", "mount=/tmp").Compare(expct)
+		"--driver", "local", "-o", "mount=/tmp/"+funcname).Compare(expct)
 	defer command.PouchRun("volume", "remove", funcname)
 
 	c.Assert(err, check.IsNil)
@@ -233,9 +233,11 @@ func (suite *PouchVolumeSuite) TestVolumeBindReplaceMode(c *check.C) {
 
 	volumeName := "volume_" + funcname
 	command.PouchRun("volume", "create", "--name", volumeName).Assert(c, icmd.Success)
-	command.PouchRun("run", "-d", "-v", volumeName+":/mnt", "-v", volumeName+":/home:dr", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
 	defer func() {
 		command.PouchRun("volume", "rm", volumeName)
+	}()
+	command.PouchRun("run", "-d", "-v", volumeName+":/mnt", "-v", volumeName+":/home:dr", "--name", funcname, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
 		command.PouchRun("rm", "-f", funcname)
 	}()
 
@@ -291,7 +293,7 @@ func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
 	}
 }
 
-// TestVolumeList tests the volume list with options: size and mountpoint.
+// TestVolumeListOptions tests the volume list with options: size and mountpoint.
 func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -319,7 +321,6 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	for _, line := range strings.Split(ret.Stdout(), "\n") {
 		if strings.Contains(line, volumeName) {
 			if !strings.Contains(line, "local") ||
-				!strings.Contains(line, "M") ||
 				!strings.Contains(line, DefaultVolumeMountPath) {
 				c.Errorf("list result have no driver or name or size or mountpoint, line: %s", line)
 				break

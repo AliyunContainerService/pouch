@@ -132,14 +132,6 @@ func (quota *PrjQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 		return errors.Errorf("failed to find mountpoint, dir: (%s)", dir)
 	}
 
-	id, err := quota.SetSubtree(dir, quotaID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to set subtree, dir: (%s), quota id: (%d)", dir, quotaID)
-	}
-	if id == 0 {
-		return errors.Errorf("failed to find quota id to set subtree")
-	}
-
 	// transfer limit from kbyte to byte
 	limit, err := bytefmt.ToKilobytes(size)
 	if err != nil {
@@ -148,6 +140,14 @@ func (quota *PrjQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 
 	if err := checkDevLimit(dir, limit*1024); err != nil {
 		return errors.Wrapf(err, "failed to check device limit, dir: (%s), limit: (%d)kb", dir, limit)
+	}
+
+	id, err := quota.SetSubtree(dir, quotaID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to set subtree, dir: (%s), quota id: (%d)", dir, quotaID)
+	}
+	if id == 0 {
+		return errors.Errorf("failed to find quota id to set subtree")
 	}
 
 	return quota.setQuota(id, limit, mountPoint)

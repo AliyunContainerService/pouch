@@ -7,15 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// ListMeta represents list meta.
-type ListMeta struct {
-	// An opaque value that represents the version of this resource. May be used for optimistic
-	// concurrency, change detection, and the watch operation on a resource or set of resources.
-	// Clients must treat these values as opaque and values may only be valid for a particular
-	// resource or set of resources. Only servers will generate resource versions.
-	ResourceVersion int64 `json:"ResourceVersion,omitempty"`
-}
-
 // ObjectPhase is a int type, specific generation of an object state.
 type ObjectPhase string
 
