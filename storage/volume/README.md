@@ -52,26 +52,26 @@ Core provides these functions is as following:
 
 ```go
 // GetVolume return a volume's info with specified name, If not errors.
-func (c *Core) GetVolume(id types.VolumeID) (*types.Volume, error)
+func (c *Core) GetVolume(id types.VolumeContext) (*types.Volume, error)
 
 // CreateVolume use to create a volume, if failed, will return error info.
-func (c *Core) CreateVolume(id types.VolumeID) error
+func (c *Core) CreateVolume(id types.VolumeContext) error
 
 // ListVolumeName return the name of all volumes only.
 // Param 'labels' use to filter the volume's names, only return those you want.
 func (c *Core) ListVolumeName(labels map[string]string) ([]string, error)
 
 // RemoveVolume remove volume from storage and meta information, if not success return error.
-func (c *Core) RemoveVolume(id types.VolumeID) error
+func (c *Core) RemoveVolume(id types.VolumeContext) error
 
 // VolumePath return the path of volume on node host.
-func (c *Core) VolumePath(id types.VolumeID) (string, error)
+func (c *Core) VolumePath(id types.VolumeContext) (string, error)
 
 // AttachVolume to enable a volume on local host.
-func (c *Core) AttachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error)
+func (c *Core) AttachVolume(id types.VolumeContext, extra map[string]string) (*types.Volume, error)
 
 // DetachVolume to disable a volume on local host.
-func (c *Core) DetachVolume(id types.VolumeID, extra map[string]string) (*types.Volume, error)
+func (c *Core) DetachVolume(id types.VolumeContext, extra map[string]string) (*types.Volume, error)
 ```
 
 ### Driver

@@ -576,3 +576,59 @@ func TestMergeMap(t *testing.T) {
 		}
 	}
 }
+
+func TestToStringMap(t *testing.T) {
+	type Expect struct {
+		isNil bool
+		key   string
+		value string
+	}
+	tests := []struct {
+		m1     map[string]interface{}
+		expect Expect
+	}{
+		{nil, Expect{true, "", ""}},
+		{map[string]interface{}{"a": "a", "b": "b"}, Expect{false, "a", "a"}},
+		{map[string]interface{}{"a": "a", "b": "b"}, Expect{false, "b", "b"}},
+		{map[string]interface{}{"a": map[string]string{"aa": "aa"}, "b": "b"}, Expect{false, "a", ""}},
+		{map[string]interface{}{"a": map[string]string{"aa": "aa"}, "b": "b"}, Expect{false, "b", "b"}},
+	}
+
+	for _, test := range tests {
+		m2 := ToStringMap(test.m1)
+		if (test.expect.isNil && m2 != nil) || (!test.expect.isNil && m2 == nil) {
+			t.Fatalf("ToStringMap(%v) expected: %v, but got %v", test.m1, test.expect, m2)
+		}
+		if m2[test.expect.key] != test.expect.value {
+			t.Fatalf("ToStringMap(%v) expected: %v, but got %v", test.m1, test.expect.value, m2[test.expect.key])
+		}
+	}
+}
+
+func TestStringSliceDelete(t *testing.T) {
+	type Expect struct {
+		index int
+		value string
+	}
+	tests := []struct {
+		s1     []string
+		del    string
+		expect *Expect
+	}{
+		{nil, "", nil},
+		{[]string{"a", "b", "a"}, "a", &Expect{0, "b"}},
+		{[]string{"a", "b", "a"}, "b", &Expect{0, "a"}},
+		{[]string{"a", "b", "a", "c"}, "a", &Expect{1, "c"}},
+	}
+
+	for _, test := range tests {
+		s2 := StringSliceDelete(test.s1, test.del)
+		if test.expect == nil && s2 != nil {
+			t.Fatalf("StringSliceDelete(%v) expected: nil, but got %v", test.s1, s2)
+		}
+
+		if s2 != nil && s2[test.expect.index] != test.expect.value {
+			t.Fatalf("StringSliceDelete(%v) expected: %v, but got %v", test.s1, test.expect.value, s2[test.expect.index])
+		}
+	}
+}

@@ -361,3 +361,34 @@ func StringDefault(s string, val string) string {
 	}
 	return val
 }
+
+// ToStringMap changes the map[string]interface{} to map[string]string,
+// If the interface is not string, it will be ignore.
+func ToStringMap(in map[string]interface{}) map[string]string {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, 0)
+	for k, v := range in {
+		if s, ok := v.(string); ok {
+			out[k] = s
+		}
+	}
+	return out
+}
+
+// StringSliceDelete deletes the `del` string in string slice.
+func StringSliceDelete(in []string, del string) []string {
+	if in == nil {
+		return nil
+	}
+
+	out := make([]string, 0)
+	for _, value := range in {
+		if value != del {
+			out = append(out, value)
+		}
+	}
+
+	return out
+}

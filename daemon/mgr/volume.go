@@ -6,6 +6,7 @@ import (
 
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume"
 	"github.com/alibaba/pouch/storage/volume/types"
 
@@ -65,12 +66,11 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 		driver = types.DefaultBackend
 	}
 
-	id := types.VolumeID{
-		Name:      name,
-		Driver:    driver,
-		Options:   map[string]string{},
-		Selectors: map[string]string{},
-		Labels:    map[string]string{},
+	id := types.VolumeContext{
+		Name:    name,
+		Driver:  driver,
+		Options: map[string]string{},
+		Labels:  map[string]string{},
 	}
 
 	if labels != nil {
@@ -83,6 +83,9 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 
 	v, err := vm.core.CreateVolume(id)
 	if err != nil {
+		if errtypes.IsVolumeExisted(err) {
+			return v, nil
+		}
 		return nil, err
 	}
 
@@ -93,7 +96,7 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 
 // Get returns the information of volume that specified name/id.
 func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, error) {
-	id := types.VolumeID{
+	id := types.VolumeContext{
 		Name: name,
 	}
 	vol, err := vm.core.GetVolume(id)
@@ -123,7 +126,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 		return errors.Wrapf(errtypes.ErrVolumeInUse, "failed to remove volume(%s)", name)
 	}
 
-	id := types.VolumeID{
+	id := types.VolumeContext{
 		Name: name,
 	}
 	if err := vm.core.RemoveVolume(id); err != nil {
@@ -140,7 +143,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 
 // Path returns the mount path of volume.
 func (vm *VolumeManager) Path(ctx context.Context, name string) (string, error) {
-	id := types.VolumeID{
+	id := types.VolumeContext{
 		Name: name,
 	}
 	return vm.core.VolumePath(id)
@@ -148,7 +151,7 @@ func (vm *VolumeManager) Path(ctx context.Context, name string) (string, error) 
 
 // Attach is used to bind a volume to container.
 func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[string]string) (*types.Volume, error) {
-	id := types.VolumeID{
+	id := types.VolumeContext{
 		Name: name,
 	}
 
@@ -176,7 +179,7 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 
 // Detach is used to unbind a volume from container.
 func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[string]string) (*types.Volume, error) {
-	id := types.VolumeID{
+	id := types.VolumeContext{
 		Name: name,
 	}
 
@@ -198,12 +201,7 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 
 		if ref != "" {
 			ids := strings.Split(ref, ",")
-			for i, id := range ids {
-				if id == cid {
-					ids = append(ids[:i], ids[i+1:]...)
-				}
-			}
-
+			ids = utils.StringSliceDelete(ids, cid)
 			if len(ids) > 0 {
 				options[types.OptionRef] = strings.Join(ids, ",")
 			} else {

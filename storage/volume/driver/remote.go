@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/plugins"
 	"github.com/alibaba/pouch/storage/volume/types"
 )
@@ -33,7 +34,7 @@ func (r *remoteDriverWrapper) StoreMode(ctx Context) VolumeStoreMode {
 }
 
 // Create a remote volume.
-func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeID) (*types.Volume, error) {
+func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeContext) (*types.Volume, error) {
 	ctx.Log.Debugf("driver wrapper [%s] creates volume: %s", r.Name(ctx), id.Name)
 
 	ctx.Log.Debugf("driver wrapper gets options: %v", id.Options)
@@ -47,7 +48,7 @@ func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeID) (*types.Vol
 		mountPath = ""
 	}
 
-	return types.NewVolumeFromID(mountPath, "", id), nil
+	return types.NewVolumeFromContext(mountPath, "", id), nil
 }
 
 // Remove a remote volume.
@@ -66,9 +67,9 @@ func (r *remoteDriverWrapper) Get(ctx Context, name string) (*types.Volume, erro
 		return nil, err
 	}
 
-	id := types.NewVolumeID(name, r.Name(ctx))
+	id := types.NewVolumeContext(name, r.Name(ctx), utils.ToStringMap(rv.Status), nil)
 
-	return types.NewVolumeFromID(rv.Mountpoint, "", id), nil
+	return types.NewVolumeFromContext(rv.Mountpoint, "", id), nil
 }
 
 // List all volumes from remote driver.
@@ -83,8 +84,8 @@ func (r *remoteDriverWrapper) List(ctx Context) ([]*types.Volume, error) {
 	var vList []*types.Volume
 
 	for _, rv := range rvList {
-		id := types.NewVolumeID(rv.Name, r.Name(ctx))
-		volume := types.NewVolumeFromID(rv.Mountpoint, "", id)
+		id := types.NewVolumeContext(rv.Name, r.Name(ctx), utils.ToStringMap(rv.Status), nil)
+		volume := types.NewVolumeFromContext(rv.Mountpoint, "", id)
 		vList = append(vList, volume)
 	}
 

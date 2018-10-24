@@ -26,15 +26,6 @@ type ObjectMetaAccessor interface {
 	GetObjectMeta() Object
 }
 
-// GetListMeta returns ListMeta instance.
-func (meta *ListMeta) GetListMeta() List { return meta }
-
-// GetResourceVersion returns ListMeta's resource version.
-func (meta *ListMeta) GetResourceVersion() int64 { return meta.ResourceVersion }
-
-// SetResourceVersion is used to set ListMeta's resource version.
-func (meta *ListMeta) SetResourceVersion(version int64) { meta.ResourceVersion = version }
-
 // GetUID returns meta's uid.
 func (meta *ObjectMeta) GetUID() string { return meta.UID }
 

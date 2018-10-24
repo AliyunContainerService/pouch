@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/storage/volume/driver"
-	volerr "github.com/alibaba/pouch/storage/volume/error"
 	"github.com/alibaba/pouch/storage/volume/types"
 )
 
@@ -39,7 +39,7 @@ func TestCreateVolume(t *testing.T) {
 	driver.Register(driver.NewFakeDriver(volumeDriverName))
 	defer driver.Unregister(volumeDriverName)
 
-	v, err := core.CreateVolume(types.VolumeID{Name: "test1", Driver: volumeDriverName})
+	v, err := core.CreateVolume(types.VolumeContext{Name: "test1", Driver: volumeDriverName})
 	if err != nil {
 		t.Fatalf("create volume error: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestCreateVolume(t *testing.T) {
 		t.Fatalf("expect volume driver is %s, but got %s", volumeDriverName, v.Driver())
 	}
 
-	_, err = core.CreateVolume(types.VolumeID{Name: "none", Driver: "none"})
+	_, err = core.CreateVolume(types.VolumeContext{Name: "none", Driver: "none"})
 	if err == nil {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}
@@ -74,7 +74,7 @@ func TestGetVolume(t *testing.T) {
 	// add one volume and get
 	driverName1 := "fake1"
 	volumeName1 := "test1"
-	vID1 := types.VolumeID{Name: volumeName1, Driver: driverName1}
+	vID1 := types.VolumeContext{Name: volumeName1, Driver: driverName1}
 	driver.Register(driver.NewFakeDriver(driverName1))
 	defer driver.Unregister(driverName1)
 
@@ -82,7 +82,7 @@ func TestGetVolume(t *testing.T) {
 	if v0 != nil {
 		t.Fatalf("expect get volume nil, but got a volume with name %s", v0.Name)
 	}
-	if err0 != volerr.ErrVolumeNotFound {
+	if !errtypes.IsVolumeNotFound(err0) {
 		if err0 == nil {
 			t.Fatal("expect get volume not found error, but err is nil")
 		} else {
@@ -107,7 +107,7 @@ func TestGetVolume(t *testing.T) {
 	// add two volumes and get
 	driverName2 := "fake1"
 	volumeName2 := "test1"
-	vID2 := types.VolumeID{Name: volumeName2, Driver: driverName2}
+	vID2 := types.VolumeContext{Name: volumeName2, Driver: driverName2}
 	driver.Register(driver.NewFakeDriver(driverName2))
 	defer driver.Unregister(driverName2)
 
@@ -158,7 +158,7 @@ func TestListVolumes(t *testing.T) {
 	volmap := map[string]*types.Volume{}
 	for i = 0; i < 6; i++ {
 		volName := strconv.FormatInt(i, 10)
-		volid := types.VolumeID{Name: volName, Driver: driverName}
+		volid := types.VolumeContext{Name: volName, Driver: driverName}
 		v, err := core.CreateVolume(volid)
 		if err != nil {
 			t.Fatalf("create volume error: %v", err)
@@ -195,7 +195,7 @@ func TestListVolumesWithLabels(t *testing.T) {
 	var i int64
 	for i = 0; i < 6; i++ {
 		volName := strconv.FormatInt(i, 10)
-		volid := types.VolumeID{Name: volName, Driver: driverName, Labels: map[string]string{fmt.Sprintf("label-%v", i): fmt.Sprintf("value-%v", i)}}
+		volid := types.VolumeContext{Name: volName, Driver: driverName, Labels: map[string]string{fmt.Sprintf("label-%v", i): fmt.Sprintf("value-%v", i)}}
 		_, err := core.CreateVolume(volid)
 		if err != nil {
 			t.Fatalf("create volume error: %v", err)
@@ -204,7 +204,7 @@ func TestListVolumesWithLabels(t *testing.T) {
 
 	testLabels := map[string]string{"test-label": "test-value"}
 
-	testVolume, err := core.CreateVolume(types.VolumeID{Name: "test-volume", Driver: driverName, Labels: testLabels})
+	testVolume, err := core.CreateVolume(types.VolumeContext{Name: "test-volume", Driver: driverName, Labels: testLabels})
 	if err != nil {
 		t.Fatalf("create volume error: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestListVolumeName(t *testing.T) {
 	volmap := map[string]*types.Volume{}
 	for i = 0; i < 6; i++ {
 		volName := strconv.FormatInt(i, 10)
-		volid := types.VolumeID{Name: volName, Driver: driverName}
+		volid := types.VolumeContext{Name: volName, Driver: driverName}
 		v, err := core.CreateVolume(volid)
 		if err != nil {
 			t.Fatalf("create volume fail: %v", err)
@@ -275,7 +275,7 @@ func TestListVolumeName(t *testing.T) {
 func TestRemoveVolume(t *testing.T) {
 	volName1 := "vol2"
 	driverName1 := "fake_driver12"
-	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	volid1 := types.VolumeContext{Name: volName1, Driver: driverName1}
 
 	dir, err := ioutil.TempDir("", "TestGetVolume")
 	if err != nil {
@@ -316,7 +316,7 @@ func TestRemoveVolume(t *testing.T) {
 func TestVolumePath(t *testing.T) {
 	volName1 := "vol3"
 	driverName1 := "fake_dirver"
-	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	volid1 := types.VolumeContext{Name: volName1, Driver: driverName1}
 
 	expectPath := path.Join("/fake/", volName1) //keep consist with the path API in fake_driver.go
 	dir, err := ioutil.TempDir("", "TestVolumePath")
@@ -370,7 +370,7 @@ func TestAttachVolume(t *testing.T) {
 
 	driverName1 := "fake1"
 	volumeName1 := "test1"
-	vID1 := types.VolumeID{Name: volumeName1, Driver: driverName1}
+	vID1 := types.VolumeContext{Name: volumeName1, Driver: driverName1}
 	driver.Register(driver.NewFakeDriver(volumeDriverName))
 	defer driver.Unregister(volumeDriverName)
 
@@ -380,7 +380,7 @@ func TestAttachVolume(t *testing.T) {
 	if v0 != nil {
 		t.Fatalf("expect get volume nil, but got a volume with name %s", v0.Name)
 	}
-	if err0 != volerr.ErrVolumeNotFound {
+	if !errtypes.IsVolumeNotFound(err0) {
 		if err0 == nil {
 			t.Fatal("expect get volume not found error, but err is nil")
 		} else {
@@ -388,7 +388,7 @@ func TestAttachVolume(t *testing.T) {
 		}
 	}
 
-	core.CreateVolume(types.VolumeID{Name: "test1", Driver: volumeDriverName})
+	core.CreateVolume(types.VolumeContext{Name: "test1", Driver: volumeDriverName})
 
 	v1, err1 := core.AttachVolume(vID1, extra)
 	if err1 != nil {
@@ -406,7 +406,7 @@ func TestAttachVolume(t *testing.T) {
 func TestDetachVolume(t *testing.T) {
 	volName1 := "vol2"
 	driverName1 := "fake_driver12"
-	volid1 := types.VolumeID{Name: volName1, Driver: driverName1}
+	volid1 := types.VolumeContext{Name: volName1, Driver: driverName1}
 	extra1 := map[string]string{}
 
 	dir, err := ioutil.TempDir("", "TestDetachVolume")
@@ -441,7 +441,7 @@ func TestDetachVolume(t *testing.T) {
 	}
 
 	//detach a null volume
-	_, err = core.DetachVolume(types.VolumeID{Name: "none", Driver: "none"}, nil)
+	_, err = core.DetachVolume(types.VolumeContext{Name: "none", Driver: "none"}, nil)
 	if err == nil {
 		t.Fatal("expect get driver not found error, but err is nil")
 	}

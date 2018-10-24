@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/bytefmt"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -41,13 +42,31 @@ func (p *Tmpfs) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
 }
 
 // Create a tmpfs volume.
-func (p *Tmpfs) Create(ctx driver.Context, id types.VolumeID) (*types.Volume, error) {
+func (p *Tmpfs) Create(ctx driver.Context, id types.VolumeContext) (*types.Volume, error) {
 	ctx.Log.Debugf("Tmpfs create volume: %s", id.Name)
 
 	// parse the mount path
 	mountPath := path.Join(dataDir, id.Name)
 
-	return types.NewVolumeFromID(mountPath, "", id), nil
+	// parse the size, default size is 64M * 1024 * 1024
+	size := "67108864"
+	s := ""
+	for _, k := range []string{"size", "opt.size", "Size", "opt.Size"} {
+		var ok bool
+		s, ok = id.Options[k]
+		if ok {
+			break
+		}
+	}
+	if s != "" {
+		sizeInt, err := bytefmt.ToBytes(s)
+		if err != nil {
+			return nil, err
+		}
+		size = strconv.Itoa(int(sizeInt))
+	}
+
+	return types.NewVolumeFromContext(mountPath, size, id), nil
 }
 
 // Remove a tmpfs volume.
@@ -76,10 +95,16 @@ func (p *Tmpfs) Options() map[string]types.Option {
 func (p *Tmpfs) Attach(ctx driver.Context, v *types.Volume) error {
 	ctx.Log.Debugf("Tmpfs attach volume: %s", v.Name)
 	mountPath := v.Path()
-	size := v.Size()
 	reqID := v.Option("reqID")
-	ids := v.Option("ids")
 
+	size := v.Size()
+	sizeInt, err := bytefmt.ToKilobytes(size)
+	if err != nil {
+		return err
+	}
+	size = strconv.Itoa(int(sizeInt))
+
+	ids := v.Option("ids")
 	if ids != "" {
 		if !strings.Contains(ids, reqID) {
 			ids = ids + "," + reqID

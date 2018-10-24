@@ -83,11 +83,10 @@ type VolumeConfig struct {
 
 // VolumeSpec represents volume spec.
 type VolumeSpec struct {
-	ClusterID     string   `json:"clusterid"`
-	Selector      Selector `json:"selector"`
-	Operable      bool     `json:"operable"`
-	Backend       string   `json:"backend,omitempty"`
-	MountMode     string   `json:"mountMode,omitempty"`
+	ClusterID     string `json:"clusterid"`
+	Operable      bool   `json:"operable"`
+	Backend       string `json:"backend,omitempty"`
+	MountMode     string `json:"mountMode,omitempty"`
 	*VolumeConfig `json:"config,inline"`
 	Extra         map[string]string `json:"extra"`
 }
@@ -102,12 +101,6 @@ type VolumeStatus struct {
 	MountPoint          string            `json:"mountpath,omitempty"`
 	Reason              string            `json:"reason"`
 	Message             string            `json:"message"`
-}
-
-// VolumeList represents volume list.
-type VolumeList struct {
-	meta.ListMeta `json:",inline,omitempty"`
-	Items         []Volume `json:"Items,omitempty"`
 }
 
 // Volume defined volume struct.
@@ -147,9 +140,9 @@ func (v *Volume) Driver() string {
 	return v.Spec.Backend
 }
 
-// VolumeID return volume's identity.
-func (v *Volume) VolumeID() VolumeID {
-	return NewVolumeID(v.Name, v.Driver())
+// VolumeContext return volume's context.
+func (v *Volume) VolumeContext() VolumeContext {
+	return NewVolumeContext(v.Name, v.Driver(), v.Spec.Extra, v.Labels)
 }
 
 // Label returns volume's label.
@@ -162,9 +155,19 @@ func (v *Volume) SetLabel(label, value string) {
 	v.Labels[label] = value
 }
 
-// Size returns volume's size(MB).
+// Size returns volume's size(bytes).
 func (v *Volume) Size() string {
-	return v.Spec.Size
+	if v.Spec.Size != "" {
+		return v.Spec.Size
+	}
+
+	for _, k := range []string{"size", "Size", "opt.size", "opt.Size"} {
+		if s, ok := v.Spec.Extra[k]; ok {
+			return s
+		}
+	}
+
+	return ""
 }
 
 // FileSystem returns volume's file system.
@@ -191,37 +194,41 @@ func (v *Volume) CreateTime() string {
 	return v.CreationTimestamp.Format("2006-1-2 15:04:05")
 }
 
-// VolumeID use to define the volume's identity.
-type VolumeID struct {
-	Name      string
-	Driver    string
-	Options   map[string]string
-	Labels    map[string]string
-	Selectors map[string]string
+// VolumeContext use to define the volume's identity.
+type VolumeContext struct {
+	Name    string
+	Driver  string
+	Options map[string]string
+	Labels  map[string]string
 }
 
-// NewVolumeID returns VolumeID instance.
-func NewVolumeID(name, driver string) VolumeID {
-	return VolumeID{
-		Name:      name,
-		Driver:    driver,
-		Options:   map[string]string{},
-		Labels:    map[string]string{},
-		Selectors: map[string]string{},
+// NewVolumeContext returns VolumeContext instance.
+func NewVolumeContext(name, driver string, options, labels map[string]string) VolumeContext {
+	if options == nil {
+		options = map[string]string{}
+	}
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	return VolumeContext{
+		Name:    name,
+		Driver:  driver,
+		Options: options,
+		Labels:  labels,
 	}
 }
 
-// Equal check VolumeID is equal or not.
-func (v VolumeID) Equal(v1 VolumeID) bool {
+// Equal check VolumeContext is equal or not.
+func (v VolumeContext) Equal(v1 VolumeContext) bool {
 	return (v.Name == v1.Name) && (v.Driver == v1.Driver)
 }
 
-// String return VolumeID with string.
-func (v VolumeID) String() string {
+// String return VolumeContext with string.
+func (v VolumeContext) String() string {
 	return fmt.Sprintf("<%s, %s>", v.Name, v.Driver)
 }
 
-// Invalid is used to check VolumeID's name is valid or not.
-func (v VolumeID) Invalid() bool {
+// Invalid is used to check VolumeContext's name is valid or not.
+func (v VolumeContext) Invalid() bool {
 	return v.Name == ""
 }
