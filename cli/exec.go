@@ -77,6 +77,10 @@ func (e *ExecCommand) runExec(args []string) error {
 		Env:          e.Envs,
 	}
 
+	if err := checkTty(createExecConfig.AttachStdin, createExecConfig.Tty, os.Stdin.Fd()); err != nil {
+		return err
+	}
+
 	createResp, err := apiClient.ContainerCreateExec(ctx, id, createExecConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create exec: %v", err)
