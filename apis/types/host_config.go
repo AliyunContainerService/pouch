@@ -135,6 +135,10 @@ type HostConfig struct {
 	// A list of string values to customize labels for MLS systems, such as SELinux.
 	SecurityOpt []string `json:"SecurityOpt"`
 
+	// Shim name, pass to containerd to choose which shim is used for container.
+	//
+	Shim string `json:"Shim,omitempty"`
+
 	// Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.
 	// Minimum: 0
 	ShmSize *int64 `json:"ShmSize,omitempty"`
@@ -230,6 +234,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		SecurityOpt []string `json:"SecurityOpt"`
 
+		Shim string `json:"Shim,omitempty"`
+
 		ShmSize *int64 `json:"ShmSize,omitempty"`
 
 		StorageOpt map[string]string `json:"StorageOpt,omitempty"`
@@ -309,6 +315,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.Runtime = dataAO0.Runtime
 
 	m.SecurityOpt = dataAO0.SecurityOpt
+
+	m.Shim = dataAO0.Shim
 
 	m.ShmSize = dataAO0.ShmSize
 
@@ -401,6 +409,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		SecurityOpt []string `json:"SecurityOpt"`
 
+		Shim string `json:"Shim,omitempty"`
+
 		ShmSize *int64 `json:"ShmSize,omitempty"`
 
 		StorageOpt map[string]string `json:"StorageOpt,omitempty"`
@@ -477,6 +487,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	dataAO0.Runtime = m.Runtime
 
 	dataAO0.SecurityOpt = m.SecurityOpt
+
+	dataAO0.Shim = m.Shim
 
 	dataAO0.ShmSize = m.ShmSize
 

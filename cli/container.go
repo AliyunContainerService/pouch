@@ -16,6 +16,7 @@ type container struct {
 	tty                 bool
 	volume              []string
 	volumesFrom         []string
+	shim                string
 	runtime             string
 	env                 []string
 	entrypoint          string
@@ -206,6 +207,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			Binds:       c.volume,
 			VolumesFrom: c.volumesFrom,
 			Runtime:     c.runtime,
+			Shim:        c.shim,
 			Resources: types.Resources{
 				// cpu
 				CPUShares:  c.cpushare,

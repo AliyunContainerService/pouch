@@ -33,6 +33,9 @@ var (
 
 	// ProfileUnconfined means run a container without the default seccomp profile.
 	ProfileUnconfined = "unconfined"
+
+	// DefaultShim is default shim used for container.
+	DefaultShim = "io.containerd.runtime.v1.linux"
 )
 
 var (

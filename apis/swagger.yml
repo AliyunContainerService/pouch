@@ -2004,6 +2004,11 @@ definitions:
         items:
           type: "string"
         example: ["--debug", "--systemd-cgroup=false"]
+      shim:
+        description: |
+          shim name, pass to containerd to choose which shim is used for container.
+        type: "string"
+
 
   Commit:
     description: |
@@ -2421,6 +2426,10 @@ definitions:
           Runtime:
             type: "string"
             description: "Runtime to use with this container."
+          Shim:
+            description: |
+              Shim name, pass to containerd to choose which shim is used for container.
+            type: "string"
           # Applicable to Windows
           ConsoleSize:
             type: "array"

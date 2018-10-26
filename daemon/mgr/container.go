@@ -688,11 +688,17 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return err
 	}
 
+	// shim always need for containerd.
+	if c.HostConfig.Shim == "" {
+		c.HostConfig.Shim = DefaultShim
+	}
+
 	c.Lock()
 	ctrdContainer := &ctrd.Container{
 		ID:             c.ID,
 		Image:          c.Config.Image,
 		Labels:         c.Config.Labels,
+		Shim:           c.HostConfig.Shim,
 		Runtime:        runtime,
 		Spec:           sw.s,
 		IO:             mgr.IOs.Get(c.ID),

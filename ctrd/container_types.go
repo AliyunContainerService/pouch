@@ -13,11 +13,15 @@ import (
 type Container struct {
 	ID         string
 	Image      string
-	Runtime    string
 	Labels     map[string]string
 	IO         *containerio.IO
 	Spec       *specs.Spec
 	SnapshotID string
+
+	// Shim is shim name, specify shim used for container
+	Shim string
+	// Runtime is runtime name, specify runtime used for container
+	Runtime string
 
 	// BaseFS is rootfs used by containerd container
 	BaseFS string

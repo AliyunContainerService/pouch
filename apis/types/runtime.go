@@ -30,6 +30,10 @@ type Runtime struct {
 	// List of command-line arguments to pass to the runtime when invoked.
 	//
 	RuntimeArgs []string `json:"runtimeArgs"`
+
+	// shim name, pass to containerd to choose which shim is used for container.
+	//
+	Shim string `json:"shim,omitempty"`
 }
 
 // Validate validates this runtime

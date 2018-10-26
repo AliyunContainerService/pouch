@@ -76,6 +76,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.BoolVar(&c.privileged, "privileged", false, "Give extended privileges to the container")
 
 	flagSet.StringVar(&c.restartPolicy, "restart", "", "Restart policy to apply when container exits")
+	flagSet.StringVar(&c.shim, "shim", "io.containerd.runtime.v1.linux", "containerd shim used for this container")
 	flagSet.StringVar(&c.runtime, "runtime", "", "OCI runtime to use for this container")
 
 	flagSet.StringSliceVar(&c.securityOpt, "security-opt", nil, "Security Options")
