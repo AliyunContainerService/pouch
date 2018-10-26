@@ -583,8 +583,7 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 	}
 
 	for name, endpointSetting := range c.NetworkSettings.Networks {
-		endpoint := mgr.buildContainerEndpoint(c)
-		endpoint.Name = name
+		endpoint := mgr.buildContainerEndpoint(c, name)
 		endpoint.EndpointConfig = endpointSetting
 		if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
 			logrus.Errorf("failed to create endpoint: %v", err)
@@ -1372,9 +1371,8 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	}
 
 	c.Lock()
-	endpoint := mgr.buildContainerEndpoint(c)
+	endpoint := mgr.buildContainerEndpoint(c, network.Name)
 	c.Unlock()
-	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
 		// TODO(ziren): it is a trick, we should wrapper sanbox
@@ -1484,9 +1482,8 @@ func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *Co
 	}
 
 	container.Lock()
-	endpoint := mgr.buildContainerEndpoint(container)
+	endpoint := mgr.buildContainerEndpoint(container, network.Name)
 	container.Unlock()
-	endpoint.Name = network.Name
 	endpoint.EndpointConfig = epConfig
 	if _, err := mgr.NetworkMgr.EndpointCreate(ctx, endpoint); err != nil {
 		logrus.Errorf("failed to create endpoint: %v", err)
@@ -1780,8 +1777,7 @@ func (mgr *ContainerManager) releaseContainerNetwork(c *Container) error {
 	}
 
 	for name, epConfig := range c.NetworkSettings.Networks {
-		endpoint := mgr.buildContainerEndpoint(c)
-		endpoint.Name = name
+		endpoint := mgr.buildContainerEndpoint(c, name)
 		endpoint.EndpointConfig = epConfig
 		if err := mgr.NetworkMgr.EndpointRemove(context.Background(), endpoint); err != nil {
 			// TODO(ziren): it is a trick, we should wrapper "sanbox
@@ -1811,8 +1807,13 @@ func (mgr *ContainerManager) releaseContainerIOs(containerID string) {
 
 // buildContainerEndpoint builds Endpoints according to container
 // caller should lock container when calling this func.
-func (mgr *ContainerManager) buildContainerEndpoint(c *Container) *networktypes.Endpoint {
+func (mgr *ContainerManager) buildContainerEndpoint(c *Container, name string) *networktypes.Endpoint {
 	ep := BuildContainerEndpoint(c)
+	ep.Name = name
+
+	if !IsUserDefined(name) {
+		ep.DisableResolver = true
+	}
 
 	if mgr.containerPlugin != nil {
 		ep.Priority, ep.DisableResolver, ep.GenericParams = mgr.containerPlugin.PreCreateEndpoint(c.ID, c.Config.Env)

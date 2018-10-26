@@ -30,9 +30,9 @@ func IsBridge(mode string) bool {
 	return mode == "bridge"
 }
 
-// IsUserDefined is used to check if network mode is bridge mode.
+// IsUserDefined is used to check if network mode is user-created.
 func IsUserDefined(mode string) bool {
-	return !isContainer(mode) && !isHost(mode) && isNone(mode)
+	return !IsBridge(mode) && !IsContainer(mode) && !IsHost(mode) && !IsNone(mode)
 }
 
 // IsDefault indicates whether container uses the default network stack.
