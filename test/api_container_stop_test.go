@@ -62,8 +62,19 @@ func (suite *APIContainerStopSuite) TestStopWait(c *check.C) {
 
 // TestInvalidParam tests using invalid parameter return.
 func (suite *APIContainerStopSuite) TestInvalidParam(c *check.C) {
-	// TODO: missing case
-	helpwantedForMissingCase(c, "container api stop bad request case")
+	cname := "TestInvalidParam"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
+
+	q := url.Values{}
+	q.Add("t", "invalidParam")
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/containers/"+cname+"/stop", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 400)
 }
 
 // TestStopPausedContainer tests stop a paused container.
