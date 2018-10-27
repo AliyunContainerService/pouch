@@ -91,9 +91,7 @@ func (suite *PouchStopSuite) TestStopInWrongWay(c *check.C) {
 	}{
 		{name: "unknown container name", args: "unknown"},
 		{name: "unknown flag", args: "-a"},
-
-		// TODO: should add the following cases if ready
-		// {name: "missing container name", args: ""},
+		{name: "Error: requires at least 1 arg(s), only received 0", args: ""},
 	} {
 		res := command.PouchRun("stop", tc.args)
 		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
