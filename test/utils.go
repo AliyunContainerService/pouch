@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
 	"github.com/go-check/check"
@@ -94,4 +96,14 @@ func IsTLSExist() bool {
 		return false
 	}
 	return true
+}
+
+// inspectFilter get the string of info via inspect -f
+func inspectFilter(name, filter string) (string, error) {
+	format := fmt.Sprintf("{{%s}}", filter)
+	result := command.PouchRun("inspect", "-f", format, name)
+	if result.Error != nil || result.ExitCode != 0 {
+		return "", fmt.Errorf("failed to inspect container %s via filter %s: %s", name, filter, result.Combined())
+	}
+	return strings.TrimSpace(result.Combined()), nil
 }
