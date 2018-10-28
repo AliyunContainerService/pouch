@@ -72,6 +72,13 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 		items := imagesListToKV(res.Combined())[busyboxImage]
 		c.Assert(items[2], check.Equals, strings.TrimPrefix(image.RepoDigests[0], environment.BusyboxRepo+"@"))
 	}
+
+	// with --no-trunc
+	{
+		res := command.PouchRun("images", "--no-trunc").Assert(c, icmd.Success)
+		items := imagesListToKV(res.Combined())[busyboxImage]
+		c.Assert(items[0], check.Equals, image.ID)
+	}
 }
 
 // imagesListToKV parse "pouch images" into key-value mapping.
