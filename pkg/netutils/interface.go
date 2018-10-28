@@ -171,25 +171,27 @@ func isLoopbackOrPointToPoint(intf *net.Interface) bool {
 // getMatchingGlobalIP returns the first valid global unicast address of the given
 // 'family' from the list of 'addrs'.
 func getMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error) {
-	if len(addrs) > 0 {
-		for i := range addrs {
-			glog.V(4).Infof("Checking addr  %s.", addrs[i].String())
-			ip, _, err := net.ParseCIDR(addrs[i].String())
-			if err != nil {
-				return nil, err
-			}
-			if memberOf(ip, family) {
-				if ip.IsGlobalUnicast() {
-					glog.V(4).Infof("IP found %v", ip)
-					return ip, nil
-				}
-				glog.V(4).Infof("Non-global unicast address found %v", ip)
-			} else {
-				glog.V(4).Infof("%v is not an IPv%d address", ip, int(family))
-			}
-
-		}
+	if len(addrs) == 0 {
+		return nil, nil
 	}
+
+	for i := range addrs {
+		glog.V(4).Infof("Checking addr  %s.", addrs[i].String())
+		ip, _, err := net.ParseCIDR(addrs[i].String())
+		if err != nil {
+			return nil, err
+		}
+		if !memberOf(ip, family) {
+			glog.V(4).Infof("%v is not an IPv%d address", ip, int(family))
+			continue
+		}
+		if ip.IsGlobalUnicast() {
+			glog.V(4).Infof("IP found %v", ip)
+			return ip, nil
+		}
+		glog.V(4).Infof("Non-global unicast address found %v", ip)
+	}
+
 	return nil, nil
 }
 
@@ -200,21 +202,26 @@ func getIPFromInterface(intfName string, forFamily AddressFamily, nw networkInte
 	if err != nil {
 		return nil, err
 	}
-	if isInterfaceUp(intf) {
-		addrs, err := nw.Addrs(intf)
-		if err != nil {
-			return nil, err
-		}
-		glog.V(4).Infof("Interface %q has %d addresses :%v.", intfName, len(addrs), addrs)
-		matchingIP, err := getMatchingGlobalIP(addrs, forFamily)
-		if err != nil {
-			return nil, err
-		}
-		if matchingIP != nil {
-			glog.V(4).Infof("Found valid IPv%d address %v for interface %q.", int(forFamily), matchingIP, intfName)
-			return matchingIP, nil
-		}
+
+	if !isInterfaceUp(intf) {
+		return nil, nil
 	}
+
+	addrs, err := nw.Addrs(intf)
+	if err != nil {
+		return nil, err
+	}
+
+	glog.V(4).Infof("Interface %q has %d addresses :%v.", intfName, len(addrs), addrs)
+	matchingIP, err := getMatchingGlobalIP(addrs, forFamily)
+	if err != nil {
+		return nil, err
+	}
+	if matchingIP != nil {
+		glog.V(4).Infof("Found valid IPv%d address %v for interface %q.", int(forFamily), matchingIP, intfName)
+		return matchingIP, nil
+	}
+
 	return nil, nil
 }
 
