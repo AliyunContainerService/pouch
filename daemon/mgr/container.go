@@ -27,6 +27,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	mountutils "github.com/alibaba/pouch/pkg/mount"
+	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
@@ -34,7 +35,6 @@ import (
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/mount"
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -83,8 +83,11 @@ type ContainerMgr interface {
 	// Stats of a container.
 	Stats(ctx context.Context, name string) (*containerdtypes.Metric, *cgroups.Metrics, error)
 
-	// Attach a container.
-	Attach(ctx context.Context, name string, attach *AttachConfig) error
+	// AttachContainerIO attach stream to container IO.
+	AttachContainerIO(ctx context.Context, name string, cfg *streams.AttachConfig) error
+
+	// AttachCRILog attach cri log to container IO.
+	AttachCRILog(ctx context.Context, name string, path string) error
 
 	// Rename renames a container.
 	Rename(ctx context.Context, oldName string, newName string) error
@@ -113,7 +116,7 @@ type ContainerMgr interface {
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
 
 	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, attach *AttachConfig) error
+	StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig) error
 
 	// InspectExec returns low-level information about exec command.
 	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
@@ -241,12 +244,18 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		}
 
 		// recover the running or paused container.
-		io, err := mgr.openContainerIO(container)
+		cntrio, err := mgr.initContainerIO(container)
 		if err != nil {
-			logrus.Errorf("failed to recover container %s: %v", id, err)
+			logrus.Errorf("failed to init container IO %s: %v", id, err)
+			return err
 		}
 
-		err = mgr.Client.RecoverContainer(ctx, id, io)
+		if err := mgr.initLogDriverBeforeStart(container); err != nil {
+			logrus.Errorf("failed to init log driver %s: %v", id, err)
+			return err
+		}
+
+		err = mgr.Client.RecoverContainer(ctx, id, cntrio)
 		if err != nil && strings.Contains(err.Error(), "not found") {
 			logrus.Infof("failed to recover container %s (not found, executes mark stopped and release resources): %v", id, err)
 			if err := mgr.markStoppedAndRelease(container, nil); err != nil {
@@ -255,7 +264,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		} else if err != nil {
 			logrus.Errorf("failed to recover container %s: %v", id, err)
 			// release io
-			io.Close()
+			cntrio.Close()
 			mgr.IOs.Remove(id)
 		}
 
@@ -373,6 +382,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		Created:    time.Now().UTC().Format(utils.TimeLayout),
 		HostConfig: config.HostConfig,
 		SnapshotID: snapID,
+	}
+
+	if _, err := mgr.initContainerIO(container); err != nil {
+		logrus.Errorf("failed to initialise IO: %v", err)
+		return nil, err
 	}
 
 	// merge image's config into container
@@ -661,10 +675,9 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		return err
 	}
 
-	// open container's stdio.
-	io, err := mgr.openContainerIO(c)
-	if err != nil {
-		return errors.Wrap(err, "failed to open io")
+	// init log driver
+	if err := mgr.initLogDriverBeforeStart(c); err != nil {
+		return errors.Wrap(err, "failed to initialize log driver")
 	}
 
 	// set container's LogPath
@@ -682,7 +695,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		Labels:         c.Config.Labels,
 		Runtime:        runtime,
 		Spec:           sw.s,
-		IO:             io,
+		IO:             mgr.IOs.Get(c.ID),
 		RootFSProvided: c.RootFSProvided,
 		BaseFS:         c.BaseFS,
 		SnapshotID:     c.SnapshotID,
@@ -892,19 +905,44 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	return nil
 }
 
-// Attach attachs a container's io.
-func (mgr *ContainerManager) Attach(ctx context.Context, name string, attach *AttachConfig) error {
+// AttachContainerIO attachs a container's io.
+func (mgr *ContainerManager) AttachContainerIO(ctx context.Context, name string, cfg *streams.AttachConfig) error {
 	c, err := mgr.container(name)
 	if err != nil {
 		return err
 	}
 
-	_, err = mgr.openAttachIO(c, attach)
+	cntrio := mgr.IOs.Get(c.ID)
+	cfg.Terminal = c.Config.Tty
+
+	// NOTE: the AttachContainerIO might use the hijack's connection as
+	// stdin in the AttachConfig. If we close it directly, the stdout/stderr
+	// will return the `using closed connection` error. As a result, the
+	// Attach will return the error. We need to use pipe here instead of
+	// origin one and let the caller closes the stdin by themself.
+	if c.Config.OpenStdin && cfg.UseStdin {
+		oldStdin := cfg.Stdin
+		pstdinr, pstdinw := io.Pipe()
+		go func() {
+			defer pstdinw.Close()
+			io.Copy(pstdinw, oldStdin)
+		}()
+		cfg.Stdin = pstdinr
+		cfg.CloseStdin = true
+	} else {
+		cfg.UseStdin = false
+	}
+	return <-cntrio.Stream().Attach(ctx, cfg)
+}
+
+// AttachCRILog adds cri log to a container.
+func (mgr *ContainerManager) AttachCRILog(ctx context.Context, name string, logPath string) error {
+	c, err := mgr.container(name)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return mgr.attachCRILog(c, logPath)
 }
 
 // Rename renames a container.
@@ -1100,11 +1138,14 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	// When removing a container, we have set up such rule for object removing sequences:
 	// 1. container object in pouchd's memory;
 	// 2. meta.json for container in local disk.
+	// 3. remove the container IO from cache
 
 	// remove name
 	mgr.NameToID.Remove(c.Name)
 	// remove container cache
 	mgr.cache.Remove(c.ID)
+	// remove the container IO
+	mgr.IOs.Remove(c.ID)
 
 	// remove meta.json for container in local disk
 	if err := mgr.Store.Remove(c.Key()); err != nil {
@@ -1417,25 +1458,6 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	return nil
 }
 
-func (mgr *ContainerManager) openContainerIO(c *Container) (*containerio.IO, error) {
-	if io := mgr.IOs.Get(c.ID); io != nil {
-		return io, nil
-	}
-
-	logInfo := mgr.convContainerToLoggerInfo(c)
-	options := []func(*containerio.Option){
-		containerio.WithID(c.ID),
-		containerio.WithLoggerInfo(logInfo),
-		containerio.WithStdin(c.Config.OpenStdin),
-	}
-
-	options = append(options, logOptionsForContainerio(c)...)
-
-	io := containerio.NewIO(containerio.NewOption(options...))
-	mgr.IOs.Put(c.ID, io)
-	return io, nil
-}
-
 func (mgr *ContainerManager) updateNetworkConfig(container *Container, networkIDOrName string, endpointConfig *types.EndpointSettings) error {
 	if IsContainer(container.HostConfig.NetworkMode) {
 		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
@@ -1537,77 +1559,54 @@ func (mgr *ContainerManager) updateNetworkSettings(container *Container, n libne
 	return nil
 }
 
-func (mgr *ContainerManager) openExecIO(id string, attach *AttachConfig) (*containerio.IO, error) {
+func (mgr *ContainerManager) initContainerIO(c *Container) (*containerio.IO, error) {
+	if io := mgr.IOs.Get(c.ID); io != nil {
+		return nil, errors.Wrap(errtypes.ErrConflict, "failed to create containerIO")
+	}
+
+	cntrio := containerio.NewIO(c.ID, c.Config.OpenStdin)
+	mgr.IOs.Put(c.ID, cntrio)
+	return cntrio, nil
+}
+
+func (mgr *ContainerManager) initLogDriverBeforeStart(c *Container) error {
+	var (
+		cntrio *containerio.IO
+		err    error
+	)
+
+	if cntrio = mgr.IOs.Get(c.ID); cntrio == nil {
+		cntrio, err = mgr.initContainerIO(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	logDriver, err := logOptionsForContainerio(c, mgr.convContainerToLoggerInfo(c))
+	if err != nil {
+		return err
+	}
+	cntrio.SetLogDriver(logDriver)
+	return nil
+}
+
+func (mgr *ContainerManager) attachCRILog(c *Container, logPath string) error {
+	cntrio := mgr.IOs.Get(c.ID)
+	if cntrio == nil {
+		return errors.Wrap(errtypes.ErrNotfound, "failed to get containerIO")
+	}
+
+	return cntrio.AttachCRILog(logPath, c.Config.Tty)
+}
+
+func (mgr *ContainerManager) initExecIO(id string, withStdin bool) (*containerio.IO, error) {
 	if io := mgr.IOs.Get(id); io != nil {
-		return io, nil
+		return nil, errors.Wrap(errtypes.ErrConflict, "failed to create containerIO")
 	}
 
-	options := []func(*containerio.Option){
-		containerio.WithID(id),
-	}
-
-	if attach != nil {
-		options = append(options, attachConfigToOptions(attach)...)
-		options = append(options, containerio.WithStdin(attach.Stdin))
-		options = append(options, containerio.WithMuxDisabled(attach.MuxDisabled))
-	} else {
-		options = append(options, containerio.WithDiscard())
-	}
-
-	io := containerio.NewIO(containerio.NewOption(options...))
-	mgr.IOs.Put(id, io)
-	return io, nil
-}
-
-func (mgr *ContainerManager) openAttachIO(c *Container, attach *AttachConfig) (*containerio.IO, error) {
-	logInfo := mgr.convContainerToLoggerInfo(c)
-	options := []func(*containerio.Option){
-		containerio.WithID(c.ID),
-		containerio.WithLoggerInfo(logInfo),
-	}
-	options = append(options, logOptionsForContainerio(c)...)
-
-	if attach != nil {
-		options = append(options, attachConfigToOptions(attach)...)
-		options = append(options, containerio.WithStdin(attach.Stdin))
-	} else {
-		options = append(options, containerio.WithDiscard())
-	}
-
-	io := mgr.IOs.Get(c.ID)
-	if io != nil {
-		io.AddBackend(containerio.NewOption(options...))
-	} else {
-		io = containerio.NewIO(containerio.NewOption(options...))
-	}
-	mgr.IOs.Put(c.ID, io)
-	return io, nil
-}
-
-func attachConfigToOptions(attach *AttachConfig) []func(*containerio.Option) {
-	options := []func(*containerio.Option){}
-	if attach.Hijack != nil {
-		// Attaching using http.
-		options = append(options, containerio.WithHijack(attach.Hijack, attach.Upgrade))
-		if attach.Stdin {
-			options = append(options, containerio.WithStdinHijack())
-		}
-	} else if attach.Pipe != nil {
-		// Attaching using pipe.
-		options = append(options, containerio.WithPipe(attach.Pipe))
-	} else if attach.Streams != nil {
-		// Attaching using streams.
-		options = append(options, containerio.WithStreams(attach.Streams))
-		if attach.Stdin {
-			options = append(options, containerio.WithStdinStream())
-		}
-	}
-
-	if attach.CriLogFile != nil {
-		options = append(options, containerio.WithCriLogFile(attach.CriLogFile))
-	}
-
-	return options
+	cntrio := containerio.NewIO(id, withStdin)
+	mgr.IOs.Put(id, cntrio)
+	return cntrio, nil
 }
 
 func (mgr *ContainerManager) markStoppedAndRelease(c *Container, m *ctrd.Message) error {
@@ -1739,6 +1738,7 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	if !ok {
 		return fmt.Errorf("invalid exec config type")
 	}
+
 	execConfig.ExitCode = int64(m.ExitCode())
 	execConfig.Running = false
 	execConfig.Error = m.RawError()
@@ -1748,23 +1748,14 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 		return nil
 	}
 
-	if err := m.RawError(); err != nil {
-		var stdout io.Writer = eio.Stdout
-		if !execConfig.Tty && !eio.MuxDisabled {
-			stdout = stdcopy.NewStdWriter(stdout, stdcopy.Stdout)
-		}
-		stdout.Write([]byte(err.Error() + "\r\n"))
-	}
-
 	// close io
 	eio.Close()
 	mgr.IOs.Remove(id)
-
 	return nil
 }
 
 func (mgr *ContainerManager) releaseContainerResources(c *Container) error {
-	mgr.releaseContainerIOs(c.ID)
+	mgr.resetContainerIOs(c.ID)
 	return mgr.releaseContainerNetwork(c)
 }
 
@@ -1801,16 +1792,15 @@ func (mgr *ContainerManager) releaseContainerNetwork(c *Container) error {
 	return nil
 }
 
-// releaseContainerIOs releases container IO resources.
-func (mgr *ContainerManager) releaseContainerIOs(containerID string) {
+// resetContainerIOs resets container IO resources.
+func (mgr *ContainerManager) resetContainerIOs(containerID string) {
 	// release resource
 	io := mgr.IOs.Get(containerID)
 	if io == nil {
 		return
 	}
 
-	io.Close()
-	mgr.IOs.Remove(containerID)
+	io.Reset()
 	return
 }
 

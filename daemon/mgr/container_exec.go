@@ -9,9 +9,9 @@ import (
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/user"
 
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
@@ -57,40 +57,12 @@ func (mgr *ContainerManager) ResizeExec(ctx context.Context, execid string, opts
 }
 
 // StartExec executes a new process in container.
-func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attach *AttachConfig) (err error) {
+func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig) (err0 error) {
 	// GetExecConfig should not error, since we have done this before call StartExec
 	execConfig, err := mgr.GetExecConfig(ctx, execid)
 	if err != nil {
 		return err
 	}
-
-	// FIXME(fuweid): make attachConfig consistent with execConfig
-	if attach != nil {
-		attach.Stdin = execConfig.AttachStdin
-	}
-
-	eio, err := mgr.openExecIO(execid, attach)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			var stdout io.Writer = eio.Stdout
-			if !execConfig.Tty && !eio.MuxDisabled {
-				stdout = stdcopy.NewStdWriter(stdout, stdcopy.Stdout)
-			}
-			stdout.Write([]byte(err.Error() + "\r\n"))
-			// set exec exit status
-			execConfig.Running = false
-			exitCode := 126
-			execConfig.ExitCode = int64(exitCode)
-
-			// close io to make hijack connection exit
-			eio.Close()
-			mgr.IOs.Remove(execid)
-		}
-	}()
 
 	c, err := mgr.container(execConfig.ContainerID)
 	if err != nil {
@@ -130,16 +102,53 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, attac
 		return err
 	}
 
-	execConfig.Running = true
+	// NOTE: the StartExec might use the hijack's connection as
+	// stdin in the AttachConfig. If we close it directly, the stdout/stderr
+	// will return the `using closed connection` error. As a result, the
+	// Attach will return the error. We need to use pipe here instead of
+	// origin one and let the caller closes the stdin by themself.
+	if execConfig.AttachStdin && cfg.UseStdin {
+		oldStdin := cfg.Stdin
+		pstdinr, pstdinw := io.Pipe()
+		go func() {
+			defer pstdinw.Close()
+			io.Copy(pstdinw, oldStdin)
+		}()
+		cfg.Stdin = pstdinr
+	} else {
+		cfg.UseStdin = false
+	}
 
-	err = mgr.Client.ExecContainer(ctx, &ctrd.Process{
+	// NOTE: always close stdin pipe for exec process
+	cfg.CloseStdin = true
+	eio, err := mgr.initExecIO(execid, cfg.UseStdin)
+	if err != nil {
+		return err
+	}
+
+	attachErrCh := eio.Stream().Attach(ctx, cfg)
+
+	defer func() {
+		if err0 != nil {
+			// set exec exit status
+			execConfig.Running = false
+			exitCode := 126
+			execConfig.ExitCode = int64(exitCode)
+			eio.Close()
+			mgr.IOs.Remove(execid)
+		}
+	}()
+
+	execConfig.Running = true
+	if err := mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,
 		ExecID:      execid,
 		IO:          eio,
 		P:           process,
-	})
-
-	return err
+	}); err != nil {
+		return err
+	}
+	return <-attachErrCh
 }
 
 // InspectExec returns low-level information about exec command.

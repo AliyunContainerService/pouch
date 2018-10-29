@@ -24,7 +24,6 @@ func ServeAttach(ctx context.Context, w http.ResponseWriter, req *http.Request, 
 	defer streamCtx.conn.Close()
 
 	err := attacher.Attach(ctx, container, streamOpts, &Streams{
-		StreamCh:     make(chan struct{}, 1),
 		StdinStream:  streamCtx.stdinStream,
 		StdoutStream: streamCtx.stdoutStream,
 		StderrStream: streamCtx.stderrStream,

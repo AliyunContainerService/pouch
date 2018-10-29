@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/ioutils"
 
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
@@ -145,9 +146,12 @@ func holdHijackConnection(ctx context.Context, conn net.Conn, reader *bufio.Read
 	go func() {
 		if stdin {
 			io.Copy(conn, os.Stdin)
+			// close write if receive CTRL-D
+			if cw, ok := conn.(ioutils.CloseWriter); ok {
+				cw.CloseWrite()
+			}
 		}
 
-		// TODO: close write side of conn
 		close(stdinDone)
 	}()
 

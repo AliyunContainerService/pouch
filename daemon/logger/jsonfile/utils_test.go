@@ -15,6 +15,8 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 )
 
+var _ logger.LogDriver = &JSONLogFile{}
+
 func generateFileBytes(lines int) []byte {
 	buf := bytes.NewBuffer(nil)
 	defer buf.Reset()

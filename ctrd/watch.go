@@ -92,14 +92,6 @@ func (w *watch) add(pack *containerPack) {
 		// not the grpc client executing this parts of code.
 		pack.client.Produce(1)
 
-		if _, err := pack.task.Delete(context.Background()); err != nil {
-			logrus.Errorf("failed to delete task, container id: %s: %v", pack.id, err)
-		}
-
-		if err := pack.container.Delete(context.Background()); err != nil {
-			logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
-		}
-
 		msg := &Message{
 			err:      status.Error(),
 			exitCode: status.ExitCode(),
@@ -115,6 +107,14 @@ func (w *watch) add(pack *containerPack) {
 			}
 		}
 
+		// NOTE: we should delete task/container after update the status, for example, status code.
+		if _, err := pack.task.Delete(context.Background()); err != nil {
+			logrus.Errorf("failed to delete task, container id: %s: %v", pack.id, err)
+		}
+
+		if err := pack.container.Delete(context.Background()); err != nil {
+			logrus.Errorf("failed to delete container, container id: %s: %v", pack.id, err)
+		}
 		pack.ch <- msg
 
 	}(w, pack)

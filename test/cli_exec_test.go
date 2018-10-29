@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
@@ -278,4 +281,20 @@ func (suite *PouchExecSuite) TestExecWithTty(c *check.C) {
 	attachRes := command.PouchRun("exec", "-i", "-t", name, "ls")
 	errString := attachRes.Stderr()
 	assert.Equal(c, errString, "Error: the input device is not a TTY\n")
+}
+
+// TestExecForCloseIO test CloseIO works.
+func (suite *PouchExecSuite) TestExecForCloseIO(c *check.C) {
+	name := "TestExecForCloseIO"
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+
+	cmdLine := fmt.Sprintf("echo 1 | %s exec -i %s sh -c 'cat && echo hello'", environment.PouchBinary, name)
+	out, err := exec.CommandContext(ctx, "bash", "-c", cmdLine).Output()
+	c.Assert(err, check.IsNil)
+	c.Assert(string(out), check.Equals, "1\nhello\n")
 }
