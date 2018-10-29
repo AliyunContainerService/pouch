@@ -28,8 +28,6 @@ type Options struct {
 // Streams contains all the streams used to stdio for
 // remote command execution.
 type Streams struct {
-	// Notified from StreamCh if streams broken.
-	StreamCh     chan struct{}
 	StdinStream  io.ReadCloser
 	StdoutStream io.WriteCloser
 	StderrStream io.WriteCloser

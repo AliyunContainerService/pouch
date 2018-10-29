@@ -7,11 +7,11 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/daemon/mgr"
+	pkgstreams "github.com/alibaba/pouch/pkg/streams"
 
 	"github.com/sirupsen/logrus"
 )
@@ -52,17 +52,6 @@ func (s *streamRuntime) Exec(ctx context.Context, containerID string, cmd []stri
 		return 0, fmt.Errorf("failed to create exec for container %q: %v", containerID, err)
 	}
 
-	attachConfig := &mgr.AttachConfig{
-		Stdin:       streamOpts.Stdin,
-		Streams:     streams,
-		MuxDisabled: true,
-	}
-
-	err = s.containerMgr.StartExec(ctx, execid, attachConfig)
-	if err != nil {
-		return 0, fmt.Errorf("failed to start exec for container %q: %v", containerID, err)
-	}
-
 	handleResizing(containerID, execid, resizeChan, func(size apitypes.ResizeOptions) {
 		err := s.containerMgr.ResizeExec(ctx, execid, size)
 		if err != nil {
@@ -70,20 +59,24 @@ func (s *streamRuntime) Exec(ctx context.Context, containerID string, cmd []stri
 		}
 	})
 
-	// TODO Find a better way instead of the dead loop
-	var ei *apitypes.ContainerExecInspect
-	for {
-		ei, err = s.containerMgr.InspectExec(ctx, execid)
-		if err != nil {
-			return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
-		}
-		// Loop until exec finished.
-		if !ei.Running {
-			break
-		}
-		time.Sleep(100 * time.Millisecond)
+	attachCfg := &pkgstreams.AttachConfig{
+		UseStdin:  createConfig.AttachStdin,
+		Stdin:     streams.StdinStream,
+		UseStdout: createConfig.AttachStdout,
+		Stdout:    streams.StdoutStream,
+		UseStderr: createConfig.AttachStderr,
+		Stderr:    streams.StderrStream,
+		Terminal:  createConfig.Tty,
 	}
 
+	if err := s.containerMgr.StartExec(ctx, execid, attachCfg); err != nil {
+		return 0, fmt.Errorf("failed to exec for container %q: %v", containerID, err)
+	}
+
+	ei, err := s.containerMgr.InspectExec(ctx, execid)
+	if err != nil {
+		return 0, fmt.Errorf("failed to inspect exec for container %q: %v", containerID, err)
+	}
 	return uint32(ei.ExitCode), nil
 }
 
@@ -110,20 +103,19 @@ func handleResizing(containerID, execID string, resizeChan <-chan apitypes.Resiz
 
 // Attach attaches to a running container.
 func (s *streamRuntime) Attach(ctx context.Context, containerID string, streamOpts *remotecommand.Options, streams *remotecommand.Streams) error {
-	attachConfig := &mgr.AttachConfig{
-		Stdin:   streamOpts.Stdin,
-		Stdout:  streamOpts.Stdout,
-		Stderr:  streamOpts.Stderr,
-		Streams: streams,
+	// TODO(fuweid): could we close stdin after stop attach?
+	attachCfg := &pkgstreams.AttachConfig{
+		UseStdin:  streamOpts.Stdin,
+		Stdin:     streams.StdinStream,
+		UseStdout: streamOpts.Stdout,
+		Stdout:    streams.StdoutStream,
+		UseStderr: streamOpts.Stderr,
+		Stderr:    streams.StderrStream,
+		Terminal:  streamOpts.TTY,
 	}
-
-	err := s.containerMgr.Attach(ctx, containerID, attachConfig)
-	if err != nil {
+	if err := s.containerMgr.AttachContainerIO(ctx, containerID, attachCfg); err != nil {
 		return fmt.Errorf("failed to attach to container %q: %v", containerID, err)
 	}
-
-	<-streams.StreamCh
-
 	return nil
 }
 

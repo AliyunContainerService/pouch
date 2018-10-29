@@ -20,6 +20,8 @@ import (
 	"github.com/RackSec/srslog"
 )
 
+var _ logger.LogDriver = &Syslog{}
+
 type testingTB interface {
 	Fatalf(format string, args ...interface{})
 }

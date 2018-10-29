@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/filters"
 
@@ -284,26 +286,40 @@ func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, re
 
 func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	name := mux.Vars(req)["name"]
-
 	_, upgrade := req.Header["Upgrade"]
 
-	hijacker, ok := rw.(http.Hijacker)
-	if !ok {
-		return fmt.Errorf("not a hijack connection, container: %s", name)
+	var (
+		err     error
+		closeFn func() error
+		attach  = new(streams.AttachConfig)
+		stdin   io.ReadCloser
+		stdout  io.Writer
+	)
+
+	stdin, stdout, closeFn, err = openHijackConnection(rw)
+	if err != nil {
+		return err
 	}
 
-	attach := &mgr.AttachConfig{
-		Hijack:  hijacker,
-		Stdin:   req.FormValue("stdin") == "1",
-		Stdout:  true,
-		Stderr:  true,
-		Upgrade: upgrade,
+	// close hijack stream
+	defer closeFn()
+
+	if upgrade {
+		fmt.Fprintf(stdout, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n")
+	} else {
+		fmt.Fprintf(stdout, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
 	}
 
-	if err := s.ContainerMgr.Attach(ctx, name, attach); err != nil {
-		// TODO handle error
-	}
+	attach.UseStdin = httputils.BoolValue(req, "stdin")
+	attach.Stdin = stdin
+	attach.UseStdout = true
+	attach.Stdout = stdout
+	attach.UseStderr = true
+	attach.Stderr = stdout
 
+	if err := s.ContainerMgr.AttachContainerIO(ctx, name, attach); err != nil {
+		stdout.Write([]byte(err.Error() + "\r\n"))
+	}
 	return nil
 }
 

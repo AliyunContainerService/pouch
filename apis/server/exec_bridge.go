@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/streams"
 
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -64,28 +66,47 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 		return err
 	}
 
-	var attach *mgr.AttachConfig
+	var (
+		err     error
+		closeFn func() error
+		attach  = new(streams.AttachConfig)
+		stdin   io.ReadCloser
+		stdout  io.Writer
+	)
 
 	// TODO(huamin.thm): support detach exec process through http post method
 	if !config.Detach {
-		hijacker, ok := rw.(http.Hijacker)
-		if !ok {
-			return fmt.Errorf("not a hijack connection, container: %s", name)
+		stdin, stdout, closeFn, err = openHijackConnection(rw)
+		if err != nil {
+			return err
 		}
 
-		attach = &mgr.AttachConfig{
-			Hijack:  hijacker,
-			Stdin:   config.Tty,
-			Stdout:  true,
-			Stderr:  true,
-			Upgrade: upgrade,
+		// close hijack stream
+		defer closeFn()
+
+		if upgrade {
+			fmt.Fprintf(stdout, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n")
+		} else {
+			fmt.Fprintf(stdout, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
+		}
+
+		attach.UseStdin, attach.Stdin = true, stdin
+		attach.Terminal = config.Tty
+
+		if config.Tty {
+			attach.UseStdout, attach.Stdout = true, stdout
+		} else {
+			attach.UseStdout, attach.Stdout = true, stdcopy.NewStdWriter(stdout, stdcopy.Stdout)
+			attach.UseStderr, attach.Stderr = true, stdcopy.NewStdWriter(stdout, stdcopy.Stderr)
 		}
 	}
 
 	if err := s.ContainerMgr.StartExec(ctx, name, attach); err != nil {
-		logrus.Errorf("failed to run exec process: %s", err)
+		if config.Detach {
+			return err
+		}
+		attach.Stdout.Write([]byte(err.Error() + "\r\n"))
 	}
-
 	return nil
 }
 
@@ -123,4 +144,22 @@ func (s *Server) resizeExec(ctx context.Context, rw http.ResponseWriter, req *ht
 	rw.WriteHeader(http.StatusOK)
 	return nil
 
+}
+
+func openHijackConnection(rw http.ResponseWriter) (io.ReadCloser, io.Writer, func() error, error) {
+	hijacker, ok := rw.(http.Hijacker)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("not a hijack connection")
+	}
+
+	conn, _, err := hijacker.Hijack()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// set raw mode
+	conn.Write([]byte{})
+	return conn, conn, func() error {
+		return conn.Close()
+	}, nil
 }

@@ -37,6 +37,11 @@ func defaultOptions() *options {
 	}
 }
 
+// Init return the Syslog log driver.
+func Init(info logger.Info) (logger.LogDriver, error) {
+	return NewSyslog(info)
+}
+
 // NewSyslog returns new Syslog based on the log config.
 func NewSyslog(info logger.Info) (*Syslog, error) {
 	opt, err := parseOptions(info)
@@ -49,6 +54,11 @@ func NewSyslog(info logger.Info) (*Syslog, error) {
 		opt:  opt,
 		conn: nil,
 	}, nil
+}
+
+// Name return the log driver's name.
+func (s *Syslog) Name() string {
+	return "syslog"
 }
 
 // WriteLogMessage will write the LogMessage.

@@ -1,12 +1,16 @@
 package jsonfile
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/alibaba/pouch/daemon/logger"
 )
+
+var jsonFilePathName = "json.log"
 
 //MarshalFunc is the function of marshal the logMessage
 type MarshalFunc func(message *logger.LogMessage) ([]byte, error)
@@ -19,6 +23,33 @@ type JSONLogFile struct {
 	perms       os.FileMode
 	closed      bool
 	marshalFunc MarshalFunc
+}
+
+// Init initializes the jsonfile log driver.
+func Init(info logger.Info) (logger.LogDriver, error) {
+	if _, err := os.Stat(info.ContainerRootDir); err != nil {
+		return nil, err
+	}
+
+	logPath := filepath.Join(info.ContainerRootDir, jsonFilePathName)
+
+	attrs, err := info.ExtraAttributes(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var extra []byte
+	if len(attrs) > 0 {
+		var err error
+		extra, err = json.Marshal(attrs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewJSONLogFile(logPath, 0644, func(msg *logger.LogMessage) ([]byte, error) {
+		return Marshal(msg, extra)
+	})
 }
 
 // NewJSONLogFile returns new JSONLogFile instance.
@@ -34,6 +65,11 @@ func NewJSONLogFile(logPath string, perms os.FileMode, marshalFunc MarshalFunc) 
 		closed:      false,
 		marshalFunc: marshalFunc,
 	}, nil
+}
+
+// Name return the log driver's name.
+func (lf *JSONLogFile) Name() string {
+	return "json-file"
 }
 
 // WriteLogMessage will write the LogMessage into the file.

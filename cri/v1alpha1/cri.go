@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,6 +22,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
+	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/version"
 
@@ -603,11 +603,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Get container log.
 	if config.GetLogPath() != "" {
 		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		// NOTE: If we attach log here, the IO of container will be created
-		// by this function first, so we should decide whether open the stdin
-		// here. It's weird actually, make it more elegant in the future.
-		err = c.attachLog(logPath, containerID, config.Stdin)
-		if err != nil {
+		if err := c.ContainerMgr.AttachCRILog(ctx, containerID, logPath); err != nil {
 			return nil, err
 		}
 	}
@@ -905,60 +901,37 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 	defer cancel()
 
 	createConfig := &apitypes.ExecCreateConfig{
-		Cmd: r.GetCmd(),
+		Cmd:          r.GetCmd(),
+		AttachStdout: true,
+		AttachStderr: true,
 	}
+
 	execid, err := c.ContainerMgr.CreateExec(ctx, id, createConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create exec for container %q: %v", id, err)
 	}
 
-	reader, writer := io.Pipe()
-	defer writer.Close()
-
-	attachConfig := &mgr.AttachConfig{
-		Stdout:      true,
-		Stderr:      true,
-		Pipe:        writer,
-		MuxDisabled: true,
+	stdoutBuf, stderrBuf := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+	attachCfg := &streams.AttachConfig{
+		UseStdout: true,
+		Stdout:    stdoutBuf,
+		UseStderr: true,
+		Stderr:    stderrBuf,
 	}
-
-	err = c.ContainerMgr.StartExec(ctx, execid, attachConfig)
-	if err != nil {
+	if err := c.ContainerMgr.StartExec(ctx, execid, attachCfg); err != nil {
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 
-	readWaitCh := make(chan error, 1)
-	var recv bytes.Buffer
-	go func() {
-		defer reader.Close()
-		_, err = io.Copy(&recv, reader)
-		readWaitCh <- err
-	}()
-
-	select {
-	case <-ctx.Done():
-		//TODO maybe stop the execution?
-		return nil, fmt.Errorf("timeout %v exceeded", timeout)
-	case readWaitErr := <-readWaitCh:
-		if readWaitErr != nil {
-			return nil, fmt.Errorf("failed to read data from the pipe: %v", err)
-		}
-		execConfig, err := c.ContainerMgr.GetExecConfig(ctx, execid)
-		if err != nil {
-			return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
-		}
-
-		var stderr []byte
-		if execConfig.Error != nil {
-			stderr = []byte(execConfig.Error.Error())
-		}
-
-		return &runtime.ExecSyncResponse{
-			Stdout:   recv.Bytes(),
-			Stderr:   stderr,
-			ExitCode: int32(execConfig.ExitCode),
-		}, nil
+	execConfig, err := c.ContainerMgr.GetExecConfig(ctx, execid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect exec for container %q: %v", id, err)
 	}
+
+	return &runtime.ExecSyncResponse{
+		Stdout:   stdoutBuf.Bytes(),
+		Stderr:   stderrBuf.Bytes(),
+		ExitCode: int32(execConfig.ExitCode),
+	}, nil
 }
 
 // Exec prepares a streaming endpoint to execute a command in the container, and returns the address.
