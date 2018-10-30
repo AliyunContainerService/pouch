@@ -31,7 +31,7 @@ func (suite *PouchRunDNSSuite) TearDownTest(c *check.C) {
 }
 
 // TestRunWithUserDefinedNetwork tests enabling libnetwork resolver if user-defined network.
-func (suite *PouchRunSuite) TestRunWithUserDefinedNetwork(c *check.C) {
+func (suite *PouchRunDNSSuite) TestRunWithUserDefinedNetwork(c *check.C) {
 	cname := "TestRunWithUserDefinedNetwork"
 
 	// Create a user-defined network
@@ -52,7 +52,7 @@ func (suite *PouchRunSuite) TestRunWithUserDefinedNetwork(c *check.C) {
 }
 
 // TestRunWithBridgeNetwork tests disabling libnetwork resolver if not user-defined network.
-func (suite *PouchRunSuite) TestRunWithBridgeNetwork(c *check.C) {
+func (suite *PouchRunDNSSuite) TestRunWithBridgeNetwork(c *check.C) {
 	cname := "TestRunWithBridgeNetwork"
 
 	// Use bridge network if not set --net.
@@ -65,4 +65,73 @@ func (suite *PouchRunSuite) TestRunWithBridgeNetwork(c *check.C) {
 	hostRes.Assert(c, icmd.Success)
 
 	c.Assert(res.Stdout(), check.Equals, hostRes.Stdout())
+}
+
+// TestRunWithDNSFlags tests DNS related flags.
+func (suite *PouchRunDNSSuite) TestRunWithDNSFlags(c *check.C) {
+	cname := "TestRunWithDNSFlags"
+
+	res := command.PouchRun("run", "--name", cname,
+		"--dns", "1.2.3.4",
+		"--dns-option", "timeout:3",
+		"--dns-search", "example.com",
+		busyboxImage,
+		"cat", "/etc/resolv.conf")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is correct in container
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(strings.Contains(out, "nameserver 1.2.3.4"), check.Equals, true)
+	c.Assert(strings.Contains(out, "options timeout:3"), check.Equals, true)
+	c.Assert(strings.Contains(out, "search example.com"), check.Equals, true)
+
+	// test if the value is in inspect result
+	dns, err := inspectFilter(cname, ".HostConfig.DNS")
+	c.Assert(err, check.IsNil)
+	c.Assert(dns, check.Equals, "[1.2.3.4]")
+
+	dnsOptions, err := inspectFilter(cname, ".HostConfig.DNSOptions")
+	c.Assert(err, check.IsNil)
+	c.Assert(dnsOptions, check.Equals, "[timeout:3]")
+
+	dnsSearch, err := inspectFilter(cname, ".HostConfig.DNSSearch")
+	c.Assert(err, check.IsNil)
+	c.Assert(dnsSearch, check.Equals, "[example.com]")
+}
+
+// TestRunWithDNSRepeatFlags tests repeated DNS related flags.
+func (suite *PouchRunDNSSuite) TestRunWithDNSRepeatFlags(c *check.C) {
+	cname := "TestRunWithDNSRepeatFlags"
+
+	res := command.PouchRun("run", "--name", cname,
+		"--dns", "1.2.3.4",
+		"--dns", "2.3.4.5",
+		"--dns-option", "timeout:3",
+		"--dns-option", "ndots:9",
+		"--dns-search", "mydomain",
+		"--dns-search", "mydomain2",
+		busyboxImage,
+		"cat", "/etc/resolv.conf")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is correct in container
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(strings.Contains(out, "nameserver 1.2.3.4\nnameserver 2.3.4.5"), check.Equals, true)
+	c.Assert(strings.Contains(out, "options timeout:3 ndots:9"), check.Equals, true)
+	c.Assert(strings.Contains(out, "search mydomain mydomain2"), check.Equals, true)
+
+	// test if the value is in inspect result
+	dns, err := inspectFilter(cname, ".HostConfig.DNS")
+	c.Assert(err, check.IsNil)
+	c.Assert(dns, check.Equals, "[1.2.3.4 2.3.4.5]")
+
+	dnsOptions, err := inspectFilter(cname, ".HostConfig.DNSOptions")
+	c.Assert(err, check.IsNil)
+	c.Assert(dnsOptions, check.Equals, "[timeout:3 ndots:9]")
+
+	dnsSearch, err := inspectFilter(cname, ".HostConfig.DNSSearch")
+	c.Assert(err, check.IsNil)
+	c.Assert(dnsSearch, check.Equals, "[mydomain mydomain2]")
 }

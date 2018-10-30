@@ -32,6 +32,11 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// device related options
 	flagSet.StringSliceVarP(&c.devices, "device", "", nil, "Add a host device to the container")
 
+	// dns
+	flagSet.StringArrayVar(&c.dns, "dns", nil, "Set DNS servers")
+	flagSet.StringSliceVar(&c.dnsOptions, "dns-option", nil, "Set DNS options")
+	flagSet.StringArrayVar(&c.dnsSearch, "dns-search", nil, "Set DNS search domains")
+
 	flagSet.BoolVar(&c.enableLxcfs, "enableLxcfs", false, "Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd")
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
 	flagSet.StringArrayVarP(&c.env, "env", "e", nil, "Set environment variables for container")
