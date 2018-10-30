@@ -47,19 +47,13 @@ func (suite *PouchRunBlkioSuite) TestRunBlockIOWeight(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	value, _ := strconv.Atoi(strvalue)
-	c.Assert(result[0].HostConfig.BlkioWeight, check.Equals, uint16(value))
+	blkioWeight, err := inspectFilter(cname, ".HostConfig.BlkioWeight")
+	c.Assert(err, check.IsNil)
+	c.Assert(blkioWeight, check.Equals, strvalue)
 
 	// test if cgroup has record the real value
-	containerID := result[0].ID
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/blkio/default/%s/blkio.weight", containerID)
 	checkFileContains(c, path, strvalue)

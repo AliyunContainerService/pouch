@@ -118,13 +118,13 @@ func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C)
 	defer DelContainerForceMultyTime(c, funcname)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", funcname).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].Config.Rich, check.Equals, true)
-	c.Assert(result[0].Config.RichMode, check.Equals, "dumb-init")
+	rich, err := inspectFilter(funcname, ".Config.Rich")
+	c.Assert(err, check.IsNil)
+	c.Assert(rich, check.Equals, "true")
+
+	richMode, err := inspectFilter(funcname, ".Config.RichMode")
+	c.Assert(err, check.IsNil)
+	c.Assert(richMode, check.Equals, "dumb-init")
 
 	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
 
@@ -219,13 +219,13 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	defer DelContainerForceMultyTime(c, funcname)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", funcname).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].Config.Rich, check.Equals, true)
-	c.Assert(result[0].Config.RichMode, check.Equals, "systemd")
+	rich, err := inspectFilter(funcname, ".Config.Rich")
+	c.Assert(err, check.IsNil)
+	c.Assert(rich, check.Equals, "true")
+
+	richMode, err := inspectFilter(funcname, ".Config.RichMode")
+	c.Assert(err, check.IsNil)
+	c.Assert(richMode, check.Equals, "systemd")
 
 	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemd"), check.Equals, true)
 	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)

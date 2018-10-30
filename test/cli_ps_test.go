@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"regexp"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/util"
@@ -92,12 +90,8 @@ func (suite *PouchPsSuite) TestPsFilterEqual(c *check.C) {
 	labelA := "equal-label-a"
 	command.PouchRun("run", "-d", "--name", labelA, "-l", "a=b", busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, labelA)
-	output := command.PouchRun("inspect", labelA).Assert(c, icmd.Success).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	labelAID := result[0].ID
+	labelAID, err := inspectFilter(labelA, ".ID")
+	c.Assert(err, check.IsNil)
 
 	labelB := "equal-label-b"
 	command.PouchRun("run", "-d", "--name", labelB, "-l", "b=c", busyboxImage, "top").Assert(c, icmd.Success)
@@ -255,14 +249,11 @@ func (suite *PouchPsSuite) TestPsNoTrunc(c *check.C) {
 	kv := psToKV(res.Combined())
 
 	// Use inspect command to get container id
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	c.Assert(kv[name].id, check.HasLen, 64)
-	c.Assert(kv[name].id, check.Equals, result[0].ID)
+	c.Assert(kv[name].id, check.Equals, containerID)
 }
 
 // psTable represents the table of "pouch ps" result.

@@ -303,12 +303,9 @@ func (suite *PouchRunSuite) TestRunWithExitCode(c *check.C) {
 	ret.Assert(c, icmd.Expected{ExitCode: 101})
 
 	// test container ExitCode == 101
-	output := command.PouchRun("inspect", cname).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
+	exitCode, err := inspectFilter(cname, ".State.ExitCode")
+	c.Assert(err, check.IsNil)
+	c.Assert(exitCode, check.Equals, "101")
 }
 
 // TestRunWithRM is to verify the valid running container with rm flag
@@ -366,35 +363,7 @@ func (suite *PouchRunSuite) TestRunWithDisableNetworkFiles(c *check.C) {
 	}
 }
 
-// TestRunWithShm is to verify the valid running container
-// with shm-size
-func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
-	cname := "TestRunWithShm"
-	res := command.PouchRun("run", "-d", "--shm-size", "1g",
-		"--name", cname, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
-
-	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(int64(*result[0].HostConfig.ShmSize),
-		check.Equals, int64(1073741824))
-
-	containerID := result[0].ID
-
-	res = command.PouchRun("exec", containerID, "df", "-k", "/dev/shm")
-	res.Assert(c, icmd.Success)
-
-	c.Assert(util.PartialEqual(res.Stdout(), "1048576"), check.IsNil)
-}
-
-// TestRunSetRunningFlag is to verfy whether set Running Flag in ContainerState
+// TestRunSetRunningFlag is to verify whether set Running Flag in ContainerState
 // when started a container
 func (suite *PouchRunSuite) TestRunSetRunningFlag(c *check.C) {
 	cname := "TestRunSetRunningFlag"
@@ -403,14 +372,9 @@ func (suite *PouchRunSuite) TestRunSetRunningFlag(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.Running, check.Equals, true)
+	state, err := inspectFilter(cname, ".State.Running")
+	c.Assert(err, check.IsNil)
+	c.Assert(state, check.Equals, "true")
 }
 
 func (suite *PouchRunSuite) TestRunWithMtab(c *check.C) {

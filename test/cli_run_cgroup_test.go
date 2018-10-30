@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -53,12 +51,8 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	// this code slice may not robust, but for this test case is enough.
 	if strings.HasPrefix(cgroupParent, "/") {

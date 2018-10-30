@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/util"
@@ -55,17 +53,13 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(expected))
+	memorySwap, err := inspectFilter(cname, ".HostConfig.MemorySwap")
+	c.Assert(err, check.IsNil)
+	c.Assert(memorySwap, check.Equals, strconv.Itoa(expected))
 
 	// test if cgroup has record the real value
-	containerID := result[0].ID
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
 		containerID)
@@ -90,17 +84,13 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result = []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].HostConfig.MemorySwap, check.Equals, int64(expected))
+	memorySwap, err = inspectFilter(cname, ".HostConfig.MemorySwap")
+	c.Assert(err, check.IsNil)
+	c.Assert(memorySwap, check.Equals, strconv.Itoa(expected))
 
 	// test if cgroup has record the real value
-	containerID = result[0].ID
+	containerID, err = inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
 	path = fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
 		containerID)
@@ -130,7 +120,6 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 	cname = "TestRunWithMemoryswappiness"
 	memory := "100m"
 	memSwappiness := "70"
-	expected, _ := strconv.Atoi(memSwappiness)
 	sleep := "10000"
 
 	res = command.PouchRun("run", "-d", "-m", memory,
@@ -140,18 +129,13 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(int64(*result[0].HostConfig.MemorySwappiness),
-		check.Equals, int64(expected))
+	memorySwappiness, err := inspectFilter(cname, ".HostConfig.MemorySwappiness")
+	c.Assert(err, check.IsNil)
+	c.Assert(memorySwappiness, check.Equals, memSwappiness)
 
 	// test if cgroup has record the real value
-	containerID := result[0].ID
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.swappiness", containerID)
 	checkFileContains(c, path, memSwappiness)
@@ -180,17 +164,13 @@ func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].HostConfig.Memory, check.Equals, int64(expected))
+	memory, err := inspectFilter(cname, ".HostConfig.Memory")
+	c.Assert(err, check.IsNil)
+	c.Assert(memory, check.Equals, strconv.Itoa(expected))
 
 	// test if cgroup has record the real value
-	containerID := result[0].ID
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
 	path := fmt.Sprintf(
 		"/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
 
@@ -216,7 +196,7 @@ func (suite *PouchRunMemorySuite) TestRunMemoryOOM(c *check.C) {
 }
 
 // TestRunWithMemoryFlag test pouch run with memory flags
-func (suite *PouchRunSuite) TestRunWithMemoryFlag(c *check.C) {
+func (suite *PouchRunMemorySuite) TestRunWithMemoryFlag(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySupport)
 	SkipIfFalse(c, environment.IsMemorySwapSupport)
 
@@ -229,4 +209,25 @@ func (suite *PouchRunSuite) TestRunWithMemoryFlag(c *check.C) {
 	res = command.PouchRun("run", "-d", "--name", cname, "-m=500m", "--memory-swap=50m", busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, cname)
 	c.Assert(util.PartialEqual(res.Stderr(), "Minimum memoryswap limit should be larger than memory limit"), check.IsNil)
+}
+
+// TestRunWithShm is to verify the valid running container
+// with shm-size
+func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
+	cname := "TestRunWithShm"
+	res := command.PouchRun("run", "-d", "--shm-size", "1g",
+		"--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	shmSize, err := inspectFilter(cname, ".HostConfig.ShmSize")
+	c.Assert(err, check.IsNil)
+	c.Assert(shmSize,
+		check.Equals, "1073741824")
+
+	res = command.PouchRun("exec", cname, "df", "-k", "/dev/shm")
+	res.Assert(c, icmd.Success)
+
+	c.Assert(util.PartialEqual(res.Stdout(), "1048576"), check.IsNil)
 }
