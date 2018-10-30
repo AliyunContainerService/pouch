@@ -104,7 +104,7 @@ sudo systemctl restart pouch
 
 After installing and configuring PouchContainer to make it ready for Kubernetes, validation work could be made to verify if the pouchd meets the requirement.
 
-User can execute a command `pouch info` on the node to see if the field `IsCRIEnabled`in the result is true. If `IsCRIEnabled` is true, it means it is ready for Kubernetes. Otherwise, it is not.
+User can execute a command `pouch info` on the node to see if the field `CriEnabled`in the result is true. If `CriEnabled` is true, it means it is ready for Kubernetes. Otherwise, it is not.
 
 ## Install and Configure Kubernetes
 
