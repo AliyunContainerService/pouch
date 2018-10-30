@@ -404,6 +404,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		container.NetworkSettings.Networks = make(map[string]*types.EndpointSettings)
 		container.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
+	container.NetworkSettings.Ports = config.HostConfig.PortBindings
 
 	if err := parseSecurityOpts(container, config.HostConfig.SecurityOpt); err != nil {
 		return nil, err

@@ -186,3 +186,19 @@ func (suite *PouchInspectSuite) TestContainerInspectState(c *check.C) {
 	output = command.PouchRun("inspect", "-f", "{{.State.Status}}", name).Stdout()
 	c.Assert(strings.TrimSpace(output), check.Equals, "stopped")
 }
+
+func (suite *PouchInspectSuite) TestContainerInspectPorts(c *check.C) {
+	name := "TestContainerInspectPorts"
+	command.PouchRun("run", "-d", "--name", name, "-p", "8080:80", busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	output := command.PouchRun("inspect", name).Stdout()
+
+	containers := make([]types.ContainerJSON, 1)
+	err := json.Unmarshal([]byte(output), &containers)
+	if err != nil || len(containers) == 0 {
+		c.Fatal("fail to format container json")
+	}
+	data, _ := json.Marshal(containers[0].NetworkSettings.Ports)
+	c.Assert(string(data), check.Equals, "{\"80/tcp\":[{\"HostPort\":\"8080\"}]}")
+}
