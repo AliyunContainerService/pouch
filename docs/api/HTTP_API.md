@@ -369,6 +369,35 @@ json :
 ```
 
 
+<a name="containercheckpointcreate"></a>
+### create a checkpoint from a running container
+```
+POST /containers/{id}/checkpoints
+```
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Body**|**body**  <br>*optional*||[CheckpointCreateOptions](#checkpointcreateoptions)|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**201**|created|No Content|
+|**400**|bad parameter|[Error](#error)|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+
+
+#### Tags
+
+* Container
+
+
 <a name="containercheckpointlist"></a>
 ### list checkpoints of a container
 ```
@@ -401,7 +430,7 @@ GET /containers/{id}/checkpoints
 <a name="containercheckpointdelete"></a>
 ### delete a checkpoint of a container
 ```
-DELETE /containers/{id}/checkpoints/{id}
+DELETE /containers/{id}/checkpoints/{checkpointId}
 ```
 
 
@@ -409,9 +438,9 @@ DELETE /containers/{id}/checkpoints/{id}
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
+|**Path**|**checkpointId**  <br>*required*|checkpoint id|string|
 |**Path**|**id**  <br>*required*|ID or name of the container|string|
-|**Query**|**checkpointdir**  <br>*optional*|checkpoint directory|string|
-|**Query**|**checkpointid**  <br>*optional*|checkpoint id|string|
+|**Query**|**dir**  <br>*optional*|checkpoint directory|string|
 
 
 #### Responses
@@ -996,7 +1025,7 @@ Networks report these events: `create`, `connect`, `disconnect`, `destroy`
 
 |HTTP Code|Description|Schema|
 |---|---|---|
-|**200**|no error|[#definitions/EventsMessage](#definitions-eventsmessage)|
+|**200**|no error|[EventsMessage](#eventsmessage)|
 |**400**|bad parameter|[Error](#error)|
 |**500**|An unexpected server error occurred.|[Error](#error)|
 
@@ -2545,24 +2574,24 @@ Container configuration that depends on the host we are running on
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioWeight**  <br>*required*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
+|**BlkioWeight**  <br>*optional*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
 |**CapAdd**  <br>*optional*|A list of kernel capabilities to add to the container.|< string > array|
 |**CapDrop**  <br>*optional*|A list of kernel capabilities to drop from the container.|< string > array|
 |**Cgroup**  <br>*optional*|Cgroup to use for the container.|string|
-|**CgroupParent**  <br>*required*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
+|**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**ConsoleSize**  <br>*optional*|Initial console size, as an `[height, width]` array. (Windows only)|< integer > array|
 |**ContainerIDFile**  <br>*optional*|Path to a file where the container ID is written|string|
-|**CpuCount**  <br>*required*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPercent**  <br>*required*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*required*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*required*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
-|**CpuRealtimePeriod**  <br>*required*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuRealtimeRuntime**  <br>*required*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuShares**  <br>*required*|An integer value representing this container's relative CPU weight versus other containers.|integer|
-|**CpusetCpus**  <br>*required*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
-|**CpusetMems**  <br>*required*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
-|**DeviceCgroupRules**  <br>*required*|a list of cgroup rules to apply to the container|< string > array|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
+|**CpusetCpus**  <br>*optional*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
+|**CpusetMems**  <br>*optional*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
+|**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
 |**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
 |**Dns**  <br>*optional*|A list of DNS servers for the container to use.|< string > array|
 |**DnsOptions**  <br>*optional*|A list of DNS options.|< string > array|
@@ -2570,29 +2599,29 @@ Container configuration that depends on the host we are running on
 |**EnableLxcfs**  <br>*optional*|Whether to enable lxcfs.|boolean|
 |**ExtraHosts**  <br>*optional*|A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `["hostname:IP"]`.|< string > array|
 |**GroupAdd**  <br>*optional*|A list of additional groups that the container process will run as.|< string > array|
-|**IOMaximumBandwidth**  <br>*required*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
-|**IOMaximumIOps**  <br>*required*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
 |**InitScript**  <br>*optional*|Initial script executed in container. The script will be executed before entrypoint or command|string|
-|**IntelRdtL3Cbm**  <br>*required*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
+|**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
 |**IpcMode**  <br>*optional*|IPC sharing mode for the container. Possible values are:<br>- `"none"`: own private IPC namespace, with /dev/shm not mounted<br>- `"private"`: own private IPC namespace<br>- `"shareable"`: own private IPC namespace, with a possibility to share it with other containers<br>- `"container:<name\|id>"`: join another (shareable) container's IPC namespace<br>- `"host"`: use the host system's IPC namespace<br>If not specified, daemon default is used, which can either be `"private"`<br>or `"shareable"`, depending on daemon version and configuration.|string|
 |**Isolation**  <br>*optional*|Isolation technology of the container. (Windows only)|enum (default, process, hyperv)|
-|**KernelMemory**  <br>*required*|Kernel memory limit in bytes.|integer (int64)|
+|**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Links**  <br>*optional*|A list of links for the container in the form `container_name:alias`.|< string > array|
 |**LogConfig**  <br>*optional*|The logging configuration for this container|[LogConfig](#logconfig)|
-|**Memory**  <br>*required*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*required*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*required*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
-|**MemoryReservation**  <br>*required*|Memory soft limit in bytes.|integer (int64)|
-|**MemorySwap**  <br>*required*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*required*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*required*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**NanoCpus**  <br>*required*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
+|**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
+|**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
-|**OomKillDisable**  <br>*required*|Disable OOM Killer for the container.|boolean|
+|**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.<br>The range is in [-1000, 1000].  <br>**Minimum value** : `-1000`  <br>**Maximum value** : `1000`|integer (int)|
 |**PidMode**  <br>*optional*|Set the PID (Process) Namespace mode for the container. It can be either:<br>- `"container:<name\|id>"`: joins another container's PID namespace<br>- `"host"`: use the host's PID namespace inside the container|string|
-|**PidsLimit**  <br>*required*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|[PortMap](#portmap)|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
@@ -2601,7 +2630,7 @@ Container configuration that depends on the host we are running on
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Runtime**  <br>*optional*|Runtime to use with this container.|string|
-|**ScheLatSwitch**  <br>*required*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
 |**SecurityOpt**  <br>*optional*|A list of string values to customize labels for MLS systems, such as SELinux.|< string > array|
 |**ShmSize**  <br>*optional*|Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.  <br>**Minimum value** : `0`|integer|
 |**StorageOpt**  <br>*optional*|Storage driver options for this container, in the form `{"size": "120G"}`.|< string, string > map|
@@ -2980,36 +3009,36 @@ A container's resources (cgroups config, ulimits, etc)
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioWeight**  <br>*required*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
+|**BlkioWeight**  <br>*optional*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
-|**CgroupParent**  <br>*required*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
-|**CpuCount**  <br>*required*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPercent**  <br>*required*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*required*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*required*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
-|**CpuRealtimePeriod**  <br>*required*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuRealtimeRuntime**  <br>*required*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuShares**  <br>*required*|An integer value representing this container's relative CPU weight versus other containers.|integer|
-|**CpusetCpus**  <br>*required*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
-|**CpusetMems**  <br>*required*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
-|**DeviceCgroupRules**  <br>*required*|a list of cgroup rules to apply to the container|< string > array|
+|**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
+|**CpusetCpus**  <br>*optional*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
+|**CpusetMems**  <br>*optional*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
+|**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
 |**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
-|**IOMaximumBandwidth**  <br>*required*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
-|**IOMaximumIOps**  <br>*required*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
-|**IntelRdtL3Cbm**  <br>*required*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
-|**KernelMemory**  <br>*required*|Kernel memory limit in bytes.|integer (int64)|
-|**Memory**  <br>*required*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*required*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*required*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
-|**MemoryReservation**  <br>*required*|Memory soft limit in bytes.|integer (int64)|
-|**MemorySwap**  <br>*required*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*required*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*required*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**NanoCpus**  <br>*required*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
+|**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
+|**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
+|**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
+|**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
-|**OomKillDisable**  <br>*required*|Disable OOM Killer for the container.|boolean|
-|**PidsLimit**  <br>*required*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
-|**ScheLatSwitch**  <br>*required*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimit](#ulimit) > array|
 
 
@@ -3177,40 +3206,40 @@ UpdateConfig holds the mutable attributes of a Container. Those attributes can b
 |**BlkioDeviceReadIOps**  <br>*optional*|Limit read rate (IO per second) from a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteBps**  <br>*optional*|Limit write rate (bytes per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
 |**BlkioDeviceWriteIOps**  <br>*optional*|Limit write rate (IO per second) to a device, in the form `[{"Path": "device_path", "Rate": rate}]`.|< [ThrottleDevice](#throttledevice) > array|
-|**BlkioWeight**  <br>*required*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
+|**BlkioWeight**  <br>*optional*|Block IO weight (relative weight), need CFQ IO Scheduler enable.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1000`|integer (uint16)|
 |**BlkioWeightDevice**  <br>*optional*|Block IO weight (relative device weight) in the form `[{"Path": "device_path", "Weight": weight}]`.|< [WeightDevice](#weightdevice) > array|
-|**CgroupParent**  <br>*required*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
-|**CpuCount**  <br>*required*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPercent**  <br>*required*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
-|**CpuPeriod**  <br>*required*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*required*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
-|**CpuRealtimePeriod**  <br>*required*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuRealtimeRuntime**  <br>*required*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
-|**CpuShares**  <br>*required*|An integer value representing this container's relative CPU weight versus other containers.|integer|
-|**CpusetCpus**  <br>*required*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
-|**CpusetMems**  <br>*required*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
-|**DeviceCgroupRules**  <br>*required*|a list of cgroup rules to apply to the container|< string > array|
+|**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
+|**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
+|**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
+|**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
+|**CpusetCpus**  <br>*optional*|CPUs in which to allow execution (e.g., `0-3`, `0,1`)  <br>**Example** : `"0-3"`|string|
+|**CpusetMems**  <br>*optional*|Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.|string|
+|**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
 |**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
 |**DiskQuota**  <br>*optional*|update disk quota for container|< string, string > map|
 |**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
-|**IOMaximumBandwidth**  <br>*required*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
-|**IOMaximumIOps**  <br>*required*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
-|**IntelRdtL3Cbm**  <br>*required*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
-|**KernelMemory**  <br>*required*|Kernel memory limit in bytes.|integer (int64)|
+|**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
+|**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
+|**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
+|**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Label**  <br>*optional*|List of labels set to container.|< string > array|
-|**Memory**  <br>*required*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*required*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*required*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
-|**MemoryReservation**  <br>*required*|Memory soft limit in bytes.|integer (int64)|
-|**MemorySwap**  <br>*required*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*required*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*required*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**NanoCpus**  <br>*required*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
+|**Memory**  <br>*optional*|Memory limit in bytes.|integer|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
+|**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
-|**OomKillDisable**  <br>*required*|Disable OOM Killer for the container.|boolean|
-|**PidsLimit**  <br>*required*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
+|**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
+|**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**RestartPolicy**  <br>*optional*||[RestartPolicy](#restartpolicy)|
-|**ScheLatSwitch**  <br>*required*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimit](#ulimit) > array|
 
 
