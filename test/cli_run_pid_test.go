@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -58,16 +56,13 @@ func (suite *PouchRunPidSuite) TestRunWithPidsLimit(c *check.C) {
 	pidfile := "/sys/fs/cgroup/pids/pids.max"
 	res := command.PouchRun("run", "--pids-limit", "10",
 		"--name", cname, busyboxImage, "cat", pidfile)
+	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
 	out := res.Stdout()
 	c.Assert(out, check.Equals, "10\n")
 
-	output := command.PouchRun("inspect", cname).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	pl := result[0].HostConfig.PidsLimit
-	c.Assert(int(pl), check.Equals, 10)
+	pidsLimit, err := inspectFilter(cname, ".HostConfig.PidsLimit")
+	c.Assert(err, check.IsNil)
+	c.Assert(pidsLimit, check.Equals, "10")
 }

@@ -2,13 +2,11 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -270,12 +268,9 @@ func (suite *PouchStartSuite) TestStartWithExitCode(c *check.C) {
 	ret.Assert(c, icmd.Expected{ExitCode: 101})
 
 	// test container ExitCode == 101
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.ExitCode, check.Equals, int64(101))
+	exitCode, err := inspectFilter(name, ".State.ExitCode")
+	c.Assert(err, check.IsNil)
+	c.Assert(exitCode, check.Equals, "101")
 }
 
 // TestStartWithUlimit starts a container with --ulimit.

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -43,14 +41,9 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithExistWorkingDir(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].Config.WorkingDir, check.Equals, "/root")
+	workingDir, err := inspectFilter(cname, ".Config.WorkingDir")
+	c.Assert(err, check.IsNil)
+	c.Assert(workingDir, check.Equals, "/root")
 }
 
 // TestRunWithNotExistWorkingDir is to verify the valid running container
@@ -64,14 +57,9 @@ func (suite *PouchRunWorkingDirSuite) TestRunWithNotExistWorkingDir(c *check.C) 
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].Config.WorkingDir, check.Equals, "/tmp/notexist/dir")
+	workingDir, err := inspectFilter(cname, ".Config.WorkingDir")
+	c.Assert(err, check.IsNil)
+	c.Assert(workingDir, check.Equals, "/tmp/notexist/dir")
 }
 
 // TestRunWithWorkingDir is to verify the valid running container

@@ -43,12 +43,8 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.shares"
 	if _, err := os.Stat(file); err != nil {
@@ -66,13 +62,9 @@ func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "40")
 	}
 
-	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(metaJSON[0].HostConfig.CPUShares, check.Equals, int64(40))
+	cpuShares, err := inspectFilter(name, ".HostConfig.CPUShares")
+	c.Assert(err, check.IsNil)
+	c.Assert(cpuShares, check.Equals, "40")
 }
 
 // TestUpdateCpuPeriod is to verify the correctness of updating container cpu-period.
@@ -83,12 +75,8 @@ func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_period_us"
 	if _, err := os.Stat(file); err != nil {
@@ -106,13 +94,9 @@ func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "2000")
 	}
 
-	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(metaJSON[0].HostConfig.CPUPeriod, check.Equals, int64(2000))
+	cpuPeriod, err := inspectFilter(name, ".HostConfig.CPUPeriod")
+	c.Assert(err, check.IsNil)
+	c.Assert(cpuPeriod, check.Equals, "2000")
 }
 
 // TestUpdateCpuMemoryFail is to verify the invalid value of updating container cpu and memory related flags will fail.
@@ -143,12 +127,8 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	file := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
 	if _, err := os.Stat(file); err != nil {
@@ -166,13 +146,9 @@ func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
 	}
 
-	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
+	memory, err := inspectFilter(name, ".HostConfig.Memory")
+	c.Assert(err, check.IsNil)
+	c.Assert(memory, check.Equals, "524288000")
 }
 
 // TestUpdateStoppedContainer is to verify the correctness of updating a stopped container.
@@ -183,12 +159,8 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	command.PouchRun("update", "-m", "500M", name).Assert(c, icmd.Success)
 
@@ -208,13 +180,9 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
 	}
 
-	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(metaJSON[0].HostConfig.Memory, check.Equals, int64(524288000))
+	memory, err := inspectFilter(name, ".HostConfig.Memory")
+	c.Assert(err, check.IsNil)
+	c.Assert(memory, check.Equals, "524288000")
 }
 
 // TestUpdateContainerCPUQuota is to verify the correctness of updating cpu-quota of container.
@@ -228,12 +196,8 @@ func (suite *PouchUpdateSuite) TestUpdateContainerCPUQuota(c *check.C) {
 	// ensure update cpu-quota is ok
 	command.PouchRun("update", "--cpu-quota", "1100", name).Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	containerID := result[0].ID
+	containerID, err := inspectFilter(name, ".ID")
+	c.Assert(err, check.IsNil)
 
 	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_quota_us"
 	if _, err := os.Stat(file); err != nil {
@@ -249,13 +213,9 @@ func (suite *PouchUpdateSuite) TestUpdateContainerCPUQuota(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
 	}
 
-	inspectInfo := command.PouchRun("inspect", name).Stdout()
-	metaJSON := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(inspectInfo), &metaJSON); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(metaJSON[0].HostConfig.CPUQuota, check.Equals, int64(1100))
+	cpuQuota, err := inspectFilter(name, ".HostConfig.CPUQuota")
+	c.Assert(err, check.IsNil)
+	c.Assert(cpuQuota, check.Equals, "1100")
 }
 
 // TestUpdateContainerWithoutFlag is to verify the correctness of updating a container without any flag.

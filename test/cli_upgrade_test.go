@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"strings"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -48,12 +46,9 @@ func (suite *PouchUpgradeSuite) TestPouchUpgrade(c *check.C) {
 	}
 
 	// check if the new container is running after upgade a running container
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.Running, check.Equals, true)
+	state, err := inspectFilter(name, ".State.Running")
+	c.Assert(err, check.IsNil)
+	c.Assert(state, check.Equals, "true")
 
 	// double check if container is running by executing a exec command
 	out := command.PouchRun("exec", name, "echo", "test").Stdout()
@@ -96,12 +91,9 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	}
 
 	// check if the new container is running after upgade a running container
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.Status, check.Equals, types.StatusStopped)
+	status, err := inspectFilter(name, ".State.Status")
+	c.Assert(err, check.IsNil)
+	c.Assert(status, check.Equals, "stopped")
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
@@ -138,12 +130,9 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeCheckVolume(c *check.C) {
 	}
 
 	// check if the new container is running after upgade a running container
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(result[0].State.Running, check.Equals, true)
+	state, err := inspectFilter(name, ".State.Running")
+	c.Assert(err, check.IsNil)
+	c.Assert(state, check.Equals, "true")
 
 	// double check if container is running by executing a exec command
 	out := command.PouchRun("exec", name, "cat", "/data/test").Stdout()
