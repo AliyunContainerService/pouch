@@ -7,7 +7,7 @@ import (
 	"github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/apis/types"
 
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 type container struct {
@@ -49,6 +49,10 @@ type container struct {
 	memoryForceEmptyCtl int64
 	scheLatSwitch       int64
 	oomKillDisable      bool
+
+	dns        []string
+	dnsOptions []string
+	dnsSearch  []string
 
 	devices        []string
 	enableLxcfs    bool
@@ -235,6 +239,9 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				Ulimits:       c.ulimit.Value(),
 				PidsLimit:     c.pidsLimit,
 			},
+			DNS:           c.dns,
+			DNSOptions:    c.dnsOptions,
+			DNSSearch:     c.dnsSearch,
 			EnableLxcfs:   c.enableLxcfs,
 			Privileged:    c.privileged,
 			RestartPolicy: restartPolicy,
