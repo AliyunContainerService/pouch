@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
+	ns "github.com/alibaba/pouch/pkg/namespace"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -81,7 +82,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 		&ContainerListOption{
 			All: true,
 			FilterFunc: func(c *Container) bool {
-				return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
+				return (c.IsRunning() || c.IsPaused()) && !ns.IsContainer(c.HostConfig.NetworkMode)
 			}})
 	if err != nil {
 		logrus.Errorf("failed to new network manager: cannot get container list")
@@ -613,7 +614,7 @@ func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]lib
 
 	sandboxOptions = append(sandboxOptions, libnetwork.OptionHostname(string(endpoint.Hostname)), libnetwork.OptionDomainname(endpoint.Domainname))
 
-	if IsHost(endpoint.NetworkMode) {
+	if ns.IsHost(endpoint.NetworkMode) {
 		sandboxOptions = append(sandboxOptions, libnetwork.OptionUseDefaultSandbox())
 		if len(endpoint.ExtraHosts) == 0 {
 			sandboxOptions = append(sandboxOptions, libnetwork.OptionOriginHostsPath("/etc/hosts"))

@@ -11,6 +11,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
+	ns "github.com/alibaba/pouch/pkg/namespace"
 
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
@@ -373,54 +374,6 @@ func setupNamespaces(ctx context.Context, c *Container, specWrapper *SpecWrapper
 	return setupUtsNamespace(ctx, c, specWrapper)
 }
 
-// isEmpty indicates whether namespace mode is empty.
-func isEmpty(mode string) bool {
-	return mode == ""
-}
-
-// isNone indicates whether container's namespace mode is set to "none".
-func isNone(mode string) bool {
-	return mode == "none"
-}
-
-// isHost indicates whether the container shares the host's corresponding namespace.
-func isHost(mode string) bool {
-	return mode == "host"
-}
-
-// isShareable indicates whether the containers namespace can be shared with another container.
-func isShareable(mode string) bool {
-	return mode == "shareable"
-}
-
-// isContainer indicates whether the container uses another container's corresponding namespace.
-func isContainer(mode string) bool {
-	parts := strings.SplitN(mode, ":", 2)
-	return len(parts) > 1 && parts[0] == "container"
-}
-
-// isPrivate indicates whether the container uses its own namespace.
-func isPrivate(ns specs.LinuxNamespaceType, mode string) bool {
-	switch ns {
-	case specs.IPCNamespace:
-		return mode == "private"
-	case specs.NetworkNamespace, specs.PIDNamespace:
-		return !(isHost(mode) || isContainer(mode))
-	case specs.UserNamespace, specs.UTSNamespace:
-		return !(isHost(mode))
-	}
-	return false
-}
-
-// connectedContainer is the id or name of the container whose namespace this container share with.
-func connectedContainer(mode string) string {
-	parts := strings.SplitN(mode, ":", 2)
-	if len(parts) == 2 {
-		return parts[1]
-	}
-	return ""
-}
-
 func getIpcContainer(ctx context.Context, mgr ContainerMgr, id string) (*Container, error) {
 	// Check whether the container exists.
 	c, err := mgr.Get(ctx, id)
@@ -458,10 +411,10 @@ func setupNetworkNamespace(ctx context.Context, c *Container, specWrapper *SpecW
 	}
 
 	s := specWrapper.s
-	ns := specs.LinuxNamespace{Type: specs.NetworkNamespace}
+	netns := specs.LinuxNamespace{Type: specs.NetworkNamespace}
 
 	networkMode := c.HostConfig.NetworkMode
-	if IsContainer(networkMode) {
+	if ns.IsContainer(networkMode) {
 		origContainer, err := specWrapper.ctrMgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
 		if err != nil {
 			return err
@@ -472,14 +425,14 @@ func setupNetworkNamespace(ctx context.Context, c *Container, specWrapper *SpecW
 			return fmt.Errorf("can not join network of a non running container: %s", origContainer.ID)
 		}
 
-		ns.Path = fmt.Sprintf("/proc/%d/ns/net", origContainer.State.Pid)
-	} else if IsHost(networkMode) {
-		ns.Path = c.NetworkSettings.SandboxKey
+		netns.Path = fmt.Sprintf("/proc/%d/ns/net", origContainer.State.Pid)
+	} else if ns.IsHost(networkMode) {
+		netns.Path = c.NetworkSettings.SandboxKey
 	}
-	setNamespace(s, ns)
+	setNamespace(s, netns)
 
-	for _, ns := range s.Linux.Namespaces {
-		if ns.Type == "network" && ns.Path == "" && !c.Config.NetworkDisabled {
+	for _, n := range s.Linux.Namespaces {
+		if n.Type == "network" && n.Path == "" && !c.Config.NetworkDisabled {
 			target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
 			if err != nil {
 				return err
@@ -499,19 +452,19 @@ func setupIpcNamespace(ctx context.Context, c *Container, specWrapper *SpecWrapp
 	s := specWrapper.s
 	ipcMode := c.HostConfig.IpcMode
 	switch {
-	case isContainer(ipcMode):
-		ns := specs.LinuxNamespace{Type: specs.IPCNamespace}
-		c, err := getIpcContainer(ctx, specWrapper.ctrMgr, connectedContainer(ipcMode))
+	case ns.IsContainer(ipcMode):
+		ipcns := specs.LinuxNamespace{Type: specs.IPCNamespace}
+		c, err := getIpcContainer(ctx, specWrapper.ctrMgr, ns.ConnectedContainer(ipcMode))
 		if err != nil {
 			return fmt.Errorf("setup container ipc namespace mode failed: %v", err)
 		}
-		ns.Path = fmt.Sprintf("/proc/%d/ns/ipc", c.State.Pid)
-		setNamespace(s, ns)
-	case isHost(ipcMode):
+		ipcns.Path = fmt.Sprintf("/proc/%d/ns/ipc", c.State.Pid)
+		setNamespace(s, ipcns)
+	case ns.IsHost(ipcMode):
 		removeNamespace(s, specs.IPCNamespace)
 	default:
-		ns := specs.LinuxNamespace{Type: specs.IPCNamespace}
-		setNamespace(s, ns)
+		ipcns := specs.LinuxNamespace{Type: specs.IPCNamespace}
+		setNamespace(s, ipcns)
 	}
 	return nil
 }
@@ -520,19 +473,19 @@ func setupPidNamespace(ctx context.Context, c *Container, specWrapper *SpecWrapp
 	s := specWrapper.s
 	pidMode := c.HostConfig.PidMode
 	switch {
-	case isContainer(pidMode):
-		ns := specs.LinuxNamespace{Type: specs.PIDNamespace}
-		c, err := getPidContainer(ctx, specWrapper.ctrMgr, connectedContainer(pidMode))
+	case ns.IsContainer(pidMode):
+		pidns := specs.LinuxNamespace{Type: specs.PIDNamespace}
+		c, err := getPidContainer(ctx, specWrapper.ctrMgr, ns.ConnectedContainer(pidMode))
 		if err != nil {
 			return fmt.Errorf("setup container pid namespace mode failed: %v", err)
 		}
-		ns.Path = fmt.Sprintf("/proc/%d/ns/pid", c.State.Pid)
-		setNamespace(s, ns)
-	case isHost(pidMode):
+		pidns.Path = fmt.Sprintf("/proc/%d/ns/pid", c.State.Pid)
+		setNamespace(s, pidns)
+	case ns.IsHost(pidMode):
 		removeNamespace(s, specs.PIDNamespace)
 	default:
-		ns := specs.LinuxNamespace{Type: specs.PIDNamespace}
-		setNamespace(s, ns)
+		pidns := specs.LinuxNamespace{Type: specs.PIDNamespace}
+		setNamespace(s, pidns)
 	}
 	return nil
 }
@@ -541,7 +494,7 @@ func setupUtsNamespace(ctx context.Context, c *Container, specWrapper *SpecWrapp
 	s := specWrapper.s
 	utsMode := c.HostConfig.UTSMode
 	switch {
-	case isHost(utsMode):
+	case ns.IsHost(utsMode):
 		removeNamespace(s, specs.UTSNamespace)
 		// remove hostname
 		s.Hostname = ""

@@ -27,6 +27,7 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	mountutils "github.com/alibaba/pouch/pkg/mount"
+	ns "github.com/alibaba/pouch/pkg/namespace"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
@@ -38,6 +39,7 @@ import (
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -392,7 +394,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		container.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	}
-	if container.NetworkSettings.Networks == nil && !IsContainer(config.HostConfig.NetworkMode) {
+	if container.NetworkSettings.Networks == nil && !ns.IsContainer(config.HostConfig.NetworkMode) {
 		container.NetworkSettings.Networks = make(map[string]*types.EndpointSettings)
 		container.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
@@ -547,7 +549,7 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 
 	networkMode := c.HostConfig.NetworkMode
 
-	if IsContainer(networkMode) {
+	if ns.IsContainer(networkMode) {
 		var origContainer *Container
 		origContainer, err := mgr.Get(ctx, strings.SplitN(networkMode, ":", 2)[1])
 		if err != nil {
@@ -564,7 +566,7 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 	}
 
 	// initialise host network mode
-	if IsHost(networkMode) {
+	if ns.IsHost(networkMode) {
 		hostname, err := os.Hostname()
 		if err != nil {
 			return err
@@ -1352,7 +1354,7 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	networkMode := c.HostConfig.NetworkMode
 	c.Unlock()
 
-	if IsHost(networkMode) && IsHost(network.Mode) {
+	if ns.IsHost(networkMode) && ns.IsHost(network.Mode) {
 		return fmt.Errorf("container cannot be disconnected from host network or connected to hostnetwork ")
 	}
 
@@ -1428,13 +1430,13 @@ func (mgr *ContainerManager) openContainerIO(c *Container) (*containerio.IO, err
 }
 
 func (mgr *ContainerManager) updateNetworkConfig(container *Container, networkIDOrName string, endpointConfig *types.EndpointSettings) error {
-	if IsContainer(container.HostConfig.NetworkMode) {
+	if ns.IsContainer(container.HostConfig.NetworkMode) {
 		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
 	}
 
 	// TODO check bridge-mode conflict
 
-	if IsUserDefined(container.HostConfig.NetworkMode) {
+	if ns.IsUserDefined(container.HostConfig.NetworkMode) {
 		if hasUserDefinedIPAddress(endpointConfig) {
 			return fmt.Errorf("user specified IP address is supported on user defined networks only")
 		}
@@ -1470,7 +1472,7 @@ func (mgr *ContainerManager) updateNetworkConfig(container *Container, networkID
 }
 
 func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *Container, networkIDOrName string, epConfig *types.EndpointSettings) (err error) {
-	if IsContainer(container.HostConfig.NetworkMode) {
+	if ns.IsContainer(container.HostConfig.NetworkMode) {
 		return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
 	}
 
@@ -1499,7 +1501,7 @@ func (mgr *ContainerManager) updateNetworkSettings(container *Container, n libne
 		container.NetworkSettings = &types.NetworkSettings{Networks: make(map[string]*types.EndpointSettings)}
 	}
 
-	if !IsHost(container.HostConfig.NetworkMode) && IsHost(n.Type()) {
+	if !ns.IsHost(container.HostConfig.NetworkMode) && ns.IsHost(n.Type()) {
 		return fmt.Errorf("container cannot be connected to host network")
 	}
 
@@ -1513,10 +1515,10 @@ func (mgr *ContainerManager) updateNetworkSettings(container *Container, n libne
 			// Avoid duplicate config
 			return nil
 		}
-		if !IsPrivate(sn.Type) || !IsPrivate(n.Type()) {
+		if !ns.IsPrivate(specs.NetworkNamespace, sn.Type) || !ns.IsPrivate(specs.NetworkNamespace, n.Type()) {
 			return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
 		}
-		if IsNone(sn.Name) || IsNone(n.Name()) {
+		if ns.IsNone(sn.Name) || ns.IsNone(n.Name()) {
 			return fmt.Errorf("container cannot be connected to multiple networks with one of the networks in none mode")
 		}
 	}
@@ -1811,7 +1813,7 @@ func (mgr *ContainerManager) buildContainerEndpoint(c *Container, name string) *
 	ep := BuildContainerEndpoint(c)
 	ep.Name = name
 
-	if !IsUserDefined(name) {
+	if !ns.IsUserDefined(name) {
 		ep.DisableResolver = true
 	}
 

@@ -10,8 +10,10 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
+	ns "github.com/alibaba/pouch/pkg/namespace"
 	"github.com/alibaba/pouch/pkg/system"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -72,6 +74,11 @@ func (mgr *ContainerManager) validateConfig(c *Container, update bool) ([]string
 			warnings = append(warnings, fmt.Sprintf("Current Kernel does not support apparmor, discard --security-opt apparmor=%s", c.AppArmorProfile))
 		}
 		c.AppArmorProfile = ""
+	}
+
+	// validate namespace value
+	if err := validateNSValue(hostConfig); err != nil {
+		return warnings, err
 	}
 
 	return warnings, nil
@@ -292,5 +299,26 @@ func validateNvidiaDevice(r *types.Resources) error {
 		}
 		// TODO: how to validate GPU UUID
 	}
+	return nil
+}
+
+// validateNSValue valids value of namespace related parameters
+func validateNSValue(hostConfig *types.HostConfig) error {
+	if !ns.Valid(specs.PIDNamespace, hostConfig.PidMode) {
+		return fmt.Errorf("invalid pid namespace mode %s", hostConfig.PidMode)
+	}
+
+	if !ns.Valid(specs.UTSNamespace, hostConfig.UTSMode) {
+		return fmt.Errorf("invalid uts namespace mode %s", hostConfig.UTSMode)
+	}
+
+	if !ns.Valid(specs.IPCNamespace, hostConfig.IpcMode) {
+		return fmt.Errorf("invalid ipc namespace mode %s", hostConfig.IpcMode)
+	}
+
+	if !ns.Valid(specs.UserNamespace, hostConfig.UsernsMode) {
+		return fmt.Errorf("invalid user namespace mode %s", hostConfig.UsernsMode)
+	}
+
 	return nil
 }
