@@ -177,6 +177,11 @@ func (s *localStore) Keys(fileName string) ([]string, error) {
 	return keys, nil
 }
 
+// Close do nothing in local store
+func (s *localStore) Close() error {
+	return nil
+}
+
 func mkdirIfNotExist(dir string) error {
 	if _, err := os.Stat(dir); err != nil {
 		if os.IsNotExist(err) {

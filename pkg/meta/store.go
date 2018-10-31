@@ -270,3 +270,8 @@ func (s *Store) KeysWithPrefix(prefix string) ([]string, error) {
 func (s *Store) Path(key string) string {
 	return s.backend.Path(key)
 }
+
+// Shutdown releases all resources used by the backend
+func (s *Store) Shutdown() error {
+	return s.backend.Close()
+}

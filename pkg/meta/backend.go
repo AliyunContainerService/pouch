@@ -24,6 +24,10 @@ type Backend interface {
 
 	// Path returns the path with the specified key.
 	Path(key string) string
+
+	// Close releases all resources used by the store
+	// It does not make any changes to store.
+	Close() error
 }
 
 // Register registers a backend to be daemon's store.

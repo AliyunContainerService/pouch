@@ -1,8 +1,13 @@
 package meta
 
 import (
+	"fmt"
+	"os"
+	"path"
 	"reflect"
 	"testing"
+
+	"github.com/alibaba/pouch/pkg/utils"
 )
 
 type Demo struct {
@@ -23,25 +28,58 @@ func (d *Demo2) Key() string {
 	return d.B
 }
 
-var s *Store
-
-var cfg = Config{
-	Driver:  "local",
-	BaseDir: "/tmp/containers",
-	Buckets: []Bucket{
+var (
+	localBuckets = []Bucket{
 		{MetaJSONFile, reflect.TypeOf(Demo{})},
 		{"test.json", reflect.TypeOf(Demo2{})},
-	},
+	}
+
+	boltdbBuckets = []Bucket{
+		{"boltdb", reflect.TypeOf(Demo3{})},
+	}
+)
+
+func initStore(dbFile, driver string, buckets []Bucket) (*Store, error) {
+	localCfg := Config{
+		Driver:  driver,
+		BaseDir: dbFile,
+		Buckets: buckets,
+	}
+
+	return NewStore(localCfg)
 }
 
-func TestPut(t *testing.T) {
+func testStoreWrapper(t *testing.T, name, driver string, buckets []Bucket, test func(t *testing.T, s *Store)) {
 	// initialize
-	var err error
-	s, err = NewStore(cfg)
+	dbFile := path.Join("/tmp", utils.RandString(8, name, ""))
+	if err := ensureFileNotExist(dbFile); err != nil {
+		t.Fatal(err)
+	}
+	defer ensureFileNotExist(dbFile)
+
+	s, err := initStore(dbFile, driver, buckets)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	test(t, s)
+}
+
+func ensureFileNotExist(file string) error {
+	_, err := os.Stat(file)
+	if err == nil {
+		os.RemoveAll(file)
+		return nil
+	}
+
+	if !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
+}
+
+func testPut(t *testing.T, s *Store) {
 	// put 1
 	if err := s.Put(&Demo{
 		A: 1,
@@ -65,7 +103,19 @@ func TestPut(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestPut(t *testing.T) {
+	testStoreWrapper(t, "TestPut", "local", localBuckets, testPut)
+}
+
+func testGet(t *testing.T, s *Store) {
+	// put 1
+	if err := s.Put(&Demo{
+		A: 1,
+		B: "key",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	obj, err := s.Get("key")
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +129,19 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestFetch(t *testing.T) {
+func TestGet(t *testing.T) {
+	testStoreWrapper(t, "TestGet", "local", localBuckets, testGet)
+}
+
+func testFetch(t *testing.T, s *Store) {
+	// put 2
+	if err := s.Put(&Demo{
+		A: 2,
+		B: "key2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	d := &Demo{}
 	d.B = "key2"
 
@@ -92,20 +154,48 @@ func TestFetch(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestFetch(t *testing.T) {
+	testStoreWrapper(t, "TestFetch", "local", localBuckets, testFetch)
+}
+
+func testList(t *testing.T, s *Store) {
+	// put 2
+	if err := s.Put(&Demo{
+		A: 2,
+		B: "key2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	objs, err := s.List()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(objs) != 2 {
+	if len(objs) != 1 {
 		t.Fatalf("failed to list")
+	}
+
+}
+
+func TestList(t *testing.T) {
+	testStoreWrapper(t, "TestList", "local", localBuckets, testList)
+}
+
+func testRemove(t *testing.T, s *Store) {
+	// put 1
+	if err := s.Put(&Demo{
+		A: 1,
+		B: "key",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Remove("key"); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestRemove(t *testing.T) {
-	if err := s.Remove("key"); err != nil {
-		t.Fatal(err)
-	}
+	testStoreWrapper(t, "TestRemove", "local", localBuckets, testList)
 }
 
 type Demo3 struct {
@@ -117,24 +207,7 @@ func (d *Demo3) Key() string {
 	return d.B
 }
 
-var boltdbStore *Store
-
-var boltdbCfg = Config{
-	Driver:  "boltdb",
-	BaseDir: "/tmp/bolt.db",
-	Buckets: []Bucket{
-		{"boltdb", reflect.TypeOf(Demo3{})},
-	},
-}
-
-func TestBoltdbPut(t *testing.T) {
-	// initialize
-	var err error
-	boltdbStore, err = NewStore(boltdbCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+func testBoltdbPut(t *testing.T, boltdbStore *Store) {
 	// put 1
 	if err := boltdbStore.Put(&Demo3{
 		A: 1,
@@ -158,7 +231,19 @@ func TestBoltdbPut(t *testing.T) {
 	}
 }
 
-func TestBoltdbGet(t *testing.T) {
+func TestBoltdbPut(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbPut", "boltdb", boltdbBuckets, testBoltdbPut)
+}
+
+func testBoltdbGet(t *testing.T, boltdbStore *Store) {
+	// first put 1
+	if err := boltdbStore.Put(&Demo3{
+		A: 1,
+		B: "key",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	obj, err := boltdbStore.Get("key")
 	if err != nil {
 		t.Fatal(err)
@@ -172,7 +257,19 @@ func TestBoltdbGet(t *testing.T) {
 	}
 }
 
-func TestBoltdbFetch(t *testing.T) {
+func TestBoltdbGet(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbGet", "boltdb", boltdbBuckets, testBoltdbGet)
+}
+
+func testBoltdbFetch(t *testing.T, boltdbStore *Store) {
+	// first put 2
+	if err := boltdbStore.Put(&Demo3{
+		A: 2,
+		B: "key2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	d := &Demo3{}
 	d.B = "key2"
 
@@ -185,20 +282,64 @@ func TestBoltdbFetch(t *testing.T) {
 	}
 }
 
-func TestBoltdbList(t *testing.T) {
+func TestBoltdbFetch(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbFetch", "boltdb", boltdbBuckets, testBoltdbFetch)
+}
+
+func testBoltdbList(t *testing.T, boltdbStore *Store) {
+	// first put 2
+	if err := boltdbStore.Put(&Demo3{
+		A: 2,
+		B: "key2",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	objs, err := boltdbStore.List()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(objs) != 2 {
+	if len(objs) != 1 {
 		t.Fatalf("failed to list")
 	}
 }
 
-func TestBoltdbRemove(t *testing.T) {
+func TestBoltdbList(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbList", "boltdb", boltdbBuckets, testBoltdbList)
+}
+
+func testBoltdbRemove(t *testing.T, boltdbStore *Store) {
+	// first put 1
+	if err := boltdbStore.Put(&Demo3{
+		A: 1,
+		B: "key",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := boltdbStore.Remove("key"); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestBoltdbRemove(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbRemove", "boltdb", boltdbBuckets, testBoltdbRemove)
+}
+
+func testBoltdbClose(t *testing.T, boltdbStore *Store) {
+	if err := boltdbStore.Shutdown(); err != nil {
+		t.Fatal(err)
+	}
+
+	// test List again, should occur error here
+	_, err := boltdbStore.List()
+	if err == nil {
+		t.Fatal(fmt.Errorf("still can visit the boltdb after execute close db action"))
+	}
+}
+
+func TestBoltdbClose(t *testing.T) {
+	testStoreWrapper(t, "TestBoltdbClose", "boltdb", boltdbBuckets, testBoltdbClose)
 }
 
 type Demo4 struct {
@@ -210,23 +351,7 @@ func (d *Demo4) Key() string {
 	return d.B
 }
 
-var boltdb4 *Store
-
-var boltdbCfg4 = Config{
-	Driver:  "boltdb",
-	BaseDir: "/tmp/bolt4.db",
-	Buckets: []Bucket{
-		{"boltdb", reflect.TypeOf(Demo4{})},
-	},
-}
-
-func TestKeysWithPrefix(t *testing.T) {
-	var err error
-	boltdb4, err = NewStore(boltdbCfg4)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+func testKeysWithPrefix(t *testing.T, boltdb4 *Store) {
 	// put 1
 	if err := boltdb4.Put(&Demo4{
 		A: 1,
@@ -259,4 +384,8 @@ func TestKeysWithPrefix(t *testing.T) {
 	if len(obj) != 0 {
 		t.Fatal("should get empty item")
 	}
+}
+
+func TestKeysWithPrefix(t *testing.T) {
+	testStoreWrapper(t, "TestKeysWithPrefix", "boltdb", boltdbBuckets, testKeysWithPrefix)
 }

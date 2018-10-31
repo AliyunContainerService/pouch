@@ -160,3 +160,9 @@ func (b *bolt) List(bucket string) ([][]byte, error) {
 
 	return values, err
 }
+
+// Close releases all database resources.
+// All transactions must be closed before closing the database.
+func (b *bolt) Close() error {
+	return b.db.Close()
+}
