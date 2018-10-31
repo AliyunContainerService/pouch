@@ -361,6 +361,27 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
 	}
 }
 
+// TestNetworkCreateWithIPAMOption creates network with ipam options
+func (suite *PouchNetworkSuite) TestNetworkCreateWithIPAMOption(c *check.C) {
+	gateway := "192.168.100.1"
+	subnet := "192.168.100.0/24"
+	networkName := "TestNetworkCreateWithIPAMOption"
+	command.PouchRun("network", "create",
+		"--name", networkName,
+		"-d", "bridge",
+		"--gateway", gateway,
+		"--subnet", subnet,
+		"--ipam-opt", "test=foo").Assert(c, icmd.Success)
+	defer command.PouchRun("network", "remove", networkName)
+	networkInfo := command.PouchRun("network", "inspect", networkName).Stdout()
+	networkJSON := []types.NetworkCreate{}
+	err := json.Unmarshal([]byte(networkInfo), &networkJSON)
+	if err != nil || len(networkJSON) == 0 {
+		c.Fatalf("fail to deserialize NetworkCreate: %v", err)
+	}
+	c.Assert(networkJSON[0].IPAM.Options["test"], check.Equals, "foo")
+}
+
 // TestNetworkCreateDup tests creating duplicate network return error.
 func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
