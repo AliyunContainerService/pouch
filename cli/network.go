@@ -93,6 +93,7 @@ func (n *NetworkCreateCommand) addFlags() {
 	flagSet.StringVar(&n.ipRange, "ip-range", "", "the range of network's ip")
 	flagSet.StringVar(&n.subnet, "subnet", "", "the subnet of network")
 	flagSet.StringVar(&n.ipamDriver, "ipam-driver", "default", "the ipam driver of network")
+	flagSet.StringSliceVarP(&n.ipamOpts, "ipam-opt", "", nil, "the ipam driver options of network")
 	flagSet.BoolVar(&n.enableIPv6, "enable-ipv6", false, "enable ipv6 network")
 	flagSet.StringSliceVarP(&n.options, "option", "o", nil, "create network with options")
 	flagSet.StringSliceVarP(&n.labels, "label", "l", nil, "create network with labels")
