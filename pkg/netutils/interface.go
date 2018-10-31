@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/pkg/exec"
-	"github.com/sirupsen/logrus"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -381,8 +380,6 @@ func getAddrByHostname() (net.IP, error) {
 	if addr == nil {
 		return nil, errors.Errorf("failed to get ip address, invalid format: (%s)", stdout)
 	}
-
-	logrus.Infof("get host ip address: (%s)", stdout)
 
 	return addr, nil
 }
