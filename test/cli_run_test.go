@@ -140,29 +140,6 @@ func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
 	}
 }
 
-// TestRunWithIPCMode is to verify --specific IPC mode when running a container.
-// TODO: test container ipc namespace mode.
-func (suite *PouchRunSuite) TestRunWithIPCMode(c *check.C) {
-	name := "test-run-with-ipc-mode"
-
-	res := command.PouchRun("run", "-d", "--name", name,
-		"--ipc", "host", busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-
-	res.Assert(c, icmd.Success)
-}
-
-// TestRunWithUTSMode is to verify --specific UTS mode when running a container.
-func (suite *PouchRunSuite) TestRunWithUTSMode(c *check.C) {
-	name := "test-run-with-uts-mode"
-
-	res := command.PouchRun("run", "-d", "--name", name,
-		"--uts", "host", busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-
-	res.Assert(c, icmd.Success)
-}
-
 // TestRunWithSysctls is to verify run container with sysctls.
 func (suite *PouchRunSuite) TestRunWithSysctls(c *check.C) {
 	sysctl := "net.ipv4.ip_forward=1"
