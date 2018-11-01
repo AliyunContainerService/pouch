@@ -237,6 +237,22 @@ Makefile target named `build` will compile the pouch and pouchd binaries into cu
 make build && make install
 ```
 
+#### Build Tags
+
+Pouch not use build tags by default, if you want pouchd to support additional security options, build pouchd with tags like
+
+```
+make BUILDTAGS='seccomp apparmor selinux'
+```
+
+Supported build Tags
+
+| Tags     | Description                                             |
+|----------|---------------------------------------------------------|
+| seccomp  | filter syscalls                                         |
+| apparmor | restrict program capabilities with per-program profiles |
+| selinux  | selinux process and mount label                         |
+
 ### Start PouchContainer
 
 With all needed binaries installed, you could start pouchd via:
