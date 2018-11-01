@@ -23,12 +23,14 @@ if [ -z "$KUBERNETES_VERSION" ] || [ -z "$CRI_VERSION" ]; then
         1)
         KUBERNETES_VERSION="1.9"
         CRI_VERSION="v1alpha1"
-        RELEASE_UBUNTU="v1.9.4"
+        KUBERNETES_RELEASE="1.9.4"
+        RELEASE_UBUNTU="1.9.4-00"
         RELEASE_CENTOS="1.9.4-0.x86_64";;
         2)
         KUBERNETES_VERSION="1.10"
         CRI_VERSION="v1alpha2"
-        RELEASE_UBUNTU="v1.10.2"
+        KUBERNETES_RELEASE="1.10.2"
+        RELEASE_UBUNTU="1.10.2-00"
         RELEASE_CENTOS="1.10.2-0.x86_64";;
         0)
         exit;;
@@ -62,11 +64,10 @@ if [ -z "$CRI_VERSION" ]; then
 fi
 
 MASTER_CIDR="10.244.0.0/16"
-CNI_VERSION="v0.6.0"
 
 install_pouch_ubuntu() {
-    apt-get install lxcfs
-    apt-get install curl apt-transport-https ca-certificates software-properties-common
+    apt-get -y install lxcfs
+    apt-get -y install curl apt-transport-https ca-certificates software-properties-common
     curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
     add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
     apt-get -y update
@@ -101,7 +102,14 @@ config_pouch_centos() {
     systemctl restart pouch
 }
 
-config_repo(){
+config_repo_ubuntu() {
+    curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add -
+    cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+EOF
+}
+
+config_repo_centos(){
    cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -119,16 +127,9 @@ install_kubelet_ubuntu() {
         echo "RELEASE_UBUNTU can't be null" >&2
         exit 1
     fi
-    KUBE_URL="https://storage.googleapis.com/kubernetes-release/release/$RELEASE_UBUNTU/bin/linux/amd64"
-    wget --progress=bar:force:noscroll "$KUBE_URL/kubeadm" -O /usr/bin/kubeadm
-    wget --progress=bar:force:noscroll "$KUBE_URL/kubelet" -O /usr/bin/kubelet
-    wget --progress=bar:force:noscroll "$KUBE_URL/kubectl" -O /usr/bin/kubectl
-    chmod +x /usr/bin/kubeadm /usr/bin/kubelet /usr/bin/kubectl
 
-    KUBELET_URL="https://raw.githubusercontent.com/kubernetes/kubernetes/$RELEASE_UBUNTU/build/debs"
-    mkdir -p /etc/systemd/system/kubelet.service.d
-    curl -sS "$KUBELET_URL/kubelet.service" -o /etc/systemd/system/kubelet.service
-    curl -sS "$KUBELET_URL/10-kubeadm.conf" -o /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    apt-get update
+    apt-get -y install kubelet=$RELEASE_UBUNTU kubeadm=$RELEASE_UBUNTU kubectl=$RELEASE_UBUNTU
 }
 
 install_kubelet_centos() {
@@ -143,8 +144,7 @@ install_kubelet_centos() {
 }
 
 install_cni_ubuntu() {
-    mkdir -p /opt/cni/bin
-    wget -O- --read-timeout=20 --progress=bar:force:noscroll "https://github.com/containernetworking/plugins/releases/download/$CNI_VERSION/cni-plugins-amd64-$CNI_VERSION.tgz" | tar -C /opt/cni/bin -xz
+    apt-get -y install kubernetes-cni
 }
 
 install_cni_centos() {
@@ -163,7 +163,7 @@ setup_imagerepository() {
    cat <<EOF > kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1alpha1
 kind: MasterConfiguration
-kubernetesVersion: $RELEASE_UBUNTU
+kubernetesVersion: $KUBERNETES_RELEASE
 api:
   bindPort: 6443
 certificatesDir: /etc/kubernetes/pki
@@ -289,6 +289,7 @@ case "$lsb_dist" in
     ubuntu)
         install_pouch_ubuntu
         config_pouch_ubuntu
+        config_repo_ubuntu
         install_kubelet_ubuntu
         install_cni_ubuntu
         kubelet_config
@@ -304,7 +305,7 @@ case "$lsb_dist" in
     fedora|centos|redhat)
         install_pouch_centos
         config_pouch_centos
-        config_repo
+        config_repo_centos
         install_kubelet_centos
         kubelet_config
         install_cni_centos

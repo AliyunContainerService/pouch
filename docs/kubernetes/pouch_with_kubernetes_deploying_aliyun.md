@@ -69,6 +69,16 @@ systemctl restart pouch
 
 ### Setup Repo
 
+On Ubuntu 16.04+:
+
+```sh
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add -
+
+cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+EOF
+```
+
 On CentOS 7:
 
 ```
@@ -89,17 +99,9 @@ EOF
 On Ubuntu 16.04+:
 
 ```sh
-RELEASE="v1.9.4"
-KUBE_URL="https://storage.googleapis.com/kubernetes-release/release/${RELEASE_UBUNTU}/bin/linux/amd64"
-wget "${KUBE_URL}/kubeadm" -O /usr/bin/kubeadm
-wget "${KUBE_URL}/kubelet" -O /usr/bin/kubelet
-wget "${KUBE_URL}/kubectl" -O /usr/bin/kubectl
-chmod +x /usr/bin/kubeadm /usr/bin/kubelet /usr/bin/kubectl
-
-KUBELET_URL="https://raw.githubusercontent.com/kubernetes/kubernetes/${RELEASE_UBUNTU}/build/debs"
-mkdir -p /etc/systemd/system/kubelet.service.d
-wget "${KUBELET_URL}/kubelet.service" -O /etc/systemd/system/kubelet.service
-wget "${KUBELET_URL}/10-kubeadm.conf" -O /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+RELEASE="v1.9.4-00"
+apt-get update
+apt-get -y install kubelet=$RELEASE kubeadm=$RELEASE kubectl=$RELEASE
 ```
 
 On CentOS 7:
@@ -116,9 +118,7 @@ For more details, please check [install kubelet](https://kubernetes.io/docs/setu
 On Ubuntu 16.04+:
 
 ```
-CNI_VERSION="v0.6.0"
-mkdir -p /opt/cni/bin
-curl -L "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-amd64-${CNI_VERSION}.tgz" | tar -C /opt/cni/bin -xz
+apt-get -y install kubernetes-cni
 ```
 
 On CentOS 7:
