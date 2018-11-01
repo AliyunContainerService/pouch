@@ -15,11 +15,6 @@
 			"revisionTime": "2018-05-01T17:05:46Z"
 		},
 		{
-			"checksumSHA1": "FU/snvk/G/MqCWeKVnTyCKx+Y5M=",
-			"path": "github.com/Microsoft/go-winio/vhd",
-			"revision": ""
-		},
-		{
 			"checksumSHA1": "65Fw8Cr6ScQ3PiFTpxdlRHkYKzY=",
 			"path": "github.com/Microsoft/hcsshim",
 			"revision": "f47e6d88e78fee4d6d76d181bc93101f52dfb635",
@@ -102,10 +97,6 @@
 			"path": "github.com/RackSec/srslog",
 			"revision": "1f7cff998e92763c026b26ab7c80a39e19acc368",
 			"revisionTime": "2018-05-14T15:09:17Z"
-		},
-		{
-			"path": "github.com/alibaba/pouch/libcontainerd",
-			"revision": ""
 		},
 		{
 			"checksumSHA1": "eiRzLoenl7oEVCuoT+Ju/zWBlKg=",
@@ -534,14 +525,6 @@
 		{
 			"checksumSHA1": "8u2ZojhEDaoA4Co6usLof+TKj78=",
 			"path": "github.com/containerd/containerd/sys",
-			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
-			"revisionTime": "2018-04-02T20:34:37Z",
-			"version": "v1.0.3",
-			"versionExact": "v1.0.3"
-		},
-		{
-			"checksumSHA1": "grEvoaogoFLNPAH7XjjNgau3SNY=",
-			"path": "github.com/containerd/containerd/version",
 			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
 			"revisionTime": "2018-04-02T20:34:37Z",
 			"version": "v1.0.3",
@@ -1185,12 +1168,6 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "I21ZDprdd0n98lXaL8Kc79Ypihs=",
-			"path": "github.com/go-ini/ini",
-			"revision": "5b3e00af70a9484542169a976dcab8d03e601a17",
-			"revisionTime": "2017-10-14T21:05:30Z"
-		},
-		{
 			"checksumSHA1": "OwxeZNizPZT7YriySSR4haPHcRg=",
 			"path": "github.com/go-openapi/analysis",
 			"revision": "8ed83f2ea9f00f945516462951a288eaa68bf0d6",
@@ -1249,12 +1226,6 @@
 			"path": "github.com/go-openapi/validate",
 			"revision": "8a82927c942c94794a5cd8b8b50ce2f48a955c0c",
 			"revisionTime": "2017-07-05T07:52:02Z"
-		},
-		{
-			"checksumSHA1": "tszr7JJNLyWwyd5PCvy3IoQ6zdU=",
-			"path": "github.com/go-resty/resty",
-			"revision": "9ac9c42358f7c3c69ac9f8610e8790d7c338e85d",
-			"revisionTime": "2017-09-25T19:29:30Z"
 		},
 		{
 			"checksumSHA1": "YuGQx5ilYzlkaqeyVQh8qpsGExI=",
@@ -1442,12 +1413,6 @@
 			"path": "github.com/kr/pty",
 			"revision": "95d05c1eef33a45bd58676b6ce28d105839b8d0b",
 			"revisionTime": "2017-10-06T17:48:01Z"
-		},
-		{
-			"checksumSHA1": "NiPRC0JDsfCFir75S1TrFHPP8+M=",
-			"path": "github.com/magiconair/properties",
-			"revision": "2c9e9502788518c97fe44e8955cd069417ee89df",
-			"revisionTime": "2018-02-17T13:45:45Z"
 		},
 		{
 			"checksumSHA1": "T8soMJArSZrYnhmdpAnq1bVxQ6Q=",
