@@ -19,6 +19,8 @@ import (
 	"github.com/alibaba/pouch/registry"
 	volumedriver "github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/version"
+	"github.com/opencontainers/runc/libcontainer/apparmor"
+	selinux "github.com/opencontainers/selinux/go-selinux"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -112,6 +114,19 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 	}
 	volumeDrivers := volumedriver.AllDriversName()
 
+	// security options get four part, seccomp, apparmor, selinux and userns
+	securityOpts := []string{}
+	sysInfo := system.NewInfo()
+	if sysInfo.Seccomp && IsSeccompEnable() {
+		securityOpts = append(securityOpts, "seccomp")
+	}
+	if sysInfo.AppArmor && apparmor.IsEnabled() {
+		securityOpts = append(securityOpts, "apparmor")
+	}
+	if selinux.GetEnabled() {
+		securityOpts = append(securityOpts, "selinux")
+	}
+
 	info := types.SystemInfo{
 		Architecture: runtime.GOARCH,
 		// CgroupDriver: ,
@@ -148,8 +163,8 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		PouchRootDir:       mgr.config.HomeDir,
 		RegistryConfig:     &mgr.config.RegistryService,
 		// RuncCommit: ,
-		Runtimes: mgr.config.Runtimes,
-		// SecurityOptions: ,
+		Runtimes:        mgr.config.Runtimes,
+		SecurityOptions: securityOpts,
 		ServerVersion:   version.Version,
 		ListenAddresses: mgr.config.Listen,
 	}

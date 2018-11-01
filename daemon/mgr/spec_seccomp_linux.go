@@ -12,6 +12,11 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+// IsSeccompEnable return true since pouch support seccomp in build
+func IsSeccompEnable() bool {
+	return true
+}
+
 // setupSeccomp creates seccomp security settings spec.
 func setupSeccomp(ctx context.Context, c *Container, s *specs.Spec) error {
 	if c.HostConfig.Privileged {
