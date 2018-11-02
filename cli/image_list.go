@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
 
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +39,7 @@ type ImagesCommand struct {
 	flagQuiet   bool
 	flagDigest  bool
 	flagNoTrunc bool
+	flagFilter  []string
 }
 
 // Init initialize images command.
@@ -63,6 +65,7 @@ func (i *ImagesCommand) addFlags() {
 	flagSet.BoolVarP(&i.flagQuiet, "quiet", "q", false, "Only show image numeric ID")
 	flagSet.BoolVar(&i.flagDigest, "digest", false, "Show images with digest")
 	flagSet.BoolVar(&i.flagNoTrunc, "no-trunc", false, "Do not truncate output")
+	flagSet.StringSliceVarP(&i.flagFilter, "filter", "f", []string{}, "Filter output based on conditions provided, filter support reference, since, before")
 }
 
 // runImages is the entry of images container command.
@@ -70,10 +73,14 @@ func (i *ImagesCommand) runImages(args []string) error {
 	ctx := context.Background()
 	apiClient := i.cli.Client()
 
-	imageList, err := apiClient.ImageList(ctx)
+	imageFilterArgs, err := filters.FromFilterOpts(i.flagFilter)
+	if err != nil {
+		return err
+	}
+
+	imageList, err := apiClient.ImageList(ctx, imageFilterArgs)
 	if err != nil {
 		return fmt.Errorf("failed to get image list: %v", err)
-
 	}
 
 	if i.flagQuiet {

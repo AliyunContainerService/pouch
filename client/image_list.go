@@ -2,13 +2,26 @@ package client
 
 import (
 	"context"
+	"net/url"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 )
 
 // ImageList requests daemon to list all images
-func (client *APIClient) ImageList(ctx context.Context) ([]types.ImageInfo, error) {
-	resp, err := client.get(ctx, "/images/json", nil, nil)
+func (client *APIClient) ImageList(ctx context.Context, filter filters.Args) ([]types.ImageInfo, error) {
+	query := url.Values{}
+
+	if filter.Len() > 0 {
+		filtersJSON, err := filters.ToParam(filter)
+		if err != nil {
+			return nil, err
+		}
+
+		query.Set("filters", filtersJSON)
+	}
+
+	resp, err := client.get(ctx, "/images/json", query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -19,5 +32,4 @@ func (client *APIClient) ImageList(ctx context.Context) ([]types.ImageInfo, erro
 	ensureCloseReader(resp)
 
 	return imageList, err
-
 }

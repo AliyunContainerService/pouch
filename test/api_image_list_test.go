@@ -2,7 +2,10 @@ package main
 
 import (
 	"net/url"
+	"reflect"
 
+	"github.com/alibaba/pouch/apis/filters"
+	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -56,6 +59,50 @@ func (suite *APIImageListSuite) TestImageListDigest(c *check.C) {
 
 // TestImageListFilter tests listing images with filter.
 func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
-	// TODO: missing case
-	helpwantedForMissingCase(c, "iamge api list filter cases")
+	q := url.Values{}
+
+	repoDigest := "registry.hub.docker.com/library/busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47"
+	repoTag := "registry.hub.docker.com/library/busybox:1.28"
+
+	f := filters.NewArgs()
+	f.Add("reference", repoTag)
+	filterJSON, err := filters.ToParam(f)
+	c.Assert(err, check.IsNil)
+
+	q.Add("filters", filterJSON)
+	query := request.WithQuery(q)
+	resp, err := request.Get("/images/json", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	got := []types.ImageInfo{}
+	err = request.DecodeBody(&got, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(got, check.NotNil)
+	c.Assert(len(got), check.Equals, 1)
+	c.Assert(got[0].ID, check.NotNil)
+	c.Assert(got[0].CreatedAt, check.NotNil)
+	c.Assert(got[0].Config, check.NotNil)
+	c.Assert(got[0].Architecture, check.NotNil)
+	c.Assert(got[0].Size, check.NotNil)
+	c.Assert(got[0].Os, check.NotNil)
+	c.Assert(reflect.DeepEqual(got[0].RepoTags, []string{repoTag}), check.Equals, true)
+	c.Assert(reflect.DeepEqual(got[0].RepoDigests, []string{repoDigest}), check.Equals, true)
+}
+
+// TestImageListInvalidFilter tests listing images with invalid filter.
+func (suite *APIImageListSuite) TestImageListInvalidFilter(c *check.C) {
+	repoTag := "registry.hub.docker.com/library/busybox:1.28"
+	q := url.Values{}
+	f := filters.NewArgs()
+	f.Add("after", repoTag)
+	filterJSON, err := filters.ToParam(f)
+	c.Assert(err, check.IsNil)
+	q.Add("filters", filterJSON)
+	query := request.WithQuery(q)
+	resp, err := request.Get("/images/json", query)
+
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 500)
 }

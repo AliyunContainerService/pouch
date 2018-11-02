@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
@@ -21,13 +22,20 @@ import (
 	"github.com/containerd/containerd/content"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 var deadlineLoadImagesAtBootup = time.Second * 10
+
+// the filter tags set allowed when pouch images -f
+var acceptedImageFilterTags = map[string]bool{
+	"before":    true,
+	"since":     true,
+	"reference": true,
+}
 
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
@@ -38,7 +46,7 @@ type ImageMgr interface {
 	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
 
 	// ListImages lists images stored by containerd.
-	ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error)
+	ListImages(ctx context.Context, filter filters.Args) ([]types.ImageInfo, error)
 
 	// Search Images from specified registry.
 	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
@@ -161,12 +169,89 @@ func (mgr *ImageManager) GetImage(ctx context.Context, idOrRef string) (*types.I
 }
 
 // ListImages lists images stored by containerd.
-func (mgr *ImageManager) ListImages(ctx context.Context, filter ...string) ([]types.ImageInfo, error) {
-	// TODO: support filter functionality
+func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([]types.ImageInfo, error) {
+	if err := filter.Validate(acceptedImageFilterTags); err != nil {
+		return nil, err
+	}
+
+	beforeImages := filter.Get("before")
+	sinceImages := filter.Get("since")
+
+	// refuse undefined behavior
+	if len(beforeImages) > 1 {
+		return nil, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "can't use before filter more than one")
+	}
+	// refuse undefined behavior
+	if len(sinceImages) > 1 {
+		return nil, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "can't use since filter more than one")
+	}
+
 	ctrdImageInfos := mgr.localStore.ListCtrdImageInfo()
 	imgInfos := make([]types.ImageInfo, 0, len(ctrdImageInfos))
 
+	var (
+		beforeFilter, sinceFilter *types.ImageInfo
+		beforeTime, sinceTime     time.Time
+		err                       error
+	)
+
+	if len(beforeImages) > 0 {
+		beforeFilter, err = mgr.GetImage(ctx, beforeImages[0])
+		if err != nil {
+			return nil, err
+		}
+		beforeTime, err = time.Parse(utils.TimeLayout, beforeFilter.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(sinceImages) > 0 {
+		sinceFilter, err = mgr.GetImage(ctx, sinceImages[0])
+		if err != nil {
+			return nil, err
+		}
+		sinceTime, err = time.Parse(utils.TimeLayout, sinceFilter.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for _, img := range ctrdImageInfos {
+		if beforeFilter != nil {
+			if img.OCISpec.Created.Equal(beforeTime) || img.OCISpec.Created.After(beforeTime) {
+				continue
+			}
+		}
+		if sinceFilter != nil {
+			if img.OCISpec.Created.Equal(sinceTime) || img.OCISpec.Created.Before(sinceTime) {
+				continue
+			}
+		}
+
+		if filter.Contains("reference") {
+			var found bool
+			referenceFilters := filter.Get("reference")
+			for _, ref := range mgr.localStore.GetReferences(img.ID) {
+				for _, pattern := range referenceFilters {
+					matched, err := filters.FamiliarMatch(pattern, ref.String())
+					if err != nil {
+						return nil, err
+					}
+					if matched {
+						found = true
+						break
+					}
+				}
+				if found {
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
 		imgInfo, err := mgr.containerdImageToImageInfo(ctx, img.ID)
 		if err != nil {
 			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.ID, err)

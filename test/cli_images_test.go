@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -31,8 +32,10 @@ func (suite *PouchImagesSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
 	environment.PruneAllContainers(apiClient)
+	environment.PruneAllImages(apiClient)
 
 	PullImage(c, busyboxImage)
+	PullImage(c, helloworldImage)
 }
 
 // TestImagesWorks tests "pouch images" work.
@@ -81,6 +84,32 @@ func (suite *PouchImagesSuite) TestImagesWorks(c *check.C) {
 	}
 }
 
+//TestImageListFilter test the filter flag works right
+func (suite *PouchImagesSuite) TestImageListFilter(c *check.C) {
+	busyBoxImageInfo, err := getImageInfo(apiClient, busyboxImage)
+	c.Assert(err, check.IsNil)
+
+	//Test Reference filter
+	referenceRes := command.PouchRun("images", "-f", "reference="+busyboxImage)
+	items := imagesListToKV(referenceRes.Combined())
+	c.Assert(len(items), check.Equals, 1)
+	c.Assert(items[busyboxImage][1], check.Equals, busyBoxImageInfo.RepoTags[0])
+
+	//Test before filter
+	beforeRes1 := command.PouchRun("images", "-f", "before="+busyboxImage)
+	items1 := imagesListToKV(beforeRes1.Combined())
+	beforeRes2 := command.PouchRun("images", "-f", "before="+helloworldImage)
+	items2 := imagesListToKV(beforeRes2.Combined())
+	c.Assert(len(items1)+len(items2), check.Equals, 1)
+
+	//Test since filter
+	sinceRes1 := command.PouchRun("images", "-f", "since="+busyboxImage)
+	items1 = imagesListToKV(sinceRes1.Combined())
+	sinceRes2 := command.PouchRun("images", "-f", "since="+helloworldImage)
+	items2 = imagesListToKV(sinceRes2.Combined())
+	c.Assert(len(items1)+len(items2), check.Equals, 1)
+}
+
 // imagesListToKV parse "pouch images" into key-value mapping.
 func imagesListToKV(list string) map[string][]string {
 	// skip header
@@ -101,7 +130,7 @@ func imagesListToKV(list string) map[string][]string {
 // getImageInfo is used to retrieve the information about image.
 func getImageInfo(apiClient client.ImageAPIClient, name string) (types.ImageInfo, error) {
 	ctx := context.Background()
-	images, err := apiClient.ImageList(ctx)
+	images, err := apiClient.ImageList(ctx, filters.NewArgs())
 	if err != nil {
 		return types.ImageInfo{}, errors.Wrap(err, "fail to list images")
 	}

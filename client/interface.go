@@ -49,7 +49,7 @@ type ContainerAPIClient interface {
 
 // ImageAPIClient defines methods of Image client.
 type ImageAPIClient interface {
-	ImageList(ctx context.Context) ([]types.ImageInfo, error)
+	ImageList(ctx context.Context, filters filters.Args) ([]types.ImageInfo, error)
 	ImageInspect(ctx context.Context, name string) (types.ImageInfo, error)
 	ImagePull(ctx context.Context, name, tag, encodedAuth string) (io.ReadCloser, error)
 	ImageRemove(ctx context.Context, name string, force bool) error

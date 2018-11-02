@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestImageListServerError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ImageList(context.Background())
+	_, err := client.ImageList(context.Background(), filters.NewArgs())
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -62,7 +63,7 @@ func TestImageList(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	image, err := client.ImageList(context.Background())
+	image, err := client.ImageList(context.Background(), filters.NewArgs())
 	if err != nil {
 		t.Fatal(err)
 	}
