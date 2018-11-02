@@ -20,9 +20,9 @@ import (
 	"github.com/alibaba/pouch/registry"
 	volumedriver "github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/version"
+
 	"github.com/opencontainers/runc/libcontainer/apparmor"
 	selinux "github.com/opencontainers/selinux/go-selinux"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

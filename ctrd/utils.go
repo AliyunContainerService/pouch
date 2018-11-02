@@ -1,7 +1,6 @@
 package ctrd
 
 import (
-	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -10,21 +9,12 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 
-	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
-
-// NewDefaultSpec new a template spec with default.
-func NewDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
-	ctx = namespaces.WithNamespace(ctx, namespaces.Default)
-	return oci.GenerateSpec(ctx, nil, &containers.Container{ID: id})
-}
 
 func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	var (
