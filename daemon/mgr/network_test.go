@@ -55,8 +55,34 @@ func Test_getIpamConfig(t *testing.T) {
 			want1:   []*libnetwork.IpamConf{},
 			wantErr: false,
 		},
+		{
+			name: "getIpamConfigIPv6Normal",
+			args: args{
+				data: []apitypes.IPAMConfig{
+					{
+						AuxAddress: map[string]string{
+							"foo": "bar",
+						},
+						Gateway: "2002:db8:1::1",
+						IPRange: "2002:db8:1::1/68",
+						Subnet:  "2002:db8:1::1/64",
+					},
+				},
+			},
+			want:    []*libnetwork.IpamConf{},
+			wantErr: false,
+			want1: []*libnetwork.IpamConf{
+				{
+					PreferredPool: "2002:db8:1::1/64",
+					SubPool:       "2002:db8:1::1/68",
+					Gateway:       "2002:db8:1::1",
+					AuxAddresses: map[string]string{
+						"foo": "bar",
+					},
+				},
+			},
+		},
 		// TODO: add Invalid IPv4 subnet
-		// TODO: add IPv6 test
 
 	}
 	for _, tt := range tests {

@@ -26,9 +26,12 @@ type Config struct {
 // BridgeConfig defines the bridge network configuration.
 type BridgeConfig struct {
 	Name        string `json:"bridge-name,omitempty"`
-	IP          string `json:"bip,omitempty"`
-	FixedCIDR   string `json:"fixed-cidr,omitempty"`
+	IPv4        string `json:"bip,omitempty"`
+	FixedCIDRv4 string `json:"fixed-cidr,omitempty"`
 	GatewayIPv4 string `json:"default-gateway,omitempty"`
+	EnableIPv6  bool   `json:"enable-ipv6,omitempty"`
+	FixedCIDRv6 string `json:"fixed-cidr-v6,omitempty"`
+	GatewayIPv6 string `json:"default-gateway-v6,omitempty"`
 	PreferredIP string `json:"preferred-ip,omitempty"`
 
 	Mtu           int  `json:"mtu,omitempty"`

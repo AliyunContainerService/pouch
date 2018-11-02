@@ -164,7 +164,7 @@ unit-test: modules plugin ## run go unit-test
 	done )
 
 .PHONY: integration-test
-integration-test: ## run daemon integration-test
+integration-test: build-daemon-integration build-integration-test ## run daemon integration-test
 	@echo $@
 	@mkdir -p coverage
 	./hack/testing/run_daemon_integration.sh

@@ -35,8 +35,8 @@ type DaemonUpdateCommand struct {
 	execRoot         string
 	bridgeName       string
 	bridgeIP         string
-	fixedCIDR        string
-	defaultGateway   string
+	fixedCIDRv4      string
+	defaultGatewayv4 string
 	iptables         bool
 	ipforward        bool
 	userlandProxy    bool
@@ -72,8 +72,8 @@ func (udc *DaemonUpdateCommand) addFlags() {
 	flagSet.StringVar(&udc.execRoot, "exec-root-dir", "", "update exec root directory for network")
 	flagSet.StringVar(&udc.bridgeName, "bridge-name", "", "update daemon bridge device")
 	flagSet.StringVar(&udc.bridgeIP, "bip", "", "update daemon bridge IP")
-	flagSet.StringVar(&udc.fixedCIDR, "fixed-cidr", "", "update daemon bridge fixed CIDR")
-	flagSet.StringVar(&udc.defaultGateway, "default-gateway", "", "update daemon bridge default gateway")
+	flagSet.StringVar(&udc.fixedCIDRv4, "fixed-cidr", "", "update daemon bridge fixed CIDR")
+	flagSet.StringVar(&udc.defaultGatewayv4, "default-gateway", "", "update daemon bridge default gateway")
 	flagSet.BoolVar(&udc.iptables, "iptables", true, "update daemon with iptables")
 	flagSet.BoolVar(&udc.ipforward, "ipforward", true, "udpate daemon with ipforward")
 	flagSet.BoolVar(&udc.userlandProxy, "userland-proxy", false, "update daemon with userland proxy")
@@ -143,15 +143,15 @@ func (udc *DaemonUpdateCommand) updateDaemonConfigFile() error {
 	}
 
 	if flagSet.Changed("bip") {
-		daemonConfig.NetworkConfig.BridgeConfig.IP = udc.bridgeIP
+		daemonConfig.NetworkConfig.BridgeConfig.IPv4 = udc.bridgeIP
 	}
 
 	if flagSet.Changed("fixed-cidr") {
-		daemonConfig.NetworkConfig.BridgeConfig.FixedCIDR = udc.fixedCIDR
+		daemonConfig.NetworkConfig.BridgeConfig.FixedCIDRv4 = udc.fixedCIDRv4
 	}
 
 	if flagSet.Changed("default-gateway") {
-		daemonConfig.NetworkConfig.BridgeConfig.GatewayIPv4 = udc.defaultGateway
+		daemonConfig.NetworkConfig.BridgeConfig.GatewayIPv4 = udc.defaultGatewayv4
 	}
 
 	if flagSet.Changed("iptables") {
