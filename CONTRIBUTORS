@@ -1,5 +1,5 @@
-# This file lists all contributors having contributed to pouch.
-# For how it is generated, see `hack/generate-contributors.sh`.
+# This file lists all contributors having contributed to this project.
+# For how it is generated, see command "git log --format='%aN <%aE>' | sort -uf".
 
 Ace Tang <Ace-Tang@users.noreply.github.com>
 Ace-Tang <aceapril@126.com>
