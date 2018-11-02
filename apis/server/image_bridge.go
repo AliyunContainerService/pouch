@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/metrics"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -75,9 +76,12 @@ func (s *Server) getImage(ctx context.Context, rw http.ResponseWriter, req *http
 }
 
 func (s *Server) listImages(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	filters := req.FormValue("filters")
+	filter, err := filters.FromParam(req.FormValue("filters"))
+	if err != nil {
+		return err
+	}
 
-	imageList, err := s.ImageMgr.ListImages(ctx, filters)
+	imageList, err := s.ImageMgr.ListImages(ctx, filter)
 	if err != nil {
 		logrus.Errorf("failed to list images: %v", err)
 		return err
@@ -91,7 +95,7 @@ func (s *Server) searchImages(ctx context.Context, rw http.ResponseWriter, req *
 
 	searchResultItem, err := s.ImageMgr.SearchImages(ctx, searchPattern, registry)
 	if err != nil {
-		logrus.Errorf("failed to search images from resgitry: %v", err)
+		logrus.Errorf("failed to search images from registry: %v", err)
 		return err
 	}
 	return EncodeResponse(rw, http.StatusOK, searchResultItem)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
 
@@ -13,7 +14,7 @@ import (
 // PruneAllImages deletes all images from pouchd.
 func PruneAllImages(apiClient client.ImageAPIClient) error {
 	ctx := context.Background()
-	images, err := apiClient.ImageList(ctx)
+	images, err := apiClient.ImageList(ctx, filters.NewArgs())
 	if err != nil {
 		return errors.Wrap(err, "fail to list images")
 	}

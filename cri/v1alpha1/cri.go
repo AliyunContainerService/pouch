@@ -12,6 +12,7 @@ import (
 	goruntime "runtime"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
 	cni "github.com/alibaba/pouch/cri/ocicni"
@@ -996,7 +997,7 @@ func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 // ListImages lists existing images.
 func (c *CriManager) ListImages(ctx context.Context, r *runtime.ListImagesRequest) (*runtime.ListImagesResponse, error) {
 	// TODO: handle image list filters.
-	imageList, err := c.ImageMgr.ListImages(ctx, "")
+	imageList, err := c.ImageMgr.ListImages(ctx, filters.NewArgs())
 	if err != nil {
 		return nil, err
 	}

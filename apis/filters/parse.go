@@ -3,6 +3,7 @@ package filters
 import (
 	"encoding/json"
 	"errors"
+	"path"
 	"strings"
 )
 
@@ -34,6 +35,12 @@ func NewArgs(initialArgs ...KeyValuePair) Args {
 		args.Add(arg.Key, arg.Value)
 	}
 	return args
+}
+
+// Contains returns true if the key exists in the mapping
+func (args Args) Contains(field string) bool {
+	_, ok := args.fields[field]
+	return ok
 }
 
 // Get returns the list of values associated with the key
@@ -149,4 +156,34 @@ func FromParam(p string) (Args, error) {
 		return args, err
 	}
 	return args, nil
+}
+
+// FromFilterOpts parse key=value to Args string from cli opts
+func FromFilterOpts(filter []string) (Args, error) {
+	filterArgs := NewArgs()
+
+	for _, f := range filter {
+		var err error
+		filterArgs, err = ParseFlag(f, filterArgs)
+		if err != nil {
+			return filterArgs, err
+		}
+	}
+	return filterArgs, nil
+}
+
+// Validate compared the set of accepted keys against the keys in the mapping.
+// An error is returned if any mapping keys are not in the accepted set.
+func (args Args) Validate(accepted map[string]bool) error {
+	for name := range args.fields {
+		if !accepted[name] {
+			return errors.New("invalid filter " + name)
+		}
+	}
+	return nil
+}
+
+// FamiliarMatch decide the ref match the pattern or not
+func FamiliarMatch(pattern string, ref string) (bool, error) {
+	return path.Match(pattern, ref)
 }

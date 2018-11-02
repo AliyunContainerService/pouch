@@ -149,3 +149,30 @@ func TestFromParam(t *testing.T) {
 		}
 	}
 }
+
+func TestFromFilterOpts(t *testing.T) {
+	filterOpts := []string{
+		"reference=img1",
+		"since=img2",
+		"before=img3",
+		"reference=img3",
+	}
+
+	args, err := FromFilterOpts(filterOpts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	images := args.Get("reference")
+	if len(images) != 2 {
+		t.Fatal("Expected two values of reference key, but got one.")
+	}
+
+	if !args.Contains("since") {
+		t.Fatal("Excepted get since key, but got none.")
+	}
+
+	if !args.Contains("before") {
+		t.Fatal("Excepted get before key, but got none.")
+	}
+}

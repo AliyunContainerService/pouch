@@ -108,7 +108,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		OSName = osName
 	}
 
-	images, err := mgr.imageMgr.ListImages(context.Background(), "")
+	images, err := mgr.imageMgr.ListImages(context.Background(), filters.NewArgs())
 	if err != nil {
 		logrus.Warnf("failed to get image info: %v", err)
 	}
