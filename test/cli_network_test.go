@@ -252,16 +252,46 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	gateway := "192.168.3.1"
-	subnet := "192.168.3.0/24"
+	tests := []struct {
+		name    string
+		ipv6    bool
+		gateway string
+		subnet  string
+	}{
+		{
+			name:    "IPv4",
+			ipv6:    false,
+			gateway: "192.168.3.1",
+			subnet:  "192.168.3.0/24",
+		},
+		{
+			name:    "IPv6",
+			ipv6:    true,
+			gateway: "2006:db8:1::1",
+			subnet:  "2006:db8:1::1/64",
+		},
+	}
 
-	command.PouchRun("network", "create",
-		"--name", funcname,
-		"-d", "bridge",
-		"--gateway", gateway,
-		"--subnet", subnet,
-		"--label", "test=foo").Assert(c, icmd.Success)
-	defer command.PouchRun("network", "remove", funcname)
+	for _, tt := range tests {
+		funcname += tt.name
+		if tt.ipv6 {
+			command.PouchRun("network", "create",
+				"--name", funcname,
+				"-d", "bridge",
+				"--enable-ipv6",
+				"--gateway", tt.gateway,
+				"--subnet", tt.subnet,
+				"--label", "test=foo").Assert(c, icmd.Success)
+		} else {
+			command.PouchRun("network", "create",
+				"--name", funcname,
+				"-d", "bridge",
+				"--gateway", tt.gateway,
+				"--subnet", tt.subnet,
+				"--label", "test=foo").Assert(c, icmd.Success)
+		}
+		defer command.PouchRun("network", "remove", funcname)
+	}
 }
 
 // TestNetworkCreateWithOption tests creating network with option.
@@ -273,16 +303,46 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
 		funcname = tmpname[i]
 	}
 
-	gateway := "192.168.100.1"
-	subnet := "192.168.100.0/24"
+	tests := []struct {
+		name    string
+		ipv6    bool
+		gateway string
+		subnet  string
+	}{
+		{
+			name:    "IPv4",
+			ipv6:    false,
+			gateway: "192.168.4.1",
+			subnet:  "192.168.4.0/24",
+		},
+		{
+			name:    "IPv6",
+			ipv6:    true,
+			gateway: "2007:db8:1::1",
+			subnet:  "2007:db8:1::1/64",
+		},
+	}
 
-	command.PouchRun("network", "create",
-		"--name", funcname,
-		"-d", "bridge",
-		"--gateway", gateway,
-		"--subnet", subnet,
-		"--option", "test=foo").Assert(c, icmd.Success)
-	defer command.PouchRun("network", "remove", funcname)
+	for _, tt := range tests {
+		funcname += tt.name
+		if tt.ipv6 {
+			command.PouchRun("network", "create",
+				"--name", funcname,
+				"-d", "bridge",
+				"--enable-ipv6",
+				"--gateway", tt.gateway,
+				"--subnet", tt.subnet,
+				"--option", "test=foo").Assert(c, icmd.Success)
+		} else {
+			command.PouchRun("network", "create",
+				"--name", funcname,
+				"-d", "bridge",
+				"--gateway", tt.gateway,
+				"--subnet", tt.subnet,
+				"--option", "test=foo").Assert(c, icmd.Success)
+		}
+		defer command.PouchRun("network", "remove", funcname)
+	}
 }
 
 // TestNetworkCreateDup tests creating duplicate network return error.
@@ -391,7 +451,7 @@ func (suite *PouchNetworkSuite) TestNetworkConnect(c *check.C) {
 	// create bridge network
 	command.PouchRun("network", "create",
 		"-d", "bridge",
-		"--subnet=172.18.0.0/24", "--gateway=172.18.0.1",
+		"--subnet=172.68.0.0/24", "--gateway=172.68.0.1",
 		"-o", "com.docker.network.bridge.name="+bridgeName, networkName).Assert(c, icmd.Success)
 	defer func() {
 		command.PouchRun("network", "rm", networkName).Assert(c, icmd.Success)

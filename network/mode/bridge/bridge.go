@@ -22,8 +22,6 @@ import (
 
 // New is used to initialize bridge network.
 func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMgr) error {
-	// TODO: support ipv6.
-
 	// clear exist bridge network
 	if err := manager.Remove(ctx, "bridge"); err != nil {
 		if !errtypes.IsNotfound(err) {
@@ -38,52 +36,17 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 	}
 
 	// get bridge ip
-	bridgeIP := utils.StringDefault(config.IP, DefaultIPNet)
-	ipNet, err := netlink.ParseIPNet(bridgeIP)
+	bridgeIP := utils.StringDefault(config.IPv4, DefaultIPv4Net)
+	ipv4Net, err := netlink.ParseIPNet(bridgeIP)
 	if err != nil {
 		return fmt.Errorf("failed to parse ip %v", bridgeIP)
 	}
-	logrus.Debugf("initialize bridge network, bridge ip: %s.", ipNet)
+	logrus.Debugf("initialize bridge network, bridge ip: %s.", ipv4Net)
 
 	// init host bridge network.
-	_, err = initBridgeDevice(bridgeName, ipNet)
+	_, err = initBridgeDevice(bridgeName, ipv4Net)
 	if err != nil {
 		return err
-	}
-
-	// get bridge subnet
-	_, subnet, err := net.ParseCIDR(bridgeIP)
-	if err != nil {
-		return fmt.Errorf("failted to parse subnet %v", bridgeIP)
-	}
-	logrus.Debugf("initialize bridge network, bridge network: %s", subnet)
-
-	// get ip range
-	var ipRange string
-	if config.FixedCIDR != "" {
-		ipRange = config.FixedCIDR
-	} else {
-		ipRange = subnet.String()
-	}
-	logrus.Debugf("initialize bridge network, bridge ip range in subnet: %s", ipRange)
-
-	// get gateway
-	gateway := DefaultGateway
-	if config.GatewayIPv4 != "" {
-		gateway = config.GatewayIPv4
-	}
-	logrus.Debugf("initialize bridge network, gateway: %s", gateway)
-
-	ipamV4Conf := types.IPAMConfig{
-		AuxAddress: make(map[string]string),
-		Subnet:     subnet.String(),
-		IPRange:    ipRange,
-		Gateway:    gateway,
-	}
-
-	ipam := &types.IPAM{
-		Driver: "default",
-		Config: []types.IPAMConfig{ipamV4Conf},
 	}
 
 	mtu := network.DefaultNetworkMtu
@@ -91,9 +54,15 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 		mtu = config.Mtu
 	}
 
+	// create ipam
+	ipam, err := createIPAM(ctx, config)
+	if err != nil {
+		return fmt.Errorf("failed to create IPAM")
+	}
+
 	networkCreate := types.NetworkCreate{
 		Driver:     "bridge",
-		EnableIPV6: false,
+		EnableIPV6: config.EnableIPv6,
 		Internal:   false,
 		Options: map[string]string{
 			bridge.BridgeName:         bridgeName,
@@ -113,6 +82,86 @@ func New(ctx context.Context, config network.BridgeConfig, manager mgr.NetworkMg
 
 	_, err = manager.Create(ctx, create)
 	return err
+}
+
+func createIPAM(ctx context.Context, config network.BridgeConfig) (*types.IPAM, error) {
+	// get bridge ip
+	bridgeIP := utils.StringDefault(config.IPv4, DefaultIPv4Net)
+	ipv4Net, err := netlink.ParseIPNet(bridgeIP)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ip %v", bridgeIP)
+	}
+	logrus.Debugf("initialize bridge network, bridge ip: %s.", ipv4Net)
+
+	// get bridge subnet
+	_, subnetv4, err := net.ParseCIDR(bridgeIP)
+	if err != nil {
+		return nil, fmt.Errorf("failted to parse subnet %v", bridgeIP)
+	}
+	logrus.Debugf("initialize bridge network, bridge network: %s", subnetv4)
+
+	// get ip range
+	var ipv4Range string
+	if config.FixedCIDRv4 != "" {
+		ipv4Range = config.FixedCIDRv4
+	} else {
+		ipv4Range = subnetv4.String()
+	}
+	logrus.Debugf("initialize bridge network, bridge ip range in subnet: %s", ipv4Range)
+
+	// get gateway
+	gatewayv4 := DefaultGatewayv4
+	if config.GatewayIPv4 != "" {
+		gatewayv4 = config.GatewayIPv4
+	}
+	logrus.Debugf("initialize bridge network, gateway: %s", gatewayv4)
+
+	ipamV4Conf := types.IPAMConfig{
+		AuxAddress: make(map[string]string),
+		Subnet:     subnetv4.String(),
+		IPRange:    ipv4Range,
+		Gateway:    gatewayv4,
+	}
+
+	ipam := &types.IPAM{
+		Driver: "default",
+		Config: []types.IPAMConfig{ipamV4Conf},
+	}
+
+	if config.EnableIPv6 {
+		// get ipv6 subnet
+		FixedCIDRv6 := utils.StringDefault(config.FixedCIDRv6, DefaultIPv6Net)
+		_, subnetv6, err := net.ParseCIDR(FixedCIDRv6)
+		if err != nil {
+			return nil, fmt.Errorf("failted to parse subnet %v", FixedCIDRv6)
+		}
+		logrus.Debugf("initialize bridge network, bridge network: %s", subnetv6)
+
+		// get ipv6 range
+		var ipv6Range string
+		if config.FixedCIDRv6 != "" {
+			ipv6Range = config.FixedCIDRv6
+		} else {
+			ipv6Range = subnetv6.String()
+		}
+		logrus.Debugf("initialize bridge network, bridge ip range in subnet: %s", ipv6Range)
+
+		gatewayv6 := DefaultGatewayv6
+		if config.GatewayIPv6 != "" {
+			gatewayv6 = config.GatewayIPv6
+		}
+		logrus.Debugf("initialize bridge network, gateway: %s", gatewayv6)
+
+		ipamV6Conf := types.IPAMConfig{
+			AuxAddress: make(map[string]string),
+			Subnet:     subnetv6.String(),
+			IPRange:    ipv6Range,
+			Gateway:    gatewayv6,
+		}
+		ipam.Config = append(ipam.Config, ipamV6Conf)
+	}
+
+	return ipam, nil
 }
 
 func containIP(ip net.IPNet, br netlink.Link) bool {
