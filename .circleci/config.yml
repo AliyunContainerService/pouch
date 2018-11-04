@@ -5,13 +5,14 @@ version: 2
 jobs:
   markdownlint-misspell-shellcheck:
     docker:
-      # this image is build from Dockerfile located in ./.circleci/Dockerfile
-      - image: allencloud/pouchlint:v0.1
+      # this image is build from Dockerfile 
+      # https://github.com/pouchcontainer/pouchlinter/blob/master/Dockerfile
+      - image: pouchcontainer/pouchlinter:v0.1
     working_directory: /go/src/github.com/alibaba/pouch
     steps:
       - checkout
       - run:
-          name: use markdownlint v0.4.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
+          name: use markdownlint v0.5.0 to lint markdown file (https://github.com/markdownlint/markdownlint)
           command: |
             find  ./ -name  "*.md" | grep -v vendor | grep -v commandline |  grep -v .github |  grep -v swagger |  grep -v api |  xargs mdl -r ~MD010,~MD013,~MD024,~MD029,~MD033,~MD036
       - run:
@@ -25,16 +26,19 @@ jobs:
 
   code-check:
     docker: 
-      - image: golang:1.10.4
+      - image: pouchcontainer/pouchlinter:v0.1
     working_directory: /go/src/github.com/alibaba/pouch
     steps:
       - checkout
       - run: 
-          name: install gometalinter linters tools
-          command: hack/install/install_ci_related.sh
+          name: validate swagger.yml
+          command: |
+            swagger validate "/go/src/github.com/alibaba/pouch/apis/swagger.yml"
+            
       - run: 
-          name: use check target in Makefile to check code
-          command: make check
+          name: validate go code with gometalinter
+          command: |
+            gometalinter --disable-all --skip vendor -E gofmt -E goimports -E golint -E ineffassign -E misspell -E vet -E megacheck ./...
 
 notify:
   webhooks:

@@ -116,10 +116,10 @@ In `daemon_hook.go` define your plugin object, struct is `type daemonPlugin stru
 
 In `init` function to register your plugin, now we provide 4 plugin to register:
 
-    * `RegisterContainerPlugin`
-    * `RegisterDaemonPlugin`
-    * `RegisterCriPlugin`
-    * `RegisterVolumePlugin`
+* `RegisterContainerPlugin`
+* `RegisterDaemonPlugin`
+* `RegisterCriPlugin`
+* `RegisterVolumePlugin`
 
 In my plugin, we use `RegisterDaemonPlugin` to register a daemon plugin into pouch daemon.
 

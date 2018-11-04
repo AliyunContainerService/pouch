@@ -40,8 +40,8 @@ For PouchContainer developer, if your code is only used in a single module, then
 Tests could be run through the target provided by `Makefile` in the root directory of PouchContainer code. Also could be run manually.
 To run the test automatically, the following prerequisites are needed:
 
-    * golang is installed and GOPATH and GOROOT is set correctly
-    * docker is installed
+* golang is installed and GOPATH and GOROOT is set correctly
+* docker is installed
 
 Then you could just clone the PouchContainer source to GOPATH and run tests as following:
 
