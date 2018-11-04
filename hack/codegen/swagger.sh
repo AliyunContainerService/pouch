@@ -26,7 +26,7 @@ swagger::check_version() {
 swagger::install() {
   echo ">>>> install swagger-${SWAGGER_VERSION} <<<<"
   local url
-  url="https://raw.githubusercontent.com/pouchcontainer/tools/master/bin/swagger"
+  
   url="https://github.com/go-swagger/go-swagger/releases/download/${SWAGGER_VERSION}/swagger_linux_amd64"
 
   wget --quiet -O /usr/local/bin/swagger "${url}"
