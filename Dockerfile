@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get clean
 
 # set go version this image use
-ENV GO_VERSION=1.9.1
+ENV GO_VERSION=1.10.4
 ENV ARCH=amd64
 
 # install golang which version is GO_VERSION
