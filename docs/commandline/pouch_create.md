@@ -76,6 +76,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options
       --shm-size string              Size of /dev/shm, default value is 64MB
+      --specific-id string           Specify id of container, length of id should be 64, characters of id should be in '0123456789abcdef'
       --sysctl strings               Sysctl options
   -t, --tty                          Allocate a pseudo-TTY
       --ulimit value                 Set container ulimit (default [])
