@@ -62,7 +62,7 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecWithEnvs(c *check.C) 
 	CheckRespStatus(c, resp, 201)
 }
 
-// TestContainerCreateExecNoCmd tests execing containers is OK.
+// TestContainerCreateExecNoCmd tests exec without cmd.
 func (suite *APIContainerExecSuite) TestContainerCreateExecNoCmd(c *check.C) {
 	cname := "TestContainerCreateExecNoCmd"
 
@@ -71,6 +71,7 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecNoCmd(c *check.C) {
 
 	StartContainerOk(c, cname)
 
+	// test no Cmd
 	obj := map[string]interface{}{
 		"Detach": true,
 	}
@@ -78,7 +79,18 @@ func (suite *APIContainerExecSuite) TestContainerCreateExecNoCmd(c *check.C) {
 
 	resp, err := request.Post("/containers/"+cname+"/exec", body)
 	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
+	CheckRespStatus(c, resp, 400)
+
+	// test empty Cmd
+	obj = map[string]interface{}{
+		"Detach": true,
+		"Cmd":    []string{},
+	}
+	body = request.WithJSONBody(obj)
+
+	resp, err = request.Post("/containers/"+cname+"/exec", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 400)
 }
 
 // TestExecCreatedContainer tests creating exec on created container return error.

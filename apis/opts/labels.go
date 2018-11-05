@@ -26,9 +26,3 @@ func parseLabel(label string) ([]string, error) {
 	}
 	return fields, nil
 }
-
-// ValidateLabels verifies the correct of labels
-func ValidateLabels(map[string]string) error {
-	// TODO
-	return nil
-}

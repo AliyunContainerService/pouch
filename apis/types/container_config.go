@@ -123,6 +123,7 @@ type ContainerConfig struct {
 	StopSignal string `json:"StopSignal,omitempty"`
 
 	// Timeout to stop a container in seconds.
+	// Minimum: 0
 	StopTimeout *int64 `json:"StopTimeout,omitempty"`
 
 	// Attach standard streams to a TTY, including `stdin` if it is not closed.
@@ -155,6 +156,10 @@ func (m *ContainerConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateRichMode(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStopTimeout(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -271,6 +276,19 @@ func (m *ContainerConfig) validateRichMode(formats strfmt.Registry) error {
 
 	// value enum
 	if err := m.validateRichModeEnum("RichMode", "body", m.RichMode); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ContainerConfig) validateStopTimeout(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.StopTimeout) { // not required
+		return nil
+	}
+
+	if err := validate.MinimumInt("StopTimeout", "body", int64(*m.StopTimeout), 0, false); err != nil {
 		return err
 	}
 
