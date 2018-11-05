@@ -64,13 +64,6 @@ func StartDefaultDaemon(args ...string) (*daemon.Config, error) {
 	return &cfg, cfg.StartDaemon()
 }
 
-// StartDaemonBareWithArgs starts a deamon with all user specified parameter.
-func StartDaemonBareWithArgs(cfg *daemon.Config, args ...string) error {
-	cfg.NewArgs(args...)
-
-	return cfg.StartDaemon()
-}
-
 // RestartDaemon restart daemon
 func RestartDaemon(cfg *daemon.Config) error {
 	cfg.KillDaemon()

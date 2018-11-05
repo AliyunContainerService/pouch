@@ -70,11 +70,6 @@ func genRegistryEndpoints(addr string) (endpoints []registryEndpoint) {
 	return endpoints
 }
 
-// TODO: generate v2 registry endpoint for login
-func genV1Endpoints(addr string) registryEndpoint {
-	return registryEndpoint{}
-}
-
 func genV2Endpoints(addr string) registryEndpoint {
 	if addr == "" {
 		addr = defaultV2Registry

@@ -32,8 +32,7 @@ import (
 )
 
 var (
-	runtimeRoot           = "/run"
-	defaultTrylockTimeout = 5 * time.Second
+	runtimeRoot = "/run"
 )
 
 type containerPack struct {

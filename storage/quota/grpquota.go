@@ -18,10 +18,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	grpQuotaType = "grpquota"
-)
-
 // GrpQuotaDriver represents group quota driver.
 type GrpQuotaDriver struct {
 	lock sync.Mutex
