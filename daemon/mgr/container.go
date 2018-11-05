@@ -35,6 +35,7 @@ import (
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/mount"
+	"github.com/docker/go-units"
 	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -1582,9 +1583,21 @@ func (mgr *ContainerManager) initLogDriverBeforeStart(c *Container) error {
 		}
 	}
 
-	logDriver, err := logOptionsForContainerio(c, mgr.convContainerToLoggerInfo(c))
+	logInfo := mgr.convContainerToLoggerInfo(c)
+	logDriver, err := logOptionsForContainerio(c, logInfo)
 	if err != nil {
 		return err
+	}
+
+	if logger.LogMode(logInfo.LogConfig["mode"]) == logger.LogModeNonBlock {
+		if maxBufferSize, ok := logInfo.LogConfig["max-buffer-size"]; ok {
+			maxBytes, err := units.RAMInBytes(maxBufferSize)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse option max-buffer-size: %s", maxBufferSize)
+			}
+			cntrio.SetMaxBufferSize(maxBytes)
+			cntrio.SetNonBlock(true)
+		}
 	}
 	cntrio.SetLogDriver(logDriver)
 	return nil

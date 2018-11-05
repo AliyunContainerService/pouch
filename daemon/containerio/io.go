@@ -6,6 +6,7 @@ import (
 
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/crilog"
+	"github.com/alibaba/pouch/daemon/logger/logbuffer"
 	"github.com/alibaba/pouch/pkg/multierror"
 	"github.com/alibaba/pouch/pkg/streams"
 
@@ -47,6 +48,9 @@ type IO struct {
 	logdriver logger.LogDriver
 	logcopier *logger.LogCopier
 	criLog    *crilog.Log
+
+	nonBlock      bool
+	maxBufferSize int64
 }
 
 // NewIO return IO instance.
@@ -85,6 +89,16 @@ func (ctrio *IO) Reset() {
 // SetLogDriver sets log driver to the IO.
 func (ctrio *IO) SetLogDriver(logdriver logger.LogDriver) {
 	ctrio.logdriver = logdriver
+}
+
+// SetMaxBufferSize set the max size of buffer.
+func (ctrio *IO) SetMaxBufferSize(maxBufferSize int64) {
+	ctrio.maxBufferSize = maxBufferSize
+}
+
+// SetNonBlock whether to cache the container's logs with buffer.
+func (ctrio *IO) SetNonBlock(nonBlock bool) {
+	ctrio.nonBlock = nonBlock
 }
 
 // Stream is used to export the stream field.
@@ -186,6 +200,14 @@ func (ctrio *IO) InitContainerIO(dio *DirectIO) (cio.IO, error) {
 func (ctrio *IO) startLogging() error {
 	if ctrio.logdriver == nil {
 		return nil
+	}
+
+	if ctrio.nonBlock {
+		logDriver, err := logbuffer.NewLogBuffer(ctrio.logdriver, ctrio.maxBufferSize)
+		if err != nil {
+			return err
+		}
+		ctrio.logdriver = logDriver
 	}
 
 	ctrio.logcopier = logger.NewLogCopier(ctrio.logdriver, map[string]io.Reader{

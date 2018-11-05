@@ -1,17 +1,19 @@
 package mgr
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
 	"github.com/alibaba/pouch/pkg/system"
 
+	"github.com/docker/go-units"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +29,12 @@ var (
 
 	errInvalidDevice = errors.New("invalid nvidia device")
 	errInvalidDriver = errors.New("invalid nvidia driver capability")
+
+	// commonLogOpts the option which should be validated in common such as mode, max-buffer-size.
+	commonLogOpts = map[string]bool{
+		"mode":            true,
+		"max-buffer-size": true,
+	}
 )
 
 // validateConfig validates container config
@@ -217,9 +225,37 @@ func (mgr *ContainerManager) validateLogConfig(c *Container) error {
 		return nil
 	}
 
+	// validate log mode
+	switch logger.LogMode(logCfg.LogOpts["mode"]) {
+	case logger.LogModeDefault, logger.LogModeBlocking, logger.LogModeNonBlock:
+	default:
+		return fmt.Errorf("unsupported logger mode: %s", logCfg.LogOpts["mode"])
+	}
+
+	// validate max buffer size of logger
+	if maxBufferSize, ok := logCfg.LogOpts["max-buffer-size"]; ok {
+		if logger.LogMode(logCfg.LogOpts["mode"]) != logger.LogModeNonBlock {
+			return fmt.Errorf("max-buffer-size option is only supported with 'mode=%s'", logger.LogModeNonBlock)
+		}
+
+		// try to parse the max-buffer-size option
+		_, err := units.RAMInBytes(maxBufferSize)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse option max-buffer-size: %s", maxBufferSize)
+		}
+	}
+
+	// filter the option which have been validated in common.
+	restOpts := make(map[string]string)
+	for k, v := range logCfg.LogOpts {
+		if !commonLogOpts[k] {
+			restOpts[k] = v
+		}
+	}
+
 	switch logCfg.LogDriver {
 	case types.LogConfigLogDriverNone, types.LogConfigLogDriverJSONFile:
-		return jsonfile.ValidateLogOpt(logCfg.LogOpts)
+		return jsonfile.ValidateLogOpt(restOpts)
 	case types.LogConfigLogDriverSyslog:
 		info := mgr.convContainerToLoggerInfo(c)
 		return syslog.ValidateSyslogOption(info)
