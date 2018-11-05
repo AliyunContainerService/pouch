@@ -92,6 +92,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --sche-lat-switch int          Whether to enable scheduler latency count in cpuacct
       --security-opt strings         Security Options
       --shm-size string              Size of /dev/shm, default value is 64MB
+      --specific-id string           Specify id of container, length of id should be 64, characters of id should be in '0123456789abcdef'
       --sysctl strings               Sysctl options
   -t, --tty                          Allocate a pseudo-TTY
       --ulimit value                 Set container ulimit (default [])
