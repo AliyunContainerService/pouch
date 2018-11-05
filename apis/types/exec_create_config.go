@@ -26,6 +26,7 @@ type ExecCreateConfig struct {
 	AttachStdout bool `json:"AttachStdout,omitempty"`
 
 	// Execution commands and args
+	// Required: true
 	// Min Items: 1
 	Cmd []string `json:"Cmd"`
 
@@ -64,8 +65,8 @@ func (m *ExecCreateConfig) Validate(formats strfmt.Registry) error {
 
 func (m *ExecCreateConfig) validateCmd(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Cmd) { // not required
-		return nil
+	if err := validate.Required("Cmd", "body", m.Cmd); err != nil {
+		return err
 	}
 
 	iCmdSize := int64(len(m.Cmd))

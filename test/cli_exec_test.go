@@ -57,6 +57,18 @@ func (suite *PouchExecSuite) TestExecCommand(c *check.C) {
 	}
 }
 
+func (suite *PouchExecSuite) TestExecNoCommand(c *check.C) {
+	cname := "TestExecNoCommand"
+	res := command.PouchRun("run", "-d", "--name", cname, busyboxImage, "sleep", "100000").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	res = command.PouchRun("exec", cname)
+	expectedError := "requires at least 2 arg(s), only received 1"
+	if out := res.Combined(); !strings.Contains(out, expectedError) {
+		c.Fatalf("unexpected output %s, expected %s", out, expectedError)
+	}
+}
+
 // TestExecMultiCommands is to verify the correctness of execing container with specified commands.
 func (suite *PouchExecSuite) TestExecMultiCommands(c *check.C) {
 	name := "exec-normal2"

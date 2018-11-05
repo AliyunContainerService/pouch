@@ -201,6 +201,29 @@ func (suite *APIContainerCreateSuite) TestBadParam(c *check.C) {
 	helpwantedForMissingCase(c, "container api create with bad request")
 }
 
+func testCreateContainerWithBadParam(c *check.C, cname string, obj map[string]interface{}) {
+	q := url.Values{}
+	q.Add("name", cname)
+	query := request.WithQuery(q)
+	body := request.WithJSONBody(obj)
+
+	resp, err := request.Post("/containers/create", query, body)
+	defer DelContainerForceMultyTime(c, cname)
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+	CheckRespStatus(c, resp, 400)
+}
+
+// TestCreateWithBadStopTimeout using bad stopTimeout to create container.
+func (suite *APIContainerCreateSuite) TestCreateWithBadStopTimeout(c *check.C) {
+	testCreateContainerWithBadParam(c,
+		"TestCreateWithBadStopTimeout",
+		map[string]interface{}{
+			"Image":       busyboxImage,
+			"StopTimeout": -1,
+		})
+}
+
 func (suite *APIContainerCreateSuite) TestCreateNvidiaConfig(c *check.C) {
 	cname := "TestCreateNvidiaConfig"
 	q := url.Values{}

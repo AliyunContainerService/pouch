@@ -2187,6 +2187,7 @@ definitions:
       StopTimeout:
         description: "Timeout to stop a container in seconds."
         type: "integer"
+        minimum: 0
         default: 10
       Shell:
         description: "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell."
@@ -3222,6 +3223,7 @@ definitions:
   ExecCreateConfig:
     type: "object"
     description: is a small subset of the Config struct that holds the configuration.
+    required: [Cmd]
     properties:
       User:
         type: "string"
@@ -3917,8 +3919,9 @@ definitions:
         type: "string"
         example: "127.0.0.1"
       HostPort:
-        description: "Host port number that the container's port is mapped to."
+        description: "Host port number that the container's port is mapped to. range (0,65535]"
         type: "string"
+        pattern: ^([1-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$
         example: "4443"
 
   RestartPolicy:
