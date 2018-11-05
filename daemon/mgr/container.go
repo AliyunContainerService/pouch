@@ -51,7 +51,14 @@ import (
 type ContainerMgr interface {
 	// 1. the following functions are related to regular container management
 
-	// Restore containers from meta store to memory and recover those container.
+	// Load containers from meta store to memory. Split used Restore feature into two function:
+	// Load: just load all containers information into memory, it will be called before network
+	// manager being initialized.
+	// Restore: recover all running containers, it will be called after network manager being
+	// initialized so that we can call network functions in the recover procedures.
+	Load(ctx context.Context) error
+
+	// Restore recover those alive containers.
 	Restore(ctx context.Context) error
 
 	// Create a new container.
@@ -222,8 +229,8 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APICli
 	return mgr, nil
 }
 
-// Restore containers from meta store to memory and recover those container.
-func (mgr *ContainerManager) Restore(ctx context.Context) error {
+// Load containers from meta store to memory.
+func (mgr *ContainerManager) Load(ctx context.Context) error {
 	fn := func(obj meta.Object) error {
 		container, ok := obj.(*Container)
 		if !ok {
@@ -232,46 +239,75 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		}
 
 		id := container.ID
-
 		// map container's name to id.
 		mgr.NameToID.Put(container.Name, id)
 
 		// put container into cache.
 		mgr.cache.Put(id, container)
 
-		if container.State.Status != types.StatusRunning &&
-			container.State.Status != types.StatusPaused {
-			return nil
-		}
+		return nil
+	}
 
+	return mgr.Store.ForEach(fn)
+}
+
+// Restore tries to recover those alive containers
+func (mgr *ContainerManager) Restore(ctx context.Context) error {
+	// get all running containers
+	containers, err := mgr.List(ctx,
+		&ContainerListOption{
+			All: true,
+			FilterFunc: func(c *Container) bool {
+				return (c.IsRunning() || c.IsPaused())
+			}})
+	if err != nil {
+		logrus.Errorf("failed to get container list when restore alive containers: %v", err)
+		return errors.Wrap(err, "failed to get container list")
+	}
+
+	// start recover all alive containers
+	for _, c := range containers {
+		logrus.Debugf("Start recover container %s", c.Key())
+		id := c.Key()
 		// recover the running or paused container.
-		cntrio, err := mgr.initContainerIO(container)
+		cntrio, err := mgr.initContainerIO(c)
 		if err != nil {
 			logrus.Errorf("failed to init container IO %s: %v", id, err)
 			return err
 		}
 
-		if err := mgr.initLogDriverBeforeStart(container); err != nil {
+		if err := mgr.initLogDriverBeforeStart(c); err != nil {
 			logrus.Errorf("failed to init log driver %s: %v", id, err)
 			return err
 		}
 
+		// Start recover the container
 		err = mgr.Client.RecoverContainer(ctx, id, cntrio)
-		if err != nil && strings.Contains(err.Error(), "not found") {
-			logrus.Infof("failed to recover container %s (not found, executes mark stopped and release resources): %v", id, err)
-			if err := mgr.markStoppedAndRelease(container, nil); err != nil {
-				logrus.Errorf("failed to mark container %s stop status: %v", id, err)
-			}
-		} else if err != nil {
+		if err == nil {
+			continue
+		}
+
+		// Note(ziren): Since we got an unknown error when recover the
+		// container, we just log the error and continue in case we wrongly
+		// release the container's resources
+		if !strings.Contains(err.Error(), "not found") {
 			logrus.Errorf("failed to recover container %s: %v", id, err)
 			// release io
 			cntrio.Close()
 			mgr.IOs.Remove(id)
+			continue
 		}
 
-		return nil
+		// Note(ziren) if containerd post not found error, that is mean
+		// container or task is not found. So we should set the container's
+		// status to exited and release the container's resources.
+		logrus.Warnf("recover container %s, got a notfound error, start clean the container's resources", id)
+		if err := mgr.exitedAndRelease(id, nil, nil); err != nil {
+			logrus.Errorf("failed to execute exited and release for container %s: %v", id, err)
+		}
 	}
-	return mgr.Store.ForEach(fn)
+
+	return nil
 }
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
@@ -1709,8 +1745,10 @@ func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message, cleanu
 	}
 
 	// for example, delete containerd container/task.
-	if err := cleanup(); err != nil {
-		return err
+	if cleanup != nil {
+		if err := cleanup(); err != nil {
+			return err
+		}
 	}
 
 	// Action Container Remove and function exitedAndRelease are conflict.

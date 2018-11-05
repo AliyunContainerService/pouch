@@ -187,7 +187,9 @@ func (d *Daemon) Run() error {
 	}
 	d.containerMgr = containerMgr
 
-	if err := containerMgr.Restore(ctx); err != nil {
+	// just register containers information here to let
+	// networkMgr to use.
+	if err := containerMgr.Load(ctx); err != nil {
 		return err
 	}
 
@@ -197,6 +199,12 @@ func (d *Daemon) Run() error {
 	}
 	d.networkMgr = networkMgr
 	containerMgr.(*mgr.ContainerManager).NetworkMgr = networkMgr
+
+	// after initialize network manager, try to recover all
+	// running containers
+	if err := containerMgr.Restore(ctx); err != nil {
+		return err
+	}
 
 	if err := d.addSystemLabels(); err != nil {
 		return err
