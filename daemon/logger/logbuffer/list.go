@@ -1,14 +1,16 @@
-package ringbuffer
+package logbuffer
 
 import (
 	"sync"
+
+	"github.com/alibaba/pouch/daemon/logger"
 )
 
 var elemPool = &sync.Pool{New: func() interface{} { return new(element) }}
 
 type element struct {
 	next, prev *element
-	val        interface{}
+	val        *logger.LogMessage
 }
 
 func (e *element) reset() {
@@ -34,7 +36,7 @@ func (q *queue) size() int {
 	return q.count
 }
 
-func (q *queue) enqueue(val interface{}) {
+func (q *queue) enqueue(val *logger.LogMessage) {
 	elem := elemPool.Get().(*element)
 	elem.val = val
 
@@ -47,7 +49,7 @@ func (q *queue) enqueue(val interface{}) {
 	q.count++
 }
 
-func (q *queue) dequeue() interface{} {
+func (q *queue) dequeue() *logger.LogMessage {
 	if q.size() == 0 {
 		return nil
 	}
