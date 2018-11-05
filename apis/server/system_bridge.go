@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-openapi/strfmt"
@@ -152,6 +153,11 @@ func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.R
 			return nil
 		}
 	}
+}
+
+func (s *Server) metrics(ctx context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
+	metrics.GetPrometheusHandler().ServeHTTP(rw, req)
+	return nil
 }
 
 func eventTime(formTime string) (time.Time, error) {
