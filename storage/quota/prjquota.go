@@ -18,10 +18,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	prjQuotaType = "prjquota"
-)
-
 // PrjQuotaDriver represents project quota driver.
 type PrjQuotaDriver struct {
 	lock sync.Mutex

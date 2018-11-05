@@ -124,15 +124,6 @@ func CheckContainerRunning(c *check.C, cname string, isRunning bool) {
 	c.Assert(gotRunning, check.Equals, isRunning)
 }
 
-// DelContainerForceOk forcely deletes the container and asserts success.
-func DelContainerForceOk(c *check.C, cname string) {
-	resp, err := delContainerForce(cname)
-	c.Assert(err, check.IsNil)
-
-	defer resp.Body.Close()
-	CheckRespStatus(c, resp, 204)
-}
-
 func delContainerForce(cname string) (*http.Response, error) {
 	q := url.Values{}
 	q.Add("force", "true")
@@ -154,7 +145,6 @@ func PauseContainerOk(c *check.C, cname string) {
 func UnpauseContainerOk(c *check.C, cname string) {
 	resp, err := request.Post("/containers/" + cname + "/unpause")
 	c.Assert(err, check.IsNil)
-
 	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 204)
 }

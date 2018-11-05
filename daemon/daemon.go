@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"plugin"
 	"reflect"
 
 	"github.com/alibaba/pouch/apis/server"
@@ -24,8 +23,6 @@ import (
 
 	systemddaemon "github.com/coreos/go-systemd/daemon"
 	systemdutil "github.com/coreos/go-systemd/util"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,12 +47,6 @@ type Daemon struct {
 	volumePlugin    hookplugins.VolumePlugin
 	criPlugin       hookplugins.CriPlugin
 	eventsService   *events.Events
-}
-
-// router represents the router of daemon.
-type router struct {
-	daemon *Daemon
-	*mux.Router
 }
 
 // NewDaemon constructs a brand new server.
@@ -115,14 +106,6 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		ctrdDaemon:     ctrdDaemon,
 		containerStore: containerStore,
 	}
-}
-
-func loadSymbolByName(p *plugin.Plugin, name string) (plugin.Symbol, error) {
-	s, err := p.Lookup(name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "lookup plugin with name %s error", name)
-	}
-	return s, nil
 }
 
 func (d *Daemon) loadPlugin() error {

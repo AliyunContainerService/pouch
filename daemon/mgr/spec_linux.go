@@ -373,43 +373,15 @@ func setupNamespaces(ctx context.Context, c *Container, specWrapper *SpecWrapper
 	return setupUtsNamespace(ctx, c, specWrapper)
 }
 
-// isEmpty indicates whether namespace mode is empty.
-func isEmpty(mode string) bool {
-	return mode == ""
-}
-
-// isNone indicates whether container's namespace mode is set to "none".
-func isNone(mode string) bool {
-	return mode == "none"
-}
-
 // isHost indicates whether the container shares the host's corresponding namespace.
 func isHost(mode string) bool {
 	return mode == "host"
-}
-
-// isShareable indicates whether the containers namespace can be shared with another container.
-func isShareable(mode string) bool {
-	return mode == "shareable"
 }
 
 // isContainer indicates whether the container uses another container's corresponding namespace.
 func isContainer(mode string) bool {
 	parts := strings.SplitN(mode, ":", 2)
 	return len(parts) > 1 && parts[0] == "container"
-}
-
-// isPrivate indicates whether the container uses its own namespace.
-func isPrivate(ns specs.LinuxNamespaceType, mode string) bool {
-	switch ns {
-	case specs.IPCNamespace:
-		return mode == "private"
-	case specs.NetworkNamespace, specs.PIDNamespace:
-		return !(isHost(mode) || isContainer(mode))
-	case specs.UserNamespace, specs.UTSNamespace:
-		return !(isHost(mode))
-	}
-	return false
 }
 
 // connectedContainer is the id or name of the container whose namespace this container share with.

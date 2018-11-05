@@ -17,7 +17,6 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/debug"
-	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
@@ -256,23 +255,6 @@ func initLog() {
 		TimestampFormat: time.RFC3339Nano,
 	}
 	logrus.SetFormatter(formatter)
-}
-
-// define lxcfs processe.
-func setLxcfsProcess(processes exec.Processes) exec.Processes {
-	if !cfg.IsLxcfsEnabled {
-		return processes
-	}
-
-	p := &exec.Process{
-		Path: cfg.LxcfsBinPath,
-		Args: []string{
-			cfg.LxcfsHome,
-		},
-	}
-	processes = append(processes, p)
-
-	return processes
 }
 
 // check lxcfs config
