@@ -46,6 +46,7 @@ type Daemon struct {
 	daemonPlugin    hookplugins.DaemonPlugin
 	volumePlugin    hookplugins.VolumePlugin
 	criPlugin       hookplugins.CriPlugin
+	apiPlugin       hookplugins.APIPlugin
 	eventsService   *events.Events
 }
 
@@ -129,6 +130,11 @@ func (d *Daemon) loadPlugin() error {
 	// load cri plugin if exist
 	if criPlugin := hookplugins.GetCriPlugin(); criPlugin != nil {
 		d.criPlugin = criPlugin
+	}
+
+	// load api plugin if exist
+	if apiPlugin := hookplugins.GetAPIPlugin(); apiPlugin != nil {
+		d.apiPlugin = apiPlugin
 	}
 
 	if d.daemonPlugin != nil {
@@ -222,6 +228,7 @@ func (d *Daemon) Run() error {
 		NetworkMgr:      networkMgr,
 		StreamRouter:    streamRouter,
 		ContainerPlugin: d.containerPlugin,
+		APIPlugin:       d.apiPlugin,
 	}
 
 	httpReadyCh := make(chan bool)

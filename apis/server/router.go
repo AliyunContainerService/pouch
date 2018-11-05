@@ -8,10 +8,11 @@ import (
 	"net/http/pprof"
 	"time"
 
+	serverTypes "github.com/alibaba/pouch/apis/server/types"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
-	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -20,91 +21,95 @@ import (
 // versionMatcher defines to parse version url path.
 const versionMatcher = "/v{version:[0-9.]+}"
 
-func initRoute(s *Server) http.Handler {
+func initRoute(s *Server) *mux.Router {
 	r := mux.NewRouter()
 
-	// system
-	s.addRoute(r, http.MethodGet, "/_ping", s.ping)
-	s.addRoute(r, http.MethodGet, "/info", s.info)
-	s.addRoute(r, http.MethodGet, "/version", s.version)
-	s.addRoute(r, http.MethodPost, "/auth", s.auth)
-	s.addRoute(r, http.MethodGet, "/events", withCancelHandler(s.events))
+	handlers := []*serverTypes.HandlerSpec{
+		// system
+		{Method: http.MethodGet, Path: "/_ping", HandlerFunc: s.ping},
+		{Method: http.MethodGet, Path: "/info", HandlerFunc: s.info},
+		{Method: http.MethodGet, Path: "/version", HandlerFunc: s.version},
+		{Method: http.MethodPost, Path: "/auth", HandlerFunc: s.auth},
+		{Method: http.MethodGet, Path: "/events", HandlerFunc: withCancelHandler(s.events)},
 
-	// daemon, we still list this API into system manager.
-	s.addRoute(r, http.MethodPost, "/daemon/update", s.updateDaemon)
+		// daemon, we still list this API into system manager.
+		{Method: http.MethodPost, Path: "/daemon/update", HandlerFunc: s.updateDaemon},
 
-	// container
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/checkpoints", withCancelHandler(s.createContainerCheckpoint))
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/checkpoints", withCancelHandler(s.listContainerCheckpoint))
-	s.addRoute(r, http.MethodDelete, "/containers/{name}/checkpoints/{id}", withCancelHandler(s.deleteContainerCheckpoint))
-	s.addRoute(r, http.MethodPost, "/containers/create", s.createContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/start", s.startContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/stop", s.stopContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/attach", s.attachContainer)
-	s.addRoute(r, http.MethodGet, "/containers/json", s.getContainers)
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/json", s.getContainer)
-	s.addRoute(r, http.MethodDelete, "/containers/{name:.*}", s.removeContainers)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/exec", s.createContainerExec)
-	s.addRoute(r, http.MethodGet, "/exec/{name:.*}/json", s.getExecInfo)
-	s.addRoute(r, http.MethodPost, "/exec/{name:.*}/start", s.startContainerExec)
-	s.addRoute(r, http.MethodPost, "/exec/{name:.*}/resize", s.resizeExec)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/rename", s.renameContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/pause", s.pauseContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/unpause", s.unpauseContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/update", s.updateContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/upgrade", s.upgradeContainer)
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/top", s.topContainer)
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/logs", withCancelHandler(s.logsContainer))
-	s.addRoute(r, http.MethodGet, "/containers/{name:.*}/stats", withCancelHandler(s.statsContainer))
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/resize", s.resizeContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/restart", s.restartContainer)
-	s.addRoute(r, http.MethodPost, "/containers/{name:.*}/wait", withCancelHandler(s.waitContainer))
-	s.addRoute(r, http.MethodPost, "/commit", withCancelHandler(s.commitContainer))
+		// container
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/checkpoints", HandlerFunc: withCancelHandler(s.createContainerCheckpoint)},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/checkpoints", HandlerFunc: withCancelHandler(s.listContainerCheckpoint)},
+		{Method: http.MethodDelete, Path: "/containers/{name}/checkpoints/{id}", HandlerFunc: withCancelHandler(s.deleteContainerCheckpoint)},
+		{Method: http.MethodPost, Path: "/containers/create", HandlerFunc: s.createContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/start", HandlerFunc: s.startContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/stop", HandlerFunc: s.stopContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/attach", HandlerFunc: s.attachContainer},
+		{Method: http.MethodGet, Path: "/containers/json", HandlerFunc: s.getContainers},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/json", HandlerFunc: s.getContainer},
+		{Method: http.MethodDelete, Path: "/containers/{name:.*}", HandlerFunc: s.removeContainers},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/exec", HandlerFunc: s.createContainerExec},
+		{Method: http.MethodGet, Path: "/exec/{name:.*}/json", HandlerFunc: s.getExecInfo},
+		{Method: http.MethodPost, Path: "/exec/{name:.*}/start", HandlerFunc: s.startContainerExec},
+		{Method: http.MethodPost, Path: "/exec/{name:.*}/resize", HandlerFunc: s.resizeExec},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/rename", HandlerFunc: s.renameContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/restart", HandlerFunc: s.restartContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/pause", HandlerFunc: s.pauseContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/unpause", HandlerFunc: s.unpauseContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/update", HandlerFunc: s.updateContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/upgrade", HandlerFunc: s.upgradeContainer},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/top", HandlerFunc: s.topContainer},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/logs", HandlerFunc: withCancelHandler(s.logsContainer)},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/stats", HandlerFunc: withCancelHandler(s.statsContainer)},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/resize", HandlerFunc: s.resizeContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/restart", HandlerFunc: s.restartContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/wait", HandlerFunc: withCancelHandler(s.waitContainer)},
+		{Method: http.MethodPost, Path: "/commit", HandlerFunc: withCancelHandler(s.commitContainer)},
 
-	// image
-	s.addRoute(r, http.MethodPost, "/images/create", s.pullImage)
-	s.addRoute(r, http.MethodPost, "/images/search", s.searchImages)
-	s.addRoute(r, http.MethodGet, "/images/json", s.listImages)
-	s.addRoute(r, http.MethodDelete, "/images/{name:.*}", s.removeImage)
-	s.addRoute(r, http.MethodGet, "/images/{name:.*}/json", s.getImage)
-	s.addRoute(r, http.MethodPost, "/images/{name:.*}/tag", s.postImageTag)
-	s.addRoute(r, http.MethodPost, "/images/load", withCancelHandler(s.loadImage))
-	s.addRoute(r, http.MethodGet, "/images/save", withCancelHandler(s.saveImage))
-	s.addRoute(r, http.MethodGet, "/images/{name:.*}/history", s.getImageHistory)
+		// image
+		{Method: http.MethodPost, Path: "/images/create", HandlerFunc: s.pullImage},
+		{Method: http.MethodPost, Path: "/images/search", HandlerFunc: s.searchImages},
+		{Method: http.MethodGet, Path: "/images/json", HandlerFunc: s.listImages},
+		{Method: http.MethodDelete, Path: "/images/{name:.*}", HandlerFunc: s.removeImage},
+		{Method: http.MethodGet, Path: "/images/{name:.*}/json", HandlerFunc: s.getImage},
+		{Method: http.MethodPost, Path: "/images/{name:.*}/tag", HandlerFunc: s.postImageTag},
+		{Method: http.MethodPost, Path: "/images/load", HandlerFunc: withCancelHandler(s.loadImage)},
+		{Method: http.MethodGet, Path: "/images/save", HandlerFunc: withCancelHandler(s.saveImage)},
+		{Method: http.MethodGet, Path: "/images/{name:.*}/history", HandlerFunc: s.getImageHistory},
 
-	// volume
-	s.addRoute(r, http.MethodGet, "/volumes", s.listVolume)
-	s.addRoute(r, http.MethodPost, "/volumes/create", s.createVolume)
-	s.addRoute(r, http.MethodGet, "/volumes/{name:.*}", s.getVolume)
-	s.addRoute(r, http.MethodDelete, "/volumes/{name:.*}", s.removeVolume)
+		// volume
+		{Method: http.MethodGet, Path: "/volumes", HandlerFunc: s.listVolume},
+		{Method: http.MethodPost, Path: "/volumes/create", HandlerFunc: s.createVolume},
+		{Method: http.MethodGet, Path: "/volumes/{name:.*}", HandlerFunc: s.getVolume},
+		{Method: http.MethodDelete, Path: "/volumes/{name:.*}", HandlerFunc: s.removeVolume},
 
-	// network
-	s.addRoute(r, http.MethodGet, "/networks", s.listNetwork)
-	s.addRoute(r, http.MethodPost, "/networks/create", s.createNetwork)
-	s.addRoute(r, http.MethodGet, "/networks/{id:.*}", s.getNetwork)
-	s.addRoute(r, http.MethodDelete, "/networks/{id:.*}", s.deleteNetwork)
-	s.addRoute(r, http.MethodPost, "/networks/{id:.*}/connect", s.connectToNetwork)
-	s.addRoute(r, http.MethodPost, "/networks/{id:.*}/disconnect", s.disconnectNetwork)
+		// network
+		{Method: http.MethodGet, Path: "/networks", HandlerFunc: s.listNetwork},
+		{Method: http.MethodPost, Path: "/networks/create", HandlerFunc: s.createNetwork},
+		{Method: http.MethodGet, Path: "/networks/{id:.*}", HandlerFunc: s.getNetwork},
+		{Method: http.MethodDelete, Path: "/networks/{id:.*}", HandlerFunc: s.deleteNetwork},
+		{Method: http.MethodPost, Path: "/networks/{id:.*}/connect", HandlerFunc: s.connectToNetwork},
+		{Method: http.MethodPost, Path: "/networks/{id:.*}/disconnect", HandlerFunc: s.disconnectNetwork},
 
-	// metrics
-	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(util_metrics.GetPrometheusHandler())
-	r.Path("/metrics").Methods(http.MethodGet).Handler(util_metrics.GetPrometheusHandler())
+		// metrics
+		{Method: http.MethodGet, Path: "/metrics", HandlerFunc: s.metrics},
 
-	// CRI stream server related handlers
-	if s.StreamRouter != nil {
-		endpoints := []struct {
-			path    string
-			handler http.HandlerFunc
-		}{
-			{"/exec/{token}", s.StreamRouter.ServeExec},
-			{"/attach/{token}", s.StreamRouter.ServeAttach},
-			{"/portforward/{token}", s.StreamRouter.ServePortForward},
-		}
-		for _, e := range endpoints {
-			for _, method := range []string{http.MethodGet, http.MethodPost} {
-				r.Path(e.path).Methods(method).Handler(e.handler)
-			}
+		// cri stream
+		{Method: http.MethodGet, Path: "/exec/{token}", HandlerFunc: s.criExec},
+		{Method: http.MethodPost, Path: "/exec/{token}", HandlerFunc: s.criExec},
+		{Method: http.MethodGet, Path: "/attach/{token}", HandlerFunc: s.criAttach},
+		{Method: http.MethodPost, Path: "/attach/{token}", HandlerFunc: s.criAttach},
+		{Method: http.MethodGet, Path: "/portforward/{token}", HandlerFunc: s.criPortForward},
+		{Method: http.MethodPost, Path: "/portforward/{token}", HandlerFunc: s.criPortForward},
+	}
+
+	if s.APIPlugin != nil {
+		handlers = s.APIPlugin.UpdateHandler(handlers)
+	}
+
+	// register API
+	for _, h := range handlers {
+		if h != nil {
+			r.Path(versionMatcher + h.Path).Methods(h.Method).Handler(filter(h.HandlerFunc, s))
+			r.Path(h.Path).Methods(h.Method).Handler(filter(h.HandlerFunc, s))
 		}
 	}
 
@@ -112,11 +117,6 @@ func initRoute(s *Server) http.Handler {
 		profilerSetup(r)
 	}
 	return r
-}
-
-func (s *Server) addRoute(r *mux.Router, mothod string, path string, f func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error) {
-	r.Path(versionMatcher + path).Methods(mothod).Handler(filter(f, s))
-	r.Path(path).Methods(mothod).Handler(filter(f, s))
 }
 
 func profilerSetup(mainRouter *mux.Router) {
@@ -132,12 +132,10 @@ func profilerSetup(mainRouter *mux.Router) {
 	r.HandleFunc("/pprof/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
 }
 
-type handler func(context.Context, http.ResponseWriter, *http.Request) error
-
 // withCancelHandler will use context to cancel the handler. Otherwise, if the
 // the connection has been cut by the client or firewall, the server handler
 // will hang and cause goroutine leak.
-func withCancelHandler(h handler) handler {
+func withCancelHandler(h serverTypes.Handler) serverTypes.Handler {
 	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		notifier, ok := rw.(http.CloseNotifier)
 		if !ok {
@@ -166,7 +164,7 @@ func withCancelHandler(h handler) handler {
 	}
 }
 
-func filter(handler handler, s *Server) http.HandlerFunc {
+func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 	pctx := context.Background()
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -197,6 +195,8 @@ func filter(handler handler, s *Server) http.HandlerFunc {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			issuer := req.TLS.PeerCertificates[0].Issuer.CommonName
 			clientName := req.TLS.PeerCertificates[0].Subject.CommonName
+			ctx = utils.SetTLSIssuer(ctx, issuer)
+			ctx = utils.SetTLSCommonName(ctx, clientName)
 			clientInfo = fmt.Sprintf("%s %s %s", clientInfo, issuer, clientName)
 		}
 		if req.Method != http.MethodGet {

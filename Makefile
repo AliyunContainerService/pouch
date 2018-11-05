@@ -202,6 +202,7 @@ plugin: ## build hook plugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/daemonplugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/criplugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/volumeplugin
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/apiplugin
 
 .PHONY: help
 help: ## this help

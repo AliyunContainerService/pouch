@@ -30,6 +30,7 @@ type Server struct {
 	StreamRouter     stream.Router
 	listeners        []net.Listener
 	ContainerPlugin  hookplugins.ContainerPlugin
+	APIPlugin        hookplugins.APIPlugin
 	ManagerWhiteList map[string]struct{}
 	lock             sync.RWMutex
 }
