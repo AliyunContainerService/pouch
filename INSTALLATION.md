@@ -189,10 +189,14 @@ This guide provides step by step instructions to deploy PouchContainer on bare m
 As a developer, you may need to build and test PouchContainer binaries via source code. To build pouchd which is so-called "PouchContainer Daemon" and pouch which is so-called "PouchContainer CLI", the following build system dependencies are required:
 
 * Linux Kernel 3.10+
-* Go 1.9.0+
+* Go 1.10.4+
 * containerd: 1.0.3
 * runc: 1.0.0-rc4
 * runv: 1.0.0 (option)
+
+> NOTE: The PouchContainer is using overlayfs, which requires kernel to support multiple lowerdirs.
+On 4.x kernels, they always support multiple lowerdirs overlayfs. And RHEL and Centos 3.x kernels (> 3.10.0-693.el7.x86_64) also support it.
+Besides this, it needs filesystem to support `d_type`. If the backing filesystem is `xfs`, please reformat with `ftype=1` to enable `d_type` support.
 
 ### Prerequisites Installation
 
