@@ -632,3 +632,75 @@ func TestStringSliceDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestResolveHomeDir(t *testing.T) {
+	assert := assert.New(t)
+	type tCase struct {
+		ErrorLine error
+		pass      bool
+		path      string
+		realPath  string
+	}
+
+	dir, err := ioutil.TempDir("", "TestResolveHomeDir")
+	assert.NoError(err)
+	defer os.RemoveAll(dir)
+	fileMode := os.FileMode(0666)
+
+	pa := filepath.Join(dir, "IAmDir")
+	assert.NoError(os.Mkdir(pa, fileMode))
+
+	pb := filepath.Join(dir, "IAmFile")
+	f, err := os.Create(pb)
+	assert.NoError(err)
+	f.Close()
+
+	target := filepath.Join(dir, "target")
+	assert.NoError(os.Mkdir(target, fileMode))
+	link := filepath.Join(dir, "link")
+	assert.NoError(os.Symlink(target, link))
+
+	for _, t := range []tCase{
+		{
+			ErrorLine: nil,
+			pass:      true,
+			path:      filepath.Join(dir, "non-exist"),
+			realPath:  filepath.Join(dir, "non-exist"),
+		},
+		{
+			ErrorLine: nil,
+			pass:      true,
+			path:      pa,
+			realPath:  pa,
+		},
+		{
+			ErrorLine: nil,
+			pass:      true,
+			path:      link,
+			realPath:  target,
+		},
+		{
+			ErrorLine: fmt.Errorf("home dir should not be empty"),
+			pass:      false,
+			path:      "",
+		},
+		{
+			ErrorLine: fmt.Errorf("home dir %s should be directory", pb),
+			pass:      false,
+			path:      pb,
+		},
+		{
+			ErrorLine: fmt.Errorf("home dir %s should be an absolute path", "relative-directory"),
+			pass:      false,
+			path:      "relative-directory",
+		},
+	} {
+		p, err := ResolveHomeDir(t.path)
+		if t.pass {
+			assert.NoError(err)
+			assert.Equal(p, t.realPath)
+		} else {
+			assert.Equal(t.ErrorLine, err)
+		}
+	}
+}

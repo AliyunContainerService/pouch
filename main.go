@@ -168,17 +168,12 @@ func runDaemon(cmd *cobra.Command) error {
 		debug.SetupDumpStackTrap()
 	}
 
-	// initialize home dir.
-	dir := cfg.HomeDir
-
-	if dir == "" || !path.IsAbs(dir) {
-		return fmt.Errorf("invalid pouchd's home dir: %s", dir)
+	// resolve home dir.
+	dir, err := utils.ResolveHomeDir(cfg.HomeDir)
+	if err != nil {
+		return err
 	}
-	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0666); err != nil {
-			return fmt.Errorf("failed to mkdir: %v", err)
-		}
-	}
+	cfg.HomeDir = dir
 
 	// saves daemon pid to pidfile.
 	if cfg.Pidfile != "" {
