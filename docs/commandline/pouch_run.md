@@ -52,6 +52,9 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --device-write-iops value      Limit write rate (IO per second) from a device (default [])
       --disable-network-files        Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false
       --disk-quota strings           Set disk quota for container
+      --dns stringArray              Set DNS servers
+      --dns-option strings           Set DNS options
+      --dns-search stringArray       Set DNS search domains
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env stringArray              Set environment variables for container
