@@ -76,10 +76,10 @@ const (
 	networkNotReadyReason = "NetworkPluginNotReady"
 
 	// passthruKey to specify whether a interface is passthru to qemu
-	passthruKey = "io.alibaba.pouch.runv.passthru"
+	passthruKey = "io.alibaba.pouch.vm.passthru"
 
 	// passthruIP is the IP for container
-	passthruIP = "io.alibaba.pouch.runv.passthru.ip"
+	passthruIP = "io.alibaba.pouch.vm.passthru.ip"
 )
 
 var (
