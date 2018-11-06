@@ -13,12 +13,18 @@ import (
 
 func Test_setNvidiaHook(t *testing.T) {
 	nvidiaHookName = "test-nvidia-container-runtime-hook"
-	installDir := "/usr/local/bin/"
+	installDir := "/usr/local/bin"
 	fullname := path.Join(installDir, nvidiaHookName)
+	nvidiaHookName = fullname
 	os.Remove(fullname)
 	os.Create(fullname)
 	os.Chmod(fullname, 0755)
-	path, _ := exec.LookPath(nvidiaHookName)
+	hookPath := ""
+	if !path.IsAbs(nvidiaHookName) {
+		hookPath, _ = exec.LookPath(nvidiaHookName)
+	} else {
+		hookPath = nvidiaHookName
+	}
 	defer func() {
 		os.Remove(fullname)
 	}()
@@ -69,10 +75,36 @@ func Test_setNvidiaHook(t *testing.T) {
 					},
 				},
 			},
-			// exec.LookPath("nvidia-container-runtime-hook") return error,
-			[]specs.Hook{specs.Hook{
-				Path: path,
-				Args: append([]string{path}, "prestart"),
+			[]specs.Hook{{
+				Path: hookPath,
+				Args: append([]string{hookPath}, "prestart"),
+			}},
+		},
+		{
+			"NvidiaConfig not nil, NvidiaEnv is null",
+			&Container{
+				HostConfig: &types.HostConfig{
+					Resources: types.Resources{
+						NvidiaConfig: &types.NvidiaConfig{
+							NvidiaDriverCapabilities: "all",
+							NvidiaVisibleDevices:     "all",
+						},
+					},
+				},
+				Config: &types.ContainerConfig{
+					Env: []string{},
+				},
+			},
+			&SpecWrapper{
+				s: &specs.Spec{
+					Hooks: &specs.Hooks{
+						Prestart: []specs.Hook{},
+					},
+				},
+			},
+			[]specs.Hook{{
+				Path: hookPath,
+				Args: append([]string{hookPath}, "prestart"),
 			}},
 		},
 	}
