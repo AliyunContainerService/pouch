@@ -45,8 +45,8 @@ var registerMetrics sync.Once
 
 // Register all metrics.
 func Register() {
-	// Get a custom prometheus registry.
-	registry := util_metrics.GetCustomPrometheusRegistry()
+	// Get a prometheus registry.
+	registry := util_metrics.GetPrometheusRegistry()
 	registerMetrics.Do(func() {
 		// Register the custom metrics.
 		registry.MustRegister(ImagePullSummary)
