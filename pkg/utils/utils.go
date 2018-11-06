@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -391,4 +392,33 @@ func StringSliceDelete(in []string, del string) []string {
 	}
 
 	return out
+}
+
+// ResolveHomeDir resolve a target path from home dir, home dir must not be a relative
+// path, must not be a file, create directory if not exist, returns the target
+// directory if directory is symlink.
+func ResolveHomeDir(path string) (string, error) {
+	if path == "" {
+		return "", fmt.Errorf("home dir should not be empty")
+	}
+	if !filepath.IsAbs(path) {
+		return "", fmt.Errorf("home dir %s should be an absolute path", path)
+	}
+
+	// create directory for home-dir if is not exist, or check if exist home-dir
+	// is directory.
+	if pinfo, err := os.Stat(path); err != nil {
+		if err := os.MkdirAll(path, 0666); err != nil {
+			return "", fmt.Errorf("failed to mkdir for home dir %s: %v", path, err)
+		}
+	} else if !pinfo.Mode().IsDir() {
+		return "", fmt.Errorf("home dir %s should be directory", path)
+	}
+
+	realPath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to acquire real path for %s: %s", path, err)
+	}
+
+	return realPath, nil
 }
