@@ -31,15 +31,11 @@ func (suite *APIContainerPauseSuite) TestPauseUnpauseOk(c *check.C) {
 	StartContainerOk(c, cname)
 
 	// pause it
-	resp, err := request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	PauseContainerOk(c, cname)
 	CheckContainerStatus(c, cname, "paused")
 
 	// unpause it
-	resp, err = request.Post("/containers/" + cname + "/unpause")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	UnpauseContainerOk(c, cname)
 	CheckContainerStatus(c, cname, "running")
 }
 
@@ -66,9 +62,7 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	StartContainerOk(c, cname)
 
 	// pause it
-	resp, err = request.Post("/containers/" + cname + "/pause")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	PauseContainerOk(c, cname)
 
 	// should not pause twice
 	resp, err = request.Post("/containers/" + cname + "/pause")
@@ -76,9 +70,7 @@ func (suite *APIContainerPauseSuite) TestNotRunningContainer(c *check.C) {
 	CheckRespStatus(c, resp, 500)
 
 	// unpause it
-	resp, err = request.Post("/containers/" + cname + "/unpause")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 204)
+	UnpauseContainerOk(c, cname)
 
 	// stop it
 	StopContainerOk(c, cname)
