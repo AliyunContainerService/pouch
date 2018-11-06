@@ -4,10 +4,15 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	rdebug "runtime/debug"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
 )
+
+func init() {
+	rdebug.SetTraceback("all")
+}
 
 // SetupDumpStackTrap setups signal trap to dump stack.
 func SetupDumpStackTrap() {
