@@ -38,6 +38,9 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --device-write-iops value      Limit write rate (IO per second) from a device (default [])
       --disable-network-files        Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false
       --disk-quota strings           Set disk quota for container
+      --dns stringArray              Set DNS servers
+      --dns-option strings           Set DNS options
+      --dns-search stringArray       Set DNS search domains
       --enableLxcfs                  Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string            Overwrite the default ENTRYPOINT of the image
   -e, --env stringArray              Set environment variables for container
