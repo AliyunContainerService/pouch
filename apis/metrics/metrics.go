@@ -4,8 +4,6 @@ import (
 	"sync"
 
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func init() {
@@ -47,15 +45,17 @@ var registerMetrics sync.Once
 
 // Register all metrics.
 func Register() {
-	// Register the metrics.
+	// Get a custom prometheus registry.
+	registry := util_metrics.GetCustomPrometheusRegistry()
 	registerMetrics.Do(func() {
-		prometheus.MustRegister(ImagePullSummary)
-		prometheus.MustRegister(EngineVersion)
-		prometheus.MustRegister(ContainerActionsCounter)
-		prometheus.MustRegister(ContainerSuccessActionsCounter)
-		prometheus.MustRegister(ImageActionsCounter)
-		prometheus.MustRegister(ImageSuccessActionsCounter)
-		prometheus.MustRegister(ContainerActionsTimer)
-		prometheus.MustRegister(ImageActionsTimer)
+		// Register the custom metrics.
+		registry.MustRegister(ImagePullSummary)
+		registry.MustRegister(EngineVersion)
+		registry.MustRegister(ContainerActionsCounter)
+		registry.MustRegister(ContainerSuccessActionsCounter)
+		registry.MustRegister(ImageActionsCounter)
+		registry.MustRegister(ImageSuccessActionsCounter)
+		registry.MustRegister(ContainerActionsTimer)
+		registry.MustRegister(ImageActionsTimer)
 	})
 }

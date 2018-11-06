@@ -11,9 +11,9 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
+	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -88,8 +88,8 @@ func initRoute(s *Server) http.Handler {
 	s.addRoute(r, http.MethodPost, "/networks/{id:.*}/disconnect", s.disconnectNetwork)
 
 	// metrics
-	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
-	r.Path("/metrics").Methods(http.MethodGet).Handler(prometheus.Handler())
+	r.Path(versionMatcher + "/metrics").Methods(http.MethodGet).Handler(util_metrics.GetPrometheusHandler())
+	r.Path("/metrics").Methods(http.MethodGet).Handler(util_metrics.GetPrometheusHandler())
 
 	// CRI stream server related handlers
 	if s.StreamRouter != nil {
