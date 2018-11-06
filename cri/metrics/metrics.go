@@ -6,7 +6,6 @@ import (
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func init() {
@@ -75,22 +74,26 @@ var registerMetrics sync.Once
 
 // Register all metrics.
 func Register() {
+	// Get a custom prometheus registry.
+	registry := util_metrics.GetCustomPrometheusRegistry()
 	registerMetrics.Do(func() {
-		prometheus.MustRegister(PodActionsCounter)
-		prometheus.MustRegister(PodSuccessActionsCounter)
-		prometheus.MustRegister(PodActionsTimer)
-		prometheus.MustRegister(ContainerActionsCounter)
-		prometheus.MustRegister(ContainerSuccessActionsCounter)
-		prometheus.MustRegister(ContainerActionsTimer)
-		prometheus.MustRegister(ImagePullSummary)
-		prometheus.MustRegister(ImageActionsCounter)
-		prometheus.MustRegister(ImageSuccessActionsCounter)
-		prometheus.MustRegister(ImageActionsTimer)
-		prometheus.MustRegister(VolumeActionsCounter)
-		prometheus.MustRegister(VolumeSuccessActionsCounter)
-		prometheus.MustRegister(VolumeActionsTimer)
-		prometheus.MustRegister(RuntimeActionsCounter)
-		prometheus.MustRegister(RuntimeSuccessActionsCounter)
-		prometheus.MustRegister(RuntimeActionsTimer)
+		// Register the custom metrics.
+		registry.MustRegister(PodActionsCounter)
+		registry.MustRegister(PodSuccessActionsCounter)
+		registry.MustRegister(PodActionsTimer)
+		registry.MustRegister(ContainerActionsCounter)
+		registry.MustRegister(ContainerSuccessActionsCounter)
+		registry.MustRegister(ContainerActionsTimer)
+		registry.MustRegister(ImagePullSummary)
+		registry.MustRegister(ImageActionsCounter)
+		registry.MustRegister(ImageSuccessActionsCounter)
+		registry.MustRegister(ImageActionsTimer)
+		registry.MustRegister(VolumeActionsCounter)
+		registry.MustRegister(VolumeSuccessActionsCounter)
+		registry.MustRegister(VolumeActionsTimer)
+		registry.MustRegister(RuntimeActionsCounter)
+		registry.MustRegister(RuntimeSuccessActionsCounter)
+		registry.MustRegister(RuntimeActionsTimer)
+		registry.MustRegister(GRPCMetrics)
 	})
 }
