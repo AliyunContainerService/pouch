@@ -2,6 +2,7 @@ package mgr
 
 import (
 	"os/exec"
+	"path"
 
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -9,6 +10,7 @@ import (
 )
 
 var (
+	// nvidiaHookName is a custom OCI prestart hook binary to runc in order to enable GPU containers.
 	nvidiaHookName = "nvidia-container-runtime-hook"
 )
 
@@ -25,13 +27,19 @@ func setNvidiaHook(c *Container, spec *SpecWrapper) error {
 		return nil
 	}
 
-	path, err := exec.LookPath(nvidiaHookName)
-	if err != nil {
-		return err
+	hookPath := ""
+	if !path.IsAbs(nvidiaHookName) {
+		var err error
+		hookPath, err = exec.LookPath(nvidiaHookName)
+		if err != nil {
+			return err
+		}
+	} else {
+		hookPath = nvidiaHookName
 	}
-	args := []string{path}
+	args := []string{hookPath}
 	nvidiaPrestart := specs.Hook{
-		Path: path,
+		Path: hookPath,
 		Args: append(args, "prestart"),
 	}
 	spec.s.Hooks.Prestart = append(spec.s.Hooks.Prestart, nvidiaPrestart)
