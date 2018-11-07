@@ -58,7 +58,7 @@ func (w *WeightDevice) String() string {
 
 // Type implement WeightDevice as pflag.Value interface
 func (w *WeightDevice) Type() string {
-	return "value"
+	return "strings"
 }
 
 // Value returns all values as type WeightDevice
@@ -116,7 +116,7 @@ func (t *ThrottleBpsDevice) String() string {
 
 // Type implement ThrottleBpsDevice as pflag.Value interface
 func (t *ThrottleBpsDevice) Type() string {
-	return "value"
+	return "strings"
 }
 
 // Value returns all values as type ThrottleDevice
@@ -174,7 +174,7 @@ func (t *ThrottleIOpsDevice) String() string {
 
 // Type implement ThrottleIOpsDevice as pflag.Value interface
 func (t *ThrottleIOpsDevice) Type() string {
-	return "value"
+	return "strings"
 }
 
 // Value returns all values

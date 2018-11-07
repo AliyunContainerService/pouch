@@ -55,5 +55,5 @@ func (r *Runtime) String() string {
 
 // Type implement Runtime as pflag.Value interface
 func (r *Runtime) Type() string {
-	return "value"
+	return "runtime"
 }
