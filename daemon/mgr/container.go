@@ -973,6 +973,9 @@ func (mgr *ContainerManager) AttachContainerIO(ctx context.Context, name string,
 
 // AttachCRILog adds cri log to a container.
 func (mgr *ContainerManager) AttachCRILog(ctx context.Context, name string, logPath string) error {
+	if logPath == "" {
+		return errors.Wrap(errtypes.ErrInvalidParam, "logPath cannot be empty")
+	}
 	c, err := mgr.container(name)
 	if err != nil {
 		return err

@@ -33,6 +33,7 @@ import (
 
 	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -250,7 +251,8 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, err
 	}
 	sandboxMeta := &SandboxMeta{
-		ID: id,
+		ID:              id,
+		ContainerLogMap: make(map[string]string),
 	}
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 		return nil, err
@@ -499,28 +501,26 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 	// Remove all containers in the sandbox.
 	for _, container := range containers {
-		err = c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
-		if err != nil {
+		if err := c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
 			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
+
 		logrus.Infof("success to remove container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
 	// Remove the sandbox container.
-	err = c.ContainerMgr.Remove(ctx, podSandboxID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
-	if err != nil {
+	if err := c.ContainerMgr.Remove(ctx, podSandboxID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
 		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
 	}
 
 	// Cleanup the sandbox root directory.
 	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
-	err = os.RemoveAll(sandboxRootDir)
-	if err != nil {
+
+	if err := os.RemoveAll(sandboxRootDir); err != nil {
 		return nil, fmt.Errorf("failed to remove root directory %q: %v", sandboxRootDir, err)
 	}
 
-	err = c.SandboxStore.Remove(podSandboxID)
-	if err != nil {
+	if err := c.SandboxStore.Remove(podSandboxID); err != nil {
 		return nil, fmt.Errorf("failed to remove meta %q: %v", sandboxRootDir, err)
 	}
 
@@ -765,6 +765,11 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	// Get container log.
 	if config.GetLogPath() != "" {
 		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
+		sandboxMeta.ContainerLogMap[containerID] = logPath
+		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+			return nil, err
+		}
+
 		if err := c.ContainerMgr.AttachCRILog(ctx, containerID, logPath); err != nil {
 			return nil, err
 		}
@@ -825,8 +830,7 @@ func (c *CriManager) RemoveContainer(ctx context.Context, r *runtime.RemoveConta
 
 	containerID := r.GetContainerId()
 
-	err := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
-	if err != nil {
+	if err := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
 		return nil, fmt.Errorf("failed to remove container %q: %v", containerID, err)
 	}
 
@@ -1128,7 +1132,42 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 // to either create a new log file and return nil, or return an error.
 // Once it returns error, new container log file MUST NOT be created.
 func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenContainerLogRequest) (*runtime.ReopenContainerLogResponse, error) {
-	return nil, fmt.Errorf("ReopenContainerLog Not Implemented Yet")
+	containerID := r.GetContainerId()
+
+	container, err := c.ContainerMgr.Get(ctx, containerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container %q with error: %v", containerID, err)
+	}
+	if !container.IsRunning() {
+		return nil, errors.Wrap(errtypes.ErrPreCheckFailed, "container is not running")
+	}
+
+	// get the container's podSandbox id.
+	podSandboxID, ok := container.Config.Labels[sandboxIDLabelKey]
+	if !ok {
+		return nil, fmt.Errorf("failed to get the sandboxId of container %q", containerID)
+	}
+
+	// get logPath of container
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta, ok := res.(*SandboxMeta)
+	if !ok {
+		return nil, fmt.Errorf("failed to type asseration for sandboxMeta: %v", res)
+	}
+	logPath, ok := sandboxMeta.ContainerLogMap[containerID]
+	if !ok {
+		logrus.Warnf("log path of container: %q is empty", containerID)
+		return &runtime.ReopenContainerLogResponse{}, nil
+	}
+
+	if err := c.ContainerMgr.AttachCRILog(ctx, container.Name, logPath); err != nil {
+		return nil, err
+	}
+
+	return &runtime.ReopenContainerLogResponse{}, nil
 }
 
 // ExecSync executes a command in the container, and returns the stdout output.
