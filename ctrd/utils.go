@@ -16,7 +16,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
-	"github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
@@ -75,18 +74,6 @@ func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	}
 
 	return docker.NewResolver(options), nil
-}
-
-// rootFSToAPIType transfer the rootfs from OCI format to Pouch format.
-func rootFSToAPIType(rootFs *v1.RootFS) types.ImageInfoRootFS {
-	var layers []string
-	for _, l := range rootFs.DiffIDs {
-		layers = append(layers, l.String())
-	}
-	return types.ImageInfoRootFS{
-		Type:   rootFs.Type,
-		Layers: layers,
-	}
 }
 
 // toLinuxResources transfers Pouch Resources to LinuxResources.
