@@ -836,11 +836,11 @@
 			"revisionTime": "2018-06-21T03:37:56Z"
 		},
 		{
-			"checksumSHA1": "PjtJFUyEOokrmiBiHmfXrX/lAug=",
+			"checksumSHA1": "sg0Y+cZfphw37dkRJ45DF5ydvRs=",
 			"origin": "github.com/alibaba/libnetwork/bitseq",
 			"path": "github.com/docker/libnetwork/bitseq",
-			"revision": "04a77bdbfb6f51185791ee3d61e3644f058e6b21",
-			"revisionTime": "2018-06-11T16:09:43Z"
+			"revision": "993eca828c7d68859e321c91cd0a50ac6dbc3234",
+			"revisionTime": "2018-11-07T10:13:49Z"
 		},
 		{
 			"checksumSHA1": "yg3AGtG4at2y028lOyXP4Bg8tzY=",
