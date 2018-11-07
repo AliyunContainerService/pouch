@@ -40,7 +40,7 @@ func (u *Ulimit) String() string {
 
 // Type implement Ulimit as pflag.Value interface.
 func (u *Ulimit) Type() string {
-	return "value"
+	return "ulimit"
 }
 
 // Value return ulimit values as type Ulimit
