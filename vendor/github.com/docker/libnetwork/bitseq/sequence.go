@@ -206,7 +206,7 @@ func (h *Handle) getCopy() *Handle {
 
 // SetAnyInRange atomically sets the first unset bit in the specified range in the sequence and returns the corresponding ordinal
 func (h *Handle) SetAnyInRange(start, end uint64, serial bool) (uint64, error) {
-	if end < start || end >= h.bits {
+	if end < start || end > h.bits {
 		return invalidPos, fmt.Errorf("invalid bit range [%d, %d]", start, end)
 	}
 	if h.Unselected() == 0 {
