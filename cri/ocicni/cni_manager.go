@@ -8,6 +8,7 @@ import (
 
 	cnicurrent "github.com/containernetworking/cni/pkg/types/current"
 	"github.com/cri-o/ocicni/pkg/ocicni"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -75,11 +76,18 @@ func (c *CniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
 
 // TearDownPodNetwork is the method called before a pod's sandbox container will be deleted.
 func (c *CniManager) TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error {
+	// perform the teardown network operation whatever to
+	// give CNI Plugin a chance to perform some operations
 	err := c.plugin.TearDownPod(*podNetwork)
-	if err != nil {
-		return fmt.Errorf("failed to destroy network for sandbox %q: %v", podNetwork.ID, err)
+	if err == nil {
+		return nil
 	}
-	return nil
+
+	// if netNSPath is not found, should return the error of IsNotExist.
+	if _, err = os.Stat(podNetwork.NetNS); err != nil {
+		return err
+	}
+	return errors.Wrapf(err, "failed to destroy network for sandbox %q", podNetwork.ID)
 }
 
 // GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the pod sandbox.

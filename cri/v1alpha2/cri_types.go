@@ -12,16 +12,13 @@ type SandboxMeta struct {
 	// Config is CRI sandbox config.
 	Config *runtime.PodSandboxConfig
 
-	// NetNSPath is the network namespace used by the sandbox.
-	NetNSPath string
-
 	// Runtime is the runtime of sandbox
 	Runtime string
 
 	// Runtime whether to enable lxcfs for a container
 	LxcfsEnabled bool
 
-	// Netns is the sandbox's network namespace
+	// NetNS is the sandbox's network namespace
 	NetNS string
 }
 
