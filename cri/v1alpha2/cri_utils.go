@@ -19,6 +19,8 @@ import (
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/utils"
 
+	"github.com/alibaba/pouch/pkg/meta"
+	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/containerd/cgroups"
 	"github.com/containerd/typeurl"
 	"github.com/cri-o/ocicni/pkg/ocicni"
@@ -46,6 +48,36 @@ func toCriTimestamp(t string) (int64, error) {
 	}
 
 	return result.UnixNano(), nil
+}
+
+// generateSandboxID generates an ID for newly created sandbox meta.
+// We must ensure that this ID has not used yet.
+func (c *CriManager) generateSandboxID() (string, error) {
+	var id string
+	for {
+		id = randomid.Generate()
+		_, err := c.SandboxStore.Get(id)
+		if err != nil {
+			if merr, ok := err.(meta.Error); ok && merr.IsNotfound() {
+				break
+			}
+			return "", err
+		}
+	}
+	return id, nil
+}
+
+// getSandboxMeta get meta of sandbox and type asseration.
+func (c *CriManager) getSandboxMeta(podSandboxID string) (*SandboxMeta, error) {
+	// get the sandbox's meta data.
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	if sandboxMeta, ok := res.(*SandboxMeta); ok {
+		return sandboxMeta, nil
+	}
+	return nil, fmt.Errorf("failed to type asseration for sandboxMeta: %v", res)
 }
 
 // generateEnvList converts KeyValue list to a list of strings, in the form of
@@ -247,11 +279,13 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 }
 
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtime.PodSandboxConfig.
-func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image string) (*apitypes.ContainerCreateConfig, error) {
+func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, image, podSandboxID string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
+	// Apply a label to get the podSandboxID of the sandbox container.
+	labels[sandboxIDLabelKey] = podSandboxID
 
 	hc := &apitypes.HostConfig{}
 
@@ -298,15 +332,21 @@ func toCriSandbox(c *mgr.Container) (*runtime.PodSandbox, error) {
 	if err != nil {
 		return nil, err
 	}
-	labels, annotations := extractLabels(c.Config.Labels)
+	containerLabels := c.Config.Labels
+	labels, annotations := extractLabels(containerLabels)
 
 	createdAt, err := toCriTimestamp(c.Created)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse create timestamp for container %q: %v", c.ID, err)
 	}
 
+	podSandboxID, ok := containerLabels[sandboxIDLabelKey]
+	if !ok {
+		return nil, fmt.Errorf("failed to find podSandboxID of sandbox container:%q", c.ID)
+	}
+
 	return &runtime.PodSandbox{
-		Id:          c.ID,
+		Id:          podSandboxID,
 		Metadata:    metadata,
 		State:       state,
 		CreatedAt:   createdAt,
@@ -331,7 +371,13 @@ func (c *CriManager) filterInvalidSandboxes(ctx context.Context, sandboxes []*mg
 	for _, sandbox := range sandboxes {
 		exist := false
 		for _, id := range validSandboxes {
-			if sandbox.ID == id {
+			// get the sandbox's meta data.
+			sandboxMeta, err := c.getSandboxMeta(id)
+			if err != nil {
+				return nil, err
+			}
+
+			if sandbox.ID == sandboxMeta.SandboxContainerID {
 				exist = true
 				break
 			}
@@ -745,7 +791,7 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		}
 
 		// Apply security context.
-		if err := applyContainerSecurityContext(lc, sandboxMeta.ID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
+		if err := applyContainerSecurityContext(lc, sandboxMeta.SandboxContainerID, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
 			return fmt.Errorf("failed to apply container security context for container %q: %v", config.Metadata.Name, err)
 		}
 	}

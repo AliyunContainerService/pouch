@@ -231,6 +231,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		metrics.PodActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
 
+	removeContainerErr := false
 	config := r.GetConfig()
 
 	// Step 1: Prepare image for the sandbox.
@@ -242,8 +243,43 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, err
 	}
 
+	// generate the id of sandbox meta and store it.
+	podSandboxID, err := c.generateSandboxID()
+	if err != nil {
+		return nil, err
+	}
+	sandboxMeta := &SandboxMeta{
+		ID: podSandboxID,
+	}
+	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+		return nil, err
+	}
+
+	// If running sandbox failed, clean up the sandboxMeta from sandboxStore.
+	defer func() {
+		if retErr != nil && !removeContainerErr {
+			// should not remove the sandbox container metadata from sandboxStore
+			// until it was removed by pouchd.
+			if err := c.SandboxStore.Remove(podSandboxID); err != nil {
+				logrus.Errorf("failed to remove the metadata of container %q from sandboxStore: %v", podSandboxID, err)
+			}
+		}
+	}()
+
+	if _, ok := config.Annotations[anno.LxcfsEnabled]; ok {
+		enableLxcfs, err := strconv.ParseBool(config.Annotations[anno.LxcfsEnabled])
+		if err != nil {
+			return nil, err
+		}
+		sandboxMeta.LxcfsEnabled = enableLxcfs
+
+		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+			return nil, err
+		}
+	}
+
 	// Step 2: Create the sandbox container.
-	createConfig, err := makeSandboxPouchConfig(config, image)
+	createConfig, err := makeSandboxPouchConfig(config, image, podSandboxID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
 	}
@@ -254,23 +290,12 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a sandbox for pod %q: %v", config.Metadata.Name, err)
 	}
-	id := createResp.ID
+	sandboxContainerID := createResp.ID
 
 	// once sandbox container created, we are obligated to store it.
-	sandboxMeta := &SandboxMeta{
-		ID:      id,
-		Config:  config,
-		Runtime: config.Annotations[anno.KubernetesRuntime],
-	}
-
-	if _, ok := config.Annotations[anno.LxcfsEnabled]; ok {
-		enableLxcfs, err := strconv.ParseBool(config.Annotations[anno.LxcfsEnabled])
-		if err != nil {
-			return nil, err
-		}
-		sandboxMeta.LxcfsEnabled = enableLxcfs
-	}
-
+	sandboxMeta.SandboxContainerID = sandboxContainerID
+	sandboxMeta.Config = config
+	sandboxMeta.Runtime = config.Annotations[anno.KubernetesRuntime]
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 		return nil, err
 	}
@@ -278,25 +303,20 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// If running sandbox failed, clean up the container.
 	defer func() {
 		if retErr != nil {
-			if err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
-				logrus.Errorf("failed to remove container when running sandbox failed %q: %v", id, err)
-				return
-			}
-			// should not remove the sandbox container metadata from sandboxStore
-			// until it was removed by pouchd.
-			if err := c.SandboxStore.Remove(id); err != nil {
-				logrus.Errorf("failed to remove the metadata of container %q from sandboxStore: %v", id, err)
+			if err := c.ContainerMgr.Remove(ctx, sandboxContainerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
+				removeContainerErr = true
+				logrus.Errorf("failed to remove container when running sandbox failed %q: %v", sandboxContainerID, err)
 			}
 		}
 	}()
 
 	// Step 3: Start the sandbox container.
-	err = c.ContainerMgr.Start(ctx, id, &apitypes.ContainerStartOptions{})
+	err = c.ContainerMgr.Start(ctx, sandboxContainerID, &apitypes.ContainerStartOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
 	}
 
-	sandboxRootDir := path.Join(c.SandboxBaseDir, id)
+	sandboxRootDir := path.Join(c.SandboxBaseDir, sandboxContainerID)
 	err = os.MkdirAll(sandboxRootDir, 0755)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sandbox root directory: %v", err)
@@ -304,9 +324,8 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		// If running sandbox failed, clean up the sandbox directory.
 		if retErr != nil {
-
 			if err := os.RemoveAll(sandboxRootDir); err != nil {
-				logrus.Errorf("failed to clean up the directory of sandbox %q: %v", id, err)
+				logrus.Errorf("failed to clean up the directory of sandbox %q: %v", sandboxContainerID, err)
 			}
 		}
 	}()
@@ -321,7 +340,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	networkNamespaceMode := config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
 	// If it is in host network, no need to configure the network of sandbox.
 	if networkNamespaceMode != runtime.NamespaceMode_NODE {
-		err = c.setupPodNetwork(ctx, id, config)
+		err = c.setupPodNetwork(ctx, sandboxContainerID, config)
 		if err != nil {
 			return nil, err
 		}
@@ -329,7 +348,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()
 
-	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
+	return &runtime.RunPodSandboxResponse{PodSandboxId: podSandboxID}, nil
 }
 
 // StartPodSandbox restart a sandbox pod which was stopped by accident
@@ -344,34 +363,35 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 
 	podSandboxID := r.GetPodSandboxId()
 
-	// start PodSandbox.
-	startErr := c.ContainerMgr.Start(ctx, podSandboxID, &apitypes.ContainerStartOptions{})
-	if startErr != nil {
-		return nil, fmt.Errorf("failed to start podSandbox %q: %v", podSandboxID, startErr)
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
+	if err != nil {
+		return nil, err
 	}
 
-	var err error
+	// get sandbox's container id
+	sandboxContainerID := sandboxMeta.SandboxContainerID
+
+	// start PodSandbox.
+	startErr := c.ContainerMgr.Start(ctx, sandboxContainerID, &apitypes.ContainerStartOptions{})
+	if startErr != nil {
+		return nil, fmt.Errorf("failed to start podSandbox %q: %v", sandboxContainerID, startErr)
+	}
+
 	defer func() {
 		if err != nil {
-			stopErr := c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
+			stopErr := c.ContainerMgr.Stop(ctx, sandboxContainerID, defaultStopTimeout)
 			if stopErr != nil {
-				logrus.Errorf("failed to stop sandbox %q: %v", podSandboxID, stopErr)
+				logrus.Errorf("failed to stop sandbox %q: %v", sandboxContainerID, stopErr)
 			}
 		}
 	}()
-
-	// get the sandbox's meta data.
-	res, err := c.SandboxStore.Get(podSandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
-	}
-	sandboxMeta := res.(*SandboxMeta)
 
 	// setup networking for the sandbox.
 	networkNamespaceMode := sandboxMeta.Config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
 	// If it is in host network, no need to configure the network of sandbox.
 	if networkNamespaceMode != runtime.NamespaceMode_NODE {
-		err = c.setupPodNetwork(ctx, podSandboxID, sandboxMeta.Config)
+		err = c.setupPodNetwork(ctx, sandboxContainerID, sandboxMeta.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -392,39 +412,44 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	}(time.Now())
 
 	podSandboxID := r.GetPodSandboxId()
-	res, err := c.SandboxStore.Get(podSandboxID)
+
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+		return nil, err
 	}
-	sandboxMeta := res.(*SandboxMeta)
+
+	// get sandbox's container id
+	sandboxContainerID := sandboxMeta.SandboxContainerID
 
 	opts := &mgr.ContainerListOption{All: true}
 	filter := func(c *mgr.Container) bool {
-		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
+		return (c.Config.Labels[sandboxIDLabelKey] == podSandboxID) &&
+			(c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer)
 	}
 	opts.FilterFunc = filter
 
 	containers, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to stop sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	// Stop all containers in the sandbox.
 	for _, container := range containers {
 		err = c.ContainerMgr.Stop(ctx, container.ID, defaultStopTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
+			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, sandboxContainerID, err)
 		}
-		logrus.Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
+		logrus.Infof("success to stop container %q of sandbox %q", container.ID, sandboxContainerID)
 	}
 
-	container, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	container, err := c.ContainerMgr.Get(ctx, sandboxContainerID)
 	if err != nil {
 		return nil, err
 	}
 	metadata, err := parseSandboxName(container.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse metadata of sandbox %q from container name: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to parse metadata of sandbox %q from container name: %v", sandboxContainerID, err)
 	}
 
 	securityContext := sandboxMeta.Config.GetLinux().GetSecurityContext()
@@ -432,16 +457,16 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 
 	// Teardown network of the pod, if it is not in host network mode.
 	if !hostNet {
-		sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+		sandbox, err := c.ContainerMgr.Get(ctx, sandboxContainerID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get sandbox %q: %v", podSandboxID, err)
+			return nil, fmt.Errorf("failed to get sandbox %q: %v", sandboxContainerID, err)
 		}
 
 		netNSPath := containerNetns(sandbox)
 		err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
 			Name:         metadata.GetName(),
 			Namespace:    metadata.GetNamespace(),
-			ID:           podSandboxID,
+			ID:           sandboxContainerID,
 			NetNS:        netNSPath,
 			PortMappings: toCNIPortMappings(sandboxMeta.Config.GetPortMappings()),
 		})
@@ -449,14 +474,14 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 			if !os.IsNotExist(err) {
 				return nil, err
 			}
-			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", netNSPath, podSandboxID)
+			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", netNSPath, sandboxContainerID)
 		}
 	}
 
 	// Stop the sandbox container.
-	err = c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
+	err = c.ContainerMgr.Stop(ctx, sandboxContainerID, defaultStopTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to stop sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()
@@ -475,34 +500,43 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 	podSandboxID := r.GetPodSandboxId()
 
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
+	if err != nil {
+		return nil, err
+	}
+
+	sandboxContainerID := sandboxMeta.SandboxContainerID
+
 	opts := &mgr.ContainerListOption{All: true}
 	filter := func(c *mgr.Container) bool {
-		return c.Config.Labels[sandboxIDLabelKey] == podSandboxID
+		return (c.Config.Labels[sandboxIDLabelKey] == podSandboxID) &&
+			(c.Config.Labels[containerTypeLabelKey] == containerTypeLabelContainer)
 	}
 	opts.FilterFunc = filter
 
 	containers, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to remove sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	// Remove all containers in the sandbox.
 	for _, container := range containers {
 		err = c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 		if err != nil {
-			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
+			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, sandboxContainerID, err)
 		}
-		logrus.Infof("success to remove container %q of sandbox %q", container.ID, podSandboxID)
+		logrus.Infof("success to remove container %q of sandbox %q", container.ID, sandboxContainerID)
 	}
 
 	// Remove the sandbox container.
-	err = c.ContainerMgr.Remove(ctx, podSandboxID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
+	err = c.ContainerMgr.Remove(ctx, sandboxContainerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 	if err != nil {
-		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to remove sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	// Cleanup the sandbox root directory.
-	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
+	sandboxRootDir := path.Join(c.SandboxBaseDir, sandboxContainerID)
 	err = os.RemoveAll(sandboxRootDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove root directory %q: %v", sandboxRootDir, err)
@@ -528,21 +562,23 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 
 	podSandboxID := r.GetPodSandboxId()
 
-	res, err := c.SandboxStore.Get(podSandboxID)
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+		return nil, err
 	}
-	sandboxMeta := res.(*SandboxMeta)
 
-	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	sandboxContainerID := sandboxMeta.SandboxContainerID
+
+	sandbox, err := c.ContainerMgr.Get(ctx, sandboxContainerID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	// Parse the timestamps.
 	createdAt, err := toCriTimestamp(sandbox.Created)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse timestamp for sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to parse timestamp for sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	// Translate container to sandbox state.
@@ -553,7 +589,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 
 	metadata, err := parseSandboxName(sandbox.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", sandboxContainerID, err)
 	}
 	labels, annotations := extractLabels(sandbox.Config.Labels)
 
@@ -566,7 +602,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		ip, err = c.CniMgr.GetPodNetworkStatus(containerNetns(sandbox))
 		if err != nil {
 			// Maybe the pod has been stopped.
-			logrus.Warnf("failed to get ip of sandbox %q: %v", podSandboxID, err)
+			logrus.Warnf("failed to get ip of sandbox %q: %v", sandboxContainerID, err)
 		}
 	}
 
@@ -652,17 +688,21 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	sandboxConfig := r.GetSandboxConfig()
 	podSandboxID := r.GetPodSandboxId()
 
-	// get sandbox
-	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get sandbox %q: %v", podSandboxID, err)
+		return nil, err
 	}
 
-	res, err := c.SandboxStore.Get(podSandboxID)
+	// get sandbox's container id
+	sandboxContainerID := sandboxMeta.SandboxContainerID
+
+	// get sandbox
+	sandbox, err := c.ContainerMgr.Get(ctx, sandboxContainerID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to get sandbox %q: %v", sandboxContainerID, err)
 	}
-	sandboxMeta := res.(*SandboxMeta)
+
 	sandboxMeta.NetNS = containerNetns(sandbox)
 
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
@@ -678,8 +718,8 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	specAnnotation := make(map[string]string)
 	specAnnotation[anno.ContainerType] = anno.ContainerTypeContainer
-	specAnnotation[anno.SandboxName] = podSandboxID
-	specAnnotation[anno.SandboxID] = podSandboxID
+	specAnnotation[anno.SandboxName] = sandboxContainerID
+	specAnnotation[anno.SandboxID] = sandboxContainerID
 
 	resources := r.GetConfig().GetLinux().GetResources()
 	createConfig := &apitypes.ContainerCreateConfig{
@@ -712,7 +752,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}
 
 	// Bindings to overwrite the container's /etc/resolv.conf, /etc/hosts etc.
-	sandboxRootDir := path.Join(c.SandboxBaseDir, podSandboxID)
+	sandboxRootDir := path.Join(c.SandboxBaseDir, sandboxContainerID)
 	createConfig.HostConfig.Binds = append(createConfig.HostConfig.Binds, generateContainerMounts(sandboxRootDir)...)
 
 	var devices []*apitypes.DeviceMapping
@@ -736,7 +776,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	createResp, err := c.ContainerMgr.Create(ctx, containerName, createConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create container for sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to create container for sandbox %q: %v", sandboxContainerID, err)
 	}
 
 	containerID := createResp.ID
@@ -964,11 +1004,13 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 	}
 
 	podSandboxID := container.Config.Labels[sandboxIDLabelKey]
-	res, err := c.SandboxStore.Get(podSandboxID)
+
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+		return nil, err
 	}
-	sandboxMeta := res.(*SandboxMeta)
+
 	logDirectory := sandboxMeta.Config.GetLogDirectory()
 	// TODO: let the container manager handle the log stuff for CRI.
 	logPath := makeupLogPath(logDirectory, metadata)
@@ -1177,6 +1219,16 @@ func (c *CriManager) Attach(ctx context.Context, r *runtime.AttachRequest) (*run
 
 // PortForward prepares a streaming endpoint to forward ports from a PodSandbox, and returns the address.
 func (c *CriManager) PortForward(ctx context.Context, r *runtime.PortForwardRequest) (*runtime.PortForwardResponse, error) {
+	podSandboxID := r.GetPodSandboxId()
+
+	// get the sandbox's meta data.
+	sandboxMeta, err := c.getSandboxMeta(podSandboxID)
+	if err != nil {
+		return nil, err
+	}
+
+	// update sandbox's meta id to sandbox's container id
+	r.PodSandboxId = sandboxMeta.SandboxContainerID
 	return c.StreamServer.GetPortForward(r)
 }
 

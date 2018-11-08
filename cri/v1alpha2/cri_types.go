@@ -9,6 +9,9 @@ type SandboxMeta struct {
 	// ID is the id of sandbox.
 	ID string
 
+	// SandboxContainerID is the container id of sandbox.
+	SandboxContainerID string
+
 	// Config is CRI sandbox config.
 	Config *runtime.PodSandboxConfig
 
