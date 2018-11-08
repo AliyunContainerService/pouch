@@ -23,7 +23,7 @@ cni::install_cni() {
   go get -u -d "${pkg}"/...
 
   # build and copy into /opt/cni/bin
-  "${workdir}"/build.sh
+  "${workdir}"/build_linux.sh
   mkdir -p /etc/cni/net.d /opt/cni/bin
   cp "${workdir}"/bin/* /opt/cni/bin
 
