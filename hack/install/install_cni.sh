@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+CNI_VERSION=v0.7
+
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
 
@@ -20,7 +22,14 @@ cni::install_cni() {
   workdir="${GOPATH}/src/${pkg}"
 
   # downloads github.com/containernetworking/plugins
-  go get -u -d "${pkg}"/...
+  if [ ! -d "${workdir}" ]; then
+    mkdir -p "${workdir}"
+    cd "${workdir}"
+    git clone https://${pkg}.git .
+  fi
+  cd "${workdir}"
+  git fetch --all
+  git checkout "${CNI_VERSION}"
 
   # build and copy into /opt/cni/bin
   "${workdir}"/build.sh
