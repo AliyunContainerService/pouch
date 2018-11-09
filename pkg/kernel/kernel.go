@@ -20,27 +20,37 @@ func (k *VersionInfo) String() string {
 	return fmt.Sprintf("%d.%d.%d-%s", k.Kernel, k.Major, k.Minor, k.Flavor)
 }
 
+var (
+	kernelVersionCache *VersionInfo
+)
+
 // GetKernelVersion returns the kernel version info.
 func GetKernelVersion() (*VersionInfo, error) {
-	var (
-		kernel, major, minor int
-		flavor               string
-	)
 
-	_, stdout, _, err := exec.Run(0, "uname", "-r")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to run command uname -r")
+	if kernelVersionCache == nil {
+
+		var (
+			kernel, major, minor int
+			flavor               string
+		)
+
+		_, stdout, _, err := exec.Run(0, "uname", "-r")
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to run command uname -r")
+		}
+
+		parsed, _ := fmt.Sscanf(stdout, "%d.%d.%d-%s", &kernel, &major, &minor, &flavor)
+		if parsed < 3 {
+			return nil, fmt.Errorf("Can't parse kernel version, release: %s" + stdout)
+		}
+
+		kernelVersionCache = &VersionInfo{
+			Kernel: kernel,
+			Major:  major,
+			Minor:  minor,
+			Flavor: flavor,
+		}
 	}
 
-	parsed, _ := fmt.Sscanf(stdout, "%d.%d.%d-%s", &kernel, &major, &minor, &flavor)
-	if parsed < 3 {
-		return nil, fmt.Errorf("Can't parse kernel version, release: %s" + stdout)
-	}
-
-	return &VersionInfo{
-		Kernel: kernel,
-		Major:  major,
-		Minor:  minor,
-		Flavor: flavor,
-	}, nil
+	return kernelVersionCache, nil
 }
