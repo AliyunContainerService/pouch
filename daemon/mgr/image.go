@@ -216,6 +216,7 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 
 	beforeImages := filter.Get("before")
 	sinceImages := filter.Get("since")
+	referenceFilter := filter.Get("reference")
 
 	// refuse undefined behavior
 	if len(beforeImages) > 1 {
@@ -269,35 +270,32 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 			}
 		}
 
-		if filter.Contains("reference") {
-			var found bool
-			referenceFilters := filter.Get("reference")
-			for _, ref := range mgr.localStore.GetReferences(img.ID) {
-				for _, pattern := range referenceFilters {
-					matched, err := filters.FamiliarMatch(pattern, ref.String())
-					if err != nil {
-						return nil, err
-					}
-					if matched {
-						found = true
-						break
-					}
-				}
-				if found {
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-
 		imgInfo, err := mgr.containerdImageToImageInfo(ctx, img.ID)
 		if err != nil {
 			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.ID, err)
 			continue
 		}
-		imgInfos = append(imgInfos, imgInfo)
+
+		if len(referenceFilter) == 0 {
+			imgInfos = append(imgInfos, imgInfo)
+			continue
+		}
+
+		// do reference filter
+		imgInfo.RepoDigests, err = filterReference(referenceFilter, imgInfo.RepoDigests)
+		if err != nil {
+			return []types.ImageInfo{}, err
+		}
+
+		imgInfo.RepoTags, err = filterReference(referenceFilter, imgInfo.RepoTags)
+		if err != nil {
+			return []types.ImageInfo{}, err
+		}
+
+		if len(imgInfo.RepoTags) > 0 || len(imgInfo.RepoDigests) > 0 {
+			imgInfos = append(imgInfos, imgInfo)
+		}
+
 	}
 	return imgInfos, nil
 }
@@ -732,4 +730,27 @@ func parseTagReference(targetTag string) (reference.Named, error) {
 	}
 
 	return reference.WithDefaultTagIfMissing(ref), nil
+}
+
+func filterReference(filter, ref []string) ([]string, error) {
+	if len(filter) == 0 {
+		return ref, nil
+	}
+
+	var err error
+	filteredRefs := make([]string, 0)
+	for _, ref := range ref {
+		var found bool
+		for _, pattern := range filter {
+			found, err = filters.FamiliarMatch(pattern, ref)
+			if err != nil {
+				return []string{}, err
+			}
+			if found {
+				filteredRefs = append(filteredRefs, ref)
+				break
+			}
+		}
+	}
+	return filteredRefs, nil
 }

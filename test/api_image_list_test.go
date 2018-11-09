@@ -61,7 +61,6 @@ func (suite *APIImageListSuite) TestImageListDigest(c *check.C) {
 func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
 	q := url.Values{}
 
-	repoDigest := environment.BusyboxRepo + "@" + environment.BusyboxDigest
 	repoTag := environment.BusyboxRepo + ":" + environment.BusyboxTag
 
 	f := filters.NewArgs()
@@ -88,7 +87,6 @@ func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
 	c.Assert(got[0].Size, check.NotNil)
 	c.Assert(got[0].Os, check.NotNil)
 	c.Assert(reflect.DeepEqual(got[0].RepoTags, []string{repoTag}), check.Equals, true)
-	c.Assert(reflect.DeepEqual(got[0].RepoDigests, []string{repoDigest}), check.Equals, true)
 }
 
 // TestImageListInvalidFilter tests listing images with invalid filter.
