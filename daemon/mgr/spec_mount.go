@@ -14,6 +14,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// RPrivatePropagationMode represents mount propagation rprivate.
+	RPrivatePropagationMode = "rprivate"
+	// PrivatePropagationMode represents mount propagation private.
+	PrivatePropagationMode = "private"
+	// RSharedPropagationMode represents mount propagation rshared.
+	RSharedPropagationMode = "rshared"
+	// SharedPropagationMode represents mount propagation shared.
+	SharedPropagationMode = "shared"
+	// RSlavePropagationMode represents mount propagation rslave.
+	RSlavePropagationMode = "rslave"
+	// SlavePropagationMode represents mount propagation slave.
+	SlavePropagationMode = "slave"
+)
+
 func clearReadonly(m *specs.Mount) {
 	var opts []string
 	for _, o := range m.Options {
@@ -73,13 +88,14 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		rootfspg := s.Linux.RootfsPropagation
 		// Set rootfs propagation, default setting is private.
 		switch pg {
-		case "shared", "rshared":
-			if rootfspg != "shared" && rootfspg != "rshared" {
-				s.Linux.RootfsPropagation = "shared"
+		case SharedPropagationMode, RSharedPropagationMode:
+			if rootfspg != SharedPropagationMode && rootfspg != RSharedPropagationMode {
+				s.Linux.RootfsPropagation = SharedPropagationMode
 			}
-		case "slave", "rslave":
-			if rootfspg != "shared" && rootfspg != "rshared" && rootfspg != "slave" && rootfspg != "rslave" {
-				s.Linux.RootfsPropagation = "rslave"
+		case SlavePropagationMode, RSlavePropagationMode:
+			if rootfspg != SharedPropagationMode && rootfspg != RSharedPropagationMode &&
+				rootfspg != SlavePropagationMode && rootfspg != RSlavePropagationMode {
+				s.Linux.RootfsPropagation = RSlavePropagationMode
 			}
 		}
 

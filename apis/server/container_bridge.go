@@ -17,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/filters"
+	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -25,7 +26,7 @@ import (
 )
 
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "create"
+	label := util_metrics.ActionCreateLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -159,7 +160,7 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 }
 
 func (s *Server) startContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "start"
+	label := util_metrics.ActionStartLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -188,7 +189,7 @@ func (s *Server) restartContainer(ctx context.Context, rw http.ResponseWriter, r
 		t   int
 		err error
 	)
-	label := "restart"
+	label := util_metrics.ActionRestartLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -218,7 +219,7 @@ func (s *Server) stopContainer(ctx context.Context, rw http.ResponseWriter, req 
 		err error
 	)
 
-	label := "stop"
+	label := util_metrics.ActionStopLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -265,7 +266,7 @@ func (s *Server) unpauseContainer(ctx context.Context, rw http.ResponseWriter, r
 }
 
 func (s *Server) renameContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "rename"
+	label := util_metrics.ActionRenameLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -324,7 +325,7 @@ func (s *Server) attachContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "update"
+	label := util_metrics.ActionUpdateLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -364,7 +365,7 @@ func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) upgradeContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "upgrade"
+	label := util_metrics.ActionUpgradeLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
@@ -470,7 +471,7 @@ func (s *Server) resizeContainer(ctx context.Context, rw http.ResponseWriter, re
 }
 
 func (s *Server) removeContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	label := "delete"
+	label := util_metrics.ActionDeleteLabel
 	metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
 		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
