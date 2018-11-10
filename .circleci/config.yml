@@ -38,7 +38,7 @@ jobs:
       - run: 
           name: validate go code with gometalinter
           command: |
-            gometalinter --disable-all --skip vendor -E gofmt -E goimports -E golint -E ineffassign -E misspell -E vet -E megacheck ./...
+            gometalinter --disable-all --skip vendor -E gofmt -E goimports -E golint -E goconst -E ineffassign -E misspell -E vet -E megacheck ./...
       
       - run:
           name: detect deadcode without test folder
