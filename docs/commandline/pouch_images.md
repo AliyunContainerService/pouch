@@ -32,10 +32,11 @@ sha256:4ab4c602aa5eed5528a6620ff18a1dc4faef0e1ab3a5eddeddb410714478c67f   regist
 ### Options
 
 ```
-      --digest     Show images with digest
-  -h, --help       help for images
-      --no-trunc   Do not truncate output
-  -q, --quiet      Only show image numeric ID
+      --digest           Show images with digest
+  -f, --filter strings   Filter output based on conditions provided, filter support reference, since, before
+  -h, --help             help for images
+      --no-trunc         Do not truncate output
+  -q, --quiet            Only show image numeric ID
 ```
 
 ### Options inherited from parent commands
