@@ -3,8 +3,7 @@ package kernel
 import (
 	"fmt"
 
-	"github.com/alibaba/pouch/pkg/exec"
-	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
 // VersionInfo holds information about the kernel.
@@ -27,14 +26,15 @@ func GetKernelVersion() (*VersionInfo, error) {
 		flavor               string
 	)
 
-	_, stdout, _, err := exec.Run(0, "uname", "-r")
+	buf := unix.Utsname{}
+	err := unix.Uname(&buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to run command uname -r")
+		return nil, err
 	}
-
-	parsed, _ := fmt.Sscanf(stdout, "%d.%d.%d-%s", &kernel, &major, &minor, &flavor)
+	release := string(buf.Release[:])
+	parsed, _ := fmt.Sscanf(release, "%d.%d.%d-%s", &kernel, &major, &minor, &flavor)
 	if parsed < 3 {
-		return nil, fmt.Errorf("Can't parse kernel version, release: %s" + stdout)
+		return nil, fmt.Errorf("Can't parse kernel version, release: %s" + release)
 	}
 
 	return &VersionInfo{
