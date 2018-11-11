@@ -26,6 +26,8 @@ func init() {
 func (suite *PouchVolumeSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
+	environment.PruneAllVolumes(apiClient)
+	environment.PruneAllContainers(apiClient)
 	PullImage(c, busyboxImage)
 }
 
@@ -293,7 +295,7 @@ func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
 	}
 }
 
-// TestVolumeListOptions tests the volume list with options: size and mountpoint.
+// TestVolumeListOptions tests the volume list with options: size, mountpoint, quiet.
 func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	pc, _, _, _ := runtime.Caller(0)
 	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -315,6 +317,7 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", volumeName3)
 
+	// test --size and --mountpoint options
 	ret := command.PouchRun("volume", "list", "--size", "--mountpoint")
 	ret.Assert(c, icmd.Success)
 
@@ -325,6 +328,26 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 				c.Errorf("list result have no driver or name or size or mountpoint, line: %s", line)
 				break
 			}
+		}
+	}
+
+	// test --quiet options
+	ret = command.PouchRun("volume", "list", "--quiet")
+	ret.Assert(c, icmd.Success)
+
+	lines := strings.Split(ret.Stdout(), "\n")
+	fields := strings.Split(lines[1], " ")
+	c.Assert(len(fields), check.Equals, 1)
+
+	for _, line := range lines {
+		if !strings.Contains(line, volumeName) {
+			continue
+		}
+		if !strings.EqualFold(line, volumeName1) &&
+			!strings.EqualFold(line, volumeName2) &&
+			!strings.EqualFold(line, volumeName3) {
+			c.Errorf("list volume doesn't match any existing volume name, line: %s", line)
+			break
 		}
 	}
 }

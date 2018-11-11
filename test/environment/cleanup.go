@@ -44,3 +44,19 @@ func PruneAllContainers(apiClient client.ContainerAPIClient) error {
 	}
 	return nil
 }
+
+// PruneAllVolumes deletes all volumes from pouchd
+func PruneAllVolumes(apiClient client.VolumeAPIClient) error {
+	ctx := context.Background()
+	volumes, err := apiClient.VolumeList(ctx)
+	if err != nil {
+		return errors.Wrap(err, "fail to list volumes")
+	}
+
+	for _, volume := range volumes.Volumes {
+		if err := apiClient.VolumeRemove(ctx, volume.Name); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("fail to remove volume (%s)", volume.Name))
+		}
+	}
+	return nil
+}

@@ -284,6 +284,7 @@ type VolumeListCommand struct {
 
 	size       bool
 	mountPoint bool
+	quiet      bool
 }
 
 // Init initializes VolumeListCommand command.
@@ -308,6 +309,7 @@ func (v *VolumeListCommand) addFlags() {
 	flagSet := v.cmd.Flags()
 	flagSet.BoolVar(&v.size, "size", false, "Display volume size")
 	flagSet.BoolVar(&v.mountPoint, "mountpoint", false, "Display volume mountpoint")
+	flagSet.BoolVarP(&v.quiet, "quiet", "q", false, "Only display volume names")
 }
 
 // runVolumeList is the entry of VolumeListCommand command.
@@ -322,27 +324,39 @@ func (v *VolumeListCommand) runVolumeList(args []string) error {
 		return err
 	}
 
+	if (v.size || v.mountPoint) && v.quiet {
+		return fmt.Errorf("Conflicting options: --size (or --mountpoint) and -q")
+	}
+
 	display := v.cli.NewTableDisplay()
-	displayHead := []string{"DRIVER", "VOLUME NAME"}
-	if v.size {
-		displayHead = append(displayHead, "SIZE")
+	displayHead := []string{"VOLUME NAME"}
+
+	if !v.quiet {
+		displayHead = append([]string{"DRIVER"}, displayHead...)
+		if v.size {
+			displayHead = append(displayHead, "SIZE")
+		}
+		if v.mountPoint {
+			displayHead = append(displayHead, "MOUNT POINT")
+		}
 	}
-	if v.mountPoint {
-		displayHead = append(displayHead, "MOUNT POINT")
-	}
+
 	display.AddRow(displayHead)
 
 	for _, volume := range volumeList.Volumes {
-		displayLine := []string{volume.Driver, volume.Name}
-		if v.size {
-			if s, ok := volume.Status["size"]; ok {
-				displayLine = append(displayLine, s.(string))
-			} else {
-				displayLine = append(displayLine, "ulimit")
+		displayLine := []string{volume.Name}
+		if !v.quiet {
+			displayLine = append([]string{volume.Driver}, displayLine...)
+			if v.size {
+				if s, ok := volume.Status["size"]; ok {
+					displayLine = append(displayLine, s.(string))
+				} else {
+					displayLine = append(displayLine, "ulimit")
+				}
 			}
-		}
-		if v.mountPoint {
-			displayLine = append(displayLine, volume.Mountpoint)
+			if v.mountPoint {
+				displayLine = append(displayLine, volume.Mountpoint)
+			}
 		}
 		display.AddRow(displayLine)
 	}
@@ -358,5 +372,10 @@ func volumeListExample() string {
 DRIVER   VOLUME NAME
 local    pouch-volume-1
 local    pouch-volume-2
-local    pouch-volume-3`
+local    pouch-volume-3
+$ pouch volume list --quiet
+VOLUME NAME
+pouch-volume-1
+pouch-volume-2
+pouch-volume-3`
 }
