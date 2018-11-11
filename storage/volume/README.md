@@ -15,7 +15,7 @@ Volume includes these modules is as following:
 
 The relationship between each module is as following:
 
-![pouch_volume_architecture | center | 710x515 ](../docs/static_files/pouch_volume_architecture.png)
+![pouch_volume_architecture | center | 710x515 ](../../docs/static_files/pouch_volume_architecture.png)
 
 ### VolumeManager
 
@@ -127,11 +127,11 @@ type Formator interface {
 
 ### Modules
 
-As of now, PouchContainer volume supports the following types of storage: local, tmpfs, ceph. If you want to add a new driver, you can refer to the sample code: [demo](volume/examples/demo/demo.go)
+As of now, PouchContainer volume supports the following types of storage: local, tmpfs.
 
 ## How to use volume
 
-As of now, volume supports the following operations: create/remove/list/inspect, for more details, please refer: [Volume Cli](docs/commandline/pouch_volume.md)
+As of now, volume supports the following operations: create/remove/list/inspect, for more details, please refer: [Volume Cli](../../docs/commandline/pouch_volume.md)
 
 ## Volume roadmap
 
