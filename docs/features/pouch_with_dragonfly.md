@@ -4,7 +4,7 @@ Container technology is helpful to facilitate IT operation and maintenance, but 
 
 ## What is Dragonfly
 
-[Dragonfly](https://github.com/alibaba/Dragonfly#installation) is a P2P file distribution system. It solves the problems of time-consuming distribution, low success rate, and wasteful bandwidth in large-scale file distribution scenarios. Dragonfly significantly improves service capabilities such as data preheating, and large-scale container image distribution.
+[Dragonfly](https://github.com/dragonflyoss/Dragonfly#installation) is a P2P file distribution system. It solves the problems of time-consuming distribution, low success rate, and wasteful bandwidth in large-scale file distribution scenarios. Dragonfly significantly improves service capabilities such as data preheating, and large-scale container image distribution.
 
 ### composition
 
@@ -20,11 +20,11 @@ Client concludes two part: dfget and proxy. dfget is a host-side tool for downlo
 
 1.install server
 
-server can be deployed in two way, on the physical machine or on a container, the steps is simple in the [install dragonfly server](https://github.com/alibaba/Dragonfly/blob/master/docs/install_server.md)
+server can be deployed in two way, on the physical machine or on a container, the steps is simple in the [install dragonfly server](https://github.com/dragonflyoss/Dragonfly/blob/master/docs/user_guide/install_server.md)
 
 2.install client
 
-- Downloading [client package](https://github.com/alibaba/Dragonfly/blob/master/package/df-client.linux-amd64.tar.gz).
+- Downloading client from [dragonfly release](https://github.com/dragonflyoss/Dragonfly/releases).
 - untar the package `tar xzvf df-client.linux-amd64.tar.gz -C /usr/local/bin`, or you can untar it to any directory you like, but remember to add client path into PATH environment, `export PATH=$PATH:/usr/local/bin/df-client`.
 - add server ip into client config file, `/etc/dragonfly.conf`, nodeIp is the host ip which you deploy server
 
@@ -33,7 +33,7 @@ server can be deployed in two way, on the physical machine or on a container, th
 address=nodeIp1,nodeIp2,...
 ```
 
-about detail install information, you can find in [install dragonfly client](https://github.com/alibaba/Dragonfly/blob/master/docs/install_client.md)
+about detail install information, you can find in [install dragonfly client](https://github.com/dragonflyoss/Dragonfly/blob/master/docs/user_guide/install_client.md)
 
 ## Run PouchContainer with dragonfly
 
@@ -42,7 +42,7 @@ about detail install information, you can find in [install dragonfly client](htt
 Start dragonfly proxy, `/usr/local/bin/df-client/df-daemon  --registry https://reg.docker.alibaba-inc.com`, you can add flag `--verbose` to get debug log. Dragonfly logs can be found in
 directory `~/.small-dragonfly/logs`.
 
-More dragonfly usage information you can find in [dragonfly usage](https://github.com/alibaba/Dragonfly/blob/master/docs/usage.md)
+More dragonfly usage information you can find in [dragonfly usage](https://github.com/dragonflyoss/Dragonfly/blob/master/docs/quick_start/_index.md)
 
 2.add the following configuration in PouchContainer config file `/etc/pouch/config.json`
 
