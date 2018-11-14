@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cli/inspect"
 
@@ -285,6 +286,7 @@ type VolumeListCommand struct {
 	size       bool
 	mountPoint bool
 	quiet      bool
+	filter     []string
 }
 
 // Init initializes VolumeListCommand command.
@@ -310,6 +312,7 @@ func (v *VolumeListCommand) addFlags() {
 	flagSet.BoolVar(&v.size, "size", false, "Display volume size")
 	flagSet.BoolVar(&v.mountPoint, "mountpoint", false, "Display volume mountpoint")
 	flagSet.BoolVarP(&v.quiet, "quiet", "q", false, "Only display volume names")
+	flagSet.StringSliceVarP(&v.filter, "filter", "f", []string{}, "Filter output based on conditions provided, filter support driver, name, label")
 }
 
 // runVolumeList is the entry of VolumeListCommand command.
@@ -319,7 +322,12 @@ func (v *VolumeListCommand) runVolumeList(args []string) error {
 	ctx := context.Background()
 	apiClient := v.cli.Client()
 
-	volumeList, err := apiClient.VolumeList(ctx)
+	volumeFilterArgs, err := filters.FromFilterOpts(v.filter)
+	if err != nil {
+		return err
+	}
+
+	volumeList, err := apiClient.VolumeList(ctx, volumeFilterArgs)
 	if err != nil {
 		return err
 	}

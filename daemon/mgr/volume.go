@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -12,6 +13,13 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+// the filter tags set allowed when pouch volume ls -f
+var acceptedVolumeFilterTags = map[string]bool{
+	"driver": true,
+	"name":   true,
+	"label":  true,
+}
 
 // VolumeMgr defines interface to manage container volume.
 type VolumeMgr interface {
@@ -22,7 +30,7 @@ type VolumeMgr interface {
 	Get(ctx context.Context, name string) (*types.Volume, error)
 
 	// List returns all volumes on this host.
-	List(ctx context.Context, labels map[string]string) ([]*types.Volume, error)
+	List(ctx context.Context, filter filters.Args) ([]*types.Volume, error)
 
 	// Remove is used to delete an existing volume.
 	Remove(ctx context.Context, name string) error
@@ -110,8 +118,11 @@ func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, e
 }
 
 // List returns all volumes on this host.
-func (vm *VolumeManager) List(ctx context.Context, labels map[string]string) ([]*types.Volume, error) {
-	return vm.core.ListVolumes(labels)
+func (vm *VolumeManager) List(ctx context.Context, filter filters.Args) ([]*types.Volume, error) {
+	if err := filter.Validate(acceptedVolumeFilterTags); err != nil {
+		return nil, err
+	}
+	return vm.core.ListVolumes(filter)
 }
 
 // Remove is used to delete an existing volume.

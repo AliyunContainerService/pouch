@@ -176,3 +176,50 @@ func TestFromFilterOpts(t *testing.T) {
 		t.Fatal("Excepted get before key, but got none.")
 	}
 }
+
+func TestArgsMatchKVList(t *testing.T) {
+	// Not empty sources
+	sources := map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+		"key3": "value3",
+	}
+
+	matches := map[*Args]string{
+		{}: "field",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key1": true}},
+		}: "labels",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key1=value1": true}},
+		}: "labels",
+	}
+
+	for args, field := range matches {
+		if !args.MatchKVList(field, sources) {
+			t.Fatalf("Expected true for %v on %v, got false", sources, args)
+		}
+	}
+
+	differs := map[*Args]string{
+		{map[string]map[string]bool{
+			"created": {"today": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key4": true}},
+		}: "labels",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key1=value3": true}},
+		}: "labels",
+	}
+
+	for args, field := range differs {
+		if args.MatchKVList(field, sources) {
+			t.Fatalf("Expected false for %v on %v, got true", sources, args)
+		}
+	}
+}

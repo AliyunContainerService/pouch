@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -94,7 +95,12 @@ func (s *Server) getVolume(ctx context.Context, rw http.ResponseWriter, req *htt
 }
 
 func (s *Server) listVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	volumes, err := s.VolumeMgr.List(ctx, map[string]string{})
+	filter, err := filters.FromParam(req.FormValue("filters"))
+	if err != nil {
+		return err
+	}
+
+	volumes, err := s.VolumeMgr.List(ctx, filter)
 	if err != nil {
 		return err
 	}

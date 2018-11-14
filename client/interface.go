@@ -64,7 +64,7 @@ type VolumeAPIClient interface {
 	VolumeCreate(ctx context.Context, config *types.VolumeCreateConfig) (*types.VolumeInfo, error)
 	VolumeRemove(ctx context.Context, name string) error
 	VolumeInspect(ctx context.Context, name string) (*types.VolumeInfo, error)
-	VolumeList(ctx context.Context) (*types.VolumeListResp, error)
+	VolumeList(ctx context.Context, filter filters.Args) (*types.VolumeListResp, error)
 }
 
 // SystemAPIClient defines methods of System client.

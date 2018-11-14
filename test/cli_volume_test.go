@@ -271,6 +271,39 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 			break
 		}
 	}
+
+	// test filter options
+	volumeName4 := "volume_" + funcname + "4"
+	command.PouchRun("volume", "create", "--name", volumeName4, "--driver", "tmpfs", "--label", "test=foo").Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", volumeName4)
+
+	// test name, label, driver filter separately
+	filterArgs := []string{
+		"name=" + volumeName4,
+		"label=test",
+		"driver=tmpfs",
+	}
+
+	for _, args := range filterArgs {
+		res := command.PouchRun("volume", "list", "--filter", args)
+		res.Assert(c, icmd.Success)
+
+		lines := volumesToKV(res.Stdout())
+		c.Assert(len(lines), check.Equals, 1)
+		if _, exist := lines[volumeName4]; !exist {
+			c.Errorf("volume filter options doesn't work, filter : ", args)
+		}
+	}
+
+	// test multi volume filter
+	res := command.PouchRun("volume", "list", "--filter", filterArgs[0], "--filter", filterArgs[1], "--filter", filterArgs[2])
+	res.Assert(c, icmd.Success)
+
+	lines = volumesToKV(res.Stdout())
+	c.Assert(len(lines), check.Equals, 1)
+	if _, exist := lines[volumeName4]; !exist {
+		c.Error("volume filter options doesn't work, with all filters")
+	}
 }
 
 // volumesToKV parse the output of "pouch volume list" into key-value pair

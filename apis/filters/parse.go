@@ -187,3 +187,32 @@ func (args Args) Validate(accepted map[string]bool) error {
 func FamiliarMatch(pattern string, ref string) (bool, error) {
 	return path.Match(pattern, ref)
 }
+
+// MatchKVList returns true if all the pairs in sources exist as key=value
+// pairs in the mapping at key, or if there are no values at key.
+func (args Args) MatchKVList(key string, sources map[string]string) bool {
+	fieldValues := args.fields[key]
+
+	// do not filter if there is no filter set or cannot determine filter
+	if len(fieldValues) == 0 {
+		return true
+	}
+
+	if len(sources) == 0 {
+		return false
+	}
+
+	for value := range fieldValues {
+		attrKV := strings.SplitN(value, "=", 2)
+
+		v, ok := sources[attrKV[0]]
+		if !ok {
+			return false
+		}
+		if len(attrKV) == 2 && attrKV[1] != v {
+			return false
+		}
+	}
+
+	return true
+}
