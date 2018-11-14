@@ -48,7 +48,7 @@ func PruneAllContainers(apiClient client.ContainerAPIClient) error {
 // PruneAllVolumes deletes all volumes from pouchd
 func PruneAllVolumes(apiClient client.VolumeAPIClient) error {
 	ctx := context.Background()
-	volumes, err := apiClient.VolumeList(ctx)
+	volumes, err := apiClient.VolumeList(ctx, filters.NewArgs())
 	if err != nil {
 		return errors.Wrap(err, "fail to list volumes")
 	}

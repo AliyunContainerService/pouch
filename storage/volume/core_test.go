@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -166,7 +167,7 @@ func TestListVolumes(t *testing.T) {
 		volmap[volName] = v
 	}
 
-	volarray, _ := core.ListVolumes(nil)
+	volarray, _ := core.ListVolumes(filters.NewArgs())
 	for k := 0; k < len(volarray); k++ {
 		vol := volarray[k]
 		_, found := volmap[vol.Name]
@@ -208,7 +209,11 @@ func TestListVolumesWithLabels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create volume error: %v", err)
 	}
-	realVolume, err := core.ListVolumes(testLabels)
+
+	filter := filters.NewArgs()
+	filter.Add("label", fmt.Sprintf("%s=%s", "test-label", testLabels["test-label"]))
+	realVolume, err := core.ListVolumes(filter)
+
 	if err != nil {
 		t.Fatalf("list volumes error: %v", err)
 	}
@@ -245,7 +250,7 @@ func TestListVolumeName(t *testing.T) {
 		volmap[volName] = v
 	}
 
-	volarray, errLv := core.ListVolumes(nil)
+	volarray, errLv := core.ListVolumes(filters.NewArgs())
 	if errLv != nil {
 		t.Fatalf("list volumes fail")
 	}
@@ -259,7 +264,7 @@ func TestListVolumeName(t *testing.T) {
 	}
 	//add unit test for listVolumeName
 	var volNames []string
-	volNames, err = core.ListVolumeName(nil)
+	volNames, err = core.ListVolumeName(filters.NewArgs())
 	if err != nil {
 		t.Fatalf("list volume name function fail!")
 	}

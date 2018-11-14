@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestVolumeListServerError(t *testing.T) {
 	client := &APIClient{
 		HTTPCli: newMockClient(errorMockResponse(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.VolumeList(context.Background())
+	_, err := client.VolumeList(context.Background(), filters.NewArgs())
 	if err == nil || !strings.Contains(err.Error(), "Server error") {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -67,7 +68,7 @@ func TestVolumeList(t *testing.T) {
 		HTTPCli: httpClient,
 	}
 
-	volume, err := client.VolumeList(context.Background())
+	volume, err := client.VolumeList(context.Background(), filters.NewArgs())
 	if err != nil {
 		t.Fatal(err)
 	}

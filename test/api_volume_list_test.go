@@ -1,6 +1,9 @@
 package main
 
 import (
+	"net/url"
+
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
@@ -56,4 +59,52 @@ func (suite *APIVolumeListSuite) TestVolumeListOk(c *check.C) {
 		}
 	}
 	c.Assert(found, check.Equals, 3)
+}
+
+// TestVolumeListFilter tests if list volumes with filter is OK.
+func (suite *APIVolumeListSuite) TestVolumeListFilter(c *check.C) {
+	// Create a volume with the name "TestVolume1".
+	testVolumeName := "TestVolume1"
+	CreateVolumeOK(c, testVolumeName, "local", nil)
+	defer RemoveVolumeOK(c, testVolumeName)
+
+	f := filters.NewArgs()
+	f.Add("name", "TestVolume1")
+	filterJSON, err := filters.ToParam(f)
+	c.Assert(err, check.IsNil)
+
+	q := url.Values{}
+	q.Add("filters", filterJSON)
+	query := request.WithQuery(q)
+	resp, err := request.Get("/volumes", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	// Check list result.
+	volumeListResp := &types.VolumeListResp{}
+	err = request.DecodeBody(volumeListResp, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(len(volumeListResp.Volumes), check.Equals, 1)
+	c.Assert(volumeListResp.Volumes[0].Name, check.Equals, testVolumeName)
+}
+
+// TestVolumeListInvalidFilter tests if list volumes with invalid filter is OK.
+func (suite *APIVolumeListSuite) TestVolumeListInvalidFilter(c *check.C) {
+	// Create a volume with the name "TestVolume1".
+	testVolumeName := "TestVolume1"
+	CreateVolumeOK(c, testVolumeName, "local", nil)
+	defer RemoveVolumeOK(c, testVolumeName)
+
+	f := filters.NewArgs()
+	f.Add("driver-name", "TestVolume1")
+	filterJSON, err := filters.ToParam(f)
+	c.Assert(err, check.IsNil)
+
+	q := url.Values{}
+	q.Add("filters", filterJSON)
+	query := request.WithQuery(q)
+	resp, err := request.Get("/volumes", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 500)
 }

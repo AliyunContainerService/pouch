@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/kmutex"
 	metastore "github.com/alibaba/pouch/pkg/meta"
@@ -198,8 +199,8 @@ func (c *Core) CreateVolume(id types.VolumeContext) (*types.Volume, error) {
 }
 
 // ListVolumes return all volumes.
-// Param 'labels' use to filter the volumes, only return those you want.
-func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
+// Param 'filter' use to filter the volumes, only return those you want.
+func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
 	var retVolumes = make([]*types.Volume, 0)
 
 	// list local meta store.
@@ -257,6 +258,7 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 			// real volume not exist, ignore it
 			continue
 		}
+
 		v.Status.MountPoint = rv.Status.MountPoint
 
 		delete(realVolumes, name)
@@ -272,29 +274,40 @@ func (c *Core) ListVolumes(labels map[string]string) ([]*types.Volume, error) {
 		retVolumes = append(retVolumes, v)
 	}
 
-	// filter volumes if specify labels
-	if len(labels) != 0 {
-		filteredVolumes := make([]*types.Volume, 0)
-		for k, v := range labels {
-			for _, vol := range retVolumes {
-				if val, ok := vol.Labels[k]; ok && val == v {
-					filteredVolumes = append(filteredVolumes, vol)
-				}
-			}
-		}
-
-		return filteredVolumes, nil
+	// filter volumes
+	if filter.Len() == 0 {
+		return retVolumes, nil
 	}
 
-	return retVolumes, nil
+	filteredVolumes := make([]*types.Volume, 0)
+	for _, vol := range retVolumes {
+		// do label filter
+		found := true
+		if filter.Contains("label") {
+			found = found && filter.MatchKVList("label", vol.Labels)
+		}
+		// do name filter
+		if filter.Contains("name") {
+			found = found && filter.ExactMatch("name", vol.Name)
+		}
+		// do driverName filter
+		if filter.Contains("driver") {
+			found = found && filter.ExactMatch("driver", vol.Spec.Backend)
+		}
+		if found {
+			filteredVolumes = append(filteredVolumes, vol)
+		}
+	}
+
+	return filteredVolumes, nil
 }
 
 // ListVolumeName return the name of all volumes only.
-// Param 'labels' use to filter the volume's names, only return those you want.
-func (c *Core) ListVolumeName(labels map[string]string) ([]string, error) {
+// Param 'filter' use to filter the volume's names, only return those you want.
+func (c *Core) ListVolumeName(filter filters.Args) ([]string, error) {
 	var names []string
 
-	volumes, err := c.ListVolumes(labels)
+	volumes, err := c.ListVolumes(filter)
 	if err != nil {
 		return names, err
 	}
