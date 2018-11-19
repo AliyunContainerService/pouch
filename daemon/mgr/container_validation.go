@@ -118,7 +118,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			r.MemorySwappiness = nil
 		}
 		if r.MemorySwappiness != nil && *r.MemorySwappiness != -1 && (*r.MemorySwappiness < 0 || *r.MemorySwappiness > 100) {
-			return warnings, fmt.Errorf("MemorySwappiness should in range [0, 100]")
+			return warnings, fmt.Errorf("MemorySwappiness should in range [0, 100] or -1 as a legacy alias of 0")
 		}
 		if r.OomKillDisable != nil && !cgroupInfo.Memory.OOMKillDisable {
 			logrus.Warn(OOMKillWarn)

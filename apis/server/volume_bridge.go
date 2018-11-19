@@ -20,12 +20,13 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+
+	logCreateOptions("volume", config)
+
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-
-	logCreateOptions("volume", config)
 
 	name := config.Name
 	driver := config.Driver

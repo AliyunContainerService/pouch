@@ -20,12 +20,13 @@ func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req 
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+
+	logCreateOptions("network", config)
+
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-
-	logCreateOptions("network", config)
 
 	network, err := s.NetworkMgr.Create(ctx, *config)
 	if err != nil {
