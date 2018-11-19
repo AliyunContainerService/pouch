@@ -24,14 +24,14 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 	if err := json.NewDecoder(req.Body).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+	name := mux.Vars(req)["name"]
+
+	logCreateOptions("container exec for "+name, config)
+
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-
-	name := mux.Vars(req)["name"]
-
-	logCreateOptions("container exec for "+name, config)
 
 	id, err := s.ContainerMgr.CreateExec(ctx, name, config)
 	if err != nil {

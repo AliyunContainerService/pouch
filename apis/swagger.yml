@@ -2598,7 +2598,6 @@ definitions:
           Microseconds of CPU time that the container can get in a CPU period."
         type: "integer"
         format: "int64"
-        minimum: 1000
         x-nullable: false
         x-omitempty: false
       CpuRealtimePeriod:
@@ -2660,10 +2659,10 @@ definitions:
         x-nullable: false
         x-omitempty: false
       MemorySwappiness:
-        description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100."
+        description: "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100. -1 is also accepted, as a legacy alias of 0."
         type: "integer"
         format: "int64"
-        minimum: 0
+        minimum: -1
         maximum: 100
         x-omitempty: false
       NanoCpus:

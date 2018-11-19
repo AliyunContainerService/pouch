@@ -38,12 +38,13 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 	if err := json.NewDecoder(reader).Decode(config); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
+
+	logCreateOptions("container", config)
+
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
-
-	logCreateOptions("container", config)
 
 	name := req.FormValue("name")
 	//consider set specific id by url params

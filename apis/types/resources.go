@@ -66,7 +66,6 @@ type Resources struct {
 	// CPU CFS (Completely Fair Scheduler) quota.
 	// Microseconds of CPU time that the container can get in a CPU period."
 	//
-	// Minimum: 1000
 	CPUQuota int64 `json:"CpuQuota"`
 
 	// The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
@@ -125,7 +124,7 @@ type Resources struct {
 
 	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
 	// Maximum: 100
-	// Minimum: 0
+	// Minimum: -1
 	MemorySwappiness *int64 `json:"MemorySwappiness"`
 
 	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
@@ -187,10 +186,6 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCPUPeriod(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCPUQuota(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -391,19 +386,6 @@ func (m *Resources) validateCPUPeriod(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateCPUQuota(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.CPUQuota) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("CpuQuota", "body", int64(m.CPUQuota), 1000, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateDevices(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Devices) { // not required
@@ -469,7 +451,7 @@ func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.MinimumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), 0, false); err != nil {
+	if err := validate.MinimumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), -1, false); err != nil {
 		return err
 	}
 
