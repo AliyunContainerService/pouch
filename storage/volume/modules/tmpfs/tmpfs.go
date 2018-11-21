@@ -98,7 +98,7 @@ func (p *Tmpfs) Attach(ctx driver.Context, v *types.Volume) error {
 	reqID := v.Option("reqID")
 
 	size := v.Size()
-	sizeInt, err := bytefmt.ToKilobytes(size)
+	sizeInt, err := bytefmt.ToBytes(size)
 	if err != nil {
 		return err
 	}
