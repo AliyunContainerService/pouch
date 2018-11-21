@@ -166,6 +166,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	contents, err := ioutil.ReadFile(cfg.ConfigFile)
 	if err != nil {
 		if os.IsNotExist(err) {
+			logrus.Debugf("the %v doesn't exist: %v", cfg.ConfigFile, err)
 			return nil
 		}
 		return fmt.Errorf("failed to read contents from config file %s: %s", cfg.ConfigFile, err)
