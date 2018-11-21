@@ -64,6 +64,24 @@ func (suite *PouchRunVolumeSuite) TestRunWithLocalVolume(c *check.C) {
 		DefaultVolumeMountPath+"/"+funcname+"/test").Assert(c, icmd.Success)
 }
 
+// TestRunWithTmpFSVolume tests running container with tmpfs volume.
+func (suite *PouchRunVolumeSuite) TestRunWithTmpFSVolume(c *check.C) {
+	cname := "TestRunWithTmpfsVolume"
+
+	command.PouchRun("volume", "create", "--name", cname, "--driver", "tmpfs",
+		"-o", "opt.size=1m").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("volume", "rm", cname).Assert(c, icmd.Success)
+	}()
+
+	res := command.PouchRun("run", "-v", cname+":/opt", "--name", cname,
+		busyboxImage, "df", "-h", "/opt")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	c.Assert(strings.Contains(res.Stdout(), "1.0M"), check.Equals, true)
+}
+
 // TestRunWithHostFileVolume tests binding a host file as a volume into container.
 // fixes https://github.com/alibaba/pouch/issues/813
 func (suite *PouchRunVolumeSuite) TestRunWithHostFileVolume(c *check.C) {
