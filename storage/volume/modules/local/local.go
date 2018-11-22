@@ -103,6 +103,10 @@ func (p *Local) Remove(ctx driver.Context, v *types.Volume) error {
 func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
 	ctx.Log.Debugf("Local volume mount path: %s", v.Name)
 
+	if mp := v.Path(); mp != "" {
+		return mp, nil
+	}
+
 	mountPath := v.Option("mount")
 	if mountPath == "" {
 		mountPath = path.Join(defaultDataPath, v.Name)
@@ -110,6 +114,8 @@ func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
 			mountPath = path.Join(p.DataPath, v.Name)
 		}
 	}
+
+	v.SetPath(mountPath)
 
 	return mountPath, nil
 }
