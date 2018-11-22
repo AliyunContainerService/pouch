@@ -17,6 +17,7 @@ import (
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/cgroups"
@@ -46,6 +47,23 @@ func toCriTimestamp(t string) (int64, error) {
 	}
 
 	return result.UnixNano(), nil
+}
+
+// generateSandboxID generates an ID for newly created sandbox meta.
+// We must ensure that this ID has not used yet.
+func (c *CriManager) generateSandboxID(ctx context.Context) (string, error) {
+	var id string
+	for {
+		id = randomid.Generate()
+		_, err := c.ContainerMgr.Get(ctx, id)
+		if err != nil {
+			if errtypes.IsNotfound(err) {
+				break
+			}
+			return "", err
+		}
+	}
+	return id, nil
 }
 
 // generateEnvList converts KeyValue list to a list of strings, in the form of
@@ -243,6 +261,31 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 
 	// Set sysctls.
 	hc.Sysctls = lc.Sysctls
+	return nil
+}
+
+// applySandboxAnnotations applies the annotations extended.
+func (c *CriManager) applySandboxAnnotations(sandboxMeta *SandboxMeta, annotations map[string]string) error {
+	// apply the annotation of io.kubernetes.runtime which specify the runtime of container.
+	if runtime, ok := annotations[anno.KubernetesRuntime]; ok {
+		sandboxMeta.Runtime = runtime
+		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+			return err
+		}
+	}
+
+	// apply the annotation of io.kubernetes.lxcfs.enabled
+	// which specify whether to enable lxcfs for a container.
+	if lxcfsEnabled, ok := annotations[anno.LxcfsEnabled]; ok {
+		enableLxcfs, err := strconv.ParseBool(lxcfsEnabled)
+		if err != nil {
+			return err
+		}
+		sandboxMeta.LxcfsEnabled = enableLxcfs
+		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
