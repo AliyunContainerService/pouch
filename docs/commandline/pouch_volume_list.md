@@ -18,6 +18,11 @@ DRIVER   VOLUME NAME
 local    pouch-volume-1
 local    pouch-volume-2
 local    pouch-volume-3
+$ pouch volume list --quiet
+VOLUME NAME
+pouch-volume-1
+pouch-volume-2
+pouch-volume-3
 ```
 
 ### Options
@@ -25,6 +30,7 @@ local    pouch-volume-3
 ```
   -h, --help         help for list
       --mountpoint   Display volume mountpoint
+  -q, --quiet        Only display volume names
       --size         Display volume size
 ```
 
