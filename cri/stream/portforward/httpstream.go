@@ -189,7 +189,7 @@ func (h *httpStreamHandler) portForward(ctx context.Context, p *httpStreamPair) 
 
 	logrus.Infof("portforward of cri: invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
 	err := h.forwarder.PortForward(ctx, h.pod, int32(port), p.dataStream)
-	logrus.Infof("portforward of cri: done invoking forwarder.PortForward for port %s", portString, p.requestID)
+	logrus.Infof("portforward of cri: done invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
 
 	if err != nil {
 		msg := fmt.Sprintf("portforward of cri: error forwarding port %d to pod %s: %v", port, h.pod, err)

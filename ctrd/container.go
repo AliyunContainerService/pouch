@@ -603,7 +603,7 @@ func (c *Client) createTask(ctx context.Context, id, checkpointDir string, conta
 
 	statusCh, err := task.Wait(context.TODO())
 	if err != nil {
-		return pack, errors.Wrapf(err, "failed to wait task in container", id)
+		return pack, errors.Wrapf(err, "failed to wait task in container(%s)", id)
 	}
 
 	logrus.Infof("success to create task(pid=%d) in container(%s)", task.Pid(), id)
