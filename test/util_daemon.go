@@ -22,26 +22,25 @@ var (
 )
 
 func init() {
-	GetRootDir(&DefaultRootDir)
+	DefaultRootDir, _ = GetRootDir()
 	// DefaultVolumeMountPath defines the default volume mount path.
 	DefaultVolumeMountPath = DefaultRootDir + "/volume"
 }
 
 // GetRootDir assign the root dir
-func GetRootDir(rootdir *string) error {
+func GetRootDir() (string, error) {
 	resp, err := request.Get("/info")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	got := types.SystemInfo{}
 	err = json.NewDecoder(resp.Body).Decode(&got)
 	if err != nil {
-		return err
+		return "", err
 	}
-	*rootdir = got.PouchRootDir
-	return nil
+	return got.PouchRootDir, nil
 }
 
 // StartDefaultDaemonDebug starts a deamon with default configuration and debug on.

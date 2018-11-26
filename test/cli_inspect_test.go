@@ -36,6 +36,11 @@ func (suite *PouchInspectSuite) TearDownTest(c *check.C) {
 // TestInspectCreateAndStartedFormat is to verify the format flag of inspect command.
 func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	name := "TestInspectCreateAndStartedFormat"
+	// get root dir
+	rootDir, err := GetRootDir()
+	if err != nil || rootDir == "" {
+		c.Fatalf("failed to get daemon root dir, err(%v)", err)
+	}
 
 	// create a raw container
 	res := command.PouchRun("create", "-m", "30M", "--name", name, busyboxImage, "top")
@@ -68,7 +73,7 @@ func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	// Inspect LogPath, LogPath should not be empty after container's start.
 	// by default, the container has log type of json-file.
 	output = command.PouchRun("inspect", "-f", "{{.LogPath}}", name).Stdout()
-	expectedLogPath := fmt.Sprintf("/var/lib/pouch/containers/%s/json.log", containerID)
+	expectedLogPath := fmt.Sprintf(rootDir+"/containers/%s/json.log", containerID)
 	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
 }
 
