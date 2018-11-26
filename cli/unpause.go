@@ -11,7 +11,7 @@ import (
 
 // unpauseDescription is used to describe unpause command in detail and auto generate command doc.
 var unpauseDescription = "Unpause one or more paused containers in Pouchd. " +
-	"when unpausing, the paused container will resumes the process execution within the container." +
+	"when unpausing, the paused container will resumes the process execution within the container. " +
 	"The container you unpaused will be running again if no error occurs."
 
 // UnpauseCommand use to implement 'unpause' command, it unpauses one or more containers.

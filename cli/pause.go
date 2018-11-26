@@ -11,8 +11,8 @@ import (
 
 // pauseDescription is used to describe pause command in detail and auto generate command doc.
 var pauseDescription = "Pause one or more running containers in Pouchd. " +
-	"when pausing, the container will pause its running but hold all the relevant resource." +
-	"This is useful when you wish to pause a container for a while and to restore the running status later." +
+	"when pausing, the container will pause its running but hold all the relevant resource. " +
+	"This is useful when you wish to pause a container for a while and to restore the running status later. " +
 	"The container you paused will pause without being terminated."
 
 // PauseCommand use to implement 'pause' command, it pauses one or more containers.
