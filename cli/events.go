@@ -18,7 +18,7 @@ import (
 )
 
 // eventsDescription is used to describe events command in detail and auto generate command doc.
-var eventsDescription = "events cli tool is used to subscribe pouchd events." +
+var eventsDescription = "events cli tool is used to subscribe pouchd events. " +
 	"We support filter parameter to filter some events that we care about or not."
 
 // EventsCommand use to implement 'events' command.

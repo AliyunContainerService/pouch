@@ -14,8 +14,8 @@ import (
 )
 
 // imagesDescription is used to describe image command in detail and auto generate command doc.
-var imagesDescription = "List all images in Pouchd." +
-	"This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE." +
+var imagesDescription = "List all images in Pouchd. " +
+	"This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE. " +
 	"All local images will be shown in a table format you can use."
 
 type imageSize int64

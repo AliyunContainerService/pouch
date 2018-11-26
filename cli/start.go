@@ -16,7 +16,7 @@ import (
 
 // startDescription is used to describe start command in detail and auto generate command doc.
 var startDescription = "Start one or more created container objects in Pouchd. " +
-	"When starting, the relevant resource preserved during creating period comes into use." +
+	"When starting, the relevant resource preserved during creating period comes into use. " +
 	"This is useful when you wish to start a container which has been created in advance." +
 	"The container you started will be running if no error occurs."
 

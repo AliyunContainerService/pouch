@@ -10,7 +10,7 @@ import (
 )
 
 var rmiDescription = "Remove one or more images by reference." +
-	"When the image is being used by a container, you must specify -f to delete it." +
+	"When the image is being used by a container, you must specify -f to delete it. " +
 	"But it is strongly discouraged, because the container will be in abnormal status."
 
 // RmiCommand use to implement 'rmi' command, it remove one or more images by reference

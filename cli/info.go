@@ -13,7 +13,7 @@ import (
 
 // infoDespscription is used to describe info command in detail and auto generate command doc.
 var infoDescription = "Display the information of pouch, " +
-	"including Containers, Images, Storage Driver, Execution Driver, Logging Driver, Kernel Version," +
+	"including Containers, Images, Storage Driver, Execution Driver, Logging Driver, Kernel Version, " +
 	"Operating System, CPUs, Total Memory, Name, ID."
 
 // InfoCommand use to implement 'info' command.

@@ -11,9 +11,9 @@ import (
 )
 
 // upgradeDescription is used to describe upgrade command in detail and auto generate command doc.
-var upgradeDescription = "upgrade is a feature to replace a container's image." +
-	"You can specify the new Entrypoint and Cmd for the new container. When you want to update" +
-	"a container's image, but inherit the network and volumes of the old container, then you should" +
+var upgradeDescription = "upgrade is a feature to replace a container's image. " +
+	"You can specify the new Entrypoint and Cmd for the new container. When you want to update " +
+	"a container's image, but inherit the network and volumes of the old container, then you should " +
 	"think about the upgrade feature."
 
 // UpgradeCommand use to implement 'upgrade' command, it is used to upgrade a container.
@@ -90,5 +90,5 @@ func upgradeExample() string {
 	return ` $ pouch run -d -m 20m --name test  registry.hub.docker.com/library/busybox:latest
 4c58d27f58d38776dda31c01c897bbf554c802a9b80ae4dc20be1337f8a969f2
 $ pouch upgrade --image registry.hub.docker.com/library/hello-world:latest test
-test1`
+test`
 }
