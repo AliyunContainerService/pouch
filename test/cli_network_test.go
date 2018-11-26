@@ -264,12 +264,20 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
 			gateway: "192.168.3.1",
 			subnet:  "192.168.3.0/24",
 		},
-		{
+	}
+
+	if !environment.IsAliKernel() {
+		tests = append(tests, struct {
+			name    string
+			ipv6    bool
+			gateway string
+			subnet  string
+		}{
 			name:    "IPv6",
 			ipv6:    true,
 			gateway: "2006:db8:1::1",
 			subnet:  "2006:db8:1::1/64",
-		},
+		})
 	}
 
 	for _, tt := range tests {
@@ -315,12 +323,20 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
 			gateway: "192.168.4.1",
 			subnet:  "192.168.4.0/24",
 		},
-		{
+	}
+
+	if !environment.IsAliKernel() {
+		tests = append(tests, struct {
+			name    string
+			ipv6    bool
+			gateway string
+			subnet  string
+		}{
 			name:    "IPv6",
 			ipv6:    true,
 			gateway: "2007:db8:1::1",
 			subnet:  "2007:db8:1::1/64",
-		},
+		})
 	}
 
 	for _, tt := range tests {

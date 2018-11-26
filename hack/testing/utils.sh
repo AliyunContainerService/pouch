@@ -15,6 +15,18 @@ integration::stop_local_persist() {
   set +e; pkill local-persist; set -e
 }
 
+# integration::run_mount_lxcfs_background runs lxcfs mount to /var/lib/lxcfs.
+integration::run_mount_lxcfs_background() {
+  echo "start mount lxcfs /var/lib/lxcfs..."
+  lxcfs /var/lib/lxcfs 2>&1 &
+}
+
+# integration::stop_mount_lxcfs stop lxcfs mount.
+integration::stop_mount_lxcfs() {
+    echo "stop lxcfs /var/lib/lxcfs..."
+    set +e; pkill lxcfs; rm -rf /run/lxcfs.pid; set -e
+}
+
 # integration::run_pouchd_background runs pouchd in background.
 integration::run_pouchd_background() {
   echo "start pouch daemon..."

@@ -53,6 +53,10 @@ main() {
 
   integration::stop_local_persist
   integration::run_local_persist_background "${local_persist_log}"
+
+  integration::stop_mount_lxcfs
+  integration::run_mount_lxcfs_background
+
   integration::stop_pouchd
   integration::run_pouchd_background "${cmd}" "${flags}" "${pouchd_log}"
 
