@@ -51,7 +51,7 @@ func NewPluginClient(addr string, tlsconfig *TLSConfig) (*PluginClient, error) {
 
 	// Scheme is https, generate the tls config
 	if url.Scheme == "https" {
-		if tlsconfig != nil && tlsconfig.InsecureSkipVerify == false {
+		if tlsconfig != nil && !tlsconfig.InsecureSkipVerify {
 			config, err = httputils.GenTLSConfig(tlsconfig.KeyFile, tlsconfig.CertFile, tlsconfig.CAFile)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse plugin tls config: %v", err)

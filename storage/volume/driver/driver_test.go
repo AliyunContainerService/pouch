@@ -26,7 +26,7 @@ func TestRegister(t *testing.T) {
 	}
 
 	success := Unregister(testDriverName)
-	if success == false {
+	if !success {
 		t.Fatal("failed to unregister testdriver")
 	}
 
@@ -49,7 +49,7 @@ func TestGetAll(t *testing.T) {
 	defer func() {
 		for _, name := range driverNames {
 			success := Unregister(name)
-			if success == false {
+			if !success {
 				t.Fatalf("failed to unregister driver: %s", name)
 			}
 		}
@@ -80,7 +80,7 @@ func TestAlias(t *testing.T) {
 	defer func() {
 		for _, name := range driverNames {
 			success := Unregister(name)
-			if success == false {
+			if !success {
 				t.Fatalf("failed to unregister driver: %s", name)
 			}
 		}

@@ -5,12 +5,15 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func TestKMutex(t *testing.T) {
 	m := New()
 
 	var wg sync.WaitGroup
+	errchan := make(chan error)
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -20,48 +23,58 @@ func TestKMutex(t *testing.T) {
 
 			k := strconv.Itoa(i)
 
-			if m.Trylock(k) == false {
-				t.Fatalf("failed to trylock: %d", i)
+			if !m.Trylock(k) {
+				errchan <- errors.Errorf("failed to trylock: %d", i)
 			}
-			if m.Trylock(k) == true {
-				t.Fatalf("trylock is error: %d", i)
+			if m.Trylock(k) {
+				errchan <- errors.Errorf("trylock is error: %d", i)
 			}
 
 			m.Unlock(k)
 
-			if m.Trylock(k) == false {
-				t.Fatalf("failed to trylock: %d", i)
+			if !m.Trylock(k) {
+				errchan <- errors.Errorf("failed to trylock: %d", i)
 			}
 		}(i)
 	}
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(errchan)
+	}()
+
+	if err := <-errchan; err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestKMutexTimeout(t *testing.T) {
 	m := New()
 
 	running := make(chan struct{})
-	wait := make(chan struct{})
+	errchan := make(chan error)
+
 	go func() {
-		if m.Trylock("key") == false {
-			t.Fatalf("failed to trylock")
+		if !m.Trylock("key") {
+			errchan <- errors.New("failed to trylock")
+			return
 		}
 
 		close(running)
 
 		time.Sleep(time.Second * 10)
-		close(wait)
 	}()
-
-	<-running
 
 	go func() {
-		<-wait
-		t.Fatalf("failed to trylock with timeout")
+		<-running
+		close(errchan)
 	}()
 
-	if m.LockWithTimeout("key", time.Second*5) == true {
+	if err := <-errchan; err != nil {
+		t.Fatal(err)
+	}
+
+	if m.LockWithTimeout("key", time.Second*5) {
 		t.Fatalf("trylock with timeout is error")
 	}
 }

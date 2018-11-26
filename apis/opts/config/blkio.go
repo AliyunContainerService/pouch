@@ -66,9 +66,7 @@ func (w *WeightDevice) Type() string {
 // Value returns all values as type WeightDevice
 func (w *WeightDevice) Value() []*types.WeightDevice {
 	var weightDevice []*types.WeightDevice
-	for _, v := range w.values {
-		weightDevice = append(weightDevice, v)
-	}
+	weightDevice = append(weightDevice, w.values...)
 
 	return weightDevice
 }
@@ -124,9 +122,7 @@ func (t *ThrottleBpsDevice) Type() string {
 // Value returns all values as type ThrottleDevice
 func (t *ThrottleBpsDevice) Value() []*types.ThrottleDevice {
 	var throttleDevice []*types.ThrottleDevice
-	for _, v := range t.values {
-		throttleDevice = append(throttleDevice, v)
-	}
+	throttleDevice = append(throttleDevice, t.values...)
 
 	return throttleDevice
 }
@@ -182,9 +178,7 @@ func (t *ThrottleIOpsDevice) Type() string {
 // Value returns all values
 func (t *ThrottleIOpsDevice) Value() []*types.ThrottleDevice {
 	var throttleDevice []*types.ThrottleDevice
-	for _, v := range t.values {
-		throttleDevice = append(throttleDevice, v)
-	}
+	throttleDevice = append(throttleDevice, t.values...)
 
 	return throttleDevice
 }

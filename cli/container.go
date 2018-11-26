@@ -65,7 +65,7 @@ type container struct {
 	networks       []string
 	ports          []string
 	expose         []string
-	publicAll      bool
+	publishAll     bool
 	securityOpt    []string
 	capAdd         []string
 	capDrop        []string

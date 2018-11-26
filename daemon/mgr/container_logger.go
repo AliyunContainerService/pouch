@@ -62,5 +62,4 @@ func (mgr *ContainerManager) SetContainerLogPath(c *Container) {
 	if c.HostConfig.LogConfig.LogDriver == "json-file" {
 		c.LogPath = filepath.Join(mgr.Config.HomeDir, "containers", c.ID, "json.log")
 	}
-	return
 }

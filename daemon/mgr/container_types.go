@@ -452,7 +452,7 @@ func (c *Container) UnsetMergedDir() {
 // SetSnapshotterMeta sets snapshotter for container
 func (c *Container) SetSnapshotterMeta(mounts []mount.Mount) {
 	// TODO(ziren): now we only support overlayfs
-	data := make(map[string]string, 0)
+	data := make(map[string]string)
 	for _, opt := range mounts[0].Options {
 		if strings.HasPrefix(opt, "upperdir=") {
 			data["UpperDir"] = strings.TrimPrefix(opt, "upperdir=")

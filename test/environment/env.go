@@ -116,10 +116,7 @@ func IsLinux() bool {
 // IsAliKernel checks if the kernel of test environment is AliKernel.
 func IsAliKernel() bool {
 	cmd := "uname -r | grep -i alios"
-	if icmd.RunCommand("bash", "-c", cmd).ExitCode == 0 {
-		return true
-	}
-	return false
+	return icmd.RunCommand("bash", "-c", cmd).ExitCode == 0
 }
 
 // IsDumbInitExist checks if the dumb-init binary exists on host.
@@ -133,10 +130,7 @@ func IsDumbInitExist() bool {
 // IsRuncVersionSupportRichContianer checks if the version of runc supports rich container.
 func IsRuncVersionSupportRichContianer() bool {
 	cmd := "runc -v|grep 1.0.0-rc4-1"
-	if icmd.RunCommand("bash", "-c", cmd).ExitCode == 0 {
-		return true
-	}
-	return false
+	return icmd.RunCommand("bash", "-c", cmd).ExitCode == 0
 }
 
 // IsHubConnected checks if hub address can be connected.
@@ -147,10 +141,7 @@ func IsHubConnected() bool {
 
 // IsDiskQuota checks if it can use disk quota for container.
 func IsDiskQuota() bool {
-	if icmd.RunCommand("which", "quotaon").ExitCode == 0 {
-		return true
-	}
-	return false
+	return icmd.RunCommand("which", "quotaon").ExitCode == 0
 }
 
 // IsPrjquota checks if there is prjquota set on test machine
@@ -174,17 +165,11 @@ func IsLxcfsEnabled() bool {
 		return false
 	}
 	cmd := "ps -ef |grep pouchd |grep \"enable\\-lxcfs\""
-	if icmd.RunCommand("sh", "-c", cmd).ExitCode != 0 {
-		return false
-	}
-	return true
+	return icmd.RunCommand("sh", "-c", cmd).ExitCode == 0
 }
 
 // IsCRIUExist checks if criu exist on machine.
 func IsCRIUExist() bool {
 	_, err := exec.LookPath("criu")
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }

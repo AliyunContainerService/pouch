@@ -90,7 +90,7 @@ func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
 			header[4] = 0x01
 		}
 
-		if writeErr := ioutil.WriteFile(filename, header, 644); writeErr != nil {
+		if writeErr := ioutil.WriteFile(filename, header, 0644); writeErr != nil {
 			return mountPoint, errors.Wrapf(writeErr, "failed to write file, filename: (%s), vfs version: (%s)",
 				filename, vfsVersion)
 		}

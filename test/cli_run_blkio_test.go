@@ -79,7 +79,7 @@ func (suite *PouchRunBlkioSuite) TestRunBlockIOWeightDevice(c *check.C) {
 
 	SkipIfFalse(c, func() bool {
 		file := fmt.Sprintf("/sys/block/%s/queue/scheduler",
-			strings.Trim(testDisk, "/dev/"))
+			strings.TrimPrefix(testDisk, "/dev/"))
 		if data, err := ioutil.ReadFile(file); err == nil {
 			return strings.Contains(string(data), "[cfq]")
 		}

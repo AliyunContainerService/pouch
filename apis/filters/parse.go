@@ -152,10 +152,7 @@ func FromParam(p string) (Args, error) {
 
 	raw := []byte(p)
 	err := json.Unmarshal(raw, &args)
-	if err != nil {
-		return args, err
-	}
-	return args, nil
+	return args, err
 }
 
 // FromFilterOpts parse key=value to Args string from cli opts

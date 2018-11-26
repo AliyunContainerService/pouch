@@ -299,10 +299,8 @@ func (validNetworkInterface) InterfaceByName(intfName string) (*net.Interface, e
 	return &upIntf, nil
 }
 func (validNetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{
-		addrStruct{val: "fe80::2f7:6fff:fe6e:2956/64"}, addrStruct{val: "10.254.71.145/17"}}
-	return ifat, nil
+	return []net.Addr{
+		addrStruct{val: "fe80::2f7:6fff:fe6e:2956/64"}, addrStruct{val: "10.254.71.145/17"}}, nil
 }
 func (validNetworkInterface) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{upIntf}, nil
@@ -316,11 +314,10 @@ func (v4v6NetworkInterface) InterfaceByName(intfName string) (*net.Interface, er
 	return &upIntf, nil
 }
 func (v4v6NetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{
-		addrStruct{val: "2001::10/64"}, addrStruct{val: "10.254.71.145/17"}}
-	return ifat, nil
+	return []net.Addr{
+		addrStruct{val: "2001::10/64"}, addrStruct{val: "10.254.71.145/17"}}, nil
 }
+
 func (v4v6NetworkInterface) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{upIntf}, nil
 }
@@ -333,9 +330,7 @@ func (ipv6NetworkInterface) InterfaceByName(intfName string) (*net.Interface, er
 	return &upIntf, nil
 }
 func (ipv6NetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{addrStruct{val: "2001::200/64"}}
-	return ifat, nil
+	return []net.Addr{addrStruct{val: "2001::200/64"}}, nil
 }
 
 func (ipv6NetworkInterface) Interfaces() ([]net.Interface, error) {
@@ -350,10 +345,9 @@ func (networkInterfaceWithOnlyLinkLocals) InterfaceByName(intfName string) (*net
 	return &upIntf, nil
 }
 func (networkInterfaceWithOnlyLinkLocals) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{addrStruct{val: "169.254.162.166/16"}, addrStruct{val: "fe80::200/10"}}
-	return ifat, nil
+	return []net.Addr{addrStruct{val: "169.254.162.166/16"}, addrStruct{val: "fe80::200/10"}}, nil
 }
+
 func (networkInterfaceWithOnlyLinkLocals) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{upIntf}, nil
 }
@@ -394,10 +388,8 @@ func (downNetworkInterface) InterfaceByName(intfName string) (*net.Interface, er
 	return &downIntf, nil
 }
 func (downNetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{
-		addrStruct{val: "fe80::2f7:6fff:fe6e:2956/64"}, addrStruct{val: "10.254.71.145/17"}}
-	return ifat, nil
+	return []net.Addr{
+		addrStruct{val: "fe80::2f7:6fff:fe6e:2956/64"}, addrStruct{val: "10.254.71.145/17"}}, nil
 }
 func (downNetworkInterface) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{downIntf}, nil
@@ -411,10 +403,8 @@ func (loopbackNetworkInterface) InterfaceByName(intfName string) (*net.Interface
 	return &loopbackIntf, nil
 }
 func (loopbackNetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{
-		addrStruct{val: "::1/128"}, addrStruct{val: "127.0.0.1/8"}}
-	return ifat, nil
+	return []net.Addr{
+		addrStruct{val: "::1/128"}, addrStruct{val: "127.0.0.1/8"}}, nil
 }
 func (loopbackNetworkInterface) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{loopbackIntf}, nil
@@ -428,10 +418,8 @@ func (p2pNetworkInterface) InterfaceByName(intfName string) (*net.Interface, err
 	return &p2pIntf, nil
 }
 func (p2pNetworkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{
-		addrStruct{val: "::1/128"}, addrStruct{val: "127.0.0.1/8"}}
-	return ifat, nil
+	return []net.Addr{
+		addrStruct{val: "::1/128"}, addrStruct{val: "127.0.0.1/8"}}, nil
 }
 func (p2pNetworkInterface) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{p2pIntf}, nil
@@ -459,8 +447,7 @@ func (networkInterfaceWithNoAddrs) InterfaceByName(intfName string) (*net.Interf
 	return &upIntf, nil
 }
 func (networkInterfaceWithNoAddrs) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	ifat := []net.Addr{}
-	return ifat, nil
+	return []net.Addr{}, nil
 }
 func (networkInterfaceWithNoAddrs) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{upIntf}, nil
@@ -474,9 +461,7 @@ func (networkInterfaceWithInvalidAddr) InterfaceByName(intfName string) (*net.In
 	return &upIntf, nil
 }
 func (networkInterfaceWithInvalidAddr) Addrs(intf *net.Interface) ([]net.Addr, error) {
-	var ifat []net.Addr
-	ifat = []net.Addr{addrStruct{val: "10.20.30.40.50/24"}}
-	return ifat, nil
+	return []net.Addr{addrStruct{val: "10.20.30.40.50/24"}}, nil
 }
 func (networkInterfaceWithInvalidAddr) Interfaces() ([]net.Interface, error) {
 	return []net.Interface{upIntf}, nil

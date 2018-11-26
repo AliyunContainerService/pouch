@@ -47,7 +47,7 @@ func (r *Runtime) Set(val string) error {
 func (r *Runtime) String() string {
 	var str []string
 	for k := range *r.values {
-		str = append(str, fmt.Sprintf("%s", k))
+		str = append(str, k)
 	}
 
 	return fmt.Sprintf("%v", str)

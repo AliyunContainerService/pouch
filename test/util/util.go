@@ -30,7 +30,7 @@ func WaitTimeout(timeout time.Duration, condition func() bool) bool {
 			fmt.Printf("condition failed to return true within %f seconds.\n", timeout.Seconds())
 			return false
 		case <-ticker.C:
-			if condition() == true {
+			if condition() {
 				ch <- true
 			}
 		}

@@ -55,9 +55,7 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 	c.Assert(err, check.IsNil)
 
 	// this code slice may not robust, but for this test case is enough.
-	if strings.HasPrefix(cgroupParent, "/") {
-		cgroupParent = cgroupParent[1:]
-	}
+	cgroupParent = strings.TrimPrefix(cgroupParent, "/")
 
 	if cgroupParent == "" {
 		cgroupParent = "default"

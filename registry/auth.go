@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,9 +21,9 @@ type challengeClient struct {
 }
 
 type registryEndpoint struct {
-	version   string
-	url       *url.URL
-	tlsConfig *tls.Config
+	version string
+	url     *url.URL
+	// TODO: support tls for registry.
 }
 
 // token defines a token that registry may return after login successfully.

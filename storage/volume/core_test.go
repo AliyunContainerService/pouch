@@ -171,7 +171,7 @@ func TestListVolumes(t *testing.T) {
 	for k := 0; k < len(volarray); k++ {
 		vol := volarray[k]
 		_, found := volmap[vol.Name]
-		if found == false {
+		if !found {
 			t.Fatalf("list volumes %v not found", vol)
 		}
 	}
@@ -258,7 +258,7 @@ func TestListVolumeName(t *testing.T) {
 	for k := 0; k < len(volarray); k++ {
 		vol := volarray[k]
 		_, found := volmap[vol.Name]
-		if found == false {
+		if !found {
 			t.Fatalf("list volumes %v not found", vol)
 		}
 	}
@@ -270,7 +270,7 @@ func TestListVolumeName(t *testing.T) {
 	}
 	for j := 0; j < len(volNames); j++ {
 		_, found := volmap[volNames[j]]
-		if found == false {
+		if !found {
 			t.Fatalf("list volumes name %s not found", volNames[j])
 		}
 	}

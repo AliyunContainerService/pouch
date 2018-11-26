@@ -69,7 +69,7 @@ type VerifyCondition func() bool
 // SkipIfFalse skips the suite, if any of the conditions is not satisfied.
 func SkipIfFalse(c *check.C, conditions ...VerifyCondition) {
 	for _, con := range conditions {
-		if con() == false {
+		if !con() {
 			c.Skip("Skip test as condition is not matched")
 		}
 	}

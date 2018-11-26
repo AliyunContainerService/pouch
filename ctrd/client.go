@@ -32,8 +32,6 @@ type Client struct {
 	watch *watch
 	lock  *containerLock
 
-	rpcAddr string
-
 	// containerd grpc pool
 	pool      []scheduler.Factory
 	scheduler scheduler.Scheduler
