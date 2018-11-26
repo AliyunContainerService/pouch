@@ -12,7 +12,6 @@ var tagDescription = "tag command is to add tag reference for the existing image
 // TagCommand use to implement 'tag' command.
 type TagCommand struct {
 	baseCommand
-	args []string
 }
 
 // Init initialize tag command.

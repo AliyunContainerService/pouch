@@ -111,13 +111,6 @@ func (h *httpStreamHandler) getStreamPair(requestID string) (*httpStreamPair, bo
 	return pair, true
 }
 
-// hasStreamPair returns a bool indicating if a stream pair for requestID exists.
-func (h *httpStreamHandler) hasStreamPair(requestID string) bool {
-	_, ok := h.streamPairs.Get(requestID).Result()
-
-	return ok
-}
-
 // removeStreamPair removes the stream pair identified by requestID from streamPairs.
 func (h *httpStreamHandler) removeStreamPair(requestID string) {
 	h.streamPairs.Remove(requestID)

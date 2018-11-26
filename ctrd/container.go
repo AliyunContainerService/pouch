@@ -701,9 +701,8 @@ func (c *Client) waitContainer(ctx context.Context, id string) (types.ContainerW
 		return c.ProbeContainer(ctx, id, -1*time.Second)
 	}
 
-	var msg *Message
 	// wait for the task to exit.
-	msg = waitExit()
+	msg := waitExit()
 
 	errMsg := ""
 	err = msg.RawError()

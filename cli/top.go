@@ -17,7 +17,6 @@ var topDescription = "top command is to display the running processes of a conta
 // TopCommand use to implement 'top' command, it displays all processes in a container.
 type TopCommand struct {
 	baseCommand
-	args []string
 }
 
 // Init initialize top command.

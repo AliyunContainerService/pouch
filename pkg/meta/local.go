@@ -39,12 +39,9 @@ func NewLocalStore(cfg Config) (Backend, error) {
 
 	// initialize cache
 	handle := func(f os.FileInfo) error {
-		if _, err := s.Get(MetaJSONFile, f.Name()); err != nil {
-			return err
-		}
+		_, err := s.Get(MetaJSONFile, f.Name())
+		return err
 		// TODO maybe get other file.
-
-		return nil
 	}
 
 	if err := walkDir(s.base, handle); err != nil {

@@ -50,11 +50,8 @@ func tarFromDir(src string, writer io.Writer) error {
 		defer f.Close()
 
 		// copy file data into tar writer
-		if _, err := io.Copy(tw, f); err != nil {
-			return err
-		}
-
-		return nil
+		_, err = io.Copy(tw, f)
+		return err
 	})
 }
 

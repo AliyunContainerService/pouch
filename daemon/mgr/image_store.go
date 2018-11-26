@@ -171,9 +171,8 @@ func (store *imageStore) Search(ref reference.Named) (digest.Digest, reference.N
 
 func (store *imageStore) searchIDs(refID string) (digest.Digest, error) {
 	var ids []digest.Digest
-	var id string
 
-	id = refID
+	id := refID
 	if !strings.HasPrefix(refID, digest.Canonical.String()) {
 		id = fmt.Sprintf("%s:%s", digest.Canonical.String(), refID)
 	}

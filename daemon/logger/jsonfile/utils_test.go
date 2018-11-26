@@ -8,11 +8,14 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/pkg/utils"
+
+	"github.com/pkg/errors"
 )
 
 var _ logger.LogDriver = &JSONLogFile{}
@@ -133,21 +136,25 @@ func TestFollowFile(t *testing.T) {
 	// create goroutine to read the file
 	watcher := logger.NewLogWatcher()
 	waitCh := make(chan struct{})
+	errchan := make(chan error)
+	var wg sync.WaitGroup
 	defer func() {
 		watcher.Close()
 		<-waitCh
 	}()
 
 	go func() {
-		// NOTE: make sure all the goutine exits
+		wg.Add(1)
+		// NOTE: make sure all the goroutine exits
 		defer func() {
 			waitCh <- struct{}{}
 		}()
 
 		newF, err := os.Open(f.Name())
 		if err != nil {
-			t.Fatalf("unexpected error during open file for followFile: %v", err)
+			errchan <- errors.Errorf("unexpected error during open file for followFile: %v", err)
 		}
+		wg.Done()
 
 		cfg := &logger.ReadConfig{
 			Since: generateTime(t, "2018-05-09T10:00:01.1Z"),
@@ -155,6 +162,15 @@ func TestFollowFile(t *testing.T) {
 		}
 		followFile(newF, cfg, newUnmarshal, watcher)
 	}()
+
+	go func() {
+		wg.Wait()
+		close(errchan)
+	}()
+
+	if err := <-errchan; err != nil {
+		t.Fatal(err)
+	}
 
 	// should read three log message
 	for _, el := range expectedMsgs[:2] {

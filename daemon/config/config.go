@@ -179,7 +179,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 		return nil
 	}
 
-	fileFlags := make(map[string]interface{}, 0)
+	fileFlags := make(map[string]interface{})
 	flattenConfig(origin, fileFlags)
 
 	// check conflict in command line flags and config file

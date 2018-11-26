@@ -28,6 +28,4 @@ func ServePortForward(ctx context.Context, w http.ResponseWriter, req *http.Requ
 		logrus.Errorf("failed to serve port forward: %v", err)
 		return
 	}
-
-	return
 }

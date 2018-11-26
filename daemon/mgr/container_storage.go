@@ -736,7 +736,7 @@ func copyImageContent(source, destination string) error {
 
 		// destination directory is not exist, so mkdir for it.
 		logrus.Warnf("(%s) is not exist", destination)
-		if err := os.MkdirAll(destination, 755); err != nil && !os.IsExist(err) {
+		if err := os.MkdirAll(destination, 0755); err != nil && !os.IsExist(err) {
 			return err
 		}
 	} else if !fi.IsDir() {

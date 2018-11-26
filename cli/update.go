@@ -17,7 +17,6 @@ var updateDescription = "Update a container's configurations, including memory, 
 type UpdateCommand struct {
 	baseCommand
 	container
-	image string
 }
 
 // Init initialize update command.

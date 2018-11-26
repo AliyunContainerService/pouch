@@ -368,7 +368,7 @@ func ToStringMap(in map[string]interface{}) map[string]string {
 	if in == nil {
 		return nil
 	}
-	out := make(map[string]string, 0)
+	out := make(map[string]string)
 	for k, v := range in {
 		if s, ok := v.(string); ok {
 			out[k] = s

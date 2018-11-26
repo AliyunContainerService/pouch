@@ -36,7 +36,6 @@ import (
 	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/mount"
 	"github.com/docker/go-units"
-	"github.com/docker/libnetwork"
 	"github.com/go-openapi/strfmt"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -1525,41 +1524,6 @@ func (mgr *ContainerManager) connectToNetwork(ctx context.Context, container *Co
 	return mgr.updateNetworkConfig(container, networkIDOrName, endpoint.EndpointConfig)
 }
 
-// FIXME: remove this useless functions
-func (mgr *ContainerManager) updateNetworkSettings(container *Container, n libnetwork.Network) error {
-	if container.NetworkSettings == nil {
-		container.NetworkSettings = &types.NetworkSettings{Networks: make(map[string]*types.EndpointSettings)}
-	}
-
-	if !IsHost(container.HostConfig.NetworkMode) && IsHost(n.Type()) {
-		return fmt.Errorf("container cannot be connected to host network")
-	}
-
-	for s := range container.NetworkSettings.Networks {
-		sn, err := mgr.NetworkMgr.Get(context.Background(), s)
-		if err != nil {
-			continue
-		}
-
-		if sn.Name == n.Name() {
-			// Avoid duplicate config
-			return nil
-		}
-		if !IsPrivate(sn.Type) || !IsPrivate(n.Type()) {
-			return fmt.Errorf("container sharing network namespace with another container or host cannot be connected to any other network")
-		}
-		if IsNone(sn.Name) || IsNone(n.Name()) {
-			return fmt.Errorf("container cannot be connected to multiple networks with one of the networks in none mode")
-		}
-	}
-
-	if _, ok := container.NetworkSettings.Networks[n.Name()]; !ok {
-		container.NetworkSettings.Networks[n.Name()] = new(types.EndpointSettings)
-	}
-
-	return nil
-}
-
 func (mgr *ContainerManager) initContainerIO(c *Container) (*containerio.IO, error) {
 	if io := mgr.IOs.Get(c.ID); io != nil {
 		return nil, errors.Wrap(errtypes.ErrConflict, "failed to create containerIO")
@@ -1814,7 +1778,6 @@ func (mgr *ContainerManager) resetContainerIOs(containerID string) {
 	}
 
 	io.Reset()
-	return
 }
 
 // buildContainerEndpoint builds Endpoints according to container

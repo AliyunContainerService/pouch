@@ -260,10 +260,8 @@ func (s *Store) KeysWithPrefix(prefix string) ([]string, error) {
 	s.trieLock.Lock()
 	defer s.trieLock.Unlock()
 
-	if err := s.trie.VisitSubtree(patricia.Prefix(prefix), fn); err != nil {
-		return keys, err
-	}
-	return keys, nil
+	err := s.trie.VisitSubtree(patricia.Prefix(prefix), fn)
+	return keys, err
 }
 
 // Path returns the path with specified key.

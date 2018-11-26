@@ -192,11 +192,8 @@ func (s *Server) saveImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	defer r.Close()
 
 	output := newWriteFlusher(rw)
-	if _, err := io.Copy(output, r); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(output, r)
+	return err
 }
 
 // getImageHistory gets image history.

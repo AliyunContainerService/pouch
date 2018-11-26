@@ -29,8 +29,6 @@ const (
 )
 
 var (
-	hasQuota bool
-
 	// GQuotaDriver represents global quota driver.
 	GQuotaDriver = NewQuotaDriver("")
 
@@ -344,7 +342,7 @@ func getOverlayMountInfo(basefs string) (*OverlayMount, error) {
 // #500      --   47504       0       0            101     0     0
 // #16777221 -- 3048576       0 3048576              8     0     0
 func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
-	quotaIDs := make(map[uint32]struct{}, 0)
+	quotaIDs := make(map[uint32]struct{})
 
 	minID := QuotaMinID
 	exit, output, stderr, err := exec.Run(0, "repquota", repquotaOpt)

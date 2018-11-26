@@ -115,11 +115,7 @@ func (r *remoteDriverWrapper) Attach(ctx Context, v *types.Volume) error {
 	ctx.Log.Debugf("driver wrapper [%s] attach volume: %s", r.Name(ctx), v.Name)
 
 	_, err := r.proxy.Mount(v.Name, v.UID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Detach a remote volume.

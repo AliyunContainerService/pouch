@@ -33,9 +33,6 @@ type uidParser struct {
 	placeholder string
 	uid         int
 	gid         int
-	finger      []string
-	userdir     string
-	shell       string
 }
 
 // gidParser defines lines in /etc/group, eg: root:x:0:.
@@ -43,7 +40,6 @@ type gidParser struct {
 	group       string
 	placeholder string
 	gid         int
-	otherGroup  []string
 }
 
 // Get accepts user and group slice, return valid uid, gid and additional gids.

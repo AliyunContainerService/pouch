@@ -168,8 +168,8 @@ func (d *Config) StartDaemon() error {
 		close(wait)
 	}()
 
-	if util.WaitTimeout(time.Duration(d.timeout)*time.Second, d.IsDaemonUp) == false {
-		if d.Debug == true {
+	if !util.WaitTimeout(time.Duration(d.timeout)*time.Second, d.IsDaemonUp) {
+		if d.Debug {
 			d.DumpLog()
 
 			fmt.Printf("\nFailed to launch pouchd:%v\n", d.Args)
@@ -201,7 +201,7 @@ func (d *Config) DumpLog() {
 
 // KillDaemon kill pouchd.
 func (d *Config) KillDaemon() {
-	if d.IsDaemonUp() == false {
+	if !d.IsDaemonUp() {
 		return
 	}
 
@@ -215,5 +215,4 @@ func (d *Config) KillDaemon() {
 
 		d.LogFile.Close()
 	}
-	return
 }

@@ -44,7 +44,7 @@ func CheckLxcfsMount() error {
 			break
 		}
 	}
-	if isMount == false {
+	if !isMount {
 		return fmt.Errorf("%s is not a mount point, please run \" lxcfs %s \" before Pouchd", LxcfsHomeDir, LxcfsHomeDir)
 	}
 	return nil
