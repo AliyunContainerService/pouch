@@ -61,7 +61,7 @@ type ContainerAPIClient interface {
 	// UpdateResources updates the configurations of a container.
 	UpdateResources(ctx context.Context, id string, resources types.Resources) error
 	// SetExitHooks specified the handlers of container exit.
-	SetExitHooks(hooks ...func(string, *Message) error)
+	SetExitHooks(hooks ...func(string, *Message, func() error) error)
 	// SetExecExitHooks specified the handlers of exec process exit.
 	SetExecExitHooks(hooks ...func(string, *Message) error)
 	// Events subscribe containerd events through an event subscribe client.

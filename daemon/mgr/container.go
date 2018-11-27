@@ -1698,13 +1698,18 @@ func (mgr *ContainerManager) markExitedAndRelease(c *Container, m *ctrd.Message)
 
 // exitedAndRelease be register into ctrd as a callback function, when the running container suddenly
 // exited, "ctrd" will call it to set the container's state and release resouce and so on.
-func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message) error {
+func (mgr *ContainerManager) exitedAndRelease(id string, m *ctrd.Message, cleanup func() error) error {
 	c, err := mgr.container(id)
 	if err != nil {
 		return err
 	}
 
 	if err := mgr.markExitedAndRelease(c, m); err != nil {
+		return err
+	}
+
+	// for example, delete containerd container/task.
+	if err := cleanup(); err != nil {
 		return err
 	}
 
