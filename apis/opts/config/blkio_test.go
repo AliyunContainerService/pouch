@@ -227,7 +227,7 @@ func TestWeightDevice_Type(t *testing.T) {
 					},
 				},
 			},
-			want: "value",
+			want: "strings",
 		},
 	}
 	for _, tt := range tests {
@@ -493,7 +493,7 @@ func TestThrottleBpsDevice_Type(t *testing.T) {
 					},
 				},
 			},
-			want: "value",
+			want: "strings",
 		},
 	}
 	for _, tt := range tests {
@@ -779,7 +779,7 @@ func TestThrottleIOpsDevice_Type(t *testing.T) {
 					},
 				},
 			},
-			want: "value",
+			want: "strings",
 		},
 	}
 	for _, tt := range tests {
