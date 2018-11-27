@@ -119,7 +119,7 @@ func (c *Client) Get(ctx context.Context) (*WrapperClient, error) {
 }
 
 // SetExitHooks specified the handlers of container exit.
-func (c *Client) SetExitHooks(hooks ...func(string, *Message) error) {
+func (c *Client) SetExitHooks(hooks ...func(string, *Message, func() error) error) {
 	c.watch.hooks = hooks
 }
 
