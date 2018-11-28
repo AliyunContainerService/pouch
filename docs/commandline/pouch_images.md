@@ -4,7 +4,7 @@ List all images
 
 ### Synopsis
 
-List all images in Pouchd.This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE.All local images will be shown in a table format you can use.
+List all images in Pouchd. This is useful when you wish to have a look at images and Pouchd will show all local images with their NAME and SIZE. All local images will be shown in a table format you can use.
 
 ```
 pouch images [OPTIONS]

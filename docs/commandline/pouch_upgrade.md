@@ -4,7 +4,7 @@ Upgrade a container with new image and args
 
 ### Synopsis
 
-upgrade is a feature to replace a container's image.You can specify the new Entrypoint and Cmd for the new container. When you want to updatea container's image, but inherit the network and volumes of the old container, then you shouldthink about the upgrade feature.
+upgrade is a feature to replace a container's image. You can specify the new Entrypoint and Cmd for the new container. When you want to update a container's image, but inherit the network and volumes of the old container, then you should think about the upgrade feature.
 
 ```
 pouch upgrade [OPTIONS] CONTAINER [COMMAND] [ARG...]
@@ -16,7 +16,7 @@ pouch upgrade [OPTIONS] CONTAINER [COMMAND] [ARG...]
  $ pouch run -d -m 20m --name test  registry.hub.docker.com/library/busybox:latest
 4c58d27f58d38776dda31c01c897bbf554c802a9b80ae4dc20be1337f8a969f2
 $ pouch upgrade --image registry.hub.docker.com/library/hello-world:latest test
-test1
+test
 ```
 
 ### Options

@@ -4,7 +4,7 @@ Start one or more created or stopped containers
 
 ### Synopsis
 
-Start one or more created container objects in Pouchd. When starting, the relevant resource preserved during creating period comes into use.This is useful when you wish to start a container which has been created in advance.The container you started will be running if no error occurs.
+Start one or more created container objects in Pouchd. When starting, the relevant resource preserved during creating period comes into use. This is useful when you wish to start a container which has been created in advance.The container you started will be running if no error occurs.
 
 ```
 pouch start [OPTIONS] CONTAINER [CONTAINER...]

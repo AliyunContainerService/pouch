@@ -4,7 +4,7 @@ Update the configurations of pouchd
 
 ### Synopsis
 
-Update daemon's configurations, if daemon is stoped, it will just update config file. Online update just including: image proxy, label, offline update including: manager white list, debug level, execute root directory, bridge name, bridge IP, fixed CIDR, defaut gateway, iptables, ipforwark, userland proxyIf pouchd is alive, you can only use --offline=true to update config file
+Update daemon's configurations, if daemon is stoped, it will just update config file. Online update just including: image proxy, label, offline update including: manager white list, debug level, execute root directory, bridge name, bridge IP, fixed CIDR, defaut gateway, iptables, ipforwark, userland proxy. If pouchd is alive, you can only use --offline=true to update config file
 
 ```
 pouch updatedaemon [OPTIONS]

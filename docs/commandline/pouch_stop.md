@@ -4,7 +4,7 @@ Stop one or more running containers
 
 ### Synopsis
 
-Stop one or more running containers in Pouchd. Waiting the given number of seconds before forcefully killing the container.This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. The container that you stopped will be terminated. 
+Stop one or more running containers in Pouchd. Waiting the given number of seconds before forcefully killing the container. This is useful when you wish to stop a container. And Pouchd will stop this running container and release the resource. The container that you stopped will be terminated. 
 
 ```
 pouch stop [OPTIONS] CONTAINER [CONTAINER...]
