@@ -13,3 +13,4 @@ coverage.txt
 .DS_Store
 bin/
 coverage/
+install/

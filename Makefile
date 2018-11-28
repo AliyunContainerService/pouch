@@ -27,6 +27,22 @@ DAEMON_INTEGRATION_BINARY_NAME=pouchd-integration
 # INTEGRATION_TESTCASE_BINARY_NAME is the name of binary of integration cases.
 INTEGRATION_TESTCASE_BINARY_NAME=pouchd-integration-test
 
+# GOARCH is the target platform for build
+GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
+
+# CC is the cross compiler
+ifeq (${GOARCH},arm64)
+	CC=aarch64-linux-gnu-gcc
+else ifeq (${GOARCH},ppc64le)
+	CC=powerpc64le-linux-gnu-gcc
+else
+	GOARCH=amd64
+endif
+
+# BUILD_ROOT is specified
+BUILD_ROOT := ${CURDIR}/install/${GOARCH}
+
 # DEST_DIR is base path used to install pouch & pouchd
 DEST_DIR=/usr/local
 
@@ -71,6 +87,30 @@ COVERAGE_PACKAGES=$(shell go list ./... | \
 
 COVERAGE_PACKAGES_LIST=$(shell echo $(COVERAGE_PACKAGES) | tr " " ",")
 
+#  POUCH IMAGE is the develop image for cross-building
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+GIT_BRANCH_CLEAN := $(shell echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
+POUCH_IMAGE := pouch_dev$(if $(GIT_BRANCH_CLEAN),:$(GIT_BRANCH_CLEAN))
+
+# Project location
+RUNC_PRO := github.com/opencontainers/runc
+CONTAINERD_PRO := github.com/containerd/containerd
+POUCH_PRO := github.com/alibaba/pouch
+LXCFS_PRO := github.com/lxc/lxcfs
+
+# Runc cross building configuration
+RUNC_VERSION ?= "v1.0.0-rc6-1"
+RUNC_BUILDTAGS := seccomp
+RUNC_EXTRA_FLAGS :=
+RUNC_COMMIT_NO :=
+RUNC_COMMIT :=
+
+# CONTAINERD cross-building configuration
+CONTAINERD_VERSION := "v1.0.3"
+
+# LXCFS cross building configuration
+LXCFS_VERSION := "stable-2.0"
+
 build: build-daemon build-cli ## build PouchContainer both daemon and cli binaries
 
 build-daemon: modules plugin ## build PouchContainer daemon binary
@@ -82,6 +122,84 @@ build-cli: ## build PouchContainer cli binary
 	@echo "$@: bin/${CLI_BINARY_NAME}"
 	@mkdir -p bin
 	@go build -o bin/${CLI_BINARY_NAME} github.com/alibaba/pouch/cli
+
+dev-image: ## build the Docker Image as cross building environment
+	docker build -f Dockerfile.${GOARCH}.cross . -t ${POUCH_IMAGE}
+
+shell: dev-image ## enter into the cross building shell environment
+	docker run -ti --privileged --rm -v ${CURDIR}:/go/src/${POUCH_PRO} \
+		${POUCH_IMAGE} \
+		bash
+
+download-source: ## download source code for cross-building
+	@echo "remove the source code"
+	rm -rf ${GOPATH}/src/${RUNC_PRO}
+	rm -rf ${GOPATH}/src/${CONTAINERD_PRO}
+	rm -rf ${GOPATH}/src/${LXCFS_PRO}
+	mkdir -p ${GOPATH}/src/${RUNC_PRO}
+	mkdir -p ${GOPATH}/src/${CONTAINERD_PRO}
+	mkdir -p ${GOPATH}/src/${LXCFS_PRO}
+	@echo "download the runc source code"
+	git clone -b ${RUNC_VERSION} \
+		https://github.com/alibaba/runc \
+		${GOPATH}/src/${RUNC_PRO}
+	@echo "download the containerd source code"
+	git clone -b ${CONTAINERD_VERSION} \
+		https://${CONTAINERD_PRO} \
+		${GOPATH}/src/${CONTAINERD_PRO}
+	@echo "download the containerd source code"
+	git clone -b ${LXCFS_VERSION} \
+		https://${LXCFS_PRO} \
+		${GOPATH}/src/${LXCFS_PRO}
+
+cross-build: dev-image ## cross build pouchd pouchd runc containerd on host
+	docker run -e BUILDTAGS="$(BUILDTAGS)" -e GOARCH="${GOARCH}" \
+		--rm -v ${CURDIR}:/go/src/${POUCH_PRO} \
+		${POUCH_IMAGE} \
+		make local-cross
+
+local-cross: modules plugin download-source ## local cross build pouch pouchd runc containerd inside container
+	@echo "$@: ${BUILD_ROOT}/bin/${DAEMON_BINARY_NAME}"
+	@mkdir -p ${BUILD_ROOT}/bin
+	@CGO_ENABLED=1 GOARCH=${GOARCH} GOOS=linux CC=${CC} \
+		go build -ldflags ${DEFAULT_LDFLAGS} ${GOBUILD_TAGS} \
+		-o ${BUILD_ROOT}/bin/${DAEMON_BINARY_NAME}
+	@echo "$@: ${BUILD_ROOT}/bin/${CLI_BINARY_NAME}"
+	@CGO_ENABLED=0 GOARCH=${GOARCH} \
+		go build -o ${BUILD_ROOT}/bin/${CLI_BINARY_NAME} \
+		github.com/alibaba/pouch/cli
+	@echo "$@: ${BUILD_ROOT}/bin/runc"
+	@CGO_ENABLED=1 GOARCH=${GOARCH} GOOS=linux CC=${CC} \
+		go build -buildmode=pie ${RUNC_EXTRA_FLAGS} \
+		-ldflags "-X main.gitCommit=${RUNC_COMMIT} -X main.version=${RUNC_VERSION} ${RUNC_EXTRA_LDFLAGS}" \
+		-tags "${RUNC_BUILDTAGS}" \
+		-o ${BUILD_ROOT}/bin/runc ${RUNC_PRO}
+	@CGO_ENABLED=1 GOARCH=${GOARCH} GOOS=linux CC=${CC} \
+		${MAKE} -C /go/src/${CONTAINERD_PRO} && cp -Rf /go/src/${CONTAINERD_PRO}/bin/* ${BUILD_ROOT}/bin
+	@echo "cross building lxcfs"
+	cd /go/src/${LXCFS_PRO} \
+		&& grep -l -r "liblxcfs" . | xargs sed -i 's/liblxcfs/libpouchlxcfs/g' \
+		&& ./bootstrap.sh
+ifeq (${GOARCH},amd64)
+	cd /go/src/${LXCFS_PRO} \
+		&& ./configure --prefix=${BUILD_ROOT}
+endif
+ifeq (${GOARCH},arm64)
+	cd /go/src/${LXCFS_PRO} \
+		&& ./configure --prefix=${BUILD_ROOT} \
+		--host=aarch64-linux-gnu \
+		--with-gnu-ld \
+		--with-distro=redhat
+endif
+ifeq (${GOARCH},ppc64le)
+	cd /go/src/${LXCFS_PRO} \
+		&& ./configure --prefix=${BUILD_ROOT} \
+		--host=powerpc64le-linux-gnu \
+		--with-gnu-ld \
+		--with-distro=redhat
+endif
+	@cd /go/src/${LXCFS_PRO} && ${MAKE} clean && ${MAKE} && ${MAKE} install
+	@mv ${BUILD_ROOT}/bin/lxcfs ${BUILD_ROOT}/bin/pouch-lxcfs
 
 build-daemon-integration: modules plugin ## build PouchContainer daemon integration testing binary
 	@echo $@
@@ -133,6 +251,7 @@ download-dependencies: package-dependencies ## install dumb-init, local-persist,
 clean: ## clean to remove bin/* and files created by module
 	@go clean
 	@rm -f bin/*
+	@rm -rf install/*
 	@rm -rf coverage/*
 	@./hack/module --clean
 
