@@ -4,7 +4,7 @@ Display the running processes of a container
 
 ### Synopsis
 
-top command is to display the running processes of a container.You can add options just like using Linux ps command.
+top command is to display the running processes of a container. You can add options just like using Linux ps command.
 
 ```
 pouch top CONTAINER [ps OPTIONS]

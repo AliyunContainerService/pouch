@@ -4,7 +4,7 @@ Get real time events from the daemon
 
 ### Synopsis
 
-events cli tool is used to subscribe pouchd events.We support filter parameter to filter some events that we care about or not.
+events cli tool is used to subscribe pouchd events. We support filter parameter to filter some events that we care about or not.
 
 ```
 pouch events [OPTIONS]

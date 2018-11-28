@@ -4,7 +4,7 @@ Unpause one or more paused container
 
 ### Synopsis
 
-Unpause one or more paused containers in Pouchd. when unpausing, the paused container will resumes the process execution within the container.The container you unpaused will be running again if no error occurs.
+Unpause one or more paused containers in Pouchd. when unpausing, the paused container will resumes the process execution within the container. The container you unpaused will be running again if no error occurs.
 
 ```
 pouch unpause CONTAINER [CONTAINER...]
