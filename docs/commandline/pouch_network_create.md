@@ -26,6 +26,7 @@ pouchnet: e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
   -h, --help                 help for create
       --ip-range string      the range of network's ip
       --ipam-driver string   the ipam driver of network (default "default")
+      --ipam-opt strings     the ipam driver options of network
   -l, --label strings        create network with labels
   -n, --name string          the name of network
   -o, --option strings       create network with options
