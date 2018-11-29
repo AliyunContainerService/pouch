@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
@@ -143,8 +144,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		ContainersStopped: cStopped,
 		Debug:             mgr.config.Debug,
 		DefaultRuntime:    mgr.config.DefaultRuntime,
-		// FIXME: avoid hard code
-		Driver: "overlayfs",
+		Driver:            ctrd.CurrentSnapshotterName(),
 		// DriverStatus: ,
 		ExperimentalBuild: false,
 		HTTPProxy:         mgr.config.ImageProxy,

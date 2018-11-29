@@ -26,6 +26,7 @@ type APIClient interface {
 
 	Version(ctx context.Context) (containerd.Version, error)
 	Cleanup() error
+	Plugins(ctx context.Context, filters []string) ([]Plugin, error)
 }
 
 // ContainerAPIClient provides access to containerd container features.
@@ -104,8 +105,9 @@ type SnapshotAPIClient interface {
 	// GetSnapshotUsage returns the resource usage of an active or committed snapshot
 	// excluding the usage of parent snapshots.
 	GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usage, error)
-	// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
-	WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error
+	// WalkSnapshot walk all snapshots in specific snapshotter. If not set specific snapshotter,
+	// it will be set to current snapshotter. For each snapshot, the function will be called.
+	WalkSnapshot(ctx context.Context, snapshotter string, fn func(context.Context, snapshots.Info) error) error
 	// CreateCheckpoint creates a checkpoint from a running container
 	CreateCheckpoint(ctx context.Context, id string, checkpointDir string, exit bool) error
 }

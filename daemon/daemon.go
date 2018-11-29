@@ -101,6 +101,17 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		return nil
 	}
 
+	if cfg.Snapshotter != "" {
+		ctrd.SetSnapshotterName(cfg.Snapshotter)
+	}
+
+	if err = checkSnapshotterValid(ctrd.CurrentSnapshotterName(), ctrdClient); err != nil {
+		logrus.Errorf("failed to check snapshotter driver: %v", err)
+		return nil
+	}
+
+	logrus.Infof("Snapshotter is set to be %s", ctrd.CurrentSnapshotterName())
+
 	return &Daemon{
 		config:         cfg,
 		ctrdClient:     ctrdClient,

@@ -112,7 +112,7 @@ func (s *SnapshotsSyncer) Start() {
 func (s *SnapshotsSyncer) Sync() error {
 	start := time.Now().UnixNano()
 	var infos []snapshots.Info
-	err := s.client.WalkSnapshot(context.Background(), func(ctx context.Context, info snapshots.Info) error {
+	err := s.client.WalkSnapshot(context.Background(), "", func(ctx context.Context, info snapshots.Info) error {
 		infos = append(infos, info)
 		return nil
 	})
