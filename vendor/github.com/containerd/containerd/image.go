@@ -9,6 +9,8 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/rootfs"
+	"github.com/containerd/containerd/snapshots"
+
 	digest "github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -99,15 +101,16 @@ func (i *image) Unpack(ctx context.Context, snapshotterName string) error {
 	}
 
 	var (
-		sn = i.client.SnapshotService(snapshotterName)
-		a  = i.client.DiffService()
-		cs = i.client.ContentStore()
+		sn  = i.client.SnapshotService(snapshotterName)
+		a   = i.client.DiffService()
+		cs  = i.client.ContentStore()
+		opt = snapshots.WithLabels(i.i.Labels)
 
 		chain    []digest.Digest
 		unpacked bool
 	)
 	for _, layer := range layers {
-		unpacked, err = rootfs.ApplyLayer(ctx, layer, chain, sn, a)
+		unpacked, err = rootfs.ApplyLayer(ctx, layer, chain, sn, a, opt)
 		if err != nil {
 			return err
 		}

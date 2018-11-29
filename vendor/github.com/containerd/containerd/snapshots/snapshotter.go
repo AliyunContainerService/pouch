@@ -9,6 +9,12 @@ import (
 	"github.com/containerd/containerd/mount"
 )
 
+//add label type=image in Snapshotter metadata Info.Labels to indicate the snapshot for image.
+const (
+	TypeLabelKey = "type"
+	ImageType    = "image"
+)
+
 // Kind identifies the kind of snapshot.
 type Kind uint8
 

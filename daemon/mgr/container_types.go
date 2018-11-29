@@ -12,6 +12,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -466,7 +467,7 @@ func (c *Container) SetSnapshotterMeta(mounts []mount.Mount) {
 	}
 
 	c.Snapshotter = &types.SnapshotterData{
-		Name: "overlayfs",
+		Name: ctrd.CurrentSnapshotterName(),
 		Data: data,
 	}
 }

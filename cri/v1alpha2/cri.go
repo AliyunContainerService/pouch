@@ -20,6 +20,7 @@ import (
 	cni "github.com/alibaba/pouch/cri/ocicni"
 	"github.com/alibaba/pouch/cri/stream"
 	criutils "github.com/alibaba/pouch/cri/utils"
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/hookplugins"
@@ -65,9 +66,6 @@ const (
 
 	// resolvConfPath is the abs path of resolv.conf on host or container.
 	resolvConfPath = "/etc/resolv.conf"
-
-	// defaultSnapshotterName is the default Snapshotter name.
-	defaultSnapshotterName = "overlayfs"
 
 	// snapshotPlugin implements a snapshotter.
 	snapshotPlugin = "io.containerd.snapshotter.v1"
@@ -180,7 +178,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		return nil, fmt.Errorf("failed to create sandbox meta store: %v", err)
 	}
 
-	c.imageFSPath = imageFSPath(path.Join(config.HomeDir, "containerd/root"), defaultSnapshotterName)
+	c.imageFSPath = imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName())
 	logrus.Infof("Get image filesystem path %q", c.imageFSPath)
 
 	if !config.CriConfig.DisableCriStatsCollect {

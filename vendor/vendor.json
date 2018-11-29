@@ -141,12 +141,12 @@
 			"revisionTime": "2017-09-25T15:48:32Z"
 		},
 		{
-			"checksumSHA1": "1ny6UV3Oq4kaqpQtM8bs9W9e3vw=",
+			"checksumSHA1": "FWVcLZHVLh1DFPx4vdgdXZSPICY=",
 			"path": "github.com/containerd/containerd",
-			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
-			"revisionTime": "2018-04-02T20:34:37Z",
-			"version": "v1.0.3",
-			"versionExact": "v1.0.3"
+			"revision": "8d8f780274f3fcf2efb5d21c25569b6fc3bb08fb",
+			"revisionTime": "2018-12-05T03:53:22Z",
+			"version": "v1.0.3-dev-alibaba",
+			"versionExact": "v1.0.3-dev-alibaba"
 		},
 		{
 			"checksumSHA1": "5pKxGJe3gsS/LjW8ZklKJvSXBMs=",
@@ -515,12 +515,12 @@
 			"versionExact": "v1.0.3"
 		},
 		{
-			"checksumSHA1": "DzMZUrndYzzDT7nqwcxHq2oC8Kc=",
+			"checksumSHA1": "/C8Wbf5VxH2wJkQTcZ+rsgG0BKY=",
 			"path": "github.com/containerd/containerd/snapshots",
-			"revision": "773c489c9c1b21a6d78b5c538cd395416ec50f88",
-			"revisionTime": "2018-04-02T20:34:37Z",
-			"version": "v1.0.3",
-			"versionExact": "v1.0.3"
+			"revision": "8d8f780274f3fcf2efb5d21c25569b6fc3bb08fb",
+			"revisionTime": "2018-12-05T03:53:22Z",
+			"version": "v1.0.3-dev-alibaba",
+			"versionExact": "v1.0.3-dev-alibaba"
 		},
 		{
 			"checksumSHA1": "8u2ZojhEDaoA4Co6usLof+TKj78=",
