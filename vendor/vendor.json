@@ -762,6 +762,12 @@
 			"revisionTime": "2018-06-06T04:43:31Z"
 		},
 		{
+			"checksumSHA1": "WjvsjU1rtFjD3S0MmzKi5M08zjc=",
+			"path": "github.com/docker/docker/pkg/term",
+			"revision": "fd2f2a919e392b96de74795ae9af2dc5e510bc4c",
+			"revisionTime": "2018-06-06T04:43:31Z"
+		},
+		{
 			"checksumSHA1": "1IPGX6/BnX7QN4DjbBk0UafTB2U=",
 			"path": "github.com/docker/go-connections/nat",
 			"revision": "7395e3f8aa162843a74ed6d48e79627d9792ac55",

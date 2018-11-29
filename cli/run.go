@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/ioutils"
 
 	"github.com/spf13/cobra"
@@ -105,42 +106,23 @@ func (rc *RunCommand) runRun(args []string) error {
 		rc.attach = true
 	}
 
-	wait := make(chan struct{})
+	pouchCliStreams := ioutils.CliStream{
+		InStream:  ioutils.NewInStream(os.Stdin),
+		OutStream: ioutils.NewOutStream(os.Stdout),
+	}
 
-	if err := checkTty(rc.stdin, rc.tty, os.Stdout.Fd()); err != nil {
+	if err := pouchCliStreams.InStream.CheckTty(rc.stdin, rc.tty); err != nil {
 		return err
 	}
 
+	var errCh chan error
 	if rc.attach || rc.stdin {
-		if rc.tty {
-			in, out, err := setRawMode(rc.stdin, false)
-			if err != nil {
-				return fmt.Errorf("failed to set raw mode")
-			}
-			defer func() {
-				if err := restoreMode(in, out); err != nil {
-					fmt.Fprintf(os.Stderr, "failed to restore term mode")
-				}
-			}()
-		}
-
-		conn, br, err := apiClient.ContainerAttach(ctx, containerName, rc.stdin)
+		// attach container
+		closer, err := rc.attachContainer(ctx, &pouchCliStreams, &errCh, containerName, apiClient)
 		if err != nil {
 			return fmt.Errorf("failed to attach container: %v", err)
 		}
-		defer conn.Close()
-
-		go func() {
-			io.Copy(os.Stdout, br)
-			wait <- struct{}{}
-		}()
-		go func() {
-			io.Copy(conn, os.Stdin)
-			// close write if receive CTRL-D
-			if cw, ok := conn.(ioutils.CloseWriter); ok {
-				cw.CloseWrite()
-			}
-		}()
+		defer closer.Close()
 	}
 
 	// start container
@@ -150,10 +132,13 @@ func (rc *RunCommand) runRun(args []string) error {
 		return fmt.Errorf("failed to run container %s: %v", containerName, err)
 	}
 
-	// wait the io to finish
-	if rc.attach || rc.stdin {
-		<-wait
-	} else {
+	if errCh != nil {
+		if err := <-errCh; err != nil {
+			return fmt.Errorf("failed to hijack container attach or std io: %v", err)
+		}
+	}
+
+	if !rc.attach && !rc.stdin {
 		fmt.Fprintf(os.Stdout, "%s\n", result.ID)
 	}
 
@@ -174,6 +159,49 @@ func (rc *RunCommand) runRun(args []string) error {
 	}
 
 	return nil
+}
+
+func (rc *RunCommand) attachContainer(
+	ctx context.Context,
+	cliStreams ioutils.Streams,
+	errCh *chan error,
+	containerName string,
+	apiClient client.CommonAPIClient,
+) (io.Closer, error) {
+	out := os.Stdout
+
+	var in io.ReadCloser
+	if rc.stdin {
+		in = os.Stdin
+	}
+
+	conn, br, err := apiClient.ContainerAttach(ctx, containerName, rc.stdin)
+	if err != nil {
+		return conn, fmt.Errorf("failed to attach container: %v", err)
+	}
+
+	ch := make(chan error, 1)
+	*errCh = ch
+
+	go func() {
+		ch <- func() error {
+			streamer := ioutils.HijackedIOStreamer{
+				Streams:      cliStreams,
+				InputStream:  in,
+				OutputStream: out,
+				Conn:         conn,
+				BufReader:    br,
+				Tty:          rc.tty,
+				DetachKeys:   rc.detachKeys,
+			}
+
+			if errH := streamer.Stream(ctx); errH != nil {
+				return errH
+			}
+			return err
+		}()
+	}()
+	return conn, nil
 }
 
 // runExample shows examples in run command, and is used in auto-generated cli docs.
