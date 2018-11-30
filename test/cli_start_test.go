@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -309,6 +310,13 @@ func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
 	defer os.RemoveAll(tmpDir)
 	checkpoint := "cp0"
 	command.PouchRun("checkpoint", "create", "--checkpoint-dir", tmpDir, name, checkpoint).Assert(c, icmd.Success)
+	// check criu image files have been dumped into checkpoint-dir, pouch create a description json,
+	// so there should be more than 1 files
+	dirs, err := ioutil.ReadDir(filepath.Join(tmpDir, checkpoint))
+	c.Assert(err, check.IsNil)
+	if len(dirs) < 2 {
+		c.Errorf("failed to dump criu image for container %s", name)
+	}
 
 	restoredContainer := "restoredContainer"
 	defer DelContainerForceMultyTime(c, restoredContainer)
@@ -318,6 +326,11 @@ func (suite *PouchStartSuite) TestStartFromCheckpoint(c *check.C) {
 	command.PouchRun("stop", restoredContainer).Assert(c, icmd.Success)
 
 	command.PouchRun("start", "--checkpoint-dir", tmpDir, "--checkpoint", checkpoint, restoredContainer).Assert(c, icmd.Success)
+
+	result := command.PouchRun("exec", restoredContainer, "sh", "-c", "ps -ef | grep top").Assert(c, icmd.Success)
+	if !strings.Contains(result.Stdout(), "top") {
+		c.Error("restored container should have top process")
+	}
 }
 
 // TestStartWithTty tests running container with -tty flag and attach stdin in a non-tty client.
