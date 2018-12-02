@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -36,14 +35,8 @@ func (suite *PouchRunVolumeSuite) TearDownTest(c *check.C) {
 
 // TestRunWithLocalVolume is to verify run container with -v volume works.
 func (suite *PouchRunVolumeSuite) TestRunWithLocalVolume(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestRunWithLocalVolume"
 
-	name := funcname
 	{
 		res := command.PouchRun("volume", "create", "--name", funcname)
 		defer func() {
@@ -53,9 +46,9 @@ func (suite *PouchRunVolumeSuite) TestRunWithLocalVolume(c *check.C) {
 	}
 
 	{
-		res := command.PouchRun("run", "--name", name, "-v", funcname+":/tmp",
+		res := command.PouchRun("run", "--name", funcname, "-v", funcname+":/tmp",
 			busyboxImage, "touch", "/tmp/test")
-		defer DelContainerForceMultyTime(c, name)
+		defer DelContainerForceMultyTime(c, funcname)
 		res.Assert(c, icmd.Success)
 	}
 

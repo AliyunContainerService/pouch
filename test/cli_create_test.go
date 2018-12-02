@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"runtime"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -14,7 +13,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 )
 
 // PouchCreateSuite is the test suite for create CLI.
@@ -109,12 +108,7 @@ func (suite *PouchCreateSuite) TestCreateWithTTY(c *check.C) {
 //
 // TODO: pouch inspect should return volume info to check
 func (suite *PouchCreateSuite) TestPouchCreateVolume(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestPouchCreateVolume"
 
 	res := command.PouchRun("create", "-v /tmp:/tmp", "--name", funcname, busyboxImage)
 	defer DelContainerForceMultyTime(c, funcname)
