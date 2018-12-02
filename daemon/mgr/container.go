@@ -1168,6 +1168,14 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 		if err := mount.Unmount(c.BaseFS, 0); err != nil {
 			logrus.Errorf("failed to umount rootfs when remove the container %s: %v", c.ID, err)
 		}
+
+		// Note(ziren): when deleting a container whose rootfs was provided, we also should
+		// remove the upperDir and workDir of container. because the directories cost disk
+		// space and the disk space counted into the new container that using the same
+		// disk quota id.
+		if err := c.CleanRootfsSnapshotDirs(); err != nil {
+			logrus.Errorf("failed to clean rootfs: %v", err)
+		}
 	} else if err := mgr.Client.RemoveSnapshot(ctx, c.SnapshotKey()); err != nil {
 		// if the container is created by normal method, remove the
 		// snapshot when delete it.
