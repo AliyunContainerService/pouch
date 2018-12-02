@@ -439,10 +439,11 @@ func (c *Container) FormatStatus() (string, error) {
 }
 
 // UnsetMergedDir unsets Snapshot MergedDir. Stop a container will
-// delete the containerd container, the merged dir
-// will also be deleted, so we should unset the
-// container's MergedDir.
+// delete the containerd container, the merged dir  will also be
+// deleted, so we should unset the container's MergedDir.
 func (c *Container) UnsetMergedDir() {
+	c.Lock()
+	defer c.Unlock()
 	if c.Snapshotter == nil || c.Snapshotter.Data == nil {
 		return
 	}
@@ -489,6 +490,41 @@ func (c *Container) GetSpecificBasePath(path string) string {
 	}
 
 	return ""
+}
+
+// CleanRootfsSnapshotDirs deletes container's rootfs snapshot MergedDir, UpperDir and
+// WorkDir. Since the snapshot of container created by containerd will be cleaned by
+// containerd, so we only clean rootfs that is RootFSProvided.
+func (c *Container) CleanRootfsSnapshotDirs() error {
+	// if RootFSProvided is not set or Snapshotter data empty , we no need clean the rootfs
+	if !c.RootFSProvided || c.Snapshotter == nil || c.Snapshotter.Data == nil {
+		return nil
+	}
+
+	var (
+		removeDirs []string
+	)
+
+	c.Lock()
+	for _, dir := range []string{"MergedDir", "UpperDir", "WorkDir"} {
+		if v, ok := c.Snapshotter.Data[dir]; ok {
+			removeDirs = append(removeDirs, v)
+		}
+	}
+	c.Unlock()
+
+	var errMsgs []string
+	for _, dir := range removeDirs {
+		if err := os.RemoveAll(dir); err != nil {
+			errMsgs = append(errMsgs, err.Error())
+		}
+	}
+
+	if len(errMsgs) != 0 {
+		return fmt.Errorf(strings.Join(errMsgs, "\n"))
+	}
+
+	return nil
 }
 
 // ContainerRestartPolicy represents the policy is used to manage container.
