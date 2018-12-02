@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"runtime"
 	"strings"
 	"time"
 
@@ -57,12 +56,7 @@ func (suite *PouchNetworkSuite) TestNetworkInspectFormat(c *check.C) {
 
 // TestNetworkDefault tests the creation of default bridge/none/host network.
 func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkDefault"
 
 	// After pouchd is launched, default network bridge is created
 	// check the existence of default network: bridge
@@ -109,12 +103,7 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 
 // TestNetworkBridgeWorks tests bridge network works.
 func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkBridgeWorks"
 
 	// Remove network in case there is legacy network which may impacts test.
 	defer command.PouchRun("network", "remove", funcname)
@@ -225,12 +214,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 
 // TestNetworkCreateWrongDriver tests using wrong driver returns error.
 func (suite *PouchNetworkSuite) TestNetworkCreateWrongDriver(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkCreateWrongDriver"
 
 	expct := icmd.Expected{
 		ExitCode: 1,
@@ -245,12 +229,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWrongDriver(c *check.C) {
 
 // TestNetworkCreateWithLabel tests creating network with label.
 func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkCreateWithLabel"
 
 	tests := []struct {
 		name    string
@@ -304,12 +283,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithLabel(c *check.C) {
 
 // TestNetworkCreateWithOption tests creating network with option.
 func (suite *PouchNetworkSuite) TestNetworkCreateWithOption(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkCreateWithOption"
 
 	tests := []struct {
 		name    string
@@ -384,12 +358,7 @@ func (suite *PouchNetworkSuite) TestNetworkCreateWithIPAMOption(c *check.C) {
 
 // TestNetworkCreateDup tests creating duplicate network return error.
 func (suite *PouchNetworkSuite) TestNetworkCreateDup(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestNetworkCreateDup"
 
 	expct := icmd.Expected{
 		ExitCode: 1,

@@ -1,9 +1,6 @@
 package main
 
 import (
-	"runtime"
-	"strings"
-
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -34,12 +31,7 @@ func (suite *PouchAliKernelSuite) TearDownTest(c *check.C) {
 
 // TestAliKernelDiskQuotaWorks tests disk quota works on AliKernel.
 func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaWorks(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestAliKernelDiskQuotaWorks"
 
 	command.PouchRun("volume", "create", "--name", funcname, "-d", "local", "-o", "opt.size=1g").Assert(c, icmd.Success)
 	defer command.PouchRun("volume", "rm", funcname)
@@ -66,12 +58,7 @@ func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaWorks(c *check.C) {
 
 // TestAliKernelDiskQuotaMultiWorks tests multi volume with different disk quota works on AliKernel.
 func (suite *PouchAliKernelSuite) TestAliKernelDiskQuotaMultiWorks(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestAliKernelDiskQuotaMultiWorks"
 
 	name1 := funcname + "1"
 	name2 := funcname + "2"

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -106,12 +105,7 @@ func checkInitScriptWorks(c *check.C, cname string, image string, richmode strin
 // TestRichContainerDumbInitWorks check the dumb-init works.
 func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C) {
 	SkipIfFalse(c, environment.IsDumbInitExist)
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestRichContainerDumbInitWorks"
 
 	res := command.PouchRun("run", "-d", "--rich", "--rich-mode", "dumb-init", "--name", funcname,
 		busyboxImage, "sleep", "10000")
@@ -154,12 +148,7 @@ Comment the test (Ace-Tang).
 related issue : https://github.com/alibaba/pouch/issues/960
 related pr: https://github.com/alibaba/pouch/pull/1128
 func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestRichContainerInitdWorks"
 
 	ok, _ := isFileExistsInImage(centosImage, "/sbin/init", "checkinit")
 	if !ok {
@@ -202,12 +191,7 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	// TODO: uncomment it
 	c.Skip("skip this flaky test")
 
-	pc, _, _, _ := runtime.Caller(0)
-	tmpname := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-	var funcname string
-	for i := range tmpname {
-		funcname = tmpname[i]
-	}
+	funcname := "TestRichContainerSystemdWorks"
 
 	ok, _ := isFileExistsInImage(centosImage, "/usr/lib/systemd/systemd", "checksysd")
 	if !ok {
