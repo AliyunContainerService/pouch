@@ -75,6 +75,34 @@ func (suite *PouchRunVolumeSuite) TestRunWithTmpFSVolume(c *check.C) {
 	c.Assert(strings.Contains(res.Stdout(), "1.0M"), check.Equals, true)
 }
 
+//TestRunWithVolumeCopyData tests binds copying data
+//Pouch volumes should copy data, but host bind mount should not.
+func (suite *PouchRunVolumeSuite) TestRunWithVolumeCopyData(c *check.C) {
+	volumeName := "volume-test-copydata"
+	hostdir := "/tmp/bind-test-copydata"
+	containerName1 := "copydata-test-1"
+	containerName2 := "copydata-test-2"
+
+	// create volume
+	command.PouchRun("volume", "create", "-n", volumeName).Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
+	}()
+
+	command.PouchRun("run", "-t", "-v", volumeName+":/var", "--name", containerName1, busyboxImage, "ls", "/var").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerName1)
+	output1 := icmd.RunCommand("ls", DefaultVolumeMountPath+"/"+volumeName).Stdout()
+	lines := strings.Split(output1, "\n")
+	c.Assert(lines[0], check.Equals, "spool")
+	c.Assert(lines[1], check.Equals, "www")
+
+	command.PouchRun("run", "-t", "-v", hostdir+":/var", "--name", containerName2, busyboxImage, "ls", "/var").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerName2)
+	defer icmd.RunCommand("rm", "-rf", hostdir)
+	output2 := icmd.RunCommand("ls", hostdir).Stdout()
+	c.Assert(output2, check.Equals, "")
+}
+
 // TestRunWithHostFileVolume tests binding a host file as a volume into container.
 // fixes https://github.com/alibaba/pouch/issues/813
 func (suite *PouchRunVolumeSuite) TestRunWithHostFileVolume(c *check.C) {
