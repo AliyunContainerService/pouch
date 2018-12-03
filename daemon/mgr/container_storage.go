@@ -207,6 +207,8 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 				mp.Named = false
 				mp.Driver = ""
 			}
+		} else {
+			mp.CopyData = false
 		}
 
 		c.Mounts = append(c.Mounts, mp)
