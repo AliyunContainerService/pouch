@@ -27,6 +27,7 @@ type ExecCommand struct {
 	Detach      bool
 	User        string
 	Envs        []string
+	Privileged  bool
 }
 
 // Init initializes ExecCommand command.
@@ -54,6 +55,7 @@ func (e *ExecCommand) addFlags() {
 	flagSet.BoolVarP(&e.Interactive, "interactive", "i", false, "Open container's STDIN")
 	flagSet.StringVarP(&e.User, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
 	flagSet.StringArrayVarP(&e.Envs, "env", "e", []string{}, "Set environment variables")
+	flagSet.BoolVar(&e.Privileged, "privileged", false, "Give extended privileges to the exec process")
 }
 
 // runExec is the entry of ExecCommand command.
@@ -73,7 +75,7 @@ func (e *ExecCommand) runExec(args []string) error {
 		AttachStderr: !e.Detach,
 		AttachStdout: !e.Detach,
 		AttachStdin:  !e.Detach && e.Interactive,
-		Privileged:   false,
+		Privileged:   e.Privileged,
 		User:         e.User,
 		Env:          e.Envs,
 	}
