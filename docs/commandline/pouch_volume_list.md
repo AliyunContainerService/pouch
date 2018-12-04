@@ -28,10 +28,11 @@ pouch-volume-3
 ### Options
 
 ```
-  -h, --help         help for list
-      --mountpoint   Display volume mountpoint
-  -q, --quiet        Only display volume names
-      --size         Display volume size
+  -f, --filter strings   Filter output based on conditions provided, filter support driver, name, label
+  -h, --help             help for list
+      --mountpoint       Display volume mountpoint
+  -q, --quiet            Only display volume names
+      --size             Display volume size
 ```
 
 ### Options inherited from parent commands
