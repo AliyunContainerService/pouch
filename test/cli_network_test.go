@@ -48,10 +48,12 @@ func (suite *PouchNetworkSuite) TestNetworkInspectFormat(c *check.C) {
 		c.Errorf("failed to decode inspect output: %v", err)
 	}
 	networkID := network[0].ID
+	c.Assert(network[0].Name, check.Equals, "bridge")
+	c.Assert(network[0].Scope, check.Equals, "local")
 
 	// inspect network name by ID
-	output = command.PouchRun("network", "inspect", "-f", "{{.Name}}", networkID).Stdout()
-	c.Assert(output, check.Equals, "bridge\n")
+	output = command.PouchRun("network", "inspect", "-f", "Name: {{.Name}} Scope: {{.Scope}}", networkID).Stdout()
+	c.Assert(output, check.Equals, "Name: bridge Scope: local\n")
 }
 
 // TestNetworkDefault tests the creation of default bridge/none/host network.

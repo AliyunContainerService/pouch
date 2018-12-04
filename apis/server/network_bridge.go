@@ -61,11 +61,7 @@ func (s *Server) listNetwork(ctx context.Context, rw http.ResponseWriter, req *h
 
 	respNetworks := []types.NetworkResource{}
 	for _, net := range networks {
-		respNetworks = append(respNetworks, types.NetworkResource{
-			Name:   net.Name,
-			ID:     net.ID,
-			Driver: net.Type,
-		})
+		respNetworks = append(respNetworks, buildNetworkResource(net))
 	}
 	return EncodeResponse(rw, http.StatusOK, respNetworks)
 }
@@ -126,22 +122,45 @@ func buildNetworkInspectResp(n *networktypes.Network) *types.NetworkInspectResp 
 		Internal:   info.Internal(),
 		Options:    info.DriverOptions(),
 		Labels:     info.Labels(),
-		IPAM:       &types.IPAM{},
+		IPAM:       buildIpamResources(info),
+		Scope:      info.Scope(),
 	}
-	buildIpamResources(network, info)
 	return network
 }
 
-func buildIpamResources(r *types.NetworkInspectResp, nwInfo libnetwork.NetworkInfo) {
+func buildNetworkResource(n *networktypes.Network) types.NetworkResource {
+	r := types.NetworkResource{}
+	if n == nil {
+		return r
+	}
+
+	info := n.Network.Info()
+	r.Name = n.Name
+	r.ID = n.ID
+	r.Driver = n.Type
+	r.Containers = make(map[string]types.EndpointResource)
+	r.EnableIPV6 = info.IPv6Enabled()
+	r.IPAM = buildIpamResources(info)
+	r.Internal = info.Internal()
+	r.Labels = info.Labels()
+	r.Options = info.DriverOptions()
+	r.Scope = info.Scope()
+
+	return r
+}
+
+func buildIpamResources(nwInfo libnetwork.NetworkInfo) *types.IPAM {
+	r := &types.IPAM{}
+
 	id, opts, ipv4conf, ipv6conf := nwInfo.IpamConfig()
 
 	ipv4Info, ipv6Info := nwInfo.IpamInfo()
 
-	r.IPAM.Driver = id
+	r.Driver = id
 
-	r.IPAM.Options = opts
+	r.Options = opts
 
-	r.IPAM.Config = []types.IPAMConfig{}
+	r.Config = []types.IPAMConfig{}
 	for _, ip4 := range ipv4conf {
 		if ip4.PreferredPool == "" {
 			continue
@@ -151,15 +170,15 @@ func buildIpamResources(r *types.NetworkInspectResp, nwInfo libnetwork.NetworkIn
 		iData.IPRange = ip4.SubPool
 		iData.Gateway = ip4.Gateway
 		iData.AuxAddress = ip4.AuxAddresses
-		r.IPAM.Config = append(r.IPAM.Config, iData)
+		r.Config = append(r.Config, iData)
 	}
 
-	if len(r.IPAM.Config) == 0 {
+	if len(r.Config) == 0 {
 		for _, ip4Info := range ipv4Info {
 			iData := types.IPAMConfig{}
 			iData.Subnet = ip4Info.IPAMData.Pool.String()
 			iData.Gateway = ip4Info.IPAMData.Gateway.String()
-			r.IPAM.Config = append(r.IPAM.Config, iData)
+			r.Config = append(r.Config, iData)
 		}
 	}
 
@@ -174,7 +193,7 @@ func buildIpamResources(r *types.NetworkInspectResp, nwInfo libnetwork.NetworkIn
 		iData.IPRange = ip6.SubPool
 		iData.Gateway = ip6.Gateway
 		iData.AuxAddress = ip6.AuxAddresses
-		r.IPAM.Config = append(r.IPAM.Config, iData)
+		r.Config = append(r.Config, iData)
 	}
 
 	if !hasIpv6Conf {
@@ -185,7 +204,9 @@ func buildIpamResources(r *types.NetworkInspectResp, nwInfo libnetwork.NetworkIn
 			iData := types.IPAMConfig{}
 			iData.Subnet = ip6Info.IPAMData.Pool.String()
 			iData.Gateway = ip6Info.IPAMData.Gateway.String()
-			r.IPAM.Config = append(r.IPAM.Config, iData)
+			r.Config = append(r.Config, iData)
 		}
 	}
+
+	return r
 }
