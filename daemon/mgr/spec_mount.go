@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 
@@ -54,8 +55,13 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		if dup {
 			continue
 		}
-		if sm.Destination == "/dev/shm" && c.HostConfig.ShmSize != nil {
-			sm.Options = append(sm.Options, fmt.Sprintf("size=%s", strconv.FormatInt(*c.HostConfig.ShmSize, 10)))
+		if sm.Destination == "/dev/shm" && c.HostConfig.ShmSize != nil &&
+			*c.HostConfig.ShmSize != 0 {
+			for idx, v := range sm.Options {
+				if strings.Contains(v, "size=") {
+					sm.Options[idx] = fmt.Sprintf("size=%s", strconv.FormatInt(*c.HostConfig.ShmSize, 10))
+				}
+			}
 		}
 		mounts = append(mounts, sm)
 	}
@@ -101,10 +107,6 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 		}
 
 		// TODO: support copy data.
-
-		if mp.Destination == "/dev/shm" && c.HostConfig.ShmSize != nil {
-			opts = []string{fmt.Sprintf("size=%s", strconv.FormatInt(*c.HostConfig.ShmSize, 10))}
-		}
 
 		mounts = append(mounts, specs.Mount{
 			Source:      mp.Source,
