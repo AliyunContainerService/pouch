@@ -14,9 +14,10 @@ This doc includes:
 
 To build the `containerd` daemon, and the `ctr` simple test client, the following build system dependencies are required:
 
-* Go 1.9.x or above
+* Go 1.10.x or above
 * Protoc 3.x compiler and headers (download at the [Google protobuf releases page](https://github.com/google/protobuf/releases))
 * Btrfs headers and libraries for your distribution. Note that building the btrfs driver can be disabled via the build tag `no_btrfs`, removing this dependency.
+* `libseccomp` is required if you're building with seccomp support
 
 ## Build the development environment
 
@@ -43,7 +44,35 @@ need to satisfy this dependencies in your system:
 * CentOS/Fedora: `yum install btrfs-progs-devel`
 * Debian/Ubuntu: `apt-get install btrfs-tools`
 
+If you're building with seccomp, you'll need to install it with the following:
+
+* Debian/Ubuntu: `apt install libseccomp-dev`
+
 At this point you are ready to build `containerd` yourself!
+
+## Build runc
+
+`runc` is the default container runtime used by `containerd` and is required to
+run containerd. While it is okay to download a runc binary and install that on
+the system, sometimes it is necessary to build runc directly when working with
+container runtime development. You can skip this step if you already have the
+correct version of `runc` installed.
+
+For the quick and dirty installation, you can use the following:
+
+    go get github.com/opencontainers/runc
+
+This is not recommended, as the generated binary will not have version
+information. Instead, cd into the source directory and use make to build and
+install the binary:
+
+	cd $GOPATH/src/github.com/opencontainers/runc
+	make
+	make install
+
+Make sure to follow the guidelines for versioning in [RUNC.md](RUNC.md) for the
+best results. Some pointers on proper build tag setupVersion mismatches can
+result in undefined behavior.
 
 ## Build containerd
 
@@ -69,8 +98,12 @@ compiler to regenerate the API generated code packages with:
 make generate
 ```
 
-> *Note*: A build tag is currently available to disable building the btrfs snapshot driver.
-> Adding `BUILDTAGS=no_btrfs` to your environment before calling the **binaries**
+> *Note*: Several build tags are currently available:
+> * `no_btrfs`: A build tag disables building the btrfs snapshot driver.
+> * `no_cri`: A build tag disables building Kubernetes [CRI](http://blog.kubernetes.io/2016/12/container-runtime-interface-cri-in-kubernetes.html) support into containerd.
+> See [here](https://github.com/containerd/cri-containerd#build-tags) for build tags of CRI plugin.
+>
+> For example, adding `BUILDTAGS=no_btrfs` to your environment before calling the **binaries**
 > Makefile target will disable the btrfs driver within the containerd Go build.
 
 Vendoring of external imports uses the [`vndr` tool](https://github.com/LK4D4/vndr) which uses a simple config file, `vendor.conf`, to provide the URL and version or hash details for each vendored import. After modifying `vendor.conf` run the `vndr` tool to update the `vendor/` directory contents. Combining the `vendor.conf` update with the changeset in `vendor/` after running `vndr` should become a single commit for a PR which relies on vendored updates.
@@ -84,7 +117,7 @@ You can build static binaries by providing a few variables to `make`:
 ```sudo
 make EXTRA_FLAGS="-buildmode pie" \
 	EXTRA_LDFLAGS='-extldflags "-fno-PIC -static"' \
-	BUILDTAGS="static_build"
+	BUILDTAGS="netgo osusergo static_build"
 ```
 
 > *Note*:
@@ -102,7 +135,7 @@ You can build an image from this `Dockerfile`:
 FROM golang
 
 RUN apt-get update && \
-    apt-get install btrfs-tools
+    apt-get install -y btrfs-tools libseccomp-dev
 ```
 
 Let's suppose that you built an image called `containerd/build`. From the
@@ -138,11 +171,11 @@ We can build an image from this `Dockerfile`:
 FROM golang
 
 RUN apt-get update && \
-    apt-get install -y btrfs-tools libapparmor-dev libseccomp-dev
+    apt-get install -y btrfs-tools libseccomp-dev
 
 ```
 
-In our Docker container we will use a specific `runc` build which includes [seccomp](https://en.wikipedia.org/wiki/seccomp) and [apparmor](https://en.wikipedia.org/wiki/AppArmor) support. Hence why our Dockerfile includes these dependencies: `libapparmor-dev` `libseccomp-dev`. Please refer to [RUNC.md](/RUNC.md) for the currently supported version of `runc` that is used by containerd.
+In our Docker container we will use a specific `runc` build which includes [seccomp](https://en.wikipedia.org/wiki/seccomp) and [apparmor](https://en.wikipedia.org/wiki/AppArmor) support. Hence why our Dockerfile includes `libseccomp-dev` as a dependency (apparmor support doesn't require external libraries). Please refer to [RUNC.md](/RUNC.md) for the currently supported version of `runc` that is used by containerd.
 
 Let's suppose you build an image called `containerd/build` from the above Dockerfile. You can run the following command:
 

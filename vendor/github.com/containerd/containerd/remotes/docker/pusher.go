@@ -1,3 +1,19 @@
+/*
+   Copyright The containerd Authors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package docker
 
 import (
@@ -139,9 +155,18 @@ func (p dockerPusher) Push(ctx context.Context, desc ocispec.Descriptor) (conten
 		location := resp.Header.Get("Location")
 		// Support paths without host in location
 		if strings.HasPrefix(location, "/") {
-			u := p.base
-			u.Path = location
-			location = u.String()
+			// Support location string containing path and query
+			qmIndex := strings.Index(location, "?")
+			if qmIndex > 0 {
+				u := p.base
+				u.Path = location[:qmIndex]
+				u.RawQuery = location[qmIndex+1:]
+				location = u.String()
+			} else {
+				u := p.base
+				u.Path = location
+				location = u.String()
+			}
 		}
 
 		req, err = http.NewRequest(http.MethodPut, location, nil)
