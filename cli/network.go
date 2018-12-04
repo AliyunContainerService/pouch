@@ -371,11 +371,11 @@ func (n *NetworkListCommand) runNetworkList(args []string) error {
 
 // networkListExample shows examples in network list command, and is used in auto-generated cli docs.
 func networkListExample() string {
-	return `$ pouch network ls
-NETWORK ID   NAME   DRIVER    SCOPE
-6f7aba8a58   net2   bridge
-55f134176c   net3   bridge
-e495f50913   net1   bridge
+	return `$ pouch network list
+NETWORK ID   NAME     DRIVER   SCOPE
+058fce03b8   none     null     local
+b05a9b8844   bridge   bridge   local
+d8684bf988   host     host     local
 `
 }
 
