@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
-	"github.com/alibaba/pouch/test/util"
-
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -60,20 +58,19 @@ func (suite *APIContainerListSuite) TestListAll(c *check.C) {
 
 // TestListFilterInvalid test invalid filter.
 func (suite *APIContainerListSuite) TestListFilterInvalid(c *check.C) {
-	success, _, errResp := getContainerListOK(c, "foo", false)
-	c.Assert(success, check.Equals, false)
-	err := util.PartialEqual(errResp.Message, "invalid character")
+	filter := filters.NewArgs()
+	filter.Add("foo", "")
+	args, err := filters.ToParam(filter)
 	c.Assert(err, check.IsNil)
+	success, _, _ := getContainerListOK(c, args, false)
+	c.Assert(success, check.Equals, false)
 
-	success, _, errResp = getContainerListOK(c, "{\"foo\":[\"bar\"]}", false)
-	c.Assert(success, check.Equals, false)
-	err = util.PartialEqual(errResp.Message, "invalid filter")
+	filter = filters.NewArgs()
+	filter.Add("foo", "bar")
+	args, err = filters.ToParam(filter)
 	c.Assert(err, check.IsNil)
-
-	success, _, errResp = getContainerListOK(c, "{\"id\":[\"null\"],\"foo\":[\"bar\"]}", false)
+	success, _, _ = getContainerListOK(c, args, false)
 	c.Assert(success, check.Equals, false)
-	err = util.PartialEqual(errResp.Message, "invalid filter")
-	c.Assert(err, check.IsNil)
 }
 
 // TestListFilterInvalid test equal filter.
@@ -89,46 +86,76 @@ func (suite *APIContainerListSuite) TestListFilterEqual(c *check.C) {
 	containerBID := strings.TrimSpace(resB.Combined())
 
 	// id filter
-	success, got, _ := getContainerListOK(c, fmt.Sprintf("{\"id\":[\"%s\"]}", containerAID), true)
+	filter := filters.NewArgs()
+	filter.Add("id", containerAID)
+	args, err := filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ := getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerAID)
 
 	// name filter
-	success, got, _ = getContainerListOK(c, fmt.Sprintf("{\"name\":[\"%s\"]}", containerA), true)
+	filter = filters.NewArgs()
+	filter.Add("name", containerA)
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerAID)
 
 	// label filter
-	success, got, _ = getContainerListOK(c, fmt.Sprintf("{\"label\":[\"label=%s\"]}", containerB), true)
+	filter = filters.NewArgs()
+	filter.Add("label", "label="+containerB)
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerBID)
 
 	// status filter
-	success, got, _ = getContainerListOK(c, fmt.Sprintf("{\"status\":[\"%s\"]}", "created"), true)
+	filter = filters.NewArgs()
+	filter.Add("status", "create")
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerBID)
 
 	// combined filter matched
-	success, got, _ = getContainerListOK(c,
-		fmt.Sprintf("{\"id\":[\"%s\"],\"status\":[\"%s\"],\"label\":[\"label=%s\"],\"name\":[\"%s\"]}", containerBID, "created", containerB, containerB),
-		true)
+	filter = filters.NewArgs()
+	filter.Add("id", containerBID)
+	filter.Add("status", "created")
+	filter.Add("label", "label="+containerB)
+	filter.Add("name", containerB)
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerBID)
 
 	// combined filter
-	success, got, _ = getContainerListOK(c,
-		fmt.Sprintf("{\"id\":[\"%s\"],\"status\":[\"%s\"],\"label\":[\"label=%s\"],\"name\":[\"%s\"]}", containerAID, "created", containerB, containerB),
-		true)
+	filter = filters.NewArgs()
+	filter.Add("id", containerAID)
+	filter.Add("status", "created")
+	filter.Add("label", "label="+containerB)
+	filter.Add("name", containerB)
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 0)
 
 	// regex filter
-	success, got, _ = getContainerListOK(c, "{\"name\":[\"A\"]}", true)
+	filter = filters.NewArgs()
+	filter.Add("name", "A")
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerAID)
@@ -146,12 +173,21 @@ func (suite *APIContainerListSuite) TestListFilterUnEqual(c *check.C) {
 	defer DelContainerForceMultyTime(c, containerB)
 	containerBID := strings.TrimSpace(resB.Combined())
 
-	success, got, _ := getContainerListOK(c, fmt.Sprintf("{\"label\":[\"label!=%s\"]}", containerB), true)
+	filter := filters.NewArgs()
+	filter.Add("label", "label!="+containerB)
+	args, err := filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ := getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerAID)
 
-	success, got, _ = getContainerListOK(c, fmt.Sprintf("{\"id\":[\"%s\"],\"label\":[\"label!=null\"]}", containerBID), true)
+	filter = filters.NewArgs()
+	filter.Add("id", containerBID)
+	filter.Add("label", "label!=null")
+	args, err = filters.ToParam(filter)
+	c.Assert(err, check.IsNil)
+	success, got, _ = getContainerListOK(c, args, true)
 	c.Assert(success, check.Equals, true)
 	c.Assert(len(got), check.Equals, 1)
 	c.Assert(got[0].ID, check.Equals, containerBID)

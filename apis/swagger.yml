@@ -544,7 +544,7 @@ paths:
         - name: "filters"
           in: "query"
           description: |
-            Filters encoded as JSON string(type map[string][]string in Golang). This API will list containers match all of the filters. For example, `{"status": ["paused"]}` will only return paused containers.
+            Filters encoded as JSON string(type map[string]map[string]bool in Golang). This API will list containers match all of the filters. For example, `{"status": ["paused"]}` will only return paused containers.
             Available filters:
             - `id=<ID>` container ID filter, support regular expression.
             - `name=<name>` container name filter, support regular expression.
@@ -4222,33 +4222,6 @@ definitions:
         type: "boolean"
       Link:
         type: "boolean"
-
-  ContainerListOptions:
-    description: |
-      options of list container, filters (a `map[string][]string`) to process on the container list. Available filters:
-
-      - `id=container-id`
-      - `name=container-name`
-      - `status=running`
-      - `label=key` or `label=key=value`
-      - `network=container-network`
-      - `volume=volume-id`
-    type: "object"
-    properties:
-      All:
-        type: "boolean"
-      Since:
-        type: "string"
-      Before:
-        type: "string"
-      Limit:
-        type: "integer"
-      Filter:
-        type: "object"
-        additionalProperties:
-          type: "array"
-          items:
-            type: "string"
 
   EventsMessage:
     description: |

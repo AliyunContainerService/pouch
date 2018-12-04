@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/utils/filters"
 )
 
 // ContainerList returns the list of containers.
@@ -16,8 +16,8 @@ func (client *APIClient) ContainerList(ctx context.Context, option types.Contain
 		q.Set("all", "true")
 	}
 
-	if len(option.Filter) > 0 {
-		fJSON, err := filters.ToURLParam(option.Filter)
+	if option.Filter.Len() > 0 {
+		fJSON, err := filters.ToParam(option.Filter)
 		if err != nil {
 			return nil, err
 		}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -200,6 +201,17 @@ func (args Args) MatchKVList(key string, sources map[string]string) bool {
 	}
 
 	for value := range fieldValues {
+		if attrKV := strings.SplitN(value, "!=", 2); len(attrKV) == 2 {
+			//unequal case, such as labels=key!=value
+			v, ok := sources[attrKV[0]]
+			if !ok {
+				return false
+			}
+			if attrKV[1] == v {
+				return false
+			}
+			continue
+		}
 		attrKV := strings.SplitN(value, "=", 2)
 
 		v, ok := sources[attrKV[0]]
@@ -212,4 +224,23 @@ func (args Args) MatchKVList(key string, sources map[string]string) bool {
 	}
 
 	return true
+}
+
+// Match returns true if any of the values at key match the source string
+func (args Args) Match(field, source string) bool {
+	if args.ExactMatch(field, source) {
+		return true
+	}
+
+	fieldValues := args.fields[field]
+	for name2match := range fieldValues {
+		match, err := regexp.MatchString(name2match, source)
+		if err != nil {
+			continue
+		}
+		if match {
+			return true
+		}
+	}
+	return false
 }

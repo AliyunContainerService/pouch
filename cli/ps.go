@@ -6,9 +6,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/pkg/utils/filters"
 
 	"github.com/spf13/cobra"
 )
@@ -60,7 +60,7 @@ func (p *PsCommand) runPs(args []string) error {
 	ctx := context.Background()
 	apiClient := p.cli.Client()
 
-	filter, err := filters.Parse(p.flagFilter)
+	filter, err := filters.FromFilterOpts(p.flagFilter)
 	if err != nil {
 		return err
 	}

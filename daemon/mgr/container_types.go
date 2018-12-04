@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/ctrd"
@@ -155,7 +156,7 @@ type AttachConfig struct {
 // ContainerListOption wraps the container list interface params.
 type ContainerListOption struct {
 	All        bool
-	Filter     map[string][]string
+	Filter     filters.Args
 	FilterFunc ContainerFilter
 }
 

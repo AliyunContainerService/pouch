@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/metrics"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/pkg/utils/filters"
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/go-openapi/strfmt"
@@ -127,17 +127,15 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 }
 
 func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
-	option := &mgr.ContainerListOption{
-		All: httputils.BoolValue(req, "all"),
-	}
-
-	filters, err := filters.FromURLParam(req.FormValue("filters"))
+	filter, err := filters.FromParam(req.FormValue("filters"))
 	if err != nil {
 		return err
 	}
-	option.Filter = filters
 
-	cons, err := s.ContainerMgr.List(ctx, option)
+	cons, err := s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
+		Filter: filter,
+		All:    httputils.BoolValue(req, "all"),
+	})
 	if err != nil {
 		return err
 	}

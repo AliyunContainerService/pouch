@@ -195,6 +195,10 @@ func TestArgsMatchKVList(t *testing.T) {
 			"created": {"today": true},
 			"labels":  {"key1=value1": true}},
 		}: "labels",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key1!=value2": true}},
+		}: "labels",
 	}
 
 	for args, field := range matches {
@@ -214,6 +218,10 @@ func TestArgsMatchKVList(t *testing.T) {
 		{map[string]map[string]bool{
 			"created": {"today": true},
 			"labels":  {"key1=value3": true}},
+		}: "labels",
+		{map[string]map[string]bool{
+			"created": {"today": true},
+			"labels":  {"key1!=value1": true}},
 		}: "labels",
 	}
 
@@ -268,5 +276,59 @@ func TestArgsValidate(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func TestArgsMatch(t *testing.T) {
+	source := "today"
+
+	matches := map[*Args]string{
+		{}: "field",
+		{map[string]map[string]bool{
+			"created": {"today": true}},
+		}: "today",
+		{map[string]map[string]bool{
+			"created": {"to*": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"to(.*)": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"tod": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"anything": true, "to*": true}},
+		}: "created",
+	}
+
+	for args, field := range matches {
+		if !args.Match(field, source) {
+			t.Fatalf("Expected field %s to match %s", field, source)
+		}
+	}
+
+	differs := map[*Args]string{
+		{map[string]map[string]bool{
+			"created": {"tomorrow": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"to(day": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"tom(.*)": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"tom": true}},
+		}: "created",
+		{map[string]map[string]bool{
+			"created": {"today1": true},
+			"labels":  {"today": true}},
+		}: "created",
+	}
+
+	for args, field := range differs {
+		if args.Match(field, source) {
+			t.Fatalf("Expected field %s to not match %s", field, source)
+		}
 	}
 }

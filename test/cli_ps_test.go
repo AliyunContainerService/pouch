@@ -6,8 +6,6 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
-	"github.com/alibaba/pouch/test/util"
-
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -68,21 +66,6 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 		c.Assert(kv[name].status[0], check.Equals, "Stopped")
 	}
 
-}
-
-// TestPsFilterInvalid tests "pouch ps -f" invalid
-func (suite *PouchPsSuite) TestPsFilterInvalid(c *check.C) {
-	result := command.PouchRun("ps", "-f", "foo")
-	err := util.PartialEqual(result.Stderr(), "Bad format of filter, expected name=value")
-	c.Assert(err, check.IsNil)
-
-	result = command.PouchRun("ps", "-f", "foo=bar")
-	err = util.PartialEqual(result.Stderr(), "Invalid filter")
-	c.Assert(err, check.IsNil)
-
-	result = command.PouchRun("ps", "-f", "id=null", "-f", "foo=bar")
-	err = util.PartialEqual(result.Stderr(), "Invalid filter")
-	c.Assert(err, check.IsNil)
 }
 
 // TestPsFilterEqual tests "pouch ps -f" filter equal condition work
