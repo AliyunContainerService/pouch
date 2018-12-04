@@ -24,8 +24,8 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/linux/runctypes"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/runtime/linux/runctypes"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -112,7 +112,7 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 			},
 		).Debugf("creating cio (withStdin=%v, withTerminal=%v)", withStdin, withTerminal)
 
-		fifoset, err := containerio.NewCioFIFOSet(execID, withStdin, withTerminal)
+		fifoset, err := containerio.NewFIFOSet(execID, withStdin, withTerminal)
 		if err != nil {
 			return nil, err
 		}
@@ -341,7 +341,7 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID)
 
 	if !c.lock.TrylockWithRetry(ctx, id) {
 		return nil, errtypes.ErrLockfailed
@@ -583,7 +583,7 @@ func (c *Client) createTask(ctx context.Context, id, checkpointDir string, conta
 	task, err := container.NewTask(ctx, func(_ string) (cio.IO, error) {
 		logrus.WithField("container", cntrID).Debugf("creating cio (withStdin=%v, withTerminal=%v)", withStdin, withTerminal)
 
-		fifoset, err := containerio.NewCioFIFOSet(execID, withStdin, withTerminal)
+		fifoset, err := containerio.NewFIFOSet(execID, withStdin, withTerminal)
 		if err != nil {
 			return nil, err
 		}
@@ -695,7 +695,7 @@ func (c *Client) waitContainer(ctx context.Context, id string) (types.ContainerW
 		return types.ContainerWaitOKBody{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID)
 
 	waitExit := func() *Message {
 		return c.ProbeContainer(ctx, id, -1*time.Second)
@@ -735,7 +735,7 @@ func (c *Client) CreateCheckpoint(ctx context.Context, id string, checkpointDir 
 
 	var opts []containerd.CheckpointTaskOpts
 	if exit {
-		opts = append(opts, containerd.WithExit)
+		opts = append(opts, withExitShimV1CheckpointTaskOpts())
 	}
 	checkpoint, err := pack.task.Checkpoint(ctx, opts...)
 	if err != nil {
@@ -749,7 +749,7 @@ func (c *Client) CreateCheckpoint(ctx context.Context, id string, checkpointDir 
 }
 
 func applyCheckpointImage(ctx context.Context, client *containerd.Client, checkpoint containerd.Image, checkpointDir string) error {
-	b, err := content.ReadBlob(ctx, client.ContentStore(), checkpoint.Target().Digest)
+	b, err := content.ReadBlob(ctx, client.ContentStore(), checkpoint.Target())
 	if err != nil {
 		return errors.Wrapf(err, "failed to retrieve checkpoint data")
 	}
@@ -769,7 +769,7 @@ func applyCheckpointImage(ctx context.Context, client *containerd.Client, checkp
 		return errors.Wrapf(err, "invalid checkpoint")
 	}
 
-	rat, err := client.ContentStore().ReaderAt(ctx, cpDesc.Digest)
+	rat, err := client.ContentStore().ReaderAt(ctx, *cpDesc)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get checkpoint reader")
 	}
@@ -783,7 +783,7 @@ func applyCheckpointImage(ctx context.Context, client *containerd.Client, checkp
 }
 
 func writeContent(ctx context.Context, mediaType, ref string, r io.Reader, client *containerd.Client) (*containerdtypes.Descriptor, error) {
-	writer, err := client.ContentStore().Writer(ctx, ref, 0, "")
+	writer, err := client.ContentStore().Writer(ctx, content.WithRef(ref))
 	if err != nil {
 		return nil, err
 	}
@@ -832,10 +832,10 @@ func withCheckpointOpt(checkpoint *containerdtypes.Descriptor) containerd.NewTas
 }
 
 // InitStdio allows caller to handle any initialize job.
-type InitStdio func(dio *containerio.DirectIO) (cio.IO, error)
+type InitStdio func(dio *cio.DirectIO) (cio.IO, error)
 
-func (c *Client) createIO(fifoSet *containerio.CioFIFOSet, cntrID, procID string, closeStdinCh <-chan struct{}, initstdio InitStdio) (cio.IO, error) {
-	cdio, err := containerio.NewDirectIO(context.Background(), fifoSet)
+func (c *Client) createIO(fifoSet *cio.FIFOSet, cntrID, procID string, closeStdinCh <-chan struct{}, initstdio InitStdio) (cio.IO, error) {
+	cdio, err := cio.NewDirectIO(context.Background(), fifoSet)
 	if err != nil {
 		return nil, err
 	}
@@ -884,12 +884,12 @@ func (c *Client) attachIO(fifoSet *cio.FIFOSet, initstdio InitStdio) (cio.IO, er
 		return nil, fmt.Errorf("cannot attach to existing fifos")
 	}
 
-	cdio, err := containerio.NewDirectIO(context.Background(), &containerio.CioFIFOSet{
+	cdio, err := cio.NewDirectIO(context.Background(), &cio.FIFOSet{
 		Config: cio.Config{
 			Terminal: fifoSet.Terminal,
-			Stdin:    fifoSet.In,
-			Stdout:   fifoSet.Out,
-			Stderr:   fifoSet.Err,
+			Stdin:    fifoSet.Stdin,
+			Stdout:   fifoSet.Stdout,
+			Stderr:   fifoSet.Stderr,
 		},
 	})
 	if err != nil {

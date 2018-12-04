@@ -143,8 +143,8 @@ func (c *Client) saveImage(ctx context.Context, exporter ctrdmetaimages.Exporter
 // ImportImage creates a set of images by tarstream.
 //
 // NOTE: One tar may have several manifests.
-func (c *Client) ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error) {
-	imgs, err := c.importImage(ctx, importer, reader)
+func (c *Client) ImportImage(ctx context.Context, reader io.Reader, opts ...containerd.ImportOpt) ([]containerd.Image, error) {
+	imgs, err := c.importImage(ctx, reader, opts...)
 	if err != nil {
 		return imgs, convertCtrdErr(err)
 	}
@@ -154,7 +154,7 @@ func (c *Client) ImportImage(ctx context.Context, importer ctrdmetaimages.Import
 // importImage creates a set of images by tarstream.
 //
 // NOTE: One tar may have several manifests.
-func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error) {
+func (c *Client) importImage(ctx context.Context, reader io.Reader, opts ...containerd.ImportOpt) ([]containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -162,18 +162,23 @@ func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Import
 
 	// NOTE: The import will store the data into boltdb. But the unpack may
 	// fail. It is not transaction.
-	imgs, err := wrapperCli.client.Import(ctx, importer, reader)
+	imgs, err := wrapperCli.client.Import(ctx, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
 
+	res := make([]containerd.Image, 0, len(imgs))
 	for _, img := range imgs {
-		err = img.Unpack(ctx, containerd.DefaultSnapshotter)
+		image := containerd.NewImage(wrapperCli.client, img)
+
+		err = image.Unpack(ctx, containerd.DefaultSnapshotter)
 		if err != nil {
 			return nil, err
 		}
+
+		res = append(res, image)
 	}
-	return imgs, nil
+	return res, nil
 }
 
 // PullImage downloads an image from the remote repository.

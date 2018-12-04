@@ -665,9 +665,9 @@ func (mgr *ImageManager) validateTagReference(ref reference.Named) error {
 }
 
 // getManifest gets a manifest from the image for the given platform.
-func (mgr *ImageManager) getManifest(ctx context.Context, cs content.Store, img containerd.Image, platform string) (ocispec.Manifest, error) {
+func (mgr *ImageManager) getManifest(ctx context.Context, cs content.Store, img containerd.Image, matcher platforms.MatchComparer) (ocispec.Manifest, error) {
 	// layers info
-	manifest, err := ctrdmetaimages.Manifest(ctx, cs, img.Target(), platform)
+	manifest, err := ctrdmetaimages.Manifest(ctx, cs, img.Target(), matcher)
 	if err != nil {
 		return ocispec.Manifest{}, err
 	}

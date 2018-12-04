@@ -186,12 +186,12 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	}
 
 	// write manifest content
-	if err := content.WriteBlob(ctx, cs, mfstDigest.String(), bytes.NewReader(mfstJSON), mfstDesc.Size, mfstDesc.Digest, content.WithLabels(labels)); err != nil {
+	if err := content.WriteBlob(ctx, cs, mfstDigest.String(), bytes.NewReader(mfstJSON), mfstDesc, content.WithLabels(labels)); err != nil {
 		return "", errors.Wrapf(err, "error writing manifest blob %s", mfstDigest)
 	}
 
 	// write config content
-	if err := content.WriteBlob(ctx, cs, configDesc.Digest.String(), bytes.NewReader(imgJSON), configDesc.Size, configDesc.Digest); err != nil {
+	if err := content.WriteBlob(ctx, cs, configDesc.Digest.String(), bytes.NewReader(imgJSON), configDesc); err != nil {
 		return "", errors.Wrap(err, "error writing config blob")
 	}
 
@@ -200,9 +200,9 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 }
 
 // export a new layer from a container
-func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, differ diff.Differ) (ocispec.Descriptor, string, error) {
+func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, comparer diff.Comparer) (ocispec.Descriptor, string, error) {
 	// export new layer
-	rwDesc, err := rootfs.Diff(ctx, name, sn, differ, diff.WithLabels(map[string]string{
+	rwDesc, err := rootfs.CreateDiff(ctx, name, sn, comparer, diff.WithLabels(map[string]string{
 		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339Nano),
 	}))
 	if err != nil {
@@ -258,7 +258,7 @@ func newChildImage(ctx context.Context, config *CommitConfig, diffIDDigest diges
 }
 
 // create a new snapshot for exported layer
-func newSnapshot(ctx context.Context, pImg ocispec.Image, sn snapshots.Snapshotter, differ diff.Differ, layer ocispec.Descriptor, name, diffIDStr string) error {
+func newSnapshot(ctx context.Context, pImg ocispec.Image, sn snapshots.Snapshotter, differ diff.Applier, layer ocispec.Descriptor, name, diffIDStr string) error {
 	diffIDs := pImg.RootFS.DiffIDs
 	parent := identity.ChainID(diffIDs).String()
 

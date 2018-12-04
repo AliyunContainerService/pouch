@@ -60,7 +60,8 @@ main() {
   integration::stop_pouchd
   integration::run_pouchd_background "${cmd}" "${flags}" "${pouchd_log}"
 
-  set +e; integration::ping_pouchd; code=$?; set -e
+  # use subshell to ping
+  set +e; ( integration::ping_pouchd ); code=$?; set -e
   if [[ "${code}" != "0" ]]; then
     echo "there is daemon logs..."
     cat "${pouchd_log}"
