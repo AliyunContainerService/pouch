@@ -310,3 +310,22 @@ func (suite *PouchExecSuite) TestExecForCloseIO(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(string(out), check.Equals, "1\nhello\n")
 }
+
+// TestExecWithPrivileged tests exec with --privileged can work
+func (suite *PouchExecSuite) TestExecWithPrivileged(c *check.C) {
+	name := "TestExecWithPrivileged"
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("run", "-d", "--name", name, "--cap-drop=ALL", busyboxImage, "top").Assert(c, icmd.Success)
+
+	// without --privileged, exec should fails
+	command.PouchRun("exec", name, "sh", "-c", "mknod /tmp/sda b 8 16").Assert(c, icmd.Expected{
+		ExitCode: 1,
+		Err:      "Operation not permitted",
+	})
+
+	command.PouchRun("exec", "--privileged", name, "sh", "-c", "mknod /tmp/sdb b 8 16").Assert(c, icmd.Success)
+	ret := command.PouchRun("exec", name, "ls", "/tmp/sdb")
+	ret.Assert(c, icmd.Success)
+	c.Assert(ret.Stdout(), check.Equals, "/tmp/sdb\n")
+}
