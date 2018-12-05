@@ -1,8 +1,11 @@
 package mgr
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -13,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"github.com/pkg/errors"
 )
@@ -123,6 +127,23 @@ func (mgr *ContainerManager) getRuntime(runtime string) (string, error) {
 	}
 
 	return rPath, nil
+}
+
+// getContainerSpec returns container runtime spec, unmarshal spec from config.json
+// TODO: when runtime type can be specified, it need fix
+func (mgr *ContainerManager) getContainerSpec(c *Container) (*specs.Spec, error) {
+	runtimeType := fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS)
+	configFile := filepath.Join(mgr.Config.HomeDir, "containerd/state", runtimeType, mgr.Config.DefaultNamespace, c.ID, "config.json")
+	var spec specs.Spec
+	data, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(data, &spec); err != nil {
+		return nil, err
+	}
+
+	return &spec, nil
 }
 
 // BuildContainerEndpoint is used to build container's endpoint config.
