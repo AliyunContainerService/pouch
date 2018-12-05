@@ -109,6 +109,7 @@ func (suite *PouchRunVolumeSuite) TestRunWithHostFileVolume(c *check.C) {
 	// first create a file on the host
 	filepath := "/tmp/TestRunWithHostFileVolume.md"
 	icmd.RunCommand("touch", filepath).Assert(c, icmd.Success)
+	defer icmd.RunCommand("rm", "-f", filepath)
 
 	cname := "TestRunWithHostFileVolume"
 	res := command.PouchRun("run", "-d", "--name", cname, "-v",
