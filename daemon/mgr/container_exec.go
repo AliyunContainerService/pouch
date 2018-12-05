@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/user"
+	"github.com/docker/docker/daemon/caps"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
@@ -95,6 +96,21 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 			GID:            gid,
 			AdditionalGids: additionalGids,
 		},
+	}
+
+	if execConfig.Privileged {
+		capList := caps.GetAllCapabilities()
+		process.Capabilities = &specs.LinuxCapabilities{
+			Effective:   capList,
+			Bounding:    capList,
+			Permitted:   capList,
+			Inheritable: capList,
+		}
+	} else if spec, err := mgr.getContainerSpec(c); err == nil {
+		// NOTE: if container is created by docker and taken over by pouchd,
+		// no config.json can found under current path, runc exec is good even
+		// without these capabilities in exec process
+		process.Capabilities = spec.Process.Capabilities
 	}
 
 	// set exec process ulimit, ulimit not decided by exec config
