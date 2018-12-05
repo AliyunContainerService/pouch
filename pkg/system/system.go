@@ -119,6 +119,7 @@ func GetNodeIP() string {
 	}
 
 	scanner := bufio.NewScanner(bytes.NewReader(output))
+	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		ip := scanner.Text()
 		if net.ParseIP(ip) != nil {
