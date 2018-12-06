@@ -143,8 +143,8 @@ func TestFollowFile(t *testing.T) {
 		<-waitCh
 	}()
 
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		// NOTE: make sure all the goroutine exits
 		defer func() {
 			waitCh <- struct{}{}
