@@ -90,22 +90,38 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumeCopyData(c *check.C) {
 		command.PouchRun("volume", "rm", volumeName).Assert(c, icmd.Success)
 	}()
 
+	// dirs under busybox image `/var` directory
+	// notes: there is a `/var/log` directory under rich mode container
+	expectedDirs := []string{"spool", "www"}
+
 	command.PouchRun("run", "-t", "-v", volumeName+":/var", "--name", containerName1, busyboxImage, "ls", "/var").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, containerName1)
 	output1 := icmd.RunCommand("ls", DefaultVolumeMountPath+"/"+volumeName).Stdout()
-	lines := strings.Split(output1, "\n")
-	if !utils.StringInSlice(lines, "spool") {
-		c.Fatalf("expected \"spool\" directory under /var directory, but got %s", output1)
-	}
-	if !utils.StringInSlice(lines, "www") {
-		c.Fatalf("expected \"www\" directory under /var directory, but got %s", output1)
+
+	if !lsResultContains(output1, expectedDirs) {
+		c.Fatalf("expected \"%s\" directory under /var directory, but got %s",
+			strings.Join(expectedDirs, " "), output1)
 	}
 
 	command.PouchRun("run", "-t", "-v", hostdir+":/var", "--name", containerName2, busyboxImage, "ls", "/var").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, containerName2)
 	defer icmd.RunCommand("rm", "-rf", hostdir)
 	output2 := icmd.RunCommand("ls", hostdir).Stdout()
-	c.Assert(output2, check.Equals, "")
+
+	if lsResultContains(output2, expectedDirs) {
+		c.Fatalf("volume mount in host bind mode, but \"%s\" exists", strings.Join(expectedDirs, " "))
+	}
+}
+
+func lsResultContains(res string, names []string) bool {
+	lines := strings.Split(res, "\n")
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		if !utils.StringInSlice(lines, name) {
+			return false
+		}
+	}
+	return true
 }
 
 // TestRunWithHostFileVolume tests binding a host file as a volume into container.
