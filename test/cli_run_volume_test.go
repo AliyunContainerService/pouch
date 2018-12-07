@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 
@@ -93,8 +94,12 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumeCopyData(c *check.C) {
 	defer DelContainerForceMultyTime(c, containerName1)
 	output1 := icmd.RunCommand("ls", DefaultVolumeMountPath+"/"+volumeName).Stdout()
 	lines := strings.Split(output1, "\n")
-	c.Assert(lines[0], check.Equals, "spool")
-	c.Assert(lines[1], check.Equals, "www")
+	if !utils.StringInSlice(lines, "spool") {
+		c.Fatalf("expected \"spool\" directory under /var directory, but got %s", output1)
+	}
+	if !utils.StringInSlice(lines, "www") {
+		c.Fatalf("expected \"www\" directory under /var directory, but got %s", output1)
+	}
 
 	command.PouchRun("run", "-t", "-v", hostdir+":/var", "--name", containerName2, busyboxImage, "ls", "/var").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, containerName2)
