@@ -13,11 +13,11 @@ pouch network list
 ### Examples
 
 ```
-$ pouch network ls
-NETWORK ID   NAME   DRIVER    SCOPE
-6f7aba8a58   net2   bridge
-55f134176c   net3   bridge
-e495f50913   net1   bridge
+$ pouch network list
+NETWORK ID   NAME     DRIVER   SCOPE
+058fce03b8   none     null     local
+b05a9b8844   bridge   bridge   local
+d8684bf988   host     host     local
 
 ```
 
