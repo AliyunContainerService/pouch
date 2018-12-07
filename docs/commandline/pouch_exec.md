@@ -27,6 +27,7 @@ PID   USER     TIME  COMMAND
   -e, --env stringArray   Set environment variables
   -h, --help              help for exec
   -i, --interactive       Open container's STDIN
+      --privileged        Give extended privileges to the exec process
   -t, --tty               Allocate a tty device
   -u, --user string       Username or UID (format: <name|uid>[:<group|gid>])
 ```
