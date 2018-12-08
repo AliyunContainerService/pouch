@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"path"
+	"strconv"
 	"strings"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
@@ -662,7 +663,6 @@ func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]lib
 
 	// TODO: secondary ip address
 	// TODO: parse extra hosts
-	// TODO: port mapping
 	var bindings = make(nat.PortMap)
 	if endpoint.PortBindings != nil {
 		for p, b := range endpoint.PortBindings {
@@ -743,4 +743,67 @@ func joinOptions(endpoint *types.Endpoint) ([]libnetwork.EndpointOption, error) 
 	// set priority option
 	joinOptions = append(joinOptions, libnetwork.JoinOptionPriority(nil, endpoint.Priority))
 	return joinOptions, nil
+}
+
+// getSandboxPortMapInfo retrieves the current port-mapping programmed for the given sandbox.
+func getSandboxPortMapInfo(sb libnetwork.Sandbox) apitypes.PortMap {
+	pm := apitypes.PortMap{}
+	if sb == nil {
+		return pm
+	}
+
+	for _, ep := range sb.Endpoints() {
+		pm, _ = getEndpointPortMapInfo(ep)
+		if len(pm) > 0 {
+			break
+		}
+	}
+	return pm
+}
+
+func getEndpointPortMapInfo(ep libnetwork.Endpoint) (apitypes.PortMap, error) {
+	pm := apitypes.PortMap{}
+	driverInfo, err := ep.DriverInfo()
+	if err != nil {
+		return pm, err
+	}
+
+	if driverInfo == nil {
+		return pm, nil
+	}
+
+	// get exposedPorts from driverInfo, which was open by --expose and so on
+	if expData, ok := driverInfo[netlabel.ExposedPorts]; ok {
+		if exposedPorts, ok := expData.([]networktypes.TransportPort); ok {
+			for _, tp := range exposedPorts {
+				natPort, err := nat.NewPort(tp.Proto.String(), strconv.Itoa(int(tp.Port)))
+				if err != nil {
+					return pm, fmt.Errorf("failed to parse Port value(%v):%v", tp.Port, err)
+				}
+				pm[string(natPort)] = nil
+			}
+		}
+	}
+
+	mapData, ok := driverInfo[netlabel.PortMap]
+	if !ok {
+		return pm, nil
+	}
+
+	// get the port-mapping from driverInfo, which was open by -p HostPort:port
+	portMapping, ok := mapData.([]networktypes.PortBinding)
+	if !ok {
+		return pm, nil
+	}
+
+	for _, pp := range portMapping {
+		natPort, err := nat.NewPort(pp.Proto.String(), strconv.Itoa(int(pp.Port)))
+		if err != nil {
+			return pm, err
+		}
+		natBndg := apitypes.PortBinding{HostIP: pp.HostIP.String(), HostPort: strconv.Itoa(int(pp.HostPort))}
+		pm[string(natPort)] = append(pm[string(natPort)], natBndg)
+	}
+
+	return pm, nil
 }

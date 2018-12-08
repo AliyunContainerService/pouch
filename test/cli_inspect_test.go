@@ -205,5 +205,5 @@ func (suite *PouchInspectSuite) TestContainerInspectPorts(c *check.C) {
 		c.Fatal("fail to format container json")
 	}
 	data, _ := json.Marshal(containers[0].NetworkSettings.Ports)
-	c.Assert(string(data), check.Equals, "{\"80/tcp\":[{\"HostPort\":\"8080\"}]}")
+	c.Assert(string(data), check.Equals, "{\"80/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"8080\"}]}")
 }

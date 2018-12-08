@@ -650,6 +650,15 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 		}
 	}
 
+	sb, err := mgr.NetworkMgr.Controller().SandboxByID(c.NetworkSettings.SandboxID)
+	if err != nil {
+		// sandbox not found, maybe caused by disconnect network or no endpoint
+		logrus.Warnf("failed to get sandbox by id(%s), err(%v)", c.NetworkSettings.SandboxID, err)
+		c.NetworkSettings.Ports = types.PortMap{}
+		return nil
+	}
+
+	c.NetworkSettings.Ports = getSandboxPortMapInfo(sb)
 	return nil
 }
 
@@ -1472,7 +1481,7 @@ func (mgr *ContainerManager) Disconnect(ctx context.Context, containerName, netw
 	c.Unlock()
 	endpoint.EndpointConfig = epConfig
 	if err := mgr.NetworkMgr.EndpointRemove(ctx, endpoint); err != nil {
-		// TODO(ziren): it is a trick, we should wrapper sanbox
+		// TODO(ziren): it is a trick, we should wrapper sandbox
 		// not found as an error type
 		if !strings.Contains(err.Error(), "not found") {
 			logrus.Errorf("failed to remove endpoint: %v", err)
