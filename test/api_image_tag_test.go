@@ -8,7 +8,6 @@ import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
-
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -61,7 +60,7 @@ func (suite *APIImageTagSuite) TestImageTagUsingNoFoundSourceImage(c *check.C) {
 
 // TestImageTagFailToOverrideExistingPrimaryReference tests fail.
 func (suite *APIImageTagSuite) TestImageTagFailToOverrideExistingPrimaryReference(c *check.C) {
-	repo, tag := "registry.hub.docker.com/library/busybox", "1.25"
+	repo, tag := environment.BusyboxRepo, environment.Busybox125Tag
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 	command.PouchRun("pull", tagRef).Assert(c, icmd.Success)
 	defer DelImageForceOk(c, tagRef)

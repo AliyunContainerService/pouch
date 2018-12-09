@@ -54,7 +54,7 @@ func (suite *APIContainerInspectSuite) TestInpectOk(c *check.C) {
 	//
 	// add more field checker
 	c.Assert(got.Name, check.Equals, cname)
-	c.Assert(got.Image, check.Equals, busyboxImage125ID)
+	c.Assert(got.Image, check.Equals, environment.Busybox125ID)
 	c.Assert(got.Config.Image, check.Equals, busyboxImage125)
 	c.Assert(got.Created, check.NotNil)
 	// StartedAt time should be 0001-01-01T00:00:00Z for a non-started container

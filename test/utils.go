@@ -14,22 +14,22 @@ import (
 // const defines common image name
 var (
 	busyboxImage                string
+	busyboxImageID              string
+	busyboxImage125             string
 	helloworldImage             string
 	helloworldImageOnlyRepoName = "hello-world"
 
 	// GateWay test gateway
-	GateWay string
+	testGateWay string
 
 	// Subnet test subnet
-	Subnet string
+	testSubnet string
 )
 
 const (
-	busyboxImage125   = "registry.hub.docker.com/library/busybox:1.25"
-	busyboxImage125ID = "sha256:e02e811dd08fd49e7f6032625495118e63f597eb150403d02e3238af1df240ba"
-	testHubAddress    = "registry.hub.docker.com"
-	testHubUser       = "pouchcontainertest"
-	testHubPasswd     = "pouchcontainertest"
+	testHubAddress = "registry.hub.docker.com"
+	testHubUser    = "pouchcontainertest"
+	testHubPasswd  = "pouchcontainertest"
 
 	testDaemonHTTPSAddr = "tcp://0.0.0.0:2000"
 	serverCa            = "/tmp/tls/server/ca.pem"
@@ -44,13 +44,18 @@ const (
 func init() {
 	// Get test images config from test environment.
 	environment.GetBusybox()
-	environment.GetHelloWorld()
+	environment.GetOtherImage()
 
 	busyboxImage = environment.BusyboxRepo + ":" + environment.BusyboxTag
+	busyboxImageID = environment.BusyboxRepo + ":" + environment.BusyboxID
+	busyboxImage125 = environment.BusyboxRepo + ":" + environment.Busybox125Tag
 	helloworldImage = environment.HelloworldRepo + ":" + environment.HelloworldTag
 
-	GateWay = environment.GateWay
-	Subnet = environment.Subnet
+	// init network test config
+	environment.GetTestNetwork()
+
+	testGateWay = environment.GateWay
+	testSubnet = environment.Subnet
 
 }
 

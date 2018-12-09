@@ -401,7 +401,7 @@ func (suite *PouchNetworkSuite) TestNetworkPortMapping(c *check.C) {
 		Out:      "It works",
 	}
 
-	image := "registry.hub.docker.com/library/httpd:2"
+	image := environment.HttpdRepo + ":" + environment.HttpdTag
 
 	command.PouchRun("pull", image).Assert(c, icmd.Success)
 	command.PouchRun("run", "-d",

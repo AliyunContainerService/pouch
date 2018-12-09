@@ -194,7 +194,7 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesDestinationNotEmpty(c *check
 	// is `/opt/cni` which is not empty in the image. We should still be able to see
 	// the data in the image's `/opt/cni` when the volume is mounted.
 	// Details refer to: https://github.com/alibaba/pouch/issues/1739
-	image := "calico/cni:v3.1.3"
+	image := environment.CniRepo + ":" + environment.CniTag
 	containerName := "volumesDestinationNotEmpty"
 
 	// For the workdir of image `calico/cni:v3.1.3` is `/opt/cni/bin`,
@@ -256,6 +256,9 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromWithDupclicate(c *check.
 func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromDifferentSources(c *check.C) {
 	// TODO: build the image with volume
 	imageWithVolume := "registry.hub.docker.com/shaloulcy/busybox:with-volume"
+	if environment.IsAliKernel() {
+		imageWithVolume = "reg.docker.alibaba-inc.com/pouch/busybox:with-volume"
+	}
 	containerName1 := "TestRunWithVolumesFromImage"
 	containerName2 := "TestRunWithVolumesFromContainerAndImage"
 
