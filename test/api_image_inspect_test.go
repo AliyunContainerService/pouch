@@ -21,27 +21,26 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIImageInspectSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-	PullImage(c, fmt.Sprintf("%s:%s", environment.BusyboxRepo, "1.24"))
+	PullImage(c, fmt.Sprintf("%s:%s", environment.BusyboxRepo, environment.BusyboxTag))
 }
 
 // TestImageInspectOk tests inspecting images is OK.
 func (suite *APIImageInspectSuite) TestImageInspectOk(c *check.C) {
 	var (
-		repo = environment.BusyboxRepo
-		tag  = "1.24"
-
-		id  = "sha256:ca3d7d608b8a8bbaaac2c350bd0f9588cce0509ada74108d5c4b2afb24c46125"
-		dig = "sha256:840f2b98a2540ff1d265782c42543dbec7218d3ab0e73b296d7dac846f146e27"
+		repo   = environment.BusyboxRepo
+		tag    = environment.BusyboxTag
+		digest = environment.BusyboxDigest
+		id     = environment.BusyboxID
 	)
 
 	repoTag := fmt.Sprintf("%s:%s", repo, tag)
-	repoDigest := fmt.Sprintf("%s@%s", repo, dig)
+	repoDigest := fmt.Sprintf("%s@%s", repo, digest)
 
 	for _, image := range []string{
 		id,
 		repoTag,
 		repoDigest,
-		fmt.Sprintf("%s:whatever@%s", repo, dig),
+		fmt.Sprintf("%s:whatever@%s", repo, digest),
 	} {
 		resp, err := request.Get("/images/" + image + "/json")
 		c.Assert(err, check.IsNil)

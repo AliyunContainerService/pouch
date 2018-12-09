@@ -28,14 +28,41 @@ var (
 	// BusyboxRepo the repository of busybox image
 	BusyboxRepo = "registry.hub.docker.com/library/busybox"
 
-	// BusyboxTag the tag used for busybox image
+	// BusyboxTag the default tag used for busybox image
 	BusyboxTag = "1.28"
+
+	// BusyboxDigest the digest used for busybox image
+	BusyboxDigest = "sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47"
+
+	// BusyboxID the default ID for busybox image
+	BusyboxID = "sha256:8c811b4aec35f259572d0f79207bc0678df4c736eeec50bc9fec37ed936a472a"
+
+	// Busybox125Tag the 1.25 tag used for 1.25 busybox image
+	Busybox125Tag = "1.25"
+
+	// Busybox125Digest the digests used for 1.25 busybox image
+	Busybox125Digest = "sha256:29f5d56d12684887bdfa50dcd29fc31eea4aaf4ad3bec43daf19026a7ce69912"
+
+	// Busybox125ID the ID used for 1.25 busybox image
+	Busybox125ID = "sha256:e02e811dd08fd49e7f6032625495118e63f597eb150403d02e3238af1df240ba"
 
 	// HelloworldRepo the repository of hello-world image
 	HelloworldRepo = "registry.hub.docker.com/library/hello-world"
 
 	// HelloworldTag the tag used for hello-world image
 	HelloworldTag = "linux"
+
+	// HttpdRepo the repo for httpd image
+	HttpdRepo = "registry.hub.docker.com/library/httpd"
+
+	// HttpdTag the tag for httpd image
+	HttpdTag = "2"
+
+	// CniRepo the repo for cni image
+	CniRepo = "calico/cni"
+
+	// CniTag the tag for cni image
+	CniTag = "v3.1.3"
 
 	// GateWay default gateway for test
 	GateWay = "192.168.1.1"
@@ -68,23 +95,47 @@ func init() {
 	cgroupInfo = system.NewCgroupInfo()
 }
 
-// GetBusybox get image info from test environment variable.
+// GetBusybox gets image info from test environment variable.
 func GetBusybox() {
-	if len(os.Getenv("POUCH_BUSYBOXREPO")) != 0 {
-		BusyboxRepo = os.Getenv("POUCH_BUSYBOXREPO")
+	if env := os.Getenv("POUCH_BUSYBOX_REPO"); len(env) != 0 {
+		BusyboxRepo = env
 	}
-	if len(os.Getenv("POUCH_BUSYBOXTAG")) != 0 {
-		BusyboxTag = os.Getenv("POUCH_BUSYBOXTAG")
+	if env := os.Getenv("POUCH_BUSYBOX_TAG"); len(env) != 0 {
+		BusyboxTag = env
+	}
+	if env := os.Getenv("POUCH_BUSYBOX_ID"); len(env) != 0 {
+		BusyboxID = env
+	}
+	if env := os.Getenv("POUCH_BUSYBOX_DIGEST"); len(env) != 0 {
+		BusyboxDigest = env
+	}
+	if env := os.Getenv("POUCH_BUSYBOX125_DIGEST"); len(env) != 0 {
+		Busybox125Digest = env
+	}
+	if env := os.Getenv("POUCH_BUSYBOX125_ID"); len(env) != 0 {
+		Busybox125ID = env
 	}
 }
 
-// GetHelloWorld get image info from test environment variable.
-func GetHelloWorld() {
-	if len(os.Getenv("POUCH_HELLOWORLDREPO")) != 0 {
-		HelloworldRepo = os.Getenv("POUCH_HELLOWORLDREPO")
+// GetOtherImage gets other image info from test environment variable.
+func GetOtherImage() {
+	if env := os.Getenv("POUCH_HELLOWORLD_REPO"); len(env) != 0 {
+		HelloworldRepo = env
 	}
-	if len(os.Getenv("POUCH_HELLOWORLDTAG")) != 0 {
-		HelloworldTag = os.Getenv("POUCH_HELLOWORLDTAG")
+	if env := os.Getenv("POUCH_HELLOWORLD_TAG"); len(env) != 0 {
+		HelloworldTag = env
+	}
+	if env := os.Getenv("POUCH_HTTPD_REPO"); len(env) != 0 {
+		HttpdRepo = env
+	}
+	if env := os.Getenv("POUCH_HTTPD_TAG"); len(env) != 0 {
+		HttpdTag = env
+	}
+	if env := os.Getenv("POUCH_CNI_REPO"); len(env) != 0 {
+		CniRepo = env
+	}
+	if env := os.Getenv("POUCH_CNI_TAG"); len(env) != 0 {
+		CniTag = env
 	}
 }
 

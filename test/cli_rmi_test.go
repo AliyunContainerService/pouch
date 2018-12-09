@@ -83,8 +83,8 @@ func (suite *PouchRmiSuite) TestRmiByImageDigestID(c *check.C) {
 // TestRmiByImageIDWithTwoPrimaryReferences tests "pouch rmi {ID}" work.
 func (suite *PouchRmiSuite) TestRmiByImageIDWithTwoPrimaryReferences(c *check.C) {
 	var (
-		repoTag    = environment.BusyboxRepo + ":" + "1.25"
-		repoDigest = environment.BusyboxRepo + "@" + "sha256:29f5d56d12684887bdfa50dcd29fc31eea4aaf4ad3bec43daf19026a7ce69912"
+		repoTag    = environment.BusyboxRepo + ":" + environment.BusyboxTag
+		repoDigest = environment.BusyboxRepo + "@" + environment.BusyboxDigest
 	)
 
 	command.PouchRun("pull", repoTag).Assert(c, icmd.Success)

@@ -40,33 +40,22 @@ func (suite *PouchPullSuite) TestPullWorks(c *check.C) {
 		command.PouchRun("rmi", "-f", expected).Assert(c, icmd.Success)
 	}
 
-	busybox := "registry.hub.docker.com/library/busybox"
+	busyboxRepo := environment.BusyboxRepo
 
 	// without tag
-	latest := busybox + ":latest"
-	checkPull(busybox, latest)
+	latest := busyboxRepo + ":latest"
+	checkPull(busyboxRepo, latest)
 
 	// with latest
 	checkPull(latest, latest)
 
-	// with :1.27.2
-	version := busybox + ":1.27.2"
+	// with default tag
+	version := busyboxRepo + ":" + environment.BusyboxTag
 	checkPull(version, version)
 
-	// without registry
-	withoutRegistry := "busybox:latest"
-	checkPull(withoutRegistry, latest)
-
-	// image with namespace but without registry
-	cadvisor := "registry.hub.docker.com/google/cadvisor:latest"
-	cadvisorWithoutRegistry := "google/cadvisor:latest"
-	checkPull(cadvisorWithoutRegistry, cadvisor)
-
-	// image with digest for tag 1.25
-	busybox125Digest := "sha256:29f5d56d12684887bdfa50dcd29fc31eea4aaf4ad3bec43daf19026a7ce69912"
-
-	busyboxDigest := busybox + "@" + busybox125Digest
-	busyboxDigestWithWrongTag := busybox + ":whatever" + "@" + busybox125Digest
+	// image with digest for tag
+	busyboxDigest := busyboxRepo + "@" + environment.BusyboxDigest
+	busyboxDigestWithWrongTag := busyboxRepo + ":whatever" + "@" + environment.BusyboxDigest
 	checkPull(busyboxDigestWithWrongTag, busyboxDigest)
 }
 

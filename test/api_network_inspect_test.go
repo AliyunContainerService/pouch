@@ -29,8 +29,8 @@ func (suite *APINetworkInspectSuite) TestNetworkInspectOk(c *check.C) {
 		"IPAM": map[string]interface{}{
 			"Config": []map[string]interface{}{
 				{
-					"Gateway": GateWay,
-					"Subnet":  Subnet,
+					"Gateway": testGateWay,
+					"Subnet":  testSubnet,
 				},
 			},
 		},

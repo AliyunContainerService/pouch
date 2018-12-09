@@ -39,7 +39,7 @@ func (suite *PouchTagSuite) TestImageTagOKWithSourceImageID(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "source.id"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
 
-	command.PouchRun("tag", busyboxImage125ID, tagRef).Assert(c, icmd.Success)
+	command.PouchRun("tag", environment.Busybox125ID, tagRef).Assert(c, icmd.Success)
 	defer DelImageForceOk(c, tagRef)
 
 	command.PouchRun("image", "inspect", tagRef).Assert(c, icmd.Success)

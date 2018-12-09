@@ -61,8 +61,8 @@ func (suite *APIImageListSuite) TestImageListDigest(c *check.C) {
 func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
 	q := url.Values{}
 
-	repoDigest := "registry.hub.docker.com/library/busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47"
-	repoTag := "registry.hub.docker.com/library/busybox:1.28"
+	repoDigest := environment.BusyboxRepo + "@" + environment.BusyboxDigest
+	repoTag := environment.BusyboxRepo + ":" + environment.BusyboxTag
 
 	f := filters.NewArgs()
 	f.Add("reference", repoTag)
@@ -93,10 +93,9 @@ func (suite *APIImageListSuite) TestImageListFilter(c *check.C) {
 
 // TestImageListInvalidFilter tests listing images with invalid filter.
 func (suite *APIImageListSuite) TestImageListInvalidFilter(c *check.C) {
-	repoTag := "registry.hub.docker.com/library/busybox:1.28"
 	q := url.Values{}
 	f := filters.NewArgs()
-	f.Add("after", repoTag)
+	f.Add("after", busyboxImage)
 	filterJSON, err := filters.ToParam(f)
 	c.Assert(err, check.IsNil)
 	q.Add("filters", filterJSON)

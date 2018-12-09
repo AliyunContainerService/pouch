@@ -37,8 +37,8 @@ func (suite *PouchRunDNSSuite) TestRunWithUserDefinedNetwork(c *check.C) {
 	// Create a user-defined network
 	command.PouchRun("network", "create", "--name", cname,
 		"-d", "bridge",
-		"--gateway", GateWay,
-		"--subnet", Subnet).Assert(c, icmd.Success)
+		"--gateway", testGateWay,
+		"--subnet", testSubnet).Assert(c, icmd.Success)
 	defer command.PouchRun("network", "remove", cname)
 
 	// Assign the user-defined network to a container

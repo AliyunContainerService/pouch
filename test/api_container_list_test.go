@@ -48,7 +48,7 @@ func (suite *APIContainerListSuite) TestListAll(c *check.C) {
 	// check fields
 	c.Assert(got[0].ID, check.Equals, containerAID)
 	c.Assert(got[0].Image, check.Equals, busyboxImage125)
-	c.Assert(got[0].ImageID, check.Equals, busyboxImage125ID)
+	c.Assert(got[0].ImageID, check.Equals, environment.Busybox125ID)
 	c.Assert(len(got[0].Names), check.Equals, 1)
 	c.Assert(got[0].Names[0], check.Equals, containerA)
 
