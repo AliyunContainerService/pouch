@@ -30,7 +30,7 @@ func (suite *APIImageTagSuite) SetUpTest(c *check.C) {
 // TestImageTagCreateWithTagOK tests OK.
 func (suite *APIImageTagSuite) TestImageTagCreateWithTagOK(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "0.5.0"
-	resp, err := suite.sendRequest(busyboxImage, repo, tag)
+	resp, err := suite.doTag(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 201)
 
@@ -42,7 +42,7 @@ func (suite *APIImageTagSuite) TestImageTagCreateWithTagOK(c *check.C) {
 // TestImageTagCreateUsingDefaultTagOK tests OK.
 func (suite *APIImageTagSuite) TestImageTagCreateUsingDefaultTagOK(c *check.C) {
 	repo, tag := "localhost:5000/testimagetagok/pouch", "latest"
-	resp, err := suite.sendRequest(busyboxImage, repo, tag)
+	resp, err := suite.doTag(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 201)
 
@@ -54,7 +54,7 @@ func (suite *APIImageTagSuite) TestImageTagCreateUsingDefaultTagOK(c *check.C) {
 // TestImageTagUsingNoFoundSourceImage tests fail.
 func (suite *APIImageTagSuite) TestImageTagUsingNoFoundSourceImage(c *check.C) {
 	repo, tag := "image_test_using_no_found_source_image", "latest"
-	resp, err := suite.sendRequest("image_test_ghost_image", repo, tag)
+	resp, err := suite.doTag("image_test_ghost_image", repo, tag)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
 }
@@ -66,33 +66,47 @@ func (suite *APIImageTagSuite) TestImageTagFailToOverrideExistingPrimaryReferenc
 	command.PouchRun("pull", tagRef).Assert(c, icmd.Success)
 	defer DelImageForceOk(c, tagRef)
 
-	resp, err := suite.sendRequest(busyboxImage, repo, tag)
+	resp, err := suite.doTag(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 400)
 }
 
 // TestImageTagFailToOverrideExistingTag tests fail.
 func (suite *APIImageTagSuite) TestImageTagFailToOverrideExistingTag(c *check.C) {
-	repo, tag := "registry.hub.docker.com/library/busybox", "1.25"
+	repo, tag := "localhost:5000/shouldnotoverridetag", "1.0"
 	tagRef := fmt.Sprintf("%s:%s", repo, tag)
-	command.PouchRun("pull", tagRef).Assert(c, icmd.Success)
-	defer DelImageForceOk(c, tagRef)
 
-	resp, err := suite.sendRequest(busyboxImage, repo, tag)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 400)
+	// create valid tag
+	{
+		command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+
+		resp, err := suite.doTag(busyboxImage, repo, tag)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 201)
+		defer DelImageForceOk(c, tagRef)
+	}
+
+	// override existing tag
+	{
+		command.PouchRun("pull", busyboxImage125).Assert(c, icmd.Success)
+		defer DelImageForceOk(c, busyboxImage125)
+
+		resp, err := suite.doTag(busyboxImage125, repo, tag)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 400)
+	}
 }
 
 // TestImageTagFailToUseSha256AsName tests fail.
 func (suite *APIImageTagSuite) TestImageTagFailToUseSha256AsName(c *check.C) {
 	repo, tag := "localhost:5000/sha256", "1.25"
 
-	resp, err := suite.sendRequest(busyboxImage, repo, tag)
+	resp, err := suite.doTag(busyboxImage, repo, tag)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 400)
 }
 
-func (suite *APIImageTagSuite) sendRequest(source, repo, tag string) (*http.Response, error) {
+func (suite *APIImageTagSuite) doTag(source, repo, tag string) (*http.Response, error) {
 	q := url.Values{}
 	q.Set("repo", repo)
 	q.Set("tag", tag)
