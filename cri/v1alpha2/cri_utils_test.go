@@ -1182,7 +1182,7 @@ func Test_imageToCriImage(t *testing.T) {
 				RepoTags:    repoDigests,
 				RepoDigests: repoDigests,
 				Size_:       uint64(1024),
-				Uid:         &runtime.Int64Value{},
+				Uid:         nil,
 				Username:    "foo",
 				Volumes:     runtimeVolumes,
 			},

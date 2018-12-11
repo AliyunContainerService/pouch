@@ -892,23 +892,25 @@ func containerNetns(container *mgr.Container) string {
 
 // imageToCriImage converts pouch image API to CRI image API.
 func imageToCriImage(image *apitypes.ImageInfo) (*runtime.Image, error) {
-	uid := &runtime.Int64Value{}
-	imageUID, username := getUserFromImageUser(image.Config.User)
-	if imageUID != nil {
-		uid.Value = *imageUID
+	if image == nil || image.Config == nil {
+		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
-
 	size := uint64(image.Size)
 	// TODO: improve type ImageInfo to include RepoTags and RepoDigests.
-	return &runtime.Image{
+	runtimeImage := &runtime.Image{
 		Id:          image.ID,
 		RepoTags:    image.RepoTags,
 		RepoDigests: image.RepoDigests,
 		Size_:       size,
-		Uid:         uid,
-		Username:    username,
 		Volumes:     parseVolumesFromPouch(image.Config.Volumes),
-	}, nil
+	}
+
+	imageUID, username := getUserFromImageUser(image.Config.User)
+	if imageUID != nil {
+		runtimeImage.Uid = &runtime.Int64Value{Value: *imageUID}
+	}
+	runtimeImage.Username = username
+	return runtimeImage, nil
 }
 
 // ensureSandboxImageExists pulls the image when it's not present.
