@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -85,4 +86,22 @@ func (suite *PouchRunPrivilegedSuite) TestRunCheckSysWritableWithAndWithoutPrivi
 	if out := res.Combined(); !strings.Contains(out, expected) {
 		c.Errorf("expected %s, but got %s", expected, out)
 	}
+}
+
+// TestCgroupWritableWithAndWithoutPrivileged tests cgroup can be writable with privileged,
+// can not be writable without privileged
+func (suite *PouchRunPrivilegedSuite) TestCgroupWritableWithAndWithoutPrivileged(c *check.C) {
+	name := "TestRunCheckCgroupWritable"
+	command.PouchRun("run", "--name", name, "--privileged", busyboxImage, "sh", "-c", "mkdir /sys/fs/cgroup/cpu/test").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	name1 := "TestRunCheckCgroupCannotWritable"
+	res := command.PouchRun("run", "--name", name1, busyboxImage, "sh", "-c", "mkdir /sys/fs/cgroup/cpu/test")
+	defer DelContainerForceMultyTime(c, name1)
+
+	if res.ExitCode == 0 {
+		c.Errorf("non-privileged container executes mkdir /sys/fs/cgroup/cpu/test should failed, but succeeded: %v", res.Combined())
+	}
+
+	c.Assert(util.PartialEqual(res.Combined(), "Read-only file system"), check.IsNil)
 }

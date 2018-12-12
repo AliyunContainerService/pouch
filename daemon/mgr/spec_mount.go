@@ -129,12 +129,15 @@ func setupMounts(ctx context.Context, c *Container, s *specs.Spec) error {
 	s.Mounts = sortMounts(mounts)
 
 	if c.HostConfig.Privileged {
-		if !s.Root.Readonly {
+		for i := range s.Mounts {
 			// Clear readonly for /sys.
-			for i := range s.Mounts {
-				if s.Mounts[i].Destination == "/sys" {
-					clearReadonly(&s.Mounts[i])
-				}
+			if s.Mounts[i].Destination == "/sys" && !s.Root.Readonly {
+				clearReadonly(&s.Mounts[i])
+			}
+
+			// Clear readonly for cgroup
+			if s.Mounts[i].Type == "cgroup" {
+				clearReadonly(&s.Mounts[i])
 			}
 		}
 	}
