@@ -74,12 +74,12 @@ func followFile(f *os.File, cfg *logger.ReadConfig, unmarshaler newUnmarshalFunc
 					// ideally, it's caused by removing the container.
 					return errDone
 				default:
-					logrus.Debug("unexpected file change during watching file %v: %v", f.Name(), e.Op)
+					logrus.Debugf("unexpected file change during watching file %v: %v", f.Name(), e.Op)
 					return errDone
 				}
 			case newErr := <-fileWatcher.Errors:
 				// something wrong during the watching.
-				logrus.Debug("unexpected error during watching file %v: %v", f.Name(), newErr)
+				logrus.Debugf("unexpected error during watching file %v: %v", f.Name(), newErr)
 				return err
 			case <-watchTimeout.C:
 				// FIXME: Since we hold the file handler in the process,
@@ -92,7 +92,7 @@ func followFile(f *os.File, cfg *logger.ReadConfig, unmarshaler newUnmarshalFunc
 					if os.IsNotExist(sErr) {
 						return errDone
 					}
-					logrus.Debug("unexpected error during watching file %v: %v", f.Name(), sErr)
+					logrus.Debugf("unexpected error during watching file %v: %v", f.Name(), sErr)
 					return errDone
 				}
 			}

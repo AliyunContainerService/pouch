@@ -374,12 +374,12 @@ func chooseHostInterfaceFromRoute(routes []Route, nw networkInterfacer) (net.IP,
 func getAddrByHostname() (net.IP, error) {
 	exit, stdout, stderr, err := exec.Run(0, "hostname", "-i")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get ip address, stdout: (%s), stderr: (%s), exit: (%s)",
+		return nil, errors.Wrapf(err, "failed to get ip address, stdout: (%s), stderr: (%s), exit: (%d)",
 			stdout, stderr, exit)
 	}
 
 	if exit != 0 {
-		return nil, errors.Errorf("failed to get ip address, stdout: (%s), stderr: (%s), exit: (%s)",
+		return nil, errors.Errorf("failed to get ip address, stdout: (%s), stderr: (%s), exit: (%d)",
 			stdout, stderr, exit)
 	}
 
