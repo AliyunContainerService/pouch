@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 
 	"github.com/alibaba/pouch/apis/opts"
@@ -359,6 +360,12 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 }
 
 func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container) error {
+	// sort mounts by destination directory string shortest length.
+	// the reason is: there are two mounts: /home/admin and /home/admin/log,
+	// when do copy data with dr mode, if the data of /home/admin/log is copied first,
+	// it will cause /home/admin don't copy data since the destination directory is not empty.
+	c.Mounts = sortMountPoint(c.Mounts)
+
 	for _, mp := range c.Mounts {
 		if mp.Driver == "tmpfs" {
 			continue
@@ -717,6 +724,17 @@ func (mgr *ContainerManager) SetupWorkingDirectory(ctx context.Context, c *Conta
 	}
 
 	return nil
+}
+
+func sortMountPoint(mounts []*types.MountPoint) []*types.MountPoint {
+	sort.Slice(mounts, func(i, j int) bool {
+		if len(mounts[i].Destination) < len(mounts[j].Destination) {
+			return true
+		}
+		return false
+	})
+
+	return mounts
 }
 
 func copyImageContent(source, destination string) error {

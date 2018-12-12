@@ -395,3 +395,30 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuota(c *check.C) {
 
 	c.Assert(found, check.Equals, true)
 }
+
+func (suite *PouchRunVolumeSuite) TestRunCopyDataWithDR(c *check.C) {
+	cname := "TestRunCopyDataWithDR_Container"
+	vname := "TestRunCopyDataWithDR_Volume"
+
+	command.PouchRun("volume", "create", "-n", vname).Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", vname)
+
+	command.PouchRun("run", "-d", "--name", cname,
+		"-v", vname+":/var/spool:dr",
+		"-v", vname+":/var:dr",
+		"-v", vname+":/data", busyboxImage, "top").Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cname)
+
+	res := command.PouchRun("exec", cname, "ls", "/var")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "spool") ||
+		!strings.Contains(res.Stdout(), "www") {
+		c.Fatal("no copy image data, miss spool and www directory")
+	}
+
+	res = command.PouchRun("exec", cname, "ls", "/var/spool")
+	res.Assert(c, icmd.Success)
+	if !strings.Contains(res.Stdout(), "mail") {
+		c.Fatal("no copy image data, miss mail directory")
+	}
+}
