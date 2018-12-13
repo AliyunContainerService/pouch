@@ -535,6 +535,8 @@ func TestStringSliceEqual(t *testing.T) {
 		{[]string{"a"}, []string{"a"}, true},
 		{[]string{"a"}, []string{"b", "a"}, false},
 		{[]string{"a", "b"}, []string{"b", "a"}, true},
+		{[]string{"a", "b", "b"}, []string{"b", "a", "a"}, false},
+		{[]string{"a", "b", "b", "c"}, []string{"b", "a", "b", "c"}, true},
 	}
 
 	for _, test := range tests {
