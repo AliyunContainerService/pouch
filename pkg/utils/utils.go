@@ -305,7 +305,9 @@ func IsFileExist(file string) bool {
 	return false
 }
 
-// StringSliceEqual compare two string slice, ignore the order.
+// StringSliceEqual compares two string slice, ignore the order.
+// If all items in the two string slice are equal, this function will return true
+// even though there may have duplicate elements in the slice, otherwise reture false.
 func StringSliceEqual(s1, s2 []string) bool {
 	if s1 == nil && s2 == nil {
 		return true
@@ -319,14 +321,24 @@ func StringSliceEqual(s1, s2 []string) bool {
 		return false
 	}
 
-	for _, s := range s1 {
-		if !StringInSlice(s2, s) {
-			return false
-		}
+	// mapKeys to remember keys that exist in s1
+	mapKeys := map[string]int{}
+
+	// first list all items in s1
+	for _, v := range s1 {
+		mapKeys[v]++
 	}
 
-	for _, s := range s2 {
-		if !StringInSlice(s1, s) {
+	// second list all items in s2
+	for _, v := range s2 {
+		mapKeys[v]--
+
+		// we may get -1 in two cases:
+		// 1. the item exists in the s2, but not in the s1;
+		// 2. the item exists both in s1 and s2, but has different copies.
+		// Under the condition that the length of slices are equals,
+		// so we can quickly return false.
+		if mapKeys[v] < 0 {
 			return false
 		}
 	}
