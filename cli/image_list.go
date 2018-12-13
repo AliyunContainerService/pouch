@@ -108,9 +108,9 @@ func (i *ImagesCommand) runImages(args []string) error {
 
 	for _, dimg := range dimgs {
 		if i.flagDigest {
-			display.AddRow([]string{dimg.id, dimg.name, dimg.digest, string(dimg.size)})
+			display.AddRow([]string{dimg.id, dimg.name, dimg.digest, dimg.size.String()})
 		} else {
-			display.AddRow([]string{dimg.id, dimg.name, string(dimg.size)})
+			display.AddRow([]string{dimg.id, dimg.name, dimg.size.String()})
 		}
 	}
 
