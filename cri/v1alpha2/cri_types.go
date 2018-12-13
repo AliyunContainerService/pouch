@@ -20,9 +20,6 @@ type SandboxMeta struct {
 
 	// NetNS is the sandbox's network namespace
 	NetNS string
-
-	// ContainerLogMap store the mapping of container id and CRI logPath.
-	ContainerLogMap map[string]string
 }
 
 // Key returns sandbox's id.
