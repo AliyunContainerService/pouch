@@ -510,32 +510,6 @@ func Test_parseContainerName(t *testing.T) {
 	}
 }
 
-func Test_makeupLogPath(t *testing.T) {
-	testCases := []struct {
-		logDirectory  string
-		containerMeta *runtime.ContainerMetadata
-		expected      string
-	}{
-		{
-			logDirectory:  "/var/log/pods/099f1c2b79126109140a1f77e211df00",
-			containerMeta: &runtime.ContainerMetadata{Name: "kube-scheduler", Attempt: 0},
-			expected:      "/var/log/pods/099f1c2b79126109140a1f77e211df00/kube-scheduler/0.log",
-		},
-		{
-			logDirectory:  "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/",
-			containerMeta: &runtime.ContainerMetadata{Name: "kube-proxy", Attempt: 10},
-			expected:      "/var/log/pods/d875aada-9920-11e8-bfef-0242ac11001e/kube-proxy/10.log",
-		},
-	}
-
-	for _, test := range testCases {
-		logPath := makeupLogPath(test.logDirectory, test.containerMeta)
-		if !reflect.DeepEqual(test.expected, logPath) {
-			t.Fatalf("unexpected logPath returned by makeupLogPath")
-		}
-	}
-}
-
 func Test_toCriContainerState(t *testing.T) {
 	testCases := []struct {
 		input    apitypes.Status

@@ -552,11 +552,6 @@ func parseContainerName(name string) (*runtime.ContainerMetadata, error) {
 	}, nil
 }
 
-// makeupLogPath makes up the log path of container from log directory and its metadata.
-func makeupLogPath(logDirectory string, metadata *runtime.ContainerMetadata) string {
-	return filepath.Join(logDirectory, metadata.Name, fmt.Sprintf("%d.log", metadata.Attempt))
-}
-
 // modifyContainerNamespaceOptions apply namespace options for container.
 func modifyContainerNamespaceOptions(nsOpts *runtime.NamespaceOption, podSandboxID string, hostConfig *apitypes.HostConfig) {
 	sandboxNSMode := fmt.Sprintf("container:%v", podSandboxID)

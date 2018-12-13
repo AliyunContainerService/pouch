@@ -53,6 +53,7 @@ const (
 	containerTypeLabelSandbox   = "sandbox"
 	containerTypeLabelContainer = "container"
 	sandboxIDLabelKey           = "io.kubernetes.sandbox.id"
+	containerLogPathLabelKey    = "io.kubernetes.container.logpath"
 
 	// sandboxContainerName is a string to include in the pouch container so
 	// that users can easily identify the sandboxes.
@@ -251,8 +252,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, err
 	}
 	sandboxMeta := &SandboxMeta{
-		ID:              id,
-		ContainerLogMap: make(map[string]string),
+		ID: id,
 	}
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
 		return nil, err
@@ -681,6 +681,12 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	labels[containerTypeLabelKey] = containerTypeLabelContainer
 	// Write the sandbox ID in the labels.
 	labels[sandboxIDLabelKey] = podSandboxID
+	// Get container log.
+	var logPath string
+	if config.GetLogPath() != "" {
+		logPath = filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
+		labels[containerLogPathLabelKey] = logPath
+	}
 
 	image := ""
 	if iSpec := config.GetImage(); iSpec != nil {
@@ -762,14 +768,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		}
 	}()
 
-	// Get container log.
-	if config.GetLogPath() != "" {
-		logPath := filepath.Join(sandboxConfig.GetLogDirectory(), config.GetLogPath())
-		sandboxMeta.ContainerLogMap[containerID] = logPath
-		if err := c.SandboxStore.Put(sandboxMeta); err != nil {
-			return nil, err
-		}
-
+	if logPath != "" {
 		if err := c.ContainerMgr.AttachCRILog(ctx, containerID, logPath); err != nil {
 			return nil, err
 		}
@@ -978,15 +977,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		imageRef = imageInfo.RepoDigests[0]
 	}
 
-	podSandboxID := container.Config.Labels[sandboxIDLabelKey]
-	res, err := c.SandboxStore.Get(podSandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
-	}
-	sandboxMeta := res.(*SandboxMeta)
-	logDirectory := sandboxMeta.Config.GetLogDirectory()
-	// TODO: let the container manager handle the log stuff for CRI.
-	logPath := makeupLogPath(logDirectory, metadata)
+	logPath := labels[containerLogPathLabelKey]
 
 	resources := container.HostConfig.Resources
 	diskQuota := container.Config.DiskQuota
@@ -1142,23 +1133,9 @@ func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenCo
 		return nil, errors.Wrap(errtypes.ErrPreCheckFailed, "container is not running")
 	}
 
-	// get the container's podSandbox id.
-	podSandboxID, ok := container.Config.Labels[sandboxIDLabelKey]
-	if !ok {
-		return nil, fmt.Errorf("failed to get the sandboxId of container %q", containerID)
-	}
-
 	// get logPath of container
-	res, err := c.SandboxStore.Get(podSandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
-	}
-	sandboxMeta, ok := res.(*SandboxMeta)
-	if !ok {
-		return nil, fmt.Errorf("failed to type asseration for sandboxMeta: %v", res)
-	}
-	logPath, ok := sandboxMeta.ContainerLogMap[containerID]
-	if !ok {
+	logPath := container.Config.Labels[containerLogPathLabelKey]
+	if logPath == "" {
 		logrus.Warnf("log path of container: %q is empty", containerID)
 		return &runtime.ReopenContainerLogResponse{}, nil
 	}
