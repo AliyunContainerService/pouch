@@ -51,6 +51,10 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 	flagSet.StringSliceVar(&uc.diskQuota, "disk-quota", nil, "Update disk quota for container(/=10g)")
+	flagSet.Var(&uc.blkioDeviceReadBps, "device-read-bps", "Update read rate (bytes per second) from a device")
+	flagSet.Var(&uc.blkioDeviceWriteBps, "device-write-bps", "Update write rate (bytes per second) from a device")
+	flagSet.Var(&uc.blkioDeviceReadIOps, "device-read-iops", "Update read rate (io per second) from a device")
+	flagSet.Var(&uc.blkioDeviceWriteIOps, "device-write-iops", "Update write rate (io per second) from a device")
 }
 
 // updateRun is the entry of update command.
@@ -69,14 +73,18 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 	}
 
 	resource := types.Resources{
-		CPUPeriod:   uc.cpuperiod,
-		CPUShares:   uc.cpushare,
-		CPUQuota:    uc.cpuquota,
-		CpusetCpus:  uc.cpusetcpus,
-		CpusetMems:  uc.cpusetmems,
-		Memory:      memory,
-		MemorySwap:  memorySwap,
-		BlkioWeight: uc.blkioWeight,
+		CPUPeriod:            uc.cpuperiod,
+		CPUShares:            uc.cpushare,
+		CPUQuota:             uc.cpuquota,
+		CpusetCpus:           uc.cpusetcpus,
+		CpusetMems:           uc.cpusetmems,
+		Memory:               memory,
+		MemorySwap:           memorySwap,
+		BlkioWeight:          uc.blkioWeight,
+		BlkioDeviceReadBps:   uc.blkioDeviceReadBps.Value(),
+		BlkioDeviceWriteBps:  uc.blkioDeviceWriteBps.Value(),
+		BlkioDeviceReadIOps:  uc.blkioDeviceReadIOps.Value(),
+		BlkioDeviceWriteIOps: uc.blkioDeviceWriteIOps.Value(),
 	}
 
 	restartPolicy, err := opts.ParseRestartPolicy(uc.restartPolicy)

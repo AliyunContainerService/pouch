@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -353,7 +355,7 @@ func (suite *PouchUpdateSuite) TestUpdateContainerDeleteEnv(c *check.C) {
 	}
 }
 
-// TestUpdateContainerDiskQuota is to verify the correctness of delete env by update interface
+// TestUpdateContainerDiskQuota is to verify the correctness of disk quota by update interface
 func (suite *PouchUpdateSuite) TestUpdateContainerDiskQuota(c *check.C) {
 	if !environment.IsDiskQuota() {
 		c.Skip("Host does not support disk quota")
@@ -394,4 +396,148 @@ func (suite *PouchUpdateSuite) TestUpdateContainerDiskQuota(c *check.C) {
 		}
 	}
 	c.Assert(found, check.Equals, true)
+}
+
+// TestUpdateWriteBps is to verify the correctness of update write bps
+func (suite *PouchUpdateSuite) TestUpdateWriteBps(c *check.C) {
+	cname := "TestUpdateWriteBps"
+	testDisk := "/dev/null"
+
+	number, exist := util.GetMajMinNumOfDevice(testDisk)
+	if !exist {
+		c.Skip("fail to get major:minor device number")
+	}
+
+	oldLimitSpeed := "100"
+	newLimitSpeed := "300"
+	blkioDeviceWriteBpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.write_bps_device"
+	oldThrottleDev := testDisk + ":" + oldLimitSpeed
+	newThrottleDev := testDisk + ":" + newLimitSpeed
+	expected := fmt.Sprintf("%s %s\n", number, newLimitSpeed)
+
+	res := command.PouchRun("run", "-d", "--name", cname,
+		"--device-write-bps ", oldThrottleDev, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	// update write bps
+	command.PouchRun("update", "--device-write-bps", newThrottleDev, cname).Assert(c, icmd.Success)
+
+	// restart container to update the configuration since runc don't support
+	// update device write bps
+	command.PouchRun("restart", cname).Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "cat", blkioDeviceWriteBpsFile)
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, expected)
+
+}
+
+// TestUpdateReadBps is to verify the correctness of update read bps
+func (suite *PouchUpdateSuite) TestUpdateReadBps(c *check.C) {
+	cname := "TestUpdateReadBps"
+	testDisk := "/dev/null"
+
+	number, exist := util.GetMajMinNumOfDevice(testDisk)
+	if !exist {
+		c.Skip("fail to get major:minor device number")
+	}
+
+	oldLimitSpeed := "100"
+	newLimitSpeed := "300"
+	blkioDeviceReadBpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.read_bps_device"
+	oldThrottleDev := testDisk + ":" + oldLimitSpeed
+	newThrottleDev := testDisk + ":" + newLimitSpeed
+	expected := fmt.Sprintf("%s %s\n", number, newLimitSpeed)
+
+	res := command.PouchRun("run", "-d", "--name", cname,
+		"--device-read-bps ", oldThrottleDev, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	// update write bps
+	command.PouchRun("update", "--device-read-bps", newThrottleDev, cname).Assert(c, icmd.Success)
+
+	// restart container to update the configuration since runc don't support
+	// update device write bps
+	command.PouchRun("restart", cname).Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "cat", blkioDeviceReadBpsFile)
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, expected)
+
+}
+
+// TestUpdateWriteIOps is to verify the correctness of update write iops
+func (suite *PouchUpdateSuite) TestUpdateWriteIOps(c *check.C) {
+	cname := "TestUpdateWriteIOps"
+	testDisk := "/dev/null"
+
+	number, exist := util.GetMajMinNumOfDevice(testDisk)
+	if !exist {
+		c.Skip("fail to get major:minor device number")
+	}
+
+	oldLimitSpeed := "100"
+	newLimitSpeed := "300"
+	blkioDeviceWriteIOpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.write_iops_device"
+	oldThrottleDev := testDisk + ":" + oldLimitSpeed
+	newThrottleDev := testDisk + ":" + newLimitSpeed
+	expected := fmt.Sprintf("%s %s\n", number, newLimitSpeed)
+
+	res := command.PouchRun("run", "-d", "--name", cname,
+		"--device-write-iops ", oldThrottleDev, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	// update write bps
+	command.PouchRun("update", "--device-write-iops", newThrottleDev, cname).Assert(c, icmd.Success)
+
+	// restart container to update the configuration since runc don't support
+	// update device write bps
+	command.PouchRun("restart", cname).Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "cat", blkioDeviceWriteIOpsFile)
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, expected)
+
+}
+
+// TestUpdateReadIOps is to verify the correctness of update read iops
+func (suite *PouchUpdateSuite) TestUpdateReadIOps(c *check.C) {
+	cname := "TestUpdateReadIOps"
+	testDisk := "/dev/null"
+
+	number, exist := util.GetMajMinNumOfDevice(testDisk)
+	if !exist {
+		c.Skip("fail to get major:minor device number")
+	}
+
+	oldLimitSpeed := "100"
+	newLimitSpeed := "300"
+	blkioDeviceReadIOpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.read_iops_device"
+	oldThrottleDev := testDisk + ":" + oldLimitSpeed
+	newThrottleDev := testDisk + ":" + newLimitSpeed
+	expected := fmt.Sprintf("%s %s\n", number, newLimitSpeed)
+
+	res := command.PouchRun("run", "-d", "--name", cname,
+		"--device-read-iops ", oldThrottleDev, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	// update write bps
+	command.PouchRun("update", "--device-read-iops", newThrottleDev, cname).Assert(c, icmd.Success)
+
+	// restart container to update the configuration since runc don't support
+	// update device write bps
+	command.PouchRun("restart", cname).Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "cat", blkioDeviceReadIOpsFile)
+	res.Assert(c, icmd.Success)
+
+	out := res.Stdout()
+	c.Assert(out, check.Equals, expected)
+
 }

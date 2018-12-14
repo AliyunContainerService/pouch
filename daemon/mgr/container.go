@@ -1284,6 +1284,18 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	if resources.BlkioWeight != 0 {
 		cResources.BlkioWeight = resources.BlkioWeight
 	}
+	if resources.BlkioDeviceReadBps != nil {
+		cResources.BlkioDeviceReadBps = resources.BlkioDeviceReadBps
+	}
+	if resources.BlkioDeviceReadIOps != nil {
+		cResources.BlkioDeviceReadIOps = resources.BlkioDeviceReadIOps
+	}
+	if resources.BlkioDeviceWriteBps != nil {
+		cResources.BlkioDeviceWriteBps = resources.BlkioDeviceWriteBps
+	}
+	if resources.BlkioDeviceWriteIOps != nil {
+		cResources.BlkioDeviceWriteIOps = resources.BlkioDeviceWriteIOps
+	}
 	if resources.CPUPeriod != 0 {
 		cResources.CPUPeriod = resources.CPUPeriod
 	}

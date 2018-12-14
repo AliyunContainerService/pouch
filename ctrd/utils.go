@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -76,13 +77,55 @@ func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	return docker.NewResolver(options), nil
 }
 
+// toLinuxThrottleDevice transfers Pouch ThrottleDeivce to Linux ThrottleDevice
+func toLinuxThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevice, error) {
+	var stat syscall.Stat_t
+	var ThrottleDevice []specs.LinuxThrottleDevice
+
+	for _, dev := range devs {
+		if err := syscall.Stat(dev.Path, &stat); err != nil {
+			return nil, err
+		}
+
+		d := specs.LinuxThrottleDevice{
+			Rate: dev.Rate,
+		}
+		d.Major = int64(stat.Rdev >> 8)
+		d.Minor = int64(stat.Rdev & 255)
+		ThrottleDevice = append(ThrottleDevice, d)
+	}
+
+	return ThrottleDevice, nil
+}
+
 // toLinuxResources transfers Pouch Resources to LinuxResources.
 func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) {
 	r := &specs.LinuxResources{}
 
+	readBpsDevice, err := toLinuxThrottleDevice(resources.BlkioDeviceReadBps)
+	if err != nil {
+		return nil, err
+	}
+	writeBpsDevice, err := toLinuxThrottleDevice(resources.BlkioDeviceWriteBps)
+	if err != nil {
+		return nil, err
+	}
+	readIOpsDevice, err := toLinuxThrottleDevice(resources.BlkioDeviceReadIOps)
+	if err != nil {
+		return nil, err
+	}
+	writeIOpsDevice, err := toLinuxThrottleDevice(resources.BlkioDeviceWriteIOps)
+	if err != nil {
+		return nil, err
+	}
+
 	// toLinuxBlockIO
 	r.BlockIO = &specs.LinuxBlockIO{
-		Weight: &resources.BlkioWeight,
+		Weight:                  &resources.BlkioWeight,
+		ThrottleReadBpsDevice:   readBpsDevice,
+		ThrottleReadIOPSDevice:  readIOpsDevice,
+		ThrottleWriteBpsDevice:  writeBpsDevice,
+		ThrottleWriteIOPSDevice: writeIOpsDevice,
 	}
 
 	// toLinuxCPU

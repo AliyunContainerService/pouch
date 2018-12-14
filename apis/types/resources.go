@@ -122,7 +122,7 @@ type Resources struct {
 	// Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.
 	MemorySwap int64 `json:"MemorySwap"`
 
-	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
+	// Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100. -1 is also accepted, as a legacy alias of 0.
 	// Maximum: 100
 	// Minimum: -1
 	MemorySwappiness *int64 `json:"MemorySwappiness"`
