@@ -55,8 +55,8 @@ crictl connects to /var/run/dockershim.sock by default. For other runtimes, the 
 
 ```
 # cat /etc/crictl.yaml
-runtime-endpoint: /var/run/pouchcri.sock
-image-endpoint: /var/run/pouchcri.sock
+runtime-endpoint: unix:///var/run/pouchcri.sock
+image-endpoint: unix:///var/run/pouchcri.sock
 timeout: 10
 debug: true
 ```
