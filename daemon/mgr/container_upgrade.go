@@ -170,7 +170,7 @@ func (mgr *ContainerManager) prepareSnapshotForUpgrade(ctx context.Context, cID,
 	}
 
 	// create a snapshot with image for new container.
-	if err := mgr.Client.CreateSnapshot(ctx, newSnapID, image); err != nil {
+	if err := mgr.Client.CreateSnapshot(ctx, newSnapID, image, nil); err != nil {
 		return "", errors.Wrap(err, "failed to create snapshot")
 	}
 

@@ -383,7 +383,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	snapID := id
 	// create a snapshot with image.
-	if err := mgr.Client.CreateSnapshot(ctx, snapID, config.Image); err != nil {
+	if err := mgr.Client.CreateSnapshot(ctx, snapID, config.Image, nil); err != nil {
 		return nil, err
 	}
 	cleanups = append(cleanups, func() error {

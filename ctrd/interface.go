@@ -93,7 +93,7 @@ type ImageAPIClient interface {
 // SnapshotAPIClient provides access to containerd snapshot features
 type SnapshotAPIClient interface {
 	// CreateSnapshot creates a active snapshot with image's name and id.
-	CreateSnapshot(ctx context.Context, id, ref string) error
+	CreateSnapshot(ctx context.Context, id, ref string, labels *map[string]string) error
 	// GetSnapshot returns the snapshot's info by id.
 	GetSnapshot(ctx context.Context, id string) (snapshots.Info, error)
 	// RemoveSnapshot removes the snapshot by id.
