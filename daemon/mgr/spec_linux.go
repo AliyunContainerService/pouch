@@ -168,8 +168,8 @@ func getWeightDevice(devs []*types.WeightDevice) ([]specs.LinuxWeightDevice, err
 		d := specs.LinuxWeightDevice{
 			Weight: &dev.Weight,
 		}
-		d.Major = int64(stat.Rdev / 256)
-		d.Minor = int64(stat.Rdev % 256)
+		d.Major = int64(stat.Rdev >> 8)
+		d.Minor = int64(stat.Rdev & 255)
 		weightDevice = append(weightDevice, d)
 	}
 
@@ -188,8 +188,8 @@ func getThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevic
 		d := specs.LinuxThrottleDevice{
 			Rate: dev.Rate,
 		}
-		d.Major = int64(stat.Rdev / 256)
-		d.Minor = int64(stat.Rdev % 256)
+		d.Major = int64(stat.Rdev >> 8)
+		d.Minor = int64(stat.Rdev & 255)
 		ThrottleDevice = append(ThrottleDevice, d)
 	}
 
