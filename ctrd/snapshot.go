@@ -14,7 +14,7 @@ import (
 const defaultSnapshotterName = "overlayfs"
 
 // CreateSnapshot creates a active snapshot with image's name and id.
-func (c *Client) CreateSnapshot(ctx context.Context, id, ref string, labels *map[string]string) error {
+func (c *Client) CreateSnapshot(ctx context.Context, id, ref string, labels map[string]string) error {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
@@ -31,10 +31,7 @@ func (c *Client) CreateSnapshot(ctx context.Context, id, ref string, labels *map
 		return err
 	}
 
-	var opts []snapshots.Opt
-	if labels != nil && len(*labels) > 0 {
-		opts = append(opts, snapshots.WithLabels(*labels))
-	}
+	opts := []snapshots.Opt{snapshots.WithLabels(labels)}
 
 	parent := identity.ChainID(diffIDs).String()
 	_, err = wrapperCli.client.SnapshotService(defaultSnapshotterName).Prepare(ctx, id, parent, opts...)
