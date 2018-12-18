@@ -71,6 +71,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --pids-limit int                Set container pids limit
       --privileged                    Give extended privileges to the container
   -p, --publish strings               Set container ports mapping
+  -P, --publish-all                   Publish all exposed ports to random ports
       --quota-id string               Specified quota id, if id < 0, it means pouchd alloc a unique quota id
       --restart string                Restart policy to apply when container exits
       --rich                          Start container in rich container mode. (default false)

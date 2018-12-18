@@ -86,6 +86,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --pids-limit int                Set container pids limit
       --privileged                    Give extended privileges to the container
   -p, --publish strings               Set container ports mapping
+  -P, --publish-all                   Publish all exposed ports to random ports
       --quota-id string               Specified quota id, if id < 0, it means pouchd alloc a unique quota id
       --restart string                Restart policy to apply when container exits
       --rich                          Start container in rich container mode. (default false)
