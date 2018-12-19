@@ -77,7 +77,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	client := wrapperCli.client
 
 	var (
-		sn     = client.SnapshotService(defaultSnapshotterName)
+		sn     = client.SnapshotService(CurrentSnapshotterName())
 		cs     = client.ContentStore()
 		differ = client.DiffService()
 	)
@@ -111,7 +111,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	defer func() {
 		if err0 != nil {
 			logrus.Warnf("remove snapshot %s cause commit image failed", snapshotKey)
-			client.SnapshotService(defaultSnapshotterName).Remove(ctx, snapshotKey)
+			client.SnapshotService(CurrentSnapshotterName()).Remove(ctx, snapshotKey)
 		}
 	}()
 
@@ -266,6 +266,7 @@ func newSnapshot(ctx context.Context, pImg ocispec.Image, sn snapshots.Snapshott
 	// avoid active snapshots cleaned by containerd 1.0.3 gc
 	opt := snapshots.WithLabels(map[string]string{
 		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339),
+		snapshots.TypeLabelKey:  snapshots.ImageType,
 	})
 	mount, err := sn.Prepare(ctx, key, parent, opt)
 	if err != nil {

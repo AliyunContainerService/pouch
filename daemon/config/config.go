@@ -117,6 +117,9 @@ type Config struct {
 
 	// DefaultNamespace is passed to containerd.
 	DefaultNamespace string `json:"default-namespace,omitempty"`
+
+	// Snapshotter is passed to containerd, default to overlayfs
+	Snapshotter string `json:"snapshotter,omitempty"`
 }
 
 // GetCgroupDriver gets cgroup driver used in runc.

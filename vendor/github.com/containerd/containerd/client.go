@@ -253,6 +253,13 @@ func (c *Client) Pull(ctx context.Context, ref string, opts ...RemoteOpt) (Image
 		}
 	}
 
+	if pullCtx.Labels == nil {
+		pullCtx.Labels = make(map[string]string)
+	}
+
+	// add label type=image to image labels
+	pullCtx.Labels[snapshots.TypeLabelKey] = snapshots.ImageType
+
 	imgrec := images.Image{
 		Name:   name,
 		Target: desc,
@@ -556,6 +563,12 @@ func (c *Client) Import(ctx context.Context, importer images.Importer, reader io
 		} else {
 			imgrec = updated
 		}
+
+		if imgrec.Labels == nil {
+			imgrec.Labels = make(map[string]string)
+		}
+		// add label type=image to pass to snapshot
+		imgrec.Labels[snapshots.TypeLabelKey] = snapshots.ImageType
 
 		images = append(images, &image{
 			client: c,

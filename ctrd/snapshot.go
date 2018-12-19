@@ -11,7 +11,23 @@ import (
 	"github.com/opencontainers/image-spec/identity"
 )
 
-const defaultSnapshotterName = "overlayfs"
+const (
+	defaultSnapshotterName = "overlayfs"
+)
+
+var (
+	currentSnapshotterName = defaultSnapshotterName
+)
+
+// SetSnapshotterName sets current snapshotter driver, it should be called only when daemon starts
+func SetSnapshotterName(name string) {
+	currentSnapshotterName = name
+}
+
+// CurrentSnapshotterName returns current snapshotter driver
+func CurrentSnapshotterName() string {
+	return currentSnapshotterName
+}
 
 // CreateSnapshot creates a active snapshot with image's name and id.
 func (c *Client) CreateSnapshot(ctx context.Context, id, ref string, labels map[string]string) error {
@@ -45,7 +61,7 @@ func (c *Client) GetSnapshot(ctx context.Context, id string) (snapshots.Info, er
 		return snapshots.Info{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	service := wrapperCli.client.SnapshotService(CurrentSnapshotterName())
 	defer service.Close()
 
 	return service.Stat(ctx, id)
@@ -58,7 +74,7 @@ func (c *Client) RemoveSnapshot(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	service := wrapperCli.client.SnapshotService(CurrentSnapshotterName())
 	defer service.Close()
 
 	return service.Remove(ctx, id)
@@ -72,7 +88,7 @@ func (c *Client) GetMounts(ctx context.Context, id string) ([]mount.Mount, error
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	service := wrapperCli.client.SnapshotService(CurrentSnapshotterName())
 	defer service.Close()
 
 	return service.Mounts(ctx, id)
@@ -86,20 +102,26 @@ func (c *Client) GetSnapshotUsage(ctx context.Context, id string) (snapshots.Usa
 		return snapshots.Usage{}, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	service := wrapperCli.client.SnapshotService(CurrentSnapshotterName())
 	defer service.Close()
 
 	return service.Usage(ctx, id)
 }
 
-// WalkSnapshot walk all snapshots. For each snapshot, the function will be called.
-func (c *Client) WalkSnapshot(ctx context.Context, fn func(context.Context, snapshots.Info) error) error {
+// WalkSnapshot walk all snapshots in specific snapshotter. If not set specific snapshotter,
+// it will be set to current snapshotter. For each snapshot, the function will be called.
+func (c *Client) WalkSnapshot(ctx context.Context, snapshotter string, fn func(context.Context, snapshots.Info) error) error {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	service := wrapperCli.client.SnapshotService(defaultSnapshotterName)
+	// if not set specific snapshotter, set snapshotter to current snaphotter
+	if snapshotter == "" {
+		snapshotter = CurrentSnapshotterName()
+	}
+
+	service := wrapperCli.client.SnapshotService(snapshotter)
 	defer service.Close()
 
 	return service.Walk(ctx, fn)
