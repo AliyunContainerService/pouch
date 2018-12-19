@@ -14,6 +14,14 @@ func ParseLabels(labels []string) (map[string]string, error) {
 			return nil, err
 		}
 		k, v := fields[0], fields[1]
+
+		if existedV, ok := results[k]; ok && existedV != v {
+			return nil, fmt.Errorf(
+				"conflicted labels %s=%s and %s=%s",
+				k, v, k, existedV,
+			)
+		}
+
 		results[k] = v
 	}
 	return results, nil

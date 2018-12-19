@@ -37,13 +37,10 @@ func TestParseLabels(t *testing.T) {
 			},
 		},
 		{
-			// FIXME: this case should throw error
 			input: []string{"a=b", "a=bb"},
 			expected: result{
-				labels: map[string]string{
-					"a": "bb",
-				},
-				err: nil,
+				labels: nil,
+				err:    fmt.Errorf("conflicted labels a=bb and a=b"),
 			},
 		},
 		{
