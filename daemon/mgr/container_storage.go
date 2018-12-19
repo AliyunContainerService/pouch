@@ -329,6 +329,8 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				Driver:      oldMountPoint.Driver,
 				Named:       oldMountPoint.Named,
 				RW:          oldMountPoint.RW,
+				Mode:        oldMountPoint.Mode,
+				Replace:     oldMountPoint.Replace,
 				Propagation: oldMountPoint.Propagation,
 			}
 

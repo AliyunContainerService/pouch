@@ -96,7 +96,9 @@ func ParseBindMode(mp *types.MountPoint, mode string) error {
 		return fmt.Errorf("invalid bind mode: %s", mode)
 	}
 
-	mp.Mode = mode
+	if mode != "" {
+		mp.Mode = mode
+	}
 	return nil
 }
 
