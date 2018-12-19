@@ -144,7 +144,7 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		ContainersStopped: cStopped,
 		Debug:             mgr.config.Debug,
 		DefaultRuntime:    mgr.config.DefaultRuntime,
-		Driver:            ctrd.CurrentSnapshotterName(),
+		Driver:            ctrd.CurrentSnapshotterName(context.TODO()),
 		// DriverStatus: ,
 		ExperimentalBuild: false,
 		HTTPProxy:         mgr.config.ImageProxy,

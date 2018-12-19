@@ -322,6 +322,7 @@ plugin: ## build hook plugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/criplugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/volumeplugin
 	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/apiplugin
+	@./hack/module --add-plugin=github.com/alibaba/pouch/hookplugins/imageplugin
 
 .PHONY: help
 help: ## this help

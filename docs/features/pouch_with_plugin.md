@@ -10,7 +10,7 @@ The pouch-container plugin provides developers or users with a way to call their
 
 ## Which plugins
 
-Currently pouch-container provides four plugins，they are: `container plugin`，`daemon plugin`，`volume plugin`，`cri plugin`
+Currently pouch-container provides four plugins，they are: `container plugin`，`daemon plugin`，`volume plugin`，`cri plugin`, `image plugin`
 
 ### container plugin
 
@@ -113,6 +113,20 @@ type APIPlugin interface {
 	// change the behavior of the default handler.
 	UpdateHandler([]*types.HandlerSpec) []*types.HandlerSpec
 }
+```
+
+### image plugin
+
+* support multiple snapshotters, post pull plugin will apply content to other snapshotter
+
+Defined as follow:
+
+```
+// ImagePlugin defines places where a plugin will be triggered in image operations
+type ImagePlugin interface {
+	PostPull(ctx context.Context, snapshotter string, image containerd.Image) error
+}
+
 ```
 
 ## Example

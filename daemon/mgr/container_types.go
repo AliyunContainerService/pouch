@@ -1,6 +1,7 @@
 package mgr
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -474,7 +475,7 @@ func (c *Container) SetSnapshotterMeta(mounts []mount.Mount) {
 	}
 
 	c.Snapshotter = &types.SnapshotterData{
-		Name: ctrd.CurrentSnapshotterName(),
+		Name: ctrd.CurrentSnapshotterName(context.TODO()),
 		Data: data,
 	}
 }

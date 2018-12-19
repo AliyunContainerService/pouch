@@ -111,6 +111,11 @@ type ContainerConfig struct {
 	// Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.
 	Shell []string `json:"Shell"`
 
+	// The snapshotter container choose, can be different with
+	// default snapshotter. The Field only set through hook plugin.
+	//
+	Snapshotter string `json:"Snapshotter,omitempty"`
+
 	// annotations send to runtime spec.
 	SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
 

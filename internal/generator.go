@@ -22,6 +22,7 @@ type DaemonProvider interface {
 	NetMgr() mgr.NetworkMgr
 	MetaStore() *meta.Store
 	ContainerPlugin() hookplugins.ContainerPlugin
+	ImagePlugin() hookplugins.ImagePlugin
 	EventsService() *events.Events
 }
 
@@ -37,7 +38,7 @@ func GenSystemMgr(cfg *config.Config, d DaemonProvider) (mgr.SystemMgr, error) {
 
 // GenImageMgr generates a ImageMgr instance according to config cfg.
 func GenImageMgr(cfg *config.Config, d DaemonProvider) (mgr.ImageMgr, error) {
-	return mgr.NewImageManager(cfg, d.Containerd(), d.EventsService())
+	return mgr.NewImageManager(cfg, d.Containerd(), d.EventsService(), d.ImagePlugin())
 }
 
 // GenVolumeMgr generates a VolumeMgr instance according to config cfg.

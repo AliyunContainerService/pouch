@@ -84,7 +84,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	defer done()
 
 	var (
-		sn     = client.SnapshotService(CurrentSnapshotterName())
+		sn     = client.SnapshotService(CurrentSnapshotterName(ctx))
 		cs     = client.ContentStore()
 		differ = client.DiffService()
 	)
@@ -111,7 +111,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	defer func() {
 		if err0 != nil {
 			logrus.Warnf("remove snapshot %s cause commit image failed", rootfsID)
-			client.SnapshotService(CurrentSnapshotterName()).Remove(ctx, rootfsID)
+			client.SnapshotService(CurrentSnapshotterName(ctx)).Remove(ctx, rootfsID)
 		}
 	}()
 
@@ -195,7 +195,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	// write config content
 	ref = configDesc.Digest.String()
 	labelOpt := content.WithLabels(map[string]string{
-		fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", CurrentSnapshotterName()): rootfsID,
+		fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", CurrentSnapshotterName(ctx)): rootfsID,
 	})
 	if err := content.WriteBlob(ctx, cs, ref, bytes.NewReader(imgJSON), configDesc.Size, configDesc.Digest, labelOpt); err != nil {
 		return "", errors.Wrap(err, "error writing config blob")
