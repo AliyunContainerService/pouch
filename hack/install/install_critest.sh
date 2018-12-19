@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CRITEST_BRANCH_v1alpha1=release-1.9
-CRITEST_BRANCH_DEFAULT=tools-dev
+CRITEST_BRANCH_DEFAULT=release-1.12
 
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
