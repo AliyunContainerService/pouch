@@ -44,24 +44,20 @@ func TestValidateEnv(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		valid   bool
 		wantErr bool
 	}{
-		{"test env nil", args{env: map[string]string{}}, false, true},
-		{"test env empty map", args{env: map[string]string{}}, false, true},
-		{"test single env map", args{env: map[string]string{"foo": "bar"}}, true, false},
-		{"test multiple env map", args{env: map[string]string{"foo": "bar", "A": "1=2"}}, true, false},
+		{"test env nil", args{env: map[string]string{}}, true},
+		{"test env empty map", args{env: map[string]string{}}, true},
+		{"test single env map", args{env: map[string]string{"foo": "bar"}}, false},
+		{"test multiple env map", args{env: map[string]string{"foo": "bar", "A": "1=2"}}, false},
 		// TODO more
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valid, err := ValidateEnv(tt.args.env)
+			err := ValidateEnv(tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateEnv() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(valid, tt.valid) {
-				t.Errorf("ValidateEnv() = %v, want %v", valid, tt.valid)
 			}
 		})
 	}
