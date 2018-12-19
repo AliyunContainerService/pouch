@@ -17,9 +17,8 @@ func TestParsePortBinding(t *testing.T) {
 		want    types.PortMap
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
-			name: "testCase1",
+			name: "testIpPrivatePublicBinding",
 			args: args{ports: []string{"127.0.0.1:80:80"}},
 			want: map[string][]types.PortBinding{
 				"80/tcp": {
@@ -32,7 +31,20 @@ func TestParsePortBinding(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "testCase2",
+			name: "testIpPrivatePublicProtoBinding",
+			args: args{ports: []string{"127.0.0.1:80:80/udp"}},
+			want: map[string][]types.PortBinding{
+				"80/udp": {
+					{
+						HostIP:   "127.0.0.1",
+						HostPort: "80",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testPrivatePublicBinding",
 			args: args{ports: []string{"26:22"}},
 			want: map[string][]types.PortBinding{
 				"22/tcp": {
@@ -43,6 +55,30 @@ func TestParsePortBinding(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name:    "testUnExistedProtoBinding",
+			args:    args{ports: []string{"80:80/abc"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "testIPv4AddressFormatErrorBinding",
+			args:    args{ports: []string{"256.0.0.1:80:80"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "testPrivatePortOutOfRange",
+			args:    args{ports: []string{"65537:22"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "testPublicPortOutOfRange",
+			args:    args{ports: []string{"22:65537"}},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -68,11 +104,59 @@ func TestVerifyPortBinding(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-		{name: "testCase1", args: args{portBindings: map[string][]types.PortBinding{"21/ftp": {types.PortBinding{HostIP: "", HostPort: "21"}}}}, wantErr: false},
-		{name: "testCase2", args: args{portBindings: map[string][]types.PortBinding{"65537/tcp": {types.PortBinding{}}}}, wantErr: true},
-		{name: "testCase3", args: args{portBindings: map[string][]types.PortBinding{"0/tcp": {types.PortBinding{}}}}, wantErr: false},
-		{name: "testCase4", args: args{portBindings: map[string][]types.PortBinding{"80/http": {types.PortBinding{}}}}, wantErr: false},
+		{
+			name: "testFtpPortBinding",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"21/ftp": {
+						types.PortBinding{HostIP: "", HostPort: "21"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testContainerPortOutOfRange",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"65537/tcp": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "testZeroContainerPort",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"0/tcp": {
+						types.PortBinding{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "testHttpPortBinding",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"80/http": {
+						types.PortBinding{},
+					},
+				},
+			}, wantErr: false,
+		},
+		{
+			name: "testHostPortOutOfRange",
+			args: args{
+				portBindings: map[string][]types.PortBinding{
+					"80/http": {
+						types.PortBinding{HostIP: "", HostPort: "65537"},
+					},
+				},
+			}, wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

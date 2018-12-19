@@ -42,7 +42,7 @@ about detail install information, you can find in [install dragonfly client](htt
 Start dragonfly proxy, `/usr/local/bin/df-client/df-daemon  --registry https://reg.docker.alibaba-inc.com`, you can add flag `--verbose` to get debug log. Dragonfly logs can be found in
 directory `~/.small-dragonfly/logs`.
 
-More dragonfly usage information you can find in [dragonfly usage](https://github.com/dragonflyoss/Dragonfly/blob/master/docs/quick_start/_index.md)
+More dragonfly usage information you can find in [dragonfly usage](https://github.com/dragonflyoss/Dragonfly/blob/master/docs/quick_start/README.md)
 
 2.add the following configuration in PouchContainer config file `/etc/pouch/config.json`
 
