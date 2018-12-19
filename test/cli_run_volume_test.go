@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -421,4 +422,53 @@ func (suite *PouchRunVolumeSuite) TestRunCopyDataWithDR(c *check.C) {
 	if !strings.Contains(res.Stdout(), "mail") {
 		c.Fatal("no copy image data, miss mail directory")
 	}
+}
+
+func (suite *PouchRunVolumeSuite) TestRunVolumesFromWithDR(c *check.C) {
+	vName := "TestRunVolumesFromWithDR_Volume"
+	cName := "TestRunVolumesFromWithDR_Container"
+	cNameBak := "TestRunVolumesFromWithDR_Container_bak"
+
+	// create volume
+	command.PouchRun("volume", "create", "-n", vName).Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", vName)
+
+	// run bak container
+	command.PouchRun("run", "-d", "--name", cNameBak,
+		"-v", vName+":/var:dr",
+		"-v", vName+":/data", busyboxImage, "top").Assert(c, icmd.Success)
+
+	var bakRemoved bool
+	defer func() {
+		if !bakRemoved {
+			command.PouchRun("rm", "-vf", cNameBak)
+		}
+	}()
+
+	// stop bak container
+	command.PouchRun("stop", cNameBak).Assert(c, icmd.Success)
+
+	// run new container with volumes-from
+	command.PouchRun("run", "-d", "--name", cName,
+		"--volumes-from", cNameBak, busyboxImage, "top").Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cName)
+
+	// remove bak container
+	command.PouchRun("rm", "-vf", cNameBak).Assert(c, icmd.Success)
+	bakRemoved = true
+
+	// check inspect mountpoint mode
+	ctr, err := apiClient.ContainerGet(context.Background(), cName)
+	if err != nil {
+		c.Fatalf("failed to get container info, err(%v)", err)
+	}
+
+	var found bool
+	for _, m := range ctr.Mounts {
+		if m.Destination == "/var" && m.Mode == "dr" {
+			found = true
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
 }
