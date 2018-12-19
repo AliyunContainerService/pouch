@@ -168,7 +168,7 @@ func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Import
 	}
 
 	for _, img := range imgs {
-		err = img.Unpack(ctx, CurrentSnapshotterName())
+		err = img.Unpack(ctx, CurrentSnapshotterName(ctx))
 		if err != nil {
 			return nil, err
 		}

@@ -184,7 +184,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		return nil, fmt.Errorf("failed to create sandbox meta store: %v", err)
 	}
 
-	c.imageFSPath = imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName())
+	c.imageFSPath = imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName(context.TODO()))
 	logrus.Infof("Get image filesystem path %q", c.imageFSPath)
 
 	if !config.CriConfig.DisableCriStatsCollect {

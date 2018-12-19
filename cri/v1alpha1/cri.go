@@ -161,7 +161,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		return nil, fmt.Errorf("failed to create sandbox meta store: %v", err)
 	}
 
-	imageFSPath := imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName())
+	imageFSPath := imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName(context.TODO()))
 	c.ImageFSUUID, err = getDeviceUUID(imageFSPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get imagefs uuid of %q: %v", imageFSPath, err)

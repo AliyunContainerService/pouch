@@ -2246,6 +2246,11 @@ definitions:
         type: "array"
         items:
           type: "string"
+      Snapshotter:
+        description: |
+            The snapshotter container choose, can be different with
+            default snapshotter. The Field only set through hook plugin.
+        type: "string"
 
   ContainerCreateResp:
     description: "response returned by daemon when container create successfully"
