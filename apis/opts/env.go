@@ -19,9 +19,18 @@ func ParseEnv(env []string) (map[string]string, error) {
 	return results, nil
 }
 
-// ValidateEnv verifies the correct of env
-func ValidateEnv(map[string]string) error {
-	// TODO
+// ValidateEnv verifies the correctness of env
+// different from the result of ParseEnv can be empty map, a empty env map is invalid
+// before invoke ValidateEnv, make sure the parameter not nil nor empty
+func ValidateEnv(env map[string]string) error {
+	if env == nil {
+		return fmt.Errorf("invalid env %s: env must not be nil", env)
+	}
+	if len(env) == 0 {
+		return fmt.Errorf("invalid env %s: env should not be empty", env)
+	}
+	// TODO if a special key of env should has a range of value,
+	// or the key should in a valid key set, it can be validated here
 
 	return nil
 }
