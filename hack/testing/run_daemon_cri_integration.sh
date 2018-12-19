@@ -18,8 +18,7 @@ export PATH="${REPO_BASE}/bin:${PATH}"
 export PATH="${GOPATH}/bin:${PATH}"
 
 # CRI_SKIP skips the test to skip.
-DEFAULT_CRI_SKIP="seccomp localhost"
-DEFAULT_CRI_SKIP="${DEFAULT_CRI_SKIP}|should error on create with wrong options"
+DEFAULT_CRI_SKIP="should error on create with wrong options"
 CRI_SKIP="${CRI_SKIP:-"${DEFAULT_CRI_SKIP}"}"
 
 # CRI_FOCUS focuses the test to run.
