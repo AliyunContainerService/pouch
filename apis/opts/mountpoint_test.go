@@ -109,6 +109,17 @@ func TestParseBindMode(t *testing.T) {
 			expectErr: nil,
 		},
 		{
+			mode: "private",
+			expectMountPoint: &types.MountPoint{
+				Mode:        "private",
+				Propagation: "private",
+				RW:          true,
+				CopyData:    true,
+			},
+			err:       false,
+			expectErr: nil,
+		},
+		{
 			mode: "nocopy",
 			expectMountPoint: &types.MountPoint{
 				Mode:     "nocopy",
@@ -242,5 +253,38 @@ func TestParseVolumesFrom(t *testing.T) {
 			assert.Equal(p.expectID, containerID)
 			assert.Equal(p.expectMode, mode)
 		}
+	}
+}
+
+func TestCheckDuplicateMountPoint(t *testing.T) {
+	assert := assert.New(t)
+
+	type parsed struct {
+		mounts      []*types.MountPoint
+		destination string
+		expectBool  bool
+	}
+
+	parseds := []parsed{
+		{
+			[]*types.MountPoint{
+				&types.MountPoint{Destination: "/1234"},
+				&types.MountPoint{Destination: "/123"},
+			},
+			"/123",
+			true,
+		},
+		{
+			[]*types.MountPoint{
+				&types.MountPoint{Destination: "/12"},
+			},
+			"/123",
+			false,
+		},
+	}
+
+	for _, p := range parseds {
+		realBool := CheckDuplicateMountPoint(p.mounts, p.destination)
+		assert.Equal(realBool, p.expectBool)
 	}
 }
