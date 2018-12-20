@@ -22,7 +22,6 @@ const (
 	HomeDir       = "/tmp/test/pouch"
 	Listen        = "unix:///tmp/test/pouch/pouchd.sock"
 	ContainerdAdd = "/tmp/test/pouch/containerd.sock"
-	ListenCRI     = "unix:///tmp/test/pouch/pouchcri.sock"
 	Pidfile       = "/tmp/test/pouch/pouch.pid"
 )
 
@@ -42,7 +41,6 @@ type Config struct {
 	Listen         string
 	HomeDir        string
 	ContainerdAddr string
-	ListenCri      string
 	Pidfile        string
 
 	// pid of pouchd
@@ -67,7 +65,6 @@ func NewConfig() Config {
 	result.Listen = Listen
 	result.HomeDir = HomeDir
 	result.ContainerdAddr = ContainerdAdd
-	result.ListenCri = ListenCRI
 	result.Pidfile = Pidfile
 
 	result.timeout = 15
@@ -88,9 +85,6 @@ func (d *Config) NewArgs(args ...string) {
 	}
 	if len(d.ContainerdAddr) != 0 {
 		d.Args = append(d.Args, "--containerd="+d.ContainerdAddr)
-	}
-	if len(d.ListenCri) != 0 {
-		d.Args = append(d.Args, "--listen-cri="+d.ListenCri)
 	}
 	if len(d.Pidfile) != 0 {
 		d.Args = append(d.Args, "--pidfile="+d.Pidfile)

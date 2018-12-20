@@ -100,7 +100,6 @@ func TestConfigValidate(t *testing.T) {
 	// Test cri configuration
 	cfg = &Config{
 		IsCriEnabled: true,
-		ListenCRI:    "unix:///tmp/test/pouch/pouchcri.sock",
 		CriConfig: criconfig.Config{
 			Listen:                 "unix:///var/run/pouchd.sock",
 			NetworkPluginBinDir:    "cni-bin-dir",
