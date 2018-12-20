@@ -101,6 +101,14 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		},
 		Mounts:          mounts,
 		NetworkSettings: c.NetworkSettings,
+		Path:            c.Path,
+		Args:            c.Args,
+		ResolvConfPath:  c.ResolvConfPath,
+		HostnamePath:    c.HostnamePath,
+		HostsPath:       c.HostsPath,
+		Driver:          c.Driver,
+		MountLabel:      c.MountLabel,
+		ProcessLabel:    c.ProcessLabel,
 	}
 
 	return EncodeResponse(rw, http.StatusOK, container)
