@@ -19,7 +19,7 @@ import (
 // swagger:model ContainerJSON
 type ContainerJSON struct {
 
-	// app armor profile
+	// AppArmorProfile are specific for AppArmor to Unix platforms
 	AppArmorProfile string `json:"AppArmorProfile,omitempty"`
 
 	// The arguments to the command being run
@@ -43,10 +43,10 @@ type ContainerJSON struct {
 	// host config
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
-	// hostname path
+	// the path of container's hostname file on host.
 	HostnamePath string `json:"HostnamePath,omitempty"`
 
-	// hosts path
+	// the path of container's hosts file on host.
 	HostsPath string `json:"HostsPath,omitempty"`
 
 	// The ID of the container
@@ -55,16 +55,16 @@ type ContainerJSON struct {
 	// The container's image
 	Image string `json:"Image,omitempty"`
 
-	// log path
+	// the path of container's log file on host.
 	LogPath string `json:"LogPath,omitempty"`
 
-	// mount label
+	// MountLabel contains the options for the 'mount' command.
 	MountLabel string `json:"MountLabel,omitempty"`
 
 	// Set of mount point in a container.
 	Mounts []MountPoint `json:"Mounts"`
 
-	// name
+	// name of the created container.
 	Name string `json:"Name,omitempty"`
 
 	// NetworkSettings exposes the network settings in the API.
@@ -76,10 +76,10 @@ type ContainerJSON struct {
 	// process label
 	ProcessLabel string `json:"ProcessLabel,omitempty"`
 
-	// resolv conf path
+	// the path of container's resolvConf file on host.
 	ResolvConfPath string `json:"ResolvConfPath,omitempty"`
 
-	// restart count
+	// the container's restart time
 	RestartCount int64 `json:"RestartCount,omitempty"`
 
 	// The total size of all the files in this container.

@@ -3392,24 +3392,33 @@ definitions:
         description: "The container's image"
         type: "string"
       ResolvConfPath:
+        description: "the path of container's resolvConf file on host."
         type: "string"
-      HostnamePath:
+      HostnamePath: 
+        description: "the path of container's hostname file on host."
         type: "string"
       HostsPath:
+        description: "the path of container's hosts file on host."
         type: "string"
       LogPath:
+        description: "the path of container's log file on host."
         type: "string"
       Name:
+        description: "name of the created container."
         type: "string"
       RestartCount:
+        description: "the container's restart time"
         type: "integer"
       Driver:
+        description: ""
         type: "string"
       MountLabel:
+        description: "MountLabel contains the options for the 'mount' command."
         type: "string"
       ProcessLabel:
         type: "string"
       AppArmorProfile:
+        description: "AppArmorProfile are specific for AppArmor to Unix platforms"
         type: "string"
       ExecIDs:
         description: "exec ids of container"

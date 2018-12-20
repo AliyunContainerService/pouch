@@ -70,10 +70,21 @@ func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	res = command.PouchRun("start", name)
 	res.Assert(c, icmd.Success)
 
-	// Inspect LogPath, LogPath should not be empty after container's start.
-	// by default, the container has log type of json-file.
+	// Inspect LogPath, HostnamePath, HostsPath, ResolvConfPath
 	output = command.PouchRun("inspect", "-f", "{{.LogPath}}", name).Stdout()
 	expectedLogPath := fmt.Sprintf(rootDir+"/containers/%s/json.log", containerID)
+	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
+
+	output = command.PouchRun("inspect", "-f", "{{.ResolvConfPath}}", name).Stdout()
+	expectedLogPath = fmt.Sprintf(rootDir+"/containers/%s/resolv.conf", containerID)
+	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
+
+	output = command.PouchRun("inspect", "-f", "{{.HostnamePath}}", name).Stdout()
+	expectedLogPath = fmt.Sprintf(rootDir+"/containers/%s/hostname", containerID)
+	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
+
+	output = command.PouchRun("inspect", "-f", "{{.HostsPath}}", name).Stdout()
+	expectedLogPath = fmt.Sprintf(rootDir+"/containers/%s/hosts", containerID)
 	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
 }
 
