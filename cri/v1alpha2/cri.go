@@ -130,6 +130,9 @@ type CriManager struct {
 
 	// imageFSPath is the path to image filesystem.
 	imageFSPath string
+
+	// DaemonConfig is the config of daemon
+	DaemonConfig *config.Config
 }
 
 // NewCriManager creates a brand new cri manager.
@@ -160,6 +163,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		SandboxBaseDir: path.Join(config.HomeDir, "sandboxes"),
 		SandboxImage:   config.CriConfig.SandboxImage,
 		SnapshotStore:  mgr.NewSnapshotStore(),
+		DaemonConfig:   config,
 	}
 	c.CniMgr, err = cni.NewCniManager(&config.CriConfig)
 	if err != nil {
@@ -1254,7 +1258,12 @@ func (c *CriManager) Status(ctx context.Context, r *runtime.StatusRequest) (*run
 		if err != nil {
 			return nil, err
 		}
+		configByt, err := json.Marshal(c.DaemonConfig)
+		if err != nil {
+			return nil, err
+		}
 		resp.Info["golang"] = string(versionByt)
+		resp.Info["daemon-config"] = string(configByt)
 
 		// TODO return more info
 	}
