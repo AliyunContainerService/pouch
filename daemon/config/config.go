@@ -45,9 +45,6 @@ type Config struct {
 	// Server listening address.
 	Listen []string `json:"listen,omitempty"`
 
-	// ListenCRI is the listening address which serves CRI.
-	ListenCRI string `json:"listen-cri,omitempty"`
-
 	// Debug refers to the log mode.
 	Debug bool `json:"debug,omitempty"`
 
