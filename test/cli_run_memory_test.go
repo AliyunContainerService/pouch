@@ -231,3 +231,16 @@ func (suite *PouchRunMemorySuite) TestRunWithShm(c *check.C) {
 
 	c.Assert(util.PartialEqual(res.Stdout(), "1048576"), check.IsNil)
 }
+
+// TestRunWithShm is to verify the container has default shm size equals 64m
+func (suite *PouchRunMemorySuite) TestRunWithDefaultShm(c *check.C) {
+	cname := "TestRunWithDefaultShm"
+	res := command.PouchRun("run", "-d", "--name", cname, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "df", "-k", "/dev/shm")
+	res.Assert(c, icmd.Success)
+
+	c.Assert(util.PartialEqual(res.Stdout(), "65536"), check.IsNil)
+}
