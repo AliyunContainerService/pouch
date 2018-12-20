@@ -24,11 +24,11 @@ DEFAULT_SKIP+="|should execute prestop exec hook properly"
 DEFAULT_SKIP+="|should execute poststart exec hook properly"
 DEFAULT_SKIP+="|should function for intra-pod communication: http*"
 DEFAULT_SKIP+="|should function for intra-pod communication: udp*"
-DEFAULT_SKIP+="|should project all components that make up the projection API*"
 export SKIP=${SKIP:-${DEFAULT_SKIP}}
 
 # FOCUS focuses the test to run.
-export FOCUS=${FOCUS:-}
+DEFAULT_FOCUS="\[NodeConformance\]"
+export FOCUS=${FOCUS:-${DEFAULT_FOCUS}}
 
 POUCH_SOCK="/var/run/pouchcri.sock"
 
@@ -61,7 +61,7 @@ integration::run_daemon_cri_test_e2e_cases() {
   if [[ "${cri_runtime}" == "v1alpha1" ]]; then
     KUBERNETES_VERSION="release-1.9"
   else
-    KUBERNETES_VERSION="release-1.10"
+    KUBERNETES_VERSION="release-1.12"
   fi
 
   KUBERNETES_REPO="github.com/kubernetes/kubernetes"
@@ -83,6 +83,7 @@ integration::run_daemon_cri_test_e2e_cases() {
     CONTAINER_RUNTIME_ENDPOINT=unix://${POUCH_SOCK} \
     SKIP="${SKIP}" \
     FOCUS="${FOCUS}" \
+    TEST_ARGS='--kubelet-flags="--cgroups-per-qos=true --cgroup-root=/"' \
     PARALLELISM=8
 
   code=$?
