@@ -383,7 +383,7 @@ func (suite *PouchDaemonSuite) TestDaemonCriEnabled(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	result := RunWithSpecifiedDaemon(dcfg, "info")
-	err = util.PartialEqual(result.Combined(), "CriEnabled:  true")
+	err = util.PartialEqual(result.Combined(), "CriEnabled: true")
 	c.Assert(err, check.IsNil)
 
 	defer dcfg.KillDaemon()

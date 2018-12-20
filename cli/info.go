@@ -16,12 +16,12 @@ var infoDescription = "Display the information of pouch, " +
 	"including Containers, Images, Storage Driver, Execution Driver, Logging Driver, Kernel Version, " +
 	"Operating System, CPUs, Total Memory, Name, ID."
 
-// InfoCommand use to implement 'info' command.
+// InfoCommand implements info command.
 type InfoCommand struct {
 	baseCommand
 }
 
-// Init initialize info command.
+// Init initializes info command.
 func (v *InfoCommand) Init(c *Cli) {
 	v.cli = c
 	v.cmd = &cobra.Command{
@@ -56,60 +56,60 @@ func (v *InfoCommand) runInfo() error {
 }
 
 func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
-	fmt.Fprintln(os.Stdout, "Containers: ", info.Containers)
-	fmt.Fprintln(os.Stdout, " Running: ", info.ContainersRunning)
-	fmt.Fprintln(os.Stdout, " Paused: ", info.ContainersPaused)
-	fmt.Fprintln(os.Stdout, " Stopped: ", info.ContainersStopped)
-	fmt.Fprintln(os.Stdout, "Images: ", info.Images)
-	fmt.Fprintln(os.Stdout, "ID: ", info.ID)
-	fmt.Fprintln(os.Stdout, "Name: ", info.Name)
-	fmt.Fprintln(os.Stdout, "Server Version: ", info.ServerVersion)
-	fmt.Fprintln(os.Stdout, "Storage Driver: ", info.Driver)
-	fmt.Fprintln(os.Stdout, "Driver Status: ", info.DriverStatus)
-	fmt.Fprintln(os.Stdout, "Logging Driver: ", info.LoggingDriver)
-	fmt.Fprintln(os.Stdout, "Volume Drivers: ", info.VolumeDrivers)
-	fmt.Fprintln(os.Stdout, "Cgroup Driver: ", info.CgroupDriver)
-	fmt.Fprintln(os.Stdout, "Default Runtime: ", info.DefaultRuntime)
+	fmt.Fprintf(os.Stdout, "Containers: %d\n", info.Containers)
+	fmt.Fprintf(os.Stdout, " Running: %d\n", info.ContainersRunning)
+	fmt.Fprintf(os.Stdout, " Paused: %d\n", info.ContainersPaused)
+	fmt.Fprintf(os.Stdout, " Stopped: %d\n", info.ContainersStopped)
+	fmt.Fprintf(os.Stdout, "Images: %d\n", info.Images)
+	fmt.Fprintf(os.Stdout, "ID: %s\n", info.ID)
+	fmt.Fprintf(os.Stdout, "Name: %s\n", info.Name)
+	fmt.Fprintf(os.Stdout, "Server Version: %s\n", info.ServerVersion)
+	fmt.Fprintf(os.Stdout, "Storage Driver: %s\n", info.Driver)
+	fmt.Fprintf(os.Stdout, "Driver Status: %v\n", info.DriverStatus)
+	fmt.Fprintf(os.Stdout, "Logging Driver: %s\n", info.LoggingDriver)
+	fmt.Fprintf(os.Stdout, "Volume Drivers: %v\n", info.VolumeDrivers)
+	fmt.Fprintf(os.Stdout, "Cgroup Driver: %s\n", info.CgroupDriver)
+	fmt.Fprintf(os.Stdout, "Default Runtime: %s\n", info.DefaultRuntime)
 	if len(info.Runtimes) > 0 {
-		fmt.Fprintf(os.Stdout, "Runtimes: ")
+		fmt.Fprint(os.Stdout, "Runtimes:")
 		for name := range info.Runtimes {
 			fmt.Fprintf(os.Stdout, " %s", name)
 		}
 		fmt.Fprint(os.Stdout, "\n")
 	}
-	fmt.Fprintln(os.Stdout, "runc: ", info.RuncCommit)
-	fmt.Fprintln(os.Stdout, "containerd: ", info.ContainerdCommit)
+	fmt.Fprintf(os.Stdout, "runc: %v\n", info.RuncCommit)
+	fmt.Fprintf(os.Stdout, "containerd: %v\n", info.ContainerdCommit)
 
 	// Kernel info
-	fmt.Fprintln(os.Stdout, "Security Options: ", info.SecurityOptions)
-	fmt.Fprintln(os.Stdout, "Kernel Version: ", info.KernelVersion)
-	fmt.Fprintln(os.Stdout, "Operating System: ", info.OperatingSystem)
-	fmt.Fprintln(os.Stdout, "OSType: ", info.OSType)
-	fmt.Fprintln(os.Stdout, "Architecture: ", info.Architecture)
+	fmt.Fprintf(os.Stdout, "Security Options: %v\n", info.SecurityOptions)
+	fmt.Fprintf(os.Stdout, "Kernel Version: %s\n", info.KernelVersion)
+	fmt.Fprintf(os.Stdout, "Operating System: %s\n", info.OperatingSystem)
+	fmt.Fprintf(os.Stdout, "OSType: %s\n", info.OSType)
+	fmt.Fprintf(os.Stdout, "Architecture: %s\n", info.Architecture)
 
-	fmt.Fprintln(os.Stdout, "HTTP Proxy: ", info.HTTPProxy)
-	fmt.Fprintln(os.Stdout, "HTTPS Proxy: ", info.HTTPSProxy)
-	fmt.Fprintln(os.Stdout, "Registry: ", info.IndexServerAddress)
-	fmt.Fprintln(os.Stdout, "Experimental: ", info.ExperimentalBuild)
-	fmt.Fprintln(os.Stdout, "Debug: ", info.Debug)
+	fmt.Fprintf(os.Stdout, "HTTP Proxy: %s\n", info.HTTPProxy)
+	fmt.Fprintf(os.Stdout, "HTTPS Proxy: %s\n", info.HTTPSProxy)
+	fmt.Fprintf(os.Stdout, "Registry: %s\n", info.IndexServerAddress)
+	fmt.Fprintf(os.Stdout, "Experimental: %v\n", info.ExperimentalBuild)
+	fmt.Fprintf(os.Stdout, "Debug: %v\n", info.Debug)
 	if len(info.Labels) != 0 {
-		fmt.Fprintln(os.Stdout, "Labels: ")
+		fmt.Fprintln(os.Stdout, "Labels:")
 		for _, label := range info.Labels {
 			fmt.Fprintf(os.Stdout, "  %s\n", label)
 		}
 	}
 
-	fmt.Fprintln(os.Stdout, "CPUs: ", info.NCPU)
-	fmt.Fprintln(os.Stdout, "Total Memory: "+units.BytesSize(float64(info.MemTotal)))
-	fmt.Fprintln(os.Stdout, "Pouch Root Dir: ", info.PouchRootDir)
-	fmt.Fprintln(os.Stdout, "LiveRestoreEnabled: ", info.LiveRestoreEnabled)
-	fmt.Fprintln(os.Stdout, "LxcfsEnabled: ", info.LxcfsEnabled)
-	fmt.Fprintln(os.Stdout, "CriEnabled: ", info.CriEnabled)
+	fmt.Fprintf(os.Stdout, "CPUs: %d\n", info.NCPU)
+	fmt.Fprintf(os.Stdout, "Total Memory: %s\n", units.BytesSize(float64(info.MemTotal)))
+	fmt.Fprintf(os.Stdout, "Pouch Root Dir: %s\n", info.PouchRootDir)
+	fmt.Fprintf(os.Stdout, "LiveRestoreEnabled: %v\n", info.LiveRestoreEnabled)
+	fmt.Fprintf(os.Stdout, "LxcfsEnabled: %v\n", info.LxcfsEnabled)
+	fmt.Fprintf(os.Stdout, "CriEnabled: %v\n", info.CriEnabled)
 	if info.RegistryConfig != nil && (len(info.RegistryConfig.InsecureRegistryCIDRs) > 0 || len(info.RegistryConfig.IndexConfigs) > 0) {
-		fmt.Fprintln(os.Stdout, "Insecure Registries: ")
+		fmt.Fprintln(os.Stdout, "Insecure Registries:")
 		for _, registry := range info.RegistryConfig.IndexConfigs {
 			if !registry.Secure {
-				fmt.Fprintln(os.Stdout, " "+registry.Name)
+				fmt.Fprintf(os.Stdout, " %s\n", registry.Name)
 			}
 		}
 
@@ -119,13 +119,13 @@ func prettyPrintInfo(cli *Cli, info *types.SystemInfo) error {
 	}
 
 	if info.RegistryConfig != nil && len(info.RegistryConfig.Mirrors) > 0 {
-		fmt.Fprintln(os.Stdout, "Registry Mirrors: ")
+		fmt.Fprintln(os.Stdout, "Registry Mirrors:")
 		for _, mirror := range info.RegistryConfig.Mirrors {
-			fmt.Fprintln(os.Stdout, " "+mirror)
+			fmt.Fprintf(os.Stdout, " %s\n", mirror)
 		}
 	}
 
-	fmt.Fprintln(os.Stdout, "Daemon Listen Addresses: ", info.ListenAddresses)
+	fmt.Fprintf(os.Stdout, "Daemon Listen Addresses: %v\n", info.ListenAddresses)
 
 	return nil
 }
