@@ -37,10 +37,10 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	}
 
 	label := util_metrics.ActionPullLabel
-	metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 
 	// record the time spent during image pull procedure.
 	defer func(start time.Time) {
+		metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 		metrics.ImagePullSummary.WithLabelValues(image).Observe(util_metrics.SinceInMicroseconds(start))
 		metrics.ImageActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
@@ -116,8 +116,8 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 	}
 
 	label := util_metrics.ActionDeleteLabel
-	metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 	defer func(start time.Time) {
+		metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 		metrics.ImageActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
 
