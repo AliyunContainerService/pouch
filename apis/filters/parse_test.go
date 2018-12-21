@@ -223,3 +223,54 @@ func TestArgsMatchKVList(t *testing.T) {
 		}
 	}
 }
+
+func TestArgsValidate(t *testing.T) {
+	tests := []struct {
+		name     string
+		testArgs Args
+		accepted map[string]bool
+		wantErr  bool
+	}{
+		{
+			"mapping keys are in the accepted set",
+			Args{
+				map[string]map[string]bool{
+					"created": {
+						"today": true,
+					},
+				},
+			},
+
+			map[string]bool{
+				"created": true,
+			},
+
+			false,
+		},
+		{
+			"mapping keys are not in the accepted set",
+			Args{
+				map[string]map[string]bool{
+					"created": {
+						"today": true,
+					},
+				},
+			},
+
+			map[string]bool{
+				"created": false,
+			},
+
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.testArgs.Validate(tt.accepted)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
