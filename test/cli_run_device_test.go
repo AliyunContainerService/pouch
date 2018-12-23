@@ -24,9 +24,7 @@ func init() {
 // SetUpSuite does common setup in the beginning of each test suite.
 func (suite *PouchRunDeviceSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
-
 	environment.PruneAllContainers(apiClient)
-
 	PullImage(c, busyboxImage)
 }
 
@@ -40,12 +38,14 @@ func (suite *PouchRunDeviceSuite) TestRunDeviceMapping(c *check.C) {
 		c.Skip("Host does not have /dev/zero")
 	}
 
-	name := "test-run-device-mapping"
+	name := "TestRunDeviceMapping"
 	testDev := "/dev/testDev"
 
-	res := command.PouchRun("run", "--name", name,
-		"--device", "/dev/zero:"+testDev,
-		busyboxImage, "ls", testDev)
+	res := command.PouchRun("run",
+		"--name", name,
+		"--device", fmt.Sprintf("/dev/zero:%s", testDev),
+		busyboxImage,
+		"ls", testDev)
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -61,12 +61,15 @@ func (suite *PouchRunDeviceSuite) TestRunDevicePermissions(c *check.C) {
 		c.Skip("Host does not have /dev/zero")
 	}
 
-	name := "test-run-device-permissions"
+	name := "TestRunDevicePermissions"
 	testDev := "/dev/testDev"
 	permissions := "crw-rw-rw-"
 
-	res := command.PouchRun("run", "--name", name, "--device",
-		"/dev/zero:"+testDev+":rwm", busyboxImage, "ls", "-l", testDev)
+	res := command.PouchRun("run",
+		"--name", name,
+		"--device", fmt.Sprintf("/dev/zero:%s:rwm", testDev),
+		busyboxImage,
+		"ls", "-l", testDev)
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -79,11 +82,14 @@ func (suite *PouchRunDeviceSuite) TestRunDevicePermissions(c *check.C) {
 // TestRunDeviceInvalidMode is to verify --device wrong mode
 // when running a container.
 func (suite *PouchRunDeviceSuite) TestRunDeviceInvalidMode(c *check.C) {
-	name := "test-run-device-with-wrong-mode"
+	name := "TestRunDeviceInvalidMode"
 	wrongMode := "rxm"
 
-	res := command.PouchRun("run", "--name", name, "--device",
-		"/dev/zero:/dev/zero:"+wrongMode, busyboxImage, "ls", "/dev/zero")
+	res := command.PouchRun("run",
+		"--name", name,
+		"--device", fmt.Sprintf("/dev/zero:/dev/zero:%s"+wrongMode),
+		busyboxImage,
+		"ls", "/dev/zero")
 	defer DelContainerForceMultyTime(c, name)
 
 	c.Assert(res.Stderr(), check.NotNil)
@@ -102,11 +108,14 @@ func (suite *PouchRunDeviceSuite) TestRunDeviceDirectory(c *check.C) {
 		c.Skip("Host does not have direcory /dev/snd")
 	}
 
-	name := "test-run-with-directory-device"
+	name := "TestRunDeviceDirectory"
 	srcDev := "/dev/snd"
 
-	res := command.PouchRun("run", "--name", name, "--device",
-		srcDev+":/dev:rwm", busyboxImage, "ls", "-l", "/dev")
+	res := command.PouchRun("run",
+		"--name", name,
+		"--device", fmt.Sprintf("%s:/dev:rwm", srcDev),
+		busyboxImage,
+		"ls", "-l", "/dev")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
@@ -121,10 +130,13 @@ func (suite *PouchRunDeviceSuite) TestRunDeviceDirectory(c *check.C) {
 // TestRunWithBadDevice is to verify --device
 // with bad device dir when running a container.
 func (suite *PouchRunDeviceSuite) TestRunDeviceWithBadDevice(c *check.C) {
-	name := "test-run-with-bad-device"
+	name := "TestRunDeviceWithBadDevice"
 
-	res := command.PouchRun("run", "--name", name, "--device", "/etc",
-		busyboxImage, "ls", "/etc")
+	res := command.PouchRun("run",
+		"--name", name,
+		"--device", "/etc",
+		busyboxImage,
+		"ls", "/etc")
 	defer DelContainerForceMultyTime(c, name)
 
 	c.Assert(res.Stderr(), check.NotNil)
@@ -136,17 +148,27 @@ func (suite *PouchRunDeviceSuite) TestRunDeviceWithBadDevice(c *check.C) {
 	}
 }
 
-// TestRunDeviceReadBps tests running container with --device-read-bps flag.
-func (suite *PouchRunDeviceSuite) TestRunDeviceReadBps(c *check.C) {
-	cname := "TestRunDeviceReadBps"
+// TestRunDeviceReadWriteBpsIops tests running container
+// with a device combined with flags
+// --device-read-bps,
+// --device-write-bps,
+// --device-read-iops,
+// --device-write-iops.
+func (suite *PouchRunDeviceSuite) TestRunDeviceReadWriteBpsIops(c *check.C) {
+	cname := "TestRunDeviceReadWriteBpsIops"
 	testDisk, found := environment.FindDisk()
 	if !found {
 		c.Skip("fail to find available disk for blkio test")
 	}
 
 	res := command.PouchRun("run", "-d",
-		"--device-read-bps", testDisk+":1mb",
-		"--name", cname, busyboxImage, "sleep", "10000")
+		"--name", cname,
+		"--device-read-bps", fmt.Sprintf("%s:1mb", testDisk),
+		"--device-write-bps", fmt.Sprintf("%s:1mb", testDisk),
+		"--device-read-iops", fmt.Sprintf("%s:1000", testDisk),
+		"--device-write-iops", fmt.Sprintf("%s:1000", testDisk),
+		busyboxImage,
+		"sleep", "10000")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -160,139 +182,30 @@ func (suite *PouchRunDeviceSuite) TestRunDeviceReadBps(c *check.C) {
 	}
 
 	c.Assert(len(result[0].HostConfig.BlkioDeviceReadBps), check.Equals, 1)
-	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Path,
-		check.Equals, testDisk)
-	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Rate,
-		check.Equals, uint64(1048576))
+	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadBps[0].Rate, check.Equals, uint64(1048576))
+
+	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteBps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Rate, check.Equals, uint64(1048576))
+
+	c.Assert(len(result[0].HostConfig.BlkioDeviceReadIOps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Rate, check.Equals, uint64(1000))
+
+	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteIOps), check.Equals, 1)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Path, check.Equals, testDisk)
+	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Rate, check.Equals, uint64(1000))
 
 	// test if cgroup has record the real value
 	containerID := result[0].ID
-	{
-		path := fmt.Sprintf(
-			"/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_bps_device",
-			containerID)
-		checkFileContains(c, path, "1048576")
-	}
-}
-
-// TestRunDeviceWriteBps tests running container
-// with --device-write-bps flag.
-func (suite *PouchRunDeviceSuite) TestRunDeviceWriteBps(c *check.C) {
-	cname := "TestRunDeviceWriteBps"
-	testDisk, found := environment.FindDisk()
-	if !found {
-		c.Skip("fail to find available disk for blkio test")
-	}
-
-	res := command.PouchRun("run", "-d",
-		"--device-write-bps", testDisk+":1mb",
-		"--name", cname, busyboxImage, "sleep", "10000")
-	defer DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
-
-	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteBps),
-		check.Equals, 1)
-	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Path,
-		check.Equals, testDisk)
-	c.Assert(result[0].HostConfig.BlkioDeviceWriteBps[0].Rate,
-		check.Equals, uint64(1048576))
-
-	// test if cgroup has record the real value
-	containerID := result[0].ID
-	{
-		path := fmt.Sprintf(
-			"/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_bps_device",
-			containerID)
-		checkFileContains(c, path, "1048576")
-	}
-}
-
-// TestRunDeviceReadIops tests running container with --device-read-iops flag.
-func (suite *PouchRunDeviceSuite) TestRunDeviceReadIops(c *check.C) {
-	cname := "TestRunDeviceReadIops"
-	testDisk, found := environment.FindDisk()
-	if !found {
-		c.Skip("fail to find available disk for blkio test")
-	}
-
-	res := command.PouchRun("run", "-d",
-		"--device-read-iops", testDisk+":1000",
-		"--name", cname, busyboxImage, "sleep", "10000")
-	defer DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
-
-	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(len(result[0].HostConfig.BlkioDeviceReadIOps),
-		check.Equals, 1)
-	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Path,
-		check.Equals, testDisk)
-	c.Assert(result[0].HostConfig.BlkioDeviceReadIOps[0].Rate,
-		check.Equals, uint64(1000))
-
-	// test if cgroup has record the real value
-	containerID := result[0].ID
-	{
-		path := fmt.Sprintf(
-			"/sys/fs/cgroup/blkio/default/%s/blkio.throttle.read_iops_device",
-			containerID)
-		checkFileContains(c, path, "1000")
-	}
-}
-
-// TestRunDeviceWriteIops tests running container
-// with --device-write-iops flag.
-func (suite *PouchRunDeviceSuite) TestRunDeviceWriteIops(c *check.C) {
-	cname := "TestRunDeviceWriteIops"
-	testDisk, found := environment.FindDisk()
-	if !found {
-		c.Skip("fail to find available disk for blkio test")
-	}
-
-	res := command.PouchRun("run", "-d",
-		"--device-write-iops", testDisk+":1000",
-		"--name", cname, busyboxImage, "sleep", "10000")
-	defer DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
-
-	// test if the value is in inspect result
-	res = command.PouchRun("inspect", cname)
-	res.Assert(c, icmd.Success)
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(res.Stdout()), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	c.Assert(len(result[0].HostConfig.BlkioDeviceWriteIOps),
-		check.Equals, 1)
-	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Path,
-		check.Equals, testDisk)
-	c.Assert(result[0].HostConfig.BlkioDeviceWriteIOps[0].Rate,
-		check.Equals, uint64(1000))
-
-	// test if cgroup has record the real value
-	containerID := result[0].ID
-	{
-		path := fmt.Sprintf(
-			"/sys/fs/cgroup/blkio/default/%s/blkio.throttle.write_iops_device",
-			containerID)
-		checkFileContains(c, path, "1000")
-	}
+	commonDir := "/sys/fs/cgroup/blkio/default"
+	path := fmt.Sprintf("%s/%s/blkio.throttle.read_bps_device", commonDir, containerID)
+	checkFileContains(c, path, "1048576")
+	path = fmt.Sprintf("%s/%s/blkio.throttle.write_bps_device", commonDir, containerID)
+	checkFileContains(c, path, "1048576")
+	path = fmt.Sprintf("%s/%s/blkio.throttle.read_iops_device", commonDir, containerID)
+	checkFileContains(c, path, "1000")
+	path = fmt.Sprintf("%s/%s/blkio.throttle.write_iops_device", commonDir, containerID)
+	checkFileContains(c, path, "1000")
 }
