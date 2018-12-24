@@ -1342,8 +1342,8 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 		return nil, err
 	}
 
-	if !c.IsRunning() {
-		return nil, fmt.Errorf("container %s is not running, cannot execute top command", c.ID)
+	if !c.IsRunningOrPaused() {
+		return nil, fmt.Errorf("container %s is not running or paused, cannot execute top command", c.ID)
 	}
 
 	pids, err := mgr.Client.ContainerPIDs(ctx, c.ID)
