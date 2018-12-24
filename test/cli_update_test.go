@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -35,68 +36,187 @@ func (suite *PouchUpdateSuite) SetUpSuite(c *check.C) {
 func (suite *PouchUpdateSuite) TearDownTest(c *check.C) {
 }
 
-// TestUpdateCpu is to verify the correctness of updating container cpu.
-func (suite *PouchUpdateSuite) TestUpdateCpu(c *check.C) {
-	name := "update-container-cpu"
+// TestUpdateContainerNormalOption is to verify the correctness of updating container cpu.
+func (suite *PouchUpdateSuite) TestUpdateContainerNormalOption(c *check.C) {
+	name := "TestUpdateContainerNormalOption"
 
-	res := command.PouchRun("run", "-d", "--cpu-shares", "20", "--name", name, busyboxImage, "top")
+	res := command.PouchRun("run", "-d",
+		"--name", name,
+		// cpu related options
+		"--cpu-shares", "1000",
+		"--cpu-period", "1000",
+		"--cpu-quota", "1000",
+		//"--cpuset-cpus", "0",
+		//"--cpuset-mems", "0",
+		// memory related options
+		"-m", "300M",
+		busyboxImage,
+		"top")
+
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	containerID, err := inspectFilter(name, ".ID")
 	c.Assert(err, check.IsNil)
 
-	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.shares"
-	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+	command.PouchRun("update",
+		// cpu related update
+		"--cpu-shares", "2000",
+		"--cpu-period", "1500",
+		"--cpu-quota", "1100",
+		"--cpuset-cpus", "0",
+		"--cpuset-mems", "0",
+		// memory related update
+		"-m", "500M",
+		// env related update
+		// adding a new env
+		"--env", "foo=bar",
+		// label related update
+		"--label", "foo=bar",
+		name,
+	).Assert(c, icmd.Success)
+
+	{
+		// test value check about cpushares
+		cpuShareFilePath := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.shares", containerID)
+		c.Assert(OsStatErr(cpuShareFilePath), check.IsNil)
+
+		out, err := exec.Command("cat", cpuShareFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
+
+		if !strings.Contains(string(out), "2000") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "2000")
+		}
+
+		cpuShares, err := inspectFilter(name, ".HostConfig.CPUShares")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpuShares, check.Equals, "2000")
 	}
 
-	command.PouchRun("update", "--cpu-shares", "40", name).Assert(c, icmd.Success)
+	{
+		// test value check about cpu period
+		cpuPeriodFilePath := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.cfs_period_us", containerID)
+		c.Assert(OsStatErr(cpuPeriodFilePath), check.IsNil)
 
-	out, err := exec.Command("cat", file).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
+		out, err := exec.Command("cat", cpuPeriodFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
+
+		if !strings.Contains(string(out), "1500") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "1500")
+		}
+
+		cpuPeriod, err := inspectFilter(name, ".HostConfig.CPUPeriod")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpuPeriod, check.Equals, "1500")
 	}
 
-	if !strings.Contains(string(out), "40") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "40")
+	{
+		// test value check about cpu quota
+		cpuQuotaFilePath := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.cfs_quota_us", containerID)
+		c.Assert(OsStatErr(cpuQuotaFilePath), check.IsNil)
+
+		out, err := exec.Command("cat", cpuQuotaFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
+
+		if !strings.Contains(string(out), "1100") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "1100")
+		}
+
+		cpuQuota, err := inspectFilter(name, ".HostConfig.CPUQuota")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpuQuota, check.Equals, "1100")
 	}
 
-	cpuShares, err := inspectFilter(name, ".HostConfig.CPUShares")
-	c.Assert(err, check.IsNil)
-	c.Assert(cpuShares, check.Equals, "40")
-}
+	{
+		// test value check about cpusetCPUs
+		cpusetCPUsFilePath := fmt.Sprintf("/sys/fs/cgroup/cpuset/default/%s/cpuset.cpus", containerID)
+		c.Assert(OsStatErr(cpusetCPUsFilePath), check.IsNil)
 
-// TestUpdateCpuPeriod is to verify the correctness of updating container cpu-period.
-func (suite *PouchUpdateSuite) TestUpdateCpuPeriod(c *check.C) {
-	name := "update-container-cpu-period"
+		out, err := exec.Command("cat", cpusetCPUsFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
 
-	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
+		if !strings.Contains(string(out), "0") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "0")
+		}
 
-	containerID, err := inspectFilter(name, ".ID")
-	c.Assert(err, check.IsNil)
-
-	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_period_us"
-	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
+		cpusetCPUs, err := inspectFilter(name, ".HostConfig.CpusetCpus")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpusetCPUs, check.Equals, "0")
 	}
 
-	command.PouchRun("update", "--cpu-period", "2000", name).Assert(c, icmd.Success)
+	{
+		// test value check about cpusetMems
+		cpusetMemsFilePath := fmt.Sprintf("/sys/fs/cgroup/cpuset/default/%s/cpuset.mems", containerID)
+		c.Assert(OsStatErr(cpusetMemsFilePath), check.IsNil)
 
-	out, err := exec.Command("cat", file).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
+		out, err := exec.Command("cat", cpusetMemsFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
+
+		if !strings.Contains(string(out), "0") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "0")
+		}
+
+		cpusetMems, err := inspectFilter(name, ".HostConfig.CpusetMems")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpusetMems, check.Equals, "0")
 	}
 
-	if !strings.Contains(string(out), "2000") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "2000")
+	{
+		// test value check about memory limit
+		memLimitFilePath := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
+		c.Assert(OsStatErr(memLimitFilePath), check.IsNil)
+
+		out, err := exec.Command("cat", memLimitFilePath).Output()
+		if err != nil {
+			c.Fatalf("failed to execute cat command: %v", err)
+		}
+
+		if !strings.Contains(string(out), "524288000") {
+			c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
+		}
+
+		cpuQuota, err := inspectFilter(name, ".HostConfig.Memory")
+		c.Assert(err, check.IsNil)
+		c.Assert(cpuQuota, check.Equals, "524288000")
 	}
 
-	cpuPeriod, err := inspectFilter(name, ".HostConfig.CPUPeriod")
-	c.Assert(err, check.IsNil)
-	c.Assert(cpuPeriod, check.Equals, "2000")
+	{
+		// test value check about env and label
+		output := command.PouchRun("inspect", name).Stdout()
+		result := []types.ContainerJSON{}
+		if err := json.Unmarshal([]byte(output), &result); err != nil {
+			c.Errorf("failed to decode inspect output: %v", err)
+		}
+
+		// test env
+		{
+			if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
+				c.Fatalf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
+			}
+
+			output = command.PouchRun("exec", name, "env").Stdout()
+			if !strings.Contains(output, "foo=bar") {
+				c.Fatalf("Update running container env not worked")
+			}
+		}
+
+		// test labels
+		{
+			if v, ok := result[0].Config.Labels["foo"]; !ok || v != "bar" {
+				c.Fatalf("expect 'foo=bar' in Labels, got: %v", result[0].Config.Labels)
+			}
+		}
+	}
 }
 
 // TestUpdateCpuMemoryFail is to verify the invalid value of updating container cpu and memory related flags will fail.
@@ -117,38 +237,6 @@ func (suite *PouchUpdateSuite) TestUpdateCpuMemoryFail(c *check.C) {
 	c.Assert(res.Stderr(), check.NotNil)
 	res = command.PouchRun("update", "-m", "10000", name)
 	c.Assert(res.Stderr(), check.NotNil)
-}
-
-// TestUpdateRunningContainer is to verify the correctness of updating a running container.
-func (suite *PouchUpdateSuite) TestUpdateRunningContainer(c *check.C) {
-	name := "update-running-container"
-
-	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
-
-	containerID, err := inspectFilter(name, ".ID")
-	c.Assert(err, check.IsNil)
-
-	file := "/sys/fs/cgroup/memory/default/" + containerID + "/memory.limit_in_bytes"
-	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
-	}
-
-	command.PouchRun("update", "-m", "500M", name).Assert(c, icmd.Success)
-
-	out, err := exec.Command("cat", file).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
-	}
-
-	if !strings.Contains(string(out), "524288000") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
-	}
-
-	memory, err := inspectFilter(name, ".HostConfig.Memory")
-	c.Assert(err, check.IsNil)
-	c.Assert(memory, check.Equals, "524288000")
 }
 
 // TestUpdateStoppedContainer is to verify the correctness of updating a stopped container.
@@ -185,39 +273,6 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainer(c *check.C) {
 	c.Assert(memory, check.Equals, "524288000")
 }
 
-// TestUpdateContainerCPUQuota is to verify the correctness of updating cpu-quota of container.
-func (suite *PouchUpdateSuite) TestUpdateContainerCPUQuota(c *check.C) {
-	name := "update-container-cpu-quota"
-
-	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
-
-	// ensure update cpu-quota is ok
-	command.PouchRun("update", "--cpu-quota", "1100", name).Assert(c, icmd.Success)
-
-	containerID, err := inspectFilter(name, ".ID")
-	c.Assert(err, check.IsNil)
-
-	file := "/sys/fs/cgroup/cpu/default/" + containerID + "/cpu.cfs_quota_us"
-	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", containerID)
-	}
-
-	out, err := exec.Command("cat", file).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
-	}
-
-	if !strings.Contains(string(out), "1100") {
-		c.Fatalf("unexpected output %s expected %s\n", string(out), "524288000")
-	}
-
-	cpuQuota, err := inspectFilter(name, ".HostConfig.CPUQuota")
-	c.Assert(err, check.IsNil)
-	c.Assert(cpuQuota, check.Equals, "1100")
-}
-
 // TestUpdateContainerWithoutFlag is to verify the correctness of updating a container without any flag.
 func (suite *PouchUpdateSuite) TestUpdateContainerWithoutFlag(c *check.C) {
 	name := "update-container-without-flag"
@@ -229,9 +284,9 @@ func (suite *PouchUpdateSuite) TestUpdateContainerWithoutFlag(c *check.C) {
 	command.PouchRun("update", name).Assert(c, icmd.Success)
 }
 
-// TestUpdateContainerEnv is to verify the correctness of updating env of container.
-func (suite *PouchUpdateSuite) TestUpdateContainerEnv(c *check.C) {
-	name := "update-container-env"
+// TestUpdateStoppedContainerEnv is to verify the correctness of updating env of container.
+func (suite *PouchUpdateSuite) TestUpdateStoppedContainerEnv(c *check.C) {
+	name := "TestUpdateStoppedContainerEnv"
 
 	res := command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage)
 	defer DelContainerForceMultyTime(c, name)
@@ -247,53 +302,6 @@ func (suite *PouchUpdateSuite) TestUpdateContainerEnv(c *check.C) {
 
 	if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
 		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
-	}
-}
-
-// TestUpdateRunningContainerEnv is to verify the correctness of updating env of an running container.
-func (suite *PouchUpdateSuite) TestUpdateRunningContainerEnv(c *check.C) {
-	name := "update-running-container-env"
-
-	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
-
-	command.PouchRun("update", "--env", "foo=bar", name).Assert(c, icmd.Success)
-
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
-		c.Errorf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
-	}
-
-	output = command.PouchRun("exec", name, "env").Stdout()
-	if !strings.Contains(output, "foo=bar") {
-		c.Fatalf("Update running container env not worked")
-	}
-}
-
-// TestUpdateContainerLabel is to verify the correctness of updating label of container.
-func (suite *PouchUpdateSuite) TestUpdateContainerLabel(c *check.C) {
-	name := "update-container-label"
-
-	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
-	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
-
-	command.PouchRun("update", "--label", "foo=bar", name).Assert(c, icmd.Success)
-
-	output := command.PouchRun("inspect", name).Stdout()
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-
-	if v, ok := result[0].Config.Labels["foo"]; !ok || v != "bar" {
-		c.Errorf("expect 'foo=bar' in Labels, got: %v", result[0].Config.Labels)
 	}
 }
 

@@ -112,3 +112,11 @@ func inspectFilter(name, filter string) (string, error) {
 	}
 	return strings.TrimSpace(result.Combined()), nil
 }
+
+// OsStatErr is used to simplify the error assert way.
+func OsStatErr(file string) error {
+	if _, err := os.Stat(file); err != nil {
+		return err
+	}
+	return nil
+}
