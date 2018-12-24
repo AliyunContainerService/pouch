@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -132,22 +133,41 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 
 	pctx, cancel := context.WithCancel(ctx)
 	stream := jsonstream.New(out, nil)
-	wait := make(chan struct{})
 
-	go func() {
-		// wait stream to finish.
-		defer cancel()
+	closeStream := func() {
+		// close and wait stream
+		stream.Close()
 		stream.Wait()
-		close(wait)
-	}()
+		cancel()
+	}
+
+	writeStream := func(err error) {
+		// Send Error information to client through stream
+		message := jsonstream.JSONMessage{
+			Error: &jsonstream.JSONError{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			},
+			ErrorMessage: err.Error(),
+		}
+		stream.WriteObject(message)
+		closeStream()
+	}
 
 	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
-	img, err := mgr.client.PullImage(pctx, namedRef.String(), authConfig, stream)
-	// wait goroutine to exit.
-	<-wait
+	img, err := mgr.client.FetchImage(pctx, namedRef.String(), authConfig, stream)
 	if err != nil {
+		writeStream(err)
 		return err
 	}
+
+	// unpack image
+	if err = img.Unpack(ctx, ctrd.CurrentSnapshotterName()); err != nil {
+		writeStream(err)
+		return err
+	}
+
+	closeStream()
 
 	mgr.LogImageEvent(ctx, img.Name(), namedRef.String(), "pull")
 
