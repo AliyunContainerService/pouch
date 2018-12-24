@@ -36,14 +36,14 @@ func (suite *PouchTopSuite) TearDownTest(c *check.C) {
 func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 	name := "TestTopStoppedContainer"
 
-	res := command.PouchRun("create", "-m", "300M", "--name", name, busyboxImage)
+	res := command.PouchRun("create", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
 	res = command.PouchRun("top", name)
 	c.Assert(res.Stderr(), check.NotNil)
 
-	expectString := " is not running, cannot execute top command"
+	expectString := " is not running or paused, cannot execute top command"
 	if out := res.Combined(); !strings.Contains(out, expectString) {
 		// FIXME(ziren): for debug top error info is empty
 		fmt.Printf("%+v", res)
@@ -51,11 +51,11 @@ func (suite *PouchTopSuite) TestTopStoppedContainer(c *check.C) {
 	}
 }
 
-// TestTopContainer is to verify the correctness of pouch top command.
-func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
-	name := "TestTopContainer"
+// TestTopRunningOrPausedContainer is to verify the correctness of pouch top command.
+func (suite *PouchTopSuite) TestTopRunningOrPausedContainer(c *check.C) {
+	name := "TestTopRunningOrPausedContainer"
 
-	res := command.PouchRun("run", "-d", "-m", "300M", "--name", name, busyboxImage, "top")
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
@@ -63,6 +63,22 @@ func (suite *PouchTopSuite) TestTopContainer(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	expectString := "UIDPIDPPID"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasPrefix(out, expectString) {
+		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	}
+	expectString = "top"
+	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasSuffix(out, expectString) {
+		c.Fatalf("unexpected output %s expected %s", out, expectString)
+	}
+
+	// Top a paused contaner is valid
+	res = command.PouchRun("pause", name)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("top", name)
+	res.Assert(c, icmd.Success)
+
+	expectString = "UIDPIDPPID"
 	if out := util.TrimAllSpaceAndNewline(res.Combined()); !strings.HasPrefix(out, expectString) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
