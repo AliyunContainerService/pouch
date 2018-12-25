@@ -105,5 +105,4 @@ func (suite *APIContainerStartSuite) TestStartAlreadyRunningContainer(c *check.C
 	resp, err := request.Post("/containers/" + cname + "/start")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 304)
-
 }

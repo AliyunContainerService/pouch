@@ -14,10 +14,14 @@ import (
 // swagger:model ExecStartConfig
 type ExecStartConfig struct {
 
-	// ExecStart will first check if it's detached
+	// Config the started exec process inside the container detached from the client.
+	// For example, if set to be true, the CLI command line will be detached from
+	// the exec processes's stdin/stdout/stderr stream, and command will terminated
+	// at once while the exec process will be running background in container.
+	//
 	Detach bool `json:"Detach,omitempty"`
 
-	// Check if there's a tty
+	// Config the exec start whether to allocate a pseudo-TTY.
 	Tty bool `json:"Tty,omitempty"`
 }
 

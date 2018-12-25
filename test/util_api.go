@@ -198,10 +198,10 @@ func DelImageForceOk(c *check.C, iname string) {
 	CheckRespStatus(c, resp, 204)
 }
 
-// CreateExecEchoOk exec process's environment with "echo" CMD.
-func CreateExecEchoOk(c *check.C, cname string, echo string) string {
+// CreateExecCmdOk exec process's environment with specific CMD.
+func CreateExecCmdOk(c *check.C, cname string, cmd ...string) string {
 	obj := map[string]interface{}{
-		"Cmd":          []string{"echo", echo},
+		"Cmd":          cmd,
 		"Detach":       true,
 		"AttachStderr": true,
 		"AttachStdout": true,
@@ -221,6 +221,14 @@ func CreateExecEchoOk(c *check.C, cname string, echo string) string {
 	return got.ID
 }
 
+// StartContainerExecOk starts executing a process in container and check if it is successful.
+func StartContainerExecOk(c *check.C, execID string) {
+	resp, conn, _, err := StartContainerExec(c, execID, false, false)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 101)
+	c.Assert(conn.Close(), check.IsNil)
+}
+
 // StartContainerExec starts executing a process in the container.
 func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http.Response, net.Conn, *bufio.Reader, error) {
 	obj := map[string]interface{}{
@@ -232,6 +240,18 @@ func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http
 		request.WithHeader("Connection", "Upgrade"),
 		request.WithHeader("Upgrade", "tcp"),
 		request.WithJSONBody(obj))
+}
+
+// InspectExecOk inspects an exec of container.
+func InspectExecOk(c *check.C, execid string) types.ContainerExecInspect {
+	resp, err := request.Get("/exec/" + execid + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	var execInspectResp types.ContainerExecInspect
+	err = request.DecodeBody(&execInspectResp, resp.Body)
+	c.Assert(err, check.IsNil)
+	return execInspectResp
 }
 
 // CreateVolumeOK creates a volume in pouchd.

@@ -242,7 +242,7 @@ func HandleErrorResponse(w http.ResponseWriter, err error) {
 		code = http.StatusNotFound
 	} else if errtypes.IsInvalidParam(err) {
 		code = http.StatusBadRequest
-	} else if errtypes.IsAlreadyExisted(err) {
+	} else if errtypes.IsAlreadyExisted(err) || errtypes.IsConflict(err) {
 		code = http.StatusConflict
 	} else if errtypes.IsNotModified(err) {
 		code = http.StatusNotModified

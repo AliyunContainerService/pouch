@@ -3269,14 +3269,14 @@ definitions:
     properties:
       User:
         type: "string"
-        description: "User that will run the command"
+        description: "User with whom the exec command will run inside container."
         x-nullable: false
       Privileged:
         type: "boolean"
-        description: "Is the container in privileged mode"
+        description: "Config whether to run the exec command in container with all privilleges."
       Tty:
         type: "boolean"
-        description: "Attach standard streams to a tty"
+        description: "Config the created exec whether to allocate a pseudo-TTY."
       AttachStdin:
         type: "boolean"
         description: "Attach the standard input, makes possible user interaction"
@@ -3288,7 +3288,11 @@ definitions:
         description: "Attach the standard output"
       Detach:
         type: "boolean"
-        description: "Execute in detach mode"
+        description: |
+          Config the exec process inside the container detached from the client.
+          For example, if set to be true, the CLI command line will be detached from
+          the exec processes's stdin/stdout/stderr stream, and command will terminated
+          at once while the exec process will be running background in container.
       DetachKeys:
         type: "string"
         description: "Escape keys for detach"
@@ -3333,10 +3337,14 @@ definitions:
     description: ExecStartConfig is a temp struct used by execStart.
     properties:
       Detach:
-        description: ExecStart will first check if it's detached
+        description: |
+          Config the started exec process inside the container detached from the client.
+          For example, if set to be true, the CLI command line will be detached from
+          the exec processes's stdin/stdout/stderr stream, and command will terminated
+          at once while the exec process will be running background in container.
         type: "boolean"
       Tty:
-        description: Check if there's a tty
+        description: Config the exec start whether to allocate a pseudo-TTY.
         type: "boolean"
     example:
       Detach: false

@@ -30,7 +30,11 @@ type ExecCreateConfig struct {
 	// Min Items: 1
 	Cmd []string `json:"Cmd"`
 
-	// Execute in detach mode
+	// Config the exec process inside the container detached from the client.
+	// For example, if set to be true, the CLI command line will be detached from
+	// the exec processes's stdin/stdout/stderr stream, and command will terminated
+	// at once while the exec process will be running background in container.
+	//
 	Detach bool `json:"Detach,omitempty"`
 
 	// Escape keys for detach
@@ -39,13 +43,13 @@ type ExecCreateConfig struct {
 	// envs for exec command in container
 	Env []string `json:"Env"`
 
-	// Is the container in privileged mode
+	// Config whether to run the exec command in container with all privilleges.
 	Privileged bool `json:"Privileged,omitempty"`
 
-	// Attach standard streams to a tty
+	// Config the created exec whether to allocate a pseudo-TTY.
 	Tty bool `json:"Tty,omitempty"`
 
-	// User that will run the command
+	// User with whom the exec command will run inside container.
 	User string `json:"User,omitempty"`
 }
 

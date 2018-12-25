@@ -70,6 +70,10 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		return err
 	}
 
+	if !c.IsRunning() {
+		return errors.Wrap(errtypes.ErrConflict, "cannot start an exec in not running containers")
+	}
+
 	// set exec process user, user decided by exec config
 	if execConfig.User == "" {
 		execConfig.User = c.Config.User
@@ -162,7 +166,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		IO:          eio,
 		P:           process,
 	}); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to exec process in container %s", execConfig.ContainerID)
 	}
 	return <-attachErrCh
 }

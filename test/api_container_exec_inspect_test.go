@@ -1,9 +1,12 @@
 package main
 
 import (
-	"time"
+	"fmt"
+	"os/exec"
+	"strconv"
+	"strings"
+	"syscall"
 
-	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -26,70 +29,60 @@ func (suite *APIContainerExecInspectSuite) SetUpTest(c *check.C) {
 
 // TestContainerCreateExecOk tests execing containers is OK.
 func (suite *APIContainerExecInspectSuite) TestContainerExecInspectOk(c *check.C) {
-	c.Skip("skip flaky test due to issue#1372")
 	cname := "TestContainerExecInspectOk"
 
 	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
 
 	StartContainerOk(c, cname)
 
-	obj := map[string]interface{}{
-		"Cmd":    []string{"sleep", "9"},
-		"Detach": true,
-	}
-	body := request.WithJSONBody(obj)
-	resp, err := request.Post("/containers/"+cname+"/exec", body)
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 201)
+	// create an exec and get the execID
+	// and inspect the exec before exec start
 
-	var execCreateResp types.ExecCreateResp
-	err = request.DecodeBody(&execCreateResp, resp.Body)
-	c.Assert(err, check.IsNil)
-
-	execid := execCreateResp.ID
-
-	// inspect the exec before exec start
-	resp, err = request.Get("/exec/" + execid + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	var execInspect01 types.ContainerExecInspect
-	request.DecodeBody(&execInspect01, resp.Body)
-
-	c.Assert(execInspect01.Running, check.Equals, false)
-	c.Assert(execInspect01.ExitCode, check.Equals, int64(0))
-
-	// start the exec
+	execid := CreateExecCmdOk(c, cname, "sleep", "12345678")
 	{
-		resp, conn, _, err := StartContainerExec(c, execid, false, false)
+		execInspectResp := InspectExecOk(c, execid)
+		c.Assert(execInspectResp.Running, check.Equals, false)
+		c.Assert(execInspectResp.ExitCode, check.Equals, int64(0))
+	}
+
+	// set the detach to be true
+	// and start the exec
+	{
+		obj := map[string]interface{}{
+			"Detach": true,
+		}
+		body := request.WithJSONBody(obj)
+		resp, err := request.Post(fmt.Sprintf("/exec/%s/start", execid), body)
 		c.Assert(err, check.IsNil)
-		CheckRespStatus(c, resp, 101)
-		c.Assert(conn.Close(), check.IsNil)
+		CheckRespStatus(c, resp, 200)
 	}
 
 	// inspect the exec after exec start
-	resp, err = request.Get("/exec/" + execid + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
+	{
+		execInspectResp := InspectExecOk(c, execid)
+		c.Assert(execInspectResp.Running, check.Equals, true)
+		c.Assert(execInspectResp.ExitCode, check.Equals, int64(0))
+	}
 
-	var execInspect02 types.ContainerExecInspect
-	request.DecodeBody(&execInspect02, resp.Body)
+	// find the exec command and terminate it.
+	{
+		cmd := exec.Command("bash", "-c", "ps aux | grep 'sleep 12345678' | awk '{print $2}'")
+		output, err := cmd.Output()
+		c.Assert(err, check.IsNil)
 
-	c.Assert(execInspect02.Running, check.Equals, true)
-	c.Assert(execInspect02.ExitCode, check.Equals, int64(0))
+		outputStr := strings.TrimSpace(string(output))
+		pids := strings.SplitN(outputStr, "\n", -1)
+		c.Assert(len(pids), check.Equals, 1)
 
-	// sleep 10s to wait the process exit
-	time.Sleep(10 * time.Second)
+		// kill the exec process by sending terminal signal
+		pid, err := strconv.Atoi(pids[0])
+		c.Assert(err, check.IsNil)
+		err = syscall.Kill(pid, syscall.SIGTERM)
+		c.Assert(err, check.IsNil)
 
-	resp, err = request.Get("/exec/" + execid + "/json")
-	c.Assert(err, check.IsNil)
-	CheckRespStatus(c, resp, 200)
-
-	var execInspect03 types.ContainerExecInspect
-	request.DecodeBody(&execInspect03, resp.Body)
-
-	c.Assert(execInspect03.Running, check.Equals, false)
-	c.Assert(execInspect03.ExitCode, check.Equals, int64(0))
-
-	DelContainerForceMultyTime(c, cname)
+		execInspectResp := InspectExecOk(c, execid)
+		c.Assert(execInspectResp.Running, check.Equals, false)
+		c.Assert(execInspectResp.ExitCode, check.Equals, int64(0))
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/streams"
 
@@ -75,6 +76,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	)
 
 	// TODO(huamin.thm): support detach exec process through http post method
+	// Do we need to merge the input config.Detach and ContainerExecConfig.ExecCreateConfig.Detach?
 	if !config.Detach {
 		stdin, stdout, closeFn, err = openHijackConnection(rw)
 		if err != nil {
@@ -102,6 +104,12 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	}
 
 	if err := s.ContainerMgr.StartExec(ctx, name, attach); err != nil {
+		if errtypes.IsConflict(err) {
+			return err
+		}
+		if errtypes.IsNotfound(err) {
+			return err
+		}
 		if config.Detach {
 			return err
 		}

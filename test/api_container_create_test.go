@@ -215,13 +215,29 @@ func testCreateContainerWithBadParam(c *check.C, cname string, obj map[string]in
 }
 
 // TestCreateWithBadStopTimeout using bad stopTimeout to create container.
-func (suite *APIContainerCreateSuite) TestCreateWithBadStopTimeout(c *check.C) {
+func (suite *APIContainerCreateSuite) testCreateWithBadParams(c *check.C) {
 	testCreateContainerWithBadParam(c,
 		"TestCreateWithBadStopTimeout",
 		map[string]interface{}{
 			"Image":       busyboxImage,
 			"StopTimeout": -1,
 		})
+
+	// too long length
+	testCreateContainerWithBadParam(c,
+		"1234567890-1234567890-1234567890-1234567890123456789",
+		map[string]interface{}{
+			"Image": busyboxImage,
+		})
+
+	// invalid characters
+	testCreateContainerWithBadParam(c,
+		"??????><!@#$%^&*",
+		map[string]interface{}{
+			"Image": busyboxImage,
+		})
+
+	// TODO: add more container creation option check
 }
 
 func (suite *APIContainerCreateSuite) TestCreateNvidiaConfig(c *check.C) {

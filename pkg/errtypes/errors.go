@@ -102,6 +102,11 @@ func IsPreCheckFailed(err error) bool {
 	return checkError(err, codePreCheckFailed)
 }
 
+// IsConflict checks if the error is conflict.
+func IsConflict(err error) bool {
+	return checkError(err, codeConflict)
+}
+
 func checkError(err error, code int) bool {
 	err = causeError(err)
 

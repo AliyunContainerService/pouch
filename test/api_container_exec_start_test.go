@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -114,7 +115,7 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartWithoutUpgrade(c 
 	defer DelContainerForceMultyTime(c, cname)
 
 	StartContainerOk(c, cname)
-	execid := CreateExecEchoOk(c, cname, content)
+	execid := CreateExecCmdOk(c, cname, "echo", content)
 
 	obj := map[string]interface{}{}
 	resp, conn, br, err := request.Hijack("/exec/"+execid+"/start", request.WithJSONBody(obj))
@@ -126,19 +127,18 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartWithoutUpgrade(c 
 // TestContainerExecStartOk tests start exec.
 func (suite *APIContainerExecStartSuite) TestContainerExecStart(c *check.C) {
 	cname := "TestContainerCreateExecStart"
-	content := "test"
 
 	CreateBusyboxContainerOk(c, cname)
 	defer DelContainerForceMultyTime(c, cname)
 
 	StartContainerOk(c, cname)
 
-	execid := CreateExecEchoOk(c, cname, content)
+	execid := CreateExecCmdOk(c, cname, "echo", "test")
 
 	resp, conn, reader, err := StartContainerExec(c, execid, false, false)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 101)
-	checkEchoSuccess(c, false, conn, reader, content)
+	checkEchoSuccess(c, false, conn, reader, "test")
 }
 
 // TestContainerExecStartNotFound tests starting an non-existing execID return error.
@@ -151,20 +151,62 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartNotFound(c *check
 	CheckRespStatus(c, resp, 404)
 }
 
-// TestContainerExecStartStopped tests start a process in a stopped container return error.
-func (suite *APIContainerExecStartSuite) TestContainerExecStartStopped(c *check.C) {
-	// TODO: missing case
-	helpwantedForMissingCase(c, "container api exec start stoped case")
-}
+// TestContainerExecStartStopped tests start a process in a stopped and pause container return error.
+func (suite *APIContainerExecStartSuite) TestExecStartInStoppedAndPausedContainer(c *check.C) {
+	cname := "TestExecStartInStoppedAndPausedContainer"
 
-// TestContainerExecStartPaused tests start a process in a paused container return error.
-func (suite *APIContainerExecStartSuite) TestContainerExecStartPaused(c *check.C) {
-	// TODO: missing case
-	helpwantedForMissingCase(c, "container api exec start paused case")
+	// only create the container, the container is stopped/created.
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
+
+	execid := CreateExecCmdOk(c, cname, "echo", "test")
+
+	// test exec start in stopped container
+
+	// stop the running container
+	StopContainerOk(c, cname)
+
+	obj := map[string]interface{}{
+		"Detach": true,
+	}
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post(fmt.Sprintf("/exec/%s/start", execid), body)
+
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 409)
+
+	// start and pause the container
+	StartContainerOk(c, cname)
+	PauseContainerOk(c, cname)
+
+	// test exec start in paused container
+	resp, err = request.Post(fmt.Sprintf("/exec/%s/start", execid), body)
+
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 409)
 }
 
 // TestContainerExecStartDup tests start a process twice return error.
 func (suite *APIContainerExecStartSuite) TestContainerExecStartDup(c *check.C) {
-	// TODO: missing case
-	helpwantedForMissingCase(c, "container api exec start twice case")
+	cname := "TestContainerExecStartDup"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+
+	StartContainerOk(c, cname)
+
+	obj := map[string]interface{}{
+		"Detach": true,
+	}
+	body := request.WithJSONBody(obj)
+
+	execid := CreateExecCmdOk(c, cname, "top")
+	resp, err := request.Post(fmt.Sprintf("/exec/%s/start", execid), body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	resp, err = request.Post(fmt.Sprintf("/exec/%s/start", execid), body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 409)
 }

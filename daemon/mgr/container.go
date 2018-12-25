@@ -1678,7 +1678,7 @@ func (mgr *ContainerManager) attachCRILog(c *Container, logPath string) error {
 
 func (mgr *ContainerManager) initExecIO(id string, withStdin bool) (*containerio.IO, error) {
 	if io := mgr.IOs.Get(id); io != nil {
-		return nil, errors.Wrap(errtypes.ErrConflict, "failed to create containerIO")
+		return nil, errors.Wrap(errtypes.ErrConflict, "failed to create execIO")
 	}
 
 	cntrio := containerio.NewIO(id, withStdin)
