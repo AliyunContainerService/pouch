@@ -366,6 +366,7 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 
 	var msg *Message
 
+	// TODO: set task request timeout by context timeout
 	if err := pack.task.Kill(ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
 		if !errdefs.IsNotFound(err) {
 			return nil, errors.Wrap(err, "failed to kill task")
@@ -385,7 +386,10 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 		}
 		msg = waitExit()
 	}
-	if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
+
+	// ignore the error is stop time out
+	// TODO: how to design the stop error is time out?
+	if err := msg.RawError(); err != nil && !errtypes.IsTimeout(err) {
 		return nil, err
 	}
 
