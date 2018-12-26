@@ -12,11 +12,12 @@ import (
 type SpecWrapper struct {
 	s *specs.Spec
 
-	ctrMgr  ContainerMgr
-	volMgr  VolumeMgr
-	netMgr  NetworkMgr
-	prioArr []int
-	argsArr [][]string
+	ctrMgr     ContainerMgr
+	volMgr     VolumeMgr
+	netMgr     NetworkMgr
+	prioArr    []int
+	argsArr    [][]string
+	useSystemd bool
 }
 
 // All the functions related to the spec is lock-free for container instance,

@@ -302,3 +302,28 @@ func TestMergeConfigurations(t *testing.T) {
 
 	defer os.Remove(configFile)
 }
+
+func TestValidateCgroupDriver(t *testing.T) {
+	for _, tc := range []struct {
+		driver    string
+		expectErr bool
+	}{
+		{
+			driver:    CgroupfsDriver,
+			expectErr: false,
+		},
+		{
+			driver:    CgroupSystemdDriver,
+			expectErr: false,
+		},
+		{
+			driver:    "foo",
+			expectErr: true,
+		},
+	} {
+		err := validateCgroupDriver(tc.driver)
+		if tc.expectErr != (err != nil) {
+			t.Fatalf("expectd error: %v, but get %s", tc.expectErr, err)
+		}
+	}
+}

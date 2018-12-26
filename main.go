@@ -125,7 +125,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringArrayVar(&logOpts, "log-opt", nil, "Set default log driver options")
 
 	// cgroup-path flag is to set parent cgroup for all containers, default is "default" staying with containerd's configuration.
-	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "default", "Set parent cgroup for all containers")
+	flagSet.StringVar(&cfg.CgroupParent, "cgroup-parent", "", "Set parent cgroup for all containers")
 	flagSet.StringSliceVar(&cfg.Labels, "label", []string{}, "Set metadata for Pouch daemon")
 	flagSet.BoolVar(&cfg.EnableProfiler, "enable-profiler", false, "Set if pouchd setup profiler")
 	flagSet.StringVar(&cfg.Pidfile, "pidfile", "/var/run/pouch.pid", "Save daemon pid")
@@ -136,6 +136,7 @@ func setupFlags(cmd *cobra.Command) {
 	// value is 'default'. So if IsCriEnabled is true for k8s, we should set the DefaultNamespace
 	// to k8s.io
 	flagSet.StringVar(&cfg.DefaultNamespace, "default-namespace", namespaces.Default, "default-namespace is passed to containerd, the default value is 'default'")
+	flagSet.StringVar(&cfg.CgroupDriver, "cgroup-driver", "cgroupfs", "Set cgroup driver for all containers(cgroupfs|systemd), default cgroupfs")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.

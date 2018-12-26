@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -601,4 +603,31 @@ func (suite *PouchDaemonSuite) TestRecoverContainerWhenHostDown(c *check.C) {
 		dcfg.DumpLog()
 		c.Fatalf("failed to wait container running")
 	}
+}
+
+// TestDaemonWithSysyemdCgroupDriver tests start daemon with systemd cgroup driver
+func (suite *PouchDaemonSuite) TestDaemonWithSystemdCgroupDriver(c *check.C) {
+	SkipIfFalse(c, environment.SupportSystemdCgroupDriver)
+	tmpDir, err := ioutil.TempDir("", "cgroup-driver")
+	path := filepath.Join(tmpDir, "config.json")
+	c.Assert(err, check.IsNil)
+	cfg := struct {
+		CgroupDriver string `json:"cgroup-driver,omitempty"`
+	}{
+		CgroupDriver: "systemd",
+	}
+	c.Assert(CreateConfigFile(path, cfg), check.IsNil)
+	defer os.RemoveAll(tmpDir)
+
+	dcfg, err := StartDefaultDaemon("--config-file=" + path)
+	defer dcfg.KillDaemon()
+	c.Assert(err, check.IsNil)
+
+	result := RunWithSpecifiedDaemon(dcfg, "info")
+	c.Assert(util.PartialEqual(result.Stdout(), "systemd"), check.IsNil)
+
+	cname := "TestWithSystemdCgroupDriver"
+	ret := RunWithSpecifiedDaemon(dcfg, "run", "-d", "--name", cname, busyboxImage, "top")
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
+	ret.Assert(c, icmd.Success)
 }

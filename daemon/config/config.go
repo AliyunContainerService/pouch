@@ -22,8 +22,12 @@ import (
 )
 
 const (
-	// CgroupfsDriverType refers to daemon's cgroup driver.
-	CgroupfsDriverType = "cgroupfs"
+	// CgroupfsDriver is cgroupfs driver
+	CgroupfsDriver = "cgroupfs"
+	// CgroupSystemdDriver is systemd driver
+	CgroupSystemdDriver = "systemd"
+	// DefaultCgroupDriver is default cgroups driver
+	DefaultCgroupDriver = CgroupfsDriver
 )
 
 // Config refers to daemon's whole configurations.
@@ -120,14 +124,19 @@ type Config struct {
 
 	// AllowMultiSnapshotter allows multi snapshotter, default false
 	AllowMultiSnapshotter bool `json:"allow-multi-snapshotter,omitempty"`
+
+	// CgroupDriver sets cgroup driver for all containers
+	CgroupDriver string `json:"cgroup-driver,omitempty"`
 }
 
 // GetCgroupDriver gets cgroup driver used in runc.
 func (cfg *Config) GetCgroupDriver() string {
-	// current pouchd only supports directly managing cgroupfs.
-	// TODO: add 'systemd' to make systemd manage cgroupfs rather than directly using it.
-	// In the future we will support this config in the daemon configuration.
-	return CgroupfsDriverType
+	return cfg.CgroupDriver
+}
+
+// UseSystemd tells whether use systemd cgroup driver
+func (cfg *Config) UseSystemd() bool {
+	return cfg.CgroupDriver == CgroupSystemdDriver
 }
 
 // Validate validates the user input config.
@@ -159,6 +168,16 @@ func (cfg *Config) Validate() error {
 	if _, exist := cfg.Runtimes[cfg.DefaultRuntime]; !exist {
 		// add default runtime
 		cfg.Runtimes[cfg.DefaultRuntime] = types.Runtime{Path: cfg.DefaultRuntime}
+	}
+
+	// if cgroup driver is empty, use default cgroup driver
+	if cfg.CgroupDriver == "" {
+		cfg.CgroupDriver = DefaultCgroupDriver
+	}
+
+	// validates cgroup driver
+	if err := validateCgroupDriver(cfg.CgroupDriver); err != nil {
+		return err
 	}
 
 	return nil
@@ -274,4 +293,13 @@ func getConflictConfigurations(flagSet *pflag.FlagSet, fileFlags map[string]inte
 // merge flagSet and config file into cfg
 func mergeConfigurations(src *Config, dest *Config) error {
 	return utils.Merge(src, dest)
+}
+
+// validateCgroupDriver validates cgroup driver
+func validateCgroupDriver(driver string) error {
+	if driver == CgroupfsDriver || driver == CgroupSystemdDriver {
+		return nil
+	}
+
+	return fmt.Errorf("invalid cgroup driver: %s, valid driver is cgroupfs or systemd", driver)
 }

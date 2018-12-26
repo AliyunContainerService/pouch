@@ -719,11 +719,12 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 
 	sw := &SpecWrapper{
-		ctrMgr:  mgr,
-		volMgr:  mgr.VolumeMgr,
-		netMgr:  mgr.NetworkMgr,
-		prioArr: prioArr,
-		argsArr: argsArr,
+		ctrMgr:     mgr,
+		volMgr:     mgr.VolumeMgr,
+		netMgr:     mgr.NetworkMgr,
+		prioArr:    prioArr,
+		argsArr:    argsArr,
+		useSystemd: mgr.Config.UseSystemd(),
 	}
 
 	if err = createSpec(ctx, c, sw); err != nil {
@@ -754,6 +755,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		RootFSProvided: c.RootFSProvided,
 		BaseFS:         c.BaseFS,
 		SnapshotID:     c.SnapshotID,
+		UseSystemd:     mgr.Config.UseSystemd(),
 	}
 	c.Unlock()
 
