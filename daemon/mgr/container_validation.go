@@ -11,6 +11,7 @@ import (
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
 	"github.com/alibaba/pouch/pkg/system"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/docker/go-units"
 	"github.com/pkg/errors"
@@ -39,6 +40,11 @@ var (
 
 // validateConfig validates container config
 func (mgr *ContainerManager) validateConfig(c *Container, update bool) ([]string, error) {
+	// validates rich mode
+	if err := validateRichMode(c); err != nil {
+		return nil, err
+	}
+
 	// validates container hostconfig
 	hostConfig := c.HostConfig
 	warnings := make([]string, 0)
@@ -83,6 +89,35 @@ func (mgr *ContainerManager) validateConfig(c *Container, update bool) ([]string
 	}
 
 	return warnings, nil
+}
+
+// validateRichMode verifies rich mode parameters
+func validateRichMode(c *Container) error {
+	richModes := []string{
+		types.ContainerConfigRichModeDumbInit,
+		types.ContainerConfigRichModeSbinInit,
+		types.ContainerConfigRichModeSystemd,
+	}
+
+	if !c.Config.Rich && c.Config.RichMode != "" {
+		return fmt.Errorf("must first enable rich mode, then specify a rich mode type")
+	}
+	// check rich mode
+	if c.Config.RichMode != "" && !utils.StringInSlice(richModes, c.Config.RichMode) {
+		return fmt.Errorf("not supported rich mode: %v", c.Config.RichMode)
+	}
+
+	// must use privileged when use systemd rich mode
+	if c.Config.RichMode == types.ContainerConfigRichModeSystemd && !c.HostConfig.Privileged {
+		return fmt.Errorf("must using privileged mode when create systemd rich container")
+	}
+
+	// if enables rich mode but not specified rich mode type, assign to dumb-init
+	if c.Config.Rich && c.Config.RichMode == "" {
+		c.Config.RichMode = types.ContainerConfigRichModeDumbInit
+	}
+
+	return nil
 }
 
 // validateResource verifies cgroup resources

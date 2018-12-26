@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -65,35 +65,60 @@ func isFileExistsInImage(image string, file string, cname string) (bool, error) 
 	return err == nil, nil
 }
 
-// checkPidofProcessIsOne checks the process of pid 1 is expected.
-func checkPidofProcessIsOne(cname string, p string) bool {
-	expect := icmd.Expected{
-		ExitCode: 0,
-		Out:      "1",
+// checkPidofProcess checks the process of pid and name are expected.
+func checkPidofProcess(c *check.C, cname, processName, pid string) bool {
+	res := command.PouchRun(
+		"exec", cname,
+		"ps", "axco", "pid,command")
+	res.Assert(c, icmd.Success)
+
+	output := res.Combined()
+	lines := strings.Split(output, "\n")
+	for _, v := range lines {
+		clearStr := strings.TrimSpace(v)
+		if clearStr == "" {
+			continue
+		}
+
+		pidInfo := strings.SplitN(clearStr, " ", 2)
+		if len(pidInfo) != 2 || pidInfo[0] != pid {
+			continue
+		}
+
+		if pidInfo[1] == processName {
+			return true
+		}
 	}
 
-	err := command.PouchRun("exec", cname,
-		"ps", "-ef", "| grep", p, "| awk '{print $1}'").Compare(expect)
-	if err != nil {
-		fmt.Printf("err=%s\n", err)
-	}
-	return err == nil
+	return false
 }
 
 // checkPPid checks the ppid of process is expected.
-func checkPPid(cname string, p string, ppid string) bool {
-	expect := icmd.Expected{
-		ExitCode: 0,
-		Out:      ppid,
+func checkPPid(c *check.C, cname, processName, ppid string) bool {
+	res := command.PouchRun(
+		"exec", cname,
+		"ps", "axco", "command,ppid")
+	res.Assert(c, icmd.Success)
+
+	output := res.Combined()
+	lines := strings.Split(output, "\n")
+	for _, v := range lines {
+		clearStr := strings.TrimSpace(v)
+		if clearStr == "" {
+			continue
+		}
+
+		pidInfo := strings.SplitN(clearStr, " ", 2)
+		if len(pidInfo) != 2 || strings.TrimSpace(pidInfo[0]) != processName {
+			continue
+		}
+
+		if strings.TrimSpace(pidInfo[1]) == ppid {
+			return true
+		}
 	}
 
-	err := command.PouchRun("exec", cname,
-		"ps", "-ef", "|grep", p, "|awk '{print $3}'").Compare(expect)
-	if err != nil {
-		fmt.Printf("err=%s\n", err)
-	}
-
-	return err == nil
+	return false
 }
 
 // checkInitScriptWorks
@@ -105,32 +130,32 @@ func checkInitScriptWorks(c *check.C, cname string, image string, richmode strin
 // TestRichContainerDumbInitWorks check the dumb-init works.
 func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C) {
 	SkipIfFalse(c, environment.IsDumbInitExist)
-	funcname := "TestRichContainerDumbInitWorks"
+	cname := "TestRichContainerDumbInitWorks"
 
-	res := command.PouchRun("run", "-d", "--rich", "--rich-mode", "dumb-init", "--name", funcname,
-		busyboxImage, "sleep", "10000")
-	defer DelContainerForceMultyTime(c, funcname)
+	res := command.PouchRun("run", "-d", "--privileged", "--rich", "--rich-mode", "dumb-init", "--name", cname,
+		centosImage, "sleep", "10000")
+	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
-	rich, err := inspectFilter(funcname, ".Config.Rich")
+	rich, err := inspectFilter(cname, ".Config.Rich")
 	c.Assert(err, check.IsNil)
 	c.Assert(rich, check.Equals, "true")
 
-	richMode, err := inspectFilter(funcname, ".Config.RichMode")
+	richMode, err := inspectFilter(cname, ".Config.RichMode")
 	c.Assert(err, check.IsNil)
 	c.Assert(richMode, check.Equals, "dumb-init")
 
-	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
+	c.Assert(checkPidofProcess(c, cname, "dumb-init", "1"), check.Equals, true)
 
 	// stop and start could work well.
-	command.PouchRun("stop", "-t", "1", funcname).Assert(c, icmd.Success)
-	command.PouchRun("start", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
+	command.PouchRun("stop", "-t", "1", cname).Assert(c, icmd.Success)
+	command.PouchRun("start", cname).Assert(c, icmd.Success)
+	c.Assert(checkPidofProcess(c, cname, "dumb-init", "1"), check.Equals, true)
 
 	// pause and unpause
-	command.PouchRun("pause", funcname).Assert(c, icmd.Success)
-	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
+	command.PouchRun("pause", cname).Assert(c, icmd.Success)
+	command.PouchRun("unpause", cname).Assert(c, icmd.Success)
+	c.Assert(checkPidofProcess(c, cname, "dumb-init", "1"), check.Equals, true)
 }
 
 // TestRichContainerWrongArgs check the wrong args of rich container.
@@ -148,7 +173,7 @@ Comment the test (Ace-Tang).
 related issue : https://github.com/alibaba/pouch/issues/960
 related pr: https://github.com/alibaba/pouch/pull/1128
 func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
-	funcname := "TestRichContainerInitdWorks"
+	cname := "TestRichContainerInitdWorks"
 
 	ok, _ := isFileExistsInImage(centosImage, "/sbin/init", "checkinit")
 	if !ok {
@@ -157,9 +182,9 @@ func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
 
 	// --privileged is MUST required
 	command.PouchRun("run", "-d", "--privileged", "--rich", "--rich-mode", "sbin-init",
-		"--name", funcname, centosImage, "/usr/bin/sleep 10000").Assert(c, icmd.Success)
+		"--name", cname, centosImage, "/usr/bin/sleep 10000").Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", funcname).Stdout()
+	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		c.Errorf("failed to decode inspect output: %v", err)
@@ -167,31 +192,59 @@ func (suite *PouchRichContainerSuite) TestRichContainerInitdWorks(c *check.C) {
 	c.Assert(result[0].Config.Rich, check.Equals, true)
 	c.Assert(result[0].Config.RichMode, check.Equals, "sbin-init")
 
-	c.Assert(checkPidofProcessIsOne(funcname, "/sbin/init"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	c.Assert(checkPidofProcess(cname, "/sbin/init"), check.Equals, true)
+	c.Assert(checkPPid(cname, "sleep", "1"), check.Equals, true)
 
 	// stop and start could work well.
-	command.PouchRun("stop", funcname).Assert(c, icmd.Success)
-	command.PouchRun("start", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "/sbin/init"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	command.PouchRun("stop", cname).Assert(c, icmd.Success)
+	command.PouchRun("start", cname).Assert(c, icmd.Success)
+	c.Assert(checkPidofProcess(cname, "/sbin/init"), check.Equals, true)
+	c.Assert(checkPPid(cname, "sleep", "1"), check.Equals, true)
 
 	// pause and unpause
-	command.PouchRun("pause", funcname).Assert(c, icmd.Success)
-	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "/sbin/init"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	command.PouchRun("pause", cname).Assert(c, icmd.Success)
+	command.PouchRun("unpause", cname).Assert(c, icmd.Success)
+	c.Assert(checkPidofProcess(cname, "/sbin/init"), check.Equals, true)
+	c.Assert(checkPPid(cname, "sleep", "1"), check.Equals, true)
 
-	command.PouchRun("rm", "-f", funcname)
+	command.PouchRun("rm", "-f", cname)
 }
 */
 
+// waitSystemdPullProcess to wait util the specified process running.
+// systemd will first pull the systemd processes, then pull the container
+// cmd process. So we need to wait the cmd process running before check it.
+func waitSystemdPullProcess(c *check.C, cname, processName string) {
+	// wait systemd pull a specified process
+	check := make(chan struct{})
+
+	// check whether container started
+	go func() {
+		for {
+			res := command.PouchRun(
+				"exec", cname,
+				"ps", "-ef")
+			res.Assert(c, icmd.Success)
+
+			if output := res.Combined(); strings.Contains(output, processName) {
+				check <- struct{}{}
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	select {
+	case <-check:
+	case <-time.After(10 * time.Second):
+		c.Fatalf("failed to wait systemd pull process %s", processName)
+	}
+
+}
+
 // TestRichContainerSystemdWorks check the systemd works.
 func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) {
-	// TODO: uncomment it
-	c.Skip("skip this flaky test")
-
-	funcname := "TestRichContainerSystemdWorks"
+	cname := "TestRichContainerSystemdWorks"
 
 	ok, _ := isFileExistsInImage(centosImage, "/usr/lib/systemd/systemd", "checksysd")
 	if !ok {
@@ -199,32 +252,35 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	}
 
 	res := command.PouchRun("run", "-d", "--privileged", "--rich", "--rich-mode", "systemd",
-		"--name", funcname, centosImage, "/usr/bin/sleep 1000")
-	defer DelContainerForceMultyTime(c, funcname)
+		"--name", cname, centosImage, "sleep", "1000")
+	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
-	rich, err := inspectFilter(funcname, ".Config.Rich")
+	rich, err := inspectFilter(cname, ".Config.Rich")
 	c.Assert(err, check.IsNil)
 	c.Assert(rich, check.Equals, "true")
 
-	richMode, err := inspectFilter(funcname, ".Config.RichMode")
+	richMode, err := inspectFilter(cname, ".Config.RichMode")
 	c.Assert(err, check.IsNil)
 	c.Assert(richMode, check.Equals, "systemd")
 
-	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemd"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	waitSystemdPullProcess(c, cname, "sleep")
+	c.Assert(checkPidofProcess(c, cname, "systemd", "1"), check.Equals, true)
+	c.Assert(checkPPid(c, cname, "sleep", "1"), check.Equals, true)
 
 	// stop and start could work well.
-	command.PouchRun("stop", "-t", "1", funcname).Assert(c, icmd.Success)
-	command.PouchRun("start", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemd"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	command.PouchRun("stop", "-t", "1", cname).Assert(c, icmd.Success)
+	command.PouchRun("start", cname).Assert(c, icmd.Success)
+
+	waitSystemdPullProcess(c, cname, "sleep")
+	c.Assert(checkPidofProcess(c, cname, "systemd", "1"), check.Equals, true)
+	c.Assert(checkPPid(c, cname, "sleep", "1"), check.Equals, true)
 
 	// pause and unpause
-	command.PouchRun("pause", funcname).Assert(c, icmd.Success)
-	command.PouchRun("unpause", funcname).Assert(c, icmd.Success)
-	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemdd"), check.Equals, true)
-	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
+	command.PouchRun("pause", cname).Assert(c, icmd.Success)
+	command.PouchRun("unpause", cname).Assert(c, icmd.Success)
+	c.Assert(checkPidofProcess(c, cname, "systemd", "1"), check.Equals, true)
+	c.Assert(checkPPid(c, cname, "sleep", "1"), check.Equals, true)
 }
 
 // TestRichContainerUpdateEnvFile check update env and env file successfully.
@@ -258,4 +314,44 @@ func (suite *PouchRichContainerSuite) TestRichContainerUpdateEnvFile(c *check.C)
 	if !strings.Contains(output, "foo=bar") {
 		c.Errorf("failed to update env, got content: %s", output)
 	}
+}
+
+// TestRunRichModeContainerWithoutRich tests running container with --rich-mode without --rich.
+func (suite *PouchRichContainerSuite) TestRunRichModeContainerWithoutRich(c *check.C) {
+	name := "TestRunRichModeContainerWithoutRich"
+
+	res := command.PouchRun("run", "-d",
+		"--rich-mode", "systemd",
+		"--privileged",
+		"--name", name, busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, name)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("must first enable rich mode, then specify a rich mode type"))
+}
+
+// TestRunRichModeContainerWithoutPrivileged tests running container with --rich but not --privileged.
+func (suite *PouchRichContainerSuite) TestRunRichModeContainerWithoutPrivileged(c *check.C) {
+	name := "TestRunRichModeContainerWithoutPrivileged"
+
+	res := command.PouchRun("run", "-d",
+		"--rich",
+		"--name", name,
+		busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, name)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("must using privileged mode when create rich container"))
+}
+
+// TestRunRichModeContainerWithWrongRichMode tests running container with --rich-mode notsupported.
+func (suite *PouchRichContainerSuite) TestRunRichModeContainerWithWrongRichMode(c *check.C) {
+	name := "TestRunRichModeContainerWithWrongRichMode"
+
+	res := command.PouchRun("run", "-d",
+		"--rich",
+		"--rich-mode", "notsupported",
+		"--privileged",
+		"--name", name, busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, name)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("not supported rich mode"))
 }
