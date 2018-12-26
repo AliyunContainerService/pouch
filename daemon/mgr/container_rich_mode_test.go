@@ -64,17 +64,4 @@ func TestRichModeSet(t *testing.T) {
 	mEnvs4 := convertEnvArrayToMap(envs4)
 	assert.Equal(t, "true", mEnvs4["rich_mode"])
 	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs4[richModeLaunchEnv])
-
-	//test set rich mode by env
-	c = &Container{
-		Config: &types.ContainerConfig{
-			Env: []string{
-				interRichModeEnv,
-			},
-		},
-	}
-	envs5 := richContainerModeEnv(c)
-	mEnvs5 := convertEnvArrayToMap(envs5)
-	assert.Equal(t, "true", mEnvs5["rich_mode"])
-	assert.Equal(t, types.ContainerConfigRichModeSystemd, mEnvs5[richModeLaunchEnv])
 }

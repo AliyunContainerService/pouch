@@ -65,19 +65,19 @@ PID   USER     TIME  COMMAND
 
 ### Using systemd or sbin-init
 
-In order to use systemd or /sbin/init to init container, please make sure install them on image.
+In order to use systemd or /sbin/init to init container, please make sure to install them in image. Please use pouch version not lower than 1.1.0 if you want to use systemd rich mode.
 As shown below, centos image has both of them.
 Also `--privileged` is required in this situation. An example of systemd and sbin-init is as following:
 
 ```
-#cat /tmp/1.sh
-#! /bin/sh
+# cat /tmp/1.sh
+! /bin/sh
 echo $(cat) >/tmp/xxx
 
 #pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode systemd --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
 3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63
 
-#pouch exec 3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63 ps aux
+# pouch exec 3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63 ps aux
 USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 root          1  7.4  0.0  42968  3264 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd
 root         17  0.0  0.0  10752   756 ?        Ss   05:29   0:00 /usr/lib/systemd/systemd-readahead collect
@@ -87,13 +87,13 @@ root         36  0.0  0.0   7724   608 ?        Ss   05:29   0:00 /usr/bin/sleep
 dbus         37  0.0  0.0  24288  1604 ?        Ss   05:29   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
 root         45  0.0  0.0  47452  1676 ?        Rs   05:29   0:00 ps aux
 
-#cat /tmp/xxx
+# cat /tmp/xxx
 {"ociVersion":"1.0.0","id":"3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63","status":"","pid":125745,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/3054125e44443fd5ee9190ee49bbca0a842724f5305cb05df49f84fd7c901d63"}
 
-#pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode sbin-init --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
+# pouch run -d -v /tmp:/tmp --privileged --rich --rich-mode sbin-init --initscript /tmp/1.sh registry.hub.docker.com/library/centos:latest /usr/bin/sleep 10000
 c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f
 
-#pouch exec c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f ps aux
+# pouch exec c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f ps aux
 USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 root          1  7.4  0.0  42968  3260 ?        Ss   05:30   0:00 /sbin/init
 root         17  0.0  0.0  10752   752 ?        Ss   05:30   0:00 /usr/lib/systemd/systemd-readahead collect
@@ -103,7 +103,7 @@ root         35  0.0  0.0   7724   612 ?        Ss   05:30   0:00 /usr/bin/sleep
 dbus         36  0.0  0.0  24288  1608 ?        Ss   05:30   0:00 /bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
 root         45  0.0  0.0  47452  1676 ?        Rs   05:30   0:00 ps aux
 
-#cat /tmp/xxx
+# cat /tmp/xxx
 {"ociVersion":"1.0.0","id":"c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f","status":"","pid":127183,"bundle":"/var/lib/pouch/containerd/state/io.containerd.runtime.v1.linux/default/c5b5eef81749ce00fb68a59ee623777bfecc8e07c617c0601cc56e4ae8b1e69f"}
 ```
 
