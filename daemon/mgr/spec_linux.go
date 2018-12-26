@@ -29,6 +29,9 @@ const (
 	ProfilePouchDefault = "pouch/default"
 	// ProfileNameUnconfined is a string indicating one should run a pod/containerd without a security profile.
 	ProfileNameUnconfined = "unconfined"
+
+	// defaultCgroupParent is default cgroup parent.
+	defaultCgroupParent = "pouch"
 )
 
 // Setup linux-platform-sepecific specification.
@@ -39,18 +42,21 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 	}
 
 	// same with containerd use. or make it a variable
-	cgroupsParent := "default"
-	if c.HostConfig.CgroupParent != "" {
-		cgroupsParent = c.HostConfig.CgroupParent
+	// set default cgroup parent
+	cgroupsParent := "/default"
+	if specWrapper.useSystemd {
+		cgroupsParent = "system.slice"
 	}
 
-	// cgroupsPath must be absolute path
-	// call filepath.Clean is to avoid bad
-	// path just like../../../.../../BadPath
-	if !filepath.IsAbs(cgroupsParent) {
-		cgroupsParent = filepath.Clean("/" + cgroupsParent)
+	if c.HostConfig.CgroupParent != "" {
+		cgroupsParent = filepath.Clean(c.HostConfig.CgroupParent)
 	}
-	s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID)
+
+	if specWrapper.useSystemd {
+		s.Linux.CgroupsPath = cgroupsParent + ":" + defaultCgroupParent + ":" + c.ID
+	} else {
+		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID)
+	}
 
 	s.Linux.Sysctl = c.HostConfig.Sysctls
 

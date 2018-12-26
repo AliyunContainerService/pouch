@@ -537,8 +537,9 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 		containerd.WithSnapshotter(CurrentSnapshotterName(ctx)),
 		containerd.WithContainerLabels(container.Labels),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
-			Runtime:     container.Runtime,
-			RuntimeRoot: runtimeRoot,
+			Runtime:       container.Runtime,
+			RuntimeRoot:   runtimeRoot,
+			SystemdCgroup: container.UseSystemd,
 		}),
 	}
 

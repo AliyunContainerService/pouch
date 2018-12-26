@@ -224,3 +224,12 @@ func IsCRIUExist() bool {
 	_, err := exec.LookPath("criu")
 	return err == nil
 }
+
+// SupportSystemdCgroupDriver checks if systemd cgroup driver is available on machine.
+func SupportSystemdCgroupDriver() bool {
+	fi, err := os.Lstat("/run/systemd/system")
+	if err != nil {
+		return false
+	}
+	return fi.IsDir()
+}

@@ -24,6 +24,9 @@ type Container struct {
 
 	// RootFSProvided is a flag to point the container is created by specifying rootfs
 	RootFSProvided bool
+
+	// UseSystemd tells whether container use systemd cgroup driver
+	UseSystemd bool
 }
 
 // Process wraps exec process's info.
