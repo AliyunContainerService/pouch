@@ -465,17 +465,17 @@ func (suite *PouchCreateSuite) TestCreateWithPidsLimit(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateWithNonExistImage(c *check.C) {
 	cname := "TestCreateWithNonExistImage"
 	// we should use a non-used image, since containerd not remove image immediately.
-	image := "docker.io/library/alpine"
-	res := command.PouchRun("create", "--name", cname, image)
-	res.Assert(c, icmd.Success)
+	DelImageForceOk(c, busyboxImage)
+	command.PouchRun("create", "--name", cname, busyboxImage).Assert(c, icmd.Success)
 }
 
 // TestCreateWithNonExistImage tests running container with image not exist.
 func (suite *PouchCreateSuite) TestCreateWithNvidiaConfig(c *check.C) {
 	cname := "TestCreateWithNvidiaConfig"
-	image := "docker.io/library/alpine"
-	res := command.PouchRun("create", "--name", cname, "--nvidia-capabilities", "all", "--nvidia-visible-devs", "none", image)
-	res.Assert(c, icmd.Success)
+	command.PouchRun("create", "--name", cname,
+		"--nvidia-capabilities", "all",
+		"--nvidia-visible-devs", "none", busyboxImage).Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cname)
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
@@ -491,9 +491,9 @@ func (suite *PouchCreateSuite) TestCreateWithNvidiaConfig(c *check.C) {
 // TestCreateWithNonExistImage tests running container with image not exist.
 func (suite *PouchCreateSuite) TestCreateWithoutNvidiaConfig(c *check.C) {
 	cname := "TestCreateWithoutNvidiaConfig"
-	image := "docker.io/library/alpine"
-	res := command.PouchRun("create", "--name", cname, image)
-	res.Assert(c, icmd.Success)
+
+	command.PouchRun("create", "--name", cname, busyboxImage).Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cname)
 
 	output := command.PouchRun("inspect", cname).Stdout()
 	result := []types.ContainerJSON{}
