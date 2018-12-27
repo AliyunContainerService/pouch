@@ -30,8 +30,8 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
       --cpu-period int        Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
       --cpu-quota int         Limit CPU CFS (Completely Fair Scheduler) quota
       --cpu-shares int        CPU shares (relative weight)
-      --cpuset-cpus string    CPUs in cpuset
-      --cpuset-mems string    MEMs in cpuset
+      --cpuset-cpus string    CPUs in cpuset which to allow execution (0-3, 0, 1)
+      --cpuset-mems string    MEMs in cpuset which to allow execution (0-3, 0, 1)
       --disk-quota strings    Update disk quota for container(/=10g)
   -e, --env strings           Set environment variables for container
   -h, --help                  help for update
