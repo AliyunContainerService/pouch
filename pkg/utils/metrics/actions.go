@@ -18,4 +18,6 @@ const (
 	ActionPullLabel      = "pull"
 	ActionStatsLabel     = "stats"
 	ActionStatsListLabel = "stats_list"
+	ActionPauseLabel     = "pause"
+	ActionUnpauseLabel   = "unpause"
 )

@@ -340,6 +340,46 @@ message StartPodSandboxRequest {
 message StartPodSandboxResponse {}
 ```
 
+## PauseContainer / UnpauseContainer
+
+### What to Solve?
+
++ PauseContainer pause a container.
++ UnpauseContainer unpause a container.
++ Scenario: Under serverless situation, we may pre-allocate a batch of container which were ready to serve, waiting online. Using pause container to balance the resource cost and application start-up time.
+
+### Modification
+
++ Extend the RuntimeService interface
+
+The changes need to be made in the proto file are as follows:
+
+
+```
+service RuntimeService {
+...
+    // PauseContainer pauses the container.
+    rpc PauseContainer(PauseContainerRequest) returns (PauseContainerResponse) {}
+    // UnpauseContainer unpauses the container.
+    rpc UnpauseContainer(UnpauseContainerRequest) returns (UnpauseContainerResponse) {}
+...
+}
+
+message PauseContainerRequest {
+    // ID of the container to pause.
+    string container_id = 1;
+}
+
+message PauseContainerResponse {}
+
+message UnpauseContainerRequest {
+    // ID of the container to unpause.
+    string container_id = 1;
+}
+
+message UnpauseContainerResponse {}
+```
+
 ## Pull Request
 
 + feature: extend cri apis for special needs [#1617](https://github.com/alibaba/pouch/pull/1617)
@@ -347,4 +387,4 @@ message StartPodSandboxResponse {}
 + feature: extend cri apis for support quotaID [#2138](https://github.com/alibaba/pouch/pull/2138)
 + feature: extend cri apis for get envs [#2163](https://github.com/alibaba/pouch/pull/2163)
 + feature: extend cri apis for support StartPodSandbox [#2242](https://github.com/alibaba/pouch/pull/2242)
-
++ feature: extend cri apis for support pause/unpause container [#2623](https://github.com/alibaba/pouch/pull/2623)

@@ -70,6 +70,10 @@ service RuntimeService {
     // to either create a new log file and return nil, or return an error.
     // Once it returns error, new container log file MUST NOT be created.
     rpc ReopenContainerLog(ReopenContainerLogRequest) returns (ReopenContainerLogResponse) {}
+    // PauseContainer pauses the container.
+    rpc PauseContainer(PauseContainerRequest) returns (PauseContainerResponse) {}
+    // UnpauseContainer unpauses the container.
+    rpc UnpauseContainer(UnpauseContainerRequest) returns (UnpauseContainerResponse) {}
 
     // ExecSync runs a command in a container synchronously.
     rpc ExecSync(ExecSyncRequest) returns (ExecSyncResponse) {}
@@ -1321,6 +1325,20 @@ message ReopenContainerLogRequest {
 
 message ReopenContainerLogResponse{
 }
+
+message PauseContainerRequest {
+    // ID of the container to pause.
+    string container_id = 1;
+}
+
+message PauseContainerResponse {}
+
+message UnpauseContainerRequest {
+    // ID of the container to unpause.
+    string container_id = 1;
+}
+
+message UnpauseContainerResponse {}
 
 message RemoveVolumeRequest {
     // Name of the volume to remove
