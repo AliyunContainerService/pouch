@@ -23,19 +23,19 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 	}
 
 	outStream := config.OutStream
-	if (!c.IsRunning() || c.IsRestarting()) && !config.Stream {
+	if (!c.IsRunningOrPaused() || c.IsRestarting()) && !config.Stream {
 		return json.NewEncoder(outStream).Encode(&types.ContainerStats{
 			Name: c.Name,
 			ID:   c.ID,
 		})
 	}
 
-	if c.IsRunning() && !config.Stream {
+	if c.IsRunningOrPaused() && !config.Stream {
 		metrics, stats, err := mgr.Stats(ctx, name)
 		if err != nil {
 			return err
 		}
-		containerStat := toContainerStats(metrics.Timestamp, stats)
+		containerStat := toContainerStats(metrics.Timestamp, c, stats)
 		return json.NewEncoder(outStream).Encode(containerStat)
 	}
 
@@ -63,7 +63,7 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 			// metrics may be nil if the container is not running,
 			// so just ignore it and try get the metrics next time.
 			if metrics != nil {
-				containerStat := toContainerStats(metrics.Timestamp, stats)
+				containerStat := toContainerStats(metrics.Timestamp, c, stats)
 
 				if err := enc.Encode(containerStat); err != nil {
 					return err
@@ -87,7 +87,7 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	c.Unlock()
 
 	// only get metrics when the container is running
-	if !(c.IsRunning() || c.IsPaused()) {
+	if !c.IsRunningOrPaused() {
 		return nil, nil, nil
 	}
 
@@ -104,9 +104,11 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	return metric, v.(*cgroups.Metrics), nil
 }
 
-func toContainerStats(time time.Time, metric *cgroups.Metrics) *types.ContainerStats {
+func toContainerStats(time time.Time, container *Container, metric *cgroups.Metrics) *types.ContainerStats {
 	return &types.ContainerStats{
 		Read: strfmt.DateTime(time),
+		ID:   container.ID,
+		Name: container.Name,
 		PidsStats: &types.PidsStats{
 			Current: metric.Pids.Current,
 		},
