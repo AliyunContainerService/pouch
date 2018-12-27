@@ -182,7 +182,7 @@ func (suite *PouchNetworkSuite) TestNetworkBridgeWorks(c *check.C) {
 	{
 		// running container is stopped, then the veth device should also been removed
 		command.PouchRun("run", "-d", "--name", funcname, "--net", funcname, busyboxImage, "top").Assert(c, icmd.Success)
-		command.PouchRun("stop", funcname).Assert(c, icmd.Success)
+		command.PouchRun("stop", "-t", "1", funcname).Assert(c, icmd.Success)
 
 		// get the ID of bridge to construct the bridge name.
 		cmd := "pouch network list |grep " + funcname + "|awk '{print $1}'"

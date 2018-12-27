@@ -145,7 +145,7 @@ func (suite *PouchExecSuite) TestExecStoppedContainer(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	out := command.PouchRun("exec", name, "echo", "test").Stderr()
 	if !strings.Contains(out, "failed") {
@@ -188,7 +188,7 @@ func (suite *PouchExecSuite) TestExecAfterContainerRestart(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 

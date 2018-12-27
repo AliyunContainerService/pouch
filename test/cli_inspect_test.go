@@ -192,7 +192,7 @@ func (suite *PouchInspectSuite) TestContainerInspectState(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 	// stop container
-	res = command.PouchRun("stop", "-t", "0", name)
+	res = command.PouchRun("stop", "-t", "1", name)
 	res.Assert(c, icmd.Success)
 
 	output = command.PouchRun("inspect", "-f", "{{.State.Pid}}", name).Stdout()

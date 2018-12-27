@@ -85,7 +85,7 @@ func (suite *PouchRestartSuite) TestPouchRestartStoppedContainer(c *check.C) {
 
 	res.Assert(c, icmd.Success)
 
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	command.PouchRun("restart", "-t", "1", name).Assert(c, icmd.Success)
 }

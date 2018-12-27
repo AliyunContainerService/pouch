@@ -109,7 +109,7 @@ func (suite *PouchEventsSuite) TestDieEventWorks(c *check.C) {
 	// only works when test case run on the same machine with pouchd
 	time.Sleep(1100 * time.Millisecond)
 	start := time.Now()
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 	time.Sleep(1100 * time.Millisecond)
 	end := time.Now()
 

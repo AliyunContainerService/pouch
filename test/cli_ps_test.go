@@ -60,7 +60,7 @@ func (suite *PouchPsSuite) TestPsWorks(c *check.C) {
 
 	// stop
 	{
-		command.PouchRun("stop", name).Assert(c, icmd.Success)
+		command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 		res := command.PouchRun("ps", "-a").Assert(c, icmd.Success)
 		kv := psToKV(res.Combined())

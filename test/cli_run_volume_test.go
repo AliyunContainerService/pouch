@@ -162,7 +162,7 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesFrom(c *check.C) {
 	res.Assert(c, icmd.Success)
 
 	// stop container1
-	command.PouchRun("stop", containerName1).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", containerName1).Assert(c, icmd.Success)
 
 	// run container2
 	res = command.PouchRun("run", "-d",
@@ -227,7 +227,7 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesFromWithDupclicate(c *check.
 	res.Assert(c, icmd.Success)
 
 	// stop container1
-	command.PouchRun("stop", containerName1).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", containerName1).Assert(c, icmd.Success)
 
 	// run container2
 	res = command.PouchRun("run", "-d",
@@ -446,7 +446,7 @@ func (suite *PouchRunVolumeSuite) TestRunVolumesFromWithDR(c *check.C) {
 	}()
 
 	// stop bak container
-	command.PouchRun("stop", cNameBak).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", cNameBak).Assert(c, icmd.Success)
 
 	// run new container with volumes-from
 	command.PouchRun("run", "-d", "--name", cName,

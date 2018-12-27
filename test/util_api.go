@@ -92,7 +92,11 @@ func StartContainerOk(c *check.C, cname string) {
 
 // StopContainerOk stops the container and asserts success..
 func StopContainerOk(c *check.C, cname string) {
-	resp, err := request.Post("/containers/" + cname + "/stop")
+	q := url.Values{}
+	q.Add("t", "1")
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/containers/"+cname+"/stop", query)
 	c.Assert(err, check.IsNil)
 
 	defer resp.Body.Close()
@@ -125,7 +129,13 @@ func CheckContainerRunning(c *check.C, cname string, isRunning bool) {
 }
 
 func delContainerForce(cname string) (*http.Response, error) {
+	// first stop the container, then delete it
 	q := url.Values{}
+	q.Add("t", "1")
+	resp, _ := request.Post("/containers/"+cname+"/stop", request.WithQuery(q))
+	defer resp.Body.Close()
+
+	q = url.Values{}
 	q.Add("force", "true")
 	q.Add("v", "true")
 
@@ -152,7 +162,6 @@ func UnpauseContainerOk(c *check.C, cname string) {
 // DelContainerForceMultyTime forcely deletes the container multy times.
 func DelContainerForceMultyTime(c *check.C, cname string) {
 	timeout := 1 * time.Minute
-
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
