@@ -20,30 +20,34 @@ Then `crictl` binary can be found in `$GOPATH/bin`.
 crictl SUBCOMMAND [FLAGS]
 ```
 
-Subcommands includes:
+Subcommands includes(crictl v1.12):
 
-- `info`:          Display runtime version information
-- `runs`:          Run a new sandbox
-- `stops`:         Stop a running sandbox
-- `rms`:           Remove a sandbox
-- `inspects`:      Display the status of a sandbox
-- `sandboxes`:     List sandboxes
-- `create`:        Create a new container
-- `start`:         Start a created container
-- `stop`:          Stop a running container
-- `rm`:            Remove a container
-- `inspect`:       Display the status of a container
-- `ps`:            List containers
-- `status`:        Display status of the container runtime
-- `attach`:        Attach to a running container
-- `pull`:          Pull an image from a registry
-- `images`:        List images
-- `inspecti`:      Return the status of an image
-- `rmi`:           Remove an image
-- `exec`:          Run a command in a running container
-- `port-forward`:  Forward local port to a sandbox
-- `logs`:          Fetch the logs of a container
-- `help`:          Shows a list of commands or help for one command
+- `attach`:       Attach to a running container
+- `create`:       Create a new container
+- `exec`:         Run a command in a running container
+- `version`:      Display runtime version information
+- `images`:       List images
+- `inspect`:      Display the status of one or more containers
+- `inspecti`:     Return the status of one ore more images
+- `inspectp`:     Display the status of one or more pods
+- `logs`:         Fetch the logs of a container
+- `port-forward`: Forward local port to a pod
+- `ps`:           List containers
+- `pull`:         Pull an image from a registry
+- `runp`:         Run a new pod
+- `rm`:           Remove one or more containers
+- `rmi`:          Remove one or more images
+- `rmp`:          Remove one or more pods
+- `pods`:         List pods
+- `start`:        Start one or more created containers
+- `info`:         Display information of the container runtime
+- `stop`:         Stop one or more running containers
+- `stopp`:        Stop one or more running pods
+- `update`:       Update one or more running containers
+- `config`:       Get and set crictl options
+- `stats`:        List container(s) resource usage statistics
+- `completion`:   Output bash shell completion code
+- `help, h`:      Shows a list of commands or help for one command
 
 ## Config runtime endpoint
 
