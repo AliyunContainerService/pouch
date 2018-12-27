@@ -123,7 +123,7 @@ func (suite *PouchRichContainerSuite) TestRichContainerDumbInitWorks(c *check.C)
 	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
 
 	// stop and start could work well.
-	command.PouchRun("stop", funcname).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", funcname).Assert(c, icmd.Success)
 	command.PouchRun("start", funcname).Assert(c, icmd.Success)
 	c.Assert(checkPidofProcessIsOne(funcname, "dumb-init"), check.Equals, true)
 
@@ -215,7 +215,7 @@ func (suite *PouchRichContainerSuite) TestRichContainerSystemdWorks(c *check.C) 
 	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)
 
 	// stop and start could work well.
-	command.PouchRun("stop", funcname).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", funcname).Assert(c, icmd.Success)
 	command.PouchRun("start", funcname).Assert(c, icmd.Success)
 	c.Assert(checkPidofProcessIsOne(funcname, "/usr/lib/systemd/systemd"), check.Equals, true)
 	c.Assert(checkPPid(funcname, "sleep", "1"), check.Equals, true)

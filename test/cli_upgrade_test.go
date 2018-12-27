@@ -81,7 +81,7 @@ func (suite *PouchUpgradeSuite) TestPouchUpgradeStoppedContainer(c *check.C) {
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	res := command.PouchRun("upgrade", "--image", busyboxImage125, name)
 	res.Assert(c, icmd.Success)

@@ -55,7 +55,7 @@ func (suite *PouchPauseSuite) TestPauseInWrongWay(c *check.C) {
 	defer DelContainerForceMultyTime(c, stoppedContainerName)
 	res.Assert(c, icmd.Success)
 	command.PouchRun("start", stoppedContainerName).Assert(c, icmd.Success)
-	command.PouchRun("stop", stoppedContainerName).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", stoppedContainerName).Assert(c, icmd.Success)
 
 	for _, tc := range []struct {
 		name          string

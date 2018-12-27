@@ -36,13 +36,13 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 
 	// test stop a created container
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	// start the created container
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 
 	// test stop a running container
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 	// test stop a stopped container
 	command.PouchRun("stop", name).Assert(c, icmd.Success)
 
@@ -52,7 +52,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 
 	// test stop container with timeout(*seconds)
 	command.PouchRun("start", name).Assert(c, icmd.Success)
-	command.PouchRun("stop", "-t", "3", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	status, err = inspectFilter(name, ".State.Status")
 	c.Assert(err, check.IsNil)
@@ -61,7 +61,7 @@ func (suite *PouchStopSuite) TestStopWorks(c *check.C) {
 	// test stop a paused container
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 	command.PouchRun("pause", name).Assert(c, icmd.Success)
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	status, err = inspectFilter(name, ".State.Status")
 	c.Assert(err, check.IsNil)
@@ -78,7 +78,7 @@ func (suite *PouchStopSuite) TestStopInWrongWay(c *check.C) {
 		{name: "unknown flag", args: "-a"},
 		{name: "Error: requires at least 1 arg(s), only received 0", args: ""},
 	} {
-		res := command.PouchRun("stop", tc.args)
+		res := command.PouchRun("stop", "-t", "1", tc.args)
 		c.Assert(res.Stderr(), check.NotNil, check.Commentf(tc.name))
 	}
 }
@@ -93,7 +93,7 @@ func (suite *PouchStopSuite) TestStopMultiContainers(c *check.C) {
 	defer DelContainerForceMultyTime(c, name1)
 	defer DelContainerForceMultyTime(c, name2)
 
-	command.PouchRun("stop", "-t", "3", name1, name2).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name1, name2).Assert(c, icmd.Success)
 
 	// test if the container is already stopped
 	status, err := inspectFilter(name1, ".State.Status")
@@ -113,7 +113,7 @@ func (suite *PouchStopSuite) TestStopPidValue(c *check.C) {
 	defer DelContainerForceMultyTime(c, name)
 
 	// test stop a created container
-	command.PouchRun("stop", name).Assert(c, icmd.Success)
+	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 
 	pid, err := inspectFilter(name, ".State.Pid")
 	c.Assert(err, check.IsNil)
