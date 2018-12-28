@@ -7,9 +7,15 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"github.com/alibaba/pouch/pkg/utils/templates"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestNewTemplateInspector(t *testing.T) {
+	// Prepare test data
+	idTmpl, _ := template.New("idTemplate").Parse("{{.ID}}")
 	type args struct {
 		tmpl *template.Template
 	}
@@ -19,11 +25,22 @@ func TestNewTemplateInspector(t *testing.T) {
 		want    Inspector
 		wantOut string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testTemplateInspector",
+			args: args{
+				tmpl: idTmpl,
+			},
+			want: &TemplateInspector{
+				outputStream: bytes.NewBufferString("pouch"),
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			wantOut: "pouch",
+		},
 	}
 	for _, tt := range tests {
+		out := bytes.NewBuffer([]byte("pouch"))
 		t.Run(tt.name, func(t *testing.T) {
-			out := &bytes.Buffer{}
 			if got := NewTemplateInspector(out, tt.args.tmpl); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewTemplateInspector() = %v, want %v", got, tt.want)
 			}
@@ -35,6 +52,8 @@ func TestNewTemplateInspector(t *testing.T) {
 }
 
 func TestNewTemplateInspectorFromString(t *testing.T) {
+	// Prepare test data
+	idTmpl, _ := templates.Parse("{{.ID}}")
 	type args struct {
 		tmplStr string
 	}
@@ -45,7 +64,54 @@ func TestNewTemplateInspectorFromString(t *testing.T) {
 		wantOut string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testEmptyTmplStr",
+			args: args{
+				tmplStr: "",
+			},
+			want: &IndentedInspector{
+				outputStream: &bytes.Buffer{},
+				elements:     nil,
+				rawElements:  nil,
+			},
+			wantOut: "",
+			wantErr: false,
+		},
+		{
+			name: "testCorrectTmplStr",
+			args: args{
+				tmplStr: "{{.ID}}",
+			},
+			want: &TemplateInspector{
+				outputStream: &bytes.Buffer{},
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			wantOut: "",
+			wantErr: false,
+		},
+		{
+			name: "testErrorTmplStr",
+			args: args{
+				tmplStr: "{{xxx}}",
+			},
+			want:    nil,
+			wantOut: "",
+			wantErr: true,
+		},
+	}
+	opts := cmp.Options{
+		// This option declares approximate equality on IndentedInspector
+		cmp.Comparer(func(x, y IndentedInspector) bool {
+			return reflect.DeepEqual(x, y)
+		}),
+		// This option declares approximate equality on TemplateInspector
+		cmp.Comparer(func(x, y TemplateInspector) bool {
+			return (reflect.DeepEqual(x.outputStream, y.outputStream)) &&
+				(reflect.DeepEqual(x.buffer, y.buffer)) &&
+				(reflect.DeepEqual(x.tmpl.Name(), y.tmpl.Name())) &&
+				(reflect.DeepEqual(x.tmpl.Tree.Root.Nodes, y.tmpl.Tree.Root.Nodes))
+		}),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -55,7 +121,10 @@ func TestNewTemplateInspectorFromString(t *testing.T) {
 				t.Errorf("NewTemplateInspectorFromString() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			// There are some unexported fields inside template ,
+			// reflect.DeepEqual is not suitable for template comparation
+			// so use cmp.Equal instead
+			if !cmp.Equal(got, tt.want, opts) {
 				t.Errorf("NewTemplateInspectorFromString() = %v, want %v", got, tt.want)
 			}
 			if gotOut := out.String(); gotOut != tt.wantOut {
@@ -78,7 +147,7 @@ func TestInspect(t *testing.T) {
 	}
 
 	type args struct {
-		references string
+		references []string
 		tmplStr    string
 		getRef     GetRefFunc
 	}
@@ -88,30 +157,74 @@ func TestInspect(t *testing.T) {
 		wantOut string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
-			name: "testInspectDefault",
+			name: "testInspectEmptyTmplStr",
 			args: args{
-				references: "test",
+				references: []string{"single reference"},
 				tmplStr:    "",
 				getRef:     getRefFunc,
 			},
 			wantOut: "id",
 			wantErr: false,
 		}, {
-			name: "testInspectTemplate",
+			name: "testInspectTemplateSingleReference",
 			args: args{
-				references: "test",
+				references: []string{"single reference"},
 				tmplStr:    "{{.ID}}",
 				getRef:     getRefFunc,
 			},
 			wantOut: "id",
 			wantErr: false,
 		}, {
+			name: "testInspectTemplateMultiReferences",
+			args: args{
+				references: []string{"reference1", "reference2"},
+				tmplStr:    "{{.ID}}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "id",
+			wantErr: false,
+		}, {
+			name: "testInspectTemplateEmptyReference",
+			args: args{
+				references: []string{},
+				tmplStr:    "{{.ID}}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "\n",
+			wantErr: false,
+		}, {
 			name: "testInspectTemplateError",
 			args: args{
-				references: "test",
+				references: []string{"single reference"},
 				tmplStr:    "{{.Id}}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "",
+			wantErr: true,
+		}, {
+			name: "testInspectTemplateError2",
+			args: args{
+				references: []string{"reference1", "reference2"},
+				tmplStr:    "{{.NotExists}}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "",
+			wantErr: true,
+		}, {
+			name: "testInspectTemplateError3",
+			args: args{
+				references: []string{"single reference"},
+				tmplStr:    "{{.Unclosed}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "",
+			wantErr: true,
+		}, {
+			name: "testInspectTemplateError4",
+			args: args{
+				references: []string{},
+				tmplStr:    "{{NotExistsFunction .WhenEmptyReference}}",
 				getRef:     getRefFunc,
 			},
 			wantOut: "",
@@ -121,7 +234,7 @@ func TestInspect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
-			if err := Inspect(out, []string{tt.args.references}, tt.args.tmplStr, tt.args.getRef); (err != nil) != tt.wantErr {
+			if err := Inspect(out, tt.args.references, tt.args.tmplStr, tt.args.getRef); (err != nil) != tt.wantErr {
 				t.Errorf("Inspect() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -134,6 +247,12 @@ func TestInspect(t *testing.T) {
 }
 
 func TestTemplateInspector_Inspect(t *testing.T) {
+	// Prepare test data
+	idTmpl, _ := templates.Parse("{{.ID}}")
+	tmplErr, _ := templates.Parse("{{.Id}}")
+	type testElement struct {
+		ID string `json:"Id"`
+	}
 	type fields struct {
 		outputStream io.Writer
 		buffer       *bytes.Buffer
@@ -148,7 +267,46 @@ func TestTemplateInspector_Inspect(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testTemplateInspectorInspect",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			args: args{
+				typedElement: &testElement{
+					ID: "id",
+				},
+			},
+			wantErr: false,
+		}, {
+			name: "testTemplateInspectorInspectError",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				buffer:       new(bytes.Buffer),
+				tmpl:         tmplErr,
+			},
+			args: args{
+				typedElement: &testElement{
+					ID: "id",
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "testTemplateInspectorInspectNilOutputStream",
+			fields: fields{
+				outputStream: nil,
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			args: args{
+				typedElement: &testElement{
+					ID: "id",
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -165,6 +323,9 @@ func TestTemplateInspector_Inspect(t *testing.T) {
 }
 
 func TestTemplateInspector_Flush(t *testing.T) {
+	// Prepare test data
+	idTmpl, _ := templates.Parse("{{.ID}}")
+	buf := bytes.NewBuffer([]byte("some content"))
 	type fields struct {
 		outputStream io.Writer
 		buffer       *bytes.Buffer
@@ -175,7 +336,23 @@ func TestTemplateInspector_Flush(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testTemplateInspectorFlushBufferLenZero",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			wantErr: false,
+		}, {
+			name: "testTemplateInspectorFlushBufferLenNotZero",
+			fields: fields{
+				outputStream: buf,
+				buffer:       new(bytes.Buffer),
+				tmpl:         idTmpl,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -197,7 +374,15 @@ func TestNewIndentedInspector(t *testing.T) {
 		want             Inspector
 		wantOutputStream string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testIndentedInspector",
+			want: &IndentedInspector{
+				outputStream: &bytes.Buffer{},
+				elements:     nil,
+				rawElements:  nil,
+			},
+			wantOutputStream: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -213,6 +398,21 @@ func TestNewIndentedInspector(t *testing.T) {
 }
 
 func TestIndentedInspector_Inspect(t *testing.T) {
+	// Prepare test data
+	var dataSlice [2]string
+	dataSlice[0] = "Hello"
+	dataSlice[1] = "Pouch"
+	interfaceSlice := make([]interface{}, len(dataSlice))
+	for i, d := range dataSlice {
+		interfaceSlice[i] = d
+	}
+	rawElements := [][]byte{
+		[]byte("Hello"),
+		[]byte("Pouch"),
+	}
+	type testElement struct {
+		ID string `json:"Id"`
+	}
 	type fields struct {
 		outputStream io.Writer
 		elements     []interface{}
@@ -227,7 +427,20 @@ func TestIndentedInspector_Inspect(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testInspect",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				elements:     interfaceSlice,
+				rawElements:  rawElements,
+			},
+			args: args{
+				typedElement: &testElement{
+					ID: "id",
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -244,6 +457,18 @@ func TestIndentedInspector_Inspect(t *testing.T) {
 }
 
 func TestIndentedInspector_Flush(t *testing.T) {
+	// Prepare test data
+	var dataSlice [2]string
+	dataSlice[0] = "Hello"
+	dataSlice[1] = "Pouch"
+	interfaceSlice := make([]interface{}, len(dataSlice))
+	for i, d := range dataSlice {
+		interfaceSlice[i] = d
+	}
+	rawElements := [][]byte{
+		[]byte("Hello"),
+		[]byte("Pouch"),
+	}
 	type fields struct {
 		outputStream io.Writer
 		elements     []interface{}
@@ -254,7 +479,23 @@ func TestIndentedInspector_Flush(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "testIndentedInspectorFlush",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				elements:     interfaceSlice,
+				rawElements:  rawElements,
+			},
+			wantErr: false,
+		}, {
+			name: "testIndentedInspectorFlushElementsNil",
+			fields: fields{
+				outputStream: &bytes.Buffer{},
+				elements:     nil,
+				rawElements:  rawElements,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
