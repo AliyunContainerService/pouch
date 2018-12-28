@@ -96,6 +96,39 @@ func (suite *PouchSnapshotterSuite) TestOldSnapshotterNotClean(c *check.C) {
 	dcfg.KillDaemon()
 }
 
+// TestAllowMultiSnapshotter tests pouchd with two snapshotter
+func (suite *PouchSnapshotterSuite) TestAllowMultiSnapshotter(c *check.C) {
+	dcfg, err := StartDefaultDaemon("--snapshotter", "overlayfs", "--allow-multi-snapshotter")
+	c.Assert(err, check.IsNil)
+
+	fileSystemInfo, err := mount.Lookup(dcfg.HomeDir)
+	c.Assert(err, check.IsNil)
+
+	if fileSystemInfo.FSType != "btrfs" {
+		dcfg.KillDaemon()
+		c.Skip("btrfs is not supported! Ignore test suite TestOldSnapshotterNotClean.")
+	}
+
+	result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	dcfg.KillDaemon()
+	time.Sleep(10 * time.Second)
+
+	dcfg, err = StartDefaultDaemon("--snapshotter", "btrfs", "--allow-multi-snapshotter")
+	c.Assert(err, check.IsNil)
+
+	dcfg.KillDaemon()
+	time.Sleep(10 * time.Second)
+
+	// clean image
+	dcfg, err = StartDefaultDaemon("--snapshotter", "overlayfs")
+	c.Assert(err, check.IsNil)
+
+	result = RunWithSpecifiedDaemon(dcfg, "rmi", busyboxImage)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	dcfg.KillDaemon()
+}
+
 // checkSnapshotsDir returns snapshots directory names by given snapshotter name
 func checkSnapshotsDir(homeDir string, snapshotter string) ([]string, error) {
 	const snapshotterPrefix = "io.containerd.snapshotter.v1."

@@ -99,6 +99,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.QuotaDriver, "quota-driver", "", "Set quota driver(grpquota/prjquota), if not set, it will set by kernel version")
 	flagSet.StringVar(&cfg.ConfigFile, "config-file", "/etc/pouch/config.json", "Configuration file of pouchd")
 	flagSet.StringVar(&cfg.Snapshotter, "snapshotter", "overlayfs", "Snapshotter driver of pouchd, it will be passed to containerd")
+	flagSet.BoolVar(&cfg.AllowMultiSnapshotter, "allow-multi-snapshotter", false, "If set true, pouchd will allow multi snapshotter")
 
 	// volume config
 	flagSet.StringVar(&cfg.VolumeConfig.DriverAlias, "volume-driver-alias", "", "Set volume driver alias, <name=alias>[;name1=alias1]")
