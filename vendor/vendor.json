@@ -1302,6 +1302,36 @@
 			"versionExact": "v1.2.0"
 		},
 		{
+			"checksumSHA1": "eLXBfOX3wO3NghA3t5K832kTalY=",
+			"path": "github.com/google/go-cmp/cmp",
+			"revision": "2248b49eaa8e1c8c0963ee77b40841adbc19d4ca",
+			"revisionTime": "2018-11-15T01:20:43Z"
+		},
+		{
+			"checksumSHA1": "mqEeEz5t8ijdicmaQrFdc5ajfV4=",
+			"path": "github.com/google/go-cmp/cmp/cmpopts",
+			"revision": "2248b49eaa8e1c8c0963ee77b40841adbc19d4ca",
+			"revisionTime": "2018-11-15T01:20:43Z"
+		},
+		{
+			"checksumSHA1": "M6/zJtjFuaVs16Zv85o47fk4kZw=",
+			"path": "github.com/google/go-cmp/cmp/internal/diff",
+			"revision": "2248b49eaa8e1c8c0963ee77b40841adbc19d4ca",
+			"revisionTime": "2018-11-15T01:20:43Z"
+		},
+		{
+			"checksumSHA1": "xCQ3denMNE1HB7+yNv44dT+YcIs=",
+			"path": "github.com/google/go-cmp/cmp/internal/function",
+			"revision": "2248b49eaa8e1c8c0963ee77b40841adbc19d4ca",
+			"revisionTime": "2018-11-15T01:20:43Z"
+		},
+		{
+			"checksumSHA1": "17NnrKlycdBXbEPVMphEiW/En9w=",
+			"path": "github.com/google/go-cmp/cmp/internal/value",
+			"revision": "2248b49eaa8e1c8c0963ee77b40841adbc19d4ca",
+			"revisionTime": "2018-11-15T01:20:43Z"
+		},
+		{
 			"checksumSHA1": "mLmwamaqyrVUNOmTAGaSpnO1YJQ=",
 			"path": "github.com/google/gops/agent",
 			"revision": "160b358b10d6123169a895090938b088c8f78dc9",
