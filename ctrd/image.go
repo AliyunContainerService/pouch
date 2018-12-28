@@ -176,7 +176,7 @@ func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Import
 	return imgs, nil
 }
 
-// FetchImage fetchs image content from the remote repository.
+// FetchImage fetches image content from the remote repository.
 func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {

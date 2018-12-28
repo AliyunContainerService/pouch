@@ -129,7 +129,7 @@ func TestUlimitType(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				out := ul.Type()
 				if !tt.wantErr && !reflect.DeepEqual(out, tt.wantStr) {
-					t.Errorf("Ulimit.String() = %v, want %v", out, tt.wantStr)
+					t.Errorf("Ulimit.Type() = %v, want %v", out, tt.wantStr)
 				}
 			})
 		}

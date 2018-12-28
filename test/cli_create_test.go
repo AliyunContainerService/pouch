@@ -48,7 +48,7 @@ func (suite *PouchCreateSuite) TestCreateName(c *check.C) {
 	c.Assert(res.Combined(), check.Equals, fmt.Sprintf("%s\n", digStr))
 }
 
-// TestCreateNameByImageID is to verify the correctness of creating contaier with specified name by image id.
+// TestCreateNameByImageID is to verify the correctness of creating container with specified name by image id.
 func (suite *PouchCreateSuite) TestCreateNameByImageID(c *check.C) {
 	name := "create-normal-by-image-id"
 
@@ -349,7 +349,7 @@ func (suite *PouchCreateSuite) TestCreateWithUser(c *check.C) {
 	c.Assert(userConfig, check.Equals, user)
 }
 
-// TestCreateWithIntelRdt tests creating container with Intel Rdt.
+// TestCreateWithIntelRdt tests creating container with Intel RDT.
 func (suite *PouchCreateSuite) TestCreateWithIntelRdt(c *check.C) {
 	name := "TestCreateWithIntelRdt"
 	intelRdt := "L3:<cache_id0>=<cbm0>"
@@ -387,7 +387,7 @@ func (suite *PouchCreateSuite) TestCreateWithAliOSMemoryOptions(c *check.C) {
 	c.Assert(result[0].HostConfig.ScheLatSwitch, check.Equals, int64(1))
 }
 
-// TestCreateWithOOMOption tests creating container with oom options.
+// TestCreateWithOOMOption tests creating container with OOM options.
 func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 	name := "TestCreateWithOOMOption"
 	oomScore := "100"

@@ -40,7 +40,7 @@ func ValidatePortBinding(portBindings types.PortMap) error {
 		for _, pb := range portBindings[port] {
 			_, err := nat.NewPort(nat.SplitProtoPort(pb.HostPort))
 			if err != nil {
-				return fmt.Errorf("invalud port specification: %q, err: %v", pb.HostPort, err)
+				return fmt.Errorf("invalid port specification: %q, err: %v", pb.HostPort, err)
 			}
 		}
 	}
