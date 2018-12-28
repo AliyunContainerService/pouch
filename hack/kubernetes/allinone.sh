@@ -54,7 +54,6 @@ install_pouch_ubuntu() {
 	add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
 	apt-get -y update
 	apt-get install -y pouch
-	systemctl enable pouch
 	systemctl start pouch
 }
 
@@ -68,9 +67,14 @@ install_pouch_centos() {
 }
 
 config_pouch_ubuntu() {
-	sed -i "s/ExecStart=\/usr\/bin\/pouchd/ExecStart=\/usr\/bin\/pouchd --enable-cri=true --cri-version=$CRI_VERSION/g" /usr/lib/systemd/system/pouch.service
+    mkdir -p /etc/systemd/system/pouch.service.d
+    cat > /etc/systemd/system/pouch.service.d/pouch.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/local/bin/pouchd --enable-cri=true --cri-version=$CRI_VERSION
+EOF
     systemctl daemon-reload
-	systemctl restart pouch
+    systemctl restart pouch
 }
 
 config_pouch_centos() {
