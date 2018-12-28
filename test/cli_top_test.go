@@ -71,7 +71,7 @@ func (suite *PouchTopSuite) TestTopRunningOrPausedContainer(c *check.C) {
 		c.Fatalf("unexpected output %s expected %s", out, expectString)
 	}
 
-	// Top a paused contaner is valid
+	// Top a paused container is valid
 	res = command.PouchRun("pause", name)
 	res.Assert(c, icmd.Success)
 
