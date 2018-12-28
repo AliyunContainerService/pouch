@@ -13,6 +13,8 @@ import (
 	"github.com/containerd/containerd"
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/api/services/introspection/v1"
+	"github.com/containerd/containerd/plugin"
+	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/typeurl"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -304,4 +306,57 @@ func (c *Client) collectContainerdEvents() {
 			}
 		}
 	}
+}
+
+// CheckSnapshotterValid checks whether the given snapshotter is valid
+func (c *Client) CheckSnapshotterValid(snapshotter string, allowMultiSnapshotter bool) error {
+	var (
+		driverFound = false
+	)
+
+	plugins, err := c.Plugins(context.Background(), []string{fmt.Sprintf("type==%s", plugin.SnapshotPlugin)})
+	if err != nil {
+		logrus.Errorf("failed to get containerd plugins: %v", err)
+		return err
+	}
+
+	for _, p := range plugins {
+		if p.Status != PluginStatusOk {
+			continue
+		}
+
+		if p.ID == snapshotter {
+			driverFound = true
+			continue
+		}
+
+		// if allowMultiSnapshotter, ignore check snapshots exist
+		if !allowMultiSnapshotter {
+			// check if other snapshotter exists snapshots
+			exist, err := c.checkSnapshotsExist(p.ID)
+			if err != nil {
+				return fmt.Errorf("failed to check snapshotter driver %s: %v", p.ID, err)
+			}
+
+			if exist {
+				return fmt.Errorf("current snapshotter driver is %s, cannot change to %s", p.ID, snapshotter)
+			}
+		}
+	}
+
+	if !driverFound {
+		return fmt.Errorf("containerd not support snapshotter driver %s", snapshotter)
+	}
+
+	return nil
+}
+
+func (c *Client) checkSnapshotsExist(snapshotter string) (existSnapshot bool, err error) {
+	fn := func(c context.Context, s snapshots.Info) error {
+		existSnapshot = true
+		return nil
+	}
+
+	err = c.WalkSnapshot(context.Background(), snapshotter, fn)
+	return
 }

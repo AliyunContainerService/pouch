@@ -27,6 +27,7 @@ type APIClient interface {
 	Version(ctx context.Context) (containerd.Version, error)
 	Cleanup() error
 	Plugins(ctx context.Context, filters []string) ([]Plugin, error)
+	CheckSnapshotterValid(snapshotter string, allowMultiSnapshotter bool) error
 }
 
 // ContainerAPIClient provides access to containerd container features.
