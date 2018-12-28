@@ -137,7 +137,7 @@ func (s *SnapshotsSyncer) Sync() error {
 		}
 		usage, err := s.client.GetSnapshotUsage(context.Background(), info.Name)
 		if err != nil {
-			logrus.Errorf("failed to get usage for snapshot %q: %v", info.Name, err)
+			logrus.Warnf("failed to get usage for snapshot %q: %v", info.Name, err)
 			continue
 		}
 		sn.Size = uint64(usage.Size)
