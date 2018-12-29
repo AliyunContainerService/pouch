@@ -1,4 +1,4 @@
-package v1alpha2
+package types
 
 import (
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"

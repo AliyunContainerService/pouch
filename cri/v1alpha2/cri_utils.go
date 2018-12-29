@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,8 +17,12 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	anno "github.com/alibaba/pouch/cri/annotations"
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
+	"github.com/alibaba/pouch/cri/stream"
+	metatypes "github.com/alibaba/pouch/cri/v1alpha2/types"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/netutils"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -27,6 +33,43 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
+
+func toStreamConfig(cfg *config.Config) (stream.Config, error) {
+	var address string
+	port := cfg.CriConfig.StreamServerPort
+	// If stream server reuse the pouchd's port, extract the ip and port from pouchd's listening addresses.
+	if cfg.CriConfig.StreamServerReusePort {
+		address, port = utils.ExtractIPAndPortFromAddresses(cfg.Listen)
+		if port == "" {
+			return stream.Config{}, fmt.Errorf("failed to extract stream server's port from pouchd's listening addresses")
+		}
+	}
+
+	// If the reused pouchd's port is https, the url that stream server return should be with https scheme.
+	reuseHTTPSPort := cfg.CriConfig.StreamServerReusePort && cfg.TLS.Key != "" && cfg.TLS.Cert != ""
+
+	ip := net.ParseIP(address)
+	// If the address is "" or "0.0.0.0", choose a proper one by ourselves.
+	if ip == nil || ip.IsUnspecified() {
+		a, err := netutils.ChooseBindAddress(nil)
+		if err != nil {
+			return stream.Config{}, fmt.Errorf("failed to get stream server address: %v", err)
+		}
+		address = a.String()
+	}
+
+	streamCfg := stream.DefaultConfig
+	streamCfg.Address = net.JoinHostPort(address, port)
+	streamCfg.BaseURL = &url.URL{
+		Scheme: "http",
+		Host:   streamCfg.Address,
+	}
+	if reuseHTTPSPort {
+		streamCfg.BaseURL.Scheme = "https"
+	}
+
+	return streamCfg, nil
+}
 
 func parseUint32(s string) (uint32, error) {
 	n, err := strconv.ParseUint(s, 10, 32)
@@ -265,7 +308,7 @@ func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandb
 }
 
 // applySandboxRuntimeHandler applies the runtime of container specified by the caller.
-func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *SandboxMeta, runtimehandler string, annotations map[string]string) error {
+func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *metatypes.SandboxMeta, runtimehandler string, annotations map[string]string) error {
 	if runtimehandler == "" {
 		// apply the annotation of io.kubernetes.runtime which specify the runtime of container.
 		// NOTE: Deprecated
@@ -283,7 +326,7 @@ func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *SandboxMeta, runtim
 }
 
 // applySandboxAnnotations applies the annotations extended.
-func (c *CriManager) applySandboxAnnotations(sandboxMeta *SandboxMeta, annotations map[string]string) error {
+func (c *CriManager) applySandboxAnnotations(sandboxMeta *metatypes.SandboxMeta, annotations map[string]string) error {
 	// apply the annotation of io.kubernetes.lxcfs.enabled
 	// which specify whether to enable lxcfs for a container.
 	if lxcfsEnabled, ok := annotations[anno.LxcfsEnabled]; ok {
@@ -772,7 +815,7 @@ func applyContainerSecurityContext(lc *runtime.LinuxContainerConfig, podSandboxI
 }
 
 // Apply Linux-specific options if applicable.
-func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, sandboxMeta *SandboxMeta) error {
+func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateConfig, config *runtime.ContainerConfig, sandboxConfig *runtime.PodSandboxConfig, sandboxMeta *metatypes.SandboxMeta) error {
 	// Apply runtime options.
 	createConfig.HostConfig.Runtime = sandboxMeta.Runtime
 

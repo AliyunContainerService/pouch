@@ -19,7 +19,7 @@ import (
 	"github.com/alibaba/pouch/cri/metrics"
 	cni "github.com/alibaba/pouch/cri/ocicni"
 	"github.com/alibaba/pouch/cri/stream"
-	criutils "github.com/alibaba/pouch/cri/utils"
+	metatypes "github.com/alibaba/pouch/cri/v1alpha2/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -32,7 +32,6 @@ import (
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 	"github.com/alibaba/pouch/version"
 
-	// NOTE: "golang.org/x/net/context" is compatible with standard "context" in golang1.7+.
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -114,7 +113,7 @@ type CriManager struct {
 	CriPlugin    hookplugins.CriPlugin
 
 	// StreamServer is the stream server of CRI serves container streaming request.
-	StreamServer Server
+	StreamServer StreamServer
 
 	// SandboxBaseDir is the directory used to store sandbox files like /etc/hosts, /etc/resolv.conf, etc.
 	SandboxBaseDir string
@@ -137,19 +136,11 @@ type CriManager struct {
 
 // NewCriManager creates a brand new cri manager.
 func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr, criPlugin hookplugins.CriPlugin) (CriMgr, error) {
-	var streamServerAddress string
-	streamServerPort := config.CriConfig.StreamServerPort
-	// If stream server reuse the pouchd's port, extract the ip and port from pouchd's listening addresses.
-	if config.CriConfig.StreamServerReusePort {
-		streamServerAddress, streamServerPort = extractIPAndPortFromAddresses(config.Listen)
-		if streamServerPort == "" {
-			return nil, fmt.Errorf("failed to extract stream server's port from pouchd's listening addresses")
-		}
+	streamCfg, err := toStreamConfig(config)
+	if err != nil {
+		return nil, err
 	}
-
-	// If the reused pouchd's port is https, the url that stream server return should be with https scheme.
-	reuseHTTPSPort := config.CriConfig.StreamServerReusePort && config.TLS.Key != "" && config.TLS.Cert != ""
-	streamServer, err := newStreamServer(ctrMgr, streamServerAddress, streamServerPort, reuseHTTPSPort)
+	streamServer, err := NewStreamServer(streamCfg, stream.NewStreamRuntime(ctrMgr))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stream server for cri manager: %v", err)
 	}
@@ -176,7 +167,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		Buckets: []meta.Bucket{
 			{
 				Name: meta.MetaJSONFile,
-				Type: reflect.TypeOf(SandboxMeta{}),
+				Type: reflect.TypeOf(metatypes.SandboxMeta{}),
 			},
 		},
 	})
@@ -201,7 +192,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		logrus.Infof("disable cri to collect stats from containerd periodically")
 	}
 
-	return NewCriWrapper(c), nil
+	return c, nil
 }
 
 // StreamServerStart starts the stream server of CRI.
@@ -209,7 +200,7 @@ func (c *CriManager) StreamServerStart() error {
 	return c.StreamServer.Start()
 }
 
-// StreamRouter returns the router of Stream Server.
+// StreamRouter returns the router of Stream StreamServer.
 func (c *CriManager) StreamRouter() stream.Router {
 	return c.StreamServer
 }
@@ -253,7 +244,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, err
 	}
-	sandboxMeta := &SandboxMeta{
+	sandboxMeta := &metatypes.SandboxMeta{
 		ID: id,
 	}
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
@@ -384,7 +375,7 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 	if err != nil {
 		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
-	sandboxMeta := res.(*SandboxMeta)
+	sandboxMeta := res.(*metatypes.SandboxMeta)
 
 	// setup networking for the sandbox.
 	networkNamespaceMode := sandboxMeta.Config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
@@ -415,7 +406,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	if err != nil {
 		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
-	sandboxMeta := res.(*SandboxMeta)
+	sandboxMeta := res.(*metatypes.SandboxMeta)
 
 	opts := &mgr.ContainerListOption{All: true}
 	filter := func(c *mgr.Container) bool {
@@ -549,7 +540,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	if err != nil {
 		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
-	sandboxMeta := res.(*SandboxMeta)
+	sandboxMeta := res.(*metatypes.SandboxMeta)
 
 	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
 	if err != nil {
@@ -679,7 +670,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	if err != nil {
 		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
 	}
-	sandboxMeta := res.(*SandboxMeta)
+	sandboxMeta := res.(*metatypes.SandboxMeta)
 	sandboxMeta.NetNS = containerNetns(sandbox)
 
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
@@ -1063,7 +1054,7 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 			return false
 		}
 		if r.GetFilter().GetLabelSelector() != nil &&
-			!criutils.MatchLabelSelector(r.GetFilter().GetLabelSelector(), c.Config.Labels) {
+			!utils.MatchLabelSelector(r.GetFilter().GetLabelSelector(), c.Config.Labels) {
 			return false
 		}
 		return true

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -433,4 +434,44 @@ func ResolveHomeDir(path string) (string, error) {
 	}
 
 	return realPath, nil
+}
+
+// MatchLabelSelector returns true if labels cover selector.
+func MatchLabelSelector(selector, labels map[string]string) bool {
+	for k, v := range selector {
+		if val, ok := labels[k]; ok {
+			if v != val {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+// ExtractIPAndPortFromAddresses extract first valid ip and port from addresses.
+func ExtractIPAndPortFromAddresses(addresses []string) (string, string) {
+	for _, addr := range addresses {
+		addrParts := strings.SplitN(addr, "://", 2)
+		if len(addrParts) != 2 {
+			logrus.Errorf("invalid listening address %s: must be in format [protocol]://[address]", addr)
+			continue
+		}
+
+		switch addrParts[0] {
+		case "tcp":
+			host, port, err := net.SplitHostPort(addrParts[1])
+			if err != nil {
+				logrus.Errorf("failed to split host and port from address: %v", err)
+				continue
+			}
+			return host, port
+		case "unix":
+			continue
+		default:
+			logrus.Errorf("only unix socket or tcp address is support")
+		}
+	}
+	return "", ""
 }
