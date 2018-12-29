@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/alibaba/pouch/cri/middleware"
 	cri "github.com/alibaba/pouch/cri/v1alpha1"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/netutils"
@@ -20,7 +21,9 @@ type Service struct {
 func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
 	s := &Service{
 		config: cfg,
-		server: grpc.NewServer(),
+		server: grpc.NewServer(
+			grpc.UnaryInterceptor(middleware.HandleWithGlobalMiddlewares(nil)),
+		),
 		criMgr: criMgr,
 	}
 

@@ -3,6 +3,7 @@ package service
 import (
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/cri/metrics"
+	"github.com/alibaba/pouch/cri/middleware"
 	cri "github.com/alibaba/pouch/cri/v1alpha2"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/pkg/netutils"
@@ -19,11 +20,12 @@ type Service struct {
 
 // NewService creates a brand new cri service.
 func NewService(cfg *config.Config, criMgr cri.CriMgr) (*Service, error) {
+	unaryInterceptor := middleware.HandleWithGlobalMiddlewares(metrics.GRPCMetrics.UnaryServerInterceptor())
 	s := &Service{
 		config: cfg,
 		server: grpc.NewServer(
 			grpc.StreamInterceptor(metrics.GRPCMetrics.StreamServerInterceptor()),
-			grpc.UnaryInterceptor(metrics.GRPCMetrics.UnaryServerInterceptor()),
+			grpc.UnaryInterceptor(unaryInterceptor),
 		),
 		criMgr: criMgr,
 	}
