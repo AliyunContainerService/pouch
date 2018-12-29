@@ -43,7 +43,7 @@ func GetRootDir() (string, error) {
 	return got.PouchRootDir, nil
 }
 
-// StartDefaultDaemonDebug starts a deamon with default configuration and debug on.
+// StartDefaultDaemonDebug starts a daemon with default configuration and debug on.
 func StartDefaultDaemonDebug(args ...string) (*daemon.Config, error) {
 	cfg := daemon.NewConfig()
 	cfg.Debug = true
@@ -53,7 +53,7 @@ func StartDefaultDaemonDebug(args ...string) (*daemon.Config, error) {
 	return &cfg, cfg.StartDaemon()
 }
 
-// StartDefaultDaemon starts a deamon with all default configuration and debug off.
+// StartDefaultDaemon starts a daemon with all default configuration and debug off.
 func StartDefaultDaemon(args ...string) (*daemon.Config, error) {
 	cfg := daemon.NewConfig()
 	cfg.Debug = false

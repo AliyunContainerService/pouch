@@ -97,7 +97,7 @@ func (suite *PouchPsSuite) TestPsFilterEqual(c *check.C) {
 	command.PouchRun("run", "-d", "--name", labelB, "-l", "b=c", busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, labelB)
 
-	name := "non-running-lable-a"
+	name := "non-running-label-a"
 	command.PouchRun("create", "--name", name, "-l", "a=b", busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
@@ -161,7 +161,7 @@ func (suite *PouchPsSuite) TestPsFilterUnequal(c *check.C) {
 	command.PouchRun("run", "-d", "--name", labelC, "-l", "a=c", busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, labelC)
 
-	name := "non-running-lable-a"
+	name := "non-running-label-a"
 	command.PouchRun("create", "--name", name, "-l", "a=c", busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 

@@ -15,7 +15,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// For pouch deamon test, we launched another pouch daemon.
+// For pouch daemon test, we launched another pouch daemon.
 const (
 	DaemonLog     = "/tmp/pouchd.log"
 	PouchdBin     = "pouchd"
@@ -49,7 +49,7 @@ type Config struct {
 	// timeout for starting daemon
 	timeout int64
 
-	// if Debug=true, dump daemon log when deamon failed to start
+	// if Debug=true, dump daemon log when daemon failed to start
 	Debug bool
 }
 

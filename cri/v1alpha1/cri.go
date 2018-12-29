@@ -527,7 +527,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	podSandboxID := r.GetPodSandboxId()
 
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
-	// Apply the container type lable.
+	// Apply the container type label.
 	labels[containerTypeLabelKey] = containerTypeLabelContainer
 	// Write the sandbox ID in the labels.
 	labels[sandboxIDLabelKey] = podSandboxID

@@ -20,7 +20,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// PouchDaemonSuite is the test suite fo daemon.
+// PouchDaemonSuite is the test suite for daemon.
 type PouchDaemonSuite struct{}
 
 func init() {
@@ -36,7 +36,7 @@ func (suite *PouchDaemonSuite) SetUpTest(c *check.C) {
 func (suite *PouchDaemonSuite) TestDaemonCgroupParent(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug("--cgroup-parent=tmp")
 	if err != nil {
-		c.Skip("deamon start failed")
+		c.Skip("daemon start failed")
 	}
 
 	// Must kill it, as we may loose the pid in next call.
@@ -209,7 +209,7 @@ func (suite *PouchDaemonSuite) TestDaemonConfigFileAndCli(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
-// TestDaemonInvalideArgs tests invalid args in deamon return error
+// TestDaemonInvalideArgs tests invalid args in daemon return error
 func (suite *PouchDaemonSuite) TestDaemonInvalideArgs(c *check.C) {
 	_, err := StartDefaultDaemon("--config=xxx")
 	c.Assert(err, check.NotNil)
@@ -325,7 +325,7 @@ func (suite *PouchDaemonSuite) TestDaemonLabel(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug("--label", "a=b")
 	// Start a test daemon with test args.
 	if err != nil {
-		c.Skip("deamon start failed.")
+		c.Skip("daemon start failed.")
 	}
 	// Must kill it, as we may loose the pid in next call.
 	defer dcfg.KillDaemon()
@@ -340,7 +340,7 @@ func (suite *PouchDaemonSuite) TestDaemonLabelDup(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug("--label", "a=b", "--label", "a=b")
 	// Start a test daemon with test args.
 	if err != nil {
-		c.Skip("deamon start failed.")
+		c.Skip("daemon start failed.")
 	}
 	// Must kill it, as we may loose the pid in next call.
 	defer dcfg.KillDaemon()
