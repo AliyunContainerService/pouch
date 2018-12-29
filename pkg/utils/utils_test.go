@@ -706,3 +706,109 @@ func TestResolveHomeDir(t *testing.T) {
 		}
 	}
 }
+
+func TestMatchLabelSelector(t *testing.T) {
+	type args struct {
+		selector map[string]string
+		labels   map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Normal Test",
+			args: args{
+				selector: map[string]string{
+					"a1": "b1",
+					"a2": "b2",
+				},
+				labels: map[string]string{
+					"a1": "b1",
+					"a2": "b2",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Uncovered Test",
+			args: args{
+				selector: map[string]string{
+					"a1": "b1",
+					"a2": "b2",
+				},
+				labels: map[string]string{
+					"a2": "b2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Unmatched Test",
+			args: args{
+				selector: map[string]string{
+					"a1": "b0",
+					"a2": "b2",
+				},
+				labels: map[string]string{
+					"a1": "b1",
+					"a2": "b2",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MatchLabelSelector(tt.args.selector, tt.args.labels); got != tt.want {
+				t.Errorf("matchLabelSelector() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractIPAndPortFromAddresses(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		wantIP   string
+		wantPort string
+	}{
+		{
+			name:     "listening addresses are nil",
+			args:     nil,
+			wantIP:   "",
+			wantPort: "",
+		},
+		{
+			name:     "listening addresses have no tcp address",
+			args:     []string{"unix:///var/run/pouchd.sock"},
+			wantIP:   "",
+			wantPort: "",
+		},
+		{
+			name:     "listening addresses have valid address",
+			args:     []string{"unix:///var/run/pouchd.sock", "tcp://0.0.0.0:4345"},
+			wantIP:   "0.0.0.0",
+			wantPort: "4345",
+		},
+		{
+			name:     "listening addresses have two tcp addresses",
+			args:     []string{"tcp://10.10.10.10:1234", "tcp://0.0.0.0:4345"},
+			wantIP:   "10.10.10.10",
+			wantPort: "1234",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotIP, gotPort := ExtractIPAndPortFromAddresses(tt.args)
+			if gotIP != tt.wantIP {
+				t.Errorf("extractIPAndPortFromAddresses() IP = %v, want IP %v", gotIP, tt.wantIP)
+			}
+			if gotPort != tt.wantPort {
+				t.Errorf("extractIPAndPortFromAddresses() Port = %v, want Port %v", gotPort, tt.wantPort)
+			}
+		})
+	}
+}

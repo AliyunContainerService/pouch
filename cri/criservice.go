@@ -7,7 +7,6 @@ import (
 	criv1alpha1 "github.com/alibaba/pouch/cri/v1alpha1"
 	servicev1alpha1 "github.com/alibaba/pouch/cri/v1alpha1/service"
 	criv1alpha2 "github.com/alibaba/pouch/cri/v1alpha2"
-	servicev1alpha2 "github.com/alibaba/pouch/cri/v1alpha2/service"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/hookplugins"
@@ -101,7 +100,7 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 		return fmt.Errorf("failed to get CriManager with error: %v", err)
 	}
 
-	service, err := servicev1alpha2.NewService(daemonconfig, criMgr)
+	service, err := criv1alpha2.NewService(daemonconfig, criMgr)
 	if err != nil {
 		streamRouterCh <- nil
 		readyCh <- false

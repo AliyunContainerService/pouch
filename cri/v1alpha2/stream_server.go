@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// Server as an interface defines all operations against stream server.
-type Server interface {
+// StreamServer as an interface defines all operations against stream server.
+type StreamServer interface {
 	// GetExec get the serving URL for Exec request.
 	GetExec(*runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error)
 
@@ -40,8 +40,8 @@ type server struct {
 	server  *http.Server
 }
 
-// NewServer creates a new stream server.
-func NewServer(config stream.Config, runtime stream.Runtime) (Server, error) {
+// NewStreamServer creates a new stream server.
+func NewStreamServer(config stream.Config, runtime stream.Runtime) (StreamServer, error) {
 	s := &server{
 		config:  config,
 		runtime: runtime,

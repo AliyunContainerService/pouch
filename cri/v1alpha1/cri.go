@@ -17,7 +17,6 @@ import (
 	anno "github.com/alibaba/pouch/cri/annotations"
 	cni "github.com/alibaba/pouch/cri/ocicni"
 	"github.com/alibaba/pouch/cri/stream"
-	criutils "github.com/alibaba/pouch/cri/utils"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
@@ -834,7 +833,7 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 			return false
 		}
 		if r.GetFilter().GetLabelSelector() != nil &&
-			!criutils.MatchLabelSelector(r.GetFilter().GetLabelSelector(), c.Config.Labels) {
+			!utils.MatchLabelSelector(r.GetFilter().GetLabelSelector(), c.Config.Labels) {
 			return false
 		}
 		return true
