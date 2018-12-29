@@ -231,7 +231,7 @@ __IMPORTANT__: In PouchContainer 1.0.0-rc1 we have done many things that importa
 * enhance: add ExtraAttribute functionality in LogInfo [#1714](https://github.com/alibaba/pouch/pull/1714) ([fuweid](https://github.com/fuweid))
 * bugfix: schema point to a response object  [#1712](https://github.com/alibaba/pouch/pull/1712) ([zhuangqh](https://github.com/zhuangqh))
 * bugfix: fix exec record user as container config user [#1657](https://github.com/alibaba/pouch/pull/1657) ([Ace-Tang](https://github.com/Ace-Tang))
-* feature: deamon support --log-driver and --log-opt options [#1647](https://github.com/alibaba/pouch/pull/1647) ([zhuangqh](https://github.com/zhuangqh))
+* feature: daemon support --log-driver and --log-opt options [#1647](https://github.com/alibaba/pouch/pull/1647) ([zhuangqh](https://github.com/zhuangqh))
 * bugfix: list image should ignore error if containerd can't handle well [#1625](https://github.com/alibaba/pouch/pull/1625) ([fuweid](https://github.com/fuweid))
 * bugfix: execConfig remove omitemtpy [#1619](https://github.com/alibaba/pouch/pull/1619) ([HusterWan](https://github.com/HusterWan))
 * enhance: add new formatter for syslog [#1608](https://github.com/alibaba/pouch/pull/1608) ([fuweid](https://github.com/fuweid))
