@@ -6,10 +6,10 @@ import (
 
 // Formater define the data's format via stream transfer.
 type Formater interface {
-	// BegineWrite write some datas at the stream beginning.
+	// BeginWrite write some data at the stream beginning.
 	BeginWrite() ([]byte, error)
 
-	// EndWrite write some datas at the stream ending.
+	// EndWrite write some data at the stream ending.
 	EndWrite() ([]byte, error)
 
 	// Write write a object be serialized.
