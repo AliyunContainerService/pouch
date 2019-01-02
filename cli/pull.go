@@ -157,7 +157,7 @@ func displayImageReferenceProgress(output io.Writer, isTerminal bool, msgs []jso
 			current += msg.Detail.Current
 		}
 
-		status := jsonstream.PullReferenceStatus(!isTerminal, msg)
+		status := jsonstream.ProcessStatus(!isTerminal, msg)
 		if _, err := fmt.Fprint(tw, status); err != nil {
 			return err
 		}

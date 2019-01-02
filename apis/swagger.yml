@@ -423,6 +423,33 @@ paths:
         500:
           $ref: "#/responses/500ErrorResponse"
 
+  /images/{imageid}/push:
+    post:
+      summary: "push an image"
+      description: "push an image on the registry"
+      operationId: "ImagePush"
+      consumes:
+        - "application/octet-stream"
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: "#/parameters/imageid"
+        - name: "tag"
+          in: "query"
+          description: "the tag to associate with the image on the registry. This is optional."
+          type: "string"
+        - name: "X-Registry-Auth"
+          in: "header"
+          description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        404:
+          $ref: "#/responses/404ErrorResponse"
+        500:
+          $ref: "#/responses/500ErrorResponse"
+
   /containers/create:
     post:
       summary: "Create a container"

@@ -16,14 +16,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
+func resolver(authConfig *types.AuthConfig, resolverOpt docker.ResolverOptions) (remotes.Resolver, error) {
 	var (
 		// TODO
-		username  = ""
-		secret    = ""
-		plainHTTP = false
-		refresh   = ""
-		insecure  = false
+		username = ""
+		secret   = ""
+		refresh  = ""
+		insecure = false
 	)
 
 	if authConfig != nil {
@@ -35,8 +34,8 @@ func resolver(authConfig *types.AuthConfig) (remotes.Resolver, error) {
 	_ = refresh
 
 	options := docker.ResolverOptions{
-		PlainHTTP: plainHTTP,
-		Tracker:   docker.NewInMemoryTracker(),
+		PlainHTTP: resolverOpt.PlainHTTP,
+		Tracker:   resolverOpt.Tracker,
 	}
 	options.Credentials = func(host string) (string, string, error) {
 		// Only one host

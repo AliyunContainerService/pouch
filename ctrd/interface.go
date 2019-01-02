@@ -90,6 +90,8 @@ type ImageAPIClient interface {
 	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
 	// Commit commits an image from a container.
 	Commit(ctx context.Context, config *CommitConfig) (digest.Digest, error)
+	// PushImage pushes a image to registry
+	PushImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error
 }
 
 // SnapshotAPIClient provides access to containerd snapshot features

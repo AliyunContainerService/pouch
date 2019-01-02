@@ -44,6 +44,9 @@ type ImageMgr interface {
 	// PullImage pulls images from specified registry.
 	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error
 
+	// PushImage pushes image to specified registry.
+	PushImage(ctx context.Context, name, tag string, authConfig *types.AuthConfig, out io.Writer) error
+
 	// GetImage returns imageInfo by reference or id.
 	GetImage(ctx context.Context, idOrRef string) (*types.ImageInfo, error)
 
@@ -192,6 +195,22 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 	mgr.LogImageEvent(ctx, img.Name(), namedRef.String(), "pull")
 
 	return mgr.StoreImageReference(ctx, img)
+}
+
+// PushImage pushes image to specified registry.
+func (mgr *ImageManager) PushImage(ctx context.Context, name, tag string, authConfig *types.AuthConfig, out io.Writer) error {
+	ref, err := reference.Parse(name)
+	if err != nil {
+		return err
+	}
+
+	if tag == "" {
+		ref = reference.WithDefaultTagIfMissing(ref)
+	} else {
+		ref = reference.WithTag(ref, tag)
+	}
+
+	return mgr.client.PushImage(ctx, ref.String(), authConfig, out)
 }
 
 // GetImage returns imageInfo by reference.
