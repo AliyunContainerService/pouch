@@ -786,11 +786,10 @@
 			"revisionTime": "2017-11-08T19:22:26Z"
 		},
 		{
-			"checksumSHA1": "dIXKrmJAsyhUTBeQlH4vLB6CqR8=",
-			"origin": "github.com/containerd/containerd/vendor/github.com/docker/go-units",
+			"checksumSHA1": "pH6j+C8XbK5fVUF9tNS4ZSXYqY4=",
 			"path": "github.com/docker/go-units",
-			"revision": "2b8ed96d2a422bf205adcdfa05272dc12c81613b",
-			"revisionTime": "2017-11-08T19:22:26Z"
+			"revision": "2fb04c6466a548a03cb009c5569ee1ab1e35398e",
+			"revisionTime": "2018-10-30T08:20:39Z"
 		},
 		{
 			"checksumSHA1": "nZxHZRxlUe66KtMbAYDamutoo6M=",

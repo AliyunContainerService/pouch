@@ -56,6 +56,9 @@ type NetworkMgr interface {
 
 	// Controller returns the network controller.
 	Controller() libnetwork.NetworkController
+
+	// GetNetworkStats returns the network stats of specific sandbox
+	GetNetworkStats(sandboxID string) (map[string]apitypes.NetworkStats, error)
 }
 
 // NetworkManager is the default implement of interface NetworkMgr.
@@ -443,6 +446,35 @@ func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.En
 	}
 
 	return nil
+}
+
+// GetNetworkStats returns the network stats of specific sandbox
+func (nm *NetworkManager) GetNetworkStats(sandboxID string) (map[string]apitypes.NetworkStats, error) {
+	sb, err := nm.Controller().SandboxByID(sandboxID)
+	if err != nil {
+		return nil, err
+	}
+
+	lnstats, err := sb.Statistics()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]apitypes.NetworkStats)
+	// Convert libnetwork nw stats into api stats
+	for ifName, ifStats := range lnstats {
+		stats[ifName] = apitypes.NetworkStats{
+			RxBytes:   ifStats.RxBytes,
+			RxPackets: ifStats.RxPackets,
+			RxErrors:  ifStats.RxErrors,
+			RxDropped: ifStats.RxDropped,
+			TxBytes:   ifStats.TxBytes,
+			TxPackets: ifStats.TxPackets,
+			TxErrors:  ifStats.TxErrors,
+			TxDropped: ifStats.TxDropped,
+		}
+	}
+	return stats, nil
 }
 
 // Controller returns the network controller.

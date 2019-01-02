@@ -36,7 +36,7 @@ func (suite *APIContainerStatsSuite) TestNoSuchContainer(c *check.C) {
 // TestNoStream tests stats api without stream
 func (suite *APIContainerStatsSuite) TestNoStream(c *check.C) {
 	name := "test_no_stream"
-	command.PouchRun("run", "-d", "--name", name, busyboxImage, "sh", "-c", "while true; do sleep 1; done").Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, "--net", "none", busyboxImage, "sh", "-c", "while true; do sleep 1; done").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
 	resp, err := request.Get(fmt.Sprintf("/containers/%s/stats", name))
@@ -54,5 +54,6 @@ func (suite *APIContainerStatsSuite) TestNoStream(c *check.C) {
 	c.Assert(out.MemoryStats, check.NotNil)
 	c.Assert(out.BlkioStats, check.NotNil)
 	c.Assert(out.PidsStats, check.NotNil)
-	c.Assert(out.PrecpuStats, check.NotNil)
+	// test net=none container that should not return network info
+	c.Assert(out.Networks, check.IsNil)
 }
