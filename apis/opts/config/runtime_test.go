@@ -10,19 +10,59 @@ import (
 )
 
 func TestNewRuntime(t *testing.T) {
-	assert := assert.New(t)
+	type args struct {
+		val *map[string]types.Runtime
+	}
 
-	for _, r := range []*map[string]types.Runtime{
-		nil,
-		{},
+	//create a nil map that makes *rts = nil
+	var nilmap = map[string]types.Runtime(nil)
+
+	tests := []struct {
+		name string
+		args args
+		want *Runtime
+	}{
 		{
-			"a": {},
-			"b": {Path: "foo"},
+			name: "rts = nil",
+			args: args{
+				val: nil,
+			},
+			want: &Runtime{
+				values: &map[string]types.Runtime{},
+			},
 		},
-	} {
-		runtime := NewRuntime(r)
-		// just test no panic here
-		assert.NotEmpty(t, runtime)
+		{
+			name: "*rts = nil",
+			args: args{
+				val: &nilmap,
+			},
+			want: &Runtime{
+				values: &map[string]types.Runtime{},
+			},
+		},
+		{
+			name: "rts is valid",
+			args: args{
+				val: &map[string]types.Runtime{
+					"runtime_name1": {},
+					"runtime_name2": {Path: "$PATH"},
+				},
+			},
+			want: &Runtime{
+				values: &map[string]types.Runtime{
+					"runtime_name1": {},
+					"runtime_name2": {Path: "$PATH"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewRuntime(tt.args.val)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewRuntime() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -112,5 +152,53 @@ func TestRuntimeType(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestRuntimeString(t *testing.T) {
+	type fields struct {
+		values *map[string]types.Runtime
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "get string of Runtime with one element",
+			fields: fields{
+				values: &(map[string]types.Runtime{
+					"runtime_name": {Path: "$PATH"},
+				}),
+			},
+			want: "[runtime_name]",
+		},
+		{
+			name: "get string of Runtime with nil",
+			fields: fields{
+				values: &(map[string]types.Runtime{}),
+			},
+			want: "[]",
+		},
+		{
+			name: "get string of Runtime with empty string",
+			fields: fields{
+				values: &(map[string]types.Runtime{
+					"": {Path: "$PATH"},
+				}),
+			},
+			want: "[]",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Runtime{
+				values: tt.fields.values,
+			}
+			if got := r.String(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Runtime.String() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
