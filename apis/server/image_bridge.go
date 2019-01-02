@@ -207,3 +207,26 @@ func (s *Server) getImageHistory(ctx context.Context, rw http.ResponseWriter, re
 
 	return EncodeResponse(rw, http.StatusOK, history)
 }
+
+// pushImage will push an image to a specified registry.
+func (s *Server) pushImage(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	name := mux.Vars(req)["name"]
+	tag := req.FormValue("tag")
+
+	// get registry auth from Request header
+	authStr := req.Header.Get("X-Registry-Auth")
+	authConfig := types.AuthConfig{}
+	if authStr != "" {
+		data := base64.NewDecoder(base64.URLEncoding, strings.NewReader(authStr))
+		if err := json.NewDecoder(data).Decode(&authConfig); err != nil {
+			return err
+		}
+	}
+
+	if err := s.ImageMgr.PushImage(ctx, name, tag, &authConfig, newWriteFlusher(rw)); err != nil {
+		logrus.Errorf("failed to push image %s with tag %s: %v", name, tag, err)
+		return err
+	}
+
+	return nil
+}

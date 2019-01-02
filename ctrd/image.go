@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -175,6 +176,62 @@ func (c *Client) importImage(ctx context.Context, importer ctrdmetaimages.Import
 	return imgs, nil
 }
 
+// PushImage pushes image to registry
+func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	img, err := wrapperCli.client.GetImage(ctx, ref)
+	if err != nil {
+		return convertCtrdErr(err)
+	}
+
+	pushTracker := docker.NewInMemoryTracker()
+
+	resolver, err := resolver(authConfig, docker.ResolverOptions{
+		Tracker: pushTracker,
+	})
+	if err != nil {
+		return err
+	}
+
+	ongoing := jsonstream.NewPushJobs(pushTracker)
+	handler := ctrdmetaimages.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		ongoing.Add(remotes.MakeRefKey(ctx, desc))
+		return nil, nil
+	})
+
+	// fetch progress status, then send to client via out channel.
+	stream := jsonstream.New(out, nil)
+	pctx, cancelProgress := context.WithCancel(ctx)
+	wait := make(chan struct{})
+	go func() {
+		jsonstream.PushProcess(pctx, ongoing, stream)
+		close(wait)
+	}()
+
+	err = wrapperCli.client.Push(ctx, ref, img.Target(),
+		containerd.WithResolver(resolver),
+		containerd.WithImageHandler(handler))
+
+	cancelProgress()
+	<-wait
+
+	defer func() {
+		stream.Close()
+		stream.Wait()
+	}()
+	if err != nil {
+		return err
+	}
+
+	logrus.Infof("push image %s successfully", ref)
+
+	return nil
+}
+
 // FetchImage fetches image content from the remote repository.
 func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
@@ -182,7 +239,7 @@ func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.A
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	resolver, err := resolver(authConfig)
+	resolver, err := resolver(authConfig, docker.ResolverOptions{})
 	if err != nil {
 		return nil, err
 	}

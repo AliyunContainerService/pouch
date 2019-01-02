@@ -19,13 +19,16 @@ const (
 	PullStatusExists = "exists"
 	// PullStatusDone represents done status.
 	PullStatusDone = "done"
+
+	// PushStatusUploading represents uploading status.
+	PushStatusUploading = "uploading"
 )
 
-// PullReferenceStatus returns the status of pulling the image reference.
+// ProcessStatus returns the status of download or upload image
 //
 // NOTE: if the stdout is not terminal, it should only show the reference and
 // status without progress bar.
-func PullReferenceStatus(short bool, msg JSONMessage) string {
+func ProcessStatus(short bool, msg JSONMessage) string {
 	if short || msg.Detail == nil {
 		return fmt.Sprintf("%s:\t%s\n", msg.ID, msg.Status)
 	}
@@ -33,7 +36,7 @@ func PullReferenceStatus(short bool, msg JSONMessage) string {
 	switch msg.Status {
 	case PullStatusResolving, PullStatusWaiting:
 		return fmt.Sprintf("%s:\t%s\t%40r\t\n", msg.ID, msg.Status, progress.Bar(0.0))
-	case PullStatusDownloading:
+	case PullStatusDownloading, PushStatusUploading:
 		bar := progress.Bar(0)
 		current, total := progress.Bytes(msg.Detail.Current), progress.Bytes(msg.Detail.Total)
 
