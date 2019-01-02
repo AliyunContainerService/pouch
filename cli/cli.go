@@ -85,7 +85,7 @@ func (c *Cli) InitLog() {
 	logrus.SetFormatter(formatter)
 }
 
-// Client returns API client torwards daemon.
+// Client returns API client towards daemon.
 func (c *Cli) Client() client.CommonAPIClient {
 	return c.APIClient
 }
@@ -165,7 +165,7 @@ type ExitError struct {
 	Status string
 }
 
-// Error inplements error interface.
+// Error implements error interface.
 func (e ExitError) Error() string {
 	return fmt.Sprintf("Exit Code: %d, Status: %s", e.Code, e.Status)
 }
