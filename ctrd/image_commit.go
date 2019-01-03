@@ -270,11 +270,7 @@ func newSnapshot(ctx context.Context, name string, pImg ocispec.Image, sn snapsh
 		parent = identity.ChainID(pImg.RootFS.DiffIDs).String()
 	)
 
-	mount, err := sn.Prepare(ctx, key, parent,
-		snapshots.WithLabels(map[string]string{
-			snapshots.TypeLabelKey: snapshots.ImageType,
-		}),
-	)
+	mount, err := sn.Prepare(ctx, key, parent)
 	if err != nil {
 		return err
 	}

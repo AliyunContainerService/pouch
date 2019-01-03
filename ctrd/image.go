@@ -15,7 +15,6 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/snapshots"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -193,7 +192,6 @@ func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.A
 	options := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion,
 		containerd.WithResolver(resolver),
-		containerd.WithPullLabel(snapshots.TypeLabelKey, snapshots.ImageType),
 	}
 
 	handle := func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
