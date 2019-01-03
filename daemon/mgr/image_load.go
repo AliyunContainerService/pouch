@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/multierror"
 	"github.com/alibaba/pouch/pkg/reference"
 
@@ -34,6 +35,9 @@ func (mgr *ImageManager) LoadImage(ctx context.Context, imageName string, tarstr
 	importer := &ociimage.V1Importer{
 		ImageName: imageName,
 	}
+
+	// before image is unpacked, call WithImageUnpack
+	ctx = ctrd.WithImageUnpack(ctx)
 
 	imgs, err := mgr.client.ImportImage(ctx, importer, tarstream)
 	if err != nil {

@@ -59,6 +59,9 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 		Image:           ociImage,
 	}
 
+	// before image commit, call WithImageUnpack
+	ctx = ctrd.WithImageUnpack(ctx)
+
 	imageDigest, err := mgr.Client.Commit(ctx, commitConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to commit container (%s)", name)
