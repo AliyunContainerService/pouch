@@ -145,7 +145,7 @@ func (cli *PluginClient) callService(service string, data io.Reader, retry bool)
 				return nil, err
 			}
 			times++
-			logrus.Warnf("plugin %s call %s failed, retry after %d seconds", cli.address, service, delay)
+			logrus.Warnf("plugin %s call %s failed, retry after %v seconds", cli.address, service, delay.Seconds())
 			time.Sleep(delay)
 			continue
 		}
