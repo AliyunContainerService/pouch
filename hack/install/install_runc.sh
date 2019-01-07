@@ -2,23 +2,32 @@
 
 set -euo pipefail
 
-readonly RUNC_VERSION="1.0.0-rc6-1"
+# keep the first one only
+GOPATH="${GOPATH%%:*}"
 
-# runc::check_version checks the command and the version.
-runc::check_version() {
-  local has_installed version
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source "./check.sh"
+
+# runc::ubuntu::install_dependencies() install dependencies
+# on ubuntu machine for make runc
+runc::ubuntu::install_dependencies() {
+  sudo apt-get install -y libseccomp-dev/trusty-backports
+}
+
+# runc::centos::install_dependencies() install dependencies 
+# on centos machine for make runc
+runc::centos::install_dependencies() {
+  sudo yum install libseccomp-dev
+}
+
+# runc::check_install checks the command and the version.
+runc::check_install() {
+  local has_installed
 
   has_installed="$(command -v runc || echo false)"
   if [[ "${has_installed}" = "false" ]]; then
     echo false
-    exit 0
-  fi
-
-  version="$(runc -v | head -1 | cut -d " " -f 3)"
-  if [[ "${RUNC_VERSION}" != "${version}" ]]; then
-
-    echo false
-    exit 0
+    return
   fi
 
   echo true
@@ -26,27 +35,32 @@ runc::check_version() {
 
 # runc::install downloads the binary from release url.
 runc::install() {
-  local url
+  local gopath
 
-  url="https://github.com/alibaba/runc/releases/download"
-  url="${url}/v${RUNC_VERSION}/runc.amd64"
-
-  wget --quiet "${url}" -P /usr/local/bin
-  chmod +x /usr/local/bin/runc.amd64
-  mv /usr/local/bin/runc.amd64 /usr/local/bin/runc
+  gopath="${GOPATH}/src/github.com/opencontainers/runc"
+  git clone -b develop https://github.com/alibaba/runc.git "${gopath}"
+  cd "${gopath}"
+  make
+  make install
 }
 
 main() {
   local has_installed
 
-  has_installed="$(runc::check_version)"
+  has_installed="$(runc::check_install)"
   if [[ "${has_installed}" = "true" ]]; then
-    echo "runc-${RUNC_VERSION} has been installed."
+    echo "runc has been installed."
     exit 0
   fi
 
-  echo ">>>> install runc-${RUNC_VERSION} <<<<"
+  echo ">>>> install runc <<<<"
 
+  os_dist="$(detect_os)"
+  if [[ "${os_dist}" = "Ubuntu" ]]; then
+    runc::ubuntu::install_dependencies
+  else
+    runc::centos::install_dependencies
+  fi
   runc::install
 
   # final check
