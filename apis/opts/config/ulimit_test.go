@@ -136,6 +136,57 @@ func TestUlimitType(t *testing.T) {
 	}
 }
 
+func TestUlimitString(t *testing.T) {
+	type args struct {
+		values map[string]*units.Ulimit
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			"get string of Ulimit with valid element",
+			args{
+				values: map[string]*units.Ulimit{
+					"a": {
+						Name: "core",
+						Hard: 5,
+						Soft: 3,
+					},
+				},
+			},
+			"[core=3:5]",
+		},
+		{
+			"get string of Runtime with nil",
+			args{
+				values: map[string]*units.Ulimit{},
+			},
+			"[]",
+		},
+		{
+			"get string of Runtime with empty Ulimit",
+			args{
+				values: map[string]*units.Ulimit{
+					"a": {},
+				},
+			},
+			"[=0:0]",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ul := &Ulimit{
+				values: tt.args.values,
+			}
+			if got := ul.String(); got != tt.want {
+				t.Errorf("Ulimit.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestUlimitValue(t *testing.T) {
 	assert := assert.New(t)
 	type args struct {
