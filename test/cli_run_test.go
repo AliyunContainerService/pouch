@@ -123,20 +123,26 @@ func (suite *PouchRunSuite) TestRunInWrongWay(c *check.C) {
 // TestRunRestartPolicyNone is to verify restart policy none works.
 func (suite *PouchRunSuite) TestRunRestartPolicyNone(c *check.C) {
 	name := "TestRunRestartPolicyNone"
-
-	res := command.PouchRun("run", "--name", name, "-d",
-		"--restart=no", busyboxImage,
-		"sh", "-c", "sleep 1")
+	res := command.PouchRun(
+		"run",
+		"-d",
+		"--name", name,
+		"--restart=no",
+		busyboxImage,
+		"sh", "-c", "echo 'start one time'; sleep 0.1")
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	time.Sleep(2000 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 
-	res = command.PouchRun("ps")
-	res.Assert(c, icmd.Success)
+	output := command.PouchRun("logs", name).Stdout()
+	lines, err := util.StringSliceTrimSpace(strings.Split(output, "\n"))
+	if err != nil {
+		c.Errorf("failed to call StringSliceTrimSpace: %v", err)
+	}
 
-	if out := res.Combined(); strings.Contains(out, name) {
-		c.Fatalf("expect container %s to be exited: %s\n", name, out)
+	if len(lines) != 1 {
+		c.Errorf("container should not restart when restart-policy is no, but we got %+v", lines)
 	}
 }
 

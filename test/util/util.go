@@ -66,3 +66,17 @@ func GetMajMinNumOfDevice(device string) (string, bool) {
 	}
 	return "", false
 }
+
+// StringSliceTrimSpace delete empty items from string slice
+func StringSliceTrimSpace(input []string) ([]string, error) {
+	output := []string{}
+
+	for _, item := range input {
+		str := strings.TrimSpace(item)
+		if str != "" {
+			output = append(output, str)
+		}
+	}
+
+	return output, nil
+}
