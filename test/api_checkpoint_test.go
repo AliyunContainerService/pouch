@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/request"
 
@@ -12,6 +14,7 @@ type APIContainerCheckpointSuite struct{}
 
 func init() {
 	check.Suite(&APIContainerCheckpointSuite{})
+	fmt.Println("hello travis-ci")
 }
 
 // SetUpTest does common setup in the beginning of each test.
