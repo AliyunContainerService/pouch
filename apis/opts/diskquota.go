@@ -11,7 +11,7 @@ func ParseDiskQuota(quotas []string) (map[string]string, error) {
 
 	for _, quota := range quotas {
 		if quota == "" {
-			return nil, fmt.Errorf("invalid format for disk quota: %s", quota)
+			return nil, fmt.Errorf("invalid format for disk quota: quota cannot be empty string")
 		}
 
 		parts := strings.Split(quota, "=")
