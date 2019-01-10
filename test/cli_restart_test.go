@@ -2,7 +2,6 @@ package main
 
 import (
 	"strings"
-	"time"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
@@ -65,12 +64,12 @@ func (suite *PouchRestartSuite) TestPouchRestartCreatedContainer(c *check.C) {
 func (suite *PouchRestartSuite) TestPouchRestartExitedContainer(c *check.C) {
 	name := "TestPouchRestartExitedContainer"
 
-	// run a container and make it exit within 0.01s, so the status is exited
-	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "0.01")
+	// run a container and make it exit.
+	res := command.PouchRun("run", "--name", name, busyboxImage, "ls")
 	defer DelContainerForceMultyTime(c, name)
-
 	res.Assert(c, icmd.Success)
-	time.Sleep(1 * time.Second)
+
+	command.PouchRun("wait", name).Assert(c, icmd.Success)
 
 	command.PouchRun("restart", "-t", "1", name).Assert(c, icmd.Success)
 }
