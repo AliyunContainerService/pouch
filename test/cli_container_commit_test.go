@@ -44,7 +44,8 @@ func (suite *PouchCommitSuite) TestCommitNewFile(c *check.C) {
 	cname := "TestCommitNewFile"
 	image := "foo:newfile"
 
-	command.PouchRun("run", "--name", cname, busyboxImage, "/bin/sh", "-c", "echo a > /foo").Assert(c, icmd.Success)
+	command.PouchRun("run", "--name", cname, busyboxImage,
+		"/bin/sh", "-c", "echo a > /foo").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 
 	ret := command.PouchRun("commit", cname, image)
@@ -64,7 +65,8 @@ func (suite *PouchCommitSuite) TestCommitHardLink(c *check.C) {
 	cname := "TestCommitHardLink"
 	image := "foo:hardlink"
 
-	ret := command.PouchRun("run", "-t", "--name", cname, "busybox", "sh", "-c", "touch file1 && ln file1 file2 && ls -di file1 file2")
+	ret := command.PouchRun("run", "-t", "--name", cname, busyboxImage,
+		"sh", "-c", "touch file1 && ln file1 file2 && ls -di file1 file2")
 	ret.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 
@@ -81,7 +83,8 @@ func (suite *PouchCommitSuite) TestCommitHardLink(c *check.C) {
 	imageID := strings.TrimSpace(ret.Stdout())
 
 	nname := "fromHardlink"
-	ret = command.PouchRun("run", "-t", "--name", nname, imageID, "sh", "-c", "ls -di file1 file2")
+	ret = command.PouchRun("run", "-t", "--name", nname, imageID,
+		"sh", "-c", "ls -di file1 file2")
 	ret.Assert(c, icmd.Success)
 	output = ret.Stdout()
 	splits = strings.SplitN(strings.TrimSpace(output), " ", 2)
@@ -97,7 +100,8 @@ func (suite *PouchCommitSuite) TestCommitBindMount(c *check.C) {
 	cname := "TestCommitBindMount"
 	image := "foo:mount"
 
-	command.PouchRun("run", "--name", cname, "-v", "/dev/null:/tmp/h1", busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "--name", cname,
+		"-v", "/dev/null:/tmp/h1", busyboxImage).Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 
 	ret := command.PouchRun("commit", cname, image)

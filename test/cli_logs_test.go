@@ -201,7 +201,12 @@ func (suite *PouchLogsSuite) TestLogsOpt(c *check.C) {
 func (suite *PouchLogsSuite) TestLogsWithDetails(c *check.C) {
 	cname := "TestLogsWithDetails"
 
-	res := command.PouchRun("run", "--name", cname, "--label", "foo=bar", "-e", "baz=qux", "--log-opt", "labels=foo", "--log-opt", "env=baz", "busybox", "echo", "hello")
+	res := command.PouchRun("run", "--name", cname,
+		"--label", "foo=bar",
+		"-e", "baz=qux",
+		"--log-opt", "labels=foo",
+		"--log-opt", "env=baz",
+		busyboxImage, "echo", "hello")
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 
@@ -219,7 +224,7 @@ func (suite *PouchLogsSuite) TestLogsWithDetails(c *check.C) {
 
 	command.PouchRun("run",
 		"--name", cnameOfEmptyDetails,
-		"busybox",
+		busyboxImage,
 		"echo", "hello",
 	).Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cnameOfEmptyDetails)
