@@ -70,7 +70,7 @@ func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	res = command.PouchRun("start", name)
 	res.Assert(c, icmd.Success)
 
-	// Inspect LogPath, HostnamePath, HostsPath, ResolvConfPath
+	// Inspect LogPath, HostnamePath, HostsPath, ResolvConfPath, Privileged
 	output = command.PouchRun("inspect", "-f", "{{.LogPath}}", name).Stdout()
 	expectedLogPath := fmt.Sprintf(rootDir+"/containers/%s/json.log", containerID)
 	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
@@ -86,6 +86,9 @@ func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	output = command.PouchRun("inspect", "-f", "{{.HostsPath}}", name).Stdout()
 	expectedLogPath = fmt.Sprintf(rootDir+"/containers/%s/hosts", containerID)
 	c.Assert(strings.TrimSpace(output), check.Equals, expectedLogPath)
+
+	output = command.PouchRun("inspect", "-f", "{{.HostConfig.Privileged}}", name).Stdout()
+	c.Assert(strings.TrimSpace(output), check.Equals, "false")
 }
 
 // TestInspectWrongFormat is to verify using wrong format flag of inspect command.

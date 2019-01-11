@@ -111,7 +111,7 @@ type HostConfig struct {
 	PortBindings PortMap `json:"PortBindings,omitempty"`
 
 	// Gives the container full access to the host.
-	Privileged bool `json:"Privileged,omitempty"`
+	Privileged bool `json:"Privileged"`
 
 	// Allocates a random host port for all of a container's exposed ports.
 	PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
@@ -214,7 +214,7 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		PortBindings PortMap `json:"PortBindings,omitempty"`
 
-		Privileged bool `json:"Privileged,omitempty"`
+		Privileged bool `json:"Privileged"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
 
@@ -385,7 +385,7 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		PortBindings PortMap `json:"PortBindings,omitempty"`
 
-		Privileged bool `json:"Privileged,omitempty"`
+		Privileged bool `json:"Privileged"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
 
