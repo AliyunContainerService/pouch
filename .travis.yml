@@ -22,53 +22,21 @@ notifications:
     on_failure: always
     on_error: always
 
-env:
-  - TEST_SUITE=unittest
-  - TEST_SUITE=integrationtest
-  - TEST_SUITE=criv1alpha1test
-  - TEST_SUITE=criv1alpha2test
-  - TEST_SUITE=nodee2etest
+jobs:
+  include:
+    - script: echo "111"
+    - script: echo "222"
+    - stage: deploy
+      script: echo "333"
+    - script: echo "444"
+#jobs:
+#  include:
+#    - stage: "Pouch Test"
+#      - script: ./travis_ci.sh unittest
+#      - script: ./travis_ci.sh integrationtest
+#      - script: ./travis_ci.sh criv1alpha1test
+#      - script: ./travis_ci.sh criv1alpha2test
+#      - script: ./travis_ci.sh nodee2etest
 
-script: |
-  set -e # fast fail
-  if [[ "${TEST_SUITE}" = "unittest" ]]; then
-    sudo env "PATH=$PATH" hack/install/install_ci_related.sh
-    make unit-test
-    make coverage
-  elif [[ "${TEST_SUITE}" = "integrationtest" ]]; then
-    make build
-    make build-daemon-integration
-    TEST_FLAGS= make build-integration-test
-    sudo env "PATH=$PATH" make install
-
-    sudo env "PATH=$PATH" make download-dependencies
-    sudo env "PATH=$PATH" make integration-test
-    make coverage
-  elif [[ "${TEST_SUITE}" = "criv1alpha1test" ]]; then
-    make build
-    TEST_FLAGS= BUILDTAGS="selinux seccomp apparmor" make build-daemon-integration
-    sudo env "PATH=$PATH" make install
-
-    sudo env "PATH=$PATH" make download-dependencies
-    sudo env "PATH=$PATH" make cri-v1alpha1-test
-    make coverage
-  elif [[ "${TEST_SUITE}" = "criv1alpha2test" ]]; then
-    make build
-    TEST_FLAGS= BUILDTAGS="selinux seccomp apparmor" make build-daemon-integration
-    sudo env "PATH=$PATH" make install
-
-    sudo env "PATH=$PATH" make download-dependencies
-    sudo env "PATH=$PATH" make cri-v1alpha2-test
-    make coverage
-  else
-    make build
-    TEST_FLAGS= make build-daemon-integration
-    sudo env "PATH=$PATH" make install
-
-    sudo env "PATH=$PATH" make download-dependencies
-    sudo env "PATH=$PATH" make cri-e2e-test
-    make coverage
-  fi
-  
 after_success:
   - bash <(curl -s https://codecov.io/bash) -cF ${TEST_SUITE} -y .codecov.yml
