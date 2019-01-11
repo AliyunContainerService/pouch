@@ -394,6 +394,12 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 	}
 
 clean:
+	// for normal destroy process, task.Delete() and container.Delete()
+	// is done in ctrd/watch.go, after task exit. clean is task effect only
+	// when unexcepted error happened in task exit process.
+	if _, err := pack.task.Delete(ctx); err != nil {
+		logrus.Errorf("failed to delete task %s again: %v", pack.id, err)
+	}
 	if err := pack.container.Delete(ctx); err != nil {
 		if !errdefs.IsNotFound(err) {
 			return msg, errors.Wrap(err, "failed to delete container")
