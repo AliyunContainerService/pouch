@@ -11,13 +11,14 @@ source "./check.sh"
 # runc::ubuntu::install_dependencies() install dependencies
 # on ubuntu machine for make runc
 runc::ubuntu::install_dependencies() {
-  sudo apt-get install -y libseccomp-dev/trusty-backports
+  sudo apt-get update
+  sudo apt-get install -y libseccomp-dev
 }
 
 # runc::centos::install_dependencies() install dependencies 
 # on centos machine for make runc
 runc::centos::install_dependencies() {
-  sudo yum install libseccomp-dev
+  sudo yum install -y libseccomp-dev
 }
 
 # runc::check_install checks the command and the version.

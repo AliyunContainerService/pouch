@@ -61,8 +61,14 @@ critest::install_ginkgo() {
   hack/install/install_ginkgo.sh
 }
 
+# critest::install_socat installs socat if missing.
+critest::install_socat() {
+  sudo apt-get install -y socat
+}
+
 main() {
   critest::install_ginkgo
+  critest::install_socat
 
   local cri_runtime has_installed
   cri_runtime=$1

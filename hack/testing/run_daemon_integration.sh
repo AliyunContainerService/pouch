@@ -23,13 +23,23 @@ rm -rf "${coverage_profile}"
 # integration::run_daemon_test_cases starts cases.
 integration::run_daemon_test_cases() {
   echo "start pouch daemon integration test..."
-  local code
+  local code=0
+  local job_id=$1
 
   cp -rf "${REPO_BASE}/test/tls" /tmp/
 
   set +e
-  "${REPO_BASE}/bin/pouchd-integration-test" -test.v -check.v
-  code=$?
+  pushd "${REPO_BASE}/test"
+  local testcases
+  testcases=$(cat "${REPO_BASE}/test/testcase.list.${job_id}")
+  for one in ${testcases}; do
+    go test -check.v -check.f "${one}"
+    ret=$?
+    if [[ ${ret} -ne 0 ]]; then
+      code=${ret}
+    fi
+  done
+
   integration::stop_local_persist
   integration::stop_pouchd
   set -e
@@ -47,6 +57,7 @@ integration::run_daemon_test_cases() {
 
 main() {
   local cmd flags
+  local job_id=$1
   cmd="pouchd-integration"
   flags=" -test.coverprofile=${coverage_profile} DEVEL"
   flags="${flags} --debug --enable-lxcfs --add-runtime runv=runv"
@@ -66,7 +77,7 @@ main() {
     cat "${pouchd_log}"
     exit ${code}
   fi
-  integration::run_daemon_test_cases
+  integration::run_daemon_test_cases "${job_id}"
 }
 
 main "$@"
