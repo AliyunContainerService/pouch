@@ -58,7 +58,7 @@ integration::run_daemon_cri_test_cases() {
       --focus="${CRI_FOCUS}" --ginkgo-flags="--skip=\"${CRI_SKIP}\"" validation
   else
     critest --runtime-endpoint=${POUCH_SOCK} \
-      --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}"
+      --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}" --parallel=8
   fi
   code=$?
 
