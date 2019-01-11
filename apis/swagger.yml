@@ -2273,9 +2273,9 @@ definitions:
 
   HostConfig:
     description: "Container configuration that depends on the host we are running on"
-    type: "object"
     allOf:
-      - properties:
+      - type: "object"
+        properties:
           # Applicable to all platforms
           Binds:
             type: "array"
@@ -2389,6 +2389,7 @@ definitions:
               - `"host"`: use the host's PID namespace inside the container
           Privileged:
             type: "boolean"
+            x-omitempty: false
             description: "Gives the container full access to the host."
           PublishAllPorts:
             type: "boolean"
