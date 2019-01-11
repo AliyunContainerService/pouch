@@ -12,7 +12,10 @@ integration::run_local_persist_background() {
 # integration::stop_local_persist stop local-persist.
 integration::stop_local_persist() {
   echo "stop local-persist volume plugin..."
-  set +e; pkill local-persist; set -e
+  set +e
+  pkill local-persist
+  rm -rf /run/docker/plugins/local-persist.sock
+  set -e
 }
 
 # integration::run_mount_lxcfs_background runs lxcfs mount to /var/lib/lxcfs.
@@ -59,7 +62,7 @@ integration::ping_pouchd() {
       break
     elif (( $((timeout--)) == 0 ));then
       echo "failed to start pouch daemon in background!"
-      exit 1
+      return 1
     fi
     sleep 1
   done

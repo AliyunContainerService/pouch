@@ -15,6 +15,9 @@
 # TEST_FLAGS used as flags of go test.
 TEST_FLAGS ?= -v --race
 
+# INTEGRATION_FLAGS used as flags of run integration test
+INTEGRATION_FLAGS ?= ""
+
 # DAEMON_BINARY_NAME is the name of binary of daemon.
 DAEMON_BINARY_NAME=pouchd
 
@@ -208,12 +211,6 @@ build-daemon-integration: modules plugin ## build PouchContainer daemon integrat
 		-cover -covermode=atomic -coverpkg ${COVERAGE_PACKAGES_LIST} \
 		-o bin/${DAEMON_INTEGRATION_BINARY_NAME}
 
-build-integration-test: modules plugin ## build PouchContainer integration test-case binary
-	@echo $@
-	@mkdir -p bin
-	go test -c \
-		-o bin/${INTEGRATION_TESTCASE_BINARY_NAME} github.com/alibaba/pouch/test
-
 modules: ## run modules to generate volume related code
 	@echo "build volume $@"
 	@./hack/module --clean
@@ -283,10 +280,10 @@ unit-test: modules plugin ## run go unit-test
 	done )
 
 .PHONY: integration-test
-integration-test: build-daemon-integration build-integration-test ## run daemon integration-test
+integration-test: build-daemon-integration ## run daemon integration-test
 	@echo $@
 	@mkdir -p coverage
-	./hack/testing/run_daemon_integration.sh
+	./hack/testing/run_daemon_integration.sh ${INTEGRATION_FLAGS}
 
 .PHONY: cri-v1alpha1-test
 cri-v1alpha1-test: ## run v1 alpha1 cri-v1alpha1-test

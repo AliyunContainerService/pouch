@@ -21,6 +21,7 @@ criu::ubuntu::install_dependencies() {
 }
 
 # criu::ubuntu::install will install criu from source.
+# TODO: change to get binary from aliyun oss storage.
 criu::ubuntu::install() {
   local tmpdir tag
 

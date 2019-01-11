@@ -46,6 +46,7 @@ nsenter::ubuntu::install_dependencies() {
 }
 
 # nsenter::ubuntu::install will install nsenter.
+# TODO: change to get binary from aliyun oss storage.
 nsenter::ubuntu::install() {
   local url target tmpdir
 
