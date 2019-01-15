@@ -256,19 +256,19 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 	containers, err := mgr.List(ctx,
 		&ContainerListOption{
 			All: true,
-			FilterFunc: func(c *Container) bool {
-				return (c.IsRunning() || c.IsPaused())
-			}})
+		},
+	)
 	if err != nil {
-		logrus.Errorf("failed to get container list when restore alive containers: %v", err)
+		logrus.Errorf("failed to get container list when restore containers: %v", err)
 		return errors.Wrap(err, "failed to get container list")
 	}
 
-	// start recover all alive containers
 	for _, c := range containers {
-		logrus.Debugf("Start recover container %s", c.Key())
 		id := c.Key()
-		// recover the running or paused container.
+
+		// NOTE: when pouch is restarting, we need to initialize
+		// container IO for the existing containers just in case that
+		// user tries to restart the stopped containers.
 		cntrio, err := mgr.initContainerIO(c)
 		if err != nil {
 			logrus.Errorf("failed to init container IO %s: %v", id, err)
@@ -279,6 +279,13 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 			logrus.Errorf("failed to init log driver %s: %v", id, err)
 			return err
 		}
+
+		// recover the running or paused container.
+		if !(c.IsRunning() || c.IsPaused()) {
+			continue
+		}
+
+		logrus.Debugf("Start recover container %s", id)
 
 		// Start recover the container
 		err = mgr.Client.RecoverContainer(ctx, id, cntrio)

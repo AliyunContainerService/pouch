@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -14,8 +15,8 @@ import (
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
 	"github.com/alibaba/pouch/test/environment"
-
 	"github.com/alibaba/pouch/test/util"
+
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
@@ -468,6 +469,51 @@ func (suite *PouchDaemonSuite) TestDaemonWithMultiRuntimes(c *check.C) {
 		"--add-runtime", "runa=runa")
 	c.Assert(err, check.NotNil)
 	dcfg2.KillDaemon()
+}
+
+// TestRestartStoppedContainerAfterDaemonRestart is used to test the case that
+// when container is stopped and then pouchd restarts, the restore logic should
+// initialize the existing container IO settings even though they are not alive.
+func (suite *PouchDaemonSuite) TestRestartStoppedContainerAfterDaemonRestart(c *check.C) {
+	cfgFile := filepath.Join("/tmp", c.TestName())
+	c.Assert(CreateConfigFile(cfgFile, nil), check.IsNil)
+	defer os.RemoveAll(cfgFile)
+
+	cfg := daemon.NewConfig()
+	cfg.NewArgs("--config-file", cfgFile)
+	c.Assert(cfg.StartDaemon(), check.IsNil)
+
+	defer cfg.KillDaemon()
+
+	var (
+		cname = c.TestName()
+		msg   = "hello"
+	)
+
+	// pull image
+	RunWithSpecifiedDaemon(&cfg, "pull", busyboxImage).Assert(c, icmd.Success)
+
+	// run a container
+	res := RunWithSpecifiedDaemon(&cfg, "run", "--name", cname, busyboxImage, "echo", msg)
+	defer ensureContainerNotExist(&cfg, cname)
+
+	res.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(res.Combined()), check.Equals, msg)
+
+	// wait for it.
+	RunWithSpecifiedDaemon(&cfg, "wait", cname).Assert(c, icmd.Success)
+
+	// kill the daemon and make sure it has been killed
+	cfg.KillDaemon()
+	c.Assert(cfg.IsDaemonUp(), check.Equals, false)
+
+	// restart again
+	c.Assert(cfg.StartDaemon(), check.IsNil)
+
+	// start the container again
+	res = RunWithSpecifiedDaemon(&cfg, "start", "-a", cname)
+	res.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(res.Combined()), check.Equals, msg)
 }
 
 // TestUpdateDaemonWithLabels tests update daemon online with labels updated
