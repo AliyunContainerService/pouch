@@ -18,6 +18,8 @@ var createDescription = "Create a static container object in Pouchd. " +
 type CreateCommand struct {
 	*container
 	baseCommand
+
+	openstdin bool
 }
 
 // Init initialize create command.
@@ -42,6 +44,8 @@ func (cc *CreateCommand) addFlags() {
 	flagSet.SetInterspersed(false)
 
 	c := addCommonFlags(flagSet)
+	flagSet.BoolVarP(&cc.openstdin, "interactive", "i", false, "open STDIN even if not attached")
+
 	cc.container = c
 }
 
@@ -51,6 +55,7 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
+	config.ContainerConfig.OpenStdin = cc.openstdin
 
 	config.Image = args[0]
 	if len(args) > 1 {
