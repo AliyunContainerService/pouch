@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
-	"github.com/kr/pty"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,32 +48,39 @@ func (suite *PouchStartSuite) TestStartCommand(c *check.C) {
 	command.PouchRun("stop", "-t", "1", name).Assert(c, icmd.Success)
 }
 
-// TestStartInTTY tests "pouch start -i" work.
-func (suite *PouchStartSuite) TestStartInTTY(c *check.C) {
+// TestStartWithStdin tests "pouch start -i" work.
+func (suite *PouchStartSuite) TestStartWithStdin(c *check.C) {
 	// make echo server
-	name := "start-tty"
-	res := command.PouchRun("create", "--name", name, busyboxImage, "cat")
+	name := c.TestName()
+	command.PouchRun("create", "--name", name, "-i", busyboxImage, "cat").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
-	res.Assert(c, icmd.Success)
 
-	// start tty and redirect
+	// start start
 	cmd := exec.Command(environment.PouchBinary, "start", "-a", "-i", name)
-	fd, err := pty.Start(cmd)
+
+	// prepare the io stream
+	stdin, err := cmd.StdinPipe()
 	c.Assert(err, check.IsNil)
-	defer fd.Close()
+	defer stdin.Close()
+
+	stdout, err := cmd.StdoutPipe()
+	c.Assert(err, check.IsNil)
+	defer stdout.Close()
+
+	c.Assert(cmd.Start(), check.IsNil)
+	defer func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	}()
 
 	msg := "Hello, Pouch"
-
-	// hey
-	_, err = fd.Write([]byte(msg + "\n"))
+	_, err = stdin.Write([]byte(msg + "\n"))
 	c.Assert(err, check.IsNil)
 
-	// what?
-	echo, err := bufio.NewReader(fd).ReadString('\n')
+	out, err := bufio.NewReader(stdout).ReadString('\n')
 	c.Assert(err, check.IsNil)
-	c.Assert(strings.TrimSpace(echo), check.Equals, msg)
-
-	command.PouchRun("stop", "-t", "1", name)
+	c.Assert(strings.TrimSpace(out), check.Equals, msg)
+	c.Assert(stdin.Close(), check.IsNil)
 }
 
 // TestStartInWrongWay runs start command in wrong way.
