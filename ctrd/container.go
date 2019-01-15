@@ -292,9 +292,30 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		return errors.Wrapf(err, "failed to load container(%s)", id)
 	}
 
-	task, err := lc.Task(ctx, func(fset *cio.FIFOSet) (cio.IO, error) {
-		return c.attachIO(fset, io.InitContainerIO)
-	})
+	var (
+		timeout = 5 * time.Second
+		ch      = make(chan error, 1)
+		task    containerd.Task
+	)
+
+	// for normal shim, this operation should be end less than 1 second,
+	// we give 5 second timeout to believe the shim get locked internal,
+	// return error since we do not want a hang shim affect daemon start
+	pctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go func() {
+		task, err = lc.Task(pctx, func(fset *cio.FIFOSet) (cio.IO, error) {
+			return c.attachIO(fset, io.InitContainerIO)
+		})
+		ch <- err
+	}()
+
+	select {
+	case <-time.After(timeout):
+		return errors.Wrap(errtypes.ErrTimeout, "failed to connect to shim")
+	case err = <-ch:
+	}
+
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
