@@ -2,15 +2,18 @@
 
 * [Overview](#overview "Overview")
 * [The Annotations Supported](#the-annotations-supported "The Annotations Supported")
-  * [Make runtime choosing supported](#make-runtime-choosing-supported "Make runtime choosing supported")
-  * [Make lxcfs configurable supported](#make-lxcfs-configurable-supported "Make lxcfs configurable supported")
-* [Pull Request](#pull-request "Pull Request")
+  * [Runtime choosing](#runtime-choosing "Runtime choosing")
+  * [LXCFS switcher](#lxcfs-switcher "LXCFS switcher")
+  * [VM passthrough config](#vm-passthrough "VM passthrough config")
+* [The container labels rule](#container-labels-rule "The container labels rule")
+  * [Used by PouchContainer implementation](#label-used-by-pouch-container "Used by PouchContainer implementation")
+  * [Generated from kubernetes spec](#label-generated-from-kubernetes-spec "Generated from kubernetes spec")
 
 ## Overview
 
 Currently, PouchContainer has lots of advantages over other container runtimes, such as:
 
-* resource review isolation via lxcfs
+* resource view isolation via LXCFS
 * runtime choosing for runc-based container or runv-based containers
 * and so on
 
@@ -28,12 +31,14 @@ So, we need to accomplish the following things:
 
 | Requirement                       | Field definition                             | Supported Kubernetes Version | Pull Request                               |
 |-----------------------------------|----------------------------------------------|------------------------------|-------------------------------------------|
-| make runtime choosing supported   | KubernetesRuntime = "io.kubernetes.runtime"  | V1.6 +                     | https://github.com/alibaba/pouch/pull/1593 |
-| make lxcfs configurable supported | LxcfsEnabled = "io.kubernetes.lxcfs.enabled" | V1.10 +                    | https://github.com/alibaba/pouch/pull/2210 |
+| Runtime choosing | io.kubernetes.runtime  | V1.6 +  | https://github.com/alibaba/pouch/pull/1593 |
+| LXCFS switcher | io.kubernetes.lxcfs.enabled | V1.10 +  | https://github.com/alibaba/pouch/pull/2210 |
+| VM passthrough config swither| io.alibaba.pouch.vm.passthru | V1.10+ | https://github.com/alibaba/pouch/pull/2437 |
+| VM passthrough IP | io.alibaba.pouch.vm.passthru.ip | V1.10+ | https://github.com/alibaba/pouch/pull/2437 |
 
-NOTES: The way to specify runtime using **KubernetesRuntime annotation is Deprecated**. It is recommended to use [RuntimeClass](https://v1-12.docs.kubernetes.io/docs/concepts/containers/runtime-class) which is an alpha feature for selecting the container runtime configuration to use to run a pod’s containers.
+NOTES: **Specify runtimes using `io.kubernetes.runtime` annotation is Deprecated**. It is recommended to use [RuntimeClass](https://v1-12.docs.kubernetes.io/docs/concepts/containers/runtime-class) which is an alpha feature for selecting the container runtime configuration to use to run a pod’s containers.
 
-### Make runtime choosing supported
+### Runtime choosing
 
 #### What To Solve
 
@@ -98,17 +103,17 @@ Linux pouch-runtime-76c8d4d79b-6l5w7 4.12.4-hyper #18 SMP Mon Sep 4 15:10:13 CST
 
 ```
 
-### Make lxcfs configurable supported
+### LXCFS switcher
 
 #### What To Solve
 
-1. Support resource review isolation via lxcfs in CRI Manager by making lxcfs configurable supported.
+1. Support resource view isolation via LXCFS in CRI Manager by making LXCFS configurable supported.
 
 #### How to verify it
 
-1. Prerequisites Installation and make sure your lxcfs service is running.
+1. Prerequisites Installation and make sure your LXCFS service is running.
 
-2. Enable pouchd lxcfs (with --enable-lxcfs flag).
+2. Enable pouchd LXCFS (with --enable-lxcfs flag).
 
 3. After setting up your kubernetes cluster, you can create a deployment like this :
 
@@ -160,7 +165,27 @@ MemAvailable:     261368 kB
 ......
 ```
 
-## Pull Request
+### VM passthrough config
 
-* feature: make runtime choosing supported [#1593](https://github.com/alibaba/pouch/pull/1593)
-* feature: make lxcfs configurable supportd in CRI [#2210](https://github.com/alibaba/pouch/pull/2210)
+#### What To Solve
+
+pass through some config to qemu
+
+1. `io.alibaba.pouch.vm.passthru` specify whether a config should be passed through to qemu
+2. `io.alibaba.pouch.vm.passthru.ip` specify the IP of the container.
+
+## The container labels rule
+
+### Used by PouchContainer implementation
+
+| LabelKey | Usage |
+| --- | --- |
+| io.kubernetes.pouch.type | identify whether a container is a sandbox or a regular container |
+| io.kubernetes.sandbox.id | attaching to a regular container specify which sandbox it belongs to |
+| io.kubernetes.container.logpath | log path of the container |
+
+### Generated from kubernetes spec
+
+PouchContainer would generate some labels according to the annotations in spec by attaching the prefix `annotation.` to each annotation key.
+
+For example, annotation `"io.kubernetes.container.restartCount": "0"` would be converted to label `"annotation.io.kubernetes.container.restartCount": "0"`.

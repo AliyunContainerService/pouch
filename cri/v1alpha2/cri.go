@@ -41,7 +41,7 @@ const (
 	pouchRuntimeName         = "pouch"
 	kubeletRuntimeAPIVersion = "0.1.0"
 
-	// kubePrefix is used to idenfify the containers/sandboxes on the node managed by kubelet.
+	// kubePrefix is used to identify the containers/sandboxes on the node managed by kubelet.
 	kubePrefix = "k8s"
 
 	// annotationPrefix is used to distinguish between annotations and labels.
@@ -73,12 +73,6 @@ const (
 
 	// networkNotReadyReason is the reason reported when network is not ready.
 	networkNotReadyReason = "NetworkPluginNotReady"
-
-	// passthruKey to specify whether a interface is passthru to qemu
-	passthruKey = "io.alibaba.pouch.vm.passthru"
-
-	// passthruIP is the IP for container
-	passthruIP = "io.alibaba.pouch.vm.passthru.ip"
 )
 
 var (
@@ -578,8 +572,8 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		}
 	}
 
-	if v, exist := annotations[passthruKey]; exist && v == "true" {
-		ip = annotations[passthruIP]
+	if v, exist := annotations[anno.PassthruKey]; exist && v == "true" {
+		ip = annotations[anno.PassthruIP]
 	}
 
 	status := &runtime.PodSandboxStatus{
@@ -674,7 +668,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	sandboxMeta.NetNS = containerNetns(sandbox)
 
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
-	// Apply the container type lable.
+	// Apply the container type label.
 	labels[containerTypeLabelKey] = containerTypeLabelContainer
 	// Write the sandbox ID in the labels.
 	labels[sandboxIDLabelKey] = podSandboxID

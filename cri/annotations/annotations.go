@@ -31,4 +31,10 @@ const (
 
 	// PidsLimitExtendAnnotation is the extend annotation of pids limit
 	PidsLimitExtendAnnotation = "io.alibaba.pouch.resources.pids-limit"
+
+	// PassthruKey specify whether an interface is pass through to qemu
+	PassthruKey = "io.alibaba.pouch.vm.passthru"
+
+	// PassthruIP is the IP for container
+	PassthruIP = "io.alibaba.pouch.vm.passthru.ip"
 )
