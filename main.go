@@ -33,26 +33,28 @@ var (
 	sigHandles   []func() error
 	printVersion bool
 	logOpts      []string
+	cfg          = &config.Config{}
 )
 
-var cfg = &config.Config{}
+var rootCmd = &cobra.Command{
+	Use:               "pouchd",
+	Short:             "An Efficient Enterprise-class Container Engine",
+	Args:              cobra.NoArgs,
+	SilenceUsage:      true,
+	DisableAutoGenTag: true, // disable displaying auto generation tag in cli docs
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runDaemon(cmd)
+	},
+}
 
 func main() {
 	if reexec.Init() {
 		return
 	}
 
-	var cmdServe = &cobra.Command{
-		Use:          "pouchd",
-		Args:         cobra.NoArgs,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDaemon(cmd)
-		},
-	}
+	setupFlags(rootCmd)
 
-	setupFlags(cmdServe)
-	if err := cmdServe.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		logrus.Error(err)
 		os.Exit(1)
 	}
