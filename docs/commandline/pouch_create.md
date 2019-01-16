@@ -50,6 +50,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --hostname string               Set container's hostname
       --initscript string             Initial script executed in container
       --intel-rdt-l3-cbm string       Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
+  -i, --interactive                   open STDIN even if not attached
       --ipc string                    IPC namespace to use
   -l, --label stringArray             Set labels for a container
       --log-driver string             Logging driver for the container (default "json-file")
