@@ -231,6 +231,10 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 		if err := SetDiskQuota(dir, size, quotaID); err != nil {
 			return 0, errors.Wrapf(err, "failed to set dir(%s) disk quota", dir)
 		}
+
+		if err := SetQuotaForDir(dir, quotaID); err != nil {
+			return 0, errors.Wrapf(err, "failed to set dir(%s) quota recursively", dir)
+		}
 	}
 
 	return quotaID, nil

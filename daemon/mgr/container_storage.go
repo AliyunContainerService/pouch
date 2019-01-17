@@ -113,12 +113,6 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 		return errors.Wrap(err, "failed to populate volumes")
 	}
 
-	// set volumes into /etc/mtab in container
-	err = mgr.setMountTab(ctx, c)
-	if err != nil {
-		return errors.Wrap(err, "failed to set mount tab")
-	}
-
 	return nil
 }
 
@@ -701,6 +695,11 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 	// set rootfs disk quota
 	if err = mgr.setRootfsQuota(ctx, c); err != nil {
 		logrus.Warnf("failed to set rootfs disk quota, err(%v)", err)
+	}
+
+	// set volumes into /etc/mtab in container
+	if err = mgr.setMountTab(ctx, c); err != nil {
+		return errors.Wrap(err, "failed to set mount tab")
 	}
 
 	return nil
