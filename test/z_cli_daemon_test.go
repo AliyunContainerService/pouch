@@ -678,3 +678,27 @@ func (suite *PouchDaemonSuite) TestDaemonWithSystemdCgroupDriver(c *check.C) {
 	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
 	ret.Assert(c, icmd.Success)
 }
+
+// TestContainerdPIDReuse tests even though old containerd pid being reused, we can still
+// pull up the containerd instance.
+func (suite *PouchDaemonSuite) TestContainerdPIDReuse(c *check.C) {
+	cfgFile := filepath.Join("/tmp", c.TestName())
+	c.Assert(CreateConfigFile(cfgFile, nil), check.IsNil)
+	defer os.RemoveAll(cfgFile)
+
+	// prepare config file for pouchd
+	cfg := daemon.NewConfig()
+	cfg.NewArgs("--config-file", cfgFile)
+
+	containerdPidPath := filepath.Join("/tmp/test/pouch/containerd/state", "containerd.pid")
+
+	// set containerd pid to 1 to make sure the pid must be alive
+	err := ioutil.WriteFile(containerdPidPath, []byte(fmt.Sprintf("%d", 1)), 0660)
+	if err != nil {
+		c.Errorf("failed to write pid to file: %v", containerdPidPath)
+	}
+
+	// make sure pouchd can successfully start
+	c.Assert(cfg.StartDaemon(), check.IsNil)
+	defer cfg.KillDaemon()
+}

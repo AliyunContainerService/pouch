@@ -167,6 +167,30 @@ func (d *Daemon) healthPostCheck() error {
 	return fmt.Errorf("health post check failed")
 }
 
+func (d *Daemon) isContainerdProcess(pid int) (bool, error) {
+	if !utils.IsProcessAlive(pid) {
+		return false, nil
+	}
+
+	// get process path by pid, if readlink -f command exit code not equals 0,
+	// we can confirm the pid is not owned by containerd.
+	output, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", pid))
+	if err != nil {
+		logrus.WithField("module", "ctrd").WithField("containerd-pid", pid).Infof("got err: %v", err)
+		return false, nil
+	}
+	processPath := strings.TrimSpace(string(output))
+
+	// get containerd process path
+	output, err = exec.LookPath(d.binaryName)
+	if err != nil {
+		return false, err
+	}
+	containerdPath := strings.TrimSpace(string(output))
+
+	return processPath == containerdPath, nil
+}
+
 func (d *Daemon) runContainerd() error {
 	pid, err := d.getContainerdPid()
 	if err != nil {
@@ -178,6 +202,10 @@ func (d *Daemon) runContainerd() error {
 	// 2. how to make sure the address is the same one?
 	if pid != -1 {
 		logrus.WithField("module", "ctrd").WithField("containerd-pid", pid).Infof("containerd is still running")
+		if err := d.setContainerdPid(pid); err != nil {
+			utils.KillProcess(d.pid)
+			return fmt.Errorf("failed to save the pid into %s: %v", d.pidPath(), err)
+		}
 		return nil
 	}
 
@@ -253,10 +281,18 @@ func (d *Daemon) getContainerdPid() (int, error) {
 			return -1, err
 		}
 
-		if utils.IsProcessAlive(int(pid)) {
+		isAlive, err := d.isContainerdProcess(int(pid))
+		if err != nil {
+			return -1, err
+		} else if !isAlive {
+			logrus.WithField("module", "ctrd").WithField("ctrd-supervisord", pid).Infof("previous containerd pid not exist, delete the pid file")
+			os.RemoveAll(d.pidPath())
+			return -1, nil
+		} else {
 			return int(pid), nil
 		}
 	}
+
 	return -1, nil
 }
 
