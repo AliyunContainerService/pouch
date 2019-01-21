@@ -761,10 +761,11 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 		IO:             mgr.IOs.Get(c.ID),
 		RootFSProvided: c.RootFSProvided,
 		BaseFS:         c.BaseFS,
-		SnapshotID:     c.SnapshotID,
 		UseSystemd:     mgr.Config.UseSystemd(),
 	}
 	c.Unlock()
+	// make sure the SnapshotID got a proper value
+	ctrdContainer.SnapshotID = c.SnapshotKey()
 
 	if checkpointID != "" {
 		checkpointDir, err = mgr.getCheckpointDir(c.ID, checkpointDir, checkpointID, false)
