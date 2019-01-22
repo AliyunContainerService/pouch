@@ -518,11 +518,12 @@ func Test_toCriContainerState(t *testing.T) {
 		{input: apitypes.StatusRunning, expected: runtime.ContainerState_CONTAINER_RUNNING},
 		{input: apitypes.StatusExited, expected: runtime.ContainerState_CONTAINER_EXITED},
 		{input: apitypes.StatusCreated, expected: runtime.ContainerState_CONTAINER_CREATED},
-		{input: apitypes.StatusPaused, expected: runtime.ContainerState_CONTAINER_UNKNOWN},
+		{input: apitypes.StatusPaused, expected: runtime.ContainerState_CONTAINER_PAUSE},
+		{input: "unknown", expected: runtime.ContainerState_CONTAINER_UNKNOWN},
 	}
 
 	for _, test := range testCases {
-		actual := toCriContainerState(test.input)
+		actual, _ := toCriContainerState(&apitypes.ContainerState{Status: test.input})
 		assert.Equal(t, test.expected, actual)
 	}
 }

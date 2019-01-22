@@ -847,21 +847,40 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 	return nil
 }
 
-func toCriContainerState(status apitypes.Status) runtime.ContainerState {
-	switch status {
-	case apitypes.StatusRunning:
-		return runtime.ContainerState_CONTAINER_RUNNING
-	case apitypes.StatusExited:
-		return runtime.ContainerState_CONTAINER_EXITED
-	case apitypes.StatusCreated:
-		return runtime.ContainerState_CONTAINER_CREATED
-	default:
-		return runtime.ContainerState_CONTAINER_UNKNOWN
+func toCriContainerState(state *apitypes.ContainerState) (criState runtime.ContainerState, reason string) {
+	if state == nil {
+		return runtime.ContainerState_CONTAINER_UNKNOWN, "container state is nil"
 	}
+	switch state.Status {
+	case apitypes.StatusCreated:
+		criState = runtime.ContainerState_CONTAINER_CREATED
+	case apitypes.StatusRunning:
+		criState = runtime.ContainerState_CONTAINER_RUNNING
+	case apitypes.StatusExited,
+		apitypes.StatusStopped:
+		criState = runtime.ContainerState_CONTAINER_EXITED
+	case apitypes.StatusPaused:
+		criState = runtime.ContainerState_CONTAINER_PAUSE
+	default:
+		criState = runtime.ContainerState_CONTAINER_UNKNOWN
+	}
+
+	if criState == runtime.ContainerState_CONTAINER_EXITED {
+		switch {
+		case state.OOMKilled:
+			reason = "OOMKilled"
+		case state.ExitCode == 0:
+			reason = "Completed"
+		default:
+			reason = "Error"
+		}
+	}
+
+	return
 }
 
 func toCriContainer(c *mgr.Container) (*runtime.Container, error) {
-	state := toCriContainerState(c.State.Status)
+	state, _ := toCriContainerState(c.State)
 	metadata, err := parseContainerName(c.Name)
 	if err != nil {
 		return nil, err
