@@ -916,44 +916,7 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		})
 	}
 
-	// Interpret container states.
-	var state runtime.ContainerState
-	var reason, message string
-	if container.State.Status == apitypes.StatusRunning {
-		// Container is running.
-		state = runtime.ContainerState_CONTAINER_RUNNING
-	} else {
-		// Container is *not* running. We need to get more details.
-		//		* Case 1: container has run and exited with non-zero finishedAt time
-		//		* Case 2: container has failed to start; it has a zero finishedAt
-		//				  time, but a non-zero exit code.
-		//		* Case 3: container has been created, but not started (yet).
-		finishTime, err := time.Parse(utils.TimeLayout, container.State.FinishedAt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse container finish time %s: %v", container.State.FinishedAt, err)
-		}
-		if !finishTime.IsZero() {
-			state = runtime.ContainerState_CONTAINER_EXITED
-			switch {
-			case container.State.OOMKilled:
-				reason = "OOMKilled"
-			case container.State.ExitCode == 0:
-				reason = "Completed"
-			default:
-				reason = "Error"
-			}
-		} else if container.State.ExitCode != 0 {
-			state = runtime.ContainerState_CONTAINER_EXITED
-			// Adjust finishedAt and startedAt time to createdAt time to avoid confusion.
-			finishedAt, startedAt = createdAt, createdAt
-			reason = "ContainerCannotRun"
-		} else {
-			state = runtime.ContainerState_CONTAINER_CREATED
-		}
-		message = container.State.Error
-	}
-
-	exitCode := int32(container.State.ExitCode)
+	state, reason := toCriContainerState(container.State)
 
 	metadata, err := parseContainerName(container.Name)
 	if err != nil {
@@ -986,13 +949,13 @@ func (c *CriManager) ContainerStatus(ctx context.Context, r *runtime.ContainerSt
 		Image:       &runtime.ImageSpec{Image: container.Config.Image},
 		ImageRef:    imageRef,
 		Mounts:      mounts,
-		ExitCode:    exitCode,
+		ExitCode:    int32(container.State.ExitCode),
 		State:       state,
 		CreatedAt:   createdAt,
 		StartedAt:   startedAt,
 		FinishedAt:  finishedAt,
 		Reason:      reason,
-		Message:     message,
+		Message:     container.State.Error,
 		Labels:      labels,
 		Annotations: annotations,
 		LogPath:     logPath,
