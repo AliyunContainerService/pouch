@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
@@ -322,7 +323,6 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				Destination: oldMountPoint.Destination,
 				Driver:      oldMountPoint.Driver,
 				Named:       oldMountPoint.Named,
-				RW:          oldMountPoint.RW,
 				Mode:        oldMountPoint.Mode,
 				Replace:     oldMountPoint.Replace,
 				Propagation: oldMountPoint.Propagation,
@@ -345,8 +345,19 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				return err
 			}
 
-			// the volumes from VolumeFrom is not allowed to CopyData
-			mp.CopyData = false
+			// if mode has no set rw mode, so need to inherit old mountpoint rw mode.
+			if !(strings.Contains(mode, "ro") || strings.Contains(mode, "rw")) {
+				mp.RW = oldMountPoint.RW
+			}
+
+			// if mode has no set copy mode, so need to inherit old mountpoint copy mode.
+			if !strings.Contains(mode, "nocopy") {
+				if !strings.Contains(oldMountPoint.Mode, "nocopy") {
+					mp.CopyData = true
+				} else {
+					mp.CopyData = false
+				}
+			}
 
 			container.Mounts = append(container.Mounts, mp)
 		}
