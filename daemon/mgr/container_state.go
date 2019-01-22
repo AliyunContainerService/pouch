@@ -140,6 +140,18 @@ func (c *Container) SetStatusUnpaused() {
 	c.setStatusFlags(types.StatusRunning)
 }
 
+// SetStatusOOM sets a container to be status exit because of OOM.
+func (c *Container) SetStatusOOM() {
+	c.Lock()
+	defer c.Unlock()
+	c.State.OOMKilled = true
+	c.State.Status = types.StatusExited
+	c.State.Pid = 0
+	c.State.ExitCode = 137
+	c.State.Error = "OOMKilled"
+	c.setStatusFlags(types.StatusExited)
+}
+
 // Notes(ziren): i still feel uncomfortable for a function hasing no return
 // setStatusFlags set the specified status flag to true, and unset others
 func (c *Container) setStatusFlags(status types.Status) {

@@ -221,7 +221,7 @@ func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APICli
 
 	mgr.Client.SetExitHooks(mgr.exitedAndRelease)
 	mgr.Client.SetExecExitHooks(mgr.execExitedAndRelease)
-	mgr.Client.SetEventsHooks(mgr.publishContainerdEvent)
+	mgr.Client.SetEventsHooks(mgr.publishContainerdEvent, mgr.updateContainerState)
 
 	go mgr.execProcessGC()
 
