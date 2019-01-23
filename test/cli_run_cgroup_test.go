@@ -3,10 +3,12 @@ package main
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -51,18 +53,14 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
-	containerID, err := inspectFilter(name, ".ID")
+	res = command.PouchRun("exec", name, "cat", "/proc/self/cgroup")
+	res.Assert(c, icmd.Success)
+	cgroupPaths := util.ParseCgroupFile(res.Stdout())
+
+	cgroupMount, err := util.FindCgroupMountpoint("memory")
 	c.Assert(err, check.IsNil)
 
-	// this code slice may not robust, but for this test case is enough.
-	cgroupParent = strings.TrimPrefix(cgroupParent, "/")
-
-	if cgroupParent == "" {
-		cgroupParent = "default"
-	}
-
-	file := "/sys/fs/cgroup/memory/" + cgroupParent + "/" +
-		containerID + "/memory.limit_in_bytes"
+	file := filepath.Join(cgroupMount, cgroupPaths["memory"], "memory.limit_in_bytes")
 	if _, err := os.Stat(file); err != nil {
 		c.Fatalf("container %s cgroup mountpoint not exists", name)
 	}
