@@ -62,7 +62,7 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 
 	file := filepath.Join(cgroupMount, cgroupPaths["memory"], "memory.limit_in_bytes")
 	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("container %s cgroup mountpoint not exists", name)
+		c.Fatalf("failed to Stat container %s cgroup mountpoint %s: %v", name, file, err)
 	}
 
 	out, err := exec.Command("cat", file).Output()

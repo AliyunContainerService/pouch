@@ -1328,7 +1328,7 @@ func (mgr *ContainerManager) updateContainerResources(c *Container, resources ty
 	if resources.CPUPeriod != 0 {
 		cResources.CPUPeriod = resources.CPUPeriod
 	}
-	if resources.CPUQuota > -1 {
+	if resources.CPUQuota == -1 || resources.CPUQuota >= 1000 {
 		cResources.CPUQuota = resources.CPUQuota
 	}
 	if resources.CPUShares != 0 {

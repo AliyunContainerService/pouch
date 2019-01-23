@@ -403,3 +403,95 @@ func (suite *PouchUpdateSuite) TestUpdateContainerDiskQuota(c *check.C) {
 	}
 	c.Assert(found, check.Equals, true)
 }
+
+func checkContainerCPUQuota(c *check.C, cName, cpuQuota string) {
+	var (
+		containerID    string
+		cgroupCPUQuota = cpuQuota
+	)
+
+	output := command.PouchRun("inspect", cName).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+	containerID = result[0].ID
+
+	if string(result[0].HostConfig.CPUQuota) == cpuQuota {
+		c.Errorf("expect CPUQuota %s, but got: %v", cpuQuota, result[0].HostConfig.CPUQuota)
+	}
+
+	// container's cpu-quota default is 0 that means not limit cpu quota in cgroup, and
+	// cpu.cfs_quota_us value is -1 when not limit cpu quota in cgroup.
+	if cgroupCPUQuota == "0" {
+		cgroupCPUQuota = "-1"
+	}
+	path := fmt.Sprintf("/sys/fs/cgroup/cpu/default/%s/cpu.cfs_quota_us", containerID)
+	checkFileContains(c, path, cgroupCPUQuota)
+}
+
+// TestUpdateContainerCPUQuota is to verify the correctness of update cpuquota by update interface
+func (suite *PouchUpdateSuite) TestUpdateContainerCPUQuota(c *check.C) {
+	name := "TestUpdateContainerCPUQuota"
+
+	command.PouchRun("run", "-d",
+		"--name", name,
+		busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// default cpuquota should be 0
+	checkContainerCPUQuota(c, name, "0")
+
+	// update cpuquota to 0, should not take effect
+	command.PouchRun("update", "--cpu-quota", "0", name).Assert(c, icmd.Success)
+	// 0 is a meaningless value
+	checkContainerCPUQuota(c, name, "0")
+
+	// update not specified any parameters,  cpuquota should still be 0
+	command.PouchRun("update", name).Assert(c, icmd.Success)
+	checkContainerCPUQuota(c, name, "0")
+
+	// update cpuquota to [1, 1000), should return error
+	res := command.PouchRun("update", "--cpu-quota", "20", name)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("CPU cfs quota should be greater than 1ms(1000)"))
+
+	// update cpuquota to 1100, should take effect
+	command.PouchRun("update", "--cpu-quota", "1100", name).Assert(c, icmd.Success)
+	checkContainerCPUQuota(c, name, "1100")
+
+	// update cpuquota to -1, should take effect
+	command.PouchRun("update", "--cpu-quota", "-1", name).Assert(c, icmd.Success)
+	checkContainerCPUQuota(c, name, "-1")
+
+}
+
+// TestUpdateStoppedContainerCPUQuota is to verify the correctness of update the cpuquota
+// of a stopped container by update interface
+func (suite *PouchUpdateSuite) TestUpdateStoppedContainerCPUQuota(c *check.C) {
+	name := "TestUpdateContainerCPUQuota"
+
+	command.PouchRun("create",
+		"--cpu-quota", "1100",
+		"--name", name,
+		busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// update cpuquota to 1200, should take effect
+	command.PouchRun("update", "--cpu-quota", "1200", name).Assert(c, icmd.Success)
+
+	// start container
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+
+	// then check the cpu-quota value
+	checkContainerCPUQuota(c, name, "1200")
+
+	// update cpuquota to 0, should not take effect
+	command.PouchRun("update", "--cpu-quota", "0", name).Assert(c, icmd.Success)
+	// 0 is a meaningless value
+	checkContainerCPUQuota(c, name, "1200")
+
+	// update not specified any parameters,  cpuquota should still be 1200
+	command.PouchRun("update", name).Assert(c, icmd.Success)
+	checkContainerCPUQuota(c, name, "1200")
+
+}
