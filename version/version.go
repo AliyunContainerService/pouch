@@ -3,7 +3,7 @@ package version
 // Version package values is auto-generated, the following values will be overwrited at build time.
 var (
 	// Version represents the version of pouchd.
-	Version = "1.1.0"
+	Version = "1.2.0"
 
 	// BuildTime is the time when pouch binary is built
 	BuildTime = "unknown"
