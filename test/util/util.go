@@ -1,9 +1,7 @@
 package util
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -96,34 +94,4 @@ func ParseCgroupFile(text string) map[string]string {
 		}
 	}
 	return cgroups
-}
-
-// FindCgroupMountpoint find cgroup mountpoint for a specified subsystem
-func FindCgroupMountpoint(subsystem string) (string, error) {
-	f, err := os.Open("/proc/self/mountinfo")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		txt := scanner.Text()
-		fields := strings.Fields(txt)
-		if len(fields) < 5 {
-			continue
-		}
-		if strings.Contains(txt, "cgroup") {
-			for _, opt := range strings.Split(fields[len(fields)-1], ",") {
-				if opt == subsystem {
-					return fields[4], nil
-				}
-			}
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	return "", fmt.Errorf("failed to find %s cgroup mountpoint", subsystem)
 }

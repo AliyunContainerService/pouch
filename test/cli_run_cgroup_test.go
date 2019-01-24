@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -53,28 +51,24 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 	defer DelContainerForceMultyTime(c, name)
 	res.Assert(c, icmd.Success)
 
+	res = command.PouchRun("exec", name, "cat", "/sys/fs/cgroup/memory/memory.limit_in_bytes")
+	res.Assert(c, icmd.Success)
+	c.Assert(util.PartialEqual(res.Stdout(), "314572800"), check.IsNil)
+
 	res = command.PouchRun("exec", name, "cat", "/proc/self/cgroup")
 	res.Assert(c, icmd.Success)
 	cgroupPaths := util.ParseCgroupFile(res.Stdout())
 
-	cgroupMount, err := util.FindCgroupMountpoint("memory")
-	c.Assert(err, check.IsNil)
-
-	file := filepath.Join(cgroupMount, cgroupPaths["memory"], "memory.limit_in_bytes")
-	if _, err := os.Stat(file); err != nil {
-		c.Fatalf("failed to Stat container %s cgroup mountpoint %s: %v", name, file, err)
+	for _, v := range cgroupPaths {
+		// NOTE: if container in child cgroup namespace, cgroup mount is /,
+		// skip test since we can not get total cgroup path
+		if v == "/" {
+			break
+		}
+		if !strings.Contains(v, cgroupParent) {
+			c.Fatalf("unexpected cgroup path %v, expect to has %s in path", v, cgroupParent)
+		}
 	}
-
-	out, err := exec.Command("cat", file).Output()
-	if err != nil {
-		c.Fatalf("execute cat command failed: %v", err)
-	}
-
-	if !strings.Contains(string(out), "314572800") {
-		c.Fatalf("unexpected output %s expected %s\n",
-			string(out), "314572800")
-	}
-
 }
 
 // TestRunInvalidCgroupParent checks that a specially-crafted cgroup parent
