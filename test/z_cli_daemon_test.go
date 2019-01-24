@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
 	"github.com/alibaba/pouch/test/environment"
@@ -701,4 +702,39 @@ func (suite *PouchDaemonSuite) TestContainerdPIDReuse(c *check.C) {
 	// make sure pouchd can successfully start
 	c.Assert(cfg.StartDaemon(), check.IsNil)
 	defer cfg.KillDaemon()
+}
+
+// TestUpdateDaemonWithHomeDirAndSnapshotter tests update daemon with home-dir and snapshotter
+func (suite *PouchDaemonSuite) TestUpdateDaemonWithHomeDirAndSnapshotter(c *check.C) {
+	path := "/tmp/pouchconfig.json"
+	fd, err := os.Create(path)
+	c.Assert(err, check.IsNil)
+	fd.Close()
+	defer os.Remove(path)
+
+	cfg := daemon.NewConfig()
+	err = cfg.StartDaemon()
+	c.Assert(err, check.IsNil)
+
+	defer cfg.KillDaemon()
+
+	tmpHomeDir := "/tmp/pouch_dir"
+	snapshotter := "test_snapshotter"
+
+	RunWithSpecifiedDaemon(&cfg, "updatedaemon", "--config-file", path, "--offline=true", "--home-dir", tmpHomeDir, "--snapshotter", snapshotter).Assert(c, icmd.Success)
+
+	ret := RunWithSpecifiedDaemon(&cfg, "info")
+	ret.Assert(c, icmd.Success)
+
+	f, err := os.Open(path)
+	c.Assert(err, check.IsNil)
+	defer f.Close()
+
+	readConfig := config.Config{}
+
+	err = json.NewDecoder(f).Decode(&readConfig)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(readConfig.HomeDir, check.Equals, tmpHomeDir)
+	c.Assert(readConfig.Snapshotter, check.Equals, snapshotter)
 }

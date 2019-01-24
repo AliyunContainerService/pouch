@@ -40,6 +40,9 @@ type DaemonUpdateCommand struct {
 	iptables         bool
 	ipforward        bool
 	userlandProxy    bool
+
+	homeDir     string
+	snapshotter string
 }
 
 // Init initialize updatedaemon command.
@@ -77,6 +80,8 @@ func (udc *DaemonUpdateCommand) addFlags() {
 	flagSet.BoolVar(&udc.iptables, "iptables", true, "update daemon with iptables")
 	flagSet.BoolVar(&udc.ipforward, "ipforward", true, "udpate daemon with ipforward")
 	flagSet.BoolVar(&udc.userlandProxy, "userland-proxy", false, "update daemon with userland proxy")
+	flagSet.StringVar(&udc.homeDir, "home-dir", "", "update daemon home dir")
+	flagSet.StringVar(&udc.snapshotter, "snapshotter", "", "update daemon snapshotter")
 }
 
 // daemonUpdateRun is the entry of updatedaemon command.
@@ -164,6 +169,14 @@ func (udc *DaemonUpdateCommand) updateDaemonConfigFile() error {
 
 	if flagSet.Changed("userland-proxy") {
 		daemonConfig.NetworkConfig.BridgeConfig.UserlandProxy = udc.userlandProxy
+	}
+
+	if flagSet.Changed("home-dir") {
+		daemonConfig.HomeDir = udc.homeDir
+	}
+
+	if flagSet.Changed("snapshotter") {
+		daemonConfig.Snapshotter = udc.snapshotter
 	}
 
 	// write config to file
