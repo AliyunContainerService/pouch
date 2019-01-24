@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -417,7 +418,7 @@ func checkContainerCPUQuota(c *check.C, cName, cpuQuota string) {
 	}
 	containerID = result[0].ID
 
-	if string(result[0].HostConfig.CPUQuota) == cpuQuota {
+	if strconv.FormatInt(result[0].HostConfig.CPUQuota, 10) != cpuQuota {
 		c.Errorf("expect CPUQuota %s, but got: %v", cpuQuota, result[0].HostConfig.CPUQuota)
 	}
 
