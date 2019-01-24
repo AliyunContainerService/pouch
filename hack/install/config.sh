@@ -1,4 +1,4 @@
 #!/bin/bash
 
-export OSS_ENDPOINT="oss-cn-beijing.aliyuncs.com"
-export OSS_BUCKET="pouch-oss"
+export OSS_ENDPOINT="oss-cn-hongkong.aliyuncs.com"
+export OSS_BUCKET="pouch-oss-hk"
