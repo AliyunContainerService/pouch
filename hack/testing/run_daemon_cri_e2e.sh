@@ -61,7 +61,7 @@ integration::run_daemon_cri_test_e2e_cases() {
   if [[ "${cri_runtime}" == "v1alpha1" ]]; then
     KUBERNETES_VERSION="release-1.9"
   else
-    KUBERNETES_VERSION="release-1.12"
+    KUBERNETES_VERSION="release-1.13"
   fi
 
   KUBERNETES_REPO="github.com/kubernetes/kubernetes"

@@ -74,6 +74,16 @@ You can easily setup a basic PouchContainer environment, see [INSTALLATION.md](I
 
 After installing PouchContainer on your machine, maybe it is the exciting moment for you to power your Kubernetes cluster by PouchContainer. There is an easy guide for you to quickly experience this amazing combination [Kubernetes + PouchContainer](docs/kubernetes/pouch_with_kubernetes_deploying.md).
 
+### Kubernetes Compatibility
+
+Whether PouchContainer passes the [NodeConformance tests.](https://github.com/kubernetes/community/blob/master/contributors/devel/conformance-tests.md)
+
+|                     | Kubernetes 1.7 | Kubernetes 1.8 | Kubernetes 1.9 | Kubernetes 1.10 | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 |
+|---------------------|----------------|----------------|----------------|-----------------|-----------------|-----------------|-----------------|
+| PouchContainer 1.0  | N/A            | N/A            | N/A            | ✓               | ✘               | ✘               | ✘               |
+| PouchContainer 1.1  | N/A            | N/A            | N/A            | ✓               | ✘               | ✘               | ✘               |
+| PouchContainer HEAD | N/A            | N/A            | N/A            | ✓               | ✓               | ✓               | ✘               |
+
 ## Contributing
 
 You are warmly welcomed to hack on PouchContainer. We have prepared a detailed guide [CONTRIBUTING.md](CONTRIBUTING.md).
