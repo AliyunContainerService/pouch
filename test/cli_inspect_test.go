@@ -221,3 +221,25 @@ func (suite *PouchInspectSuite) TestContainerInspectPorts(c *check.C) {
 	data, _ := json.Marshal(containers[0].NetworkSettings.Ports)
 	c.Assert(string(data), check.Equals, "{\"80/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"8080\"}]}")
 }
+
+func (suite *PouchInspectSuite) TestContainerInspectHostRootPath(c *check.C) {
+	name := "TestContainerInspectHostRootPath"
+	res := command.PouchRun("run", "-d", "--name", name, busyboxImage, "top")
+	defer DelContainerForceMultyTime(c, name)
+	res.Assert(c, icmd.Success)
+
+	hostRootPathOutput := command.PouchRun("inspect", "-f", "{{.HostRootPath}}", name).Stdout()
+	containerOutput := command.PouchRun("inspect", name).Stdout()
+
+	containers := make([]types.ContainerJSON, 1)
+	err := json.Unmarshal([]byte(containerOutput), &containers)
+	if err != nil || len(containers) == 0 {
+		c.Fatal("fail to format container json")
+	}
+
+	if containers[0].GraphDriver == nil {
+		c.Fatal("cannot to find any info of GraphDriver")
+	}
+
+	c.Assert(strings.TrimSpace(hostRootPathOutput), check.Equals, containers[0].GraphDriver.Data["MergedDir"])
+}

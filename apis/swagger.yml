@@ -3484,7 +3484,9 @@ definitions:
       NetworkSettings:
         description: "NetworkSettings exposes the network settings in the API."
         $ref: "#/definitions/NetworkSettings"
-
+      HostRootPath:
+        description: "The rootfs path of the container on the host."
+        type: "string"
   ContainerState:
     type: "object"
     required: [StartedAt, FinishedAt, Pid, ExitCode, Error, OOMKilled, Dead, Paused, Restarting, Running, Status]
