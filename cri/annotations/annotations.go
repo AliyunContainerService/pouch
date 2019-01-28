@@ -22,4 +22,10 @@ const (
 
 	// LxcfsEnabled whether to enable lxcfs for a container
 	LxcfsEnabled = "io.kubernetes.lxcfs.enabled"
+
+	// ExtendAnnotationPrefix is the extend annotation prefix
+	ExtendAnnotationPrefix = "io.alibaba.pouch"
+
+	// MemorySwapExtendAnnotation is the extend annotation of memory swap
+	MemorySwapExtendAnnotation = "io.alibaba.pouch.resources.memory_swap"
 )

@@ -838,6 +838,13 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 		}
 	}
 
+	if len(config.Annotations) > 0 {
+		// Apply container config by annotation
+		if err := applyContainerConfigByAnnotation(config.Annotations, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
+			return fmt.Errorf("failed to apply container annotation for container %q: %v", config.Metadata.Name, err)
+		}
+	}
+
 	// Apply cgroupsParent derived from the sandbox config.
 	if lc := sandboxConfig.GetLinux(); lc != nil {
 		// Apply Cgroup options.
@@ -1257,4 +1264,22 @@ func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapp
 		})
 	}
 	return portMappings
+}
+
+// applyContainerConfigByAnnotation updates pouch container config according to annotation.
+func applyContainerConfigByAnnotation(annotations map[string]string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
+	if len(annotations) == 0 {
+		return nil
+	}
+
+	if memorySwap, ok := annotations[anno.MemorySwapExtendAnnotation]; ok {
+		ms, err := strconv.ParseInt(memorySwap, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse resources.memory_swap: %v", err)
+		}
+
+		hc.MemorySwap = ms
+	}
+
+	return nil
 }
