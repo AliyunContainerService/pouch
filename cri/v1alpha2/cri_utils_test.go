@@ -9,6 +9,7 @@ import (
 	"time"
 
 	apitypes "github.com/alibaba/pouch/apis/types"
+	anno "github.com/alibaba/pouch/cri/annotations"
 	runtime "github.com/alibaba/pouch/cri/apis/v1alpha2"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -1850,6 +1851,61 @@ func Test_toCNIPortMappings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := toCNIPortMappings(tt.args.criPortMappings); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("toCNIPortMappings() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// CRI test: apply container config by annotation
+func Test_applyContainerConfigByAnnotation(t *testing.T) {
+	tests := []struct {
+		name       string
+		annotation map[string]string
+		checkFn    func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool
+		errMsg     string
+	}{
+		{
+			name: "normalMemorySwapTest",
+			annotation: map[string]string{
+				anno.MemorySwapExtendAnnotation: "200000000",
+			},
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool {
+				if hc.MemorySwap == 200000000 {
+					return true
+				}
+
+				return false
+			},
+			errMsg: "",
+		},
+		{
+			name: "errorMemorySwapTest",
+			annotation: map[string]string{
+				anno.MemorySwapExtendAnnotation: "1g",
+			},
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool {
+				return false
+			},
+			errMsg: "failed to parse resources.memory_swap",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &apitypes.ContainerConfig{}
+			hc := &apitypes.HostConfig{}
+
+			err := applyContainerConfigByAnnotation(tt.annotation, config, hc)
+			if tt.errMsg != "" {
+				assert.NotNil(t, err, "error should be %v", tt.errMsg)
+				if err != nil {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+			}
+
+			if tt.errMsg == "" {
+				assert.Nil(t, err)
+				assert.True(t, tt.checkFn(config, hc))
 			}
 		})
 	}
