@@ -120,6 +120,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		Driver:          c.Driver,
 		MountLabel:      c.MountLabel,
 		ProcessLabel:    c.ProcessLabel,
+		ExecIds:         c.ExecIds,
 	}
 
 	return EncodeResponse(rw, http.StatusOK, container)
