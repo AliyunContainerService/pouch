@@ -25,6 +25,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	unknowHostRootPath = "<unknown>"
+)
+
 func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 	label := util_metrics.ActionCreateLabel
 	defer func(start time.Time) {
@@ -84,6 +88,12 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		mounts = append(mounts, *mp)
 	}
 
+	hostRootPath := unknowHostRootPath
+	mergedDir, ok := c.Snapshotter.Data["MergedDir"]
+	if ok {
+		hostRootPath = mergedDir
+	}
+
 	container := types.ContainerJSON{
 		ID:           c.ID,
 		Name:         c.Name,
@@ -105,6 +115,7 @@ func (s *Server) getContainer(ctx context.Context, rw http.ResponseWriter, req *
 		Args:            c.Args,
 		ResolvConfPath:  c.ResolvConfPath,
 		HostnamePath:    c.HostnamePath,
+		HostRootPath:    hostRootPath,
 		HostsPath:       c.HostsPath,
 		Driver:          c.Driver,
 		MountLabel:      c.MountLabel,

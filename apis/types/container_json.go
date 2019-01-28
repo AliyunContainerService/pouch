@@ -43,6 +43,9 @@ type ContainerJSON struct {
 	// host config
 	HostConfig *HostConfig `json:"HostConfig,omitempty"`
 
+	// The rootfs path of the container on the host.
+	HostRootPath string `json:"HostRootPath,omitempty"`
+
 	// the path of container's hostname file on host.
 	HostnamePath string `json:"HostnamePath,omitempty"`
 
