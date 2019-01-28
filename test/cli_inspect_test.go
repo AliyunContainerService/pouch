@@ -243,3 +243,35 @@ func (suite *PouchInspectSuite) TestContainerInspectHostRootPath(c *check.C) {
 
 	c.Assert(strings.TrimSpace(hostRootPathOutput), check.Equals, containers[0].GraphDriver.Data["MergedDir"])
 }
+
+// TestContainerInspectExecIds is to valid if we can normally inspect ExecIds
+func (suite *PouchInspectSuite) TestContainerInspectExecIds(c *check.C) {
+	name := "TestContainerInspectExecIds"
+	command.PouchRun("run", "-d",
+		"--name", name,
+		busyboxImage, "top",
+	).Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// first check `ExecIds` when the container created
+	output := command.PouchRun("inspect", "-f", "{{.ExecIds}}", name).Stdout()
+	c.Assert(string(output), check.Equals, "[]\n")
+
+	// then check `ExecIds` when execute a exec command
+	command.PouchRun("exec", name, "echo", "hi").Assert(c, icmd.Success)
+	output = command.PouchRun("inspect", name).Stdout()
+	containers := make([]types.ContainerJSON, 1)
+	err := json.Unmarshal([]byte(output), &containers)
+	if err != nil || len(containers) != 1 {
+		c.Fatal("fail to format container json")
+	}
+
+	execIDs := containers[0].ExecIds
+	if len(execIDs) != 1 {
+		c.Errorf("expected one exec id, but got: %v", execIDs)
+	}
+
+	output = command.PouchRun("inspect", "-f", "{{.ExecIds}}", name).Stdout()
+	expected := fmt.Sprintf("[%v]\n", execIDs[0])
+	c.Assert(string(output), check.Equals, expected)
+}

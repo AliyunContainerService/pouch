@@ -540,6 +540,24 @@ func (mgr *ContainerManager) Get(ctx context.Context, name string) (*Container, 
 	if err != nil {
 		return nil, err
 	}
+	cID := c.Key()
+
+	// get all execids belongs to this container
+	fn := func(v interface{}) bool {
+		execConfig, ok := v.(*ContainerExecConfig)
+		if !ok || execConfig.ContainerID != cID {
+			return false
+		}
+
+		return true
+	}
+
+	var execIDs []string
+	execProcesses := mgr.ExecProcesses.Values(fn)
+	for k := range execProcesses {
+		execIDs = append(execIDs, k)
+	}
+	c.ExecIds = execIDs
 
 	return c, nil
 }
@@ -1914,7 +1932,7 @@ func (mgr *ContainerManager) setBaseFS(ctx context.Context, c *Container) {
 // execProcessGC cleans unused exec processes config every 5 minutes.
 func (mgr *ContainerManager) execProcessGC() {
 	for range time.Tick(time.Duration(GCExecProcessTick) * time.Minute) {
-		execProcesses := mgr.ExecProcesses.Values()
+		execProcesses := mgr.ExecProcesses.Values(nil)
 		cleaned := 0
 
 		for id, v := range execProcesses {

@@ -8,6 +8,9 @@ type SafeMap struct {
 	inner map[string]interface{}
 }
 
+// ValueFilter defines a function to filter values in map
+type ValueFilter func(interface{}) bool
+
 // NewSafeMap generates a instance of SafeMap type.
 func NewSafeMap() *SafeMap {
 	return &SafeMap{
@@ -26,13 +29,15 @@ func (m *SafeMap) Get(k string) *Value {
 }
 
 // Values returns all key-values stored in map
-func (m *SafeMap) Values() map[string]interface{} {
+func (m *SafeMap) Values(filter ValueFilter) map[string]interface{} {
 	m.RLock()
 	defer m.RUnlock()
 
 	nmap := make(map[string]interface{})
 	for k, v := range m.inner {
-		nmap[k] = v
+		if filter == nil || filter(v) {
+			nmap[k] = v
+		}
 	}
 
 	return nmap
