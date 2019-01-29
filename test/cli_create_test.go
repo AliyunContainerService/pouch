@@ -412,7 +412,7 @@ func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 	cname := "TestCreateWithAnnotation"
 	res := command.PouchRun("create", "--annotation", "a=b", "--annotation", "foo=bar",
-		"--name", cname, busyboxImage)
+		"--annotation", "k1=v1,v2", "--name", cname, busyboxImage)
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
@@ -431,6 +431,7 @@ func (suite *PouchCreateSuite) TestCreateWithAnnotation(c *check.C) {
 
 	c.Assert(util.PartialEqual(annotationStr, "a=b"), check.IsNil)
 	c.Assert(util.PartialEqual(annotationStr, "foo=bar"), check.IsNil)
+	c.Assert(util.PartialEqual(annotationStr, "k1=v1,v2"), check.IsNil)
 }
 
 // TestCreateWithUlimit tests creating container with annotation.

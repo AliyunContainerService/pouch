@@ -114,7 +114,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.quotaID, "quota-id", "", "Specified quota id, if id < 0, it means pouchd alloc a unique quota id")
 
 	// additional runtime spec annotations
-	flagSet.StringSliceVar(&c.specAnnotation, "annotation", nil, "Additional annotation for runtime")
+	flagSet.StringArrayVar(&c.specAnnotation, "annotation", nil, "Additional annotation for runtime")
 
 	// nvidia container
 	flagSet.StringVar(&c.nvidiaDriverCapabilities, "nvidia-capabilities", "", "NvidiaDriverCapabilities controls which driver libraries/binaries will be mounted inside the container")
