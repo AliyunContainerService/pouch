@@ -31,7 +31,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
 ### Options
 
 ```
-      --annotation strings            Additional annotation for runtime
+      --annotation stringArray        Additional annotation for runtime
   -a, --attach                        Attach container's STDOUT and STDERR
       --blkio-weight uint16           Block IO (relative weight), between 10 and 1000, or 0 to disable
       --blkio-weight-device strings   Block IO weight (relative device weight), need CFQ IO Scheduler enable (default [])
