@@ -39,6 +39,7 @@ runc::install() {
 
   gopath="${GOPATH}/src/github.com/opencontainers/runc"
   git clone -b develop https://github.com/alibaba/runc.git "${gopath}"
+
   cd "${gopath}"
   make
   make install
