@@ -40,6 +40,10 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet := uc.cmd.Flags()
 	flagSet.SetInterspersed(false)
 	flagSet.Uint16Var(&uc.blkioWeight, "blkio-weight", 0, "Block IO (relative weight), between 10 and 1000, or 0 to disable")
+	flagSet.Var(&uc.blkioDeviceReadBps, "device-read-bps", "Update read rate (bytes per second) from a device")
+	flagSet.Var(&uc.blkioDeviceReadIOps, "device-read-iops", "Update read rate (io per second) from a device")
+	flagSet.Var(&uc.blkioDeviceWriteBps, "device-write-bps", "Update write rate (bytes per second) from a device")
+	flagSet.Var(&uc.blkioDeviceWriteIOps, "device-write-iops", "Update write rate (io per second) from a device")
 	flagSet.Int64Var(&uc.cpuperiod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]")
 	flagSet.Int64Var(&uc.cpushare, "cpu-shares", 0, "CPU shares (relative weight)")
 	flagSet.Int64Var(&uc.cpuquota, "cpu-quota", 0, "Limit CPU CFS (Completely Fair Scheduler) quota")
@@ -69,14 +73,18 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 	}
 
 	resource := types.Resources{
-		CPUPeriod:   uc.cpuperiod,
-		CPUShares:   uc.cpushare,
-		CPUQuota:    uc.cpuquota,
-		CpusetCpus:  uc.cpusetcpus,
-		CpusetMems:  uc.cpusetmems,
-		Memory:      memory,
-		MemorySwap:  memorySwap,
-		BlkioWeight: uc.blkioWeight,
+		BlkioWeight:          uc.blkioWeight,
+		BlkioDeviceReadBps:   uc.blkioDeviceReadBps.Value(),
+		BlkioDeviceReadIOps:  uc.blkioDeviceReadIOps.Value(),
+		BlkioDeviceWriteBps:  uc.blkioDeviceWriteBps.Value(),
+		BlkioDeviceWriteIOps: uc.blkioDeviceWriteIOps.Value(),
+		CPUPeriod:            uc.cpuperiod,
+		CPUShares:            uc.cpushare,
+		CPUQuota:             uc.cpuquota,
+		CpusetCpus:           uc.cpusetcpus,
+		CpusetMems:           uc.cpusetmems,
+		Memory:               memory,
+		MemorySwap:           memorySwap,
 	}
 
 	restartPolicy, err := opts.ParseRestartPolicy(uc.restartPolicy)

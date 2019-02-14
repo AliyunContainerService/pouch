@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -65,13 +66,75 @@ func resolver(authConfig *types.AuthConfig, resolverOpt docker.ResolverOptions) 
 	return docker.NewResolver(options), nil
 }
 
+// GetWeightDevice Convert weight device from []*types.WeightDevice to []specs.LinuxWeightDevice
+func GetWeightDevice(devs []*types.WeightDevice) ([]specs.LinuxWeightDevice, error) {
+	var stat syscall.Stat_t
+	var weightDevice []specs.LinuxWeightDevice
+
+	for _, dev := range devs {
+		if err := syscall.Stat(dev.Path, &stat); err != nil {
+			return nil, err
+		}
+
+		d := specs.LinuxWeightDevice{
+			Weight: &dev.Weight,
+		}
+		d.Major = int64(stat.Rdev >> 8)
+		d.Minor = int64(stat.Rdev & 255)
+		weightDevice = append(weightDevice, d)
+	}
+
+	return weightDevice, nil
+}
+
+// GetThrottleDevice Convert throttle device from []*types.ThrottleDevice to []specs.LinuxThrottleDevice
+func GetThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevice, error) {
+	var stat syscall.Stat_t
+	var ThrottleDevice []specs.LinuxThrottleDevice
+
+	for _, dev := range devs {
+		if err := syscall.Stat(dev.Path, &stat); err != nil {
+			return nil, err
+		}
+
+		d := specs.LinuxThrottleDevice{
+			Rate: dev.Rate,
+		}
+		d.Major = int64(stat.Rdev >> 8)
+		d.Minor = int64(stat.Rdev & 255)
+		ThrottleDevice = append(ThrottleDevice, d)
+	}
+
+	return ThrottleDevice, nil
+}
+
 // toLinuxResources transfers Pouch Resources to LinuxResources.
 func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) {
 	r := &specs.LinuxResources{}
 
 	// toLinuxBlockIO
+	readBpsDevice, err := GetThrottleDevice(resources.BlkioDeviceReadBps)
+	if err != nil {
+		return nil, err
+	}
+	readIOpsDevice, err := GetThrottleDevice(resources.BlkioDeviceReadIOps)
+	if err != nil {
+		return nil, err
+	}
+	writeBpsDevice, err := GetThrottleDevice(resources.BlkioDeviceWriteBps)
+	if err != nil {
+		return nil, err
+	}
+	writeIOpsDevice, err := GetThrottleDevice(resources.BlkioDeviceWriteIOps)
+	if err != nil {
+		return nil, err
+	}
 	r.BlockIO = &specs.LinuxBlockIO{
-		Weight: &resources.BlkioWeight,
+		Weight:                  &resources.BlkioWeight,
+		ThrottleReadBpsDevice:   readBpsDevice,
+		ThrottleReadIOPSDevice:  readIOpsDevice,
+		ThrottleWriteBpsDevice:  writeBpsDevice,
+		ThrottleWriteIOPSDevice: writeIOpsDevice,
 	}
 
 	// toLinuxCPU

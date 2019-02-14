@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
@@ -129,23 +129,23 @@ func setupResource(ctx context.Context, c *Container, s *specs.Spec) error {
 
 // setupResource creates linux blkio resource spec.
 func setupBlkio(ctx context.Context, r types.Resources, s *specs.Spec) error {
-	weightDevice, err := getWeightDevice(r.BlkioWeightDevice)
+	weightDevice, err := ctrd.GetWeightDevice(r.BlkioWeightDevice)
 	if err != nil {
 		return err
 	}
-	readBpsDevice, err := getThrottleDevice(r.BlkioDeviceReadBps)
+	readBpsDevice, err := ctrd.GetThrottleDevice(r.BlkioDeviceReadBps)
 	if err != nil {
 		return err
 	}
-	writeBpsDevice, err := getThrottleDevice(r.BlkioDeviceWriteBps)
+	writeBpsDevice, err := ctrd.GetThrottleDevice(r.BlkioDeviceWriteBps)
 	if err != nil {
 		return err
 	}
-	readIOpsDevice, err := getThrottleDevice(r.BlkioDeviceReadIOps)
+	readIOpsDevice, err := ctrd.GetThrottleDevice(r.BlkioDeviceReadIOps)
 	if err != nil {
 		return err
 	}
-	writeIOpsDevice, err := getThrottleDevice(r.BlkioDeviceWriteIOps)
+	writeIOpsDevice, err := ctrd.GetThrottleDevice(r.BlkioDeviceWriteIOps)
 	if err != nil {
 		return err
 	}
@@ -160,46 +160,6 @@ func setupBlkio(ctx context.Context, r types.Resources, s *specs.Spec) error {
 	}
 
 	return nil
-}
-
-func getWeightDevice(devs []*types.WeightDevice) ([]specs.LinuxWeightDevice, error) {
-	var stat syscall.Stat_t
-	var weightDevice []specs.LinuxWeightDevice
-
-	for _, dev := range devs {
-		if err := syscall.Stat(dev.Path, &stat); err != nil {
-			return nil, err
-		}
-
-		d := specs.LinuxWeightDevice{
-			Weight: &dev.Weight,
-		}
-		d.Major = int64(stat.Rdev >> 8)
-		d.Minor = int64(stat.Rdev & 255)
-		weightDevice = append(weightDevice, d)
-	}
-
-	return weightDevice, nil
-}
-
-func getThrottleDevice(devs []*types.ThrottleDevice) ([]specs.LinuxThrottleDevice, error) {
-	var stat syscall.Stat_t
-	var ThrottleDevice []specs.LinuxThrottleDevice
-
-	for _, dev := range devs {
-		if err := syscall.Stat(dev.Path, &stat); err != nil {
-			return nil, err
-		}
-
-		d := specs.LinuxThrottleDevice{
-			Rate: dev.Rate,
-		}
-		d.Major = int64(stat.Rdev >> 8)
-		d.Minor = int64(stat.Rdev & 255)
-		ThrottleDevice = append(ThrottleDevice, d)
-	}
-
-	return ThrottleDevice, nil
 }
 
 // setupResource creates linux cpu resource spec
