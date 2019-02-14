@@ -12,6 +12,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
+	"github.com/alibaba/pouch/test/util"
 
 	"github.com/go-check/check"
 	"github.com/gotestyourself/gotestyourself/icmd"
@@ -362,7 +363,7 @@ func (suite *PouchUpdateSuite) TestUpdateContainerDeleteEnv(c *check.C) {
 	}
 }
 
-// TestUpdateContainerDiskQuota is to verify the correctness of delete env by update interface
+// TestUpdateContainerDiskQuota is to verify the correctness of disk quota by update interface
 func (suite *PouchUpdateSuite) TestUpdateContainerDiskQuota(c *check.C) {
 	if !environment.IsDiskQuota() {
 		c.Skip("Host does not support disk quota")
@@ -495,4 +496,46 @@ func (suite *PouchUpdateSuite) TestUpdateStoppedContainerCPUQuota(c *check.C) {
 	command.PouchRun("update", name).Assert(c, icmd.Success)
 	checkContainerCPUQuota(c, name, "1200")
 
+}
+
+// TestUpdateBlkIOLimit is to verify the correctness of update read/write bps/iops
+func (suite *PouchUpdateSuite) TestUpdateBlkIOLimit(c *check.C) {
+	cname := "TestUpdateBlkIOLimit"
+	testDisk := "/dev/null"
+
+	number, exist := util.GetMajMinNumOfDevice(testDisk)
+	if !exist {
+		c.Skip("fail to get major:minor device number")
+	}
+
+	oldReadBpsDev := testDisk + ":1000"
+	oldReadIopsDev := testDisk + ":1500"
+	oldWriteBpsDev := testDisk + ":2000"
+	oldWriteIopsDev := testDisk + ":2500"
+	newReadBpsDev := testDisk + ":3000"
+	newReadIopsDev := testDisk + ":3500"
+	newWriteBpsDev := testDisk + ":4000"
+	newWriteIopsDev := testDisk + ":4500"
+
+	blkioDeviceReadBpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.read_bps_device"
+	blkioDeviceReadIopsFile := "/sys/fs/cgroup/blkio/blkio.throttle.read_iops_device"
+	blkioDeviceWriteBpsFile := "/sys/fs/cgroup/blkio/blkio.throttle.write_bps_device"
+	blkioDeviceWriteIopsFile := "/sys/fs/cgroup/blkio/blkio.throttle.write_iops_device"
+
+	Expected := fmt.Sprintf("%s %s %s %s %s %s %s %s\n", number, "3000", number, "3500", number, "4000", number, "4500")
+
+	res := command.PouchRun("run", "-d", "--name", cname, "--device-read-bps", oldReadBpsDev, "--device-read-iops", oldReadIopsDev,
+		"--device-write-bps", oldWriteBpsDev, "--device-write-iops", oldWriteIopsDev, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	command.PouchRun("update", "--device-read-bps", newReadBpsDev, cname).Assert(c, icmd.Success)
+	command.PouchRun("update", "--device-read-iops", newReadIopsDev, cname).Assert(c, icmd.Success)
+	command.PouchRun("update", "--device-write-bps", newWriteBpsDev, cname).Assert(c, icmd.Success)
+	command.PouchRun("update", "--device-write-iops", newWriteIopsDev, cname).Assert(c, icmd.Success)
+
+	// Using "sed" to convert output to one line
+	res = command.PouchRun("exec", cname, "cat", blkioDeviceReadBpsFile, blkioDeviceReadIopsFile, blkioDeviceWriteBpsFile,
+		blkioDeviceWriteIopsFile, "| sed ':a;N;s/\n/ /g;ta'")
+	out := res.Stdout()
+	c.Assert(out, check.Equals, Expected)
 }
