@@ -27,5 +27,5 @@ const (
 	ExtendAnnotationPrefix = "io.alibaba.pouch"
 
 	// MemorySwapExtendAnnotation is the extend annotation of memory swap
-	MemorySwapExtendAnnotation = "io.alibaba.pouch.resources.memory_swap"
+	MemorySwapExtendAnnotation = "io.alibaba.pouch.resources.memory-swap"
 )
