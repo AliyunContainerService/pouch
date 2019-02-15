@@ -26,19 +26,23 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
 ### Options
 
 ```
-      --blkio-weight uint16   Block IO (relative weight), between 10 and 1000, or 0 to disable
-      --cpu-period int        Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
-      --cpu-quota int         Limit CPU CFS (Completely Fair Scheduler) quota
-      --cpu-shares int        CPU shares (relative weight)
-      --cpuset-cpus string    CPUs in cpuset which to allow execution (0-3, 0, 1)
-      --cpuset-mems string    MEMs in cpuset which to allow execution (0-3, 0, 1)
-      --disk-quota strings    Update disk quota for container(/=10g)
-  -e, --env strings           Set environment variables for container
-  -h, --help                  help for update
-  -l, --label strings         Set label for container
-  -m, --memory string         Container memory limit
-      --memory-swap string    Container swap limit
-      --restart string        Restart policy to apply when container exits
+      --blkio-weight uint16         Block IO (relative weight), between 10 and 1000, or 0 to disable
+      --cpu-period int              Limit CPU CFS (Completely Fair Scheduler) period, range is in [1000(1ms),1000000(1s)]
+      --cpu-quota int               Limit CPU CFS (Completely Fair Scheduler) quota
+      --cpu-shares int              CPU shares (relative weight)
+      --cpuset-cpus string          CPUs in cpuset which to allow execution (0-3, 0, 1)
+      --cpuset-mems string          MEMs in cpuset which to allow execution (0-3, 0, 1)
+      --device-read-bps strings     Update read rate (bytes per second) from a device (default [])
+      --device-read-iops strings    Update read rate (io per second) from a device (default [])
+      --device-write-bps strings    Update write rate (bytes per second) from a device (default [])
+      --device-write-iops strings   Update write rate (io per second) from a device (default [])
+      --disk-quota strings          Update disk quota for container(/=10g)
+  -e, --env strings                 Set environment variables for container
+  -h, --help                        help for update
+  -l, --label strings               Set label for container
+  -m, --memory string               Container memory limit
+      --memory-swap string          Container swap limit
+      --restart string              Restart policy to apply when container exits
 ```
 
 ### Options inherited from parent commands
