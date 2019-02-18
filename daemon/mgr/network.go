@@ -85,7 +85,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 		&ContainerListOption{
 			All: true,
 			FilterFunc: func(c *Container) bool {
-				return (c.IsRunning() || c.IsPaused()) && !isContainer(c.HostConfig.NetworkMode)
+				return c.IsRunningOrPaused() && !isContainer(c.HostConfig.NetworkMode)
 			}})
 	if err != nil {
 		logrus.Errorf("failed to new network manager: cannot get container list")
