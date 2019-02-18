@@ -281,7 +281,7 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 		}
 
 		// recover the running or paused container.
-		if !(c.IsRunning() || c.IsPaused()) {
+		if !c.IsRunningOrPaused() {
 			continue
 		}
 
