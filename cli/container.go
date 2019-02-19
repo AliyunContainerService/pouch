@@ -43,6 +43,7 @@ type container struct {
 	memory           string
 	memorySwap       string
 	memorySwappiness int64
+	kernelMemory     string
 
 	memoryWmarkRatio    int64
 	memoryExtra         int64
@@ -107,6 +108,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	memorySwap, err := opts.ParseMemorySwap(c.memorySwap)
+	if err != nil {
+		return nil, err
+	}
+
+	kmemory, err := opts.ParseMemory(c.kernelMemory)
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +231,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				Memory:           memory,
 				MemorySwap:       memorySwap,
 				MemorySwappiness: &c.memorySwappiness,
+				KernelMemory:     kmemory,
 				// FIXME: validate in client side
 				MemoryWmarkRatio:    &c.memoryWmarkRatio,
 				MemoryExtra:         &c.memoryExtra,

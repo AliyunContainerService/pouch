@@ -54,10 +54,10 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringArrayVar(&c.logOpts, "log-opt", nil, "Log driver options")
 
 	// memory
-
 	flagSet.StringVarP(&c.memory, "memory", "m", "", "Memory limit")
 	flagSet.StringVar(&c.memorySwap, "memory-swap", "", "Swap limit equal to memory + swap, '-1' to enable unlimited swap")
 	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", 0, "Container memory swappiness [0, 100]")
+	flagSet.StringVar(&c.kernelMemory, "kernel-memory", "", "Kernel memory limit (in bytes)")
 	// for alikernel isolation options
 	flagSet.BoolVar(&c.oomKillDisable, "oom-kill-disable", false, "Disable OOM Killer")
 	flagSet.Int64Var(&c.oomScoreAdj, "oom-score-adj", -500, "Tune host's OOM preferences (-1000 to 1000)")

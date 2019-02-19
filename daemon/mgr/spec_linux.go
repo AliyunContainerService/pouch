@@ -207,6 +207,11 @@ func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 		memory.DisableOOMKiller = &v
 	}
 
+	if r.KernelMemory > 0 {
+		v := r.KernelMemory
+		memory.Kernel = &v
+	}
+
 	s.Linux.Resources.Memory = memory
 }
 
