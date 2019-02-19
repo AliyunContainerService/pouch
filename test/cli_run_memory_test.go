@@ -35,73 +35,88 @@ func (suite *PouchRunMemorySuite) TearDownTest(c *check.C) {
 
 // TestRunWithMemoryswap is to verify the valid running container
 // with --memory-swap
-func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
+func (suite *PouchRunMemorySuite) TestRunWithMemoryswapAndKernelMemory(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySupport)
 	SkipIfFalse(c, environment.IsMemorySwapSupport)
 
-	cname := "TestRunWithMemoryswap"
-	m := 1024 * 1024
+	cname := "TestRunWithMemoryswapAndKernelMemory"
 	memory := "100m"
 	memSwap := "200m"
-	expected := 200 * m
-	sleep := "10000"
+	kernelMemory := "100m"
+	expectedMem := strconv.Itoa(100 * 1024 * 1024)       // 100 MB
+	expectedMemSwap := strconv.Itoa(200 * 1024 * 1024)   // 200 MB
+	expectedKernelMem := strconv.Itoa(1024 * 1024 * 100) // 100 MB
 
-	res := command.PouchRun("run", "-d", "-m", memory,
+	res := command.PouchRun("run", "-d",
+		"--memory", memory,
 		"--memory-swap", memSwap,
-		"--name", cname, busyboxImage, "sleep", sleep)
+		"--kernel-memory", kernelMemory,
+		"--name", cname,
+		busyboxImage,
+		"sleep", "10000")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	memoryResult, err := inspectFilter(cname, ".HostConfig.Memory")
+	c.Assert(err, check.IsNil)
+	c.Assert(memoryResult, check.Equals, expectedMem)
+	memorySwapResult, err := inspectFilter(cname, ".HostConfig.MemorySwap")
+	c.Assert(err, check.IsNil)
+	c.Assert(memorySwapResult, check.Equals, expectedMemSwap)
+	kernelMemoryResult, err := inspectFilter(cname, ".HostConfig.KernelMemory")
+	c.Assert(err, check.IsNil)
+	c.Assert(kernelMemoryResult, check.Equals, expectedKernelMem)
+
+	// test if cgroup has record the real value
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.limit_in_bytes", containerID)
+	checkFileContains(c, path, expectedMem)
+	path = fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes", containerID)
+	checkFileContains(c, path, expectedMemSwap)
+	path = fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.kmem.limit_in_bytes", containerID)
+	checkFileContains(c, path, expectedKernelMem)
+
+	// test if the value is correct in container
+	memSwapLimitFile := "/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes"
+	res = command.PouchRun("exec", cname, "cat", memSwapLimitFile)
+	res.Assert(c, icmd.Success)
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, expectedMemSwap)
+}
+
+// test memory swap should be 2x memory if not specify it.
+func (suite *PouchRunMemorySuite) TestRunWithMemoryswap2x(c *check.C) {
+	cname := "TestRunWithMemoryswap2x"
+	memory := "20m"
+	expectedMemorySwap := strconv.Itoa(2 * 20 * 1024 * 1024) // 40 MB
+
+	res := command.PouchRun("run", "-d",
+		"-m", memory,
+		"--name", cname,
+		busyboxImage,
+		"sleep", "10000")
 	defer DelContainerForceMultyTime(c, cname)
 	res.Assert(c, icmd.Success)
 
 	// test if the value is in inspect result
 	memorySwap, err := inspectFilter(cname, ".HostConfig.MemorySwap")
 	c.Assert(err, check.IsNil)
-	c.Assert(memorySwap, check.Equals, strconv.Itoa(expected))
+	c.Assert(memorySwap, check.Equals, expectedMemorySwap)
 
 	// test if cgroup has record the real value
 	containerID, err := inspectFilter(cname, ".ID")
 	c.Assert(err, check.IsNil)
-	path := fmt.Sprintf(
-		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
-		containerID)
-	checkFileContains(c, path, strconv.Itoa(expected))
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes", containerID)
+	checkFileContains(c, path, expectedMemorySwap)
 
 	// test if the value is correct in container
 	memSwapLimitFile := "/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes"
 	res = command.PouchRun("exec", cname, "cat", memSwapLimitFile)
 	res.Assert(c, icmd.Success)
-
 	out := strings.Trim(res.Stdout(), "\n")
-	c.Assert(out, check.Equals, strconv.Itoa(expected))
-
-	// test memory swap should be 2x memory if not specify it.
-	cname = "TestRunWithMemoryswap2x"
-	memory = "10m"
-	expected = 2 * 10 * m
-
-	res = command.PouchRun("run", "-d", "-m", memory,
-		"--name", cname, busyboxImage, "sleep", sleep)
-	defer DelContainerForceMultyTime(c, cname)
-	res.Assert(c, icmd.Success)
-
-	// test if the value is in inspect result
-	memorySwap, err = inspectFilter(cname, ".HostConfig.MemorySwap")
-	c.Assert(err, check.IsNil)
-	c.Assert(memorySwap, check.Equals, strconv.Itoa(expected))
-
-	// test if cgroup has record the real value
-	containerID, err = inspectFilter(cname, ".ID")
-	c.Assert(err, check.IsNil)
-	path = fmt.Sprintf(
-		"/sys/fs/cgroup/memory/default/%s/memory.memsw.limit_in_bytes",
-		containerID)
-	checkFileContains(c, path, strconv.Itoa(expected))
-
-	// test if the value is correct in container
-	res = command.PouchRun("exec", cname, "cat", memSwapLimitFile)
-	res.Assert(c, icmd.Success)
-
-	out = strings.Trim(res.Stdout(), "\n")
-	c.Assert(out, check.Equals, strconv.Itoa(expected))
+	c.Assert(out, check.Equals, expectedMemorySwap)
 }
 
 // TestRunWithMemoryswappiness is to verify the valid running container

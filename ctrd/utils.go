@@ -153,6 +153,8 @@ func toLinuxResources(resources types.Resources) (*specs.LinuxResources, error) 
 		Limit:       &resources.Memory,
 		Swap:        &resources.MemorySwap,
 		Reservation: &resources.MemoryReservation,
+		Kernel:      &resources.KernelMemory,
+		// TODO: add other fields of specs.LinuxMemory
 	}
 
 	// TODO: add more fields.
