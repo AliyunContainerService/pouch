@@ -22,7 +22,7 @@ func TestGetDefaultQuota(t *testing.T) {
 					"/": "1000kb",
 				},
 			},
-			want: "1000kb",
+			want: "",
 		},
 		{
 			name: "normal case with supposed data .*",
@@ -41,7 +41,7 @@ func TestGetDefaultQuota(t *testing.T) {
 					"/":  "1000kb",
 				},
 			},
-			want: "1000kb",
+			want: "2000kb",
 		},
 		{
 			name: "normal case with no supposed data",

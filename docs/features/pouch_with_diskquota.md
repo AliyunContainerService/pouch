@@ -10,7 +10,7 @@ hardly do this. Diskquota is designed for limitting filesystem disk usage.
 Currently PouchContainer supports diskquota which is based on graphdriver overlayfs.
 
 Currently in underlying filesystems only ext4 and xfs support diskquota. In
-addition, there are three ways to make it: **user quota**, **group quota** and
+addition, there are two ways to make it: **group quota** and
 **project quota**.
 
 There are two dimensions to limit disk usage:
@@ -25,10 +25,10 @@ PouchContainer only supports block quota now with no inode support temporarily.
 Diskquota in PouchContainer relies on kernel version PouchContainer runs on. Here is a table
 describing when each filesystem supports diskquota.
 
-|| user/group quota | project quota|
-|:---:| :----:| :---:|
-|ext4| >= 2.6|>= 4.5|
-|xfs|>= 2.6|>= 3.10|
+| | alikernel  | open kernel |
+| --- | --- | --- |
+| ext4 | >= 2.6.32 group quota <br> >= 4.5 project quota | >= 4.5 project quota |
+| xfs (unsupport) | >= 3.10 project quota | >= 3.10 project quota|
 
 Although each filesystem in related kernel version supports diskquota, user
 still needs to install [quota-tools-4.04](https://nchc.dl.sourceforge.net/project/linuxquota/quota-tools/4.04/quota-4.04.tar.gz).
@@ -47,25 +47,38 @@ Both two dimensions are covered in PouchContainer's diskquota.
 
 ### Parameter Details
 
-Flag `--disk-quota` is used to restrict diskquota of container's corresponding directory. The input type is `string`.
+Flag `--disk-quota []string` is used to restrict diskquota of container's corresponding directory. The input type is `string`.
+
+There are four ways to identify the input format:
+
+* rule1: `--disk-quota=10GB` : maps container rootfs and all potential volumes binded inside;
+* rule2: `--disk-quota=/abc=10GB` : absolute path matching, maps only mount point `/abc` has been limited, container rootfs and any other volume haven't been limited;
+* rule3: `--disk-quota=/&/abc=10G` : shared size matching, maps container rootfs and mount point `/abc` have been limited, and their total block size are 10G;
+* rule4: `--disk-quota=.*=10G`: regular expression matching, maps container rootfs and each mount points have been limited to 10G independently.
+
+Flag `--quota-id string` is used to pick an existent quota ID to specify the newly input disk quota. The input type is `string` as well.
 
 There are three ways to identify the input format:
 
-* `.*=10GB` maps container rootfs and all potential volumes binded inside;
-* `/=10GB` : maps only container rootfs without any volume binded directory in container;
-* `/=10GB,/a=10GB`: the front part maps container rootfs, and the back one maps the volume which is binded to directory `/a` inside container.
+* `--quota-id=-1` : it means pouch daemon will assign  a unique available quota id automatically to set quota, include container rootfs;
+* `--quota-id=0` or --quota-id="" or haven't set: it means pouch daemon don't assign quota id;
+* `--quota-id=16777216` or more than `16777216`, it means using the specified quota id to set quota.
 
-Flag `--quota-id` is used to pick an existent quota ID to specify the newly input disk quota. The input type is `string` as well. If input `quota-id` is less than 0, pouchd will automatically generate one brand new quotaid and return this ID. If input `quota-id` is 0, pouchd will not set quotaid. If `quota-id` is larger than 0, pouchd will use the input quota ID to set disk quota.
-
-> valid `quota-id` which is larger than 0 is only used in `upgrade` interface. In this scenario of triggering `upgrade` interface, pouchd will remove the old container and use the new image to take place of old container's image, and create a new container which should inherit the original diskquota. Then user can pass an original `quota-id` of original container to take effect on newly created container.
+> 1. `rule1` can't use with `rule2/rule3/rule4` together;
+> 2. `quota-id` isn't null or `0`, `--disk-quota` only can been set with one rule, or means the length of disk quota slice is `1`.
+> 3. `rule3` use `&` link with directory that must be absolute path, can't be regular expression with `rule4`;
+> 4. no special characters(`* & ;`) can exist in all mount points
+> 5. valid `quota-id` which is larger than `16777216`
+> 6. In this scenario of triggering `upgrade` interface, pouchd will remove the old container and use the new image to take place of old container's image, and create a new container which should inherit the original diskquota. Then user can pass an original `quota-id` of original container to take effect on newly created container.
 
 The effect taken by `disk-quota` and `quota-id` is like the following sheet:
 
 | disk-quota | quota-id(<0) | quota-id(=0) | quota-id(>0)|
 | :--------: | :--------:| :--: |:--: |
-| .*=10GB  | auto gen quota-id and return，rootfs+n\*volume(total 10GB)|no setting quotaID，rootfs 10GB，each volume 10GB| setting as input quota-id, rootfs+n\*volume(total 10GB) |
-| /=10GB   | auto gen quota-id and return，only rootfs 10GB)|no setting quotaID，only rootfs 10GB| setting as input quota-id, only rootfs 10GB|
-| /=10GB,/a=10GB      | invalid |no setting quotaID，rootfs=10GB, only volume mapped to `/a` 10GB| invalid |
+| 10GB | auto gen quota-id and return，rootfs+n\*volume(total 10GB) | no setting quotaID，rootfs+n\*volume(total 10GB) | setting as input quota-id, rootfs+n\*volume(total 10GB) |
+| /abc=10GB | auto gen quota-id and return，only `/abc` set to 10GB) | no setting quotaID，only `/abc` set to 10GB) | setting as input quota-id, only `/abc` set to 10GB) |
+| .*=10GB | auto gen quota-id and return，rootfs+n\*volume(total 10GB) | no setting quotaID，rootfs 10GB，each volume 10GB | setting as input quota-id, rootfs+n\*volume(total 10GB) |
+| /&/abc=10GB | auto gen quota-id and return, rootfs+/abc=10GB, others haven't been limited | no setting quotaID，rootfs+/abc=10GB | setting as input quota-id, rootfs+/abc=10GB |
 
 Pouchd created local volume with disk quota if user requests to create a volume with size option. If this volume is already set a disk quota rule, then no matter what directory inside container this volume is binded to, and no matter what disk quota user adds to the inside directory again, this volume will be under the original disk quota which is set at the very beginning.
 

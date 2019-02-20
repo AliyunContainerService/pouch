@@ -193,16 +193,10 @@ func GetDefaultQuota(quotas map[string]string) string {
 		return ""
 	}
 
-	// "/" means the disk quota only takes effect on rootfs + 0 * volume
-	quota, ok := quotas["/"]
-	if ok && quota != "" {
-		return quota
-	}
-
 	// ".*" means the disk quota only takes effect on rootfs + n * volume
-	quota, ok = quotas[".*"]
-	if ok && quota != "" {
-		return quota
+	size, ok := quotas[".*"]
+	if ok && size != "" {
+		return size
 	}
 
 	return ""
@@ -268,6 +262,11 @@ func CheckRegularFile(file string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// IsSetQuotaID returns whether set quota id
+func IsSetQuotaID(id string) bool {
+	return id != "" && id != "0"
 }
 
 // getOverlayMountInfo gets overlayFS informantion from /proc/mounts.

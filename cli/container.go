@@ -139,6 +139,11 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		return nil, err
 	}
 
+	quotaID, err := opts.ParseQuotaID(c.quotaID, c.diskQuota)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := opts.ValidateDiskQuota(diskQuota); err != nil {
 		return nil, err
 	}
@@ -196,7 +201,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 			InitScript:          c.initScript,
 			ExposedPorts:        ports,
 			DiskQuota:           diskQuota,
-			QuotaID:             c.quotaID,
+			QuotaID:             quotaID,
 			SpecAnnotation:      specAnnotation,
 			NetPriority:         c.netPriority,
 			SpecificID:          c.specificID,
