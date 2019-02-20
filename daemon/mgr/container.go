@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -29,7 +28,6 @@ import (
 	mountutils "github.com/alibaba/pouch/pkg/mount"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
-	"github.com/alibaba/pouch/storage/quota"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/containerd/cgroups"
@@ -356,6 +354,11 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	}
 	if config.NetworkingConfig == nil {
 		return nil, errors.Wrapf(errtypes.ErrInvalidParam, "NetworkingConfig cannot be empty")
+	}
+
+	// validate disk quota
+	if err := mgr.validateDiskQuota(config); err != nil {
+		return nil, errors.Wrapf(err, "invalid disk quota config")
 	}
 
 	id, err := mgr.generateContainerID(config.SpecificID)
@@ -1262,73 +1265,33 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	return nil
 }
 
-func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Container, diskQuota map[string]string) error {
+func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Container, diskQuota map[string]string) (err error) {
 	if diskQuota == nil {
 		return nil
 	}
 
+	// backup diskquota
+	origDiskQuota := c.Config.DiskQuota
+	defer func() {
+		if err != nil {
+			c.Lock()
+			c.Config.DiskQuota = origDiskQuota
+			c.Unlock()
+		}
+	}()
+
 	c.Lock()
+	if c.Config.DiskQuota == nil {
+		c.Config.DiskQuota = make(map[string]string)
+	}
 	for dir, quota := range diskQuota {
 		c.Config.DiskQuota[dir] = quota
 	}
 	c.Unlock()
 
 	// set mount point disk quota
-	if err := mgr.setMountPointDiskQuota(ctx, c); err != nil {
+	if err = mgr.setDiskQuota(ctx, c, false); err != nil {
 		return errors.Wrapf(err, "failed to set mount point disk quota")
-	}
-
-	c.Lock()
-	var qid uint32
-	if c.Config.QuotaID != "" {
-		id, err := strconv.Atoi(c.Config.QuotaID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to convert QuotaID %s", c.Config.QuotaID)
-		}
-
-		qid = uint32(id)
-		if id < 0 {
-			// QuotaID is < 0, it means pouchd alloc a unique quota id.
-			qid, err = quota.GetNextQuotaID()
-			if err != nil {
-				return errors.Wrap(err, "failed to get next quota id")
-			}
-
-			// update QuotaID
-			c.Config.QuotaID = strconv.Itoa(int(qid))
-		}
-	}
-	c.Unlock()
-
-	// get rootfs quota
-	defaultQuota := quota.GetDefaultQuota(c.Config.DiskQuota)
-	if qid > 0 && defaultQuota == "" {
-		return fmt.Errorf("set quota id but have no set default quota size")
-	}
-	// update container rootfs disk quota
-	// TODO: add lock for container?
-	rootfs := ""
-	if c.IsRunningOrPaused() && c.Snapshotter != nil {
-		basefs, ok := c.Snapshotter.Data["MergedDir"]
-		if !ok || basefs == "" {
-			return fmt.Errorf("Container is running, but MergedDir is missing")
-		}
-		rootfs = basefs
-	} else {
-		if err := mgr.Mount(ctx, c); err != nil {
-			return errors.Wrapf(err, "failed to mount rootfs: (%s)", c.MountFS)
-		}
-		rootfs = c.MountFS
-
-		defer func() {
-			if err := mgr.Unmount(ctx, c); err != nil {
-				logrus.Errorf("failed to umount rootfs: (%s), err: (%v)", c.MountFS, err)
-			}
-		}()
-	}
-	_, err := quota.SetRootfsDiskQuota(rootfs, defaultQuota, qid)
-	if err != nil {
-		return errors.Wrapf(err, "failed to set container rootfs diskquota")
 	}
 
 	return nil

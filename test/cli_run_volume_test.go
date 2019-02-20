@@ -322,12 +322,15 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaRegular(c *check.C) {
 	ret.Assert(c, icmd.Success)
 
 	ret = command.PouchRun("run",
-		"--disk-quota=1024m",
-		`--disk-quota=".*=512m"`,
+		`--disk-quota=/=1024m`,
 		`--disk-quota="/mnt/mount1=768m"`,
+		`--disk-quota="/mnt/mount4&/mnt/mount5=1280m"`,
+		`--disk-quota=".*=512m"`,
 		"-v", "/data/mount1:/mnt/mount1",
 		"-v", "/data/mount2:/mnt/mount2",
 		"-v", "diskquota-volume:/mnt/mount3",
+		"-v", "/data/mount4:/mnt/mount4",
+		"-v", "/data/mount5:/mnt/mount5",
 		"--name", containerName, busyboxImage, "df")
 	defer DelContainerForceMultyTime(c, containerName)
 	ret.Assert(c, icmd.Success)
@@ -338,6 +341,8 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaRegular(c *check.C) {
 	mount1Found := false
 	mount2Found := false
 	mount3Found := false
+	mount4Found := false
+	mount5Found := false
 	for _, line := range strings.Split(out, "\n") {
 		if strings.Contains(line, "/") &&
 			strings.Contains(line, "1048576") {
@@ -362,12 +367,26 @@ func (suite *PouchRunVolumeSuite) TestRunWithDiskQuotaRegular(c *check.C) {
 			mount3Found = true
 			continue
 		}
+
+		if strings.Contains(line, "/mnt/mount4") &&
+			strings.Contains(line, "1310720") {
+			mount4Found = true
+			continue
+		}
+
+		if strings.Contains(line, "/mnt/mount5") &&
+			strings.Contains(line, "1310720") {
+			mount5Found = true
+			continue
+		}
 	}
 
 	c.Assert(rootFound, check.Equals, true)
 	c.Assert(mount1Found, check.Equals, true)
 	c.Assert(mount2Found, check.Equals, true)
 	c.Assert(mount3Found, check.Equals, true)
+	c.Assert(mount4Found, check.Equals, true)
+	c.Assert(mount5Found, check.Equals, true)
 }
 
 // TestRunWithDiskQuota tests running container with --disk-quota.
@@ -470,5 +489,55 @@ func (suite *PouchRunVolumeSuite) TestRunVolumesFromWithDR(c *check.C) {
 		}
 	}
 
+	c.Assert(found, check.Equals, true)
+}
+
+// TestRunWithQuotaID tests running container with --disk-quota and --quota-id.
+func (suite *PouchRunVolumeSuite) TestRunWithQuotaID(c *check.C) {
+	if !environment.IsDiskQuota() {
+		c.Skip("Host does not support disk quota")
+	}
+
+	cname := "TestRunWithQuotaID"
+	qid := "16777240"
+	ret := command.PouchRun("run",
+		"--disk-quota", "2000m",
+		"--quota-id", qid,
+		"--name", cname, busyboxImage, "df")
+
+	defer DelContainerForceMultyTime(c, cname)
+	ret.Assert(c, icmd.Success)
+
+	out := ret.Combined()
+
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "/") &&
+			strings.Contains(line, "2048000") {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
+
+	ret = command.PouchRun("inspect", cname)
+	ret.Assert(c, icmd.Success)
+
+	out = ret.Stdout()
+	found = false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "QuotaId") {
+			parts := strings.Split(line, "\"")
+			if len(parts) != 5 {
+				continue
+			}
+
+			if parts[3] == qid {
+				found = true
+				break
+			}
+		}
+	}
 	c.Assert(found, check.Equals, true)
 }

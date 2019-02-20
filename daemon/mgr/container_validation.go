@@ -3,6 +3,7 @@ package mgr
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/daemon/logger/syslog"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/storage/quota"
 
 	"github.com/docker/go-units"
 	"github.com/pkg/errors"
@@ -28,8 +30,9 @@ var (
 	// all: all GPUs will be accessible
 	supportedDrivers = map[string]*struct{}{"compute": nil, "compat32": nil, "graphics": nil, "utility": nil, "video": nil, "display": nil}
 
-	errInvalidDevice = errors.New("invalid nvidia device")
-	errInvalidDriver = errors.New("invalid nvidia driver capability")
+	errInvalidDevice    = errors.New("invalid nvidia device")
+	errInvalidDriver    = errors.New("invalid nvidia driver capability")
+	errInvalidDiskQuota = errors.New("invalid disk quota")
 
 	// commonLogOpts the option which should be validated in common such as mode, max-buffer-size.
 	commonLogOpts = map[string]bool{
@@ -89,6 +92,46 @@ func (mgr *ContainerManager) validateConfig(c *Container, update bool) ([]string
 	}
 
 	return warnings, nil
+}
+
+// validateDiskQuota is used to validate disk quota config
+func (mgr *ContainerManager) validateDiskQuota(config *types.ContainerCreateConfig) error {
+	if config == nil {
+		return errors.Errorf("invalid request, create config is nil")
+	}
+
+	if config.DiskQuota == nil {
+		if quota.IsSetQuotaID(config.QuotaID) {
+			return errors.Wrap(errInvalidDiskQuota, "set QuotaID without DiskQuota")
+		}
+		return nil
+	}
+
+	quotaMaps := config.DiskQuota
+	if len(quotaMaps) > 1 && quota.IsSetQuotaID(config.QuotaID) {
+		return errors.Wrap(errInvalidDiskQuota, `QuotaID only used to set one disk quota, `+
+			`such as: "/=10G" or "/path1=10G" or ".*=10G"`)
+	}
+
+	for key := range quotaMaps {
+		if key == "" {
+			return errors.Wrap(errInvalidDiskQuota, "quota can not be nil string")
+		}
+
+		paths := strings.Split(key, "&")
+		if len(paths) <= 1 {
+			continue
+		}
+
+		for _, path := range paths {
+			if !filepath.IsAbs(path) {
+				return errors.Wrapf(errInvalidDiskQuota,
+					"(%s) is invalid path in set quota(%s)", path, key)
+			}
+		}
+	}
+
+	return nil
 }
 
 // validateRichMode verifies rich mode parameters

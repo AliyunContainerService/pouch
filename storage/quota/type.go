@@ -7,6 +7,7 @@ type RegExp struct {
 	Pattern *regexp.Regexp
 	Path    string
 	Size    string
+	QuotaID uint32
 }
 
 // OverlayMount represents the parameters of overlay mount.
