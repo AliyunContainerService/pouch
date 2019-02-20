@@ -61,7 +61,7 @@ func (suite *PouchRunDNSSuite) TestRunWithBridgeNetwork(c *check.C) {
 	res.Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, cname)
 
-	hostRes := icmd.RunCommand("cat", "/etc/resolv.conf")
+	hostRes := icmd.RunCommand("bash", "-c", "cat /etc/resolv.conf | grep -v 127.0.0.1")
 	hostRes.Assert(c, icmd.Success)
 
 	c.Assert(res.Stdout(), check.Equals, hostRes.Stdout())

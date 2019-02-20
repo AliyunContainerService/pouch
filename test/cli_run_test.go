@@ -236,7 +236,7 @@ func (suite *PouchRunSuite) TestRunWithoutCapability(c *check.C) {
 		Out:      "Operation not permitted",
 	}
 	err := command.PouchRun("run", "--name", name, "--cap-drop", capability,
-		busyboxImage, "chown", "755", "/tmp").Compare(expt)
+		busyboxImage, "chown", "mail:mail", "/tmp").Compare(expt)
 	c.Assert(err, check.IsNil)
 	defer DelContainerForceMultyTime(c, name)
 }

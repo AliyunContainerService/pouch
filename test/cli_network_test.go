@@ -83,7 +83,7 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 		DelContainerForceMultyTime(c, funcname)
 	}
 	{
-		cmd := "ip r |grep default"
+		cmd := "ip r | grep default"
 		// The command output of "ip r | grep default" contains extra "proto static"
 		// on Ubuntu host, which is inconsistent with output in container
 		routeOnHost := icmd.RunCommand("bash", "-c", cmd).Stdout()
@@ -91,12 +91,17 @@ func (suite *PouchNetworkSuite) TestNetworkDefault(c *check.C) {
 			// keep command output consistent between Ubuntu host and container
 			routeOnHost = strings.Replace(routeOnHost, " proto static ", "", -1)
 		}
+		if strings.Contains(routeOnHost, "mtu 1500") {
+			// keep command output consistent between Ubuntu host and container
+			routeOnHost = strings.Replace(routeOnHost, "mtu 1500", "", -1)
+		}
+		routeOnHost = strings.TrimSpace(routeOnHost)
 		// Assign the host network to a container.
 		expct := icmd.Expected{
 			ExitCode: 0,
 			Out:      routeOnHost,
 		}
-		err := command.PouchRun("run", "--name", funcname, "--net", "host", busyboxImage, "ip", "r").Compare(expct)
+		err := command.PouchRun("run", "--name", funcname, "--net", "host", busyboxImage, "sh", "-c", cmd).Compare(expct)
 		c.Assert(err, check.IsNil)
 
 		DelContainerForceMultyTime(c, funcname)
