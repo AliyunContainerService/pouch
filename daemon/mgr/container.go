@@ -416,21 +416,25 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	// set default log driver and validate for logger driver
 	config.HostConfig.LogConfig = mgr.getDefaultLogConfigIfMissing(config.HostConfig.LogConfig)
 
+	// set ReadonlyPaths and MaskedPaths to nil if privileged was set.
+	if config.HostConfig.Privileged {
+		config.HostConfig.ReadonlyPaths = nil
+		config.HostConfig.MaskedPaths = nil
+	}
+
 	container := &Container{
 		State: &types.ContainerState{
 			Status:     types.StatusCreated,
 			StartedAt:  time.Time{}.UTC().Format(utils.TimeLayout),
 			FinishedAt: time.Time{}.UTC().Format(utils.TimeLayout),
 		},
-		ID:            id,
-		Image:         imgID.String(),
-		Name:          name,
-		Config:        &config.ContainerConfig,
-		Created:       time.Now().UTC().Format(utils.TimeLayout),
-		HostConfig:    config.HostConfig,
-		SnapshotID:    snapID,
-		ReadonlyPaths: config.ReadonlyPaths,
-		MaskedPaths:   config.MaskedPaths,
+		ID:         id,
+		Image:      imgID.String(),
+		Name:       name,
+		Config:     &config.ContainerConfig,
+		Created:    time.Now().UTC().Format(utils.TimeLayout),
+		HostConfig: config.HostConfig,
+		SnapshotID: snapID,
 	}
 
 	if _, err := mgr.initContainerIO(container); err != nil {

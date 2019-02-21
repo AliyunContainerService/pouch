@@ -712,8 +712,6 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 			NetPriority:    config.NetPriority,
 			DiskQuota:      resources.GetDiskQuota(),
 			QuotaID:        config.GetQuotaId(),
-			MaskedPaths:    config.GetLinux().GetSecurityContext().GetMaskedPaths(),
-			ReadonlyPaths:  config.GetLinux().GetSecurityContext().GetReadonlyPaths(),
 		},
 		HostConfig: &apitypes.HostConfig{
 			Binds:     generateMountBindings(config.GetMounts()),

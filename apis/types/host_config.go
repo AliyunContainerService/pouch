@@ -91,6 +91,9 @@ type HostConfig struct {
 	// The logging configuration for this container
 	LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
+	// Masks over the provided paths inside the container.
+	MaskedPaths []string `json:"MaskedPaths"`
+
 	// Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.
 	NetworkMode string `json:"NetworkMode,omitempty"`
 
@@ -115,6 +118,9 @@ type HostConfig struct {
 
 	// Allocates a random host port for all of a container's exposed ports.
 	PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
+
+	// Set the provided paths as RO inside the container.
+	ReadonlyPaths []string `json:"ReadonlyPaths"`
 
 	// Mount the container's root filesystem as read only.
 	ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
@@ -206,6 +212,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
+		MaskedPaths []string `json:"MaskedPaths"`
+
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
 		OomScoreAdj int64 `json:"OomScoreAdj,omitempty"`
@@ -217,6 +225,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 		Privileged bool `json:"Privileged"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
+
+		ReadonlyPaths []string `json:"ReadonlyPaths"`
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
@@ -286,6 +296,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 	m.LogConfig = dataAO0.LogConfig
 
+	m.MaskedPaths = dataAO0.MaskedPaths
+
 	m.NetworkMode = dataAO0.NetworkMode
 
 	m.OomScoreAdj = dataAO0.OomScoreAdj
@@ -297,6 +309,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.Privileged = dataAO0.Privileged
 
 	m.PublishAllPorts = dataAO0.PublishAllPorts
+
+	m.ReadonlyPaths = dataAO0.ReadonlyPaths
 
 	m.ReadonlyRootfs = dataAO0.ReadonlyRootfs
 
@@ -377,6 +391,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		LogConfig *LogConfig `json:"LogConfig,omitempty"`
 
+		MaskedPaths []string `json:"MaskedPaths"`
+
 		NetworkMode string `json:"NetworkMode,omitempty"`
 
 		OomScoreAdj int64 `json:"OomScoreAdj,omitempty"`
@@ -388,6 +404,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 		Privileged bool `json:"Privileged"`
 
 		PublishAllPorts bool `json:"PublishAllPorts,omitempty"`
+
+		ReadonlyPaths []string `json:"ReadonlyPaths"`
 
 		ReadonlyRootfs bool `json:"ReadonlyRootfs,omitempty"`
 
@@ -454,6 +472,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 	dataAO0.LogConfig = m.LogConfig
 
+	dataAO0.MaskedPaths = m.MaskedPaths
+
 	dataAO0.NetworkMode = m.NetworkMode
 
 	dataAO0.OomScoreAdj = m.OomScoreAdj
@@ -465,6 +485,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	dataAO0.Privileged = m.Privileged
 
 	dataAO0.PublishAllPorts = m.PublishAllPorts
+
+	dataAO0.ReadonlyPaths = m.ReadonlyPaths
 
 	dataAO0.ReadonlyRootfs = m.ReadonlyRootfs
 
