@@ -10,7 +10,6 @@ import (
 	"github.com/alibaba/pouch/pkg/grpc/interceptor"
 	"github.com/alibaba/pouch/pkg/netutils"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -29,7 +28,7 @@ func NewService(cfg *config.Config, criMgr CriMgr) (*Service, error) {
 		config: cfg,
 		server: grpc.NewServer(
 			grpc.StreamInterceptor(metrics.GRPCMetrics.StreamServerInterceptor()),
-			grpc_middleware.WithUnaryServerChain(
+			interceptor.WithUnaryServerChain(
 				metrics.GRPCMetrics.UnaryServerInterceptor(),
 				interceptor.PayloadUnaryServerInterceptor(logEntry, criLogLevelDecider),
 			),
