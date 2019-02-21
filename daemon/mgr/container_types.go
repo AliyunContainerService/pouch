@@ -269,12 +269,6 @@ type Container struct {
 
 	// SnapshotID specify id of the snapshot that container using.
 	SnapshotID string
-
-	// Masks over the provided paths inside the container.
-	MaskedPaths []string `json:"MaskedPaths,omitempty"`
-
-	// Set the provided paths as RO inside the container.
-	ReadonlyPaths []string `json:"ReadonlyPaths，omitempty"`
 }
 
 // Key returns container's id.

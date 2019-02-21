@@ -69,21 +69,18 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 	// setup something depend on privileged authority
 	if !c.HostConfig.Privileged {
 		s.Linux.MountLabel = c.MountLabel
+
+		// if MaskedPaths or ReadonlyPaths are set, we will use them, otherwise using the default values.
+		if len(c.HostConfig.MaskedPaths) > 0 {
+			s.Linux.MaskedPaths = c.HostConfig.MaskedPaths
+		}
+		if len(c.HostConfig.ReadonlyPaths) > 0 {
+			s.Linux.ReadonlyPaths = c.HostConfig.ReadonlyPaths
+		}
 	} else {
-		s.Linux.ReadonlyPaths = nil
+		// MaskedPaths and ReadonlyPaths have default values, we should reset them when privileged be set
 		s.Linux.MaskedPaths = nil
-	}
-
-	// Apply masked paths if specified.
-	if c.MaskedPaths != nil {
-		s.Linux.MaskedPaths = make([]string, len(c.MaskedPaths))
-		copy(s.Linux.MaskedPaths, c.MaskedPaths)
-	}
-
-	// Apply readonly paths if specified.
-	if c.ReadonlyPaths != nil {
-		s.Linux.ReadonlyPaths = make([]string, len(c.ReadonlyPaths))
-		copy(s.Linux.ReadonlyPaths, c.ReadonlyPaths)
+		s.Linux.ReadonlyPaths = nil
 	}
 
 	// start to setup linux seccomp
