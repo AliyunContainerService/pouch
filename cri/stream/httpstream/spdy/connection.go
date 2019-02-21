@@ -21,17 +21,6 @@ type connection struct {
 	newStreamHandler httpstream.NewStreamHandler
 }
 
-// NewClientConnection creates a new SPDY client connection.
-func NewClientConnection(conn net.Conn) (httpstream.Connection, error) {
-	spdyConn, err := spdystream.NewConnection(conn, false)
-	if err != nil {
-		defer conn.Close()
-		return nil, err
-	}
-
-	return newConnection(spdyConn, httpstream.NoOpNewStreamHandler), nil
-}
-
 // NewServerConnection creates a new SPDY server connection. newStreamHandler
 // will be invoked when the server receives a newly created stream from the
 // client.
