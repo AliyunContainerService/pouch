@@ -1,3 +1,19 @@
+/*
+   Copyright The containerd Authors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package runtime
 
 import (
@@ -48,14 +64,22 @@ func (l *TaskList) Get(ctx context.Context, id string) (Task, error) {
 }
 
 // GetAll tasks under a namespace
-func (l *TaskList) GetAll(ctx context.Context) ([]Task, error) {
+func (l *TaskList) GetAll(ctx context.Context, noNS bool) ([]Task, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	var o []Task
+	if noNS {
+		for ns := range l.tasks {
+			for _, t := range l.tasks[ns] {
+				o = append(o, t)
+			}
+		}
+		return o, nil
+	}
 	namespace, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var o []Task
 	tasks, ok := l.tasks[namespace]
 	if !ok {
 		return o, nil

@@ -1,9 +1,11 @@
-![banner](/docs/images/containerd-dark.png?raw=true)
+![containerd banner](https://raw.githubusercontent.com/cncf/artwork/master/containerd/horizontal/color/containerd-horizontal-color.png)
 
 [![GoDoc](https://godoc.org/github.com/containerd/containerd?status.svg)](https://godoc.org/github.com/containerd/containerd)
 [![Build Status](https://travis-ci.org/containerd/containerd.svg?branch=master)](https://travis-ci.org/containerd/containerd)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/containerd/containerd?branch=master&svg=true)](https://ci.appveyor.com/project/mlaventure/containerd-3g73f?branch=master)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fcontainerd%2Fcontainerd.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Fcontainerd%2Fcontainerd?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/containerd/containerd)](https://goreportcard.com/report/github.com/containerd/containerd)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1271/badge)](https://bestpractices.coreinfrastructure.org/projects/1271)
 
 containerd is an industry-standard container runtime with an emphasis on simplicity, robustness and portability. It is available as a daemon for Linux and Windows, which can manage the complete container lifecycle of its host system: image transfer and storage, container execution and supervision, low-level storage and network attachments, etc.
 
@@ -13,7 +15,7 @@ containerd is designed to be embedded into a larger system, rather than being us
 
 ## Getting Started
 
-See our documentation on [containerd.io](containerd.io):
+See our documentation on [containerd.io](https://containerd.io):
 * [for ops and admins](docs/ops.md)
 * [namespaces](docs/namespaces.md)
 * [client options](docs/client-opts.md)
@@ -165,7 +167,7 @@ If you have [criu](https://criu.org/Main_Page) installed on your machine you can
 
 ```go
 // checkpoint the task then push it to a registry
-checkpoint, err := task.Checkpoint(context, containerd.WithExit)
+checkpoint, err := task.Checkpoint(context)
 
 err := client.Push(context, "myregistry/checkpoints/redis:master", checkpoint)
 
@@ -182,6 +184,28 @@ defer task.Delete(context)
 
 err := task.Start(context)
 ```
+
+### Snapshot Plugins
+
+In addition to the built-in Snapshot plugins in containerd, additional external
+plugins can be configured using GRPC. An external plugin is made available using
+the configured name and appears as a plugin alongside the built-in ones.
+
+To add an external snapshot plugin, add the plugin to containerd's config file
+(by default at `/etc/containerd/config.toml`). The string following
+`proxy_plugin.` will be used as the name of the snapshotter and the address
+should refer to a socket with a GRPC listener serving containerd's Snapshot
+GRPC API. Remember to restart containerd for any configuration changes to take
+effect.
+
+```
+[proxy_plugins]
+  [proxy_plugins.customsnapshot]
+    type = "snapshot"
+    address =  "/var/run/mysnapshotter.sock"
+```
+
+See [PLUGINS.md](PLUGINS.md) for how to create plugins
 
 ### Releases and API Stability
 
@@ -200,7 +224,7 @@ This will be the best place to discuss design and implementation.
 
 For sync communication we have a community slack with a #containerd channel that everyone is welcome to join and chat about development.
 
-**Slack:** https://dockr.ly/community
+**Slack:** https://join.slack.com/t/dockercommunity/shared_invite/enQtNDM4NjAwNDMyOTUwLWZlMDZmYWRjZjk4Zjc5ZGQ5NWZkOWI1Yjk2NGE3ZWVlYjYxM2VhYjczOWIyZDFhZTE3NTUwZWQzMjhmNGYyZTg
 
 ### Reporting security issues
 
@@ -210,6 +234,18 @@ __If you are reporting a security issue, please reach out discreetly at security
 
 The containerd codebase is released under the [Apache 2.0 license](LICENSE.code).
 The README.md file, and files in the "docs" folder are licensed under the
-Creative Commons Attribution 4.0 International License under the terms and
-conditions set forth in the file "[LICENSE.docs](LICENSE.docs)". You may obtain a duplicate
-copy of the same license, titled CC-BY-4.0, at http://creativecommons.org/licenses/by/4.0/.
+Creative Commons Attribution 4.0 International License. You may obtain a
+copy of the license, titled CC-BY-4.0, at http://creativecommons.org/licenses/by/4.0/.
+
+## Project details
+
+**containerd** is the primary open source project within the broader containerd GitHub repository.
+However, all projects within the repo have common maintainership, governance, and contributing
+guidelines which are stored in a `project` repository commonly for all containerd projects.
+
+Please find all these core project documents, including the:
+ * [Project governance](https://github.com/containerd/project/blob/master/GOVERNANCE.md),
+ * [Maintainers](https://github.com/containerd/project/blob/master/MAINTAINERS),
+ * and [Contributing guidelines](https://github.com/containerd/project/blob/master/CONTRIBUTING.md)
+
+information in our [`containerd/project`](https://github.com/containerd/project) repository.

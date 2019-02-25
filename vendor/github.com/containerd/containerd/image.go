@@ -1,3 +1,19 @@
+/*
+   Copyright The containerd Authors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package containerd
 
 import (
@@ -21,6 +37,8 @@ type Image interface {
 	Name() string
 	// Target descriptor for the image content
 	Target() ocispec.Descriptor
+	// Labels of the image
+	Labels() map[string]string
 	// Unpack unpacks the image's content into a snapshot
 	Unpack(context.Context, string) error
 	// RootFS returns the unpacked diffids that make up images rootfs.
@@ -37,10 +55,29 @@ type Image interface {
 
 var _ = (Image)(&image{})
 
+// NewImage returns a client image object from the metadata image
+func NewImage(client *Client, i images.Image) Image {
+	return &image{
+		client:   client,
+		i:        i,
+		platform: platforms.Default(),
+	}
+}
+
+// NewImageWithPlatform returns a client image object from the metadata image
+func NewImageWithPlatform(client *Client, i images.Image, platform platforms.MatchComparer) Image {
+	return &image{
+		client:   client,
+		i:        i,
+		platform: platform,
+	}
+}
+
 type image struct {
 	client *Client
 
-	i images.Image
+	i        images.Image
+	platform platforms.MatchComparer
 }
 
 func (i *image) Name() string {
@@ -51,26 +88,30 @@ func (i *image) Target() ocispec.Descriptor {
 	return i.i.Target
 }
 
+func (i *image) Labels() map[string]string {
+	return i.i.Labels
+}
+
 func (i *image) RootFS(ctx context.Context) ([]digest.Digest, error) {
 	provider := i.client.ContentStore()
-	return i.i.RootFS(ctx, provider, platforms.Default())
+	return i.i.RootFS(ctx, provider, i.platform)
 }
 
 func (i *image) Size(ctx context.Context) (int64, error) {
 	provider := i.client.ContentStore()
-	return i.i.Size(ctx, provider, platforms.Default())
+	return i.i.Size(ctx, provider, i.platform)
 }
 
 func (i *image) Config(ctx context.Context) (ocispec.Descriptor, error) {
 	provider := i.client.ContentStore()
-	return i.i.Config(ctx, provider, platforms.Default())
+	return i.i.Config(ctx, provider, i.platform)
 }
 
 func (i *image) IsUnpacked(ctx context.Context, snapshotterName string) (bool, error) {
 	sn := i.client.SnapshotService(snapshotterName)
 	cs := i.client.ContentStore()
 
-	diffs, err := i.i.RootFS(ctx, cs, platforms.Default())
+	diffs, err := i.i.RootFS(ctx, cs, i.platform)
 	if err != nil {
 		return false, err
 	}
@@ -91,9 +132,9 @@ func (i *image) Unpack(ctx context.Context, snapshotterName string) error {
 	if err != nil {
 		return err
 	}
-	defer done()
+	defer done(ctx)
 
-	layers, err := i.getLayers(ctx, platforms.Default())
+	layers, err := i.getLayers(ctx, i.platform)
 	if err != nil {
 		return err
 	}
@@ -129,29 +170,25 @@ func (i *image) Unpack(ctx context.Context, snapshotterName string) error {
 		chain = append(chain, layer.Diff.Digest)
 	}
 
-	if unpacked {
-		desc, err := i.i.Config(ctx, cs, platforms.Default())
-		if err != nil {
-			return err
-		}
-
-		rootfs := identity.ChainID(chain).String()
-
-		cinfo := content.Info{
-			Digest: desc.Digest,
-			Labels: map[string]string{
-				fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", snapshotterName): rootfs,
-			},
-		}
-		if _, err := cs.Update(ctx, cinfo, fmt.Sprintf("labels.containerd.io/gc.ref.snapshot.%s", snapshotterName)); err != nil {
-			return err
-		}
+	desc, err := i.i.Config(ctx, cs, i.platform)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	rootfs := identity.ChainID(chain).String()
+
+	cinfo := content.Info{
+		Digest: desc.Digest,
+		Labels: map[string]string{
+			fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", snapshotterName): rootfs,
+		},
+	}
+
+	_, err = cs.Update(ctx, cinfo, fmt.Sprintf("labels.containerd.io/gc.ref.snapshot.%s", snapshotterName))
+	return err
 }
 
-func (i *image) getLayers(ctx context.Context, platform string) ([]rootfs.Layer, error) {
+func (i *image) getLayers(ctx context.Context, platform platforms.MatchComparer) ([]rootfs.Layer, error) {
 	cs := i.client.ContentStore()
 
 	manifest, err := images.Manifest(ctx, cs, i.i.Target, platform)

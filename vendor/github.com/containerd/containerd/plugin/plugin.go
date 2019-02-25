@@ -1,3 +1,19 @@
+/*
+   Copyright The containerd Authors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package plugin
 
 import (
@@ -26,10 +42,7 @@ var (
 
 // IsSkipPlugin returns true if the error is skipping the plugin
 func IsSkipPlugin(err error) bool {
-	if errors.Cause(err) == ErrSkipPlugin {
-		return true
-	}
-	return false
+	return errors.Cause(err) == ErrSkipPlugin
 }
 
 // Type is the type of the plugin
@@ -38,10 +51,14 @@ type Type string
 func (t Type) String() string { return string(t) }
 
 const (
-	// AllPlugins declares that the plugin should be initialized after all others.
-	AllPlugins Type = "*"
+	// InternalPlugin implements an internal plugin to containerd
+	InternalPlugin Type = "io.containerd.internal.v1"
 	// RuntimePlugin implements a runtime
 	RuntimePlugin Type = "io.containerd.runtime.v1"
+	// RuntimePluginV2 implements a runtime v2
+	RuntimePluginV2 Type = "io.containerd.runtime.v2"
+	// ServicePlugin implements a internal service
+	ServicePlugin Type = "io.containerd.service.v1"
 	// GRPCPlugin implements a grpc service
 	GRPCPlugin Type = "io.containerd.grpc.v1"
 	// SnapshotPlugin implements a snapshotter
@@ -71,7 +88,7 @@ type Registration struct {
 
 	// InitFn is called when initializing a plugin. The registration and
 	// context are passed in. The init function may modify the registration to
-	// add exports, capabilites and platform support declarations.
+	// add exports, capabilities and platform support declarations.
 	InitFn func(*InitContext) (interface{}, error)
 }
 
@@ -140,10 +157,19 @@ func Register(r *Registration) {
 	register.r = append(register.r, r)
 }
 
-// Graph returns an ordered list of registered plugins for initialization
-func Graph() (ordered []*Registration) {
+// Graph returns an ordered list of registered plugins for initialization.
+// Plugins in disableList specified by id will be disabled.
+func Graph(disableList []string) (ordered []*Registration) {
 	register.RLock()
 	defer register.RUnlock()
+	for _, d := range disableList {
+		for i, r := range register.r {
+			if r.ID == d {
+				register.r = append(register.r[:i], register.r[i+1:]...)
+				break
+			}
+		}
+	}
 
 	added := map[*Registration]bool{}
 	for _, r := range register.r {
