@@ -55,6 +55,7 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Set label for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 	flagSet.StringSliceVar(&uc.diskQuota, "disk-quota", nil, "Update disk quota for container(/=10g)")
+	flagSet.StringSliceVar(&uc.specAnnotation, "annotation", nil, "Update annotation for runtime spec")
 }
 
 // updateRun is the entry of update command.
@@ -97,12 +98,18 @@ func (uc *UpdateCommand) updateRun(args []string) error {
 		return err
 	}
 
+	annotation, err := opts.ParseAnnotation(uc.specAnnotation)
+	if err != nil {
+		return err
+	}
+
 	updateConfig := &types.UpdateConfig{
-		Env:           uc.env,
-		Label:         uc.labels,
-		RestartPolicy: restartPolicy,
-		Resources:     resource,
-		DiskQuota:     diskQuota,
+		Env:            uc.env,
+		Label:          uc.labels,
+		RestartPolicy:  restartPolicy,
+		Resources:      resource,
+		DiskQuota:      diskQuota,
+		SpecAnnotation: annotation,
 	}
 
 	apiClient := uc.cli.Client()

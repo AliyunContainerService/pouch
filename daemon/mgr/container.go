@@ -1163,6 +1163,12 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 		}
 	}
 
+	c.Lock()
+	if len(config.SpecAnnotation) > 0 {
+		c.Config.SpecAnnotation = mergeAnnotation(config.SpecAnnotation, c.Config.SpecAnnotation)
+	}
+	c.Unlock()
+
 	if mgr.containerPlugin != nil && len(config.Env) > 0 {
 		if err = mgr.containerPlugin.PostUpdate(c.BaseFS, c.Config.Env); err != nil {
 			return err
