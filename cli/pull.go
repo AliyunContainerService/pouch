@@ -18,7 +18,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/pkg/reference"
 
-	"github.com/containerd/containerd/progress"
+	"github.com/containerd/containerd/pkg/progress"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )

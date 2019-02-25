@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly CONTAINERD_VERSION="1.0.3"
+readonly CONTAINERD_VERSION="v1.2.4"
 
 # containerd::check_version checks the command and the version.
 containerd::check_version() {
@@ -23,20 +23,22 @@ containerd::check_version() {
   echo true
 }
 
-# containerd::install downloads the binary from release url.
+# containerd::install downloads the code and builds it.
 containerd::install() {
-  local url target tmpdir
+  local tmpdir pkgpath
 
-  target="containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz"
-  url="https://github.com/containerd/containerd/releases/download"
-  url="${url}/v${CONTAINERD_VERSION}/${target}"
-
+  # create gopath
   tmpdir="$(mktemp -d /tmp/containerd-install-XXXXXX)"
   trap 'rm -rf /tmp/containerd-install-*' EXIT
 
-  wget --quiet "${url}" -P "${tmpdir}"
-  tar xf "${tmpdir}/${target}" -C "${tmpdir}"
-  cp -f "${tmpdir}"/bin/* /usr/local/bin/
+  pkgpath="$tmpdir/src/github.com/containerd/containerd"
+  mkdir -p "${pkgpath}"
+
+  git clone -b "${CONTAINERD_VERSION}" https://github.com/containerd/containerd "${pkgpath}"
+  cd "${pkgpath}"
+
+  GOPATH=$tmpdir make BUILDTAGS=no_cri # build without cri plugin
+  make install
 }
 
 main() {

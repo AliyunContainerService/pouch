@@ -38,7 +38,7 @@ func (c *Client) CreateSnapshot(ctx context.Context, id, ref string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
-	ctx = leases.WithLease(ctx, wrapperCli.lease.ID())
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID)
 
 	image, err := wrapperCli.client.ImageService().Get(ctx, ref)
 	if err != nil {

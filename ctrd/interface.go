@@ -10,7 +10,6 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 
 	"github.com/containerd/containerd"
-	eventsapi "github.com/containerd/containerd/api/services/events/v1"
 	containerdtypes "github.com/containerd/containerd/api/types"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
@@ -66,8 +65,6 @@ type ContainerAPIClient interface {
 	SetExitHooks(hooks ...func(string, *Message, func() error) error)
 	// SetExecExitHooks specified the handlers of exec process exit.
 	SetExecExitHooks(hooks ...func(string, *Message) error)
-	// Events subscribe containerd events through an event subscribe client.
-	Events(ctx context.Context, ef ...string) (eventsapi.Events_SubscribeClient, error)
 	// SetEventsHooks specified the methods to handle the containerd events.
 	SetEventsHooks(hooks ...func(context.Context, string, string, map[string]string) error)
 }
@@ -85,7 +82,7 @@ type ImageAPIClient interface {
 	// RemoveImage removes the image by the given reference.
 	RemoveImage(ctx context.Context, ref string) error
 	// ImportImage creates a set of images by tarstream.
-	ImportImage(ctx context.Context, importer ctrdmetaimages.Importer, reader io.Reader) ([]containerd.Image, error)
+	ImportImage(ctx context.Context, reader io.Reader, opts ...containerd.ImportOpt) ([]containerd.Image, error)
 	// SaveImage saves image to tarstream
 	SaveImage(ctx context.Context, exporter ctrdmetaimages.Exporter, ref string) (io.ReadCloser, error)
 	// Commit commits an image from a container.
