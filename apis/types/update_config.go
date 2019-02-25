@@ -28,6 +28,9 @@ type UpdateConfig struct {
 
 	// restart policy
 	RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+	// update specAnnotation for container
+	SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
 }
 
 // UnmarshalJSON unmarshals this object from a JSON structure
@@ -48,6 +51,8 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 		Label []string `json:"Label"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+		SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
 	}
 	if err := swag.ReadJSON(raw, &dataAO1); err != nil {
 		return err
@@ -60,6 +65,8 @@ func (m *UpdateConfig) UnmarshalJSON(raw []byte) error {
 	m.Label = dataAO1.Label
 
 	m.RestartPolicy = dataAO1.RestartPolicy
+
+	m.SpecAnnotation = dataAO1.SpecAnnotation
 
 	return nil
 }
@@ -82,6 +89,8 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 		Label []string `json:"Label"`
 
 		RestartPolicy *RestartPolicy `json:"RestartPolicy,omitempty"`
+
+		SpecAnnotation map[string]string `json:"SpecAnnotation,omitempty"`
 	}
 
 	dataAO1.DiskQuota = m.DiskQuota
@@ -91,6 +100,8 @@ func (m UpdateConfig) MarshalJSON() ([]byte, error) {
 	dataAO1.Label = m.Label
 
 	dataAO1.RestartPolicy = m.RestartPolicy
+
+	dataAO1.SpecAnnotation = m.SpecAnnotation
 
 	jsonDataAO1, errAO1 := swag.WriteJSON(dataAO1)
 	if errAO1 != nil {

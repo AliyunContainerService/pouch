@@ -539,3 +539,40 @@ func (suite *PouchUpdateSuite) TestUpdateBlkIOLimit(c *check.C) {
 	out := res.Stdout()
 	c.Assert(out, check.Equals, Expected)
 }
+
+func checkContainerAnnotation(c *check.C, cName string, annotationKey string, expect string) {
+	output := command.PouchRun("inspect", cName).Stdout()
+	result := []types.ContainerJSON{}
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		c.Errorf("failed to decode inspect output: %v", err)
+	}
+
+	annotations := result[0].Config.SpecAnnotation
+	v, found := annotations[annotationKey]
+	c.Assert(found, check.Equals, true)
+	c.Assert(v, check.Equals, expect)
+}
+
+// TestUpdateAnnotation is to verity the correctness of update the annotation
+func (suite *PouchUpdateSuite) TestUpdateAnnotation(c *check.C) {
+	cname := "TestUpdateAnnotation1"
+	annotation1 := "key1=value1"
+	annotation2 := "key2=value2"
+	command.PouchRun("run", "-d", "--name", cname, "--annotation", annotation1, "--annotation", annotation2, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	annotation1Update := "key1=value1.new"
+	annotation2Update := "key2=value2.new"
+
+	command.PouchRun("update", "--annotation", annotation1Update, cname).Assert(c, icmd.Success)
+	checkContainerAnnotation(c, cname, "key1", "value1.new")
+	checkContainerAnnotation(c, cname, "key2", "value2")
+
+	command.PouchRun("update", "--annotation", annotation2Update, cname).Assert(c, icmd.Success)
+	checkContainerAnnotation(c, cname, "key1", "value1.new")
+	checkContainerAnnotation(c, cname, "key2", "value2.new")
+
+	command.PouchRun("restart", cname).Assert(c, icmd.Success)
+	checkContainerAnnotation(c, cname, "key1", "value1.new")
+	checkContainerAnnotation(c, cname, "key2", "value2.new")
+}

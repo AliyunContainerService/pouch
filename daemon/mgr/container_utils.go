@@ -310,3 +310,19 @@ func mergeEnvSlice(newEnv, oldEnv []string) ([]string, error) {
 
 	return newEnvSlice, nil
 }
+
+func mergeAnnotation(newAnnotation, oldAnnotation map[string]string) map[string]string {
+	if len(newAnnotation) == 0 {
+		return oldAnnotation
+	}
+
+	if len(oldAnnotation) == 0 {
+		oldAnnotation = make(map[string]string)
+	}
+
+	for k, v := range newAnnotation {
+		oldAnnotation[k] = v
+	}
+
+	return oldAnnotation
+}
