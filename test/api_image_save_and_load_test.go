@@ -25,12 +25,12 @@ func init() {
 func (suite *APIImageSaveLoadSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	PullImage(c, helloworldImage)
+	PullImage(c, busyboxImage125)
 }
 
 // TestImageSaveLoadOk tests saving and loading images are OK.
 func (suite *APIImageSaveLoadSuite) TestImageSaveLoadOk(c *check.C) {
-	before, err := request.Get("/images/" + helloworldImage + "/json")
+	before, err := request.Get("/images/" + busyboxImage125 + "/json")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, before, 200)
 	gotBefore := types.ImageInfo{}
@@ -38,7 +38,7 @@ func (suite *APIImageSaveLoadSuite) TestImageSaveLoadOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	q := url.Values{}
-	q.Set("name", helloworldImage)
+	q.Set("name", busyboxImage125)
 	query := request.WithQuery(q)
 	resp, err := request.Get("/images/save", query)
 	c.Assert(err, check.IsNil)
@@ -50,7 +50,7 @@ func (suite *APIImageSaveLoadSuite) TestImageSaveLoadOk(c *check.C) {
 	}
 	defer os.RemoveAll(dir)
 
-	tmpFile := filepath.Join(dir, "helloworld.tar")
+	tmpFile := filepath.Join(dir, "busyboxImage.tar")
 	f, err := os.Create(tmpFile)
 	if err != nil {
 		c.Errorf("failed to create file: %v", err)
@@ -65,7 +65,7 @@ func (suite *APIImageSaveLoadSuite) TestImageSaveLoadOk(c *check.C) {
 		c.Errorf("failed to load file's data: %v", err)
 	}
 
-	loadImageName := "load-helloworld"
+	loadImageName := "load-busyboxImage"
 	q = url.Values{}
 	q.Set("name", loadImageName)
 
@@ -77,10 +77,10 @@ func (suite *APIImageSaveLoadSuite) TestImageSaveLoadOk(c *check.C) {
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 200)
 
-	after, err := request.Get("/images/" + loadImageName + ":" + environment.HelloworldTag + "/json")
+	after, err := request.Get("/images/" + loadImageName + ":" + environment.Busybox125Tag + "/json")
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, after, 200)
-	defer request.Delete("/images/" + loadImageName + ":" + environment.HelloworldTag)
+	defer request.Delete("/images/" + loadImageName + ":" + environment.Busybox125Tag)
 
 	gotAfter := types.ImageInfo{}
 	err = request.DecodeBody(&gotAfter, after.Body)

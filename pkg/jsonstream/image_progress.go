@@ -3,7 +3,7 @@ package jsonstream
 import (
 	"fmt"
 
-	"github.com/containerd/containerd/progress"
+	"github.com/containerd/containerd/pkg/progress"
 )
 
 const (

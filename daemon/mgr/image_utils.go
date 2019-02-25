@@ -16,6 +16,8 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+var legacyDockerConfigMediaType = "application/octet-stream"
+
 // containerdImageToOciImage returns the oci image spec.
 func containerdImageToOciImage(ctx context.Context, img containerd.Image) (ocispec.Image, error) {
 	var ociImage ocispec.Image
@@ -25,9 +27,16 @@ func containerdImageToOciImage(ctx context.Context, img containerd.Image) (ocisp
 		return ocispec.Image{}, err
 	}
 
+	// NOTE(fuweid): There is config content with legacy media type in
+	// content storage. In order to compatible with existing image,
+	// we should support it.
+	//
+	// more information is here: https://github.com/containerd/containerd/pull/2814
 	switch cfg.MediaType {
-	case ocispec.MediaTypeImageConfig, images.MediaTypeDockerSchema2Config:
-		data, err := content.ReadBlob(ctx, img.ContentStore(), cfg.Digest)
+	case ocispec.MediaTypeImageConfig, images.MediaTypeDockerSchema2Config,
+		legacyDockerConfigMediaType:
+
+		data, err := content.ReadBlob(ctx, img.ContentStore(), cfg)
 		if err != nil {
 			return ocispec.Image{}, err
 		}

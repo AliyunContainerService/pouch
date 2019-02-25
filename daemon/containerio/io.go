@@ -184,7 +184,7 @@ func (ctrio *IO) Close() error {
 }
 
 // InitContainerIO will start logger and coping data from fifo.
-func (ctrio *IO) InitContainerIO(dio *DirectIO) (cio.IO, error) {
+func (ctrio *IO) InitContainerIO(dio *cio.DirectIO) (cio.IO, error) {
 	if err := ctrio.startLogging(); err != nil {
 		return nil, err
 	}

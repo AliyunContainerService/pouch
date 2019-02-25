@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/multierror"
 	"github.com/alibaba/pouch/pkg/reference"
 
-	ociimage "github.com/containerd/containerd/images/oci"
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/images/archive"
 	pkgerrors "github.com/pkg/errors"
 )
 
@@ -32,14 +32,7 @@ func (mgr *ImageManager) LoadImage(ctx context.Context, imageName string, tarstr
 		return fmt.Errorf("the image name should not contains any digest or tag information")
 	}
 
-	importer := &ociimage.V1Importer{
-		ImageName: imageName,
-	}
-
-	// before image is unpacked, call WithImageUnpack
-	ctx = ctrd.WithImageUnpack(ctx)
-
-	imgs, err := mgr.client.ImportImage(ctx, importer, tarstream)
+	imgs, err := mgr.client.ImportImage(ctx, tarstream, containerd.WithImageRefTranslator(archive.FilterRefPrefix(imageName)))
 	if err != nil {
 		return pkgerrors.Wrap(err, "failed to import image into containerd by tarstream")
 	}

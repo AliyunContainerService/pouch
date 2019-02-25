@@ -81,7 +81,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create lease for commit")
 	}
-	defer done()
+	defer done(ctx)
 
 	var (
 		sn     = client.SnapshotService(CurrentSnapshotterName(ctx))
@@ -188,7 +188,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 
 	// write manifest content
 	ref := mfstDigest.String()
-	if err := content.WriteBlob(ctx, cs, ref, bytes.NewReader(mfstJSON), mfstDesc.Size, mfstDesc.Digest, content.WithLabels(labels)); err != nil {
+	if err := content.WriteBlob(ctx, cs, ref, bytes.NewReader(mfstJSON), mfstDesc, content.WithLabels(labels)); err != nil {
 		return "", errors.Wrapf(err, "error writing manifest blob %s", mfstDigest)
 	}
 
@@ -197,7 +197,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	labelOpt := content.WithLabels(map[string]string{
 		fmt.Sprintf("containerd.io/gc.ref.snapshot.%s", CurrentSnapshotterName(ctx)): rootfsID,
 	})
-	if err := content.WriteBlob(ctx, cs, ref, bytes.NewReader(imgJSON), configDesc.Size, configDesc.Digest, labelOpt); err != nil {
+	if err := content.WriteBlob(ctx, cs, ref, bytes.NewReader(imgJSON), configDesc, labelOpt); err != nil {
 		return "", errors.Wrap(err, "error writing config blob")
 	}
 
@@ -206,8 +206,9 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 }
 
 // export a new layer from a container
-func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, differ diff.Differ) (ocispec.Descriptor, digest.Digest, error) {
-	rwDesc, err := rootfs.Diff(ctx, name, sn, differ)
+func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, comparer diff.Comparer) (ocispec.Descriptor, digest.Digest, error) {
+	// export new layer
+	rwDesc, err := rootfs.CreateDiff(ctx, name, sn, comparer)
 	if err != nil {
 		return ocispec.Descriptor{}, digest.Digest(""), fmt.Errorf("failed to diff: %s", err)
 	}
@@ -264,7 +265,7 @@ func newChildImage(ctx context.Context, config *CommitConfig, diffID digest.Dige
 }
 
 // create a new snapshot for exported layer
-func newSnapshot(ctx context.Context, name string, pImg ocispec.Image, sn snapshots.Snapshotter, differ diff.Differ, layer ocispec.Descriptor) error {
+func newSnapshot(ctx context.Context, name string, pImg ocispec.Image, sn snapshots.Snapshotter, differ diff.Applier, layer ocispec.Descriptor) error {
 	var (
 		key    = randomid.Generate()
 		parent = identity.ChainID(pImg.RootFS.DiffIDs).String()
