@@ -471,52 +471,9 @@ func (mgr *ContainerManager) setMountTab(ctx context.Context, c *Container) erro
 	return nil
 }
 
-func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mounted bool) error {
-	var globalQuotaID uint32
-
-	if quota.IsSetQuotaID(c.Config.QuotaID) {
-		id, err := strconv.Atoi(c.Config.QuotaID)
-		if err != nil {
-			return errors.Wrapf(err, "invalid argument, QuotaID(%s)", c.Config.QuotaID)
-		}
-
-		// if QuotaID is < 0, it means pouchd alloc a unique quota id.
-		if id < 0 {
-			globalQuotaID, err = quota.GetNextQuotaID()
-			if err != nil {
-				return errors.Wrap(err, "failed to get next quota id")
-			}
-
-			// update QuotaID
-			c.Config.QuotaID = strconv.Itoa(int(globalQuotaID))
-		} else {
-			globalQuotaID = uint32(id)
-		}
-	}
-
-	// get default quota
-	quotas := c.Config.DiskQuota
-	defaultQuota := quota.GetDefaultQuota(quotas)
-
-	// parse disk quota regexp
-	var res []*quota.RegExp
-	for key, size := range quotas {
-		var err error
-		id := globalQuotaID
-		if id == 0 {
-			id, err = quota.GetNextQuotaID()
-			if err != nil {
-				return errors.Wrap(err, "failed to get next quota id")
-			}
-		}
-		paths := strings.Split(key, "&")
-		for _, path := range paths {
-			re := regexp.MustCompile(path)
-			res = append(res, &quota.RegExp{Pattern: re, Path: path, Size: size, QuotaID: id})
-		}
-	}
-
+func (mgr *ContainerManager) getDiskQuotaMountPoints(ctx context.Context, c *Container, mounted bool) ([]*types.MountPoint, error) {
 	var mounts []*types.MountPoint
+
 	for _, mp := range c.Mounts {
 		// skip volume mount or replace mode mount
 		if mp.Replace != "" || mp.Source == "" || mp.Destination == "" {
@@ -550,53 +507,139 @@ func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mou
 	// add rootfs mountpoint
 	rootfs, err := mgr.getRootfs(ctx, c, mounted)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get rootfs")
+		return nil, errors.Wrapf(err, "failed to get rootfs")
 	}
 	mounts = append(mounts, &types.MountPoint{
 		Source:      rootfs,
 		Destination: "/",
 	})
 
-	for _, mp := range mounts {
-		var (
-			size string
-			id   uint32
-		)
+	return mounts, nil
+}
 
-		for _, re := range res {
-			findStr := re.Pattern.FindString(mp.Destination)
-			if findStr == mp.Destination {
-				size = re.Size
-				id = re.QuotaID
-				if re.Path != ".*" {
-					break
+func checkDupQuotaMap(qms []*quota.QMap, qm *quota.QMap) *quota.QMap {
+	for _, prev := range qms {
+		if qm.Expression != "" && qm.Expression == prev.Expression {
+			return prev
+		}
+	}
+	return nil
+}
+
+func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mounted bool) error {
+	var (
+		err           error
+		globalQuotaID uint32
+	)
+
+	// get default quota
+	quotas := c.Config.DiskQuota
+
+	if quota.IsSetQuotaID(c.Config.QuotaID) {
+		id, err := strconv.Atoi(c.Config.QuotaID)
+		if err != nil {
+			return errors.Wrapf(err, "invalid argument, QuotaID(%s)", c.Config.QuotaID)
+		}
+
+		// if QuotaID is < 0, it means pouchd alloc a unique quota id.
+		if id < 0 {
+			globalQuotaID, err = quota.GetNextQuotaID()
+			if err != nil {
+				return errors.Wrap(err, "failed to get next quota id")
+			}
+
+			// update QuotaID
+			c.Config.QuotaID = strconv.Itoa(int(globalQuotaID))
+		} else {
+			globalQuotaID = uint32(id)
+		}
+	}
+
+	// get mount points that can set disk quota.
+	mounts, err := mgr.getDiskQuotaMountPoints(ctx, c, mounted)
+	if err != nil {
+		return errors.Wrap(err, "failed to get mount point that can set disk quota")
+	}
+
+	var qms []*quota.QMap
+	for _, mp := range mounts {
+		// get quota size
+		var (
+			found bool
+			qm    *quota.QMap
+		)
+		for exp, size := range quotas {
+			if strings.Contains(exp, "&") {
+				for _, p := range strings.Split(exp, "&") {
+					if p == mp.Destination {
+						found = true
+						qm = &quota.QMap{
+							Source:      mp.Source,
+							Destination: mp.Destination,
+							Expression:  exp,
+							Size:        size,
+						}
+						break
+					}
+				}
+			} else {
+				re := regexp.MustCompile(exp)
+
+				findStr := re.FindString(mp.Destination)
+				if findStr == mp.Destination {
+					qm = &quota.QMap{
+						Source:      mp.Source,
+						Destination: mp.Destination,
+						Size:        size,
+					}
+					if exp != ".*" {
+						break
+					}
 				}
 			}
-		}
 
-		if size == "" {
-			if defaultQuota != "" {
-				size = defaultQuota
-			} else {
-				continue
+			if found {
+				break
 			}
 		}
 
-		if mp.Destination == "/" {
+		if qm != nil {
+			// check duplicate quota map
+			prev := checkDupQuotaMap(qms, qm)
+			if prev == nil {
+				// get new quota id
+				id := globalQuotaID
+				if id == 0 {
+					id, err = quota.GetNextQuotaID()
+					if err != nil {
+						return errors.Wrap(err, "failed to get next quota id")
+					}
+				}
+				qm.QuotaID = id
+			} else {
+				qm.QuotaID = prev.QuotaID
+			}
+
+			qms = append(qms, qm)
+		}
+	}
+
+	// make quota effective
+	for _, qm := range qms {
+		if qm.Destination == "/" {
 			// set rootfs quota
-			_, err = quota.SetRootfsDiskQuota(mp.Source, size, id)
+			_, err = quota.SetRootfsDiskQuota(qm.Source, qm.Size, qm.QuotaID)
 			if err != nil {
 				return errors.Wrapf(err, "failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d)",
-					mp.Source, size, id)
+					qm.Source, qm.Size, qm.QuotaID)
 			}
 		} else {
-			err := quota.SetDiskQuota(mp.Source, size, id)
+			err := quota.SetDiskQuota(qm.Source, qm.Size, qm.QuotaID)
 			if err != nil {
 				return errors.Wrapf(err, "failed to set disk quota, directory(%s), size(%s), quota id(%d)",
-					mp.Source, size, id)
+					qm.Source, qm.Size, qm.QuotaID)
 			}
 		}
-
 	}
 
 	return nil

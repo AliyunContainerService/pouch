@@ -187,21 +187,6 @@ func GetQuotaID(dir string) (uint32, error) {
 	return id, nil
 }
 
-//GetDefaultQuota returns the default quota size.
-func GetDefaultQuota(quotas map[string]string) string {
-	if quotas == nil {
-		return ""
-	}
-
-	// ".*" means the disk quota only takes effect on rootfs + n * volume
-	size, ok := quotas[".*"]
-	if ok && size != "" {
-		return size
-	}
-
-	return ""
-}
-
 // SetRootfsDiskQuota is to set container rootfs dir disk quota.
 func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 	overlayMountInfo, err := getOverlayMountInfo(basefs)

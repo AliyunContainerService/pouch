@@ -1,13 +1,12 @@
 package quota
 
-import "regexp"
-
-// RegExp defines the regular expression of disk quota.
-type RegExp struct {
-	Pattern *regexp.Regexp
-	Path    string
-	Size    string
-	QuotaID uint32
+// QMap defines the path set quota size and quota id.
+type QMap struct {
+	Source      string
+	Destination string
+	Expression  string
+	Size        string
+	QuotaID     uint32
 }
 
 // OverlayMount represents the parameters of overlay mount.
