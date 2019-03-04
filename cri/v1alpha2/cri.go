@@ -1064,8 +1064,9 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 
 	resources := r.GetLinux()
 	updateConfig := &apitypes.UpdateConfig{
-		Resources: parseResourcesFromCRI(resources),
-		DiskQuota: resources.GetDiskQuota(),
+		Resources:      parseResourcesFromCRI(resources),
+		DiskQuota:      resources.GetDiskQuota(),
+		SpecAnnotation: r.GetSpecAnnotations(),
 	}
 	err = c.ContainerMgr.Update(ctx, containerID, updateConfig)
 	if err != nil {

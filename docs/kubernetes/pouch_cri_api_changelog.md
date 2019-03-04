@@ -42,64 +42,28 @@ Kubernetes Version: V1.10.0+
 ### What To Solve?
 
 1. Support the ability to update the container quotadir.
+2. Support more container resource fields define in OCI spec.
+3. Support the ability to update container runtime spec annotations.
 
 ### Modification
 
 + Add the `DiskQuota` field in `LinuxContainerResources`, referring to the definition of Resources in [moby](https://github.com/moby/moby/blob/master/api/types/container/host_config.go) for better compatibility. The new fields are as follows：
-
-```
-type LinuxContainerResources struct {
-    ......
-    //***New Fields***//
-    // DiskQuota constrains the disk. Default: none (not specified)
-    DiskQuota map[string]string `protobuf:"bytes,100,req,name=disk_quota,json=diskQuota,proto3" json:"disk_quota,omitempty"`
-    // Block IO weight (relative weight vs. other containers)
-    BlkioWeight          uint16            `protobuf:"bytes,101,opt,name=blkio_weight,json=blkioWeight,proto3" json:"blkio_weight,omitempty"`
-    BlkioWeightDevice    []*WeightDevice   `protobuf:"bytes,102,req,name=blkio_weight_device,json=blkioWeightDevice,proto3" json:"blkio_weight_device,omitempty"`
-    BlkioDeviceReadBps   []*ThrottleDevice `protobuf:"bytes,103,req,name=blkio_device_read_bps,json=blkioDeviceReadBps,proto3" json:"blkio_device_read_bps,omitempty"`
-    BlkioDeviceWriteBps  []*ThrottleDevice `protobuf:"bytes,104,req,name=blkio_device_write_bps,json=blkioDeviceWriteBps,proto3" json:"blkio_device_write_bps,omitempty"`
-    BlkioDeviceReadIOps  []*ThrottleDevice `protobuf:"bytes,105,req,name=blkio_device_read_IOps,json=blkioDeviceReadIOps,proto3" json:"blkio_device_read_IOps,omitempty"`
-    BlkioDeviceWriteIOps []*ThrottleDevice `protobuf:"bytes,106,req,name=blkio_device_write_IOps,json=blkioDeviceWriteIOps,proto3" json:"blkio_device_write_IOps,omitempty"`
-    // Kernel memory limit (in bytes)
-    KernelMemory int64 `protobuf:"bytes,107,opt,name=kernel_memory,json=kernelMemory,proto3" json:"kernel_memory,omitempty"`
-    // Memory soft limit (in bytes)
-    MemoryReservation int64 `protobuf:"bytes,108,opt,name=memory_reservation,json=memoryReservation,proto3" json:"memory_reservation,omitempty"`
-    // Tuning container memory swappiness behaviour
-    MemorySwappiness int64 `protobuf:"bytes,109,opt,name=memory_swappiness,json=memorySwappiness,proto3" json:"memory_swappiness,omitempty"`
-    // List of ulimits to be set in the container
-    Ulimits []*Ulimit `protobuf:"bytes,110,opt,name=ulimits,json=ulimits,proto3" json:"ulimits,omitempty"`
-}
-
-// WeightDevice is a structure that holds device:weight pair
-type WeightDevice struct {
-    // Path of weightdevice. 
-    Path string `protobuf:"bytes,1,opt,name=path,json=path,proto3" json:"path,omitempty"`
-    // Weight of weightdevice. 
-    Weight uint16 `protobuf:"bytes,2,opt,name=weight,json=weight,proto3" json:"weight,omitempty"`
-}
-
-// ThrottleDevice is a structure that holds device:rate_per_second pair
-type ThrottleDevice struct {
-    // Path of throttledevice.
-    Path string `protobuf:"bytes,1,opt,name=path,json=path,proto3" json:"path,omitempty"`
-    // Rate of throttledevice.
-    Rate uint64 `protobuf:"bytes,1,opt,name=rate,json=rate,proto3" json:"rate,omitempty"`
-}
-
-// Ulimit is a human friendly version of Rlimit.
-type Ulimit struct {
-    // Name of ulimit.
-    Name string `protobuf:"bytes,1,opt,name=name,json=name,proto3" json:"name,omitempty"`
-    // Hard of ulimit. 
-    Hard int64 `protobuf:"bytes,2,opt,name=hard,json=hard,proto3" json:"hard,omitempty"`
-    // Soft of Ulimit.
-    Soft int64 `protobuf:"bytes,3,opt,name=soft,json=soft,proto3" json:"soft,omitempty"`
-}
-```
++ Add some fields from [OCI spec](https://github.com/opencontainers/runtime-spec/blob/master/specs-go/config.go)
 
 The changes need to be made in the proto file are as follows:
 
 ```
+message UpdateContainerResourcesRequest {
+    // ID of the container to update.
+    string container_id = 1;
+    // Resource configuration specific to Linux containers.
+    LinuxContainerResources linux = 2;
+    // Annotations contains arbitrary metadata for the container.
+    // Note: spec_annotations is the metadata for container runtime, such as runc. Not
+    // the 'annotations' for Kubernetes objects.
+    map<string, string> spec_annotations = 3;
+}
+
 message LinuxContainerResources {
     ......
     //***New Fields***//
