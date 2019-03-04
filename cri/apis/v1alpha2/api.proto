@@ -974,6 +974,10 @@ message UpdateContainerResourcesRequest {
     string container_id = 1;
     // Resource configuration specific to Linux containers.
     LinuxContainerResources linux = 2;
+    // Annotations contains arbitrary metadata for the container.
+    // Note: spec_annotations is the metadata for container runtime, such as runc. Not
+    // the 'annotations' for Kubernetes objects.
+    map<string, string> spec_annotations = 3;
 }
 
 message UpdateContainerResourcesResponse {}
