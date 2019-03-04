@@ -9,6 +9,7 @@
     * [CreateContainer](#createcontainer "CreateContainer()")
     * [RemoveVolume](#removevolume "RemoveVolume()")
     * [StartPodSandbox](#startpodsandbox "StartPodSandbox()")
+    * [PauseContainer/UnpauseContainer](#pausecontainer--unpausecontainer )
 * [Pull Request](#pull-request)
 
 ## Overview
@@ -17,24 +18,6 @@ Because the CRI interface of Kubernetes cannot meet the customized development o
 
 Kubernetes Version: V1.10.0+
 
-## Requirements
-
-1. Support the ability to update the container diskquota.
-    - Scenario:
-        - Limits the directory size within the container.
-2. Support the ability to acquire the volumes of the Image.
-    - Scenario:
-        - In the Upgrade process, the volumes and mountpoints of the old container need to be read. At the same time, the volumes in the new image also need to be read. If the mount point is the same, the volumes in the new image cover the volumes in the old container.
-3. Support to the ability to acquire the volumes of the Container.
-    - Scenario:
-        - In the Upgrade process, the volumes of the new container needs to remain consistent with that of the old container, so the volumes of the old container needs to be read.
-4. Support to the ability to acquire the envs of the Container.
-     - Scenario:
-        - In the Upgrade process, the env of the new container needs to remain consistent with that of the old container, so the envs of the old container needs to be read.
-5. Support to the ability to start the PodSandbox specified and setup the network.
-     - Scenario:
-        - It will fail to get IP after PodSandbox restarts  because of the external factors such as shutdown the host.
-  
 # The Changes Of CRI API
 
 ## UpdateContainerResources
@@ -122,6 +105,10 @@ message Ulimit {
 + Pass the quotaID generated when the container is created for disk reuse.
 + Support to the ability to acquire the envs of the Container.
 
+### Scenario
+
+In the container inplace upgrade process, we read the attributes from the old one, and attach it to the new one.
+
 ### Modification
 
 + The `ContainerStatus` struct is used only in `ContainerStatusResponse` in CRI, so the volumes of the container can be obtained by directly adding `volume` field  to the `ContainerStatus` struct.
@@ -172,6 +159,10 @@ message Volume {
 
 + Support the ability to acquire the volumes of the Image.
 
+### Scenario:
+
+In the container inplace upgrade process, the volumes of the new container needs to remain consistent with that of the old container, so the volumes of the old container needs to be read.
+
 ### Modification
 
 + Add `volumes` field in the Image struct.
@@ -202,8 +193,7 @@ message Image {
 
 ### What To Solve?
 
-+ Support the ability to set DiskQuota.
-+ Add missing fields.
++ Support the ability to set DiskQuota, NetPriority.
 
 ### Modification
 
@@ -281,6 +271,10 @@ message Mount {
 
 + StartPodSandbox restarts a sandbox pod which was stopped by accident and setup the network with network plugin.
 
+### Scenario:
+
+It will fail to get IP after PodSandbox restarts because of the external factors such as shutdown the host. It is a solution to avoid container reallocating.
+
 ### Modification
 
 + Provides an interface for starting PodSandbox specified.
@@ -310,7 +304,10 @@ message StartPodSandboxResponse {}
 
 + PauseContainer pause a container.
 + UnpauseContainer unpause a container.
-+ Scenario: Under serverless situation, we may pre-allocate a batch of container which were ready to serve, waiting online. Using pause container to balance the resource cost and application start-up time.
+
+### Scenario
+
+Under serverless situation, we may pre-allocate a batch of container which were ready to serve, waiting online. Using pause container to balance the resource cost and application start-up time.
 
 ### Modification
 
