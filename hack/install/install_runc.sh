@@ -18,7 +18,7 @@ runc::ubuntu::install_dependencies() {
 # runc::centos::install_dependencies() install dependencies 
 # on centos machine for make runc
 runc::centos::install_dependencies() {
-  sudo yum install -y libseccomp-dev
+  sudo yum install -y libseccomp-devel
 }
 
 # runc::check_install checks the command and the version.
