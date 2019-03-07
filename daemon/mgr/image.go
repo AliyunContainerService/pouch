@@ -30,7 +30,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var deadlineLoadImagesAtBootup = time.Second * 10
+// The daemon will load all the images from containerd into memory. At
+// the beginning, we assume that it can load it in 10 secs. But if the
+// system has busy IO, it will take long time to load it, especially the
+// more-layers and huge-size images. So update it from 10 secs to 10 mins.
+var deadlineLoadImagesAtBootup = time.Minute * 10
 
 // the filter tags set allowed when pouch images -f
 var acceptedImageFilterTags = map[string]bool{
