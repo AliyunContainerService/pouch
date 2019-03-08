@@ -75,8 +75,8 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswap(c *check.C) {
 
 	// test memory swap should be 2x memory if not specify it.
 	cname = "TestRunWithMemoryswap2x"
-	memory = "20m"
-	expected = 2 * 20 * m
+	memory = "10m"
+	expected = 2 * 10 * m
 
 	res = command.PouchRun("run", "-d", "-m", memory,
 		"--name", cname, busyboxImage, "sleep", sleep)
