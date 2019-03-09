@@ -316,6 +316,9 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 
 // Create checks passed in parameters and create a Container object whose status is set at Created.
 func (mgr *ContainerManager) Create(ctx context.Context, name string, config *types.ContainerCreateConfig) (resp *types.ContainerCreateResp, err error) {
+	currentSnapshotter := ctrd.CurrentSnapshotterName(ctx)
+	config.Snapshotter = currentSnapshotter
+
 	if mgr.containerPlugin != nil {
 		logrus.Infof("invoke container pre-create hook in plugin")
 		if ex := mgr.containerPlugin.PreCreate(config); ex != nil {
@@ -323,9 +326,15 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 		}
 	}
 
+	// Attention, since we support multi snapshotter, if snapshotter not changed,
+	// means plugin not change it, so remove value in case to effect origin logic
+	if config.Snapshotter == currentSnapshotter {
+		config.Snapshotter = ""
+	}
+
 	// NOTE: choose snapshotter, snapshotter can only be set
 	// through containerPlugin in Create function
-	ctx = ctrd.WithSnapshotter(ctx, config.ContainerConfig.Snapshotter)
+	ctx = ctrd.WithSnapshotter(ctx, config.Snapshotter)
 
 	// cleanup allocated resources when failed
 	cleanups := []func() error{}
