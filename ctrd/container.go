@@ -419,7 +419,9 @@ clean:
 	// is done in ctrd/watch.go, after task exit. clean is task effect only
 	// when unexcepted error happened in task exit process.
 	if _, err := pack.task.Delete(ctx); err != nil {
-		logrus.Errorf("failed to delete task %s again: %v", pack.id, err)
+		if !errdefs.IsNotFound(err) {
+			logrus.Errorf("failed to delete task %s again: %v", pack.id, err)
+		}
 	}
 	if err := pack.container.Delete(ctx); err != nil {
 		if !errdefs.IsNotFound(err) {
