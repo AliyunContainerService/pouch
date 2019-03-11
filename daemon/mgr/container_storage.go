@@ -630,14 +630,14 @@ func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mou
 			// set rootfs quota
 			_, err = quota.SetRootfsDiskQuota(qm.Source, qm.Size, qm.QuotaID)
 			if err != nil {
-				return errors.Wrapf(err, "failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d)",
-					qm.Source, qm.Size, qm.QuotaID)
+				logrus.Warnf("failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d), err(%v)",
+					qm.Source, qm.Size, qm.QuotaID, err)
 			}
 		} else {
 			err := quota.SetDiskQuota(qm.Source, qm.Size, qm.QuotaID)
 			if err != nil {
-				return errors.Wrapf(err, "failed to set disk quota, directory(%s), size(%s), quota id(%d)",
-					qm.Source, qm.Size, qm.QuotaID)
+				logrus.Warnf("failed to set disk quota, directory(%s), size(%s), quota id(%d), err(%v)",
+					qm.Source, qm.Size, qm.QuotaID, err)
 			}
 		}
 	}
