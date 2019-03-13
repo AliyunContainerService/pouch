@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -73,4 +74,27 @@ func checkPortMapExists(c *check.C, portMap types.PortMap, port string) {
 	portBs, ok := portMap[port]
 	c.Assert(ok, check.Equals, true)
 	c.Assert(len(portBs), check.Equals, 1)
+}
+
+// TestRunWithMacAddress is to verify run container with mac address
+func (suite *PouchRunNetworkSuite) TestRunWithMacAddress(c *check.C) {
+	cname := "TestRunWithMacAddress"
+	macAddress := "02:42:c0:a8:05:10"
+
+	command.PouchRun("run", "-d", "--name", cname, "--mac-address", macAddress, busyboxImage, "sleep", "1000").Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cname)
+
+	res := command.PouchRun("exec", cname, "ip", "addr", "show")
+	res.Assert(c, icmd.Success)
+
+	stdout := res.Stdout()
+	found := false
+	for _, line := range strings.Split(stdout, "\n") {
+		if strings.Contains(line, macAddress) {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
 }
