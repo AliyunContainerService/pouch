@@ -778,7 +778,7 @@ func (mgr *ContainerManager) createContainerdContainer(ctx context.Context, c *C
 	}
 
 	// set container's LogPath
-	mgr.SetContainerLogPath(c)
+	c.SetLogPath(mgr.Config.HomeDir)
 
 	runtime, err := mgr.getRuntime(c.HostConfig.Runtime)
 	if err != nil {
@@ -1150,7 +1150,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	c.Unlock()
 
 	// update Resources of a container.
-	if err := mgr.updateContainerResources(c, config.Resources); err != nil {
+	if err := c.updateResources(config.Resources); err != nil {
 		restore = true
 		return errors.Wrapf(err, "failed to update resource of container %s", c.ID)
 	}
@@ -1311,63 +1311,6 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 	// set mount point disk quota
 	if err = mgr.setDiskQuota(ctx, c, false); err != nil {
 		return errors.Wrapf(err, "failed to set mount point disk quota")
-	}
-
-	return nil
-}
-
-// updateContainerResources update container's resources parameters.
-func (mgr *ContainerManager) updateContainerResources(c *Container, resources types.Resources) error {
-	c.Lock()
-	defer c.Unlock()
-	// update resources of container.
-	cResources := &c.HostConfig.Resources
-	if resources.BlkioWeight != 0 {
-		cResources.BlkioWeight = resources.BlkioWeight
-	}
-	if len(resources.BlkioDeviceReadBps) != 0 {
-		cResources.BlkioDeviceReadBps = resources.BlkioDeviceReadBps
-	}
-	if len(resources.BlkioDeviceReadIOps) != 0 {
-		cResources.BlkioDeviceReadIOps = resources.BlkioDeviceReadIOps
-	}
-	if len(resources.BlkioDeviceWriteBps) != 0 {
-		cResources.BlkioDeviceWriteBps = resources.BlkioDeviceWriteBps
-	}
-	if len(resources.BlkioDeviceWriteIOps) != 0 {
-		cResources.BlkioDeviceWriteIOps = resources.BlkioDeviceWriteIOps
-	}
-	if resources.CPUPeriod != 0 {
-		cResources.CPUPeriod = resources.CPUPeriod
-	}
-	if resources.CPUQuota == -1 || resources.CPUQuota >= 1000 {
-		cResources.CPUQuota = resources.CPUQuota
-	}
-	if resources.CPUShares != 0 {
-		cResources.CPUShares = resources.CPUShares
-	}
-	if resources.CpusetCpus != "" {
-		cResources.CpusetCpus = resources.CpusetCpus
-	}
-	if resources.CpusetMems != "" {
-		cResources.CpusetMems = resources.CpusetMems
-	}
-	if resources.Memory != 0 {
-		// if memory limit smaller than already set memoryswap limit and doesn't
-		// update the memoryswap limit, then error out.
-		if cResources.MemorySwap != 0 && resources.Memory > cResources.MemorySwap && resources.MemorySwap == 0 {
-			return fmt.Errorf("Memory limit should be smaller than already set memoryswap limit, update the memoryswap at the same time")
-		}
-		cResources.Memory = resources.Memory
-	}
-	if resources.MemorySwap != 0 {
-		cResources.MemorySwap = resources.MemorySwap
-	}
-	if resources.MemoryReservation != 0 {
-		cResources.MemoryReservation = resources.MemoryReservation
-	}
-	if resources.KernelMemory != 0 {
-		cResources.KernelMemory = resources.KernelMemory
 	}
 
 	return nil
@@ -1647,8 +1590,9 @@ func (mgr *ContainerManager) initLogDriverBeforeStart(c *Container) error {
 		}
 	}
 
-	logInfo := mgr.convContainerToLoggerInfo(c)
-	logDriver, err := logOptionsForContainerio(c, logInfo)
+	containerRootDir := mgr.Store.Path(c.ID)
+	logInfo := c.convToLoggerInfo(containerRootDir)
+	logDriver, err := c.logOptionsForContainerio(logInfo)
 	if err != nil {
 		return err
 	}

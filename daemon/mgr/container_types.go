@@ -14,6 +14,9 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/ctrd"
+	"github.com/alibaba/pouch/daemon/logger"
+	"github.com/alibaba/pouch/daemon/logger/jsonfile"
+	"github.com/alibaba/pouch/daemon/logger/syslog"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -527,6 +530,117 @@ func (c *Container) CleanRootfsSnapshotDirs() error {
 	}
 
 	return nil
+}
+
+// updateResources update container's resources parameters.
+func (c *Container) updateResources(resources types.Resources) error {
+	c.Lock()
+	defer c.Unlock()
+	// update resources of container.
+	cResources := &c.HostConfig.Resources
+	if resources.BlkioWeight != 0 {
+		cResources.BlkioWeight = resources.BlkioWeight
+	}
+	if len(resources.BlkioDeviceReadBps) != 0 {
+		cResources.BlkioDeviceReadBps = resources.BlkioDeviceReadBps
+	}
+	if len(resources.BlkioDeviceReadIOps) != 0 {
+		cResources.BlkioDeviceReadIOps = resources.BlkioDeviceReadIOps
+	}
+	if len(resources.BlkioDeviceWriteBps) != 0 {
+		cResources.BlkioDeviceWriteBps = resources.BlkioDeviceWriteBps
+	}
+	if len(resources.BlkioDeviceWriteIOps) != 0 {
+		cResources.BlkioDeviceWriteIOps = resources.BlkioDeviceWriteIOps
+	}
+	if resources.CPUPeriod != 0 {
+		cResources.CPUPeriod = resources.CPUPeriod
+	}
+	if resources.CPUQuota == -1 || resources.CPUQuota >= 1000 {
+		cResources.CPUQuota = resources.CPUQuota
+	}
+	if resources.CPUShares != 0 {
+		cResources.CPUShares = resources.CPUShares
+	}
+	if resources.CpusetCpus != "" {
+		cResources.CpusetCpus = resources.CpusetCpus
+	}
+	if resources.CpusetMems != "" {
+		cResources.CpusetMems = resources.CpusetMems
+	}
+	if resources.Memory != 0 {
+		// if memory limit smaller than already set memoryswap limit and doesn't
+		// update the memoryswap limit, then error out.
+		if cResources.MemorySwap != 0 && resources.Memory > cResources.MemorySwap && resources.MemorySwap == 0 {
+			return fmt.Errorf("Memory limit should be smaller than already set memoryswap limit, update the memoryswap at the same time")
+		}
+		cResources.Memory = resources.Memory
+	}
+	if resources.MemorySwap != 0 {
+		cResources.MemorySwap = resources.MemorySwap
+	}
+	if resources.MemoryReservation != 0 {
+		cResources.MemoryReservation = resources.MemoryReservation
+	}
+	if resources.KernelMemory != 0 {
+		cResources.KernelMemory = resources.KernelMemory
+	}
+
+	return nil
+}
+
+func (c *Container) logOptionsForContainerio(info logger.Info) (logger.LogDriver, error) {
+	cfg := c.HostConfig.LogConfig
+	if cfg == nil || cfg.LogDriver == types.LogConfigLogDriverNone {
+		return nil, nil
+	}
+
+	switch cfg.LogDriver {
+	case types.LogConfigLogDriverJSONFile:
+		return jsonfile.Init(info)
+	case types.LogConfigLogDriverSyslog:
+		return syslog.Init(info)
+	default:
+		logrus.Warnf("not support (%v) log driver yet", cfg.LogDriver)
+		return nil, nil
+	}
+}
+
+// convToLoggerInfo uses logger.Info to wrap container information.
+func (c *Container) convToLoggerInfo(containerRootDir string) logger.Info {
+	logCfg := make(map[string]string)
+	if cfg := c.HostConfig.LogConfig; cfg != nil && cfg.LogDriver != types.LogConfigLogDriverNone {
+		logCfg = cfg.LogOpts
+	}
+
+	// TODO(fuwei):
+	// 1. add more fields into logger.Info
+	// 2. separate the logic about retrieving container root dir from mgr.
+	return logger.Info{
+		LogConfig:        logCfg,
+		ContainerID:      c.ID,
+		ContainerName:    c.Name,
+		ContainerImageID: c.Image,
+		ContainerLabels:  c.Config.Labels,
+		ContainerEnvs:    c.Config.Env,
+		ContainerRootDir: containerRootDir,
+		DaemonName:       "pouchd",
+	}
+}
+
+// SetLogPath sets the log path of container.
+// LogPath would be as a field in `Inspect` response.
+func (c *Container) SetLogPath(homeDir string) {
+	if c.HostConfig.LogConfig == nil {
+		return
+	}
+
+	// If the logdriver is json-file, the LogPath should be like
+	// /var/lib/pouch/containers/5804ee42e505a5d9f30128848293fcb72d8cbc7517310bd24895e82a618fa454/json.log
+	if c.HostConfig.LogConfig.LogDriver == "json-file" {
+		c.LogPath = filepath.Join(homeDir, "containers", c.ID, "json.log")
+	}
+	return
 }
 
 // ContainerRestartPolicy represents the policy is used to manage container.

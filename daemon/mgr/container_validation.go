@@ -335,7 +335,8 @@ func (mgr *ContainerManager) validateLogConfig(c *Container) error {
 	case types.LogConfigLogDriverNone, types.LogConfigLogDriverJSONFile:
 		return jsonfile.ValidateLogOpt(restOpts)
 	case types.LogConfigLogDriverSyslog:
-		info := mgr.convContainerToLoggerInfo(c)
+		containerRootDir := mgr.Store.Path(c.ID)
+		info := c.convToLoggerInfo(containerRootDir)
 		return syslog.ValidateSyslogOption(info)
 	default:
 		return fmt.Errorf("not support (%v) log driver yet", logCfg.LogDriver)
