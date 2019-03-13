@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
@@ -865,5 +866,16 @@ func copyOwnership(source, destination string) error {
 	if err != nil {
 		return err
 	}
+
+	sys, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		return fmt.Errorf("failed to get file %s system info", source)
+	}
+
+	err = os.Chown(destination, int(sys.Uid), int(sys.Gid))
+	if err != nil {
+		return err
+	}
+
 	return os.Chmod(destination, os.FileMode(fi.Mode()))
 }
