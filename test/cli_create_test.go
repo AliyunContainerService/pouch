@@ -300,25 +300,64 @@ func (suite *PouchCreateSuite) TestCreateEnableLxcfs(c *check.C) {
 func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 	name := "TestCreateWithEnv"
 
-	res := command.PouchRun("create", "--name", name, "-e TEST=true", busyboxImage)
+	env1 := "TEST1=true"
+	env2 := "TEST2="    // should be in inspect result as TEST2=, and still in container's real env as TEST2=
+	env3 := "TEST3"     // should not in container's real env
+	env4 := "TEST4=a b" // valid
+	env5 := "TEST5=a=b" // valid
+	res := command.PouchRun("run", "-d",
+		"--name", name,
+		"-e", env1,
+		"-e", env2,
+		"-e", env3,
+		"-e", env4,
+		"-e", env5,
+		busyboxImage,
+		"top")
 	defer DelContainerForceMultyTime(c, name)
 
 	res.Assert(c, icmd.Success)
 
-	output := command.PouchRun("inspect", name).Stdout()
+	envs, err := inspectFilter(name, ".Config.Env")
+	c.Assert(err, check.IsNil)
 
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
+	// check if these envs are in inspect result of container.
+	if !strings.Contains(envs, env1) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env1, envs)
+	}
+	if !strings.Contains(envs, env2) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env2, envs)
+	}
+	if strings.Contains(envs, env3) {
+		c.Fatalf("container env in inspect result should not have %s in %s, while it has\n", env3, envs)
+	}
+	if !strings.Contains(envs, env4) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env4, envs)
+	}
+	if !strings.Contains(envs, env5) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env5, envs)
 	}
 
-	ok := false
-	for _, v := range result[0].Config.Env {
-		if strings.Contains(v, "TEST=true") {
-			ok = true
-		}
+	// check if these envs are in the real container envs
+	ret := command.PouchRun("exec", name, "env")
+	envs = ret.Stdout()
+
+	if !strings.Contains(envs, env1) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env1, envs)
 	}
-	c.Assert(ok, check.Equals, true)
+	if !strings.Contains(envs, env2) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env2, envs)
+	}
+	//  container's runtime env should not have env3
+	if strings.Contains(envs, env3) {
+		c.Fatalf("container's runtime env should not have %s in %s while it is there\n", env3, envs)
+	}
+	if !strings.Contains(envs, env4) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env4, envs)
+	}
+	if !strings.Contains(envs, env5) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env5, envs)
+	}
 }
 
 // TestCreateWithWorkDir tests creating container with a workdir works.
