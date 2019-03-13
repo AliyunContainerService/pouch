@@ -39,7 +39,7 @@ run_pre_test() {
 
 run_unittest() {
   sudo env "PATH=$PATH" hack/install/install_ci_related.sh
-  make unit-test
+  sudo env "PATH=$PATH" make unit-test
   make coverage
 
   bash <(curl -s https://codecov.io/bash) -cF unittest -y .codecov.yml
