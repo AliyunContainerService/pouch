@@ -269,46 +269,49 @@ func amendContainerSettings(config *types.ContainerConfig, hostConfig *types.Hos
 	}
 }
 
-func mergeEnvSlice(newEnv, oldEnv []string) ([]string, error) {
+// mergeEnvSlice merges two parts into a singe one.
+// Here are some cases:
+// 1. container creation needs to merge user input envs and envs inherited from image;
+// 2. update action with env needs to merge original envs and the user input envs;
+// 3. exec action needs to merge container's original envs and user input envs.
+func mergeEnvSlice(new, old []string) ([]string, error) {
 	// if newEnv is empty, return old env slice
-	if len(newEnv) == 0 {
-		return oldEnv, nil
+	if len(new) == 0 {
+		return old, nil
 	}
 
-	newEnvMap, err := opts.ParseEnv(newEnv)
+	newEnvs, err := opts.ParseEnvs(new)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse new env")
 	}
 
-	oldEnvMap, err := opts.ParseEnv(oldEnv)
+	// TODO: do we need to valid the old one?
+	oldEnvs, err := opts.ParseEnvs(old)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse old env")
 	}
 
-	for k, v := range newEnvMap {
-		// key should not be empty
-		if k == "" {
-			continue
-		}
+	oldEnvsMap := opts.ValidSliceEnvsToMap(oldEnvs)
 
-		// add or change an env
-		if v != "" {
-			oldEnvMap[k] = v
-			continue
-		}
-
-		// value is empty, we need delete the env
-		if _, exists := oldEnvMap[k]; exists {
-			delete(oldEnvMap, k)
+	for _, env := range newEnvs {
+		arr := strings.SplitN(env, "=", 2)
+		if len(arr) == 1 {
+			// there are two cases, the first is 'KEY=', the second is just 'KEY'
+			if len(env) == len(arr[0]) {
+				// the case of 'KEY'. It is valid to remove the env from original one.
+				if _, exits := oldEnvsMap[arr[0]]; exits {
+					delete(oldEnvsMap, arr[0])
+				}
+			} else {
+				// the case of 'KEY='. It is valid to set env value empty.
+				oldEnvsMap[arr[0]] = ""
+			}
+		} else {
+			oldEnvsMap[arr[0]] = arr[1]
 		}
 	}
 
-	newEnvSlice := []string{}
-	for k, v := range oldEnvMap {
-		newEnvSlice = append(newEnvSlice, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	return newEnvSlice, nil
+	return opts.ValidMapEnvsToSlice(oldEnvsMap), nil
 }
 
 func mergeAnnotation(newAnnotation, oldAnnotation map[string]string) map[string]string {

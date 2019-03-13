@@ -2149,7 +2149,9 @@ definitions:
         x-nullable: false
       Env:
         description: |
-          A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+          A list of environment variables to set inside the container in the form `["VAR=value", ...]`. 
+          A variable like "A=" means setting env A in container to be empty value.
+          And a variable without `=` is removed from the environment, rather than to have an empty value.
         type: "array"
         items:
           type: "string"
@@ -2505,7 +2507,9 @@ definitions:
             $ref: "#/definitions/RestartPolicy"
           Env:
             description: |
-              A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+              A list of environment variables to set inside the container in the form `["VAR=value", ...]`.
+              A variable like "A=" means updating env A in container to be empty value.
+              A variable without `=` is removed from the environment, rather than to have an empty value.
             type: "array"
             items:
               type: "string"

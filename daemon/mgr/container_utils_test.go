@@ -200,9 +200,8 @@ func Test_mergeEnvSlice(t *testing.T) {
 		want    []string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
-			name: "test1",
+			name: "normal merge with adding ones",
 			args: args{
 				newEnv: []string{"a=b"},
 				oldEnv: []string{"c=d"},
@@ -211,7 +210,7 @@ func Test_mergeEnvSlice(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "test2",
+			name: "normal merge with updating existing one",
 			args: args{
 				newEnv: []string{"test=false"},
 				oldEnv: []string{"test=true"},
@@ -220,16 +219,16 @@ func Test_mergeEnvSlice(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "test3",
+			name: "normal merge with removing one",
 			args: args{
-				newEnv: []string{"wrong-format"},
-				oldEnv: []string{"c=d"},
+				newEnv: []string{"JUST_KEY"},
+				oldEnv: []string{"c=d", "JUST_KEY=VALUE"},
 			},
-			want:    nil,
-			wantErr: true,
+			want:    []string{"c=d"},
+			wantErr: false,
 		},
 		{
-			name: "test4",
+			name: "normal merge with nothing in new",
 			args: args{
 				newEnv: []string{},
 				oldEnv: []string{"c=d"},
@@ -238,22 +237,40 @@ func Test_mergeEnvSlice(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "test5",
-			args: args{
-				newEnv: []string{"a=b"},
-				oldEnv: []string{},
-			},
-			want:    []string{"a=b"},
-			wantErr: false,
-		},
-		{
-			name: "test6",
+			name: "normal merge with updating existing key to empty",
 			args: args{
 				newEnv: []string{"a="},
 				oldEnv: []string{"a=b"},
 			},
-			want:    []string{},
+			want:    []string{"a="},
 			wantErr: false,
+		},
+		{
+			name: "normal merge with adding env with whitespace in value",
+			args: args{
+				newEnv: []string{"a=b c d "},
+				oldEnv: []string{"c=b"},
+			},
+			want:    []string{"a=b c d", "c=b"},
+			wantErr: false,
+		},
+		{
+			name: "illegal merge with invalid in new ones",
+			args: args{
+				newEnv: []string{"="},
+				oldEnv: []string{"a=b"},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "illegal merge with empty element in new ones",
+			args: args{
+				newEnv: []string{"", ""},
+				oldEnv: []string{"a=b"},
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

@@ -51,6 +51,9 @@ func (suite *PouchUpdateSuite) TestUpdateContainerNormalOption(c *check.C) {
 		//"--cpuset-cpus", "0",
 		//"--cpuset-mems", "0",
 		// memory related options
+		"--env", "TEST1=foo1",
+		"--env", "TEST2=foo2",
+		"--env", "TEST3=foo3",
 		"-m", "300M",
 		busyboxImage,
 		"top")
@@ -71,8 +74,10 @@ func (suite *PouchUpdateSuite) TestUpdateContainerNormalOption(c *check.C) {
 		// memory related update
 		"-m", "500M",
 		// env related update
-		// adding a new env
-		"--env", "foo=bar",
+		"--env", "TEST1=bar1", // updating env to new non-empty value
+		"--env", "TEST2=", // update env to empty
+		"--env", "TEST3", // update to remove the env
+		"--env", "TEST4=bar4", // adding a new env
 		// label related update
 		"--label", "foo=bar",
 		name,
@@ -192,31 +197,46 @@ func (suite *PouchUpdateSuite) TestUpdateContainerNormalOption(c *check.C) {
 		c.Assert(cpuQuota, check.Equals, "524288000")
 	}
 
+	// test value check about env
 	{
-		// test value check about env and label
-		output := command.PouchRun("inspect", name).Stdout()
-		result := []types.ContainerJSON{}
-		if err := json.Unmarshal([]byte(output), &result); err != nil {
-			c.Errorf("failed to decode inspect output: %v", err)
+		envs, err := inspectFilter(name, ".Config.Env")
+		c.Assert(err, check.IsNil)
+
+		if !strings.Contains(envs, "TEST1=bar1") {
+			c.Fatalf("expect 'TEST1=bar1' in container env, but got: %s", envs)
+		}
+		if !strings.Contains(envs, "TEST2=") {
+			c.Fatalf("expect 'TEST2=' in container env, but got: %s", envs)
+		}
+		if strings.Contains(envs, "TEST3") {
+			c.Fatalf("expect no 'TEST3' in container env since using '--env TEST#' to remove, but got: %s", envs)
+		}
+		if !strings.Contains(envs, "TEST4=bar4") {
+			c.Fatalf("expect 'TEST4=bar4' in container env, but got: %s", envs)
 		}
 
-		// test env
-		{
-			if !utils.StringInSlice(result[0].Config.Env, "foo=bar") {
-				c.Fatalf("expect 'foo=bar' in container env, but got: %v", result[0].Config.Env)
-			}
-
-			output = command.PouchRun("exec", name, "env").Stdout()
-			if !strings.Contains(output, "foo=bar") {
-				c.Fatalf("Update running container env not worked")
-			}
+		output := command.PouchRun("exec", name, "env").Stdout()
+		if !strings.Contains(output, "TEST1=bar1") {
+			c.Fatalf("env TEST1=bar1 should be in container runtime env, while get: %v", output)
 		}
+		if !strings.Contains(output, "TEST2=") {
+			c.Fatalf("env TEST2= should be in container runtime env, while get: %v", output)
+		}
+		if strings.Contains(output, "TEST3") {
+			c.Fatalf("env TEST3 should not be in container runtime env, while get: %v", output)
+		}
+		if !strings.Contains(output, "TEST4=bar4") {
+			c.Fatalf("env TEST4=bar4 should be in container runtime env, while get: %v", output)
+		}
+	}
 
-		// test labels
-		{
-			if v, ok := result[0].Config.Labels["foo"]; !ok || v != "bar" {
-				c.Fatalf("expect 'foo=bar' in Labels, got: %v", result[0].Config.Labels)
-			}
+	// test value check aboudoct labels
+	{
+		labels, err := inspectFilter(name, ".Config.Labels")
+		c.Assert(err, check.IsNil)
+
+		if !strings.Contains(labels, "foo:bar") {
+			c.Fatalf("expect 'foo:bar' in Labels, got: %s", labels)
 		}
 	}
 }
