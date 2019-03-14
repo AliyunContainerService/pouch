@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"runtime"
 	"strings"
 	"sync"
@@ -540,7 +541,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 		containerd.WithContainerLabels(container.Labels),
 		containerd.WithRuntime(fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS), &runctypes.RuncOptions{
 			Runtime:       container.Runtime,
-			RuntimeRoot:   runtimeRoot,
+			RuntimeRoot:   path.Join(runtimeRoot, container.Runtime),
 			SystemdCgroup: container.UseSystemd,
 		}),
 	}
