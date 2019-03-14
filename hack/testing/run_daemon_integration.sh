@@ -33,7 +33,7 @@ integration::run_daemon_test_cases() {
   local testcases
   testcases=$(cat "${REPO_BASE}/test/testcase.list.${job_id}")
   for one in ${testcases}; do
-    go test -check.v -check.f "${one}"
+    "${REPO_BASE}/bin/pouchd-integration-test" -test.v -check.v -check.f "${one}"
     ret=$?
     if [[ ${ret} -ne 0 ]]; then
       code=${ret}
