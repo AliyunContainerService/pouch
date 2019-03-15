@@ -20,6 +20,8 @@ func init() {
 func (suite *PouchCheckpointSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 	SkipIfFalse(c, environment.IsCRIUExist)
+
+	PullImage(c, busyboxImage)
 }
 
 // TestCreate tests create checkpoint
