@@ -104,16 +104,11 @@ type Resources struct {
 	// Memory limit in bytes.
 	Memory int64 `json:"Memory"`
 
-	// MemoryExtra is an integer value representing this container's memory high water mark percentage.
-	// The range is in [0, 100].
+	// MemoryExtra is an integer value representing memory extra in bytes
 	//
-	// Maximum: 100
-	// Minimum: 0
 	MemoryExtra *int64 `json:"MemoryExtra"`
 
 	// MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.
-	// Maximum: 1
-	// Minimum: 0
 	MemoryForceEmptyCtl int64 `json:"MemoryForceEmptyCtl"`
 
 	// Memory soft limit in bytes.
@@ -128,10 +123,8 @@ type Resources struct {
 	MemorySwappiness *int64 `json:"MemorySwappiness"`
 
 	// MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage.
-	// The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].
+	// The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.
 	//
-	// Maximum: 100
-	// Minimum: 0
 	MemoryWmarkRatio *int64 `json:"MemoryWmarkRatio"`
 
 	// CPU quota in units of 10<sup>-9</sup> CPUs.
@@ -148,8 +141,6 @@ type Resources struct {
 	PidsLimit int64 `json:"PidsLimit"`
 
 	// ScheLatSwitch enables scheduler latency count in cpuacct
-	// Maximum: 1
-	// Minimum: 0
 	ScheLatSwitch int64 `json:"ScheLatSwitch"`
 
 	// A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"
@@ -193,27 +184,11 @@ func (m *Resources) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateMemoryExtra(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateMemoryForceEmptyCtl(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateMemorySwappiness(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateMemoryWmarkRatio(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateNvidiaConfig(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateScheLatSwitch(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -411,40 +386,6 @@ func (m *Resources) validateDevices(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Resources) validateMemoryExtra(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.MemoryExtra) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("MemoryExtra", "body", int64(*m.MemoryExtra), 0, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("MemoryExtra", "body", int64(*m.MemoryExtra), 100, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateMemoryForceEmptyCtl(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.MemoryForceEmptyCtl) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("MemoryForceEmptyCtl", "body", int64(m.MemoryForceEmptyCtl), 0, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("MemoryForceEmptyCtl", "body", int64(m.MemoryForceEmptyCtl), 1, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.MemorySwappiness) { // not required
@@ -456,23 +397,6 @@ func (m *Resources) validateMemorySwappiness(formats strfmt.Registry) error {
 	}
 
 	if err := validate.MaximumInt("MemorySwappiness", "body", int64(*m.MemorySwappiness), 100, false); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Resources) validateMemoryWmarkRatio(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.MemoryWmarkRatio) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("MemoryWmarkRatio", "body", int64(*m.MemoryWmarkRatio), 0, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("MemoryWmarkRatio", "body", int64(*m.MemoryWmarkRatio), 100, false); err != nil {
 		return err
 	}
 
@@ -492,23 +416,6 @@ func (m *Resources) validateNvidiaConfig(formats strfmt.Registry) error {
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *Resources) validateScheLatSwitch(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ScheLatSwitch) { // not required
-		return nil
-	}
-
-	if err := validate.MinimumInt("ScheLatSwitch", "body", int64(m.ScheLatSwitch), 0, false); err != nil {
-		return err
-	}
-
-	if err := validate.MaximumInt("ScheLatSwitch", "body", int64(m.ScheLatSwitch), 1, false); err != nil {
-		return err
 	}
 
 	return nil
