@@ -52,7 +52,9 @@ type ContainerConfig struct {
 	//
 	Entrypoint []string `json:"Entrypoint"`
 
-	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`.
+	// A variable like "A=" means setting env A in container to be empty value.
+	// And a variable without `=` is removed from the environment, rather than to have an empty value.
 	//
 	Env []string `json:"Env"`
 
