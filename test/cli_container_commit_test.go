@@ -21,6 +21,8 @@ func init() {
 func (suite *PouchCommitSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 	SkipIfFalse(c, environment.IsCRIUExist)
+
+	PullImage(c, busyboxImage)
 }
 
 // TestCommitContainer tests commit a container successful.

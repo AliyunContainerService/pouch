@@ -22,6 +22,8 @@ func init() {
 // SetupTest does common setup in the beginning of each test.
 func (suite *APIVersionSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
+	PullImage(c, busyboxImage)
 }
 
 // TestNoVersionParamsInURL test api url not contains version info.

@@ -19,6 +19,8 @@ func init() {
 // SetUpTest does common setup in the beginning of each test.
 func (suite *APIContainerRestartSuite) SetUpTest(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
+
+	PullImage(c, busyboxImage)
 }
 
 // TestAPIContainerRestart is to verify restarting container.
