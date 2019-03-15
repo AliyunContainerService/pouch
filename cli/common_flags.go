@@ -59,9 +59,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.memorySwap, "memory-swap", "", "Swap limit equal to memory + swap, '-1' to enable unlimited swap")
 	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", 0, "Container memory swappiness [0, 100]")
 	// for alikernel isolation options
-	flagSet.Int64Var(&c.memoryWmarkRatio, "memory-wmark-ratio", 0, "Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio")
-	flagSet.Int64Var(&c.memoryExtra, "memory-extra", 0, "Represent container's memory high water mark percentage, range in [0, 100]")
-	flagSet.Int64Var(&c.memoryForceEmptyCtl, "memory-force-empty-ctl", 0, "Whether to reclaim page cache when deleting the cgroup of container")
 	flagSet.BoolVar(&c.oomKillDisable, "oom-kill-disable", false, "Disable OOM Killer")
 	flagSet.Int64Var(&c.oomScoreAdj, "oom-score-adj", -500, "Tune host's OOM preferences (-1000 to 1000)")
 
@@ -81,8 +78,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.runtime, "runtime", "", "OCI runtime to use for this container")
 
 	flagSet.StringSliceVar(&c.securityOpt, "security-opt", nil, "Security Options")
-
-	flagSet.Int64Var(&c.scheLatSwitch, "sche-lat-switch", 0, "Whether to enable scheduler latency count in cpuacct")
 
 	flagSet.StringSliceVar(&c.sysctls, "sysctl", nil, "Sysctl options")
 	flagSet.BoolVarP(&c.tty, "tty", "t", false, "Allocate a pseudo-TTY")

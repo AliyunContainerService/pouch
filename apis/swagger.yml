@@ -2778,37 +2778,28 @@ definitions:
         description: "ScheLatSwitch enables scheduler latency count in cpuacct"
         type: "integer"
         format: "int64"
-        minimum: 0
-        maximum: 1
         x-nullable: false
         x-omitempty: false
       MemoryWmarkRatio:
         description: | 
           MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. 
-          The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].
+          The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.
         type: "integer"
         format: "int64"
         x-nullable: true
-        minimum: 0
-        maximum: 100
         x-omitempty: false
       MemoryExtra:
         description: |
-          MemoryExtra is an integer value representing this container's memory high water mark percentage.
-          The range is in [0, 100].
+          MemoryExtra is an integer value representing memory extra in bytes
         type: "integer"
         format: "int64"
         x-nullable: true
-        minimum: 0
-        maximum: 100
         x-omitempty: false
       MemoryForceEmptyCtl:
         description: "MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup."
         type: "integer"
         format: "int64"
         x-nullable: false
-        minimum: 0
-        maximum: 1
         x-omitempty: false
       NvidiaConfig:
         $ref: "#/definitions/NvidiaConfig"

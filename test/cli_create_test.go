@@ -401,31 +401,6 @@ func (suite *PouchCreateSuite) TestCreateWithIntelRdt(c *check.C) {
 	c.Assert(intelRdtL3Cbm, check.Equals, intelRdt)
 }
 
-// TestCreateWithAliOSMemoryOptions tests creating container with AliOS container isolation options.
-func (suite *PouchCreateSuite) TestCreateWithAliOSMemoryOptions(c *check.C) {
-	name := "TestCreateWithAliOSMemoryOptions"
-	memoryWmarkRatio := "30"
-	memoryExtra := "50"
-
-	res := command.PouchRun("create", "--name", name, "--memory-wmark-ratio",
-		memoryWmarkRatio, "--memory-extra", memoryExtra, "--memory-force-empty-ctl", "1",
-		"--sche-lat-switch", "1", busyboxImage)
-	defer DelContainerForceMultyTime(c, name)
-
-	res.Assert(c, icmd.Success)
-
-	output := command.PouchRun("inspect", name).Stdout()
-
-	result := []types.ContainerJSON{}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		c.Errorf("failed to decode inspect output: %v", err)
-	}
-	c.Assert(*result[0].HostConfig.MemoryWmarkRatio, check.Equals, int64(30))
-	c.Assert(*result[0].HostConfig.MemoryExtra, check.Equals, int64(50))
-	c.Assert(result[0].HostConfig.MemoryForceEmptyCtl, check.Equals, int64(1))
-	c.Assert(result[0].HostConfig.ScheLatSwitch, check.Equals, int64(1))
-}
-
 // TestCreateWithOOMOption tests creating container with OOM options.
 func (suite *PouchCreateSuite) TestCreateWithOOMOption(c *check.C) {
 	name := "TestCreateWithOOMOption"
