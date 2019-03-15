@@ -57,7 +57,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --dns-search stringArray        Set DNS search domains
       --enableLxcfs                   Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string             Overwrite the default ENTRYPOINT of the image
-  -e, --env stringArray               Set environment variables for container
+  -e, --env stringArray               Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)
       --expose strings                Set expose container's ports
       --group-add strings             Add additional groups to join
   -h, --help                          help for run
@@ -69,6 +69,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -l, --label stringArray             Set labels for a container
       --log-driver string             Logging driver for the container (default "json-file")
       --log-opt stringArray           Log driver options
+      --mac-address string            Set mac address of container endpoint
   -m, --memory string                 Memory limit
       --memory-extra int              Represent container's memory high water mark percentage, range in [0, 100]
       --memory-force-empty-ctl int    Whether to reclaim page cache when deleting the cgroup of container
