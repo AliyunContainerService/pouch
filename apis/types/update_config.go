@@ -19,7 +19,9 @@ type UpdateConfig struct {
 	// update disk quota for container
 	DiskQuota map[string]string `json:"DiskQuota,omitempty"`
 
-	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.
+	// A list of environment variables to set inside the container in the form `["VAR=value", ...]`.
+	// A variable like "A=" means updating env A in container to be empty value.
+	// A variable without `=` is removed from the environment, rather than to have an empty value.
 	//
 	Env []string `json:"Env"`
 
