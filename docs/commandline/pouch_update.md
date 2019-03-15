@@ -38,9 +38,9 @@ $ cat /sys/fs/cgroup/memory/8649804cb63ff9713a2734d99728b9d6d5d1e4d2fbafb2b4dbdf
       --device-write-bps strings    Update write rate (bytes per second) from a device (default [])
       --device-write-iops strings   Update write rate (io per second) from a device (default [])
       --disk-quota strings          Update disk quota for container(/=10g)
-  -e, --env strings                 Set environment variables for container
+  -e, --env strings                 Update environment variables for container('--env A=' means updating env A to be empty and '--env A' means removing env A)
   -h, --help                        help for update
-  -l, --label strings               Set label for container
+  -l, --label strings               Update labels for container
   -m, --memory string               Container memory limit
       --memory-swap string          Container swap limit
       --restart string              Restart policy to apply when container exits
