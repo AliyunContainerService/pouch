@@ -273,28 +273,17 @@ type Container struct {
 
 // Key returns container's id.
 func (c *Container) Key() string {
-	c.Lock()
-	defer c.Unlock()
 	return c.ID
 }
 
 // SnapshotKey returns id of container's snapshot
 func (c *Container) SnapshotKey() string {
-	c.Lock()
-	defer c.Unlock()
 	// for old container, SnapshotKey equals to Container ID
 	if c.SnapshotID == "" {
 		return c.ID
 	}
 
 	return c.SnapshotID
-}
-
-// SetSnapshotID sets the snapshot id of container
-func (c *Container) SetSnapshotID(snapID string) {
-	c.Lock()
-	defer c.Unlock()
-	c.SnapshotID = snapID
 }
 
 // Write writes container's meta data into meta store.
@@ -304,8 +293,6 @@ func (c *Container) Write(store *meta.Store) error {
 
 // StopTimeout returns the timeout (in seconds) used to stop the container.
 func (c *Container) StopTimeout() int64 {
-	c.Lock()
-	defer c.Unlock()
 	if c.Config.StopTimeout != nil {
 		return *c.Config.StopTimeout
 	}
@@ -313,8 +300,6 @@ func (c *Container) StopTimeout() int64 {
 }
 
 func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
-	c.Lock()
-	defer c.Unlock()
 	imageConf, err := getconfig()
 	if err != nil {
 		return err
@@ -391,8 +376,6 @@ func (c *Container) merge(getconfig func() (v1.ImageConfig, error)) error {
 
 // FormatStatus format container status
 func (c *Container) FormatStatus() (string, error) {
-	c.Lock()
-	defer c.Unlock()
 	var status string
 
 	switch c.State.Status {
@@ -444,8 +427,6 @@ func (c *Container) FormatStatus() (string, error) {
 // delete the containerd container, the merged dir  will also be
 // deleted, so we should unset the container's MergedDir.
 func (c *Container) UnsetMergedDir() {
-	c.Lock()
-	defer c.Unlock()
 	if c.Snapshotter == nil || c.Snapshotter.Data == nil {
 		return
 	}
@@ -507,13 +488,11 @@ func (c *Container) CleanRootfsSnapshotDirs() error {
 		removeDirs []string
 	)
 
-	c.Lock()
 	for _, dir := range []string{"MergedDir", "UpperDir", "WorkDir"} {
 		if v, ok := c.Snapshotter.Data[dir]; ok {
 			removeDirs = append(removeDirs, v)
 		}
 	}
-	c.Unlock()
 
 	var errMsgs []string
 	for _, dir := range removeDirs {

@@ -28,6 +28,19 @@ type ContainerState struct {
 	// Required: true
 	ExitCode int64 `json:"ExitCode"`
 
+	// Whether this container is abnormal stopped. So that we can distinguish whether
+	// a container stoppped by API or abnormal.
+	//
+	// This flag can be used on the circumstances that when the host restart and try to pull up
+	// the containers that are running before host down. If we have a container with `RestartPolicy`
+	// is `always` but the `Status` is `Stopped`, should we start it or not?
+	//
+	// So with the `Exited` flag being set, we can make sure that this container is exited by abnormal,
+	// we should pull it up. But with status is `Stopped`, we should not pull it up because it is stopped
+	// by API.
+	//
+	Exited bool `json:"Exited,omitempty"`
+
 	// The time when this container last exited.
 	// Required: true
 	FinishedAt string `json:"FinishedAt"`

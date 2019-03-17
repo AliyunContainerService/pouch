@@ -9,72 +9,28 @@ import (
 
 // IsRunning returns container is running or not.
 func (c *Container) IsRunning() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusRunning
-}
-
-// IsStopped returns container is stopped or not.
-func (c *Container) IsStopped() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusStopped
-}
-
-// IsExited returns container is exited or not.
-func (c *Container) IsExited() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusExited
-}
-
-// IsCreated returns container is created or not.
-func (c *Container) IsCreated() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusCreated
-}
-
-// IsPaused returns container is paused or not.
-func (c *Container) IsPaused() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusPaused
-}
-
-// IsRemoving returns container is removing or not.
-func (c *Container) IsRemoving() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusRemoving
-}
-
-// IsDead returns container is dead or not.
-func (c *Container) IsDead() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusDead
+	return c.State.Running
 }
 
 // IsRunningOrPaused returns true of container is running or paused.
 func (c *Container) IsRunningOrPaused() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusRunning || c.State.Status == types.StatusPaused
-}
-
-// IsRestarting returns container is restarting or not.
-func (c *Container) IsRestarting() bool {
-	c.Lock()
-	defer c.Unlock()
-	return c.State.Status == types.StatusRestarting
+	return c.State.Running || c.State.Paused
 }
 
 // ExitCode returns container's ExitCode.
 func (c *Container) ExitCode() int64 {
-	c.Lock()
-	defer c.Unlock()
 	return c.State.ExitCode
+}
+
+// IsCreated returns container is created or not.
+func (c *Container) IsCreated() bool {
+	return c.State.Status == types.StatusCreated
+}
+
+// IsRemoving returns container is removing or not.
+// TODO: actually the pouchd do not set removing status for a container.
+func (c *Container) IsRemoving() bool {
+	return c.State.Status == types.StatusRemoving
 }
 
 // SetStatusRunning sets a container to be status running.
@@ -84,8 +40,6 @@ func (c *Container) ExitCode() int64 {
 // Pid -> input param
 // ExitCode -> 0
 func (c *Container) SetStatusRunning(pid int64) {
-	c.Lock()
-	defer c.Unlock()
 	c.State.Status = types.StatusRunning
 	c.State.StartedAt = time.Now().UTC().Format(utils.TimeLayout)
 	c.State.Pid = pid
@@ -101,8 +55,6 @@ func (c *Container) SetStatusRunning(pid int64) {
 // ExitCode -> input param
 // Error -> input param
 func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
-	c.Lock()
-	defer c.Unlock()
 	c.State.Status = types.StatusStopped
 	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 	c.State.Pid = 0
@@ -113,8 +65,6 @@ func (c *Container) SetStatusStopped(exitCode int64, errMsg string) {
 
 // SetStatusExited sets a container to be status exited.
 func (c *Container) SetStatusExited(exitCode int64, errMsg string) {
-	c.Lock()
-	defer c.Unlock()
 	c.State.Status = types.StatusExited
 	c.State.FinishedAt = time.Now().UTC().Format(utils.TimeLayout)
 	c.State.Pid = 0
@@ -125,8 +75,6 @@ func (c *Container) SetStatusExited(exitCode int64, errMsg string) {
 
 // SetStatusPaused sets a container to be status paused.
 func (c *Container) SetStatusPaused() {
-	c.Lock()
-	defer c.Unlock()
 	c.State.Status = types.StatusPaused
 	c.setStatusFlags(types.StatusPaused)
 }
@@ -134,16 +82,12 @@ func (c *Container) SetStatusPaused() {
 // SetStatusUnpaused sets a container to be status running.
 // Unpaused is treated running.
 func (c *Container) SetStatusUnpaused() {
-	c.Lock()
-	defer c.Unlock()
 	c.State.Status = types.StatusRunning
 	c.setStatusFlags(types.StatusRunning)
 }
 
 // SetStatusOOM sets a container to be status exit because of OOM.
 func (c *Container) SetStatusOOM() {
-	c.Lock()
-	defer c.Unlock()
 	c.State.OOMKilled = true
 	c.State.Error = "OOMKilled"
 }
@@ -156,6 +100,7 @@ func (c *Container) setStatusFlags(status types.Status) {
 		types.StatusRunning:    false,
 		types.StatusPaused:     false,
 		types.StatusRestarting: false,
+		types.StatusExited:     false,
 	}
 
 	if _, exists := statusFlags[status]; exists {
@@ -172,6 +117,8 @@ func (c *Container) setStatusFlags(status types.Status) {
 			c.State.Running = v
 		case types.StatusRestarting:
 			c.State.Restarting = v
+		case types.StatusExited:
+			c.State.Exited = v
 		}
 	}
 }
