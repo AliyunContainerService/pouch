@@ -57,7 +57,7 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 	}
 
 	// NOTE: unset the follow if the container is not running
-	cfg.Follow = cfg.Follow && c.IsRunning()
+	cfg.Follow = cfg.Follow && c.State.Running
 
 	msgCh := make(chan *logger.LogMessage, 1)
 	watcher := jf.ReadLogMessages(cfg)
@@ -103,7 +103,7 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 				// This case will be convered by the followFile
 				// in daemon/logger/jsonfile package.
 				if c, ok := mgr.cache.Get(c.ID).Result(); ok {
-					if !c.(*Container).IsRunning() {
+					if !c.(*Container).State.Running {
 						return
 					}
 				}

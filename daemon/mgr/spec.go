@@ -26,9 +26,6 @@ type SpecWrapper struct {
 
 // createSpec create a runtime-spec.
 func createSpec(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
-	c.Lock()
-	defer c.Unlock()
-
 	// new a default spec from containerd.
 	s := oci.NewDefaultSpec()
 	specWrapper.s = s

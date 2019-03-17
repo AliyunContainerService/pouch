@@ -24,7 +24,7 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 		return "", err
 	}
 
-	if !c.IsRunning() {
+	if !c.State.Running {
 		return "", fmt.Errorf("container %s is not running", c.ID)
 	}
 

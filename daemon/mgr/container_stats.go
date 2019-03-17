@@ -112,8 +112,7 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	}
 
 	c.Lock()
-	ID := c.ID
-	c.Unlock()
+	defer c.Unlock()
 
 	// only get metrics when the container is running
 	// return error to help client quick fail
@@ -121,7 +120,7 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 		return nil, nil, errors.New("can only stats running or paused container")
 	}
 
-	metric, err := mgr.Client.ContainerStats(ctx, ID)
+	metric, err := mgr.Client.ContainerStats(ctx, c.ID)
 	if err != nil {
 		return nil, nil, err
 	}

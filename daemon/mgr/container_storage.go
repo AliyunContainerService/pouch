@@ -670,9 +670,6 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 
 // setMountFS is used to set mountfs directory.
 func (mgr *ContainerManager) setMountFS(ctx context.Context, c *Container) {
-	c.Lock()
-	defer c.Unlock()
-
 	c.MountFS = path.Join(mgr.Store.Path(c.ID), "rootfs")
 }
 

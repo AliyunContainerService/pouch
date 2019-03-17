@@ -65,7 +65,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	}
 
 	// if the container is running, we need first stop it.
-	if c.IsRunning() {
+	if c.State.Running {
 		IsRunning = true
 		err = mgr.stop(ctx, c, 10)
 		if err != nil {
@@ -79,7 +79,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	if err != nil {
 		return err
 	}
-	c.SetSnapshotID(newSnapID)
+	c.SnapshotID = newSnapID
 
 	// initialize container storage config before container started
 	err = mgr.initContainerStorage(ctx, c)

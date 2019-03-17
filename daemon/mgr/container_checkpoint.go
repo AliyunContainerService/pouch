@@ -59,7 +59,7 @@ func (mgr *ContainerManager) CreateCheckpoint(ctx context.Context, name string, 
 		return err
 	}
 
-	if c.State.Status != types.StatusRunning {
+	if !c.IsRunningOrPaused() {
 		return fmt.Errorf("can not checkpoint from a %s container", c.State.Status)
 	}
 
