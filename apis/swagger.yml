@@ -2011,6 +2011,13 @@ definitions:
       and SELinux.
     type: "object"
     properties:
+      type:
+        description: The runtime type used in containerd.
+        type: "string"
+        example: "io.containerd.runtime.v1.linux"
+      options:
+        description: Options are config options for specific runtime.
+        x-go-type: "interface{}"
       path:
         description: |
           Name and, optional, path, of the OCI executable binary.
@@ -2022,6 +2029,7 @@ definitions:
       runtimeArgs:
         description: |
           List of command-line arguments to pass to the runtime when invoked.
+          DEPRECATED: Use Options instead. Remove when shim v1 is deprecated.
         type: "array"
         x-nullable: true
         items:
@@ -2452,6 +2460,9 @@ definitions:
           Runtime:
             type: "string"
             description: "Runtime to use with this container."
+          RuntimeType:
+            type: "string"
+            description: "The runtime type used in containerd."
           # Applicable to Windows
           ConsoleSize:
             type: "array"

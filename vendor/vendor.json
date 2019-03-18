@@ -587,6 +587,14 @@
 			"versionExact": "v1.2.5"
 		},
 		{
+			"checksumSHA1": "w7ldsP68azUNYnbqSI0d0MxKSeQ=",
+			"path": "github.com/containerd/containerd/runtime/v2/runc/options",
+			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
+			"revisionTime": "2019-03-13T05:41:42Z",
+			"version": "v1.2.5",
+			"versionExact": "v1.2.5"
+		},
+		{
 			"checksumSHA1": "Ta8gvFmBCYY1tByMoPBbRiyemBM=",
 			"path": "github.com/containerd/containerd/snapshots",
 			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
