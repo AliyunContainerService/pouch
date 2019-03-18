@@ -16,6 +16,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/daemon"
+	"github.com/alibaba/pouch/test/daemonv2"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/test/util"
 
@@ -537,7 +538,7 @@ func (suite *PouchDaemonSuite) TestUpdateDaemonWithLabels(c *check.C) {
 	c.Assert(updated, check.Equals, true)
 }
 
-// TestUpdateDaemonWithLabels tests update daemon offline
+// TestUpdateDaemonOffline tests update daemon offline
 func (suite *PouchDaemonSuite) TestUpdateDaemonOffline(c *check.C) {
 	path := "/tmp/pouchconfig.json"
 	fd, err := os.Create(path)
@@ -737,4 +738,33 @@ func (suite *PouchDaemonSuite) TestUpdateDaemonWithHomeDirAndSnapshotter(c *chec
 
 	c.Assert(readConfig.HomeDir, check.Equals, tmpHomeDir)
 	c.Assert(readConfig.Snapshotter, check.Equals, snapshotter)
+}
+
+// TestUpdateDaemonWithDisableBridge tests update daemon with disable bridge network
+func (suite *PouchDaemonSuite) TestUpdateDaemonWithDisableBridge(c *check.C) {
+	d := daemonv2.New()
+
+	// modify test config
+	d.Config.NetworkConfig.BridgeConfig.DisableBridge = true
+
+	err := d.Start()
+	if err != nil {
+		c.Fatalf("failed to start daemon with json, err(%v)", err)
+	}
+	defer d.Clean()
+
+	res := d.RunCommand("network", "ls")
+	res.Assert(c, icmd.Success)
+
+	if strings.Contains(res.Stdout(), "bridge") {
+		d.RunCommand("network", "rm", "bridge").Assert(c, icmd.Success)
+	}
+
+	d.Restart()
+
+	res = d.RunCommand("network", "ls")
+	res.Assert(c, icmd.Success)
+	if strings.Contains(res.Stdout(), "bridge") {
+		c.Fatalf("failed to disable bridge network")
+	}
 }

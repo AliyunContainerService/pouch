@@ -33,6 +33,7 @@ type DaemonUpdateCommand struct {
 	label            []string
 	managerWhiteList string
 	execRoot         string
+	disableBridge    bool
 	bridgeName       string
 	bridgeIP         string
 	fixedCIDRv4      string
@@ -73,6 +74,7 @@ func (udc *DaemonUpdateCommand) addFlags() {
 	flagSet.StringVar(&udc.managerWhiteList, "manager-white-list", "", "update daemon manager white list")
 	flagSet.StringSliceVar(&udc.label, "label", nil, "update daemon labels")
 	flagSet.StringVar(&udc.execRoot, "exec-root-dir", "", "update exec root directory for network")
+	flagSet.BoolVar(&udc.disableBridge, "disable-bridge", false, "disable bridge network")
 	flagSet.StringVar(&udc.bridgeName, "bridge-name", "", "update daemon bridge device")
 	flagSet.StringVar(&udc.bridgeIP, "bip", "", "update daemon bridge IP")
 	flagSet.StringVar(&udc.fixedCIDRv4, "fixed-cidr", "", "update daemon bridge fixed CIDR")
@@ -141,6 +143,10 @@ func (udc *DaemonUpdateCommand) updateDaemonConfigFile() error {
 
 	if flagSet.Changed("exec-root-dir") {
 		daemonConfig.NetworkConfig.ExecRoot = udc.execRoot
+	}
+
+	if flagSet.Changed("disable-bridge") {
+		daemonConfig.NetworkConfig.BridgeConfig.DisableBridge = udc.disableBridge
 	}
 
 	if flagSet.Changed("bridge-name") {
