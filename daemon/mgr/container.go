@@ -589,6 +589,11 @@ func (mgr *ContainerManager) Start(ctx context.Context, id string, options *type
 		return err
 	}
 
+	// check if container's status is paused
+	if c.IsPaused() {
+		return fmt.Errorf("cannot start a paused container, try unpause instead")
+	}
+
 	// check if container's status is running
 	if c.IsRunning() {
 		return errors.Wrapf(errtypes.ErrNotModified, "container already started")
