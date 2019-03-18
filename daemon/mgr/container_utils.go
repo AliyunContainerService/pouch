@@ -4,18 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/ctrd"
 	networktypes "github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 
+	"github.com/containerd/containerd/runtime/linux/runctypes"
+	runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"github.com/pkg/errors"
@@ -105,35 +108,59 @@ func (mgr *ContainerManager) generateName(id string) string {
 	return name
 }
 
-// getRuntime returns runtime real path.
-// TODO(huamin): do we need validate runtime is executable ?
-func (mgr *ContainerManager) getRuntime(runtime string) (string, error) {
+// getRuntimeType returns containerd runtime type, type shim v1 by default.
+func (mgr *ContainerManager) getRuntimeType(runtime string) (string, error) {
 	r, exist := mgr.Config.Runtimes[runtime]
 	if !exist {
 		return "", fmt.Errorf("failed to find runtime %s in daemon config", runtime)
 	}
+	if r.Type == "" {
+		return ctrd.RuntimeTypeV1, nil
+	}
+	return r.Type, nil
+}
 
-	// it is ok to use runtime name as a path.
-	rPath := runtime
-	// generally speaking, path is not be empty, but we not forbid empty path
-	// in config set, since name can be a path too.
-	if r.Path != "" {
-		rPath = r.Path
+// generateRuntimeOptions generate options from daemon runtime configurations.
+func (mgr *ContainerManager) generateRuntimeOptions(runtime string) (interface{}, error) {
+	r, exist := mgr.Config.Runtimes[runtime]
+	if !exist {
+		return nil, fmt.Errorf("failed to find runtime %s in daemon config", runtime)
 	}
 
-	// if Runtime has args, use script path as runtime path.
-	if len(r.RuntimeArgs) > 0 {
-		rPath = filepath.Join(mgr.Config.HomeDir, RuntimeDir, runtime)
+	var options interface{}
+	switch o := r.Options.(type) {
+	// io.containerd.runtime.v1.linux
+	case *runctypes.RuncOptions:
+		options = &runctypes.RuncOptions{
+			Runtime:       r.Path,
+			RuntimeRoot:   ctrd.RuntimeRoot,
+			CriuPath:      o.CriuPath,
+			SystemdCgroup: mgr.Config.UseSystemd(),
+		}
+	// io.containerd.runc.v1
+	case *runcoptions.Options:
+		options = &runcoptions.Options{
+			NoPivotRoot:   o.NoPivotRoot,
+			NoNewKeyring:  o.NoNewKeyring,
+			ShimCgroup:    o.ShimCgroup,
+			IoUid:         o.IoUid,
+			IoGid:         o.IoGid,
+			BinaryName:    r.Path,
+			Root:          ctrd.RuntimeRoot,
+			CriuPath:      o.CriuPath,
+			SystemdCgroup: mgr.Config.UseSystemd(),
+		}
+	// TODO: support other v2 shim options.
+	default:
+		return nil, nil
 	}
 
-	return rPath, nil
+	return options, nil
 }
 
 // getContainerSpec returns container runtime spec, unmarshal spec from config.json
-// TODO: when runtime type can be specified, it need fix
 func (mgr *ContainerManager) getContainerSpec(c *Container) (*specs.Spec, error) {
-	runtimeType := fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS)
-	configFile := filepath.Join(mgr.Config.HomeDir, "containerd/state", runtimeType, mgr.Config.DefaultNamespace, c.ID, "config.json")
+	configFile := filepath.Join(path.Dir(c.BaseFS), "config.json")
 	var spec specs.Spec
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {

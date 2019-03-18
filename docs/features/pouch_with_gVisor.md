@@ -26,6 +26,7 @@ Add runsc into config file (/etc/pouch/config.json), restart pouchd, ensure that
 {
     "add-runtime":{
         "runsc":{
+            "type": "io.containerd.runsc.v1",
             "path":"/usr/local/bin/runsc",
             "runtimeArgs":[
                 "--debug",

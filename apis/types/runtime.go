@@ -20,6 +20,9 @@ import (
 // swagger:model Runtime
 type Runtime struct {
 
+	// Options are config options for specific runtime.
+	Options interface{} `json:"options,omitempty"`
+
 	// Name and, optional, path, of the OCI executable binary.
 	//
 	// If the path is omitted, the daemon searches the host's `$PATH` for the
@@ -28,8 +31,12 @@ type Runtime struct {
 	Path string `json:"path,omitempty"`
 
 	// List of command-line arguments to pass to the runtime when invoked.
+	// DEPRECATED: Use Options instead. Remove when shim v1 is deprecated.
 	//
 	RuntimeArgs []string `json:"runtimeArgs"`
+
+	// The runtime type used in containerd.
+	Type string `json:"type,omitempty"`
 }
 
 // Validate validates this runtime
