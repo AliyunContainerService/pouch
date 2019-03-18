@@ -7,6 +7,8 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/network/mode/bridge"
+
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,5 +61,10 @@ func NetworkModeInit(ctx context.Context, config network.Config, manager mgr.Net
 	}
 
 	// init bridge network
-	return bridge.New(ctx, config.BridgeConfig, manager)
+	if !config.BridgeConfig.DisableBridge {
+		if err := bridge.New(ctx, config.BridgeConfig, manager); err != nil {
+			return errors.Wrapf(err, "failed to init bridge network")
+		}
+	}
+	return nil
 }

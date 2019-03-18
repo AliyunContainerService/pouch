@@ -12,6 +12,7 @@ import (
 
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/util"
+
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
