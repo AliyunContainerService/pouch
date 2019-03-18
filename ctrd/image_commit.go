@@ -143,12 +143,18 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 	}
 
 	// new manifest descriptor
-	mfst := ocispec.Manifest{
-		Versioned: specs.Versioned{
-			SchemaVersion: 2,
+	mfst := struct {
+		MediaType string `json:"mediaType,omitempty"`
+		ocispec.Manifest
+	}{
+		MediaType: manifestType,
+		Manifest: ocispec.Manifest{
+			Versioned: specs.Versioned{
+				SchemaVersion: 2,
+			},
+			Config: configDesc,
+			Layers: layers,
 		},
-		Config: configDesc,
-		Layers: layers,
 	}
 
 	mfstJSON, err := json.MarshalIndent(mfst, "", "   ")
