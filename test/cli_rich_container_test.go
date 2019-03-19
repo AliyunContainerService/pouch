@@ -236,7 +236,9 @@ func waitSystemdPullProcess(c *check.C, cname, processName string) {
 
 	select {
 	case <-check:
-	case <-time.After(10 * time.Second):
+	case <-time.After(60 * time.Second):
+		// increasing the time just in case that the systemd won't
+		// start the process in time
 		c.Fatalf("failed to wait systemd pull process %s", processName)
 	}
 
