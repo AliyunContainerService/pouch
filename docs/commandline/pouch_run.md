@@ -71,11 +71,8 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --log-opt stringArray           Log driver options
       --mac-address string            Set mac address of container endpoint
   -m, --memory string                 Memory limit
-      --memory-extra int              Represent container's memory high water mark percentage, range in [0, 100]
-      --memory-force-empty-ctl int    Whether to reclaim page cache when deleting the cgroup of container
       --memory-swap string            Swap limit equal to memory + swap, '-1' to enable unlimited swap
       --memory-swappiness int         Container memory swappiness [0, 100]
-      --memory-wmark-ratio int        Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio
       --name string                   Specify name of container
       --net strings                   Set networks to container
       --net-priority int              net priority
@@ -94,7 +91,6 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --rich-mode string              Choose one rich container mode. dumb-init(default), systemd, sbin-init
       --rm                            Automatically remove the container after it exits
       --runtime string                OCI runtime to use for this container
-      --sche-lat-switch int           Whether to enable scheduler latency count in cpuacct
       --security-opt strings          Security Options
       --shm-size string               Size of /dev/shm, default value is 64MB
       --specific-id string            Specify id of container, length of id should be 64, characters of id should be in '0123456789abcdef'
