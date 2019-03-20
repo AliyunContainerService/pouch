@@ -541,3 +541,18 @@ func (suite *PouchRunVolumeSuite) TestRunWithQuotaID(c *check.C) {
 	}
 	c.Assert(found, check.Equals, true)
 }
+
+// TestRunOverrideVolume tests bind volume should override default config
+func (suite *PouchRunVolumeSuite) TestRunOverrideVolume(c *check.C) {
+	cname := "TestRunOverrideVolume"
+	ret := command.PouchRun("run", "-d", "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
+		"--name", cname, busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, cname)
+	ret.Assert(c, icmd.Success)
+
+	output := command.PouchRun("inspect", "-f", "{{.ID}}", cname).Stdout()
+	containerID := strings.TrimSpace(output)
+
+	command.PouchRun("exec", cname, "ls", "/sys/fs/cgroup/memory/default/"+containerID).Assert(c, icmd.Success)
+}
