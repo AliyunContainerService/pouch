@@ -23,6 +23,7 @@ $ pouch updatedaemon --debug=true
       --bridge-name string          update daemon bridge device
       --config-file string          specified config file for updating daemon (default "/etc/pouch/config.json")
       --default-gateway string      update daemon bridge default gateway
+      --disable-bridge              disable bridge network
       --exec-root-dir string        update exec root directory for network
       --fixed-cidr string           update daemon bridge fixed CIDR
   -h, --help                        help for updatedaemon
