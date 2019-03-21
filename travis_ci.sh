@@ -60,20 +60,6 @@ run_integration_test() {
   bash <(curl -s https://codecov.io/bash) -cF "integration_test_${job_id}" -y .codecov.yml
 }
 
-run_criv1alpha1_test() {
-  check_port
-
-  make build
-  TEST_FLAGS="" BUILDTAGS="selinux seccomp apparmor" make build-daemon-integration
-  sudo env "PATH=$PATH" make install
-
-  sudo env "PATH=$PATH" make download-dependencies
-  sudo env "PATH=$PATH" make cri-v1alpha1-test
-  make coverage
-
-  bash <(curl -s https://codecov.io/bash) -cF criv1alpha1_test -y .codecov.yml
-}
-
 run_criv1alpha2_test() {
   check_port
 
@@ -159,10 +145,6 @@ main () {
       echo "run integration test"
       run_pre_test
       run_integration_test "${JOB_ID}"
-    ;;
-    criv1alpha1test)
-      echo "run criv1alpha1 test"
-      run_criv1alpha1_test
     ;;
     criv1alpha2test)
       echo "run criv1alpha2 test"

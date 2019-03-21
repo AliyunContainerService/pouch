@@ -86,7 +86,6 @@ COVERAGE_PACKAGES=$(shell go list ./... | \
 				  grep -v github.com/alibaba/pouch/cli$$ | \
 				  grep -v github.com/alibaba/pouch/cli/ | \
 				  grep -v github.com/alibaba/pouch/cri/apis | \
-				  grep -v github.com/alibaba/pouch/cri/v1alpha1 | \
 				  grep -v github.com/alibaba/pouch/apis/types )
 
 COVERAGE_PACKAGES_LIST=$(shell echo $(COVERAGE_PACKAGES) | tr " " ",")
@@ -292,12 +291,6 @@ integration-test: build-daemon-integration build-integration-test ## run daemon 
 	@mkdir -p coverage
 	./hack/testing/run_daemon_integration.sh ${INTEGRATION_FLAGS}
 
-.PHONY: cri-v1alpha1-test
-cri-v1alpha1-test: ## run v1 alpha1 cri-v1alpha1-test
-	@echo $@
-	@mkdir -p coverage
-	./hack/testing/run_daemon_cri_integration.sh v1alpha1
-
 .PHONY: cri-v1alpha2-test
 cri-v1alpha2-test: ## run v1 alpha2 cri-v1alpha2-test
 	@echo $@
@@ -311,7 +304,7 @@ cri-e2e-test: ## run cri-e2e-test
 	./hack/testing/run_daemon_cri_e2e.sh v1alpha2
 
 .PHONY: test
-test: unit-test integration-test cri-v1alpha1-test cri-v1alpha2-test cri-e2e-test ## run the unit-test, integration-test , cri-v1alpha1-test , cri-v1alpha2-test and cri-e2e-test
+test: unit-test integration-test cri-v1alpha2-test cri-e2e-test ## run the unit-test, integration-test, cri-v1alpha2-test and cri-e2e-test
 
 .PHONY: coverage
 coverage: ## combine coverage after test

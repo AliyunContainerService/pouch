@@ -35,9 +35,7 @@ trap 'rm -rf /tmp/integration-daemon-cri-testing-*' EXIT
 
 # integration::install_critest installs test case.
 integration::install_critest() {
-  local cri_runtime
-  cri_runtime=$1
-  hack/install/install_critest.sh "${cri_runtime}"
+  hack/install/install_critest.sh
 }
 
 # integration::install_cni installs cni plugins.
@@ -53,13 +51,8 @@ integration::run_daemon_cri_test_cases() {
   echo "start pouch daemon cri-${cri_runtime} integration test..."
 
   set +e
-  if [[ "${cri_runtime}" == "v1alpha1" ]]; then
-    critest --runtime-endpoint=${POUCH_SOCK} \
-      --focus="${CRI_FOCUS}" --ginkgo-flags="--skip=\"${CRI_SKIP}\"" validation
-  else
-    critest --runtime-endpoint=${POUCH_SOCK} \
-      --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}" --parallel=8
-  fi
+  critest --runtime-endpoint=${POUCH_SOCK} \
+    --ginkgo.focus="${CRI_FOCUS}" --ginkgo.skip="${CRI_SKIP}" --parallel=8
   code=$?
 
   integration::stop_local_persist
@@ -84,12 +77,12 @@ integration::run_cri_test(){
   # daemon cri integration coverage profile
   coverage_profile="${REPO_BASE}/coverage/integration_daemon_cri_${cri_runtime}_profile.out"
   rm -rf "${coverage_profile}"
-  
+
   cmd="pouchd-integration"
   flags=" -test.coverprofile=${coverage_profile} DEVEL"
   flags="${flags} --enable-cri --cri-version ${cri_runtime} --sandbox-image=gcr.io/google_containers/pause-amd64:3.0"
 
-  integration::install_critest "${cri_runtime}"
+  integration::install_critest
 
   integration::stop_local_persist
   integration::run_local_persist_background "${local_persist_log}"
