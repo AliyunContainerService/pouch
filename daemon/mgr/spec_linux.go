@@ -55,7 +55,7 @@ func populatePlatform(ctx context.Context, c *Container, specWrapper *SpecWrappe
 	if specWrapper.useSystemd {
 		s.Linux.CgroupsPath = cgroupsParent + ":" + defaultCgroupParent + ":" + c.ID
 	} else {
-		s.Linux.CgroupsPath = filepath.Join(cgroupsParent, c.ID)
+		s.Linux.CgroupsPath = filepath.Clean(filepath.Join("/", cgroupsParent, c.ID))
 	}
 
 	s.Linux.Sysctl = c.HostConfig.Sysctls
