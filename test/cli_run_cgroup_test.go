@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/alibaba/pouch/test/command"
@@ -67,6 +68,24 @@ func testRunWithCgroupParent(c *check.C, cgroupParent, name string) {
 		}
 		if !strings.Contains(v, cgroupParent) {
 			c.Fatalf("unexpected cgroup path %v, expect to has %s in path", v, cgroupParent)
+		}
+	}
+
+	// inspect Container ID
+	res = command.PouchRun("inspect", "-f", "{{.ID}}", name)
+	res.Assert(c, icmd.Success)
+	containerID := strings.TrimSpace(res.Stdout())
+
+	// if cgroupParent is absolute path, cgroup path should /cgroupMount/subsystem/
+	if filepath.IsAbs(cgroupParent) {
+		for p := range cgroupPaths {
+			// like name=systemd, and rdma not created by runc
+			if strings.Contains(p, "=") || strings.Contains(p, "rdma") {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join("/sys/fs/cgroup", p, cgroupParent, containerID)); err != nil {
+				c.Fatalf("%s cgroup path should exist", filepath.Join("/sys/fs/cgroup", p, cgroupParent, containerID))
+			}
 		}
 	}
 }
