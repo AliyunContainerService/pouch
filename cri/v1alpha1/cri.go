@@ -166,7 +166,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		return nil, fmt.Errorf("failed to get imagefs uuid of %q: %v", imageFSPath, err)
 	}
 
-	if !config.CriConfig.DisableCriStatsCollect {
+	if config.CriConfig.EnableCriStatsCollect {
 		period := config.CriConfig.CriStatsCollectPeriod
 		if period <= 0 {
 			return nil, fmt.Errorf("cri stats collect period should > 0")

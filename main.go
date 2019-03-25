@@ -81,7 +81,7 @@ func setupFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.CriConfig.StreamServerPort, "stream-server-port", "10010", "The port stream server of cri is listening on.")
 	flagSet.BoolVar(&cfg.CriConfig.StreamServerReusePort, "stream-server-reuse-port", false, "Specify whether cri stream server share port with pouchd. If this is true, the listen option of pouchd should specify a tcp socket and its port should be same with stream-server-port.")
 	flagSet.IntVar(&cfg.CriConfig.CriStatsCollectPeriod, "cri-stats-collect-period", 10, "The time duration (in time.Second) cri collect stats from containerd.")
-	flagSet.BoolVar(&cfg.CriConfig.DisableCriStatsCollect, "disable-cri-stats-collect", true, "Specify whether cri collect stats from containerd.If this is true, option CriStatsCollectPeriod will take no effect.")
+	flagSet.BoolVar(&cfg.CriConfig.EnableCriStatsCollect, "enable-cri-stats-collect", false, "Specify whether cri collect stats from containerd. If this is true, option CriStatsCollectPeriod will take effect.")
 	flagSet.BoolVarP(&cfg.Debug, "debug", "D", false, "Switch daemon log level to DEBUG mode")
 	flagSet.StringVarP(&cfg.ContainerdAddr, "containerd", "c", "/var/run/containerd.sock", "Specify listening address of containerd")
 	flagSet.StringVar(&cfg.ContainerdPath, "containerd-path", "", "Specify the path of containerd binary")

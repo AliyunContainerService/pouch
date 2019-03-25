@@ -101,15 +101,15 @@ func TestConfigValidate(t *testing.T) {
 	cfg = &Config{
 		IsCriEnabled: true,
 		CriConfig: criconfig.Config{
-			Listen:                 "unix:///var/run/pouchd.sock",
-			NetworkPluginBinDir:    "cni-bin-dir",
-			NetworkPluginConfDir:   "cni-conf-dir",
-			SandboxImage:           "registry.hub.docker.com/library/busybox",
-			CriVersion:             "v1alpha2",
-			StreamServerPort:       "10010",
-			StreamServerReusePort:  true,
-			CriStatsCollectPeriod:  10,
-			DisableCriStatsCollect: false,
+			Listen:                "unix:///var/run/pouchd.sock",
+			NetworkPluginBinDir:   "cni-bin-dir",
+			NetworkPluginConfDir:  "cni-conf-dir",
+			SandboxImage:          "registry.hub.docker.com/library/busybox",
+			CriVersion:            "v1alpha2",
+			StreamServerPort:      "10010",
+			StreamServerReusePort: true,
+			CriStatsCollectPeriod: 10,
+			EnableCriStatsCollect: false,
 		},
 	}
 	assert.Equal(nil, cfg.Validate())
