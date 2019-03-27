@@ -51,7 +51,8 @@ func NewCli() *Cli {
 
 // SetFlags sets all global options.
 func (c *Cli) SetFlags() *Cli {
-	flags := c.rootCmd.PersistentFlags()
+	flags := c.rootCmd.Flags()
+	flags.SetInterspersed(false)
 	flags.StringVarP(&c.Option.host, "host", "H", "unix:///var/run/pouchd.sock", "Specify connecting address of Pouch CLI")
 	flags.BoolVarP(&c.Option.Debug, "debug", "D", false, "Switch client log level to DEBUG mode")
 	flags.StringVar(&c.Option.TLS.Key, "tlskey", "", "Specify key file of TLS")
