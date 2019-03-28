@@ -714,9 +714,12 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		image = iSpec.Image
 	}
 
+	// compatible with both kubernetes and cri-o annotations
 	specAnnotation := make(map[string]string)
+	specAnnotation[anno.CRIOContainerType] = anno.ContainerTypeContainer
 	specAnnotation[anno.ContainerType] = anno.ContainerTypeContainer
-	specAnnotation[anno.SandboxName] = podSandboxID
+	specAnnotation[anno.CRIOSandboxName] = podSandboxID
+	specAnnotation[anno.CRIOSandboxID] = podSandboxID
 	specAnnotation[anno.SandboxID] = podSandboxID
 
 	resources := r.GetConfig().GetLinux().GetResources()

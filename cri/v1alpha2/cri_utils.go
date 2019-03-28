@@ -338,6 +338,10 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, sandboxMeta *metat
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
 
+	specAnnotation := make(map[string]string)
+	specAnnotation[anno.CRIOContainerType] = anno.ContainerTypeSandbox
+	specAnnotation[anno.ContainerType] = anno.ContainerTypeSandbox
+
 	hc := &apitypes.HostConfig{}
 
 	if sandboxMeta.NetNS == "" {
@@ -352,9 +356,10 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, sandboxMeta *metat
 
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
-			Hostname: strfmt.Hostname(config.Hostname),
-			Image:    image,
-			Labels:   labels,
+			Hostname:       strfmt.Hostname(config.Hostname),
+			Image:          image,
+			Labels:         labels,
+			SpecAnnotation: specAnnotation,
 		},
 		HostConfig:       hc,
 		NetworkingConfig: &apitypes.NetworkingConfig{},
