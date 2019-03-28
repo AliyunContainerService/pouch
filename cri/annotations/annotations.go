@@ -8,14 +8,20 @@ const (
 	// ContainerTypeContainer represents a container running within a pod
 	ContainerTypeContainer = "container"
 
+	// CRIOContainerType is the container type (sandbox or container) annotation
+	CRIOContainerType = "io.kubernetes.cri-o.ContainerType"
+
 	// ContainerType is the container type (sandbox or container) annotation
-	ContainerType = "io.kubernetes.cri-o.ContainerType"
+	ContainerType = "io.kubernetes.cri.container-type"
 
-	// SandboxName is the sandbox name annotation
-	SandboxName = "io.kubernetes.cri-o.SandboxName"
+	// CRIOSandboxName is the sandbox name annotation
+	CRIOSandboxName = "io.kubernetes.cri-o.SandboxName"
 
-	// SandboxID is the sandbox id annotation
-	SandboxID = "io.kubernetes.cri-o.SandboxID"
+	// CRIOSandboxID is the sandbox id annotation
+	CRIOSandboxID = "io.kubernetes.cri-o.SandboxID"
+
+	// SandboxID is the sandbox ID annotation
+	SandboxID = "io.kubernetes.cri.sandbox-id"
 
 	// KubernetesRuntime is the runtime
 	KubernetesRuntime = "io.kubernetes.runtime"
