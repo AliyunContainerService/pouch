@@ -131,6 +131,9 @@ type Config struct {
 	// InsecureRegistries sets insecure registries to allow to pull
 	// insecure registries.
 	InsecureRegistries []string `json:"insecure-registries,omitempty"`
+
+	// EnableBuilder enable builder functionality
+	EnableBuilder bool `json:"enable-builder,omitempty"`
 }
 
 // GetCgroupDriver gets cgroup driver used in runc.

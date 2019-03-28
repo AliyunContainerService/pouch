@@ -35,7 +35,8 @@ type Daemon struct {
 	ctrdDaemon *supervisord.Daemon
 
 	// ctrdClient is grpc client connecting to the containerd
-	ctrdClient      ctrd.APIClient
+	ctrdClient ctrd.APIClient
+
 	containerMgr    mgr.ContainerMgr
 	systemMgr       mgr.SystemMgr
 	imageMgr        mgr.ImageMgr
@@ -277,6 +278,21 @@ func (d *Daemon) Run() error {
 	// close the ready channel
 	close(httpReadyCh)
 	close(criReadyCh)
+
+	// init buildkit if enable builder functionality
+	//
+	// FIXME(fuweid): builder functionality is experimental version, which
+	// do not impact existing http server and cri grpc server. After it
+	// is stable, we will check the status of builder and shutdown whole
+	// daemon if the builder server is down.
+	if d.config.EnableBuilder {
+		go func() {
+			logrus.Info("serving builder server...")
+			if err := d.runBuilderServer(); err != nil {
+				logrus.Errorf("failed to serve builder server: %v", err)
+			}
+		}()
+	}
 
 	err = <-criStopCh
 	if err != nil {
