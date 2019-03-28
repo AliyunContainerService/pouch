@@ -1892,7 +1892,7 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 	tests := []struct {
 		name       string
 		annotation map[string]string
-		checkFn    func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool
+		checkFn    func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool
 		errMsg     string
 	}{
 		{
@@ -1900,12 +1900,16 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 			annotation: map[string]string{
 				anno.MemorySwapExtendAnnotation: "200000000",
 			},
-			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool {
-				if hc.MemorySwap == 200000000 {
-					return true
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool {
+				if hc.MemorySwap != 200000000 {
+					return false
 				}
 
-				return false
+				if uc.MemorySwap != 200000000 {
+					return false
+				}
+
+				return true
 			},
 			errMsg: "",
 		},
@@ -1914,7 +1918,7 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 			annotation: map[string]string{
 				anno.MemorySwapExtendAnnotation: "1g",
 			},
-			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig) bool {
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool {
 				return false
 			},
 			errMsg: "failed to parse resources.memory_swap",
@@ -1925,8 +1929,9 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &apitypes.ContainerConfig{}
 			hc := &apitypes.HostConfig{}
+			uc := &apitypes.UpdateConfig{}
 
-			err := applyContainerConfigByAnnotation(tt.annotation, config, hc)
+			err := applyContainerConfigByAnnotation(tt.annotation, config, hc, uc)
 			if tt.errMsg != "" {
 				assert.NotNil(t, err, "error should be %v", tt.errMsg)
 				if err != nil {
@@ -1936,7 +1941,7 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 
 			if tt.errMsg == "" {
 				assert.Nil(t, err)
-				assert.True(t, tt.checkFn(config, hc))
+				assert.True(t, tt.checkFn(config, hc, uc))
 			}
 		})
 	}
