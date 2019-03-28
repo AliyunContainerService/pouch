@@ -301,6 +301,14 @@
 			"versionExact": "v1.2.5"
 		},
 		{
+			"checksumSHA1": "nv5O+XkrcCzUrH8ugAMjSXW3ZZw=",
+			"path": "github.com/containerd/containerd/content/local",
+			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
+			"revisionTime": "2019-03-13T05:41:42Z",
+			"version": "v1.2.5",
+			"versionExact": "v1.2.5"
+		},
+		{
 			"checksumSHA1": "QldJREIl8aNsaHqnilEaT7mnmwc=",
 			"path": "github.com/containerd/containerd/content/proxy",
 			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
@@ -573,6 +581,12 @@
 			"versionExact": "v1.2.5"
 		},
 		{
+			"path": "github.com/containerd/containerd/services/content/contentserver",
+			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
+			"version": "v1.2.5",
+			"versionExact": "v1.2.5"
+		},
+		{
 			"checksumSHA1": "Ta8gvFmBCYY1tByMoPBbRiyemBM=",
 			"path": "github.com/containerd/containerd/snapshots",
 			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
@@ -597,6 +611,24 @@
 			"versionExact": "v1.2.5"
 		},
 		{
+			"checksumSHA1": "KBGCFRm49uvG3EqB0p0GETTI9ho=",
+			"path": "github.com/containerd/continuity",
+			"revision": "004b46473808b3e7a4a3049c20e4376c91eb966d",
+			"revisionTime": "2018-12-03T11:20:20Z"
+		},
+		{
+			"checksumSHA1": "srGubnn0uDUy/a0T9AjZG69Vy3o=",
+			"path": "github.com/containerd/continuity/devices",
+			"revision": "004b46473808b3e7a4a3049c20e4376c91eb966d",
+			"revisionTime": "2018-12-03T11:20:20Z"
+		},
+		{
+			"checksumSHA1": "RgqS72+EyJglY9BxzPtMh2F/Ldc=",
+			"path": "github.com/containerd/continuity/driver",
+			"revision": "004b46473808b3e7a4a3049c20e4376c91eb966d",
+			"revisionTime": "2018-12-03T11:20:20Z"
+		},
+		{
 			"checksumSHA1": "vCbBtPsT68dwD3psStEIrAfVmKM=",
 			"path": "github.com/containerd/continuity/fs",
 			"revision": "004b46473808b3e7a4a3049c20e4376c91eb966d",
@@ -607,6 +639,12 @@
 			"path": "github.com/containerd/continuity/pathdriver",
 			"revision": "d3c23511c1bf5851696cba83143d9cbcd666869b",
 			"revisionTime": "2018-05-24T21:06:03Z"
+		},
+		{
+			"checksumSHA1": "No2/2BFtgmHJaLm45ypBCBCDmjk=",
+			"path": "github.com/containerd/continuity/proto",
+			"revision": "004b46473808b3e7a4a3049c20e4376c91eb966d",
+			"revisionTime": "2018-12-03T11:20:20Z"
 		},
 		{
 			"checksumSHA1": "Pse/Y1lqxmWpXKh7dpbO9S+vKvU=",
@@ -740,6 +778,12 @@
 			"revisionTime": "2017-07-18T22:32:38Z"
 		},
 		{
+			"checksumSHA1": "SeRs8Hsx2iFNonoo1DioQXxYYVc=",
+			"path": "github.com/docker/cli/cli/connhelper/commandconn",
+			"revision": "f40f9c240ab03d20ae16ba97ec97ecb2cad50558",
+			"revisionTime": "2019-03-21T23:48:15Z"
+		},
+		{
 			"checksumSHA1": "Gj+xR1VgFKKmFXYOJMnAczC3Znk=",
 			"path": "github.com/docker/distribution/digestset",
 			"revision": "0d3efadf0154c2b8a4e7b6621fff9809655cc580",
@@ -752,16 +796,58 @@
 			"revisionTime": "2019-02-05T00:58:09Z"
 		},
 		{
+			"checksumSHA1": "/jF0HVFiLzUUuywSjp4F/piM7BM=",
+			"path": "github.com/docker/docker/api/types/blkiodev",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
+			"checksumSHA1": "wfrPV0iupbyLWIUOUeSnVaHHIHg=",
+			"path": "github.com/docker/docker/api/types/container",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
+			"checksumSHA1": "9OClWW7OCikgz4QCS/sAVcvqcWk=",
+			"path": "github.com/docker/docker/api/types/mount",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
 			"checksumSHA1": "IggTTG/yCDaV9SjtQz5SSarqUtc=",
 			"path": "github.com/docker/docker/api/types/network",
 			"revision": "fd2f2a919e392b96de74795ae9af2dc5e510bc4c",
 			"revisionTime": "2018-06-06T04:43:31Z"
 		},
 		{
+			"checksumSHA1": "OQEUS/2J2xVHpfvcsxcXzYqBSeY=",
+			"path": "github.com/docker/docker/api/types/strslice",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
+			"checksumSHA1": "5RBkdnXH1vvTJIOnsNzxq0JnyWg=",
+			"path": "github.com/docker/docker/builder/dockerignore",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
 			"checksumSHA1": "ttq59lEvvhcPqd+hDXxclaIXQQs=",
 			"path": "github.com/docker/docker/daemon/caps",
 			"revision": "53a58da551e961b3710bbbdfabbc162c3f5f30f6",
 			"revisionTime": "2018-01-31T23:13:00Z"
+		},
+		{
+			"checksumSHA1": "u+plsrJuRfw8vmIB82eQz9p+31I=",
+			"path": "github.com/docker/docker/pkg/archive",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
+			"checksumSHA1": "l+Cj+KvNrFIn93JBWTwlpVwzkcE=",
+			"path": "github.com/docker/docker/pkg/chrootarchive",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
 		},
 		{
 			"checksumSHA1": "jhniGMHY8Ze6TvmbKnzuCosOVN8=",
@@ -774,6 +860,18 @@
 			"path": "github.com/docker/docker/pkg/discovery/kv",
 			"revision": "fd2f2a919e392b96de74795ae9af2dc5e510bc4c",
 			"revisionTime": "2018-06-06T04:43:31Z"
+		},
+		{
+			"checksumSHA1": "eMoRb/diYeuYLojU7ChN5DaETHc=",
+			"path": "github.com/docker/docker/pkg/fileutils",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
+		},
+		{
+			"checksumSHA1": "+Ir5nXNDvy3cwbTlBh06lR7zUrI=",
+			"path": "github.com/docker/docker/pkg/idtools",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
 		},
 		{
 			"checksumSHA1": "Ybq78CnAoQWVBk+lkh3zykmcSjs=",
@@ -822,6 +920,12 @@
 			"path": "github.com/docker/docker/pkg/plugins/transport",
 			"revision": "fd2f2a919e392b96de74795ae9af2dc5e510bc4c",
 			"revisionTime": "2018-06-06T04:43:31Z"
+		},
+		{
+			"checksumSHA1": "dj8atalGWftfM9vdzCsh9YF1Seg=",
+			"path": "github.com/docker/docker/pkg/pools",
+			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
+			"revisionTime": "2019-03-27T06:32:23Z"
 		},
 		{
 			"checksumSHA1": "UNeFR/6q9MFAwCoghqObaqfU284=",
@@ -1325,6 +1429,12 @@
 			"revisionTime": "2018-05-31T15:17:15Z"
 		},
 		{
+			"checksumSHA1": "MlaWEe1K+Kpb9wDF88qPoqO1uro=",
+			"path": "github.com/gofrs/flock",
+			"revision": "5135e617513b1e6e205a3a89b042249dee6730c8",
+			"revisionTime": "2019-03-20T16:07:11Z"
+		},
+		{
 			"checksumSHA1": "sbYBeHosCmBud/xPIErOx5kcXkg=",
 			"path": "github.com/gogo/googleapis/google/rpc",
 			"revision": "08a7655d27152912db7aaf4f983275eaf8d128ef",
@@ -1481,6 +1591,12 @@
 			"revisionTime": "2018-03-11T05:24:15Z"
 		},
 		{
+			"checksumSHA1": "c0Z2sKLKi+IKRVzq0IzNvqvfCrQ=",
+			"path": "github.com/google/shlex",
+			"revision": "c34317bd91bf98fab745d77b03933cf8769299fe",
+			"revisionTime": "2018-11-06T13:46:48Z"
+		},
+		{
 			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
 			"path": "github.com/gorilla/context",
 			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
@@ -1505,6 +1621,12 @@
 			"revisionTime": "2018-08-20T15:04:22Z"
 		},
 		{
+			"checksumSHA1": "X85FZDi+2tAdURgCsAEaToSkJhk=",
+			"path": "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc",
+			"revision": "8e809c8a86450a29b90dcc9efbf062d0fe6d9746",
+			"revisionTime": "2018-05-07T21:33:50Z"
+		},
+		{
 			"checksumSHA1": "cZw5u6BGWe3gjJxmXT6J0Tfn6Mw=",
 			"path": "github.com/hashicorp/consul/api",
 			"revision": "5f3d20c5cfbc2859f0dda44d0c14826f00c4a277",
@@ -1523,10 +1645,11 @@
 			"revisionTime": "2017-12-18T14:54:08Z"
 		},
 		{
-			"checksumSHA1": "y+AeKVZoX0gB+DZW4Arzkb3tTVc=",
+			"checksumSHA1": "+4fNrgPPG7zTTIfpPn+37XD/Wf8=",
+			"origin": "github.com/tonistiigi/go-immutable-radix",
 			"path": "github.com/hashicorp/go-immutable-radix",
-			"revision": "7f3cd4390caab3250a57f30efdb2a65dd7649ecf",
-			"revisionTime": "2018-01-29T17:09:00Z"
+			"revision": "826af9ccf0feeee615d546d69b11f8e98da8c8f1",
+			"revisionTime": "2017-08-03T05:56:48Z"
 		},
 		{
 			"checksumSHA1": "TNlVzNR1OaajcNi3CbQ3bGbaLGU=",
@@ -1632,10 +1755,702 @@
 			"revisionTime": "2018-05-23T09:45:22Z"
 		},
 		{
+			"checksumSHA1": "gOIe6F97Mcq/PwZjG38FkxervzE=",
+			"path": "github.com/mitchellh/hashstructure",
+			"revision": "a38c50148365edc8df43c1580c48fb2b3a1e9cd7",
+			"revisionTime": "2018-08-28T14:53:49Z"
+		},
+		{
 			"checksumSHA1": "EHjhpHipgm+XGccrRAms9AW3Ewk=",
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "d0303fe809921458f417bcf828397a65db30a7e4",
 			"revisionTime": "2017-05-23T03:00:23Z"
+		},
+		{
+			"checksumSHA1": "51PHVBImrolZR/i/6blfRB2f8SA=",
+			"path": "github.com/moby/buildkit/api/services/control",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "f5YLiwh2mZutw+NBIGM+z7XDvi0=",
+			"path": "github.com/moby/buildkit/api/types",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "iIvH/mnycaCMO0KuK1BKUIGCVb8=",
+			"path": "github.com/moby/buildkit/cache",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "vxvOf9JfR7yGRYthfV39NmrzXcI=",
+			"path": "github.com/moby/buildkit/cache/blobs",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "0SwxGTPtOwYMJutwqUfQZQdhidc=",
+			"path": "github.com/moby/buildkit/cache/contenthash",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "scMa9xVMmGaKCduaU12mScdy40A=",
+			"path": "github.com/moby/buildkit/cache/metadata",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "s6Ao9kKRP/AWk9mHAwubO9uKtDQ=",
+			"path": "github.com/moby/buildkit/cache/remotecache",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "X4C/bd2kqHWFQyXyv4oDJ75gA+U=",
+			"path": "github.com/moby/buildkit/cache/remotecache/v1",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ZNhF2HjkxNkNtS13zl4+JcPIxo4=",
+			"path": "github.com/moby/buildkit/cache/util",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "O86EvpeZO51cm2/aToB9SYFBXjs=",
+			"path": "github.com/moby/buildkit/client",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ot60he6LK24U2O3DO7iFaT9UuVM=",
+			"path": "github.com/moby/buildkit/client/buildid",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "rLr9jgN/fca8jRXpt6pv05llstQ=",
+			"path": "github.com/moby/buildkit/client/connhelper",
+			"revision": "33bb70c81070edad791d5942e5d0787dd922fdbc",
+			"revisionTime": "2019-03-26T23:36:31Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "bRad/sB/7KwukAkQawxdnsZ+VxI=",
+			"path": "github.com/moby/buildkit/client/llb",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "b5NZE82fKsIoYVEYBQNYlPOKwWs=",
+			"path": "github.com/moby/buildkit/client/llb/imagemetaresolver",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Hbah++Hi74rX9fqMt0vANZtaWgg=",
+			"path": "github.com/moby/buildkit/client/ociindex",
+			"revision": "33bb70c81070edad791d5942e5d0787dd922fdbc",
+			"revisionTime": "2019-03-26T23:36:31Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "0UFe0BHzHkazxG/BrjPoiPioOAI=",
+			"path": "github.com/moby/buildkit/control",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ivK0acKUOcGbZ4Rn7ECHTNAqQfs=",
+			"path": "github.com/moby/buildkit/control/gateway",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ZLCpA7ZoP6U7kH9vNdL2bqILKdQ=",
+			"path": "github.com/moby/buildkit/executor",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "PW0v0J4Nnm2VEAB76xZI634lpcU=",
+			"path": "github.com/moby/buildkit/executor/containerdexecutor",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "dm57bS8+DwNMriiLmu5nVHENiwE=",
+			"path": "github.com/moby/buildkit/executor/oci",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ETqwOaN8ZSvI5QjBZCkfmfoat7o=",
+			"path": "github.com/moby/buildkit/exporter",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "PceTrTp0u1P2RVjai0LwL5ULSJk=",
+			"path": "github.com/moby/buildkit/exporter/containerimage",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Ww/DEklF+oi131m8UBlhIftrHbk=",
+			"path": "github.com/moby/buildkit/exporter/containerimage/exptypes",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "hT7QVJdUmEP4ekXN8HVZ+IzqCPo=",
+			"path": "github.com/moby/buildkit/exporter/local",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "D77Lyu3PYtFAVMYQNLnksGOK0YM=",
+			"path": "github.com/moby/buildkit/exporter/oci",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "egnH1IMFstXLqWlo2DZG7VscyOA=",
+			"path": "github.com/moby/buildkit/frontend",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "QIHkJr89voFDxqs54u60KhPs18s=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/builder",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "X/pI3Zq1wEudW5RR/8N1o16bDCE=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/command",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "7FUq9JnmhcBX4wQxxuYuzqhJ0XI=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "OBG5hi5Pt0GcuUcF30/NUHNnoyw=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/instructions",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "uVwBc1lZwIzuspIZvSGxlqk7g7A=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/parser",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "rfp5/7HOweasic2soAMLI/Tsapc=",
+			"path": "github.com/moby/buildkit/frontend/dockerfile/shell",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "kTV8ZOOcl8KUfXEHNSduE+DTqZg=",
+			"path": "github.com/moby/buildkit/frontend/gateway",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "cwrNS436nmI1MRj5d3dXjbIPViE=",
+			"path": "github.com/moby/buildkit/frontend/gateway/client",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Eeu4gfXo75OmhrdnTjZv0hFqQ08=",
+			"path": "github.com/moby/buildkit/frontend/gateway/forwarder",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ovRxV2t5ySRovUpi1I7pWolpVHw=",
+			"path": "github.com/moby/buildkit/frontend/gateway/grpcclient",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "EW6vJZcdu0lVskA2FLDAXQJTRag=",
+			"path": "github.com/moby/buildkit/frontend/gateway/pb",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "No6j9RP81cgb9+v1ks+aWz229XU=",
+			"path": "github.com/moby/buildkit/identity",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "NvXQ+lpeokU5ziTNNEhtuh1G3XE=",
+			"path": "github.com/moby/buildkit/session",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Ci9cZ7ZHGvKtPDW2xHFQdPlyJzI=",
+			"path": "github.com/moby/buildkit/session/auth",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ob+3laLKEcWMjeV+AqCiNnRL2fI=",
+			"path": "github.com/moby/buildkit/session/content",
+			"revision": "33bb70c81070edad791d5942e5d0787dd922fdbc",
+			"revisionTime": "2019-03-26T23:36:31Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "8CIns5rEmpidLjF5zKSsbwKKO+w=",
+			"path": "github.com/moby/buildkit/session/filesync",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "r3FG/37CsSH9k6GU0QjxLIx3xuM=",
+			"path": "github.com/moby/buildkit/session/grpchijack",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "kDQtsWqElIJjNroDe/xSfoZ9Skc=",
+			"path": "github.com/moby/buildkit/session/secrets",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "KT/FbajQIWPGBLfJ3m0uB5J8c3I=",
+			"path": "github.com/moby/buildkit/session/sshforward",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "g0tYiTKKe/PmiN/yDobZtJYqT4k=",
+			"path": "github.com/moby/buildkit/snapshot",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "35UXH9pQewsWahC/7LRhkqgXJGg=",
+			"path": "github.com/moby/buildkit/snapshot/blobmapping",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "WWv9ntG5FbrfBTNqnqnRsDm4F0c=",
+			"path": "github.com/moby/buildkit/snapshot/containerd",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "w0iO3GTk9gvjavy87GgxlQwEdyE=",
+			"path": "github.com/moby/buildkit/snapshot/imagerefchecker",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "IlTl70HVhflj6IqLOgx2f/MsH0g=",
+			"path": "github.com/moby/buildkit/solver",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "tBQ1fO8rthRjLwW9Eu6oLZHS/8c=",
+			"path": "github.com/moby/buildkit/solver/bboltcachestorage",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "LS9AIWMz+hYurbbDwtgvPvdx0OY=",
+			"path": "github.com/moby/buildkit/solver/internal/pipe",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "7HUzHjRDh7eLB6rBwMSXtqHLJ/E=",
+			"path": "github.com/moby/buildkit/solver/llbsolver",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "s09rEa89qNBK069oKo8CTeQWX/E=",
+			"path": "github.com/moby/buildkit/solver/llbsolver/file",
+			"revision": "33bb70c81070edad791d5942e5d0787dd922fdbc",
+			"revisionTime": "2019-03-26T23:36:31Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "JkMR0L8Kq7acwyFMeNK5SMDSeVM=",
+			"path": "github.com/moby/buildkit/solver/llbsolver/ops",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "+5XA6JtsMLMdrWC/SRwHzk6Xc44=",
+			"path": "github.com/moby/buildkit/solver/llbsolver/ops/fileoptypes",
+			"revision": "33bb70c81070edad791d5942e5d0787dd922fdbc",
+			"revisionTime": "2019-03-26T23:36:31Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "QOw57+//RURToWwu0zDSnooFE9c=",
+			"path": "github.com/moby/buildkit/solver/pb",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "pFv5tPthQkQ+KJEuPWRy6P80A2w=",
+			"path": "github.com/moby/buildkit/source",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ezPRdvfKIpk07HvqrQjaIA62Wew=",
+			"path": "github.com/moby/buildkit/source/containerimage",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Cs2AgA4xLcqSbVGhR2Yqs1O7nRE=",
+			"path": "github.com/moby/buildkit/source/git",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "L/1sqht+fM6xo3BoHl74436JrK0=",
+			"path": "github.com/moby/buildkit/source/http",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "l6tgmgLMUPmkd4AmEHG/CSoYPhA=",
+			"path": "github.com/moby/buildkit/source/local",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "fgEKSx/pzSd3uHU0Mv2ZvDT8kYs=",
+			"path": "github.com/moby/buildkit/util/apicaps",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "fUUyKF+ovzRYWbjRUV37r9Qtc2Q=",
+			"path": "github.com/moby/buildkit/util/apicaps/pb",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "26ylPYbfkGo85uKKCjSD3WkfmcU=",
+			"path": "github.com/moby/buildkit/util/appdefaults",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "JuZK5aRYc0XlCo98yZQohF0r8uk=",
+			"path": "github.com/moby/buildkit/util/cond",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "QDoKaUi2OTqqDSFzahEDsIVh5lg=",
+			"path": "github.com/moby/buildkit/util/contentutil",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "vYMd09b26kde+Po/7K7C5OL2YWc=",
+			"path": "github.com/moby/buildkit/util/dockerexporter",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "8W9sYjmfEzH7Qc8Bk2zGiB8t2iQ=",
+			"path": "github.com/moby/buildkit/util/entitlements",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "FP+/LvHFgkbjWGYcC0Uo3r4W/24=",
+			"path": "github.com/moby/buildkit/util/flightcontrol",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "DPGC2nhObeVDYu9oFZGTch05t2A=",
+			"path": "github.com/moby/buildkit/util/imageutil",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "0Ef/kyfknaSWJaHGD+x/s4IKJSk=",
+			"path": "github.com/moby/buildkit/util/network",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "r7ZSkbq0mEccs9KakMUDBXM1SFM=",
+			"path": "github.com/moby/buildkit/util/progress",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "4ewi0kc8sPt55K8C4z4oGr4NjwM=",
+			"path": "github.com/moby/buildkit/util/progress/logs",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "8uCiERSTuk/PslUEM9NlzAymx4Q=",
+			"path": "github.com/moby/buildkit/util/progress/progressui",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "nVCY26m9aRyw1duQPeC6X87SmNQ=",
+			"path": "github.com/moby/buildkit/util/pull",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "YcfJicpY0nuuWg5a4Q+YNFyhuFk=",
+			"path": "github.com/moby/buildkit/util/push",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "5avpe2Cb6VQhtflVmnBqiZFay2A=",
+			"path": "github.com/moby/buildkit/util/resolver",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "Sgr3Iw88IZu19tSv3RuXLCetIzU=",
+			"path": "github.com/moby/buildkit/util/system",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "pFaasLgAqWndIQ6WYBS3cf9dmI0=",
+			"path": "github.com/moby/buildkit/util/throttle",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "gwiIwXM3xGcKpbo0xFD4cryN7Vs=",
+			"path": "github.com/moby/buildkit/util/tracing",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ayJtggBddG9FU9IEShIqiVwnsfE=",
+			"path": "github.com/moby/buildkit/util/winlayers",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "yw0NBaB28F4ZCgYaWfdJ5gUIlAs=",
+			"path": "github.com/moby/buildkit/worker",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "ZEnQ13uxBWaYRHs+tUEhT+WFVYs=",
+			"path": "github.com/moby/buildkit/worker/base",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "uRgkcwdlnK8fTVFYs/yGxfAOG7g=",
+			"path": "github.com/moby/buildkit/worker/containerd",
+			"revision": "8cf9bec86a7f11fe6591804aee152c8e8a7a8a0d",
+			"revisionTime": "2018-11-21T03:35:10Z",
+			"version": "v0.3.3",
+			"versionExact": "v0.3.3"
+		},
+		{
+			"checksumSHA1": "OfTtsGbmK3BBWGvGfXJ1BV3fzmY=",
+			"path": "github.com/morikuni/aec",
+			"revision": "39771216ff4c63d11f5e604076f9c45e8be1067b",
+			"revisionTime": "2017-01-13T03:34:06Z"
 		},
 		{
 			"checksumSHA1": "9S9/Zqrk64Sl71znr6xOkMfWz8A=",
@@ -1708,6 +2523,30 @@
 			"path": "github.com/opencontainers/selinux/go-selinux/label",
 			"revision": "76b408a8e68e301b8245ba414ab600a0d1d797d9",
 			"revisionTime": "2018-01-04T21:15:34Z"
+		},
+		{
+			"checksumSHA1": "ln3SXy94KR+hRYFZQwOg+EuUhWs=",
+			"path": "github.com/opentracing-contrib/go-stdlib/nethttp",
+			"revision": "3020fec0e66bdb65fd42cb346cb65d58deb92e0d",
+			"revisionTime": "2019-03-24T21:49:02Z"
+		},
+		{
+			"checksumSHA1": "6EIQaeaWECn3zlechdGkqmIKld4=",
+			"path": "github.com/opentracing/opentracing-go",
+			"revision": "659c90643e714681897ec2521c60567dd21da733",
+			"revisionTime": "2019-03-23T20:25:03Z"
+		},
+		{
+			"checksumSHA1": "hZnCURJIhg56jbKk0UFRfZkcQ+c=",
+			"path": "github.com/opentracing/opentracing-go/ext",
+			"revision": "659c90643e714681897ec2521c60567dd21da733",
+			"revisionTime": "2019-03-23T20:25:03Z"
+		},
+		{
+			"checksumSHA1": "tnkdNJbJxNKuPZMWapP1xhKIIGw=",
+			"path": "github.com/opentracing/opentracing-go/log",
+			"revision": "659c90643e714681897ec2521c60567dd21da733",
+			"revisionTime": "2019-03-23T20:25:03Z"
 		},
 		{
 			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
@@ -1847,6 +2686,30 @@
 			"revisionTime": "2017-09-01T15:15:52Z"
 		},
 		{
+			"checksumSHA1": "0Khk1QAnFS376RSRm+j3E3VWJZw=",
+			"path": "github.com/tonistiigi/fsutil",
+			"revision": "2862f6bc5ac9b97124e552a5c108230b38a1b0ca",
+			"revisionTime": "2018-10-11T22:33:33Z"
+		},
+		{
+			"checksumSHA1": "uf0YKjhfXm3sycCrAvjVBntFg1w=",
+			"path": "github.com/tonistiigi/fsutil/copy",
+			"revision": "3bbb99cdbd76619ab717299830c60f6f2a533a6b",
+			"revisionTime": "2019-03-27T15:38:51Z"
+		},
+		{
+			"checksumSHA1": "m9MTt/Y7PkX9L2XC94AB7nwC/ms=",
+			"path": "github.com/tonistiigi/fsutil/types",
+			"revision": "3bbb99cdbd76619ab717299830c60f6f2a533a6b",
+			"revisionTime": "2019-03-27T15:38:51Z"
+		},
+		{
+			"checksumSHA1": "5hCmEReLaygCIiV6Pn10bzbVba4=",
+			"path": "github.com/tonistiigi/units",
+			"revision": "6950e57a87eaf136bbe44ef2ec8e75b9e3569de2",
+			"revisionTime": "2018-07-11T22:04:20Z"
+		},
+		{
 			"checksumSHA1": "kdas0zQNtQqfUMEMFGkUF1OcgPc=",
 			"path": "github.com/ugorji/go/codec",
 			"revision": "f3cacc17c85ecb7f1b6a9e373ee85d1480919868",
@@ -1865,6 +2728,12 @@
 			"revision": "604eaf189ee867d8c147fafc28def2394e878d25",
 			"revisionTime": "2015-07-10T22:24:25Z",
 			"tree": true
+		},
+		{
+			"checksumSHA1": "yENfHRTdY4X79vuZYfFOzCGt0hQ=",
+			"path": "go.etcd.io/bbolt",
+			"revision": "63597a96ec0ad9e6d43c3fc81e809909e0237461",
+			"revisionTime": "2019-01-28T18:11:30Z"
 		},
 		{
 			"checksumSHA1": "D34ZqOW907kHAGTRU6lmxJs1ToU=",
@@ -1911,6 +2780,12 @@
 			"revision": "f72d8390a633d5dfb0cc84043294db9f6c935756",
 			"revisionTime": "2017-01-09T12:45:59Z",
 			"tree": true
+		},
+		{
+			"checksumSHA1": "7Ev/X4Xe8P3961myez/hBKO05ig=",
+			"path": "golang.org/x/time/rate",
+			"revision": "9d24e82272b4f38b78bc8cff74fa936d31ccd8ef",
+			"revisionTime": "2019-02-15T22:48:40Z"
 		},
 		{
 			"checksumSHA1": "AsL/fTkY1p1HNVSikhVZJd++Nrk=",
@@ -2035,6 +2910,14 @@
 		{
 			"checksumSHA1": "ZPPSFisPDz2ANO4FBZIft+fRxyk=",
 			"path": "google.golang.org/grpc/grpclog",
+			"revision": "41344da2231b913fa3d983840a57a6b1b7b631a1",
+			"revisionTime": "2018-05-08T21:01:23Z",
+			"version": "v1.12.0",
+			"versionExact": "v1.12.0"
+		},
+		{
+			"checksumSHA1": "sNmMvFxdIGR2VcOy1FDAsLQ00SM=",
+			"path": "google.golang.org/grpc/health",
 			"revision": "41344da2231b913fa3d983840a57a6b1b7b631a1",
 			"revisionTime": "2018-05-08T21:01:23Z",
 			"version": "v1.12.0",
