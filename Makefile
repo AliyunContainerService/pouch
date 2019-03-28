@@ -62,7 +62,7 @@ endif
 API_VERSION="1.24"
 
 # VERSION is used for daemon Release Version in go build.
-VERSION ?= "1.2.0"
+VERSION ?= "1.3.0"
 
 # GIT_COMMIT is used for daemon GitCommit in go build.
 GIT_COMMIT=$(shell git describe --dirty --always --tags 2> /dev/null || true)
