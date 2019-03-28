@@ -582,7 +582,7 @@ func (suite *PouchUpdateSuite) TestUpdateAnnotation(c *check.C) {
 	defer DelContainerForceMultyTime(c, cname)
 
 	annotation1Update := "key1=value1.new"
-	annotation2Update := "key2=value2.new"
+	annotation2Update := "key2=value2,value3"
 
 	command.PouchRun("update", "--annotation", annotation1Update, cname).Assert(c, icmd.Success)
 	checkContainerAnnotation(c, cname, "key1", "value1.new")
@@ -590,9 +590,9 @@ func (suite *PouchUpdateSuite) TestUpdateAnnotation(c *check.C) {
 
 	command.PouchRun("update", "--annotation", annotation2Update, cname).Assert(c, icmd.Success)
 	checkContainerAnnotation(c, cname, "key1", "value1.new")
-	checkContainerAnnotation(c, cname, "key2", "value2.new")
+	checkContainerAnnotation(c, cname, "key2", "value2,value3")
 
 	command.PouchRun("restart", cname).Assert(c, icmd.Success)
 	checkContainerAnnotation(c, cname, "key1", "value1.new")
-	checkContainerAnnotation(c, cname, "key2", "value2.new")
+	checkContainerAnnotation(c, cname, "key2", "value2,value3")
 }

@@ -55,7 +55,7 @@ func (uc *UpdateCommand) addFlags() {
 	flagSet.StringSliceVarP(&uc.labels, "label", "l", nil, "Update labels for container")
 	flagSet.StringVar(&uc.restartPolicy, "restart", "", "Restart policy to apply when container exits")
 	flagSet.StringSliceVar(&uc.diskQuota, "disk-quota", nil, "Update disk quota for container(/=10g)")
-	flagSet.StringSliceVar(&uc.specAnnotation, "annotation", nil, "Update annotation for runtime spec")
+	flagSet.StringArrayVar(&uc.specAnnotation, "annotation", nil, "Update annotation for runtime spec")
 }
 
 // updateRun is the entry of update command.
