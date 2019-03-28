@@ -140,6 +140,9 @@ func setupFlags(cmd *cobra.Command) {
 
 	// registry
 	flagSet.StringArrayVar(&cfg.InsecureRegistries, "insecure-registries", []string{}, "enable insecure registry")
+
+	// buildkit
+	flagSet.BoolVar(&cfg.EnableBuilder, "enable-builder", false, "Enable buildkit functionality")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
