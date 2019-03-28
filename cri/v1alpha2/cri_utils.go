@@ -846,7 +846,7 @@ func (c *CriManager) updateCreateConfig(createConfig *apitypes.ContainerCreateCo
 
 	if len(config.Annotations) > 0 {
 		// Apply container config by annotation
-		if err := applyContainerConfigByAnnotation(config.Annotations, &createConfig.ContainerConfig, createConfig.HostConfig); err != nil {
+		if err := applyContainerConfigByAnnotation(config.Annotations, &createConfig.ContainerConfig, createConfig.HostConfig, nil); err != nil {
 			return fmt.Errorf("failed to apply container annotation for container %q: %v", config.Metadata.Name, err)
 		}
 	}
@@ -1273,7 +1273,7 @@ func toCNIPortMappings(criPortMappings []*runtime.PortMapping) []ocicni.PortMapp
 }
 
 // applyContainerConfigByAnnotation updates pouch container config according to annotation.
-func applyContainerConfigByAnnotation(annotations map[string]string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
+func applyContainerConfigByAnnotation(annotations map[string]string, config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) error {
 	if len(annotations) == 0 {
 		return nil
 	}
@@ -1283,8 +1283,13 @@ func applyContainerConfigByAnnotation(annotations map[string]string, config *api
 		if err != nil {
 			return fmt.Errorf("failed to parse resources.memory_swap: %v", err)
 		}
+		if hc != nil {
+			hc.MemorySwap = ms
+		}
 
-		hc.MemorySwap = ms
+		if uc != nil {
+			uc.MemorySwap = ms
+		}
 	}
 
 	return nil

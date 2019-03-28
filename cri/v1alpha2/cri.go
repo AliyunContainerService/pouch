@@ -1068,6 +1068,12 @@ func (c *CriManager) UpdateContainerResources(ctx context.Context, r *runtime.Up
 		DiskQuota:      resources.GetDiskQuota(),
 		SpecAnnotation: r.GetSpecAnnotations(),
 	}
+
+	err = applyContainerConfigByAnnotation(updateConfig.SpecAnnotation, nil, nil, updateConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply annotation to update config: %v", err)
+	}
+
 	err = c.ContainerMgr.Update(ctx, containerID, updateConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update resource for container %q: %v", containerID, err)
