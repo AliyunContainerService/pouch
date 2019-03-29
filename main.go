@@ -150,7 +150,10 @@ func runDaemon(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	cfg.DefaultLogConfig.LogOpts = logOptMap
+
+	if len(logOptMap) > 0 {
+		cfg.DefaultLogConfig.LogOpts = logOptMap
+	}
 
 	//user specifies --version or -v, print version and return.
 	if printVersion {

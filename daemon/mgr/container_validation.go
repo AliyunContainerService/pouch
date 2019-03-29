@@ -38,6 +38,7 @@ var (
 	commonLogOpts = map[string]bool{
 		"mode":            true,
 		"max-buffer-size": true,
+		logRootDirKey:     true,
 	}
 )
 
@@ -335,7 +336,10 @@ func (mgr *ContainerManager) validateLogConfig(c *Container) error {
 	case types.LogConfigLogDriverNone, types.LogConfigLogDriverJSONFile:
 		return jsonfile.ValidateLogOpt(restOpts)
 	case types.LogConfigLogDriverSyslog:
-		info := mgr.convContainerToLoggerInfo(c)
+		info, err := mgr.convContainerToLoggerInfo(c)
+		if err != nil {
+			return err
+		}
 		return syslog.ValidateSyslogOption(info)
 	default:
 		return fmt.Errorf("not support (%v) log driver yet", logCfg.LogDriver)

@@ -1276,6 +1276,14 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	// remove the container IO
 	mgr.IOs.Remove(c.ID)
 
+	logRootDir, err := mgr.getLogRootDirFromOpt(c, false)
+	if err == nil && logRootDir != mgr.Store.Path(c.ID) {
+		rErr := os.RemoveAll(logRootDir)
+		if rErr != nil {
+			logrus.Warnf("failed to remove container %s log path %s: %v", c.ID, logRootDir, rErr)
+		}
+	}
+
 	// remove meta.json for container in local disk
 	if err := mgr.Store.Remove(c.Key()); err != nil {
 		logrus.Errorf("failed to remove container %s from meta store: %v", c.ID, err)
@@ -1635,7 +1643,11 @@ func (mgr *ContainerManager) initLogDriverBeforeStart(c *Container) error {
 		}
 	}
 
-	logInfo := mgr.convContainerToLoggerInfo(c)
+	logInfo, err := mgr.convContainerToLoggerInfo(c)
+	if err != nil {
+		return err
+	}
+
 	logDriver, err := logOptionsForContainerio(c, logInfo)
 	if err != nil {
 		return err
