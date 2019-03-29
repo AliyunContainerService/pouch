@@ -312,11 +312,11 @@ func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *metatypes.SandboxMe
 	if runtimehandler == "" {
 		// apply the annotation of io.kubernetes.runtime which specify the runtime of container.
 		// NOTE: Deprecated
-		runtime, ok := annotations[anno.KubernetesRuntime]
+		rt, ok := annotations[anno.KubernetesRuntime]
 		if !ok {
-			return nil
+			rt = c.DaemonConfig.DefaultRuntime
 		}
-		runtimehandler = runtime
+		runtimehandler = rt
 	}
 	sandboxMeta.Runtime = runtimehandler
 	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
