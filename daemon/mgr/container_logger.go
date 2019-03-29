@@ -1,6 +1,8 @@
 package mgr
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -9,6 +11,10 @@ import (
 	"github.com/alibaba/pouch/daemon/logger/syslog"
 
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	logRootDirKey = "root-dir"
 )
 
 func logOptionsForContainerio(c *Container, info logger.Info) (logger.LogDriver, error) {
@@ -29,10 +35,15 @@ func logOptionsForContainerio(c *Container, info logger.Info) (logger.LogDriver,
 }
 
 // convContainerToLoggerInfo uses logger.Info to wrap container information.
-func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info {
+func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) (logger.Info, error) {
 	logCfg := make(map[string]string)
 	if cfg := c.HostConfig.LogConfig; cfg != nil && cfg.LogDriver != types.LogConfigLogDriverNone {
 		logCfg = cfg.LogOpts
+	}
+
+	rootDir, err := mgr.getLogRootDirFromOpt(c, true)
+	if err != nil {
+		return logger.Info{}, err
 	}
 
 	// TODO(fuwei):
@@ -45,9 +56,9 @@ func (mgr *ContainerManager) convContainerToLoggerInfo(c *Container) logger.Info
 		ContainerImageID: c.Image,
 		ContainerLabels:  c.Config.Labels,
 		ContainerEnvs:    c.Config.Env,
-		ContainerRootDir: mgr.Store.Path(c.ID),
+		ContainerRootDir: rootDir,
 		DaemonName:       "pouchd",
-	}
+	}, nil
 }
 
 // SetContainerLogPath sets the log path of container.
@@ -60,6 +71,38 @@ func (mgr *ContainerManager) SetContainerLogPath(c *Container) {
 	// If the logdriver is json-file, the LogPath should be like
 	// /var/lib/pouch/containers/5804ee42e505a5d9f30128848293fcb72d8cbc7517310bd24895e82a618fa454/json.log
 	if c.HostConfig.LogConfig.LogDriver == "json-file" {
-		c.LogPath = filepath.Join(mgr.Config.HomeDir, "containers", c.ID, "json.log")
+		rootDir, _ := mgr.getLogRootDirFromOpt(c, false)
+		c.LogPath = filepath.Join(rootDir, "json.log")
 	}
+}
+
+func (mgr *ContainerManager) getLogRootDirFromOpt(c *Container, createLogRoot bool) (string, error) {
+	// <pouchd-home-dir>/containers/<cid> as default root dir of container log
+	rootDir := mgr.Store.Path(c.ID)
+
+	cfg := c.HostConfig.LogConfig
+	if cfg == nil || len(cfg.LogOpts) == 0 {
+		return rootDir, nil
+	}
+
+	specficRootDir, exist := cfg.LogOpts[logRootDirKey]
+	if !exist {
+		return rootDir, nil
+	}
+
+	if !filepath.IsAbs(specficRootDir) {
+		return "", fmt.Errorf("As root dir of container log, %s should be abs path", specficRootDir)
+	}
+
+	// set <specficRootDir>/<cid> as root dir of container log.
+	rootDir = filepath.Join(specficRootDir, c.ID)
+
+	if createLogRoot {
+		err := os.MkdirAll(rootDir, 0644)
+		if err != nil {
+			return "", fmt.Errorf("Failed to mkdirAll %s: %v", rootDir, err)
+		}
+	}
+
+	return rootDir, nil
 }

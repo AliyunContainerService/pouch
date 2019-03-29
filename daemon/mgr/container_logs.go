@@ -48,7 +48,12 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 		return msgCh, c.Config.Tty, nil
 	}
 
-	fileName := filepath.Join(mgr.Store.Path(c.ID), "json.log")
+	rootDir, err := mgr.getLogRootDirFromOpt(c, false)
+	if err != nil {
+		return nil, false, err
+	}
+
+	fileName := filepath.Join(rootDir, "json.log")
 
 	jf, err := jsonfile.NewJSONLogFile(fileName, 0640, nil, nil)
 

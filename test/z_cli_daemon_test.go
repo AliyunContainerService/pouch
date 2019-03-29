@@ -692,10 +692,13 @@ func (suite *PouchDaemonSuite) TestContainerdPIDReuse(c *check.C) {
 	cfg := daemon.NewConfig()
 	cfg.NewArgs("--config-file", cfgFile)
 
+	err := os.MkdirAll("/tmp/test/pouch/containerd/state", 0664)
+	c.Assert(err, check.IsNil)
+
 	containerdPidPath := filepath.Join("/tmp/test/pouch/containerd/state", "containerd.pid")
 
 	// set containerd pid to 1 to make sure the pid must be alive
-	err := ioutil.WriteFile(containerdPidPath, []byte(fmt.Sprintf("%d", 1)), 0660)
+	err = ioutil.WriteFile(containerdPidPath, []byte(fmt.Sprintf("%d", 1)), 0660)
 	if err != nil {
 		c.Errorf("failed to write pid to file: %v", containerdPidPath)
 	}

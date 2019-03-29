@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -241,4 +244,118 @@ func (suite *PouchLogsSuite) syncLogs(c *check.C, cname string, flags ...string)
 	res.Assert(c, icmd.Success)
 
 	return strings.Split(strings.TrimSpace(string(res.Combined())), "\n")
+}
+
+// TestSetLogPathInDaemon tests set root-dir of container log path in daemon config
+func (suite *PouchLogsSuite) TestSetLogPathInDaemon(c *check.C) {
+	logRootDir := "/tmp/TestSetLogsPathInDaemon"
+	defer os.RemoveAll(logRootDir)
+
+	dcfg, err := StartDefaultDaemon("--log-opt", fmt.Sprintf("root-dir=%s", logRootDir))
+	c.Assert(err, check.IsNil)
+
+	defer dcfg.KillDaemon()
+
+	result := RunWithSpecifiedDaemon(dcfg, "pull", busyboxImage)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	// clean busybox image
+	defer RunWithSpecifiedDaemon(dcfg, "rmi", busyboxImage)
+
+	cname := "TestSetLogsPathInDaemonCnt"
+	result = RunWithSpecifiedDaemon(dcfg, "create", "--net", "none", "--name", cname, busyboxImage, "sh", "-c", "echo hello")
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
+
+	result = RunWithSpecifiedDaemon(dcfg, "inspect", "-f", "{{.ID}}", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	cid := strings.TrimSpace(result.Stdout())
+
+	result = RunWithSpecifiedDaemon(dcfg, "start", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	out, err := ioutil.ReadFile(filepath.Join(logRootDir, cid, "json.log"))
+	c.Assert(err, check.IsNil)
+	c.Assert(strings.Contains(string(out), "hello"), check.Equals, true)
+
+	result = RunWithSpecifiedDaemon(dcfg, "inspect", "-f", "{{.LogPath}}", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	logPath := strings.TrimSpace(result.Stdout())
+	c.Assert(logPath, check.Equals, filepath.Join(logRootDir, cid, "json.log"))
+
+	result = RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	_, err = os.Stat(filepath.Join(logRootDir, cid))
+	c.Assert(os.IsNotExist(err), check.Equals, true)
+
+	// case: set root-dir in container config
+	containerCfgLogRootDir := "/tmp/TestSetLogsPathInDaemon_containerCfg"
+	defer os.RemoveAll(containerCfgLogRootDir)
+
+	cname2 := "TestSetLogsPathInDaemonCnt_v2"
+
+	result = RunWithSpecifiedDaemon(dcfg, "create", "--net", "none", "--log-opt", fmt.Sprintf("root-dir=%s", containerCfgLogRootDir), "--name", cname2, busyboxImage, "sh", "-c", "echo world")
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	defer RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname2)
+
+	result = RunWithSpecifiedDaemon(dcfg, "inspect", "-f", "{{.ID}}", cname2)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	cid = strings.TrimSpace(result.Stdout())
+
+	result = RunWithSpecifiedDaemon(dcfg, "start", cname2)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	out, err = ioutil.ReadFile(filepath.Join(containerCfgLogRootDir, cid, "json.log"))
+	c.Assert(err, check.IsNil)
+	c.Assert(strings.Contains(string(out), "world"), check.Equals, true)
+
+	result = RunWithSpecifiedDaemon(dcfg, "inspect", "-f", "{{.LogPath}}", cname2)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	logPath = strings.TrimSpace(result.Stdout())
+	c.Assert(logPath, check.Equals, filepath.Join(containerCfgLogRootDir, cid, "json.log"))
+
+	result = RunWithSpecifiedDaemon(dcfg, "rm", "-f", cname2)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	_, err = os.Stat(filepath.Join(containerCfgLogRootDir, cid))
+	c.Assert(os.IsNotExist(err), check.Equals, true)
+}
+
+// TestSetLogPathByContainerConfig tests set root-dir of container log path in container config
+func (suite *PouchLogsSuite) TestSetLogPathByContainerConfig(c *check.C) {
+	logRootDir := "/tmp/TestSetLogPathByContainerConfig"
+	defer os.RemoveAll(logRootDir)
+
+	cname := "TestSetLogPathByContainerConfigCnt"
+	result := command.PouchRun("create", "--net", "none", "--log-opt", fmt.Sprintf("root-dir=%s", logRootDir), "--name", cname, busyboxImage, "sh", "-c", "echo hello")
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	defer command.PouchRun("rm", "-f", cname)
+
+	result = command.PouchRun("inspect", "-f", "{{.ID}}", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	cid := strings.TrimSpace(result.Stdout())
+
+	result = command.PouchRun("start", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	out, err := ioutil.ReadFile(filepath.Join(logRootDir, cid, "json.log"))
+	c.Assert(err, check.IsNil)
+	c.Assert(strings.Contains(string(out), "hello"), check.Equals, true)
+
+	result = command.PouchRun("inspect", "-f", "{{.LogPath}}", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+	logPath := strings.TrimSpace(result.Stdout())
+	c.Assert(logPath, check.Equals, filepath.Join(logRootDir, cid, "json.log"))
+
+	result = command.PouchRun("rm", "-f", cname)
+	c.Assert(result.ExitCode, check.Equals, 0)
+
+	_, err = os.Stat(filepath.Join(logRootDir, cid))
+	c.Assert(os.IsNotExist(err), check.Equals, true)
 }
