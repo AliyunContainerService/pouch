@@ -1921,7 +1921,35 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool {
 				return false
 			},
-			errMsg: "failed to parse resources.memory_swap",
+			errMsg: "failed to parse resources.memory-swap",
+		},
+		{
+			name: "normalPidsLimitTest",
+			annotation: map[string]string{
+				anno.PidsLimitExtendAnnotation: "100",
+			},
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool {
+				if hc.PidsLimit != 100 {
+					return false
+				}
+
+				if uc.PidsLimit != 100 {
+					return false
+				}
+
+				return true
+			},
+			errMsg: "",
+		},
+		{
+			name: "errorPidsLimitTest",
+			annotation: map[string]string{
+				anno.PidsLimitExtendAnnotation: "1m",
+			},
+			checkFn: func(config *apitypes.ContainerConfig, hc *apitypes.HostConfig, uc *apitypes.UpdateConfig) bool {
+				return false
+			},
+			errMsg: "failed to parse resources.pids-limit",
 		},
 	}
 

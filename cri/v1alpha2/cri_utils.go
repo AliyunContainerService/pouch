@@ -1281,7 +1281,7 @@ func applyContainerConfigByAnnotation(annotations map[string]string, config *api
 	if memorySwap, ok := annotations[anno.MemorySwapExtendAnnotation]; ok {
 		ms, err := strconv.ParseInt(memorySwap, 10, 64)
 		if err != nil {
-			return fmt.Errorf("failed to parse resources.memory_swap: %v", err)
+			return fmt.Errorf("failed to parse resources.memory-swap: %v", err)
 		}
 		if hc != nil {
 			hc.MemorySwap = ms
@@ -1289,6 +1289,20 @@ func applyContainerConfigByAnnotation(annotations map[string]string, config *api
 
 		if uc != nil {
 			uc.MemorySwap = ms
+		}
+	}
+
+	if pidsLimit, ok := annotations[anno.PidsLimitExtendAnnotation]; ok {
+		pl, err := strconv.ParseInt(pidsLimit, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse resources.pids-limit: %v", err)
+		}
+		if hc != nil {
+			hc.PidsLimit = pl
+		}
+
+		if uc != nil {
+			uc.PidsLimit = pl
 		}
 	}
 
