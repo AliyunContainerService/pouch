@@ -977,7 +977,7 @@ message UpdateContainerResourcesRequest {
     // Annotations contains arbitrary metadata for the container.
     // Note: spec_annotations is the metadata for container runtime, such as runc. Not
     // the 'annotations' for Kubernetes objects.
-    map<string, string> spec_annotations = 3;
+    map<string, string> spec_annotations = 100;
 }
 
 message UpdateContainerResourcesResponse {}
