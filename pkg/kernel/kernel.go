@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"bytes"
 	"fmt"
 
 	"golang.org/x/sys/unix"
@@ -31,7 +32,8 @@ func GetKernelVersion() (*VersionInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	release := string(buf.Release[:])
+	// Remove \x00 from Release
+	release := string(buf.Release[:bytes.IndexByte(buf.Release[:], 0)])
 	parsed, _ := fmt.Sscanf(release, "%d.%d.%d-%s", &kernel, &major, &minor, &flavor)
 	if parsed < 3 {
 		return nil, fmt.Errorf("Can't parse kernel version, release: %s" + release)
