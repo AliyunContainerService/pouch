@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/spf13/pflag"
@@ -89,7 +90,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.StringVar(&c.utsMode, "uts", "", "UTS namespace to use")
 
-	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
+	flagSet.VarP(config.NewVolumes(&c.volume), "volume", "v", "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
+	//flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
 	flagSet.StringSliceVar(&c.volumesFrom, "volumes-from", nil, "set volumes from other containers, format is <container>[:mode]")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")

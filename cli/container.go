@@ -14,7 +14,7 @@ type container struct {
 	labels              []string
 	name                string
 	tty                 bool
-	volume              []string
+	volume              config.Volumes
 	volumesFrom         []string
 	runtime             string
 	env                 []string
@@ -216,7 +216,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		},
 
 		HostConfig: &types.HostConfig{
-			Binds:       c.volume,
+			Binds:       c.volume.Value(),
 			VolumesFrom: c.volumesFrom,
 			Runtime:     c.runtime,
 			Resources: types.Resources{
