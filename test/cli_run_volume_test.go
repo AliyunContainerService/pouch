@@ -556,3 +556,25 @@ func (suite *PouchRunVolumeSuite) TestRunOverrideVolume(c *check.C) {
 
 	command.PouchRun("exec", cname, "ls", "/sys/fs/cgroup/memory/default/"+containerID).Assert(c, icmd.Success)
 }
+
+func (suite *PouchRunVolumeSuite) TestRunWithVolumesOpts(c *check.C) {
+	cname := "TestRunWithVolumesOpts"
+	res := command.PouchRun("run", "-d", "-v", "/tmp/test123:/mnt/test123:rslave,ro",
+		"--name", cname, busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "cat", "/proc/mounts")
+	res.Assert(c, icmd.Success)
+
+	found := false
+	for _, line := range strings.Split(res.Stdout(), "\n") {
+		if strings.Contains(line, "/mnt/test123") && strings.Contains(line, "ro") {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
+}
