@@ -108,6 +108,9 @@ func (mgr *ContainerManager) publishContainerdEvent(ctx context.Context, id, act
 		return err
 	}
 
+	c.Lock()
+	defer c.Unlock()
+
 	mgr.LogContainerEventWithAttributes(ctx, c, action, attributes)
 
 	return nil
@@ -119,6 +122,9 @@ func (mgr *ContainerManager) updateContainerState(ctx context.Context, id, actio
 	if err != nil {
 		return err
 	}
+
+	c.Lock()
+	defer c.Unlock()
 
 	dirty := true
 	switch action {
