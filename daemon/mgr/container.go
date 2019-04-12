@@ -619,6 +619,10 @@ func (mgr *ContainerManager) start(ctx context.Context, c *Container, options *t
 		return errors.Wrapf(errtypes.ErrNotModified, "container already started")
 	}
 
+	if c.State.Dead {
+		return fmt.Errorf("cannot start a dead container %s", c.ID)
+	}
+
 	attachedVolumes := map[string]struct{}{}
 	defer func() {
 		if err == nil {
@@ -1072,6 +1076,10 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 	c.Lock()
 	defer c.Unlock()
 
+	if c.State.Dead {
+		return fmt.Errorf("cannot rename a dead container %s", c.ID)
+	}
+
 	attributes := map[string]string{
 		"oldName": oldName,
 	}
@@ -1121,6 +1129,10 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 
 	if c.State.Running && config.Resources.KernelMemory != 0 {
 		return fmt.Errorf("failed to update container %s: can not update kernel memory to a running container, please stop it first", c.ID)
+	}
+
+	if c.State.Dead {
+		return fmt.Errorf("cannot update a dead container %s", c.ID)
 	}
 
 	// update container disk quota
@@ -1227,6 +1239,11 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 		return fmt.Errorf("container %s is not stopped, cannot remove it without flag force", c.ID)
 	}
 
+	if c.State.Dead {
+		logrus.Warnf("container has been deleted %s", c.ID)
+		return nil
+	}
+
 	// if the container is running, force to stop it.
 	if c.IsRunningOrPaused() && options.Force {
 		_, err := mgr.Client.DestroyContainer(ctx, c.ID, c.StopTimeout())
@@ -1275,6 +1292,7 @@ func (mgr *ContainerManager) Remove(ctx context.Context, name string, options *t
 	mgr.cache.Remove(c.ID)
 	// remove the container IO
 	mgr.IOs.Remove(c.ID)
+	c.State.Dead = true
 
 	logRootDir, err := mgr.getLogRootDirFromOpt(c, false)
 	if err == nil && logRootDir != mgr.Store.Path(c.ID) {

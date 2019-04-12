@@ -123,12 +123,22 @@ func (suite *PouchEventsSuite) TestDieEventWorks(c *check.C) {
 		c.Errorf("unexpected output %s: should contains 2 event line when stop a container", output)
 	}
 
+	firstIsDie := true
 	if err := checkContainerEvent(lines[0], "die"); err != nil {
-		c.Errorf("die event check error: %v", err)
+		if err := checkContainerEvent(lines[0], "stop"); err != nil {
+			c.Errorf("exec_die event check error, neither die nor stop: %v", err)
+		}
+		firstIsDie = false
 	}
 
-	if err := checkContainerEvent(lines[1], "stop"); err != nil {
-		c.Errorf("exec_die event check error: %v", err)
+	if firstIsDie {
+		if err := checkContainerEvent(lines[1], "stop"); err != nil {
+			c.Errorf("exec_die event check error: %v", err)
+		}
+	} else {
+		if err := checkContainerEvent(lines[1], "die"); err != nil {
+			c.Errorf("exec_die event check error: %v", err)
+		}
 	}
 }
 
