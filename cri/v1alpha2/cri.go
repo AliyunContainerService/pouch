@@ -32,7 +32,6 @@ import (
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 	"github.com/alibaba/pouch/version"
 
-	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -63,7 +62,6 @@ const (
 	nameDelimiter = "_"
 
 	namespaceModeHost = "host"
-	namespaceModeNone = "none"
 
 	// resolvConfPath is the abs path of resolv.conf on host or container.
 	resolvConfPath = "/etc/resolv.conf"
@@ -237,8 +235,6 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, err
 	}
 
-	// Step 2: Create the sandbox container.
-
 	// prepare the sandboxID and store it.
 	id, err := c.generateSandboxID(ctx)
 	if err != nil {
@@ -262,6 +258,35 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		}
 	}()
 
+	// Step 2: Setup networking for the sandbox.
+
+	// If it is in host network, no need to configure the network of sandbox.
+	if sandboxNetworkMode(config) != runtime.NamespaceMode_NODE {
+		sandboxMeta.NetNS, err = c.CniMgr.NewNetNS()
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if retErr != nil {
+				if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
+					logrus.Errorf("failed to remove net ns for sandbox %q: %v", id, err)
+				}
+			}
+		}()
+		if err := c.setupPodNetwork(id, sandboxMeta.NetNS, config); err != nil {
+			return nil, err
+		}
+		defer func() {
+			if retErr != nil {
+				if err := c.teardownNetwork(id, sandboxMeta.NetNS, config); err != nil {
+					logrus.Errorf("failed to teardown pod network for sandbox %q: %v", id, err)
+				}
+			}
+		}()
+	}
+
+	// Step 3: Create the sandbox container.
+
 	// applies the runtime of container specified by the caller.
 	if err := c.applySandboxRuntimeHandler(sandboxMeta, r.GetRuntimeHandler(), config.Annotations); err != nil {
 		return nil, err
@@ -272,7 +297,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, err
 	}
 
-	createConfig, err := makeSandboxPouchConfig(config, sandboxMeta.Runtime, image)
+	createConfig, err := makeSandboxPouchConfig(config, sandboxMeta, image)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
@@ -301,7 +326,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		}
 	}()
 
-	// Step 3: Start the sandbox container.
+	// Step 4: Start the sandbox container.
 	err = c.ContainerMgr.Start(ctx, id, &apitypes.ContainerStartOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
@@ -327,16 +352,6 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to setup sandbox files: %v", err)
 	}
 
-	// Step 4: Setup networking for the sandbox.
-	networkNamespaceMode := config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
-	// If it is in host network, no need to configure the network of sandbox.
-	if networkNamespaceMode != runtime.NamespaceMode_NODE {
-		err = c.setupPodNetwork(ctx, id, config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil
@@ -345,7 +360,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 // StartPodSandbox restart a sandbox pod which was stopped by accident
 // and we should reconfigure it with network plugin which will make sure it reacquire its original network configuration,
 // like IP address.
-func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSandboxRequest) (*runtime.StartPodSandboxResponse, error) {
+func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSandboxRequest) (_ *runtime.StartPodSandboxResponse, retErr error) {
 	label := util_metrics.ActionStartLabel
 	defer func(start time.Time) {
 		metrics.PodActionsCounter.WithLabelValues(label).Inc()
@@ -354,15 +369,50 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 
 	podSandboxID := r.GetPodSandboxId()
 
+	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container %q: %v", podSandboxID, err)
+	}
+
+	res, err := c.SandboxStore.Get(podSandboxID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
+	}
+	sandboxMeta := res.(*metatypes.SandboxMeta)
+
+	ip, _ := c.CniMgr.GetPodNetworkStatus(sandboxMeta.NetNS)
+
+	if mgr.IsNetNS(sandbox.HostConfig.NetworkMode) && ip == "" {
+		if err := c.CniMgr.RecoverNetNS(sandboxMeta.NetNS); err != nil {
+			return nil, fmt.Errorf("failed to recover netns %s for sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
+		}
+		defer func() {
+			if retErr != nil {
+				if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
+					logrus.Errorf("failed to remove net ns for sandbox %q: %v", podSandboxID, err)
+				}
+			}
+		}()
+
+		if err = c.setupPodNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+			return nil, err
+		}
+		defer func() {
+			if retErr != nil {
+				if err := c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+					logrus.Errorf("failed to teardown pod network for sandbox %q: %v", podSandboxID, err)
+				}
+			}
+		}()
+	}
+
 	// start PodSandbox.
 	startErr := c.ContainerMgr.Start(ctx, podSandboxID, &apitypes.ContainerStartOptions{})
 	if startErr != nil {
 		return nil, fmt.Errorf("failed to start podSandbox %q: %v", podSandboxID, startErr)
 	}
-
-	var err error
 	defer func() {
-		if err != nil {
+		if retErr != nil {
 			stopErr := c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
 			if stopErr != nil {
 				logrus.Errorf("failed to stop sandbox %q: %v", podSandboxID, stopErr)
@@ -370,19 +420,9 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 		}
 	}()
 
-	// get the sandbox's meta data.
-	res, err := c.SandboxStore.Get(podSandboxID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata of %q from SandboxStore: %v", podSandboxID, err)
-	}
-	sandboxMeta := res.(*metatypes.SandboxMeta)
-
-	// setup networking for the sandbox.
-	networkNamespaceMode := sandboxMeta.Config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
-	// If it is in host network, no need to configure the network of sandbox.
-	if networkNamespaceMode != runtime.NamespaceMode_NODE {
-		err = c.setupPodNetwork(ctx, podSandboxID, sandboxMeta.Config)
-		if err != nil {
+	// legacy container using /proc/$pid/ns/net as the sandbox netns.
+	if mgr.IsNone(sandbox.HostConfig.NetworkMode) {
+		if err = c.setupPodNetwork(podSandboxID, containerNetns(sandbox), sandboxMeta.Config); err != nil {
 			return nil, err
 		}
 	}
@@ -416,7 +456,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 
 	containers, err := c.ContainerMgr.List(ctx, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+		return nil, fmt.Errorf("failed to get the containers belong to sandbox %q: %v", podSandboxID, err)
 	}
 
 	// Stop all containers in the sandbox.
@@ -428,38 +468,10 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		logrus.Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
-	container, err := c.ContainerMgr.Get(ctx, podSandboxID)
-	if err != nil {
-		return nil, err
-	}
-	metadata, err := parseSandboxName(container.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse metadata of sandbox %q from container name: %v", podSandboxID, err)
-	}
-
-	securityContext := sandboxMeta.Config.GetLinux().GetSecurityContext()
-	hostNet := securityContext.GetNamespaceOptions().GetNetwork() == runtime.NamespaceMode_NODE
-
 	// Teardown network of the pod, if it is not in host network mode.
-	if !hostNet {
-		sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get sandbox %q: %v", podSandboxID, err)
-		}
-
-		netNSPath := containerNetns(sandbox)
-		err = c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
-			Name:         metadata.GetName(),
-			Namespace:    metadata.GetNamespace(),
-			ID:           podSandboxID,
-			NetNS:        netNSPath,
-			PortMappings: toCNIPortMappings(sandboxMeta.Config.GetPortMappings()),
-		})
-		if err != nil {
-			if !os.IsNotExist(err) {
-				return nil, err
-			}
-			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", netNSPath, podSandboxID)
+	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE {
+		if err = c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", sandboxMeta.NetNS, podSandboxID)
 		}
 	}
 
@@ -467,6 +479,16 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	err = c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+	}
+
+	// after container stop, no one refer the net namespace, do the clean up job.
+	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE {
+		if err := c.CniMgr.CloseNetNS(sandboxMeta.NetNS); err != nil {
+			return nil, fmt.Errorf("failed to close net ns %s of sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
+		}
+		if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
+			return nil, fmt.Errorf("failed to remove net ns %s of sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
+		}
 	}
 
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()

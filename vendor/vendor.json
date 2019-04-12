@@ -634,6 +634,14 @@
 			"tree": true
 		},
 		{
+			"checksumSHA1": "umfzSifCgODa2RhhkS8/cjw0WjU=",
+			"path": "github.com/containernetworking/plugins/pkg/ns",
+			"revision": "a62711a5da7a2dc2eb93eac47e103738ad923fd6",
+			"revisionTime": "2019-03-15T16:54:57Z",
+			"version": "v0.7",
+			"versionExact": "v0.7.5"
+		},
+		{
 			"checksumSHA1": "JOgERxEIEiFk4AN0IielftEFKmY=",
 			"path": "github.com/contiv/executor",
 			"revision": "d263f4daa3ad0ab942bf44099bd28ec8ca1f8a59",

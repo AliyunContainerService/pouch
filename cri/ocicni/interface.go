@@ -21,4 +21,19 @@ type CniMgr interface {
 
 	// Status returns error if the network plugin is in error state.
 	Status() error
+
+	// NewNetNS creates a new persistent network namespace and returns the
+	// namespace path, without switching to it
+	NewNetNS() (string, error)
+
+	// RemoveNetNS unmounts the network namespace
+	RemoveNetNS(path string) error
+
+	// CloseNetNS cleans up this instance of the network namespace; if this instance
+	// is the last user the namespace will be destroyed
+	CloseNetNS(path string) error
+
+	// RecoverNetNS recreate a persistent network namespace if the ns is not exists.
+	// Otherwise, do nothing.
+	RecoverNetNS(path string) error
 }

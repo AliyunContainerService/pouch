@@ -85,6 +85,9 @@ func (c *CniManager) TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error {
 
 	// if netNSPath is not found, should return the error of IsNotExist.
 	if _, err = os.Stat(podNetwork.NetNS); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	return errors.Wrapf(err, "failed to destroy network for sandbox %q", podNetwork.ID)

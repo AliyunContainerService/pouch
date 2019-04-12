@@ -30,9 +30,15 @@ func IsBridge(mode string) bool {
 	return mode == "bridge"
 }
 
+// IsNetNS is used to check if network mode is netns mode.
+func IsNetNS(mode string) bool {
+	parts := strings.SplitN(mode, ":", 2)
+	return len(parts) > 1 && parts[0] == "netns"
+}
+
 // IsUserDefined is used to check if network mode is user-created.
 func IsUserDefined(mode string) bool {
-	return !IsBridge(mode) && !IsContainer(mode) && !IsHost(mode) && !IsNone(mode)
+	return !IsBridge(mode) && !IsContainer(mode) && !IsHost(mode) && !IsNone(mode) && !IsNetNS(mode)
 }
 
 // IsDefault indicates whether container uses the default network stack.
