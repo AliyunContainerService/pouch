@@ -45,6 +45,7 @@ type containerPack struct {
 	// client is to record which stream client the container connect with
 	client        *WrapperClient
 	skipStopHooks bool
+	l             sync.RWMutex
 }
 
 // ContainerStats returns stats of the container.
@@ -376,9 +377,13 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 
 	// if you call DestroyContainer to stop a container, will skip the hooks.
 	// the caller need to execute the all hooks.
+	pack.l.Lock()
 	pack.skipStopHooks = true
+	pack.l.Unlock()
 	defer func() {
+		pack.l.Lock()
 		pack.skipStopHooks = false
+		pack.l.Unlock()
 	}()
 
 	waitExit := func() *Message {

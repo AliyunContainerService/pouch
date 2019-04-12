@@ -2,13 +2,11 @@ package mgr
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/docker/libnetwork"
-	"github.com/sirupsen/logrus"
 )
 
 // LogContainerEvent generates an event related to a container with only the default attributes.
@@ -128,12 +126,6 @@ func (mgr *ContainerManager) updateContainerState(ctx context.Context, id, actio
 
 	dirty := true
 	switch action {
-	case "die":
-		exitCode, err := strconv.ParseInt(attributes["exitCode"], 10, 64)
-		if err != nil {
-			logrus.Warnf("failed to parse exitCode: %v", err)
-		}
-		c.SetStatusExited(exitCode, "")
 	case "oom":
 		c.SetStatusOOM()
 	default:
