@@ -249,9 +249,6 @@ func modifySandboxNamespaceOptions(nsOpts *runtime.NamespaceOption, hostConfig *
 	if nsOpts.GetIpc() == runtime.NamespaceMode_NODE {
 		hostConfig.IpcMode = namespaceModeHost
 	}
-	if nsOpts.GetNetwork() == runtime.NamespaceMode_NODE {
-		hostConfig.NetworkMode = namespaceModeHost
-	}
 }
 
 func applySandboxSecurityContext(lc *runtime.LinuxPodSandboxConfig, config *apitypes.ContainerConfig, hc *apitypes.HostConfig) error {
@@ -287,9 +284,6 @@ func applySandboxSecurityContext(lc *runtime.LinuxPodSandboxConfig, config *apit
 
 // applySandboxLinuxOptions applies LinuxPodSandboxConfig to pouch's HostConfig and ContainerCreateConfig.
 func applySandboxLinuxOptions(hc *apitypes.HostConfig, lc *runtime.LinuxPodSandboxConfig, createConfig *apitypes.ContainerCreateConfig, image string) error {
-	// apply the sandbox network_mode, "none" is default.
-	hc.NetworkMode = namespaceModeNone
-
 	if lc == nil {
 		return nil
 	}
@@ -341,7 +335,7 @@ func (c *CriManager) applySandboxAnnotations(sandboxMeta *metatypes.SandboxMeta,
 }
 
 // makeSandboxPouchConfig returns apitypes.ContainerCreateConfig based on runtime.PodSandboxConfig.
-func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, runtimehandler, image string) (*apitypes.ContainerCreateConfig, error) {
+func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, sandboxMeta *metatypes.SandboxMeta, image string) (*apitypes.ContainerCreateConfig, error) {
 	// Merge annotations and labels because pouch supports only labels.
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
@@ -349,9 +343,15 @@ func makeSandboxPouchConfig(config *runtime.PodSandboxConfig, runtimehandler, im
 
 	hc := &apitypes.HostConfig{}
 
+	if sandboxMeta.NetNS == "" {
+		hc.NetworkMode = namespaceModeHost
+	} else {
+		hc.NetworkMode = fmt.Sprintf("netns:%s", sandboxMeta.NetNS)
+	}
+
 	// Apply runtime options.
 	// NOTE: whether to add UntrustedWorkload
-	hc.Runtime = runtimehandler
+	hc.Runtime = sandboxMeta.Runtime
 
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
@@ -546,18 +546,9 @@ func setupSandboxFiles(sandboxRootDir string, config *runtime.PodSandboxConfig) 
 	return nil
 }
 
-// setupPodNetwork sets up the network of PodSandbox and return the netnsPath of PodSandbox
+// setupPodNetwork sets up the network of PodSandbox
 // and do nothing when networkNamespaceMode equals runtime.NamespaceMode_NODE.
-func (c *CriManager) setupPodNetwork(ctx context.Context, id string, config *runtime.PodSandboxConfig) error {
-	container, err := c.ContainerMgr.Get(ctx, id)
-	if err != nil {
-		return err
-	}
-	netnsPath := containerNetns(container)
-	if netnsPath == "" {
-		return fmt.Errorf("failed to find network namespace path for sandbox %q", id)
-	}
-
+func (c *CriManager) setupPodNetwork(id, netnsPath string, config *runtime.PodSandboxConfig) error {
 	return c.CniMgr.SetUpPodNetwork(&ocicni.PodNetwork{
 		Name:         config.GetMetadata().GetName(),
 		Namespace:    config.GetMetadata().GetNamespace(),
@@ -565,6 +556,22 @@ func (c *CriManager) setupPodNetwork(ctx context.Context, id string, config *run
 		NetNS:        netnsPath,
 		PortMappings: toCNIPortMappings(config.GetPortMappings()),
 	})
+}
+
+// teardownNetwork teardown the network of PodSandbox.
+// and do nothing when networkNamespaceMode equals runtime.NamespaceMode_NODE.
+func (c *CriManager) teardownNetwork(id, netnsPath string, config *runtime.PodSandboxConfig) error {
+	return c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
+		Name:         config.GetMetadata().GetName(),
+		Namespace:    config.GetMetadata().GetNamespace(),
+		ID:           id,
+		NetNS:        netnsPath,
+		PortMappings: toCNIPortMappings(config.GetPortMappings()),
+	})
+}
+
+func sandboxNetworkMode(config *runtime.PodSandboxConfig) runtime.NamespaceMode {
+	return config.GetLinux().GetSecurityContext().GetNamespaceOptions().GetNetwork()
 }
 
 // Container related tool functions.

@@ -94,7 +94,7 @@ type HostConfig struct {
 	// Masks over the provided paths inside the container.
 	MaskedPaths []string `json:"MaskedPaths"`
 
-	// Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.
+	// Network mode to use for this container. Supported standard values are: `netns:<path>`, `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.
 	NetworkMode string `json:"NetworkMode,omitempty"`
 
 	// An integer value containing the score given to the container in order to tune OOM killer preferences.

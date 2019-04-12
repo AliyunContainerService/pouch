@@ -425,9 +425,12 @@ func setupNetworkNamespace(ctx context.Context, c *Container, specWrapper *SpecW
 		}
 
 		ns.Path = fmt.Sprintf("/proc/%d/ns/net", origContainer.State.Pid)
+	} else if IsNetNS(networkMode) {
+		ns.Path = strings.SplitN(networkMode, ":", 2)[1]
 	} else if IsHost(networkMode) {
 		ns.Path = c.NetworkSettings.SandboxKey
 	}
+
 	setNamespace(s, ns)
 
 	for _, ns := range s.Linux.Namespaces {

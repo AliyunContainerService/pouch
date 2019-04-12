@@ -479,7 +479,8 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 	if len(config.NetworkingConfig.EndpointsConfig) > 0 {
 		container.NetworkSettings.Networks = config.NetworkingConfig.EndpointsConfig
 	}
-	if container.NetworkSettings.Networks == nil && !IsContainer(config.HostConfig.NetworkMode) {
+	if container.NetworkSettings.Networks == nil &&
+		!IsContainer(config.HostConfig.NetworkMode) && !IsNetNS(config.HostConfig.NetworkMode) {
 		container.NetworkSettings.Networks = make(map[string]*types.EndpointSettings)
 		container.NetworkSettings.Networks[config.HostConfig.NetworkMode] = new(types.EndpointSettings)
 	}
@@ -680,6 +681,11 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 		c.Config.Hostname = origContainer.Config.Hostname
 		c.Config.Domainname = origContainer.Config.Domainname
 
+		return nil
+	}
+
+	// network is prepared by upper system. do nothing here.
+	if IsNetNS(networkMode) {
 		return nil
 	}
 
