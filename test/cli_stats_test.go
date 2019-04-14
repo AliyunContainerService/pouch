@@ -45,15 +45,3 @@ func (s *PouchStatsSuite) TestStatsNoStream(c *check.C) {
 		c.Fatalf("container name not present in the stats output, %s", res.Stdout())
 	}
 }
-
-func (s *PouchStatsSuite) TestStatsWrongState(c *check.C) {
-	cname := "TestStatsWrongState"
-	command.PouchRun("create", "--name", cname, busyboxImage, "top").Assert(c, icmd.Success)
-	defer DelContainerForceMultyTime(c, cname)
-
-	res := command.PouchRun("stats", "--no-stream", cname)
-	errString := res.Stderr()
-	if !strings.Contains(errString, "can only stats running or paused container") {
-		c.Fatalf("got unexpected error, %s", errString)
-	}
-}

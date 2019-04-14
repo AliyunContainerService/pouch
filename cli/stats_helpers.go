@@ -170,11 +170,11 @@ func collect(ctx context.Context, s *StatsEntryWithLock, cli client.CommonAPICli
 			}
 
 			// first time PrecpuStats will be nil
-			if v.PrecpuStats != nil {
+			if v.PrecpuStats != nil && v.PrecpuStats.CPUUsage != nil {
 				previousCPU = v.PrecpuStats.CPUUsage.TotalUsage
 				previousSystem = v.PrecpuStats.SyetemCPUUsage
 			}
-			cpuPercent = calculateCPUPercentUnix(previousCPU, previousSystem, v)
+			cpuPercent = calculateCPUPercentUnix(previousCPU, previousSystem, v.CPUStats)
 			blkRead, blkWrite = calculateBlockIO(v.BlkioStats)
 			mem = calculateMemUsageUnixNoCache(v.MemoryStats)
 			memLimit = float64(v.MemoryStats.Limit)
@@ -228,18 +228,22 @@ func collect(ctx context.Context, s *StatsEntryWithLock, cli client.CommonAPICli
 	}
 }
 
-func calculateCPUPercentUnix(previousCPU, previousSystem uint64, v *types.ContainerStats) float64 {
+func calculateCPUPercentUnix(previousCPU, previousSystem uint64, cpuStats *types.CPUStats) float64 {
+	if cpuStats == nil || cpuStats.CPUUsage == nil {
+		return 0.0
+	}
+
 	var (
 		cpuPercent = 0.0
 		// calculate the change for the cpu usage of the container in between readings
-		cpuDelta = float64(v.CPUStats.CPUUsage.TotalUsage) - float64(previousCPU)
+		cpuDelta = float64(cpuStats.CPUUsage.TotalUsage) - float64(previousCPU)
 		// calculate the change for the entire system between readings
-		systemDelta = float64(v.CPUStats.SyetemCPUUsage) - float64(previousSystem)
-		onlineCPUs  = float64(v.CPUStats.OnlineCpus)
+		systemDelta = float64(cpuStats.SyetemCPUUsage) - float64(previousSystem)
+		onlineCPUs  = float64(cpuStats.OnlineCpus)
 	)
 
 	if onlineCPUs == 0.0 {
-		onlineCPUs = float64(len(v.CPUStats.CPUUsage.PercpuUsage))
+		onlineCPUs = float64(len(cpuStats.CPUUsage.PercpuUsage))
 	}
 	if systemDelta > 0.0 && cpuDelta > 0.0 {
 		cpuPercent = (cpuDelta / systemDelta) * onlineCPUs * 100.0
@@ -273,6 +277,9 @@ func calculateNetwork(network map[string]types.NetworkStats) (float64, float64) 
 // calculateMemUsageUnixNoCache calculate memory usage of the container.
 // Page cache is intentionally excluded to avoid misinterpretation of the output.
 func calculateMemUsageUnixNoCache(mem *types.MemoryStats) float64 {
+	if mem == nil || len(mem.Stats) == 0 {
+		return 0.0
+	}
 	return float64(mem.Usage - mem.Stats["cache"])
 }
 
