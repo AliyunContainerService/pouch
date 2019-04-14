@@ -26,8 +26,6 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
-	"github.com/containerd/cgroups"
-	"github.com/containerd/typeurl"
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
 	"github.com/sirupsen/logrus"
@@ -1070,26 +1068,21 @@ func (c *CriManager) getContainerMetrics(ctx context.Context, meta *mgr.Containe
 		Annotations: annotations,
 	}
 
-	stats, _, err := c.ContainerMgr.Stats(ctx, meta.ID)
+	metricsMeta, metrics, err := c.ContainerMgr.Stats(ctx, meta.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats of container %q: %v", meta.ID, err)
 	}
 
-	if stats != nil {
-		s, err := typeurl.UnmarshalAny(stats.Data)
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract container metrics: %v", err)
-		}
-		metrics := s.(*cgroups.Metrics)
+	if metricsMeta != nil {
 		if metrics.CPU != nil && metrics.CPU.Usage != nil {
 			cs.Cpu = &runtime.CpuUsage{
-				Timestamp:            stats.Timestamp.UnixNano(),
+				Timestamp:            metricsMeta.Timestamp.UnixNano(),
 				UsageCoreNanoSeconds: &runtime.UInt64Value{Value: metrics.CPU.Usage.Total},
 			}
 		}
 		if metrics.Memory != nil && metrics.Memory.Usage != nil {
 			cs.Memory = &runtime.MemoryUsage{
-				Timestamp:       stats.Timestamp.UnixNano(),
+				Timestamp:       metricsMeta.Timestamp.UnixNano(),
 				WorkingSetBytes: &runtime.UInt64Value{Value: metrics.Memory.Usage.Usage},
 			}
 		}

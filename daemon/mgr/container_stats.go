@@ -32,14 +32,12 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 	}
 
 	outStream := config.OutStream
-	if !c.IsRunningOrPaused() {
-		return errors.New("can only stats running or paused container")
-	}
 
 	var preCPUStats *types.CPUStats
 
-	wrapContainerStats := func(timestamp time.Time, metric *cgroups.Metrics) (*types.ContainerStats, error) {
-		stats := toContainerStats(timestamp, c, metric)
+	wrapContainerStats := func(metricMeta *containerdtypes.Metric, metric *cgroups.Metrics) (*types.ContainerStats, error) {
+		stats := toContainerStats(c, metricMeta, metric)
+
 		systemCPUUsage, err := getSystemCPUUsage()
 		if err != nil {
 			return nil, err
@@ -47,33 +45,33 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 		stats.PrecpuStats = preCPUStats
 		stats.CPUStats.SyetemCPUUsage = systemCPUUsage
 		preCPUStats = stats.CPUStats
+
 		networkStat, err := mgr.NetworkMgr.GetNetworkStats(c.NetworkSettings.SandboxID)
 		if err != nil {
 			// --net=none or disconnect from network, the sandbox will be nil
-			logrus.Warnf("sandbox not found, name = %s, err= %v", name, err)
+			logrus.Debugf("failed to get network stats from container %s: %v", name, err)
 		}
 		stats.Networks = networkStat
 		return stats, nil
 	}
 
-	if c.IsRunningOrPaused() && !config.Stream {
+	// just collect stats data once.
+	if !config.Stream {
 		metrics, stats, err := mgr.Stats(ctx, name)
 		if err != nil {
 			return err
 		}
-		containerStat, err := wrapContainerStats(metrics.Timestamp, stats)
+		containerStat, err := wrapContainerStats(metrics, stats)
 		if err != nil {
 			return errors.Errorf("failed to wrap the containerStat: %v", err)
 		}
 		return json.NewEncoder(outStream).Encode(containerStat)
 	}
 
-	if config.Stream {
-		wf := ioutils.NewWriteFlusher(outStream)
-		defer wf.Close()
-		wf.Flush()
-		outStream = wf
-	}
+	wf := ioutils.NewWriteFlusher(outStream)
+	defer wf.Close()
+	wf.Flush()
+	outStream = wf
 
 	enc := json.NewEncoder(outStream)
 
@@ -89,14 +87,12 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 				return err
 			}
 
-			if metrics != nil {
-				containerStat, err := wrapContainerStats(metrics.Timestamp, stats)
-				if err != nil {
-					return errors.Errorf("failed to wrap the containerStat: %v", err)
-				}
-				if err := enc.Encode(containerStat); err != nil {
-					return err
-				}
+			containerStat, err := wrapContainerStats(metrics, stats)
+			if err != nil {
+				return errors.Errorf("failed to wrap the containerStat: %v", err)
+			}
+			if err := enc.Encode(containerStat); err != nil {
+				return err
 			}
 
 			time.Sleep(DefaultStatsInterval)
@@ -114,10 +110,9 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	c.Lock()
 	defer c.Unlock()
 
-	// only get metrics when the container is running
-	// return error to help client quick fail
+	// empty stats for not-running container.
 	if !c.IsRunningOrPaused() {
-		return nil, nil, errors.New("can only stats running or paused container")
+		return nil, nil, nil
 	}
 
 	metric, err := mgr.Client.ContainerStats(ctx, c.ID)
@@ -133,9 +128,19 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	return metric, v.(*cgroups.Metrics), nil
 }
 
-func toContainerStats(time time.Time, container *Container, metric *cgroups.Metrics) *types.ContainerStats {
+func toContainerStats(container *Container, metricMeta *containerdtypes.Metric, metric *cgroups.Metrics) *types.ContainerStats {
+	if metricMeta == nil {
+		return &types.ContainerStats{
+			ID:          container.ID,
+			Name:        container.Name,
+			PidsStats:   &types.PidsStats{},
+			CPUStats:    &types.CPUStats{},
+			BlkioStats:  &types.BlkioStats{},
+			MemoryStats: &types.MemoryStats{},
+		}
+	}
 	return &types.ContainerStats{
-		Read: strfmt.DateTime(time),
+		Read: strfmt.DateTime(metricMeta.Timestamp),
 		ID:   container.ID,
 		Name: container.Name,
 		PidsStats: &types.PidsStats{
