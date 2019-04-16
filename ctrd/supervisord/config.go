@@ -18,7 +18,7 @@ type Config struct {
 	// Metrics and monitoring settings
 	Metrics MetricsConfig `toml:"metrics"`
 	// Plugins provides plugin specific configuration for the initialization of a plugin
-	Plugins map[string]toml.Primitive `toml:"plugins"`
+	Plugins map[string]interface{} `toml:"plugins"`
 	// OOMScore adjust the containerd's oom score
 	OOMScore int `toml:"oom_score"`
 	// Cgroup specifies cgroup information for the containerd daemon process
@@ -50,4 +50,12 @@ type MetricsConfig struct {
 // CgroupConfig provides cgroup configuration
 type CgroupConfig struct {
 	Path string `toml:"path"`
+}
+
+// V1RuntimeConfig options for the runtime
+//
+// NOTE: don't add other thing here because default config
+// will be merged with this in containerd side.
+type V1RuntimeConfig struct {
+	ShimDebug bool `toml:"shim_debug"`
 }

@@ -1,6 +1,8 @@
 package supervisord
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // WithGRPCAddress sets the containerd address.
 func WithGRPCAddress(addr string) Opt {
@@ -38,6 +40,20 @@ func WithOOMScore(score int) Opt {
 func WithContainerdBinary(nameOrPath string) Opt {
 	return func(d *Daemon) error {
 		d.binaryName = nameOrPath
+		return nil
+	}
+}
+
+// WithV1RuntimeShimDebug shows shim log in stdout.
+func WithV1RuntimeShimDebug() Opt {
+	return func(d *Daemon) error {
+		var v1RuntimeCfg = V1RuntimeConfig{ShimDebug: true}
+
+		// FIXME: plugin name is hard code
+		if d.cfg.Plugins == nil {
+			d.cfg.Plugins = map[string]interface{}{}
+		}
+		d.cfg.Plugins["linux"] = v1RuntimeCfg
 		return nil
 	}
 }
