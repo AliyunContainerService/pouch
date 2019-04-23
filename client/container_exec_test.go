@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/alibaba/pouch/apis/types"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -107,4 +107,49 @@ func TestContainerInspectExec(t *testing.T) {
 
 	assert.Equal(t, res.ID, "exec_id")
 	assert.Equal(t, res.ContainerID, "container_id")
+}
+
+func TestContainerExecResize(t *testing.T) {
+	expectedURL := "/exec/exec_id/resize"
+
+	httpClient := newMockClient(func(req *http.Request) (*http.Response, error) {
+		if !strings.HasPrefix(req.URL.Path, expectedURL) {
+			return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
+		}
+		if req.Method != "POST" {
+			return nil, fmt.Errorf("expected GET method, got %s", req.Method)
+		}
+
+		height, err := strconv.Atoi(req.FormValue("h"))
+		if err != nil {
+			return nil, err
+		}
+		if height != 500 {
+			return nil, fmt.Errorf("expected height = 500, got %d", height)
+		}
+
+		width, err := strconv.Atoi(req.FormValue("w"))
+		if err != nil {
+			return nil, err
+		}
+		if width != 600 {
+			return nil, fmt.Errorf("expected width = 600, got %d", width)
+		}
+
+		return &http.Response{
+			StatusCode: http.StatusOK,
+		}, nil
+	})
+
+	client := &APIClient{
+		HTTPCli: httpClient,
+	}
+
+	err := client.ContainerExecResize(context.Background(), "exec_id", types.ResizeOptions{
+		Height: 500,
+		Width:  600,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }

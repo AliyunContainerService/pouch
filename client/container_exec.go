@@ -5,6 +5,7 @@ import (
 	"context"
 	"net"
 	"net/url"
+	"strconv"
 
 	"github.com/alibaba/pouch/apis/types"
 )
@@ -24,17 +25,17 @@ func (client *APIClient) ContainerCreateExec(ctx context.Context, name string, c
 }
 
 // ContainerStartExec starts exec process.
-func (client *APIClient) ContainerStartExec(ctx context.Context, execid string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
+func (client *APIClient) ContainerStartExec(ctx context.Context, execID string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
 	header := map[string][]string{
 		"Content-Type": {"text/plain"},
 	}
 
-	return client.hijack(ctx, "/exec/"+execid+"/start", url.Values{}, config, header)
+	return client.hijack(ctx, "/exec/"+execID+"/start", url.Values{}, config, header)
 }
 
 // ContainerExecInspect get exec info with a specified exec id.
-func (client *APIClient) ContainerExecInspect(ctx context.Context, execid string) (*types.ContainerExecInspect, error) {
-	resp, err := client.get(ctx, "/exec/"+execid+"/json", nil, nil)
+func (client *APIClient) ContainerExecInspect(ctx context.Context, execID string) (*types.ContainerExecInspect, error) {
+	resp, err := client.get(ctx, "/exec/"+execID+"/json", nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -44,4 +45,15 @@ func (client *APIClient) ContainerExecInspect(ctx context.Context, execid string
 	ensureCloseReader(resp)
 
 	return body, err
+}
+
+// ContainerExecResize changes the size of the tty for an exec process running inside a container.
+func (client *APIClient) ContainerExecResize(ctx context.Context, execID string, options types.ResizeOptions) error {
+	query := url.Values{}
+	query.Set("h", strconv.Itoa(int(options.Height)))
+	query.Set("w", strconv.Itoa(int(options.Width)))
+
+	resp, err := client.post(ctx, "/exec/"+execID+"/resize", query, nil, nil)
+	ensureCloseReader(resp)
+	return err
 }

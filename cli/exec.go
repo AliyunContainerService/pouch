@@ -7,13 +7,17 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/signal"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/ioutils"
 
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/sys/unix"
 )
 
 // execDescription is used to describe exec command in detail and auto generate command doc.
@@ -101,7 +105,7 @@ func (e *ExecCommand) runExec(args []string) error {
 	}
 
 	// handle stdio.
-	if err := holdHijackConnection(ctx, conn, reader, createExecConfig.AttachStdin, createExecConfig.AttachStdout, createExecConfig.AttachStderr, e.Terminal); err != nil {
+	if err := holdHijackConnection(ctx, apiClient, createResp.ID, conn, reader, createExecConfig.AttachStdin, createExecConfig.AttachStdout, createExecConfig.AttachStderr, e.Terminal); err != nil {
 		return err
 	}
 
@@ -118,7 +122,7 @@ func (e *ExecCommand) runExec(args []string) error {
 	return nil
 }
 
-func holdHijackConnection(ctx context.Context, conn net.Conn, reader *bufio.Reader, stdin, stdout, stderr, tty bool) error {
+func holdHijackConnection(ctx context.Context, apiClient client.CommonAPIClient, execID string, conn net.Conn, reader *bufio.Reader, stdin, stdout, stderr, tty bool) error {
 	if stdin && tty {
 		in, out, err := setRawMode(true, false)
 		if err != nil {
@@ -157,6 +161,13 @@ func holdHijackConnection(ctx context.Context, conn net.Conn, reader *bufio.Read
 		close(stdinDone)
 	}()
 
+	// resize exec tty
+	if tty {
+		if err := execResize(ctx, apiClient, execID); err != nil {
+			return err
+		}
+	}
+
 	select {
 	case err := <-stdoutDone:
 		if err != nil {
@@ -176,6 +187,39 @@ func holdHijackConnection(ctx context.Context, conn net.Conn, reader *bufio.Read
 
 	case <-ctx.Done():
 	}
+
+	return nil
+}
+
+func execResize(ctx context.Context, apiClient client.CommonAPIClient, execID string) error {
+	width, height, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return err
+	}
+
+	// retry first resize exec.
+	for i := 0; i < 16; i++ {
+		err = apiClient.ContainerExecResize(ctx, execID, types.ResizeOptions{Width: int64(width), Height: int64(height)})
+		if err == nil {
+			break
+		}
+	}
+
+	s := make(chan os.Signal, 16)
+	signal.Notify(s, unix.SIGWINCH)
+	go func() {
+		for range s {
+			width, height, err = terminal.GetSize(int(os.Stdin.Fd()))
+			if err != nil {
+				logrus.Debugf("failed to get tty size, err(%v)", err)
+				continue
+			}
+			err = apiClient.ContainerExecResize(ctx, execID, types.ResizeOptions{Width: int64(width), Height: int64(height)})
+			if err != nil {
+				logrus.Debugf("failed to resize tty, err(%v)", err)
+			}
+		}
+	}()
 
 	return nil
 }
