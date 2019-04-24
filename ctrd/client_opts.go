@@ -1,12 +1,18 @@
 package ctrd
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+	"strconv"
+	"strings"
+)
 
 type clientOpts struct {
 	rpcAddr                string
 	grpcClientPoolCapacity int
 	maxStreamsClient       int
 	defaultns              string
+	insecureRegistries     []string
 }
 
 // ClientOpt allows caller to set options for containerd client.
@@ -58,4 +64,44 @@ func WithDefaultNamespace(ns string) ClientOpt {
 		c.defaultns = ns
 		return nil
 	}
+}
+
+// WithInsecureRegistries sets the insecure registries to allow http request
+// and skip secure verify.
+func WithInsecureRegistries(endpoints []string) ClientOpt {
+	return func(c *clientOpts) error {
+		registries := make([]string, 0, len(endpoints))
+
+		for _, r := range endpoints {
+			if strings.Contains(strings.ToLower(r), "://") {
+				return fmt.Errorf("insecure registry %s should not contain any '://'", r)
+			}
+
+			if err := validateHostPort(r); err != nil {
+				return err
+			}
+			registries = append(registries, r)
+		}
+		c.insecureRegistries = registries
+		return nil
+	}
+}
+
+func validateHostPort(s string) error {
+	_, port, err := net.SplitHostPort(s)
+	if err != nil {
+		port = ""
+	}
+
+	if port != "" {
+		v, err := strconv.Atoi(port)
+		if err != nil {
+			return err
+		}
+
+		if v < 0 || v > 65535 {
+			return fmt.Errorf("invalid port %q", port)
+		}
+	}
+	return nil
 }

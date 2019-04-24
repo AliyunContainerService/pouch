@@ -199,7 +199,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 
 	pushTracker := docker.NewInMemoryTracker()
 
-	resolver, err := resolver(authConfig, docker.ResolverOptions{
+	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{
 		Tracker: pushTracker,
 	})
 	if err != nil {
@@ -248,7 +248,7 @@ func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.A
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	resolver, err := resolver(authConfig, docker.ResolverOptions{})
+	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{})
 	if err != nil {
 		return nil, err
 	}

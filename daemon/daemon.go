@@ -97,6 +97,7 @@ func NewDaemon(cfg *config.Config) *Daemon {
 	ctrdClient, err := ctrd.NewClient(
 		ctrd.WithRPCAddr(cfg.ContainerdAddr),
 		ctrd.WithDefaultNamespace(cfg.DefaultNamespace),
+		ctrd.WithInsecureRegistries(cfg.InsecureRegistries),
 	)
 	if err != nil {
 		logrus.Errorf("failed to new containerd's client: %v", err)

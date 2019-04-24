@@ -137,6 +137,9 @@ func setupFlags(cmd *cobra.Command) {
 	// to k8s.io
 	flagSet.StringVar(&cfg.DefaultNamespace, "default-namespace", namespaces.Default, "default-namespace is passed to containerd, the default value is 'default'")
 	flagSet.StringVar(&cfg.CgroupDriver, "cgroup-driver", "cgroupfs", "Set cgroup driver for all containers(cgroupfs|systemd), default cgroupfs")
+
+	// registry
+	flagSet.StringArrayVar(&cfg.InsecureRegistries, "insecure-registries", []string{}, "enable insecure registry")
 }
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
