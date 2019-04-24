@@ -380,30 +380,32 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 	}
 	sandboxMeta := res.(*metatypes.SandboxMeta)
 
-	ip, _ := c.CniMgr.GetPodNetworkStatus(sandboxMeta.NetNS)
-
-	if mgr.IsNetNS(sandbox.HostConfig.NetworkMode) && ip == "" {
-		if err := c.CniMgr.RecoverNetNS(sandboxMeta.NetNS); err != nil {
-			return nil, fmt.Errorf("failed to recover netns %s for sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
-		}
-		defer func() {
-			if retErr != nil {
-				if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
-					logrus.Errorf("failed to remove net ns for sandbox %q: %v", podSandboxID, err)
-				}
+	if mgr.IsNetNS(sandbox.HostConfig.NetworkMode) {
+		ip, _ := c.CniMgr.GetPodNetworkStatus(sandboxMeta.NetNS)
+		// recover network if it is down.
+		if ip == "" {
+			if err := c.CniMgr.RecoverNetNS(sandboxMeta.NetNS); err != nil {
+				return nil, fmt.Errorf("failed to recover netns %s for sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
 			}
-		}()
-
-		if err = c.setupPodNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
-			return nil, err
-		}
-		defer func() {
-			if retErr != nil {
-				if err := c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
-					logrus.Errorf("failed to teardown pod network for sandbox %q: %v", podSandboxID, err)
+			defer func() {
+				if retErr != nil {
+					if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
+						logrus.Errorf("failed to remove net ns for sandbox %q: %v", podSandboxID, err)
+					}
 				}
+			}()
+
+			if err = c.setupPodNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+				return nil, err
 			}
-		}()
+			defer func() {
+				if retErr != nil {
+					if err := c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+						logrus.Errorf("failed to teardown pod network for sandbox %q: %v", podSandboxID, err)
+					}
+				}
+			}()
+		}
 	}
 
 	// start PodSandbox.
