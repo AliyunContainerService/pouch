@@ -127,6 +127,10 @@ type Config struct {
 
 	// CgroupDriver sets cgroup driver for all containers
 	CgroupDriver string `json:"cgroup-driver,omitempty"`
+
+	// InsecureRegistries sets insecure registries to allow to pull
+	// insecure registries.
+	InsecureRegistries []string `json:"insecure-registries,omitempty"`
 }
 
 // GetCgroupDriver gets cgroup driver used in runc.

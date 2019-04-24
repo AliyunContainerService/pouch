@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"net/url"
 	"syscall"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/containerd/containerd/runtime/linux/runctypes"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func withExitShimV1CheckpointTaskOpts() containerd.CheckpointTaskOpts {
@@ -28,30 +30,34 @@ func withExitShimV1CheckpointTaskOpts() containerd.CheckpointTaskOpts {
 	}
 }
 
-func resolver(authConfig *types.AuthConfig, resolverOpt docker.ResolverOptions) (remotes.Resolver, error) {
+// isInsecureDomain will return true if the domain of reference is in the
+// insecure registry. The insecure registry will accept HTTP or HTTPS with
+// certificates from unknown CAs.
+func (c *Client) isInsecureDomain(ref string) bool {
+	u, err := url.Parse("dummy://" + ref)
+	if err != nil {
+		logrus.Warning("failed to parse reference(%s) into url: %v", ref, err)
+		return false
+	}
+
+	for _, r := range c.insecureRegistries {
+		if r == u.Host {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Client) getResolver(authConfig *types.AuthConfig, ref string, resolverOpt docker.ResolverOptions) (remotes.Resolver, error) {
 	var (
-		// TODO
 		username = ""
 		secret   = ""
-		refresh  = ""
-		insecure = false
+		insecure = c.isInsecureDomain(ref)
 	)
 
 	if authConfig != nil {
 		username = authConfig.Username
 		secret = authConfig.Password
-	}
-
-	// FIXME
-	_ = refresh
-
-	options := docker.ResolverOptions{
-		PlainHTTP: resolverOpt.PlainHTTP,
-		Tracker:   resolverOpt.Tracker,
-	}
-	options.Credentials = func(host string) (string, string, error) {
-		// Only one host
-		return username, secret, nil
 	}
 
 	tr := &http.Transport{
@@ -70,10 +76,17 @@ func resolver(authConfig *types.AuthConfig, resolverOpt docker.ResolverOptions) 
 		ExpectContinueTimeout: 5 * time.Second,
 	}
 
-	options.Client = &http.Client{
-		Transport: tr,
+	options := docker.ResolverOptions{
+		Tracker:   resolverOpt.Tracker,
+		PlainHTTP: insecure,
+		Credentials: func(host string) (string, string, error) {
+			// Only one host
+			return username, secret, nil
+		},
+		Client: &http.Client{
+			Transport: tr,
+		},
 	}
-
 	return docker.NewResolver(options), nil
 }
 

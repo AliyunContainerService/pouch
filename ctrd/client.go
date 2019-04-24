@@ -40,6 +40,9 @@ type Client struct {
 	watch *watch
 	lock  *containerLock
 
+	// insecureRegistries stores the insecure registries
+	insecureRegistries []string
+
 	// containerd grpc pool
 	pool      []scheduler.Factory
 	scheduler scheduler.Scheduler
@@ -64,6 +67,7 @@ func NewClient(opts ...ClientOpt) (APIClient, error) {
 		rpcAddr:                unixSocketPath,
 		grpcClientPoolCapacity: defaultGrpcClientPoolCapacity,
 		maxStreamsClient:       defaultMaxStreamsClient,
+		insecureRegistries:     []string{},
 	}
 
 	for _, opt := range opts {
@@ -79,6 +83,7 @@ func NewClient(opts ...ClientOpt) (APIClient, error) {
 		watch: &watch{
 			containers: make(map[string]*containerPack),
 		},
+		insecureRegistries: copts.insecureRegistries,
 	}
 
 	for i := 0; i < copts.grpcClientPoolCapacity; i++ {

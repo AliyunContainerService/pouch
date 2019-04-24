@@ -1,7 +1,6 @@
 package opts
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,11 +45,28 @@ func TestParseLabels(t *testing.T) {
 				err: nil,
 			},
 		},
+		// only input key
 		{
 			input: []string{"ThisIsALableWithoutEqualMark"},
 			expected: result{
-				labels: nil,
-				err:    fmt.Errorf("invalid label ThisIsALableWithoutEqualMark: label must be in format of key=value"),
+				labels: map[string]string{
+					"ThisIsALableWithoutEqualMark": "",
+				},
+				err: nil,
+			},
+		},
+		{
+			input: []string{},
+			expected: result{
+				labels: map[string]string{},
+				err: nil,
+			},
+		},
+		{
+			input: nil,
+			expected: result{
+				labels: map[string]string{},
+				err: nil,
 			},
 		},
 	}
