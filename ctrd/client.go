@@ -14,6 +14,7 @@ import (
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/api/services/introspection/v1"
 	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/plugin"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/typeurl"
@@ -29,6 +30,9 @@ const (
 	PluginStatusOk = "ok"
 	// PluginStatusError means plugin status is error
 	PluginStatusError = "error"
+
+	// a id for lease used by ctrd
+	pouchLeaseID = "pouchd.lease"
 )
 
 // ErrGetCtrdClient is an error returned when failed to get a containerd grpc client from clients pool.
@@ -86,8 +90,13 @@ func NewClient(opts ...ClientOpt) (APIClient, error) {
 		insecureRegistries: copts.insecureRegistries,
 	}
 
+	lease, err := client.preparePouchdLease(copts.rpcAddr, copts.defaultns)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare a lease for pouchd")
+	}
+
 	for i := 0; i < copts.grpcClientPoolCapacity; i++ {
-		cli, err := newWrapperClient(copts.rpcAddr, copts.defaultns, copts.maxStreamsClient)
+		cli, err := newWrapperClient(copts.rpcAddr, copts.defaultns, copts.maxStreamsClient, lease)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create containerd client: %v", err)
 		}
@@ -374,4 +383,57 @@ func (c *Client) checkSnapshotsExist(snapshotter string) (existSnapshot bool, er
 
 	err = c.WalkSnapshot(context.Background(), snapshotter, fn)
 	return
+}
+
+// preparePouchdLease is to prepare a lease for pouch client to containerd.
+func (c *Client) preparePouchdLease(rpcAddr, defaultns string) (*leases.Lease, error) {
+	var lease leases.Lease
+
+	options := []containerd.ClientOpt{
+		containerd.WithDefaultNamespace(defaultns),
+	}
+	cli, err := containerd.New(rpcAddr, options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect containerd")
+	}
+	defer cli.Close()
+
+	leaseSrv := cli.LeasesService()
+	leaseList, err := leaseSrv.List(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range leaseList {
+		if l.ID != pouchLeaseID {
+			continue
+		}
+
+		foundExpireLabel := false
+		for k := range l.Labels {
+			if k == "containerd.io/gc.expire" {
+				foundExpireLabel = true
+				break
+			}
+		}
+
+		// found a lease that matched the condition, just return
+		if !foundExpireLabel {
+			return &l, nil
+		}
+
+		// found a lease with id is pouchd.lease and has expire time,
+		// then just delete it and wait to recreate a new lease.
+		if err := leaseSrv.Delete(context.TODO(), l); err != nil {
+			return nil, err
+		}
+
+	}
+
+	// not found a matched lease, just create it
+	if lease, err = leaseSrv.Create(context.TODO(), leases.WithID(pouchLeaseID)); err != nil {
+		return nil, err
+	}
+
+	return &lease, nil
 }

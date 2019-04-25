@@ -1,7 +1,6 @@
 package ctrd
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -26,34 +25,19 @@ type WrapperClient struct {
 	streamQuota int
 }
 
-func newWrapperClient(rpcAddr string, defaultns string, maxStreamsClient int) (*WrapperClient, error) {
+func newWrapperClient(rpcAddr string, defaultns string, maxStreamsClient int, lease *leases.Lease) (*WrapperClient, error) {
 	options := []containerd.ClientOpt{
 		containerd.WithDefaultNamespace(defaultns),
 	}
+
 	cli, err := containerd.New(rpcAddr, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect containerd")
 	}
-	leaseSrv := cli.LeasesService()
-
-	// create a new lease or reuse the existed.
-	var lease leases.Lease
-
-	leases, err := leaseSrv.List(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	if len(leases) != 0 {
-		lease = leases[0]
-	} else {
-		if lease, err = leaseSrv.Create(context.TODO()); err != nil {
-			return nil, err
-		}
-	}
 
 	return &WrapperClient{
 		client:      cli,
-		lease:       &lease,
+		lease:       lease,
 		streamQuota: maxStreamsClient,
 	}, nil
 }
