@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -238,16 +239,26 @@ func (d *Daemon) runContainerd() error {
 		}
 	}
 
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	// reap the containerd process when it has been killed
+	pidChan := make(chan int)
+	// run and wait the containerd process
 	go func() {
-		cmd.Wait()
+		runtime.LockOSThread()
+		if err := cmd.Start(); err != nil {
+			logrus.Errorf("containerd failed to start: %v", err)
+			pidChan <- -1
+			return
+		}
+		pidChan <- cmd.Process.Pid
+		if err := cmd.Wait(); err != nil {
+			logrus.Errorf("containerd exits: %v", err)
+		}
 	}()
 
-	if err := d.setContainerdPid(cmd.Process.Pid); err != nil {
+	pid = <-pidChan
+	if pid == -1 {
+		return fmt.Errorf("containerd failed to start")
+	}
+	if err := d.setContainerdPid(pid); err != nil {
 		utils.KillProcess(d.pid)
 		return fmt.Errorf("failed to save the pid into %s: %v", d.pidPath(), err)
 	}
