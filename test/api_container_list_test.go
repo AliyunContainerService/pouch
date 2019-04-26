@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -178,4 +179,79 @@ func getContainerListOK(c *check.C, filters string, all bool) (success bool, got
 	}
 
 	return success, got, errResp
+}
+
+// TestListFilterMapMapFormat test label filter format of map[string]map[string]bool
+func (suite *APIContainerListSuite) TestListFilterMapMapFormat(c *check.C) {
+	containerA := "TestListFilterMapMapFormatContainerA"
+	resA := command.PouchRun("run", "-d", "--name", containerA, "-l", "label="+containerA, busyboxImage125, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerA)
+	containerAID := strings.TrimSpace(resA.Combined())
+
+	containerB := "TestListFilterMapMapFormatContainerB"
+	resB := command.PouchRun("run", "-d", "--name", containerB, "-l", "label="+containerB, busyboxImage125, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerB)
+	containerBID := strings.TrimSpace(resB.Combined())
+
+	filterA := map[string]map[string]bool{
+		"label": {
+			fmt.Sprintf("label=%s", containerA): true,
+		},
+	}
+
+	filterB := map[string]map[string]bool{
+		"label": {
+			fmt.Sprintf("label!=%s", containerA): true,
+		},
+	}
+
+	filterAStr, _ := json.Marshal(filterA)
+	filterBStr, _ := json.Marshal(filterB)
+
+	success, got, _ := getContainerListOK(c, string(filterAStr), true)
+	c.Assert(success, check.Equals, true)
+	c.Assert(len(got), check.Equals, 1)
+	c.Assert(got[0].ID, check.Equals, containerAID)
+
+	success, got, _ = getContainerListOK(c, string(filterBStr), true)
+	c.Assert(success, check.Equals, true)
+	c.Assert(len(got), check.Equals, 1)
+	c.Assert(got[0].ID, check.Equals, containerBID)
+}
+
+// TestListFilterMultiLabel test multi label filter
+func (suite *APIContainerListSuite) TestListFilterMultiLabel(c *check.C) {
+	containerA := "TestListFilterMultiLabelContainerA"
+	resA := command.PouchRun("run", "-d", "--name", containerA, "-l", "label1="+containerA, "-l", "label2=v1", busyboxImage125, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerA)
+	containerAID := strings.TrimSpace(resA.Combined())
+
+	containerB := "TestListFilterMultiLabelContainerB"
+	resB := command.PouchRun("run", "-d", "--name", containerB, "-l", "label1="+containerB, "-l", "label2=v1", busyboxImage125, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, containerB)
+	containerBID := strings.TrimSpace(resB.Combined())
+
+	filterA := map[string]map[string]bool{
+		"label": {
+			fmt.Sprintf("label1=%s", containerA): true,
+			"label2=v1":                          true,
+		},
+	}
+
+	filterB := map[string][]string{
+		"label": {fmt.Sprintf("label1!=%s", containerA), "label2=v1"},
+	}
+
+	filterAStr, _ := json.Marshal(filterA)
+	filterBStr, _ := json.Marshal(filterB)
+
+	success, got, _ := getContainerListOK(c, string(filterAStr), true)
+	c.Assert(success, check.Equals, true)
+	c.Assert(len(got), check.Equals, 1)
+	c.Assert(got[0].ID, check.Equals, containerAID)
+
+	success, got, _ = getContainerListOK(c, string(filterBStr), true)
+	c.Assert(success, check.Equals, true)
+	c.Assert(len(got), check.Equals, 1)
+	c.Assert(got[0].ID, check.Equals, containerBID)
 }
