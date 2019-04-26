@@ -108,23 +108,25 @@ func (fc *filterContext) matchKVFilter(field string, value map[string]string) bo
 		return false
 	}
 
-	match := false
-	for k, v := range value {
-		// filter equal condition
-		if equalValue, exist := equalKV[k]; exist {
-			if equalValue == "" || equalValue == v {
-				match = true
-				break
-			}
-		}
-		// filter unequal condition
-		if unequalValue, exist := unequalKV[k]; exist && unequalValue != v {
-			match = true
-			break
+	// filter equal condition
+	for k, equalValue := range equalKV {
+		// if not find equal (k, v) pair, return false
+		if v, exist := value[k]; !exist || (equalValue != "" && equalValue != v) {
+			return false
 		}
 	}
 
-	return match
+	// filter unequal condition
+	for k, unequalValue := range unequalKV {
+		// if key not exist or pair (k, v) found, return false
+		if v, exist := value[k]; exist && unequalValue != v {
+			continue
+		}
+
+		return false
+	}
+
+	return true
 }
 
 // filter does all select container work.

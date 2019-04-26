@@ -85,7 +85,28 @@ func FromURLParam(param string) (map[string][]string, error) {
 	var filter map[string][]string
 	err := json.NewDecoder(strings.NewReader(param)).Decode(&filter)
 	if err != nil {
-		return nil, err
+		// support filters as map[string]map[string]bool
+		var otherFilters map[string]map[string]bool
+		err2 := json.NewDecoder(strings.NewReader(param)).Decode(&otherFilters)
+		if err2 != nil {
+			return nil, err
+		}
+
+		filter = make(map[string][]string)
+		for key, innerMap := range otherFilters {
+			if len(innerMap) == 0 {
+				continue
+			}
+
+			value := []string{}
+			for k, v := range innerMap {
+				if v {
+					value = append(value, k)
+				}
+			}
+
+			filter[key] = value
+		}
 	}
 
 	// params from url may not passed through api, so we need validate here

@@ -132,12 +132,17 @@ func TestMatchKVFilter(t *testing.T) {
 		{
 			field:    "label",
 			value:    map[string]string{"foo": "a"},
+			isFilter: false,
+		},
+		{
+			field:    "label",
+			value:    map[string]string{"foo": "a", "hello": "word"},
 			isFilter: true,
 		},
 		{
 			field:    "label",
 			value:    map[string]string{"hello": "word"},
-			isFilter: true,
+			isFilter: false,
 		},
 	} {
 		assert.Equal(t.isFilter, fc.matchKVFilter(t.field, t.value), fmt.Sprintf("%+v", t.value))
@@ -165,7 +170,7 @@ func TestMatchKVFilter(t *testing.T) {
 		},
 		{
 			field:    "label",
-			value:    map[string]string{"a": "c"},
+			value:    map[string]string{"a": "c", "d": "b"},
 			isFilter: true,
 		},
 		{
@@ -176,7 +181,7 @@ func TestMatchKVFilter(t *testing.T) {
 		{
 			field:    "label",
 			value:    map[string]string{"d": "word"},
-			isFilter: true,
+			isFilter: false,
 		},
 	} {
 		assert.Equal(t.isFilter, fc.matchKVFilter(t.field, t.value), fmt.Sprintf("%+v", t.value))
