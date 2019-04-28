@@ -162,6 +162,11 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 			}
 		}
 
+		mounts := []types.MountPoint{}
+		for _, mp := range c.Mounts {
+			mounts = append(mounts, *mp)
+		}
+
 		singleCon := types.Container{
 			ID:              c.ID,
 			Names:           []string{c.Name},
@@ -173,6 +178,7 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 			Labels:          c.Config.Labels,
 			HostConfig:      c.HostConfig,
 			NetworkSettings: netSettings,
+			Mounts:          mounts,
 		}
 
 		containerList = append(containerList, singleCon)
