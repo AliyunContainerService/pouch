@@ -720,14 +720,14 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 		}
 	}()
 
-	// try to setup container working directory
-	if err := mgr.SetupWorkingDirectory(ctx, c); err != nil {
-		return errors.Wrapf(err, "failed to setup container %s working directory", c.ID)
-	}
-
 	// parse volume config
 	if err = mgr.generateMountPoints(ctx, c); err != nil {
 		return errors.Wrap(err, "failed to parse volume argument")
+	}
+
+	// try to setup container working directory
+	if err := mgr.SetupWorkingDirectory(ctx, c); err != nil {
+		return errors.Wrapf(err, "failed to setup container %s working directory", c.ID)
 	}
 
 	// set mount point disk quota
@@ -754,11 +754,11 @@ func (mgr *ContainerManager) SetupWorkingDirectory(ctx context.Context, c *Conta
 		mgr.setMountFS(ctx, c)
 	}
 
-	c.Config.WorkingDir = filepath.Clean(c.Config.WorkingDir)
+	workingDir := filepath.Clean(c.Config.WorkingDir)
+	resourcePath := c.GetResourcePath(c.MountFS, workingDir)
 
-	path := filepath.Join(c.MountFS, c.Config.WorkingDir)
 	// TODO(ziren): not care about File mode
-	err := os.MkdirAll(path, 0755)
+	err := os.MkdirAll(resourcePath, 0755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
