@@ -508,6 +508,33 @@ func (c *Container) CleanRootfsSnapshotDirs() error {
 	return nil
 }
 
+// GetResourcePath is to determine the real host path of dir inside a container.
+// If the dir has no volume covered, then just return BaseFS/dir,
+// else we should return the real path inside volume.
+func (c *Container) GetResourcePath(baseFS, path string) string {
+	var (
+		rootPath string
+	)
+
+	// first check if the dir in volume
+	for _, mp := range c.Mounts {
+		if !strings.HasPrefix(path, mp.Destination) {
+			continue
+		}
+
+		if mp.Source == mp.Destination {
+			rootPath = "/"
+		} else {
+			rootPath = strings.TrimSuffix(mp.Source, mp.Destination)
+		}
+	}
+
+	if rootPath != "" {
+		return filepath.Join(rootPath, path)
+	}
+	return filepath.Join(baseFS, path)
+}
+
 // ContainerRestartPolicy represents the policy is used to manage container.
 type ContainerRestartPolicy types.RestartPolicy
 
