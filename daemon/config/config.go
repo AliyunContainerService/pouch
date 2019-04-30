@@ -179,12 +179,7 @@ func (cfg *Config) Validate() error {
 		cfg.CgroupDriver = DefaultCgroupDriver
 	}
 
-	// validates cgroup driver
-	if err := validateCgroupDriver(cfg.CgroupDriver); err != nil {
-		return err
-	}
-
-	return nil
+	return validateCgroupDriver(cfg.CgroupDriver)
 }
 
 //MergeConfigurations merges flagSet flags and config file flags into Config.
