@@ -317,10 +317,7 @@ func (c *CriManager) applySandboxRuntimeHandler(sandboxMeta *metatypes.SandboxMe
 		runtimehandler = rt
 	}
 	sandboxMeta.Runtime = runtimehandler
-	if err := c.SandboxStore.Put(sandboxMeta); err != nil {
-		return err
-	}
-	return nil
+	return c.SandboxStore.Put(sandboxMeta)
 }
 
 // applySandboxAnnotations applies the annotations extended.
