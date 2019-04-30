@@ -1,28 +1,25 @@
 package opts
 
 import (
-	"fmt"
 	"strings"
 )
 
 // ParseLabels parses the labels params of container.
-func ParseLabels(labels []string) (map[string]string, error) {
+func ParseLabels(labels []string) map[string]string {
 	results := make(map[string]string)
 	for _, label := range labels {
-		fields, err := parseLabel(label)
-		if err != nil {
-			return nil, err
-		}
+		fields := parseLabel(label)
 		k, v := fields[0], fields[1]
 		results[k] = v
 	}
-	return results, nil
+	return results
 }
 
-func parseLabel(label string) ([]string, error) {
+func parseLabel(label string) []string {
 	fields := strings.SplitN(label, "=", 2)
-	if len(fields) != 2 {
-		return nil, fmt.Errorf("invalid label %s: label must be in format of key=value", label)
+	// Only input key without value
+	if len(fields) == 1 {
+		fields = append(fields, "")
 	}
-	return fields, nil
+	return fields
 }

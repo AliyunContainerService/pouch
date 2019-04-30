@@ -97,10 +97,7 @@ type container struct {
 }
 
 func (c *container) config() (*types.ContainerCreateConfig, error) {
-	labels, err := opts.ParseLabels(c.labels)
-	if err != nil {
-		return nil, err
-	}
+	labels := opts.ParseLabels(c.labels)
 
 	memory, err := opts.ParseMemory(c.memory)
 	if err != nil {

@@ -1155,10 +1155,7 @@ func (mgr *ContainerManager) Update(ctx context.Context, name string, config *ty
 	// but ContainerConfig.Labels is map[string]string
 	if len(config.Label) != 0 {
 		// support remove some labels
-		newLabels, err := opts.ParseLabels(config.Label)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse labels")
-		}
+		newLabels := opts.ParseLabels(config.Label)
 
 		for k, v := range newLabels {
 			if v == "" {
