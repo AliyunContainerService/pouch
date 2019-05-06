@@ -33,11 +33,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	// device related options
 	flagSet.StringSliceVarP(&c.devices, "device", "", nil, "Add a host device to the container")
 
-	// dns
-	flagSet.StringArrayVar(&c.dns, "dns", nil, "Set DNS servers")
-	flagSet.StringSliceVar(&c.dnsOptions, "dns-option", nil, "Set DNS options")
-	flagSet.StringArrayVar(&c.dnsSearch, "dns-search", nil, "Set DNS search domains")
-
 	flagSet.BoolVar(&c.enableLxcfs, "enableLxcfs", false, "Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd")
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
 	flagSet.StringArrayVarP(&c.env, "env", "e", nil, "Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)")
@@ -66,11 +61,19 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.name, "name", "", "Specify name of container")
 	flagSet.StringVar(&c.specificID, "specific-id", "", "Specify id of container, length of id should be 64, characters of id should be in '0123456789abcdef'")
 
+	// network
 	flagSet.StringSliceVar(&c.networks, "net", nil, "Set networks to container")
 	flagSet.StringSliceVarP(&c.ports, "publish", "p", nil, "Set container ports mapping")
 	flagSet.StringSliceVar(&c.expose, "expose", nil, "Set expose container's ports")
 	flagSet.BoolVarP(&c.publishAll, "publish-all", "P", false, "Publish all exposed ports to random ports")
 	flagSet.StringVar(&c.macAddress, "mac-address", "", "Set mac address of container endpoint")
+	flagSet.StringVar(&c.ip, "ip", "", "Set IPv4 address of container endpoint")
+	flagSet.StringVar(&c.ipv6, "ip6", "", "Set IPv6 address of container endpoint")
+	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
+	// dns
+	flagSet.StringArrayVar(&c.dns, "dns", nil, "Set DNS servers")
+	flagSet.StringSliceVar(&c.dnsOptions, "dns-option", nil, "Set DNS options")
+	flagSet.StringArrayVar(&c.dnsSearch, "dns-search", nil, "Set DNS search domains")
 
 	flagSet.StringVar(&c.pidMode, "pid", "", "PID namespace to use")
 	flagSet.BoolVar(&c.privileged, "privileged", false, "Give extended privileges to the container")
@@ -101,7 +104,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.richMode, "rich-mode", "", "Choose one rich container mode. dumb-init(default), systemd, sbin-init")
 	flagSet.StringVar(&c.initScript, "initscript", "", "Initial script executed in container")
 	flagSet.StringVar(&c.shmSize, "shm-size", "", "Size of /dev/shm, default value is 64MB")
-	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
 
 	// cgroup
 	flagSet.StringVarP(&c.cgroupParent, "cgroup-parent", "", "", "Optional parent cgroup for the container")

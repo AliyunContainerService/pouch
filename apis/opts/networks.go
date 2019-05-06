@@ -109,9 +109,38 @@ func ValidateNetworks(nwConfig *types.NetworkingConfig) error {
 			if v.IPAMConfig.IPV4Address != "" && net.ParseIP(v.IPAMConfig.IPV4Address).To4() == nil {
 				return fmt.Errorf("invalid IPv4 address: %s", v.IPAMConfig.IPV4Address)
 			}
-			// TODO: check IPv6Address
+			if v.IPAMConfig.IPV6Address != "" && net.ParseIP(v.IPAMConfig.IPV6Address).To16() == nil {
+				return fmt.Errorf("invalid IPv6 addresss: %s", v.IPAMConfig.IPV6Address)
+			}
 		}
 	}
+
+	return nil
+}
+
+// SetEndpointIPAddress set the ip address of the endpoint when network is bridge.
+func SetEndpointIPAddress(nwConfig *types.NetworkingConfig, mode, ipv4, ipv6 string) error {
+	if nwConfig == nil || mode == "" {
+		return nil
+	}
+
+	if nwConfig.EndpointsConfig != nil {
+		nwConfig.EndpointsConfig = make(map[string]*types.EndpointSettings)
+	}
+
+	epConfig := nwConfig.EndpointsConfig[mode]
+	if epConfig == nil {
+		epConfig = &types.EndpointSettings{}
+	}
+
+	if epConfig.IPAMConfig == nil {
+		epConfig.IPAMConfig = &types.EndpointIPAMConfig{}
+	}
+
+	epConfig.IPAMConfig.IPV4Address = ipv4
+	epConfig.IPAMConfig.IPV6Address = ipv6
+
+	nwConfig.EndpointsConfig[mode] = epConfig
 
 	return nil
 }

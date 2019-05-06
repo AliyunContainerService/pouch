@@ -51,23 +51,28 @@ type container struct {
 	scheLatSwitch       int64
 	oomKillDisable      bool
 
-	dns        []string
-	dnsOptions []string
-	dnsSearch  []string
+	devices       []string
+	enableLxcfs   bool
+	privileged    bool
+	restartPolicy string
+	ipcMode       string
+	pidMode       string
+	utsMode       string
+	sysctls       []string
 
-	devices        []string
-	enableLxcfs    bool
-	privileged     bool
-	restartPolicy  string
-	ipcMode        string
-	pidMode        string
-	utsMode        string
-	sysctls        []string
-	networks       []string
-	ports          []string
-	expose         []string
-	publishAll     bool
-	macAddress     string
+	// set network options
+	networks    []string
+	ports       []string
+	expose      []string
+	publishAll  bool
+	ip          string
+	ipv6        string
+	macAddress  string
+	netPriority int64
+	dns         []string
+	dnsOptions  []string
+	dnsSearch   []string
+
 	securityOpt    []string
 	capAdd         []string
 	capDrop        []string
@@ -80,7 +85,6 @@ type container struct {
 	ulimit         config.Ulimit
 	pidsLimit      int64
 	shmSize        string
-	netPriority    int64
 
 	// log driver and log option
 	logDriver string
@@ -159,6 +163,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 
 	networkingConfig, networkMode, err := opts.ParseNetworks(c.networks)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := opts.SetEndpointIPAddress(networkingConfig, networkMode, c.ip, c.ipv6); err != nil {
 		return nil, err
 	}
 
