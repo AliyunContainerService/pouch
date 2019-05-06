@@ -98,3 +98,27 @@ func (suite *PouchRunNetworkSuite) TestRunWithMacAddress(c *check.C) {
 
 	c.Assert(found, check.Equals, true)
 }
+
+// TestRunWithIP is to verify run container with ipv4 address
+func (suite *PouchRunNetworkSuite) TestRunWithIP(c *check.C) {
+	cname := "TestRunWithIP"
+	// TODO: add ipv6 address
+	ipv4 := "192.168.5.100"
+
+	command.PouchRun("run", "-d", "--name", cname, "--ip", ipv4, busyboxImage, "sleep", "1000").Assert(c, icmd.Success)
+	defer command.PouchRun("rm", "-vf", cname)
+
+	res := command.PouchRun("exec", cname, "ip", "addr", "show")
+	res.Assert(c, icmd.Success)
+
+	stdout := res.Stdout()
+	found := false
+	for _, line := range strings.Split(stdout, "\n") {
+		if strings.Contains(line, ipv4) {
+			found = true
+			break
+		}
+	}
+
+	c.Assert(found, check.Equals, true)
+}
