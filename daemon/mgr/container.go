@@ -684,11 +684,6 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 		return nil
 	}
 
-	// network is prepared by upper system. do nothing here.
-	if IsNetNS(networkMode) {
-		return nil
-	}
-
 	// initialise host network mode
 	if IsHost(networkMode) {
 		hostname, err := os.Hostname()
@@ -701,6 +696,11 @@ func (mgr *ContainerManager) prepareContainerNetwork(ctx context.Context, c *Con
 	// build the network related path.
 	if err := mgr.buildNetworkRelatedPath(c); err != nil {
 		return err
+	}
+
+	// network is prepared by upper system. do nothing here.
+	if IsNetNS(networkMode) {
+		return nil
 	}
 
 	// initialise network endpoint
