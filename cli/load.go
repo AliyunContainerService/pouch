@@ -9,7 +9,9 @@ import (
 )
 
 // loadDescription is used to describe load command in detail and auto generate command doc.
-var loadDescription = "load a set of images by tar stream"
+var loadDescription = "load a set of images by tar stream.\n" +
+	"for docker image format, no need to set the image name because pouch" +
+	" will parse image name from tar stream."
 
 // LoadCommand use to implement 'load' command.
 type LoadCommand struct {

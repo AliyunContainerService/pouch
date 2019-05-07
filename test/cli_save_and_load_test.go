@@ -27,6 +27,35 @@ func (suite *PouchSaveLoadSuite) SetUpSuite(c *check.C) {
 	environment.PruneAllContainers(apiClient)
 }
 
+// TestSaveLoadDockerImages tests "pouch load" docker images.
+func (suite *PouchSaveLoadSuite) TestSaveLoadDockerImages(c *check.C) {
+	environment.PruneAllImages(apiClient)
+
+	// the tar file contains the busybox:1.25 and alpine:3.7
+	filename := filepath.Join("testdata", "images", "docker-busybox_1_25-and-alpine_3_7.tar")
+	command.PouchRun("load", "-i", filename).Assert(c, icmd.Success)
+
+	command.PouchRun("image", "inspect", "docker.io/library/busybox:1.25").Assert(c, icmd.Success)
+	command.PouchRun("image", "inspect", "docker.io/library/alpine:3.7").Assert(c, icmd.Success)
+}
+
+// TestSaveLoadOneDockerImage tests "pouch load -i <docker images> one-image.
+func (suite *PouchSaveLoadSuite) TestSaveLoadOneDockerImage(c *check.C) {
+	environment.PruneAllImages(apiClient)
+
+	// the tar file contains the busybox:1.25 and alpine:3.7
+	filename := filepath.Join("testdata", "images", "docker-busybox_1_25-and-alpine_3_7.tar")
+
+	// only load alpine
+	command.PouchRun("load", "-i", filename, "docker.io/library/alpine").Assert(c, icmd.Success)
+
+	command.PouchRun("image", "inspect", "docker.io/library/alpine:3.7").Assert(c, icmd.Success)
+
+	// busybox should be ignored
+	res := command.PouchRun("image", "inspect", "docker.io/library/busybox:1.25")
+	c.Assert(res.ExitCode, check.Not(check.Equals), 0)
+}
+
 // TestSaveLoadWorks tests "pouch save" and "pouch load" work.
 func (suite *PouchSaveLoadSuite) TestSaveLoadWorks(c *check.C) {
 	res := command.PouchRun("pull", busyboxImage125)
