@@ -16,6 +16,7 @@ func main() {
 
 	// Add all subcommands.
 	cli.AddCommand(base, &PullCommand{})
+	cli.AddCommand(base, &PushCommand{})
 	cli.AddCommand(base, &CreateCommand{})
 	cli.AddCommand(base, &StartCommand{})
 	cli.AddCommand(base, &StopCommand{})

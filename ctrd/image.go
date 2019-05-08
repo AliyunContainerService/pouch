@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"sync"
 	"time"
 
@@ -232,7 +233,16 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 		stream.Close()
 		stream.Wait()
 	}()
+
 	if err != nil {
+		stream.WriteObject(jsonstream.JSONMessage{
+			Error: &jsonstream.JSONError{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			},
+			ErrorMessage: err.Error(),
+		})
+
 		return err
 	}
 
