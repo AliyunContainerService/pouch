@@ -473,7 +473,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	// Teardown network of the pod, if it is not in host network mode.
 	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE {
 		if err = c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
-			logrus.Warnf("failed to find network namespace file %s of sandbox %s which may have been already stopped", sandboxMeta.NetNS, podSandboxID)
+			return nil, fmt.Errorf("failed to teardown network of sandbox %s, ns path: %v", podSandboxID, sandboxMeta.NetNS)
 		}
 	}
 
