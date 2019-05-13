@@ -289,7 +289,6 @@ func getOverlayMountInfo(basefs string) (*OverlayMount, error) {
 			case strings.Contains(p, "workdir"):
 				if s := strings.Split(p, "="); len(s) == 2 {
 					workDir = s[1]
-					break
 				}
 			}
 		}
