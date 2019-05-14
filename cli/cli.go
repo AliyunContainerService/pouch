@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
+	"text/template"
 	"time"
 
 	"github.com/alibaba/pouch/client"
@@ -157,6 +158,15 @@ func (c *Cli) Print(obj interface{}) {
 	}
 
 	display.Flush()
+}
+
+// FormatDisplay use to format output with options
+func (c *Cli) FormatDisplay(format string, tmpl *template.Template, container interface{}, w *tabwriter.Writer) error {
+	tmpl, err := tmpl.Parse(format)
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(w, container)
 }
 
 // ExitError defines exit error produce by cli commands.
