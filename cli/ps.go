@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
+	"text/tabwriter"
+	"text/template"
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
-	"github.com/alibaba/pouch/pkg/utils"
+	"github.com/alibaba/pouch/cli/formatter"
 	"github.com/alibaba/pouch/pkg/utils/filters"
 
 	"github.com/spf13/cobra"
@@ -15,6 +18,7 @@ import (
 
 // psDescription is used to describe ps command in detail and auto generate command doc.
 var psDescription = "\nList Containers with container name, ID, status, creation time, image reference and runtime."
+var psDefaultFormat = "table {{.Names}}\t{{.ID}}\t{{.Status}}\t{{.RunningFor}}\t{{.Image}}\t{{.Runtime}}\n"
 
 // containerList is used to save the container list.
 type containerList []*types.Container
@@ -28,6 +32,7 @@ type PsCommand struct {
 	flagQuiet   bool
 	flagNoTrunc bool
 	flagFilter  []string
+	flagFormat  string
 }
 
 // Init initializes PsCommand command.
@@ -52,6 +57,7 @@ func (p *PsCommand) addFlags() {
 	flagSet.BoolVarP(&p.flagAll, "all", "a", false, "Show all containers (default shows just running)")
 	flagSet.BoolVarP(&p.flagQuiet, "quiet", "q", false, "Only show numeric IDs")
 	flagSet.BoolVar(&p.flagNoTrunc, "no-trunc", false, "Do not truncate output")
+	flagSet.StringVarP(&p.flagFormat, "format", "", "", "intelligent-print containers based on Go template")
 	flagSet.StringSliceVarP(&p.flagFilter, "filter", "f", nil, "Filter output based on given conditions, support filter key [ id label name status ]")
 }
 
@@ -88,24 +94,36 @@ func (p *PsCommand) runPs(args []string) error {
 		}
 		return nil
 	}
-
-	display := p.cli.NewTableDisplay()
-	display.AddRow([]string{"Name", "ID", "Status", "Created", "Image", "Runtime"})
-
+	// add to format the output with go template
+	format := p.flagFormat
+	tmplH := template.New("ps_head")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, p.cli.padding, ' ', 0)
+	if len(format) == 0 {
+		format = psDefaultFormat
+	}
+	// true is table,false is raw
+	tableOrRaw := formatter.IsTable(format)
+	format = formatter.PreFormat(format)
+	if tableOrRaw {
+		containerHeader := formatter.ContainerHeader
+		err = p.cli.FormatDisplay(format, tmplH, containerHeader, w)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "format display error:%+v\n", err)
+		}
+	}
 	for _, c := range containers {
-		created, err := utils.FormatTimeInterval(c.Created, 0)
+		containerContext, err := formatter.NewContainerContext(c, p.flagNoTrunc)
 		if err != nil {
 			return err
 		}
+		tmplD := template.New("ps_detail")
+		err = p.cli.FormatDisplay(format, tmplD, containerContext, w)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "format display error:%+v\n", err)
 
-		id := c.ID[:6]
-		if p.flagNoTrunc {
-			id = c.ID
 		}
-
-		display.AddRow([]string{c.Names[0], id, c.Status, created + " ago", c.Image, c.HostConfig.Runtime})
 	}
-	display.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -145,6 +163,10 @@ Name   ID                                                                 Status
 foo3   63fd6371f3d614bb1ecad2780972d5975ca1ab534ec280c5f7d8f4c7b2e9989d   created        2 minutes ago   docker.io/library/redis:alpine   runc
 foo2   692c77587b38f60bbd91d986ec3703848d72aea5030e320d4988eb02aa3f9d48   Up 2 minutes   2 minutes ago   docker.io/library/redis:alpine   runc
 foo    18592900006405ee64788bd108ef1de3d24dc3add73725891f4787d0f8e036f5   Up 2 minutes   2 minutes ago   docker.io/library/redis:alpine   runc
+
+$ pouch ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.RunningFor}}\t{{.Ports}}\t{{.Status}}\t{{.Size}}\t{{.Labels}}\t{{.Mounts}}\t{{.LocalVolumes}}\t{{.Networks}}\t{{.Runtime}}\t{{.ImageID}}"
+ID       Name     Image                                          Command   CreatedAt                                Created         Ports              Status         Size   Labels   Mounts        Volumes   Networks   Runtime   ImageID
+869433   test   registry.hub.docker.com/library/busybox:1.28   sh        2019-05-29 05:40:46.64617376 +0000 UTC   6 seconds ago   3333/tcp->:3333;   Up 6 seconds   0B     a = b;   /root/test;   0         bridge     runc      sha256:8c811b4aec35f259572d0f79207bc0678df4c736eeec50bc9fec37ed936a472a
 `
 }
 
