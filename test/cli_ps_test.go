@@ -23,7 +23,7 @@ func init() {
 func (suite *PouchPsSuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 
-	environment.PruneAllContainers(apiClient)
+	_ = environment.PruneAllContainers(apiClient)
 	PullImage(c, busyboxImage)
 }
 
@@ -254,6 +254,61 @@ func (suite *PouchPsSuite) TestPsNoTrunc(c *check.C) {
 
 	c.Assert(kv[name].id, check.HasLen, 64)
 	c.Assert(kv[name].id, check.Equals, containerID)
+}
+
+// TestPsWithFormat tests "pouch ps --format" work
+func (suite *PouchPsSuite) TestPsWithFormat(c *check.C) {
+	name := "ps-tableFormat"
+	command.PouchRun("create", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	command.PouchRun("start", name).Assert(c, icmd.Success)
+	resTable := command.PouchRun("ps", "--format", "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.RunningFor}}\t{{.Ports}}\t{{.Status}}\t{{.Size}}\t{{.Labels}}\t{{.Mounts}}\t{{.LocalVolumes}}\t{{.Networks}}\t{{.Runtime}}\t{{.ImageID}}").Assert(c, icmd.Success)
+	resTableHead := findTableFormatPsHead(resTable.Combined())
+	c.Assert(len(resTableHead), check.Equals, 15)
+	c.Assert(resTableHead[0], check.Equals, "ID")
+	c.Assert(resTableHead[1], check.Equals, "Name")
+	c.Assert(resTableHead[2], check.Equals, "Image")
+	c.Assert(resTableHead[3], check.Equals, "Command")
+	c.Assert(resTableHead[4], check.Equals, "CreatedAt")
+	c.Assert(resTableHead[5], check.Equals, "Created")
+	c.Assert(resTableHead[6], check.Equals, "Ports")
+	c.Assert(resTableHead[7], check.Equals, "Status")
+	c.Assert(resTableHead[8], check.Equals, "Size")
+	c.Assert(resTableHead[9], check.Equals, "Labels")
+	c.Assert(resTableHead[10], check.Equals, "Mounts")
+	c.Assert(resTableHead[11], check.Equals, "LocalVolumes")
+	c.Assert(resTableHead[12], check.Equals, "Networks")
+	c.Assert(resTableHead[13], check.Equals, "Runtime")
+	c.Assert(resTableHead[14], check.Equals, "ImageID")
+
+	resRaw := command.PouchRun("ps", "--format", "raw").Assert(c, icmd.Success)
+	resRawHead := findRawFormatPsHead(resRaw.Combined())
+	c.Assert(len(resRawHead), check.Equals, 7)
+	c.Assert(resRawHead[0], check.Equals, "Name")
+	c.Assert(resRawHead[1], check.Equals, "ID")
+	c.Assert(resRawHead[2], check.Equals, "Status")
+	c.Assert(resRawHead[3], check.Equals, "Created")
+	c.Assert(resRawHead[4], check.Equals, "Image")
+	c.Assert(resRawHead[5], check.Equals, "Runtime")
+}
+
+// findTableFormatPsHead find pouch ps --format "table" head
+func findTableFormatPsHead(ps string) []string {
+	head := strings.Split(ps, "\n")[0]
+	items := strings.Fields(head)
+	return items
+}
+
+// findRawFormatPsHead find pouch ps --format "raw" head
+func findRawFormatPsHead(ps string) []string {
+	lines := strings.Split(ps, "\n")[:7]
+	var res []string
+	for _, line := range lines {
+		items := strings.Split(line, ":")
+		res = append(res, items[0])
+	}
+	return res
 }
 
 // psTable represents the table of "pouch ps" result.
