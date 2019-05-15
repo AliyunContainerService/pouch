@@ -20,6 +20,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 
 ### SEE ALSO
 
+* [pouch build](pouch_build.md)	 - Build an image from a Dockerfile
 * [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
 * [pouch commit](pouch_commit.md)	 - Commit an image from a container
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
@@ -39,6 +40,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch pause](pouch_pause.md)	 - Pause one or more running containers
 * [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
+* [pouch push](pouch_push.md)	 - Push an image to registry
 * [pouch remount-lxcfs](pouch_remount-lxcfs.md)	 - remount lxcfs bind in containers
 * [pouch rename](pouch_rename.md)	 - Rename a container with newName
 * [pouch restart](pouch_restart.md)	 - restart one or more containers
