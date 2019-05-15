@@ -1214,7 +1214,7 @@ Return a list of stored images.
 |---|---|---|---|
 |**Query**|**all**  <br>*optional*|Show all images. Only images from a final layer (no children) are shown by default.|boolean|
 |**Query**|**digests**  <br>*optional*|Show digest information as a `RepoDigests` field on each image.|boolean|
-|**Query**|**filters**  <br>*optional*|A JSON encoded value of the filters (a `map[string][]string`) to process on the images list. Available filters:<br><br>- `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)<br>- `dangling=true`<br>- `label=key` or `label="key=value"` of an image label<br>- `reference`=(`<image-name>[:<tag>]`)<br>- `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)|string|
+|**Query**|**filters**  <br>*optional*|A JSON encoded value of the filters (a `map[string][]string`) to process on the images list. Available filters:<br><br>- `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)<br>- `reference`=(`<image-name>[:<tag>]`)<br>- `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)|string|
 
 
 #### Responses
@@ -1471,6 +1471,45 @@ json :
   "message" : "No such image: e216a057b1cb"
 }
 ```
+
+
+<a name="imagepush"></a>
+### push an image
+```
+POST /images/{imageid}/push
+```
+
+
+#### Description
+push an image on the registry
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Header**|**X-Registry-Auth**  <br>*optional*|A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)|string|
+|**Path**|**imageid**  <br>*required*|Image name or id|string|
+|**Query**|**tag**  <br>*optional*|the tag to associate with the image on the registry. This is optional.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**404**|An unexpected 404 error occurred.|[Error](#error)|
+|**500**|An unexpected server error occurred.|[Error](#error)|
+
+
+#### Consumes
+
+* `application/octet-stream`
+
+
+#### Produces
+
+* `application/json`
 
 
 <a name="images-imageid-tag-post"></a>
@@ -1740,7 +1779,7 @@ GET /volumes
 
 |Type|Name|Description|Schema|
 |---|---|---|---|
-|**Query**|**filters**  <br>*optional*|JSON encoded value of the filters (a `map[string][]string`) to<br>process on the volumes list. Available filters:<br><br>- `dangling=<boolean>` When set to `true` (or `1`), returns all<br>   volumes that are not in use by a container. When set to `false`<br>   (or `0`), only volumes that are in use by one or more<br>   containers are returned.<br>- `driver=<volume-driver-name>` Matches volumes based on their driver.<br>- `label=<key>` or `label=<key>:<value>` Matches volumes based on<br>   the presence of a `label` alone or a `label` and a value.<br>- `name=<volume-name>` Matches all or part of a volume name.|string (json)|
+|**Query**|**filters**  <br>*optional*|JSON encoded value of the filters (a `map[string][]string`) to<br>process on the volumes list. Available filters:<br><br>- `driver=<volume-driver-name>` Matches volumes based on their driver.<br>- `label=<key>` or `label=<key>:<value>` Matches volumes based on<br>   the presence of a `label` alone or a `label` and a value.<br>- `name=<volume-name>` Matches all or part of a volume name.|string (json)|
 
 
 #### Responses
@@ -2107,7 +2146,7 @@ Configuration for a container that is portable between hosts
 |**DiskQuota**  <br>*optional*|Set disk quota for container.<br>Key is the dir in container.<br>Value is disk quota size for the dir.<br>/ means rootfs dir in container.<br>.* includes rootfs dir and all volume dir.|< string, string > map|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
-|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
+|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. <br>A variable like "A=" means setting env A in container to be empty value.<br>And a variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
 |**Image**  <br>*required*|The name of the image to use when creating the container|string|
@@ -2122,10 +2161,12 @@ Configuration for a container that is portable between hosts
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**Snapshotter**  <br>*optional*|The snapshotter container choose, can be different with<br>default snapshotter. The Field only set through hook plugin.|string|
 |**SpecAnnotation**  <br>*optional*|annotations send to runtime spec.|< string, string > map|
+|**SpecificID**  <br>*optional*|Create container with given id.<br>MinLength: 64<br>MaxLength: 64<br>The characters of given id should be in 0123456789abcdef.<br>By default, given id is unnecessary.|string|
 |**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
-|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
+|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.  <br>**Minimum value** : `0`|integer|
 |**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.|boolean|
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
 |**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
@@ -2152,7 +2193,7 @@ It can be used to encode client params in client and unmarshal request body in d
 |**DiskQuota**  <br>*optional*|Set disk quota for container.<br>Key is the dir in container.<br>Value is disk quota size for the dir.<br>/ means rootfs dir in container.<br>.* includes rootfs dir and all volume dir.|< string, string > map|
 |**Domainname**  <br>*optional*|The domain name to use for the container.|string|
 |**Entrypoint**  <br>*optional*|The entry point for the container as a string or an array of strings.<br>If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default.|< string > array|
-|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
+|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. <br>A variable like "A=" means setting env A in container to be empty value.<br>And a variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**ExposedPorts**  <br>*optional*|An object mapping ports to an empty object in the form:`{<port>/<tcp\|udp>: {}}`|< string, object > map|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
 |**Hostname**  <br>*optional*|The hostname to use for the container, as a valid RFC 1123 hostname.  <br>**Minimum length** : `1`|string (hostname)|
@@ -2169,10 +2210,12 @@ It can be used to encode client params in client and unmarshal request body in d
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Shell**  <br>*optional*|Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.|< string > array|
+|**Snapshotter**  <br>*optional*|The snapshotter container choose, can be different with<br>default snapshotter. The Field only set through hook plugin.|string|
 |**SpecAnnotation**  <br>*optional*|annotations send to runtime spec.|< string, string > map|
+|**SpecificID**  <br>*optional*|Create container with given id.<br>MinLength: 64<br>MaxLength: 64<br>The characters of given id should be in 0123456789abcdef.<br>By default, given id is unnecessary.|string|
 |**StdinOnce**  <br>*optional*|Close `stdin` after one attached client disconnects|boolean|
 |**StopSignal**  <br>*optional*|Signal to stop a container as a string or unsigned integer.  <br>**Default** : `"SIGTERM"`|string|
-|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.|integer|
+|**StopTimeout**  <br>*optional*|Timeout to stop a container in seconds.  <br>**Minimum value** : `0`|integer|
 |**Tty**  <br>*optional*|Attach standard streams to a TTY, including `stdin` if it is not closed.|boolean|
 |**User**  <br>*optional*|The user that commands are run as inside the container.|string|
 |**Volumes**  <br>*optional*|An object mapping mount point paths inside the container to empty objects.|< string, object > map|
@@ -2218,7 +2261,7 @@ GET "/containers/{id}/json"
 
 |Name|Description|Schema|
 |---|---|---|
-|**AppArmorProfile**  <br>*optional*||string|
+|**AppArmorProfile**  <br>*optional*|AppArmorProfile are specific for AppArmor to Unix platforms|string|
 |**Args**  <br>*optional*|The arguments to the command being run|< string > array|
 |**Config**  <br>*optional*||[ContainerConfig](#containerconfig)|
 |**Created**  <br>*optional*|The time the container was created|string|
@@ -2226,19 +2269,20 @@ GET "/containers/{id}/json"
 |**ExecIDs**  <br>*optional*|exec ids of container|< string > array|
 |**GraphDriver**  <br>*optional*||[GraphDriverData](#graphdriverdata)|
 |**HostConfig**  <br>*optional*||[HostConfig](#hostconfig)|
-|**HostnamePath**  <br>*optional*||string|
-|**HostsPath**  <br>*optional*||string|
+|**HostRootPath**  <br>*optional*|The rootfs path of the container on the host.|string|
+|**HostnamePath**  <br>*optional*|the path of container's hostname file on host.|string|
+|**HostsPath**  <br>*optional*|the path of container's hosts file on host.|string|
 |**Id**  <br>*optional*|The ID of the container|string|
 |**Image**  <br>*optional*|The container's image|string|
-|**LogPath**  <br>*optional*||string|
-|**MountLabel**  <br>*optional*||string|
+|**LogPath**  <br>*optional*|the path of container's log file on host.|string|
+|**MountLabel**  <br>*optional*|MountLabel contains the options for the 'mount' command.|string|
 |**Mounts**  <br>*optional*|Set of mount point in a container.|< [MountPoint](#mountpoint) > array|
-|**Name**  <br>*optional*||string|
+|**Name**  <br>*optional*|name of the created container.|string|
 |**NetworkSettings**  <br>*optional*|NetworkSettings exposes the network settings in the API.|[NetworkSettings](#networksettings)|
 |**Path**  <br>*optional*|The path to the command being run|string|
 |**ProcessLabel**  <br>*optional*||string|
-|**ResolvConfPath**  <br>*optional*||string|
-|**RestartCount**  <br>*optional*||integer|
+|**ResolvConfPath**  <br>*optional*|the path of container's resolvConf file on host.|string|
+|**RestartCount**  <br>*optional*|the container's restart time|integer|
 |**SizeRootFs**  <br>*optional*|The total size of all the files in this container.|integer (int64)|
 |**SizeRw**  <br>*optional*|The size of files that have been created or changed by this container.|integer (int64)|
 |**Snapshotter**  <br>*optional*||[SnapshotterData](#snapshotterdata)|
@@ -2326,6 +2370,7 @@ options of starting container
 |**Dead**  <br>*required*|Whether this container is dead.|boolean|
 |**Error**  <br>*required*|The error message of this container|string|
 |**ExitCode**  <br>*required*|The last exit code of this container|integer|
+|**Exited**  <br>*optional*|Whether this container is abnormal stopped. So that we can distinguish whether<br>a container stoppped by API or abnormal.<br><br>This flag can be used on the circumstances that when the host restart and try to pull up<br>the containers that are running before host down. If we have a container with `RestartPolicy`<br>is `always` but the `Status` is `Stopped`, should we start it or not?<br><br>So with the `Exited` flag being set, we can make sure that this container is exited by abnormal,<br>we should pull it up. But with status is `Stopped`, we should not pull it up because it is stopped<br>by API.|boolean|
 |**FinishedAt**  <br>*required*|The time when this container last exited.|string|
 |**OOMKilled**  <br>*required*|Whether this container has been killed because it ran out of memory.|boolean|
 |**Paused**  <br>*required*|Whether this container is paused.|boolean|
@@ -2502,7 +2547,7 @@ is a small subset of the Config struct that holds the configuration.
 |**AttachStderr**  <br>*optional*|Attach the standard error|boolean|
 |**AttachStdin**  <br>*optional*|Attach the standard input, makes possible user interaction|boolean|
 |**AttachStdout**  <br>*optional*|Attach the standard output|boolean|
-|**Cmd**  <br>*optional*|Execution commands and args|< string > array|
+|**Cmd**  <br>*required*|Execution commands and args|< string > array|
 |**Detach**  <br>*optional*|Execute in detach mode|boolean|
 |**DetachKeys**  <br>*optional*|Escape keys for detach|string|
 |**Env**  <br>*optional*|envs for exec command in container|< string > array|
@@ -2585,7 +2630,7 @@ Container configuration that depends on the host we are running on
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
@@ -2608,15 +2653,16 @@ Container configuration that depends on the host we are running on
 |**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Links**  <br>*optional*|A list of links for the container in the form `container_name:alias`.|< string > array|
 |**LogConfig**  <br>*optional*|The logging configuration for this container|[LogConfig](#logconfig)|
+|**MaskedPaths**  <br>*optional*|Masks over the provided paths inside the container.|< string > array|
 |**Memory**  <br>*optional*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing memory extra in bytes|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.|integer (int64)|
 |**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
 |**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100. -1 is also accepted, as a legacy alias of 0.  <br>**Minimum value** : `-1`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.|integer (int64)|
 |**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
-|**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
+|**NetworkMode**  <br>*optional*|Network mode to use for this container. Supported standard values are: `netns:<path>`, `bridge`, `host`, `none`, and `container:<name\|id>`. Any other value is taken as a custom network's name to which this container should connect to.|string|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**OomScoreAdj**  <br>*optional*|An integer value containing the score given to the container in order to tune OOM killer preferences.<br>The range is in [-1000, 1000].  <br>**Minimum value** : `-1000`  <br>**Maximum value** : `1000`|integer (int)|
@@ -2625,12 +2671,14 @@ Container configuration that depends on the host we are running on
 |**PortBindings**  <br>*optional*|A map of exposed container ports and the host port they should map to.|[PortMap](#portmap)|
 |**Privileged**  <br>*optional*|Gives the container full access to the host.|boolean|
 |**PublishAllPorts**  <br>*optional*|Allocates a random host port for all of a container's exposed ports.|boolean|
+|**ReadonlyPaths**  <br>*optional*|Set the provided paths as RO inside the container.|< string > array|
 |**ReadonlyRootfs**  <br>*optional*|Mount the container's root filesystem as read only.|boolean|
 |**RestartPolicy**  <br>*optional*|Restart policy to be used to manage the container|[RestartPolicy](#restartpolicy)|
 |**Rich**  <br>*optional*|Whether to start container in rich container mode. (default false)|boolean|
 |**RichMode**  <br>*optional*|Choose one rich container mode.(default dumb-init)|enum (dumb-init, sbin-init, systemd)|
 |**Runtime**  <br>*optional*|Runtime to use with this container.|string|
-|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**RuntimeType**  <br>*optional*|The runtime type used in containerd.|string|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct|integer (int64)|
 |**SecurityOpt**  <br>*optional*|A list of string values to customize labels for MLS systems, such as SELinux.|< string > array|
 |**ShmSize**  <br>*optional*|Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.  <br>**Minimum value** : `0`|integer|
 |**StorageOpt**  <br>*optional*|Storage driver options for this container, in the form `{"size": "120G"}`.|< string, string > map|
@@ -2944,7 +2992,7 @@ PortBinding represents a binding between a host IP address and a host port
 |Name|Description|Schema|
 |---|---|---|
 |**HostIp**  <br>*optional*|Host IP address that the container's port is mapped to.  <br>**Example** : `"127.0.0.1"`|string|
-|**HostPort**  <br>*optional*|Host port number that the container's port is mapped to.  <br>**Example** : `"4443"`|string|
+|**HostPort**  <br>*optional*|Host port number that the container's port is mapped to. range (0,65535]  <br>**Pattern** : `"^([1-9]\|[1-9]\\d{1,3}\|[1-5]\\d{4}\|6[0-4]\\d{3}\|65[0-4]\\d{2}\|655[0-2]\\d\|6553[0-5])$"`  <br>**Example** : `"4443"`|string|
 
 
 <a name="portmap"></a>
@@ -3015,7 +3063,7 @@ A container's resources (cgroups config, ulimits, etc)
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
@@ -3028,17 +3076,17 @@ A container's resources (cgroups config, ulimits, etc)
 |**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
 |**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Memory**  <br>*optional*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing memory extra in bytes|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.|integer (int64)|
 |**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
 |**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100. -1 is also accepted, as a legacy alias of 0.  <br>**Minimum value** : `-1`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.|integer (int64)|
 |**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
-|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct|integer (int64)|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimit](#ulimit) > array|
 
 
@@ -3066,7 +3114,8 @@ and SELinux.
 |Name|Description|Schema|
 |---|---|---|
 |**path**  <br>*optional*|Name and, optional, path, of the OCI executable binary.<br><br>If the path is omitted, the daemon searches the host's `$PATH` for the<br>binary and uses the first result.  <br>**Example** : `"/usr/local/bin/my-oci-runtime"`|string|
-|**runtimeArgs**  <br>*optional*|List of command-line arguments to pass to the runtime when invoked.  <br>**Example** : `[ "--debug", "--systemd-cgroup=false" ]`|< string > array|
+|**runtimeArgs**  <br>*optional*|List of command-line arguments to pass to the runtime when invoked.<br>DEPRECATED: Use Options instead. Remove when shim v1 is deprecated.  <br>**Example** : `[ "--debug", "--systemd-cgroup=false" ]`|< string > array|
+|**type**  <br>*optional*|The runtime type used in containerd.  <br>**Example** : `"io.containerd.runtime.v1.linux"`|string|
 
 
 <a name="searchresultitem"></a>
@@ -3212,7 +3261,7 @@ UpdateConfig holds the mutable attributes of a Container. Those attributes can b
 |**CpuCount**  <br>*optional*|The number of usable CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPercent**  <br>*optional*|The usable percentage of the available CPUs (Windows only).<br>On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.|integer (int64)|
 |**CpuPeriod**  <br>*optional*|CPU CFS (Completely Fair Scheduler) period.<br>The length of a CPU period in microseconds.  <br>**Minimum value** : `1000`  <br>**Maximum value** : `1000000`|integer (int64)|
-|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."  <br>**Minimum value** : `1000`|integer (int64)|
+|**CpuQuota**  <br>*optional*|CPU CFS (Completely Fair Scheduler) quota.<br>Microseconds of CPU time that the container can get in a CPU period."|integer (int64)|
 |**CpuRealtimePeriod**  <br>*optional*|The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuRealtimeRuntime**  <br>*optional*|The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.|integer (int64)|
 |**CpuShares**  <br>*optional*|An integer value representing this container's relative CPU weight versus other containers.|integer|
@@ -3221,25 +3270,26 @@ UpdateConfig holds the mutable attributes of a Container. Those attributes can b
 |**DeviceCgroupRules**  <br>*optional*|a list of cgroup rules to apply to the container|< string > array|
 |**Devices**  <br>*optional*|A list of devices to add to the container.|< [DeviceMapping](#devicemapping) > array|
 |**DiskQuota**  <br>*optional*|update disk quota for container|< string, string > map|
-|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
+|**Env**  <br>*optional*|A list of environment variables to set inside the container in the form `["VAR=value", ...]`.<br>A variable like "A=" means updating env A in container to be empty value.<br>A variable without `=` is removed from the environment, rather than to have an empty value.|< string > array|
 |**IOMaximumBandwidth**  <br>*optional*|Maximum IO in bytes per second for the container system drive (Windows only)|integer (uint64)|
 |**IOMaximumIOps**  <br>*optional*|Maximum IOps for the container system drive (Windows only)|integer (uint64)|
 |**IntelRdtL3Cbm**  <br>*optional*|IntelRdtL3Cbm specifies settings for Intel RDT/CAT group that the container is placed into to limit the resources (e.g., L3 cache) the container has available.|string|
 |**KernelMemory**  <br>*optional*|Kernel memory limit in bytes.|integer (int64)|
 |**Label**  <br>*optional*|List of labels set to container.|< string > array|
 |**Memory**  <br>*optional*|Memory limit in bytes.|integer|
-|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing this container's memory high water mark percentage.<br>The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**MemoryExtra**  <br>*optional*|MemoryExtra is an integer value representing memory extra in bytes|integer (int64)|
+|**MemoryForceEmptyCtl**  <br>*optional*|MemoryForceEmptyCtl represents whether to reclaim the page cache when deleting cgroup.|integer (int64)|
 |**MemoryReservation**  <br>*optional*|Memory soft limit in bytes.|integer (int64)|
 |**MemorySwap**  <br>*optional*|Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.|integer (int64)|
-|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
-|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio. The range is in [0, 100].  <br>**Minimum value** : `0`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemorySwappiness**  <br>*optional*|Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100. -1 is also accepted, as a legacy alias of 0.  <br>**Minimum value** : `-1`  <br>**Maximum value** : `100`|integer (int64)|
+|**MemoryWmarkRatio**  <br>*optional*|MemoryWmarkRatio is an integer value representing this container's memory low water mark percentage. <br>The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio.|integer (int64)|
 |**NanoCpus**  <br>*optional*|CPU quota in units of 10<sup>-9</sup> CPUs.|integer (int64)|
 |**NvidiaConfig**  <br>*optional*||[NvidiaConfig](#nvidiaconfig)|
 |**OomKillDisable**  <br>*optional*|Disable OOM Killer for the container.|boolean|
 |**PidsLimit**  <br>*optional*|Tune a container's pids limit. Set -1 for unlimited. Only on Linux 4.4 does this parameter support.|integer (int64)|
 |**RestartPolicy**  <br>*optional*||[RestartPolicy](#restartpolicy)|
-|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct  <br>**Minimum value** : `0`  <br>**Maximum value** : `1`|integer (int64)|
+|**ScheLatSwitch**  <br>*optional*|ScheLatSwitch enables scheduler latency count in cpuacct|integer (int64)|
+|**SpecAnnotation**  <br>*optional*|update specAnnotation for container|< string, string > map|
 |**Ulimits**  <br>*optional*|A list of resource limits to set in the container. For example: `{"Name": "nofile", "Soft": 1024, "Hard": 2048}`"|< [Ulimit](#ulimit) > array|
 
 

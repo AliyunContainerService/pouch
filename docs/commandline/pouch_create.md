@@ -51,6 +51,8 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --initscript string             Initial script executed in container
       --intel-rdt-l3-cbm string       Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
   -i, --interactive                   open STDIN even if not attached
+      --ip string                     Set IPv4 address of container endpoint
+      --ip6 string                    Set IPv6 address of container endpoint
       --ipc string                    IPC namespace to use
       --kernel-memory string          Kernel memory limit (in bytes)
   -l, --label stringArray             Set labels for a container
