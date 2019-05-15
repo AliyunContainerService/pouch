@@ -1,27 +1,23 @@
-## pouch load
+## pouch build
 
-load a set of images from a tar archive or STDIN
+Build an image from a Dockerfile
 
 ### Synopsis
 
-load a set of images by tar stream.
-for docker image format, no need to set the image name because pouch will parse image name from tar stream.
+Build an image from a Dockerfile
 
 ```
-pouch load [OPTIONS] [IMAGE_NAME]
-```
-
-### Examples
-
-```
-$ pouch load -i busybox.tar busybox
+pouch build [OPTION] PATH
 ```
 
 ### Options
 
 ```
-  -h, --help           help for load
-  -i, --input string   Read from tar archive file, instead of STDIN
+      --addr string             buildkitd address (default "unix:///run/buildkit/buildkitd.sock")
+      --build-arg stringArray   Set build-time variables
+  -h, --help                    help for build
+  -t, --tag stringArray         Name and optionally a tag in the 'name:tag' format
+      --target string           Set the target build stage to build
 ```
 
 ### Options inherited from parent commands

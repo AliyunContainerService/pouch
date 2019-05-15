@@ -65,6 +65,8 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --initscript string             Initial script executed in container
       --intel-rdt-l3-cbm string       Limit container resource for Intel RDT/CAT which introduced in Linux 4.10 kernel
   -i, --interactive                   Attach container's STDIN
+      --ip string                     Set IPv4 address of container endpoint
+      --ip6 string                    Set IPv6 address of container endpoint
       --ipc string                    IPC namespace to use
       --kernel-memory string          Kernel memory limit (in bytes)
   -l, --label stringArray             Set labels for a container
