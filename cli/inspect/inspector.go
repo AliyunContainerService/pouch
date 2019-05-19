@@ -41,6 +41,9 @@ func NewTemplateInspectorFromString(out io.Writer, tmplStr string) (Inspector, e
 	if tmplStr == "" {
 		return NewIndentedInspector(out), nil
 	}
+	if strings.Contains(tmplStr, ".Id") {
+		tmplStr = strings.Replace(tmplStr, ".Id", ".ID", -1)
+	}
 
 	tmpl, err := templates.Parse(tmplStr)
 	if err != nil {
