@@ -58,6 +58,10 @@ func (suite *PouchInspectSuite) TestInspectCreateAndStartedFormat(c *check.C) {
 	output = command.PouchRun("inspect", "-f", "{{.ID}}", name).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", containerID))
 
+	// inspect Container Id
+	output = command.PouchRun("inspect", "-f", "{{.Id}}", name).Stdout()
+	c.Assert(output, check.Equals, fmt.Sprintf("%s\n", containerID))
+
 	// inspect Memory
 	output = command.PouchRun("inspect", "-f", "{{.HostConfig.Memory}}", name).Stdout()
 	c.Assert(output, check.Equals, fmt.Sprintf("%d\n", result[0].HostConfig.Memory))

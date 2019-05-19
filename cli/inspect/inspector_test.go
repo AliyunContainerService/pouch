@@ -194,10 +194,19 @@ func TestInspect(t *testing.T) {
 			wantOut: "\n",
 			wantErr: false,
 		}, {
+			name: "testInspectTemplate{{.Id}}",
+			args: args{
+				references: []string{"reference"},
+				tmplStr:    "{{.Id}}",
+				getRef:     getRefFunc,
+			},
+			wantOut: "id",
+			wantErr: false,
+		}, {
 			name: "testInspectTemplateError",
 			args: args{
 				references: []string{"single reference"},
-				tmplStr:    "{{.Id}}",
+				tmplStr:    "{{.id}}",
 				getRef:     getRefFunc,
 			},
 			wantOut: "",
