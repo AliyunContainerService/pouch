@@ -167,7 +167,10 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 		OperatingSystem:    OSName,
 		OSType:             runtime.GOOS,
 		PouchRootDir:       mgr.config.HomeDir,
-		RegistryConfig:     &mgr.config.RegistryService,
+		RegistryConfig: &types.RegistryServiceConfig{
+			InsecureRegistryCIDRs: mgr.config.InsecureRegistries,
+			Mirrors:               mgr.config.RegistryMirrors,
+		},
 		// RuncCommit: ,
 		Runtimes:        mgr.config.Runtimes,
 		SecurityOptions: securityOpts,

@@ -107,8 +107,8 @@ type Config struct {
 	// Default log configuration
 	DefaultLogConfig types.LogConfig `json:"default-log-config,omitempty"`
 
-	// RegistryService
-	RegistryService types.RegistryServiceConfig `json:"registry-service,omitempty" `
+	// RegistryMirrors is a list of registry URLs that act as a mirror for the default registry.
+	RegistryMirrors []string `json:"registry-mirrors,omitempty"`
 
 	// oom_score_adj for the daemon
 	OOMScoreAdjust int `json:"oom-score-adjust,omitempty"`

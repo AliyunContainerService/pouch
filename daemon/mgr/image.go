@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -45,6 +46,9 @@ var acceptedImageFilterTags = map[string]bool{
 
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
+	// LookupImageReferences find possible image reference list.
+	LookupImageReferences(ref string) []string
+
 	// PullImage pulls images from specified registry.
 	PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error
 
@@ -98,6 +102,9 @@ type ImageManager struct {
 	// DefaultNamespace is the default namespace used in DefaultRegistry.
 	DefaultNamespace string
 
+	// RegistryMirrors is a list of registry URLs that act as a mirror for the default registry.
+	RegistryMirrors []string
+
 	// client is a interface to the containerd client.
 	// It is used to interact with containerd.
 	client ctrd.APIClient
@@ -122,6 +129,7 @@ func NewImageManager(cfg *config.Config, client ctrd.APIClient, eventsService *e
 	mgr := &ImageManager{
 		DefaultRegistry:  cfg.DefaultRegistry,
 		DefaultNamespace: cfg.DefaultRegistryNS,
+		RegistryMirrors:  cfg.RegistryMirrors,
 
 		client:        client,
 		localStore:    store,
@@ -135,14 +143,45 @@ func NewImageManager(cfg *config.Config, client ctrd.APIClient, eventsService *e
 	return mgr, nil
 }
 
-// PullImage pulls images from specified registry.
-func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error {
-	newRef := addDefaultRegistryIfMissing(ref, mgr.DefaultRegistry, mgr.DefaultNamespace)
-	namedRef, err := reference.Parse(newRef)
-	if err != nil {
-		return err
+// LookupImageReferences find possible image reference list.
+func (mgr *ImageManager) LookupImageReferences(ref string) []string {
+	var (
+		registry  string
+		remainder string
+	)
+
+	// extract the domain field
+	idx := strings.IndexRune(ref, '/')
+	if idx != -1 && strings.ContainsAny(ref[:idx], ".:") {
+		registry, remainder = ref[:idx], ref[idx+1:]
+	} else {
+		remainder = ref
 	}
 
+	// create a list of reference name in order of RegistryMirrors, DefaultRegistry
+	// for partial reference like 'ns/ubuntu', 'ubuntu'
+	var fullRefs []string
+
+	// if the domain field is empty, concat the ref with registry mirror urls.
+	if registry == "" {
+		for _, reg := range mgr.RegistryMirrors {
+			fullRefs = append(fullRefs, path.Join(reg, ref))
+		}
+		registry = mgr.DefaultRegistry
+	}
+
+	// attach the default namespace if the registry match the default registry.
+	if registry == mgr.DefaultRegistry && !strings.ContainsAny(remainder, "/") {
+		remainder = mgr.DefaultNamespace + "/" + remainder
+	}
+
+	fullRefs = append(fullRefs, registry+"/"+remainder)
+
+	return fullRefs
+}
+
+// PullImage pulls images from specified registry.
+func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error {
 	pctx, cancel := context.WithCancel(ctx)
 	stream := jsonstream.New(out, nil)
 
@@ -166,7 +205,33 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 		closeStream()
 	}
 
-	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
+	var (
+		namedRef reference.Named
+		err      error
+	)
+
+	// find an available image which could be resolved.
+	fullRefs := mgr.LookupImageReferences(ref)
+	for _, newRef := range fullRefs {
+		namedRef, err = reference.Parse(newRef)
+		if err != nil {
+			logrus.Warnf("failed to parse image reference when trying to pull image %s, raw reference is %s: %v", newRef, ref, err)
+			continue
+		}
+		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
+		_, _, err = mgr.client.ResolveImage(pctx, namedRef.String(), authConfig)
+
+		// got available one
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		writeStream(err)
+		return err
+	}
+
 	img, err := mgr.client.FetchImage(pctx, namedRef.String(), authConfig, stream)
 	if err != nil {
 		writeStream(err)

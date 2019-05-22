@@ -251,6 +251,20 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 	return nil
 }
 
+// ResolveImage attempts to resolve the image reference into a name and descriptor.
+func (c *Client) ResolveImage(ctx context.Context, ref string, authConfig *types.AuthConfig) (name string, desc ocispec.Descriptor, err error) {
+	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{})
+	if err != nil {
+		return "", ocispec.Descriptor{}, err
+	}
+
+	name, desc, err = resolver.Resolve(ctx, ref)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to resolve reference %q", ref)
+	}
+	return
+}
+
 // FetchImage fetches image content from the remote repository.
 func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
