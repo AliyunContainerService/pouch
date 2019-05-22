@@ -24,4 +24,5 @@ func (i *ImageMgmtCommand) Init(c *Cli) {
 	}
 
 	i.cli.AddCommand(i, &ImageInspectCommand{})
+	i.cli.AddCommand(i, &ImagePruneCommand{})
 }

@@ -75,6 +75,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodGet, Path: "/images/save", HandlerFunc: withCancelHandler(s.saveImage)},
 		{Method: http.MethodGet, Path: "/images/{name:.*}/history", HandlerFunc: s.getImageHistory},
 		{Method: http.MethodPost, Path: "/images/{name:.*}/push", HandlerFunc: s.pushImage},
+		{Method: http.MethodPost, Path: "/images/prune", HandlerFunc: s.pruneImage},
 
 		// volume
 		{Method: http.MethodGet, Path: "/volumes", HandlerFunc: s.listVolume},

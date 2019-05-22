@@ -382,6 +382,34 @@ paths:
           type: "string"
         # TODO: add limit and filters
 
+  /images/prune:
+    post:
+      summary: "Delete unused images"
+      produces:
+        - "application/json"
+      operationId: "ImagePrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`). Available filters:
+
+            - `dangling=<boolean>` When set to `true` (or `1`), prune only
+               unused *and* untagged images. When set to `false`
+               (or `0`), all unused images are pruned.
+            - `until=<string>` Prune images created before this timestamp. The `<timestamp>` can be Unix timestamps, date formatted timestamps, or Go duration strings (e.g. `10m`, `1h30m`) computed relative to the daemon machine’s time.
+            - `label` (`label=<key>`, `label=<key>=<value>`, `label!=<key>`, or `label!=<key>=<value>`) Prune images with (or without, in case `label!=...` is used) the specified labels.
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/ImagePruneResp"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+
   /images/{imageid}/tag:
     post:
       summary: "Tag an image"
@@ -3139,6 +3167,31 @@ definitions:
           BaseLayer:
             description: "the base layer content hash."
             type: "string"
+
+  ImagePruneResp:
+    description: "response returned by daemon when unused images were removed"
+    type: "object"
+    title: "ImagePruneResponse"
+    properties:
+      ImagesDeleted:
+        description: "Images that were deleted"
+        type: "array"
+        items:
+          $ref: "#/definitions/ImageDeleteRespItem"
+      SpaceReclaimed:
+        description: "Disk space reclaimed in bytes"
+        type: "integer"
+        format: "int64"
+
+  ImageDeleteRespItem:
+    type: "object"
+    properties:
+      Untagged:
+        description: "The image ID of an image that was untagged"
+        type: "string"
+      Deleted:
+        description: "The image ID of an image that was deleted"
+        type: "string"
 
   HistoryResultItem:
     description: "An object containing image history at API side."
