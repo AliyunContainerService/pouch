@@ -118,33 +118,6 @@ func TestConfigValidate(t *testing.T) {
 	cfg = &Config{
 		DefaultRegistry:   "registry.hub.docker.com",
 		DefaultRegistryNS: "library",
-		RegistryService: types.RegistryServiceConfig{
-			AllowNondistributableArtifactsCIDRs: []string{
-				"::1/128",
-				"127.0.0.0/8",
-			},
-			AllowNondistributableArtifactsHostnames: []string{
-				"registry.internal.corp.example.com:3000",
-				"[2001:db8:a0b:12f0::1]:443",
-			},
-			InsecureRegistryCIDRs: []string{
-				"insecure.hub.docker.com",
-			},
-			IndexConfigs: map[string]types.IndexInfo{
-				"127.0.0.1:5000": {
-					Name: "127.0.0.1:5000",
-					Mirrors: []string{
-						"https://hub-mirror.corp.example.com:5000/",
-					},
-					Secure:   false,
-					Official: false,
-				},
-			},
-			Mirrors: []string{
-				"https://[2001:db8:a0b:12f0::1]/",
-				"https://hub-mirror.corp.example.com:5000/",
-			},
-		},
 	}
 	assert.Equal(nil, cfg.Validate())
 

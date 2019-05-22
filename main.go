@@ -140,6 +140,7 @@ func setupFlags(cmd *cobra.Command) {
 
 	// registry
 	flagSet.StringArrayVar(&cfg.InsecureRegistries, "insecure-registries", []string{}, "enable insecure registry")
+	flagSet.StringArrayVar(&cfg.RegistryMirrors, "registry-mirrors", []string{}, "preferred mirror registry list")
 
 	// buildkit
 	flagSet.BoolVar(&cfg.EnableBuilder, "enable-builder", false, "Enable buildkit functionality")
