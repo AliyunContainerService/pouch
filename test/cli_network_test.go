@@ -605,3 +605,37 @@ func (suite *PouchNetworkSuite) TestNetworkConnectWithRestart(c *check.C) {
 
 	c.Assert(found, check.Equals, false)
 }
+
+func (suite *PouchNetworkSuite) TestNetworkList(c *check.C) {
+	// start the test pouch daemon
+	dcfg, err := StartDefaultDaemonDebug()
+	if err != nil {
+		c.Skip("daemon start failed.")
+	}
+	defer dcfg.KillDaemon()
+
+	// list pouch network
+	ret := RunWithSpecifiedDaemon(dcfg, "network", "ls").Assert(c, icmd.Success)
+	expect := []string{"bridge", "host", "none"}
+
+	actual := networkNamesToSlice(ret.Stdout())
+	for i := 0; i < len(actual); i++ {
+		c.Assert(actual[i], check.Equals, expect[i])
+	}
+}
+
+// networkNamesToSlice parses networks' name to slice.
+func networkNamesToSlice(volumes string) []string {
+	lines := strings.Split(volumes, "\n")[1:]
+
+	res := make([]string, 0)
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		items := strings.Fields(line)
+		res = append(res, items[1])
+	}
+	return res
+}

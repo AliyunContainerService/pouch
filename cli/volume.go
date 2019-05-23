@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/filters"
@@ -335,6 +336,10 @@ func (v *VolumeListCommand) runVolumeList(args []string) error {
 	if (v.size || v.mountPoint) && v.quiet {
 		return fmt.Errorf("Conflicting options: --size (or --mountpoint) and -q")
 	}
+
+	sort.Slice(volumeList.Volumes, func(i, j int) bool {
+		return volumeList.Volumes[i].Name < volumeList.Volumes[j].Name
+	})
 
 	display := v.cli.NewTableDisplay()
 	displayHead := []string{"VOLUME NAME"}

@@ -204,20 +204,17 @@ func (suite *PouchVolumeSuite) TestVolumeBindReplaceMode(c *check.C) {
 
 // TestVolumeList tests the volume list.
 func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
-	funcname := "TestVolumeList"
+	var volumeName string
+	expectedVolumeNames := make([]string, 0)
 
-	volumeName := "volume_" + funcname
-	volumeName1 := volumeName + "_1"
-	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "opt.size=1g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName1)
-
-	volumeName2 := volumeName + "_2"
-	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "opt.size=2g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName2)
-
-	volumeName3 := volumeName + "_3"
-	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName3)
+	for i := 1; i <= 3; i++ {
+		volumeName = fmt.Sprintf("volume_TestVolumeList_%d", i)
+		expectedVolumeNames = append(expectedVolumeNames, volumeName)
+		command.PouchRun("volume", "create", "--name", volumeName, "-o", fmt.Sprintf("opt.size=%dg", i)).Assert(c, icmd.Success)
+		defer func(volumeName string) {
+			command.PouchRun("volume", "rm", volumeName)
+		}(volumeName)
+	}
 
 	ret := command.PouchRun("volume", "list")
 	ret.Assert(c, icmd.Success)
@@ -226,24 +223,26 @@ func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
 	for _, line := range lines {
 		c.Assert(line[0], check.Equals, "local")
 	}
+
+	names := volumeNamesToSlice(ret.Stdout())
+	for i, name := range names {
+		c.Assert(name, check.Equals, expectedVolumeNames[i])
+	}
 }
 
 // TestVolumeListOptions tests the volume list with options: size, mountpoint, quiet.
 func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
-	funcname := "TestVolumeListOptions"
+	var volumeName string
+	expectedVolumeNames := make([]string, 0)
 
-	volumeName := "volume_" + funcname
-	volumeName1 := volumeName + "_1"
-	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "opt.size=1g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName1)
-
-	volumeName2 := volumeName + "_2"
-	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "opt.size=2g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName2)
-
-	volumeName3 := volumeName + "_3"
-	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName3)
+	for i := 1; i <= 3; i++ {
+		volumeName = fmt.Sprintf("volume_TestVolumeListOptions_%d", i)
+		expectedVolumeNames = append(expectedVolumeNames, volumeName)
+		command.PouchRun("volume", "create", "--name", volumeName, "-o", fmt.Sprintf("opt.size=%dg", i)).Assert(c, icmd.Success)
+		defer func(volumeName string) {
+			command.PouchRun("volume", "rm", volumeName)
+		}(volumeName)
+	}
 
 	// test --size and --mountpoint options
 	ret := command.PouchRun("volume", "list", "--size", "--mountpoint")
@@ -264,22 +263,21 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	lines = volumesToKV(ret.Stdout())
 	for _, line := range lines {
 		c.Assert(len(line), check.Equals, 1)
-		if !strings.EqualFold(line[0], volumeName1) &&
-			!strings.EqualFold(line[0], volumeName2) &&
-			!strings.EqualFold(line[0], volumeName3) {
-			c.Errorf("list volume doesn't match any existing volume name, line: %s", line)
-			break
-		}
+	}
+
+	names := volumeNamesToSlice(ret.Stdout())
+	for i, name := range names {
+		c.Assert(name, check.Equals, expectedVolumeNames[i])
 	}
 
 	// test filter options
-	volumeName4 := "volume_" + funcname + "4"
-	command.PouchRun("volume", "create", "--name", volumeName4, "--driver", "tmpfs", "--label", "test=foo").Assert(c, icmd.Success)
-	defer command.PouchRun("volume", "rm", volumeName4)
+	volumeName = "volume_TestVolumeListOptions_4"
+	command.PouchRun("volume", "create", "--name", volumeName, "--driver", "tmpfs", "--label", "test=foo").Assert(c, icmd.Success)
+	defer command.PouchRun("volume", "rm", volumeName)
 
 	// test name, label, driver filter separately
 	filterArgs := []string{
-		"name=" + volumeName4,
+		"name=" + volumeName,
 		"label=test",
 		"driver=tmpfs",
 	}
@@ -290,7 +288,7 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 
 		lines := volumesToKV(res.Stdout())
 		c.Assert(len(lines), check.Equals, 1)
-		if _, exist := lines[volumeName4]; !exist {
+		if _, exist := lines[volumeName]; !exist {
 			c.Errorf("volume filter options doesn't work, filter : ", args)
 		}
 	}
@@ -301,7 +299,7 @@ func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 
 	lines = volumesToKV(res.Stdout())
 	c.Assert(len(lines), check.Equals, 1)
-	if _, exist := lines[volumeName4]; !exist {
+	if _, exist := lines[volumeName]; !exist {
 		c.Error("volume filter options doesn't work, with all filters")
 	}
 }
@@ -323,6 +321,27 @@ func volumesToKV(volumes string) map[string][]string {
 		} else {
 			// --quiet case
 			res[items[0]] = items
+		}
+	}
+	return res
+}
+
+// volumeNamesToSlice parses volumes' name to slice.
+func volumeNamesToSlice(volumes string) []string {
+	lines := strings.Split(volumes, "\n")[1:]
+
+	res := make([]string, 0)
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		items := strings.Fields(line)
+		if len(items) > 1 {
+			res = append(res, items[1])
+		} else {
+			// --quiet case
+			res = append(res, items[0])
 		}
 	}
 	return res

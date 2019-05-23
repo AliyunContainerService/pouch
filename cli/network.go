@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -353,6 +354,10 @@ func (n *NetworkListCommand) runNetworkList(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	sort.Slice(respNetworkResource, func(i, j int) bool {
+		return respNetworkResource[i].Name < respNetworkResource[j].Name
+	})
 
 	display := n.cli.NewTableDisplay()
 	display.AddRow([]string{"NETWORK ID", "NAME", "DRIVER", "SCOPE"})
