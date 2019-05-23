@@ -180,6 +180,17 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			r.Memory = 0
 			r.MemorySwap = 0
 		}
+		if r.MemoryReservation > 0 && !cgroupInfo.Memory.MemoryReservation {
+			logrus.Warn(MemoryReservationWarn)
+			warnings = append(warnings, MemoryReservationWarn)
+			r.MemoryReservation = 0
+		}
+		if r.MemoryReservation != 0 && r.MemoryReservation < MinMemory {
+			return warnings, fmt.Errorf("Minimal memory reservation should greater than 4M")
+		}
+		if r.Memory > 0 && r.MemoryReservation > 0 && r.Memory < r.MemoryReservation {
+			return warnings, fmt.Errorf("Minimum memory limit should be larger than memory reservation limit")
+		}
 		if r.MemorySwap > 0 && !cgroupInfo.Memory.MemorySwap {
 			logrus.Warn(MemorySwapWarn)
 			warnings = append(warnings, MemorySwapWarn)

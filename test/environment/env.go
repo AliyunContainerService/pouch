@@ -80,6 +80,11 @@ var (
 		return cgroupInfo.Memory.MemoryLimit
 	}
 
+	// IsMemoryReservationSupport checks if memory reservation cgroup is available
+	IsMemoryReservationSupport = func() bool {
+		return cgroupInfo.Memory.MemoryReservation
+	}
+
 	// IsMemorySwapSupport checks if memory swap cgroup is avaible
 	IsMemorySwapSupport = func() bool {
 		return cgroupInfo.Memory.MemorySwap

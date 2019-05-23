@@ -192,6 +192,11 @@ func setupMemory(ctx context.Context, r types.Resources, s *specs.Spec) {
 		memory.Limit = &v
 	}
 
+	if r.MemoryReservation > 0 {
+		v := r.MemoryReservation
+		memory.Reservation = &v
+	}
+
 	if r.MemorySwap != 0 {
 		v := r.MemorySwap
 		memory.Swap = &v
