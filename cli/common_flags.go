@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/alibaba/pouch/apis/opts/config"
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/spf13/pflag"
@@ -39,7 +40,8 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.BoolVar(&c.enableLxcfs, "enableLxcfs", false, "Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd")
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
-	flagSet.StringArrayVarP(&c.env, "env", "e", nil, "Set environment variables for container")
+	flagSet.StringArrayVarP(&c.env, "env", "e", nil, "Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)")
+	flagSet.StringArrayVar(&c.envfile, "env-file", nil, "Read in a file of environment variables")
 	flagSet.StringVar(&c.hostname, "hostname", "", "Set container's hostname")
 	flagSet.BoolVar(&c.disableNetworkFiles, "disable-network-files", false, "Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false")
 
@@ -54,14 +56,11 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringArrayVar(&c.logOpts, "log-opt", nil, "Log driver options")
 
 	// memory
-
 	flagSet.StringVarP(&c.memory, "memory", "m", "", "Memory limit")
 	flagSet.StringVar(&c.memorySwap, "memory-swap", "", "Swap limit equal to memory + swap, '-1' to enable unlimited swap")
 	flagSet.Int64Var(&c.memorySwappiness, "memory-swappiness", 0, "Container memory swappiness [0, 100]")
+	flagSet.StringVar(&c.kernelMemory, "kernel-memory", "", "Kernel memory limit (in bytes)")
 	// for alikernel isolation options
-	flagSet.Int64Var(&c.memoryWmarkRatio, "memory-wmark-ratio", 0, "Represent this container's memory low water mark percentage, range in [0, 100]. The value of memory low water mark is memory.limit_in_bytes * MemoryWmarkRatio")
-	flagSet.Int64Var(&c.memoryExtra, "memory-extra", 0, "Represent container's memory high water mark percentage, range in [0, 100]")
-	flagSet.Int64Var(&c.memoryForceEmptyCtl, "memory-force-empty-ctl", 0, "Whether to reclaim page cache when deleting the cgroup of container")
 	flagSet.BoolVar(&c.oomKillDisable, "oom-kill-disable", false, "Disable OOM Killer")
 	flagSet.Int64Var(&c.oomScoreAdj, "oom-score-adj", -500, "Tune host's OOM preferences (-1000 to 1000)")
 
@@ -72,6 +71,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringSliceVarP(&c.ports, "publish", "p", nil, "Set container ports mapping")
 	flagSet.StringSliceVar(&c.expose, "expose", nil, "Set expose container's ports")
 	flagSet.BoolVarP(&c.publishAll, "publish-all", "P", false, "Publish all exposed ports to random ports")
+	flagSet.StringVar(&c.macAddress, "mac-address", "", "Set mac address of container endpoint")
 
 	flagSet.StringVar(&c.pidMode, "pid", "", "PID namespace to use")
 	flagSet.BoolVar(&c.privileged, "privileged", false, "Give extended privileges to the container")
@@ -80,8 +80,6 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.runtime, "runtime", "", "OCI runtime to use for this container")
 
 	flagSet.StringSliceVar(&c.securityOpt, "security-opt", nil, "Security Options")
-
-	flagSet.Int64Var(&c.scheLatSwitch, "sche-lat-switch", 0, "Whether to enable scheduler latency count in cpuacct")
 
 	flagSet.StringSliceVar(&c.sysctls, "sysctl", nil, "Sysctl options")
 	flagSet.BoolVarP(&c.tty, "tty", "t", false, "Allocate a pseudo-TTY")
@@ -93,7 +91,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.StringVar(&c.utsMode, "uts", "", "UTS namespace to use")
 
-	flagSet.StringSliceVarP(&c.volume, "volume", "v", nil, "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
+	flagSet.VarP(config.NewVolumes(&c.volume), "volume", "v", "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
 	flagSet.StringSliceVar(&c.volumesFrom, "volumes-from", nil, "set volumes from other containers, format is <container>[:mode]")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")

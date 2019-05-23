@@ -66,6 +66,12 @@ func (rc *RunCommand) runRun(args []string) error {
 		return fmt.Errorf("failed to run container: %v", err)
 	}
 
+	// collect all the environment variables for the container
+	config.Env, err = readKVStrings(rc.envfile, rc.env)
+	if err != nil {
+		return nil
+	}
+
 	config.Image = args[0]
 	if len(args) > 1 {
 		config.Cmd = args[1:]

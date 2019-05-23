@@ -55,6 +55,12 @@ func (cc *CreateCommand) runCreate(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
+
+	// collect all the environment variables for the container
+	config.Env, err = readKVStrings(cc.envfile, cc.env)
+	if err != nil {
+		return nil
+	}
 	config.ContainerConfig.OpenStdin = cc.openstdin
 
 	config.Image = args[0]
