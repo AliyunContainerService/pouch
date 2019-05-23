@@ -10,10 +10,11 @@ import (
 
 // MemoryCgroupInfo defines memory cgroup information on current machine
 type MemoryCgroupInfo struct {
-	MemoryLimit      bool
-	MemorySwap       bool
-	MemorySwappiness bool
-	OOMKillDisable   bool
+	MemoryLimit       bool
+	MemoryReservation bool
+	MemorySwap        bool
+	MemorySwappiness  bool
+	OOMKillDisable    bool
 }
 
 // CPUCgroupInfo defines cpu cgroup information on current machine
@@ -66,10 +67,11 @@ func NewCgroupInfo() *CgroupInfo {
 func getMemoryCgroupInfo(root string) *MemoryCgroupInfo {
 	path := path.Join(root, "memory")
 	return &MemoryCgroupInfo{
-		MemoryLimit:      isCgroupEnable(path, "memory.limit_in_bytes"),
-		MemorySwap:       isCgroupEnable(path, "memory.memsw.limit_in_bytes"),
-		MemorySwappiness: isCgroupEnable(path, "memory.swappiness"),
-		OOMKillDisable:   isCgroupEnable(path, "memory.oom_control"),
+		MemoryLimit:       isCgroupEnable(path, "memory.limit_in_bytes"),
+		MemoryReservation: isCgroupEnable(path, "memory.soft_limit_in_bytes"),
+		MemorySwap:        isCgroupEnable(path, "memory.memsw.limit_in_bytes"),
+		MemorySwappiness:  isCgroupEnable(path, "memory.swappiness"),
+		OOMKillDisable:    isCgroupEnable(path, "memory.oom_control"),
 	}
 }
 

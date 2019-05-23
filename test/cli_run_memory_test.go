@@ -164,6 +164,59 @@ func (suite *PouchRunMemorySuite) TestRunWithMemoryswappiness(c *check.C) {
 	c.Assert(out, check.Equals, memSwappiness)
 }
 
+// TestRunWithMemoryReservation is to verify the valid running container
+// with memory-reservation
+func (suite *PouchRunMemorySuite) TestRunWithMemoryReservation(c *check.C) {
+	SkipIfFalse(c, environment.IsMemoryReservationSupport)
+
+	// test run with invalid memory reservation
+	cname := "TestRunWithMemoryReservationInvalid"
+	res := command.PouchRun("run", "-d",
+		"-m", "5m",
+		"--memory-reservation", "8m",
+		"--name", cname, busyboxImage, "true")
+	DelContainerForceMultyTime(c, cname)
+	c.Assert(res.ExitCode, check.Not(check.Equals), 0)
+
+	cname = "TestRunWithMemoryReservationInvalid2"
+	res = command.PouchRun("run", "-d",
+		"--memory-reservation", "1k",
+		"--name", cname, busyboxImage, "true")
+	DelContainerForceMultyTime(c, cname)
+	c.Assert(res.ExitCode, check.Not(check.Equals), 0)
+
+	// test run with memory reservation
+	cname = "TestRunWithMemoryReservation"
+	memReservation := "200m"
+	expected := "209715200"
+
+	res = command.PouchRun("run", "-d",
+		"--memory-reservation", memReservation,
+		"--name", cname,
+		busyboxImage,
+		"sleep", "10000")
+	defer DelContainerForceMultyTime(c, cname)
+	res.Assert(c, icmd.Success)
+
+	// test if the value is in inspect result
+	memoryReservationResult, err := inspectFilter(cname, ".HostConfig.MemoryReservation")
+	c.Assert(err, check.IsNil)
+	c.Assert(memoryReservationResult, check.Equals, expected)
+
+	// test if cgroup has record the real value
+	containerID, err := inspectFilter(cname, ".ID")
+	c.Assert(err, check.IsNil)
+	path := fmt.Sprintf("/sys/fs/cgroup/memory/default/%s/memory.soft_limit_in_bytes", containerID)
+	checkFileContains(c, path, expected)
+
+	// test if the value is correct in container
+	memReservationFile := "/sys/fs/cgroup/memory/memory.soft_limit_in_bytes"
+	res = command.PouchRun("exec", cname, "cat", memReservationFile)
+	res.Assert(c, icmd.Success)
+	out := strings.Trim(res.Stdout(), "\n")
+	c.Assert(out, check.Equals, expected)
+}
+
 // TestRunWithLimitedMemory is to verify the valid running container with -m
 func (suite *PouchRunMemorySuite) TestRunWithLimitedMemory(c *check.C) {
 	SkipIfFalse(c, environment.IsMemorySupport)

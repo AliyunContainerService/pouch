@@ -41,6 +41,9 @@ var (
 	// MemoryWarn is warning for flag --memory
 	MemoryWarn = "Current Kernel does not support memory limit, discard --memory"
 
+	// MemoryReservationWarn is warning for flag --memory-reservation
+	MemoryReservationWarn = "Current Kernel does not support memory soft limit, discard --memory-reservation"
+
 	// MemorySwapWarn is warning for flag --memory-swap
 	MemorySwapWarn = "Current Kernel does not support memory swap, discard --memory-swap"
 
