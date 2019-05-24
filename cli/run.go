@@ -182,6 +182,7 @@ func (rc *RunCommand) runRun(args []string) error {
 	return nil
 }
 
+
 // runExample shows examples in run command, and is used in auto-generated cli docs.
 func runExample() string {
 	return `$ pouch run --name test registry.hub.docker.com/library/busybox:latest echo "hi"
