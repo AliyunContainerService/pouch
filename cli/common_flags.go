@@ -41,7 +41,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.BoolVar(&c.enableLxcfs, "enableLxcfs", false, "Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd")
 	flagSet.StringVar(&c.entrypoint, "entrypoint", "", "Overwrite the default ENTRYPOINT of the image")
 	flagSet.StringArrayVarP(&c.env, "env", "e", nil, "Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)")
-	flagSet.StringArrayVar(&c.envfile, "env-file", nil, "Read in a file of environment variables")
+	//flagSet.StringArrayVar(&c.envfile, "env-file", nil, "Read in a file of environment variables")
 	flagSet.StringVar(&c.hostname, "hostname", "", "Set container's hostname")
 	flagSet.BoolVar(&c.disableNetworkFiles, "disable-network-files", false, "Disable the generation of network files(/etc/hostname, /etc/hosts and /etc/resolv.conf) for container. If true, no network files will be generated. Default false")
 

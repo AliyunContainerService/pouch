@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	//"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -67,11 +67,13 @@ func (rc *RunCommand) runRun(args []string) error {
 		return fmt.Errorf("failed to run container: %v", err)
 	}
 
+	/*
 	// collect all the environment variables for the container
 	config.Env, err = readKVStrings(rc.envfile, rc.env)
 	if err != nil {
 		return nil
 	}
+	*/
 
 	config.Image = args[0]
 	if len(args) > 1 {
@@ -183,6 +185,7 @@ func (rc *RunCommand) runRun(args []string) error {
 	return nil
 }
 
+/*
 func readKVStrings(files []string, override []string) ([]string, error){
 	envVariables := []string{}
 	for _,ef:=range files{
@@ -233,6 +236,7 @@ type ErrBadEnvVariable struct{
 func (e ErrBadEnvVariable) Error() string{
 	return fmt.Sprintf("poorly formatted environment: %s", e.msg)
 }
+*/
 
 
 // runExample shows examples in run command, and is used in auto-generated cli docs.

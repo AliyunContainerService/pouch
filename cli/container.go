@@ -18,7 +18,7 @@ type container struct {
 	volumesFrom         []string
 	runtime             string
 	env                 []string
-	envfile             []string
+	//envfile             []string
 	entrypoint          string
 	workdir             string
 	user                string
