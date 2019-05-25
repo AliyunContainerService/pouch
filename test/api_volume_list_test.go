@@ -11,7 +11,7 @@ import (
 	"github.com/go-check/check"
 )
 
-// APIVolumeListSuite is the test suite for volume inspect API.
+// APIVolumeListSuite is the test suite for volume list API.
 type APIVolumeListSuite struct{}
 
 func init() {

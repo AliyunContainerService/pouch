@@ -67,6 +67,7 @@ type VolumeAPIClient interface {
 	VolumeRemove(ctx context.Context, name string) error
 	VolumeInspect(ctx context.Context, name string) (*types.VolumeInfo, error)
 	VolumeList(ctx context.Context, filter filters.Args) (*types.VolumeListResp, error)
+	VolumePrune(ctx context.Context, filter filters.Args) (*types.VolumePruneResp, error)
 }
 
 // SystemAPIClient defines methods of System client.

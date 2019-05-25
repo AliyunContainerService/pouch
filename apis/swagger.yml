@@ -1345,6 +1345,31 @@ paths:
         - $ref: "#/parameters/id"
       tags: ["Volume"]
 
+  /volumes/prune:
+    post:
+      summary: "Delete unused volumes"
+      operationId: "VolumePrune"
+      produces: ["application/json"]
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
+
+            Available filters:
+            - `label` (`label=<key>`, `label=<key>=<value>`, `label!=<key>`, or `label!=<key>=<value>`) Prune volumes with (or without, in case `label!=...` is used) the specified labels.
+          type: "string"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            $ref: "#/definitions/VolumePruneResp"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      tags: ["Volume"]
+
   /networks/create:
     post:
       summary: "Create a network"
@@ -3267,6 +3292,17 @@ definitions:
         description: "Warnings that occurred when fetching the list of volumes"
         items:
           type: "string"
+
+  VolumePruneResp:
+    type: "object"
+    properties:
+      VolumesDeleted:
+        type: "array"
+        items:
+          type: "string"
+      SpaceReclaimed:
+        type: "integer"
+        format: "int64"
 
   ExecCreateConfig:
     type: "object"

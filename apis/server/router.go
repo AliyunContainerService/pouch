@@ -81,6 +81,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodPost, Path: "/volumes/create", HandlerFunc: s.createVolume},
 		{Method: http.MethodGet, Path: "/volumes/{name:.*}", HandlerFunc: s.getVolume},
 		{Method: http.MethodDelete, Path: "/volumes/{name:.*}", HandlerFunc: s.removeVolume},
+		{Method: http.MethodPost, Path: "/volumes/prune", HandlerFunc: s.pruneVolume},
 
 		// network
 		{Method: http.MethodGet, Path: "/networks", HandlerFunc: s.listNetwork},

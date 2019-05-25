@@ -9,6 +9,7 @@ import (
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cli/inspect"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -42,6 +43,7 @@ func (v *VolumeCommand) Init(c *Cli) {
 	c.AddCommand(v, &VolumeRemoveCommand{})
 	c.AddCommand(v, &VolumeInspectCommand{})
 	c.AddCommand(v, &VolumeListCommand{})
+	c.AddCommand(v, &VolumePruneCommand{})
 }
 
 // RunE is the entry of VolumeCommand command.
@@ -386,4 +388,97 @@ VOLUME NAME
 pouch-volume-1
 pouch-volume-2
 pouch-volume-3`
+}
+
+// volumePruneDescription is used to remove all unused local volumes and auto generate command doc.
+var volumePruneDescription = "Remove all unused local volumes"
+
+// VolumePruneCommand is used to implement 'volume prune' command.
+type VolumePruneCommand struct {
+	baseCommand
+
+	force  bool
+	filter []string
+}
+
+// Init initializes VolumePruneCommand command.
+func (v *VolumePruneCommand) Init(c *Cli) {
+	v.cli = c
+	v.cmd = &cobra.Command{
+		Use:   "prune",
+		Short: "Prune volumes",
+		Long:  volumePruneDescription,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return v.runVolumePrune(args)
+		},
+		Example: volumePruneExample(),
+	}
+	v.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (v *VolumePruneCommand) addFlags() {
+	flagSet := v.cmd.Flags()
+	flagSet.BoolVarP(&v.force, "force", "f", false, "Do not prompt for confirmation")
+	flagSet.StringSliceVarP(&v.filter, "filter", "", []string{}, "Filter output based on conditions provided, filter support driver, name, label")
+}
+
+// runVolumePrune is use to delete unused volumes.
+func (v *VolumePruneCommand) runVolumePrune(args []string) error {
+	logrus.Debugf("prune the volumes")
+
+	ctx := context.Background()
+	apiClient := v.cli.Client()
+
+	volumeFilterArgs, err := filters.FromFilterOpts(v.filter)
+	if err != nil {
+		return err
+	}
+
+	if !v.force {
+		fmt.Println("WARNING! This will delete all local volumes not used by at least one container.")
+		fmt.Print("Are you sure you want to continue? [y/N]")
+		var input string
+		fmt.Scanf("%s", &input)
+		if input != "Y" && input != "y" {
+			fmt.Println("Total reclaimed space: 0B")
+			return nil
+		}
+	}
+
+	volumeResult, err := apiClient.VolumePrune(ctx, volumeFilterArgs)
+	if err != nil {
+		return err
+	}
+
+	if len(volumeResult.VolumesDeleted) > 0 {
+		fmt.Println("Deleted Volumes:")
+	}
+	for _, v := range volumeResult.VolumesDeleted {
+		fmt.Println(v)
+	}
+
+	fmt.Printf("\nTotal reclaimed space: %s\n", utils.FormatSize(volumeResult.SpaceReclaimed))
+
+	return nil
+}
+
+// volumePruneExample shows examples in volume prune command, and is used in auto-generated cli docs.
+func volumePruneExample() string {
+	return `$ pouch volume prune
+WARNING! This will delete all local volumes not used by at least one container.
+Are you sure you want to continue? [y/N] y
+Deleted Volumes:
+17c96e4a00a0f79b045ddfc004d296c39ffeed9528bc1edbea93d0062f010a6f
+b40869a56110806f8c07a9b82a46da2d09fc0674b8eb8376415fb27fa6a83dc2
+docker-dev-cache
+0b764d338ceeaa42b7c774f53fd109b4d3ba7a2d5244798775fc3acd799d4dee
+2e17f284211ab77715833278f150e9648f194553d943aac77e6d030c4f72bded
+99f8e6b4fc014d66ad320fb87ee1e91fe44a51818b20b07bc99906d691557a02
+html
+mock
+cka-practice-environment_ssh_key
+
+Total reclaimed space: 879MB`
 }

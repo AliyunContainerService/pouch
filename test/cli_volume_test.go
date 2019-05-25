@@ -228,6 +228,32 @@ func (suite *PouchVolumeSuite) TestVolumeList(c *check.C) {
 	}
 }
 
+// TestVolumePrune tests the volume prune.
+func (suite *PouchVolumeSuite) TestVolumePrune(c *check.C) {
+	funcname := "TestVolumePrune"
+
+	volumeName := "volume_" + funcname
+	volumeName1 := volumeName + "_1"
+	command.PouchRun("volume", "create", "--name", volumeName1, "-o", "opt.size=1g").Assert(c, icmd.Success)
+
+	volumeName2 := volumeName + "_2"
+	command.PouchRun("volume", "create", "--name", volumeName2, "-o", "opt.size=2g").Assert(c, icmd.Success)
+
+	volumeName3 := volumeName + "_3"
+	command.PouchRun("volume", "create", "--name", volumeName3, "-o", "opt.size=3g").Assert(c, icmd.Success)
+
+	res := command.PouchRun("volume", "prune", "-f")
+	res.Assert(c, icmd.Success)
+
+	ret := command.PouchRun("volume", "list")
+	ret.Assert(c, icmd.Success)
+
+	lines := volumesToKV(ret.Stdout())
+	if len(lines) != 0 {
+		c.Errorf("error in volume prune")
+	}
+}
+
 // TestVolumeListOptions tests the volume list with options: size, mountpoint, quiet.
 func (suite *PouchVolumeSuite) TestVolumeListOptions(c *check.C) {
 	funcname := "TestVolumeListOptions"

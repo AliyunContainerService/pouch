@@ -7,12 +7,15 @@ import (
 
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/utils"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -136,4 +139,50 @@ func (s *Server) removeVolume(ctx context.Context, rw http.ResponseWriter, req *
 	}
 	rw.WriteHeader(http.StatusNoContent)
 	return nil
+}
+
+func (s *Server) pruneVolume(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	var volumePruneRep types.VolumePruneResp
+
+	filter, err := filters.FromParam(req.FormValue("filters"))
+	if err != nil {
+		return err
+	}
+
+	volumeList, err := s.VolumeMgr.List(ctx, filter)
+	toDeleteFlag := map[string]bool{}
+	if err != nil {
+		return err
+	}
+
+	_, err = s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
+		All: true,
+		FilterFunc: func(c *mgr.Container) bool {
+			if len(c.Mounts) == 0 {
+				return false
+			}
+			for _, v := range c.Mounts {
+				toDeleteFlag[v.Name] = true
+			}
+
+			return true
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, volume := range volumeList {
+		if toDeleteFlag[volume.Name] == false {
+			volumePruneRep.VolumesDeleted = append(volumePruneRep.VolumesDeleted, volume.Name)
+			vSize, err := utils.DirectorySize(volume.Path())
+			if err != nil {
+				logrus.Warnf("could not determine size of volume: %v", volume.Name)
+			}
+			volumePruneRep.SpaceReclaimed += vSize
+			s.VolumeMgr.Remove(ctx, volume.Name)
+		}
+	}
+
+	return EncodeResponse(rw, http.StatusOK, volumePruneRep)
 }
