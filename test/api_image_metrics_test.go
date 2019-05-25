@@ -40,11 +40,10 @@ func (suite *APIImageMetricsSuite) TestImageMetrics(c *check.C) {
 }
 
 func (suite *APIImageMetricsSuite) checkAction(c *check.C, label string) {
-	key := fmt.Sprintf(`engine_daemon_image_actions_counter_total{action="%s"}`, label)
-	keySuccess := fmt.Sprintf(`engine_daemon_image_success_actions_counter_total{action="%s"}`, label)
-	countBefore, countSuccessBefore := GetMetric(c,
-		key,
-		keySuccess)
+	key := fmt.Sprintf(`engine_daemon_image_actions_total{action="%s"}`, label)
+	keySuccess := fmt.Sprintf(`engine_daemon_image_success_actions_total{action="%s"}`, label)
+	countBefore, countSuccessBefore := GetMetric(c, key, keySuccess)
+
 	switch label {
 	case "pull":
 		PullImage(c, helloworldImage)

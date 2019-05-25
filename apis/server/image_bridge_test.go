@@ -47,8 +47,8 @@ func Test_pullImage_counter(t *testing.T) {
 	var s Server
 	ctx := context.Background()
 
-	key := fmt.Sprintf(`engine_daemon_image_actions_counter_total{action="%s"}`, "pull")
-	keySuccess := fmt.Sprintf(`engine_daemon_image_success_actions_counter_total{action="%s"}`, "pull")
+	key := fmt.Sprintf(`engine_daemon_image_actions_total{action="%s"}`, "pull")
+	keySuccess := fmt.Sprintf(`engine_daemon_image_success_actions_total{action="%s"}`, "pull")
 	countBefore, countSuccessBefore := getMetric(ctx, t, &s, key, keySuccess)
 
 	ch := make(chan int, 1)

@@ -80,7 +80,7 @@ func NewLabelTimer(subsystem, name, help string, labels ...string) *prometheus.H
 		}, labels)
 }
 
-// GetPrometheusRegistry return a resigtry of Prometheus.
+// GetPrometheusRegistry return a registry of Prometheus.
 func GetPrometheusRegistry() *prometheus.Registry {
 	return prometheusRegistry
 }

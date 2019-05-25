@@ -20,16 +20,16 @@ var (
 	ImagePullSummary = metrics.NewLabelSummary(subsystemPouch, "image_pull_latency_microseconds", "Latency in microseconds to pull a image.", "image")
 
 	// ContainerActionsCounter records the number of container operations.
-	ContainerActionsCounter = metrics.NewLabelCounter(subsystemPouch, "container_actions_counter", "The number of container operations", "action")
+	ContainerActionsCounter = metrics.NewLabelCounter(subsystemPouch, "container_actions", "The number of container operations", "action")
 
 	// ContainerSuccessActionsCounter records the number of container success operations.
-	ContainerSuccessActionsCounter = metrics.NewLabelCounter(subsystemPouch, "container_success_actions_counter", "The number of container success operations", "action")
+	ContainerSuccessActionsCounter = metrics.NewLabelCounter(subsystemPouch, "container_success_actions", "The number of container success operations", "action")
 
 	// ImageActionsCounter records the number of image operations.
-	ImageActionsCounter = metrics.NewLabelCounter(subsystemPouch, "image_actions_counter", "The number of image operations", "action")
+	ImageActionsCounter = metrics.NewLabelCounter(subsystemPouch, "image_actions", "The number of image operations", "action")
 
-	// ImageSuccessActionsCounter the number of image success operations.
-	ImageSuccessActionsCounter = metrics.NewLabelCounter(subsystemPouch, "image_success_actions_counter", "The number of image success operations", "action")
+	// ImageSuccessActionsCounter records the number of successful image operations.
+	ImageSuccessActionsCounter = metrics.NewLabelCounter(subsystemPouch, "image_success_actions", "The number of image success operations", "action")
 
 	// ContainerActionsTimer records the time cost of each container action.
 	ContainerActionsTimer = metrics.NewLabelTimer(subsystemPouch, "container_actions", "The number of seconds it takes to process each container action", "action")
