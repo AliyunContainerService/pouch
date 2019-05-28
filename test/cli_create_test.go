@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -360,6 +361,93 @@ func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 	}
 }
 
+// TestCreateWithEnvfile tests creating container with envfile
+func (suite *PouchCreateSuite) TestCreateWithEnvfile(c *check.C) {
+	name := "TestCreateWithEnvfile"
+
+	content := "TEST1=value1\n地址1=杭州\n地址2=Hangzhou\naddress=杭州"
+	validfile, err := util.TmpFileWithContent(content)
+	if err != nil {
+		c.Fatal(err)
+	}
+	defer os.Remove(validfile)
+
+	content = "TEST2="
+	invalidfile, err2 := util.TmpFileWithContent(content)
+	if err2 != nil {
+		c.Fatal(err2)
+	}
+	defer os.Remove(invalidfile)
+
+	env1 := "TEST1=value1"
+	env2 := "TEST2="
+	env3 := "TEST3=value3"
+	env4 := "地址1=杭州"
+	env5 := "地址2=Hangzhou"
+	env6 := "address=杭州"
+	res := command.PouchRun("create",
+		"--name", name,
+		"--env-file", validfile,
+		"--env-file", invalidfile,
+		"-e", env3,
+		busyboxImage,
+		"top")
+	defer DelContainerForceMultyTime(c, name)
+
+	res.Assert(c, icmd.Success)
+
+	envs, err := inspectFilter(name, ".Config.Env")
+	c.Assert(err, check.IsNil)
+
+	// check if these envs are in inspect result of container.
+	if !strings.Contains(envs, env1) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env1, envs)
+	}
+	if !strings.Contains(envs, env2) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env2, envs)
+	}
+	if !strings.Contains(envs, env3) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env3, envs)
+	}
+	if !strings.Contains(envs, env4) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env4, envs)
+	}
+	if !strings.Contains(envs, env5) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env5, envs)
+	}
+	if !strings.Contains(envs, env6) {
+		c.Fatalf("container env in inspect result should have %s in %s while no\n", env6, envs)
+	}
+
+	// check if these envs are in the real container envs
+	res = command.PouchRun("start", name)
+	res.Assert(c, icmd.Success)
+
+	ret := command.PouchRun("exec", name, "env")
+	ret.Assert(c, icmd.Success)
+	envs = ret.Stdout()
+
+	if !strings.Contains(envs, env1) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env1, envs)
+	}
+	if !strings.Contains(envs, env2) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env2, envs)
+	}
+	if !strings.Contains(envs, env3) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env3, envs)
+	}
+	if !strings.Contains(envs, env4) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env4, envs)
+	}
+	if !strings.Contains(envs, env5) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env5, envs)
+	}
+	if !strings.Contains(envs, env6) {
+		c.Fatalf("container's runtime env should have %s in %s while no\n", env6, envs)
+	}
+}
+
+// TestCreateWithWorkDir tests creating container with a workdir works.
 // TestCreateWithWorkDir tests creating container with a workdir works.
 func (suite *PouchCreateSuite) TestCreateWithWorkDir(c *check.C) {
 	name := "TestCreateWithWorkDir"

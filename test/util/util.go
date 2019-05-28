@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -94,4 +95,16 @@ func ParseCgroupFile(text string) map[string]string {
 		}
 	}
 	return cgroups
+}
+
+// TmpFileWithContent provide tmp file
+func TmpFileWithContent(content string) (string, error) {
+	tmpFile, err := ioutil.TempFile("", "envfile-test")
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	tmpFile.WriteString(content)
+	return tmpFile.Name(), nil
 }

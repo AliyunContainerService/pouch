@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -415,6 +416,67 @@ func (suite *PouchRunSuite) TestRunWithEnv(c *check.C) {
 	)
 	res.Assert(c, icmd.Success)
 	c.Assert(strings.TrimSpace(res.Stdout()), check.Equals, "a,b,c-b1")
+}
+
+func (suite *PouchRunSuite) TestRunWithEnvfile(c *check.C) {
+	// Test one
+	content := "TEST1=value1"
+	validfile, err := util.TmpFileWithContent(content)
+	if err != nil {
+		c.Fatal(err)
+	}
+	defer os.Remove(validfile)
+
+	res := command.PouchRun("run", "--rm",
+		"--env-file", validfile,
+		"--env", "TEST2=value2",
+		busyboxImage,
+		"sh", "-c", "echo ${TEST1}-${TEST2}",
+	)
+	res.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(res.Stdout()), check.Equals, "value1-value2")
+
+	// Test two
+	content = "TEST2="
+	invalidfile, err2 := util.TmpFileWithContent(content)
+	if err2 != nil {
+		c.Fatal(err2)
+	}
+	defer os.Remove(invalidfile)
+
+	ret := command.PouchRun("run", "--rm",
+		"-e", "TEST1=value1",
+		"--env-file", invalidfile,
+		busyboxImage,
+		"sh", "-c", "echo ${TEST1}-${TEST2}",
+	)
+	ret.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(ret.Stdout()), check.Equals, "value1-")
+
+	// Test three
+	content = "TEST1=value2"
+	validfile2, err3 := util.TmpFileWithContent(content)
+	if err3 != nil {
+		c.Fatal(err3)
+	}
+	defer os.Remove(validfile2)
+
+	content = "TEST2"
+	invalidfile2, err4 := util.TmpFileWithContent(content)
+	if err4 != nil {
+		c.Fatal(err4)
+	}
+	defer os.Remove(invalidfile2)
+
+	ret = command.PouchRun("run", "--rm",
+		"--env-file", validfile,
+		"--env-file", validfile2,
+		"--env-file", invalidfile2,
+		busyboxImage,
+		"sh", "-c", "echo ${TEST1}-${TEST2}",
+	)
+	ret.Assert(c, icmd.Success)
+	c.Assert(strings.TrimSpace(ret.Stdout()), check.Equals, "value2-")
 }
 
 // TestRunWithTty tests running container with -tty flag and attach stdin in a non-tty client.
