@@ -370,6 +370,17 @@ paths:
               $ref: "#/definitions/SearchResultItem"
         500:
           $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "term"
+          in: "query"
+          description: "Term to search"
+          type: "string"
+          required: true
+        - name: "registry"
+          in: "query"
+          description: "Search images from specified registry"
+          type: "string"
+        # TODO: add limit and filters
 
   /images/{imageid}/tag:
     post:
@@ -3166,24 +3177,24 @@ definitions:
         x-nullable: false
 
   SearchResultItem:
-    type: "object"
-    description: "search result item in search results."
-    properties:
-      description:
-        type: "string"
-        description: "description just shows the description of this image"
-      is_official:
-        type: "boolean"
-        description: "is_official shows if this image is marked official."
-      is_automated:
-        type: "boolean"
-        description: "is_automated means whether this image is automated."
-      name:
-        type: "string"
-        description: "name represents the name of this image"
-      star_count:
-        type: "integer"
-        description: "star_count refers to the star count of this image."
+      type: "object"
+      description: "search result item in search results."
+      properties:
+        description:
+          type: "string"
+          description: "description just shows the description of this image"
+        is_official:
+          type: "boolean"
+          description: "is_official shows if this image is marked official."
+        is_automated:
+          type: "boolean"
+          description: "is_automated means whether this image is automated."
+        name:
+          type: "string"
+          description: "name represents the name of this image"
+        star_count:
+          type: "integer"
+          description: "star_count refers to the star count of this image."
 
   VolumeInfo:
     type: "object"

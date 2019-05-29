@@ -2,10 +2,13 @@ package mgr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -20,6 +23,7 @@ import (
 	"github.com/alibaba/pouch/pkg/jsonstream"
 	"github.com/alibaba/pouch/pkg/reference"
 	"github.com/alibaba/pouch/pkg/utils"
+	searchtypes "github.com/alibaba/pouch/registry/types"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/content"
@@ -62,7 +66,7 @@ type ImageMgr interface {
 	ListImages(ctx context.Context, filter filters.Args) ([]types.ImageInfo, error)
 
 	// Search Images from specified registry.
-	SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error)
+	SearchImages(ctx context.Context, name, registry string, authConfig *types.AuthConfig) ([]types.SearchResultItem, error)
 
 	// RemoveImage deletes an image by reference.
 	RemoveImage(ctx context.Context, idOrRef string, force bool) error
@@ -389,9 +393,49 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 }
 
 // SearchImages searches imaged from specified registry.
-func (mgr *ImageManager) SearchImages(ctx context.Context, name string, registry string) ([]types.SearchResultItem, error) {
+func (mgr *ImageManager) SearchImages(ctx context.Context, name, registry string, auth *types.AuthConfig) ([]types.SearchResultItem, error) {
 	// Directly send API calls towards specified registry
-	return nil, errtypes.ErrNotImplemented
+	if len(registry) == 0 {
+		registry = "https://" + mgr.DefaultRegistry + "/v1/"
+	}
+
+	u := registry + "search?q=" + url.QueryEscape(name)
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if auth != nil && auth.Username != "" && auth.Password != "" {
+		req.SetBasicAuth(auth.Username, auth.Password)
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("unexepected status code %d", res.StatusCode)
+	}
+
+	rawData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var searchResultResp searchtypes.SearchResultResp
+	var result []types.SearchResultItem
+	err = json.Unmarshal(rawData, &searchResultResp)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: sort results by count num
+	for _, searchResultItem := range searchResultResp.Results {
+		result = append(result, *searchResultItem)
+	}
+	return result, err
 }
 
 // RemoveImage deletes a reference.
