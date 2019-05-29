@@ -305,7 +305,7 @@ func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 	env3 := "TEST3"     // should not in container's real env
 	env4 := "TEST4=a b" // valid
 	env5 := "TEST5=a=b" // valid
-	res := command.PouchRun("run", "-d",
+	res := command.PouchRun("create",
 		"--name", name,
 		"-e", env1,
 		"-e", env2,
@@ -339,6 +339,9 @@ func (suite *PouchCreateSuite) TestCreateWithEnv(c *check.C) {
 	}
 
 	// check if these envs are in the real container envs
+	res = command.PouchRun("start", name)
+	res.Assert(c, icmd.Success)
+
 	ret := command.PouchRun("exec", name, "env")
 	envs = ret.Stdout()
 
