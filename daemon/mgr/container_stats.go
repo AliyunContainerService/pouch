@@ -38,6 +38,11 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 	wrapContainerStats := func(metricMeta *containerdtypes.Metric, metric *cgroups.Metrics) (*types.ContainerStats, error) {
 		stats := toContainerStats(c, metricMeta, metric)
 
+		// if the container does not set memory limit, use the machineMemory
+		if stats.MemoryStats.Limit > mgr.Config.MachineMemory && mgr.Config.MachineMemory > 0 {
+			stats.MemoryStats.Limit = mgr.Config.MachineMemory
+		}
+
 		systemCPUUsage, err := getSystemCPUUsage()
 		if err != nil {
 			return nil, err
