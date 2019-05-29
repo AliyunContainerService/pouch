@@ -18,6 +18,7 @@ import (
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/debug"
 	"github.com/alibaba/pouch/pkg/kernel"
+	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
@@ -225,6 +226,10 @@ func runDaemon(cmd *cobra.Command) error {
 
 	if err := checkLxcfsCfg(); err != nil {
 		return err
+	}
+
+	if cfg.MachineMemory, err = system.GetTotalMem(); err != nil {
+		logrus.Warnf("failed to get system mem: %v", err)
 	}
 
 	// initialize signal and handle method.

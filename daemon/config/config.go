@@ -134,6 +134,9 @@ type Config struct {
 
 	// EnableBuilder enable builder functionality
 	EnableBuilder bool `json:"enable-builder,omitempty"`
+
+	// MachineMemory is the memory limit for a host.
+	MachineMemory uint64 `json:"-"`
 }
 
 // GetCgroupDriver gets cgroup driver used in runc.
