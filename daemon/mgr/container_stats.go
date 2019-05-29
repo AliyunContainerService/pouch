@@ -129,37 +129,48 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 }
 
 func toContainerStats(container *Container, metricMeta *containerdtypes.Metric, metric *cgroups.Metrics) *types.ContainerStats {
+	res := &types.ContainerStats{
+		ID:          container.ID,
+		Name:        container.Name,
+		PidsStats:   &types.PidsStats{},
+		CPUStats:    &types.CPUStats{},
+		BlkioStats:  &types.BlkioStats{},
+		MemoryStats: &types.MemoryStats{},
+	}
+
 	if metricMeta == nil {
-		return &types.ContainerStats{
-			ID:          container.ID,
-			Name:        container.Name,
-			PidsStats:   &types.PidsStats{},
-			CPUStats:    &types.CPUStats{},
-			BlkioStats:  &types.BlkioStats{},
-			MemoryStats: &types.MemoryStats{},
+		return res
+	}
+
+	res.Read = strfmt.DateTime(metricMeta.Timestamp)
+
+	if metric.Pids != nil {
+		res.PidsStats = &types.PidsStats{
+			Current: metric.Pids.Current,
 		}
 	}
-	return &types.ContainerStats{
-		Read: strfmt.DateTime(metricMeta.Timestamp),
-		ID:   container.ID,
-		Name: container.Name,
-		PidsStats: &types.PidsStats{
-			Current: metric.Pids.Current,
-		},
-		CPUStats: &types.CPUStats{
-			CPUUsage: &types.CPUUsage{
+
+	if metric.CPU != nil {
+		if metric.CPU.Usage != nil {
+			res.CPUStats.CPUUsage = &types.CPUUsage{
 				PercpuUsage:       metric.CPU.Usage.PerCPU,
 				TotalUsage:        metric.CPU.Usage.Total,
 				UsageInKernelmode: metric.CPU.Usage.Kernel,
 				UsageInUsermode:   metric.CPU.Usage.User,
-			},
-			ThrottlingData: &types.ThrottlingData{
+			}
+		}
+
+		if metric.CPU.Throttling != nil {
+			res.CPUStats.ThrottlingData = &types.ThrottlingData{
 				Periods:          metric.CPU.Throttling.Periods,
 				ThrottledPeriods: metric.CPU.Throttling.ThrottledPeriods,
 				ThrottledTime:    metric.CPU.Throttling.ThrottledTime,
-			},
-		},
-		BlkioStats: &types.BlkioStats{
+			}
+		}
+	}
+
+	if metric.Blkio != nil {
+		res.BlkioStats = &types.BlkioStats{
 			IoServiceBytesRecursive: toContainerBlkioStatsEntry(metric.Blkio.IoServiceBytesRecursive),
 			IoServicedRecursive:     toContainerBlkioStatsEntry(metric.Blkio.IoServicedRecursive),
 			IoQueueRecursive:        toContainerBlkioStatsEntry(metric.Blkio.IoQueuedRecursive),
@@ -168,8 +179,11 @@ func toContainerStats(container *Container, metricMeta *containerdtypes.Metric, 
 			IoMergedRecursive:       toContainerBlkioStatsEntry(metric.Blkio.IoMergedRecursive),
 			IoTimeRecursive:         toContainerBlkioStatsEntry(metric.Blkio.IoTimeRecursive),
 			SectorsRecursive:        toContainerBlkioStatsEntry(metric.Blkio.SectorsRecursive),
-		},
-		MemoryStats: &types.MemoryStats{
+		}
+	}
+
+	if metric.Memory != nil {
+		res.MemoryStats = &types.MemoryStats{
 			Stats: map[string]uint64{
 				"total_pgmajfault":          metric.Memory.TotalPgMajFault,
 				"cache":                     metric.Memory.Cache,
@@ -201,12 +215,16 @@ func toContainerStats(container *Container, metricMeta *containerdtypes.Metric, 
 				"inactive_file":             metric.Memory.InactiveFile,
 				"total_pgpgin":              metric.Memory.PgPgIn,
 			},
-			Usage:    metric.Memory.Usage.Usage,
-			Failcnt:  metric.Memory.Usage.Failcnt,
-			MaxUsage: metric.Memory.Usage.Max,
-			Limit:    metric.Memory.Usage.Limit,
-		},
+		}
+
+		if metric.Memory.Usage != nil {
+			res.MemoryStats.Usage = metric.Memory.Usage.Usage
+			res.MemoryStats.Failcnt = metric.Memory.Usage.Failcnt
+			res.MemoryStats.MaxUsage = metric.Memory.Usage.Max
+			res.MemoryStats.Limit = metric.Memory.Usage.Limit
+		}
 	}
+	return res
 }
 
 func toContainerBlkioStatsEntry(statEntrys []*cgroups.BlkIOEntry) []*types.BlkioStatEntry {
