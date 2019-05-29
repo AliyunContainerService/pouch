@@ -26,7 +26,7 @@ Swagger is a simple yet powerful representation of your RESTful API. [go-swagger
 
 ### Design API 
 
-With swagger installed in your local $PATH, you could start to design or update API of PouchContainer. Here we need to underline that every change for API should be firstly added in [swagger.yml](swagger.yml) of PouchContainer porject.
+With swagger installed in your local $PATH, you could start to design or update API of PouchContainer. Here we need to underline that every change for API should be firstly added in [swagger.yml](swagger.yml) of PouchContainer project.
 
 Let's us take an example:
 
