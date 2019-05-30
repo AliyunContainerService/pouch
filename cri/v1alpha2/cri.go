@@ -1203,7 +1203,18 @@ func (c *CriManager) PortForward(ctx context.Context, r *runtime.PortForwardRequ
 
 // UpdateRuntimeConfig updates the runtime config. Currently only handles podCIDR updates.
 func (c *CriManager) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateRuntimeConfigRequest) (*runtime.UpdateRuntimeConfigResponse, error) {
-	return nil, fmt.Errorf("UpdateRuntimeConfig Not Implemented Yet")
+	podCIDR := r.GetRuntimeConfig().GetNetworkConfig().GetPodCidr()
+	if podCIDR == "" {
+		return &runtime.UpdateRuntimeConfigResponse{}, nil
+	}
+
+	if err := c.CniMgr.Event(cni.CNIChangeEventPodCIDR, podCIDR); err != nil {
+		return nil, fmt.Errorf("failed to update podCIDR: %v", err)
+	}
+
+	logrus.Infof("CNI default PodCIDR change to \"%v\"", podCIDR)
+
+	return &runtime.UpdateRuntimeConfigResponse{}, nil
 }
 
 // Status returns the status of the runtime.

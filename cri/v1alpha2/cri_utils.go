@@ -552,11 +552,15 @@ func setupSandboxFiles(sandboxRootDir string, config *runtime.PodSandboxConfig) 
 // and do nothing when networkNamespaceMode equals runtime.NamespaceMode_NODE.
 func (c *CriManager) setupPodNetwork(id, netnsPath string, config *runtime.PodSandboxConfig) error {
 	return c.CniMgr.SetUpPodNetwork(&ocicni.PodNetwork{
-		Name:         config.GetMetadata().GetName(),
-		Namespace:    config.GetMetadata().GetNamespace(),
-		ID:           id,
-		NetNS:        netnsPath,
-		PortMappings: toCNIPortMappings(config.GetPortMappings()),
+		Name:      config.GetMetadata().GetName(),
+		Namespace: config.GetMetadata().GetNamespace(),
+		ID:        id,
+		NetNS:     netnsPath,
+		RuntimeConfig: map[string]ocicni.RuntimeConfig{
+			c.CniMgr.GetDefaultNetworkName(): {
+				PortMappings: toCNIPortMappings(config.GetPortMappings()),
+			},
+		},
 	})
 }
 
@@ -564,11 +568,15 @@ func (c *CriManager) setupPodNetwork(id, netnsPath string, config *runtime.PodSa
 // and do nothing when networkNamespaceMode equals runtime.NamespaceMode_NODE.
 func (c *CriManager) teardownNetwork(id, netnsPath string, config *runtime.PodSandboxConfig) error {
 	return c.CniMgr.TearDownPodNetwork(&ocicni.PodNetwork{
-		Name:         config.GetMetadata().GetName(),
-		Namespace:    config.GetMetadata().GetNamespace(),
-		ID:           id,
-		NetNS:        netnsPath,
-		PortMappings: toCNIPortMappings(config.GetPortMappings()),
+		Name:      config.GetMetadata().GetName(),
+		Namespace: config.GetMetadata().GetNamespace(),
+		ID:        id,
+		NetNS:     netnsPath,
+		RuntimeConfig: map[string]ocicni.RuntimeConfig{
+			c.CniMgr.GetDefaultNetworkName(): {
+				PortMappings: toCNIPortMappings(config.GetPortMappings()),
+			},
+		},
 	})
 }
 

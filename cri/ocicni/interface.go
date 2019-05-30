@@ -8,6 +8,10 @@ type CniMgr interface {
 	// for a plugin by name, e.g.
 	Name() string
 
+	// GetDefaultNetworkName returns the name of the plugin's default
+	// network.
+	GetDefaultNetworkName() string
+
 	// SetUpPodNetwork is the method called after the sandbox container of the
 	// pod has been created but before the other containers of the pod
 	// are launched.
@@ -21,6 +25,9 @@ type CniMgr interface {
 
 	// Status returns error if the network plugin is in error state.
 	Status() error
+
+	// Event handle the changes of CNI.
+	Event(subject string, detail interface{}) error
 
 	// NewNetNS creates a new persistent network namespace and returns the
 	// namespace path, without switching to it
