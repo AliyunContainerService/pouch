@@ -60,6 +60,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --log-opt stringArray           Log driver options
       --mac-address string            Set mac address of container endpoint
   -m, --memory string                 Memory limit
+      --memory-reservation string     Memory soft limit
       --memory-swap string            Swap limit equal to memory + swap, '-1' to enable unlimited swap
       --memory-swappiness int         Container memory swappiness [0, 100]
       --name string                   Specify name of container

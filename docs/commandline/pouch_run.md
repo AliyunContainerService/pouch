@@ -74,6 +74,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --log-opt stringArray           Log driver options
       --mac-address string            Set mac address of container endpoint
   -m, --memory string                 Memory limit
+      --memory-reservation string     Memory soft limit
       --memory-swap string            Swap limit equal to memory + swap, '-1' to enable unlimited swap
       --memory-swappiness int         Container memory swappiness [0, 100]
       --name string                   Specify name of container
