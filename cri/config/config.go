@@ -25,4 +25,6 @@ type Config struct {
 	CriStatsCollectPeriod int `json:"cri-stats-collect-period,omitempty"`
 	// EnableCriStatsCollect specify whether cri collect stats from containerd.
 	EnableCriStatsCollect bool `json:"enable-cri-stats-collect,omitempty"`
+	// RuntimeConfigFile is a file to make the runtime config persistent.
+	RuntimeConfigFile string `json:"runtime-config-file"`
 }
