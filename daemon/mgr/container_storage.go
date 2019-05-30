@@ -668,16 +668,31 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 	return nil
 }
 
+func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) error {
+	for _, mount := range c.Mounts {
+		name := mount.Name
+		if name == "" {
+			continue
+		}
+
+		_, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID})
+		if err != nil {
+			logrus.Warnf("failed to attach volume(%s), err(%v)", name, err)
+			return err
+		}
+	}
+	return nil
+}
+
 // setMountFS is used to set mountfs directory.
 func (mgr *ContainerManager) setMountFS(ctx context.Context, c *Container) {
 	c.MountFS = path.Join(mgr.Store.Path(c.ID), "rootfs")
 }
 
 // Mount sets the container rootfs
-func (mgr *ContainerManager) Mount(ctx context.Context, c *Container) error {
-	if c.MountFS == "" {
-		mgr.setMountFS(ctx, c)
-	}
+// preCreate = false, mount rootfs at c.BaseFS
+// preCreate = true, pouchd does some initial job before container created, so we mount rootfs at c.MountFS
+func (mgr *ContainerManager) Mount(ctx context.Context, c *Container, preCreate bool) error {
 
 	mounts, err := mgr.Client.GetMounts(ctx, c.ID)
 	if err != nil {
@@ -686,32 +701,58 @@ func (mgr *ContainerManager) Mount(ctx context.Context, c *Container) error {
 		return fmt.Errorf("failed to get snapshot %s mounts: not equals 1", c.ID)
 	}
 
-	err = os.MkdirAll(c.MountFS, 0755)
+	rootfs := c.BaseFS
+
+	if preCreate {
+		if c.MountFS == "" {
+			mgr.setMountFS(ctx, c)
+		}
+		rootfs = c.MountFS
+	}
+
+	err = os.MkdirAll(rootfs, 0755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
 
-	return mounts[0].Mount(c.MountFS)
+	return mounts[0].Mount(rootfs)
 }
 
 // Unmount unsets the container rootfs
-func (mgr *ContainerManager) Unmount(ctx context.Context, c *Container) error {
+// cleanup decides whether to clean up the dir or not
+func (mgr *ContainerManager) Unmount(ctx context.Context, c *Container, preCreate bool, cleanup bool) error {
 	// TODO: if umount is failed, and how to deal it.
-	err := mount.Unmount(c.MountFS, 0)
+	rootfs := c.MountFS
+	if !preCreate {
+		rootfs = c.BaseFS
+	}
+	var err error
+	err = mount.Unmount(rootfs, 0)
+
 	if err != nil {
-		return errors.Wrapf(err, "failed to umount mountfs(%s)", c.MountFS)
+		return errors.Wrapf(err, "failed to umount rootfs(%s)", rootfs)
 	}
 
-	return os.RemoveAll(c.MountFS)
+	if cleanup {
+		if preCreate {
+			return os.RemoveAll(rootfs)
+		}
+		// also need to remove dir named by container ID
+		cleanPath, _ := filepath.Split(rootfs)
+		logrus.Debugf("clean path of unmount is %s", cleanPath)
+		return os.RemoveAll(cleanPath)
+	}
+
+	return err
 }
 
 func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Container) (err error) {
-	if err = mgr.Mount(ctx, c); err != nil {
+	if err = mgr.Mount(ctx, c, true); err != nil {
 		return errors.Wrapf(err, "failed to mount rootfs(%s)", c.MountFS)
 	}
 
 	defer func() {
-		if umountErr := mgr.Unmount(ctx, c); umountErr != nil {
+		if umountErr := mgr.Unmount(ctx, c, true, true); umountErr != nil {
 			if err != nil {
 				err = errors.Wrapf(err, "failed to umount rootfs(%s), err(%v)", c.MountFS, umountErr)
 			} else {
@@ -774,17 +815,17 @@ func (mgr *ContainerManager) getRootfs(ctx context.Context, c *Container, mounte
 	if c.IsRunningOrPaused() && c.Snapshotter != nil {
 		basefs, ok := c.Snapshotter.Data["MergedDir"]
 		if !ok || basefs == "" {
-			return "", fmt.Errorf("Container is running, but MergedDir is missing")
+			return "", fmt.Errorf("container is running, but MergedDir is missing")
 		}
 		rootfs = basefs
 	} else if !mounted {
-		if err = mgr.Mount(ctx, c); err != nil {
+		if err = mgr.Mount(ctx, c, true); err != nil {
 			return "", errors.Wrapf(err, "failed to mount rootfs: (%s)", c.MountFS)
 		}
 		rootfs = c.MountFS
 
 		defer func() {
-			if err = mgr.Unmount(ctx, c); err != nil {
+			if err = mgr.Unmount(ctx, c, true, true); err != nil {
 				logrus.Errorf("failed to umount rootfs: (%s), err: (%v)", c.MountFS, err)
 			}
 		}()

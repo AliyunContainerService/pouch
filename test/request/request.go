@@ -97,7 +97,7 @@ func Delete(endpoint string, opts ...Option) (*http.Response, error) {
 
 // Debug sends request to the default pouchd server to get the debug info.
 //
-// NOTE: without any vesion information.
+// NOTE: without any version information.
 func Debug(endpoint string) (*http.Response, error) {
 	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
 	if err != nil {
@@ -106,6 +106,21 @@ func Debug(endpoint string) (*http.Response, error) {
 
 	fullPath := apiClient.BaseURL() + endpoint
 	req, err := newRequest(http.MethodGet, fullPath)
+	if err != nil {
+		return nil, err
+	}
+	return apiClient.HTTPCli.Do(req)
+}
+
+// Head sends head request to pouchd.
+func Head(endpoint string, opts ...Option) (*http.Response, error) {
+	apiClient, err := newAPIClient(environment.PouchdAddress, environment.TLSConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	fullPath := apiClient.BaseURL() + apiClient.GetAPIPath(endpoint, url.Values{})
+	req, err := newRequest(http.MethodHead, fullPath, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -34,6 +34,7 @@ func (e RespError) Code() int {
 type Response struct {
 	StatusCode int
 	Status     string
+	Header     http.Header
 	Body       io.ReadCloser
 }
 
@@ -48,6 +49,14 @@ func (client *APIClient) post(ctx context.Context, path string, query url.Values
 	}
 
 	return client.sendRequest(ctx, "POST", path, query, body, headers)
+}
+
+func (client *APIClient) head(ctx context.Context, path string, query url.Values, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "HEAD", path, query, nil, headers)
+}
+
+func (client *APIClient) putRawData(ctx context.Context, path string, query url.Values, data io.Reader, headers map[string][]string) (*Response, error) {
+	return client.sendRequest(ctx, "PUT", path, query, data, headers)
 }
 
 func (client *APIClient) postRawData(ctx context.Context, path string, query url.Values, data io.Reader, headers map[string][]string) (*Response, error) {
@@ -134,6 +143,7 @@ func (client *APIClient) sendRequest(ctx context.Context, method, path string, q
 		StatusCode: resp.StatusCode,
 		Status:     resp.Status,
 		Body:       resp.Body,
+		Header:     resp.Header,
 	}, nil
 }
 

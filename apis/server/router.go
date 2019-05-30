@@ -100,6 +100,11 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodPost, Path: "/attach/{token}", HandlerFunc: s.criAttach},
 		{Method: http.MethodGet, Path: "/portforward/{token}", HandlerFunc: s.criPortForward},
 		{Method: http.MethodPost, Path: "/portforward/{token}", HandlerFunc: s.criPortForward},
+
+		// copy
+		{Method: http.MethodPut, Path: "/containers/{name:.*}/archive", HandlerFunc: s.putContainersArchive},
+		{Method: http.MethodHead, Path: "/containers/{name:.*}/archive", HandlerFunc: s.headContainersArchive},
+		{Method: http.MethodGet, Path: "/containers/{name:.*}/archive", HandlerFunc: s.getContainersArchive},
 	}
 
 	if s.APIPlugin != nil {

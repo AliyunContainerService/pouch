@@ -56,6 +56,7 @@ func main() {
 	cli.AddCommand(base, &CommitCommand{})
 	cli.AddCommand(base, &StatsCommand{})
 	cli.AddCommand(base, &BuildCommand{})
+	cli.AddCommand(base, &CopyCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})
