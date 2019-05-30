@@ -1521,6 +1521,134 @@ paths:
           schema:
             $ref: "#/definitions/ContainerCommitOptions"
 
+  /containers/{id}/archive:
+    head:
+      summary: "Get information about files in a container"
+      description: "A response header `X-Docker-Container-Path-Stat` is return containing a base64 - encoded JSON object with some filesystem header information about the path."
+      operationId: "ContainerArchiveInfo"
+      responses:
+        200:
+          description: "no error"
+          headers:
+            X-Docker-Container-Path-Stat:
+              type: "string"
+              description: "A base64 - encoded JSON object with some filesystem header information about the path"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/responses/400ErrorResponse"
+        404:
+          description: "Container or path does not exist"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "path"
+          in: "query"
+          required: true
+          description: "Resource in the container’s filesystem to archive."
+          type: "string"
+      tags: ["Copy"]
+    get:
+      summary: "Get an archive of a filesystem resource in a container"
+      description: "Get a tar archive of a resource in the filesystem of container id."
+      operationId: "ContainerArchive"
+      produces: ["application/x-tar"]
+      responses:
+        200:
+          description: "no error"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/responses/400ErrorResponse"
+        404:
+          description: "Container or path does not exist"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "path"
+          in: "query"
+          required: true
+          description: "Resource in the container’s filesystem to archive."
+          type: "string"
+      tags: ["Copy"]
+    put:
+      summary: "Extract an archive of files or folders to a directory in a container"
+      description: "Upload a tar archive to be extracted to a path in the filesystem of container id."
+      operationId: "PutContainerArchive"
+      consumes: ["application/x-tar", "application/octet-stream"]
+      responses:
+        200:
+          description: "The content was extracted successfully"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/responses/400ErrorResponse"
+        403:
+          description: "Permission denied, the volume or container rootfs is marked as read-only."
+          schema:
+            $ref: "#/responses/403ErrorResponse"
+        404:
+          description: "No such container or path does not exist inside the container"
+          schema:
+            $ref: "#/responses/404ErrorResponse"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "path"
+          in: "query"
+          required: true
+          description: "Path to a directory in the container to extract the archive’s contents into. "
+          type: "string"
+        - name: "noOverwriteDirNonDir"
+          in: "query"
+          description: "If “1”, “true”, or “True” then it will be an error if unpacking the given content would cause an existing directory to be replaced with a non-directory and vice versa."
+          type: "string"
+        - name: "copyUIDGID"
+          in: "query"
+          description: "If “1”, “true”, or “True” then it will copy UID/GID maps to dest file."
+          type: "string"
+        - name: "inputStream"
+          in: "body"
+          required: true
+          description: "The input stream must be a tar archive compressed with one of the following algorithms: identity (no compression), gzip, bzip2, xz."
+          schema:
+            type: "string"
+      tags: ["Copy"]
+
 definitions:
   Error:
     type: "object"
@@ -4389,6 +4517,23 @@ definitions:
         type: "string"
         description: "ID uniquely identifies an image committed by a container"
 
+  ContainerPathStat:
+    description: "ContainerPathStat is used to describe the stat of file"
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      size:
+        type: "string"
+      mode:
+        type: "integer"
+        format: "uint32"
+      mtime:
+        description: "modification time."
+        type: "string"
+        format: date-time
+      path:
+        type: "string"
 
 parameters:
   id:
@@ -4405,8 +4550,16 @@ parameters:
     type: string
 
 responses:
+  400ErrorResponse:
+    description: An unexpected 400 error occurred.
+    schema:
+      $ref: "#/definitions/Error"
   401ErrorResponse:
     description: An unexpected 401 error occurred.
+    schema:
+      $ref: "#/definitions/Error"
+  403ErrorResponse:
+    description: An unexpected 403 error occurred.
     schema:
       $ref: "#/definitions/Error"
   404ErrorResponse:

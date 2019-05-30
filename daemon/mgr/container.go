@@ -45,6 +45,7 @@ import (
 // 1. regular container management;
 // 2. container exec management;
 // 3. container network management.
+// 4. container copy management
 type ContainerMgr interface {
 	// 1. the following functions are related to regular container management
 
@@ -163,6 +164,15 @@ type ContainerMgr interface {
 
 	// Commit commits an image from a container.
 	Commit(ctx context.Context, name string, options *types.ContainerCommitOptions) (*types.ContainerCommitResp, error)
+
+	// StatPath stats the dir info at the specified path in the container.
+	StatPath(ctx context.Context, name, path string) (stat *types.ContainerPathStat, err error)
+
+	// ArchivePath return an archive and dir info at the specified path in the container.
+	ArchivePath(ctx context.Context, name, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error)
+
+	// ExtractToDir extracts the given archive at the specified path in the container.
+	ExtractToDir(ctx context.Context, name, path string, copyUIDGID, noOverwriteDirNonDir bool, content io.Reader) error
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.
