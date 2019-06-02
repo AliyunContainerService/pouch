@@ -48,6 +48,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it
 * [pouch save](pouch_save.md)	 - Save an image to a tar archive or STDOUT
+* [pouch search](pouch_search.md)	 - Search the images from specific registry
 * [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stats](pouch_stats.md)	 - Display a live stream of container(s) resource usage statistics
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
