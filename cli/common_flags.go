@@ -63,6 +63,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	// network
 	flagSet.StringSliceVar(&c.networks, "net", nil, "Set networks to container")
+	flagSet.StringSliceVar(&c.networks, "network", nil, "Set networks to container")
 	flagSet.StringSliceVarP(&c.ports, "publish", "p", nil, "Set container ports mapping")
 	flagSet.StringSliceVar(&c.expose, "expose", nil, "Set expose container's ports")
 	flagSet.BoolVarP(&c.publishAll, "publish-all", "P", false, "Publish all exposed ports to random ports")
