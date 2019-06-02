@@ -1498,6 +1498,30 @@ paths:
             $ref: "#/definitions/NetworkDisconnect"
       tags: ["Network"]
 
+  /networks/prune:
+    post:
+      summary: "Delete unused networks"
+      produces:
+        - "application/json"
+      operationId: "NetworkPrune"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "object"
+            title: "NetworkPruneResp"
+            properties:
+              NetworksDeleted:
+                description: "Networks that were deleted"
+                type: "array"
+                items:
+                  type: "string"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      tags: ["Network"]
+
   /commit:
     post:
       summary: "Create an image from a container"

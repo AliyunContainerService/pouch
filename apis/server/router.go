@@ -89,6 +89,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodDelete, Path: "/networks/{id:.*}", HandlerFunc: s.deleteNetwork},
 		{Method: http.MethodPost, Path: "/networks/{id:.*}/connect", HandlerFunc: s.connectToNetwork},
 		{Method: http.MethodPost, Path: "/networks/{id:.*}/disconnect", HandlerFunc: s.disconnectNetwork},
+		{Method: http.MethodPost, Path: "/networks/prune", HandlerFunc: s.pruneNetwork},
 
 		// metrics
 		{Method: http.MethodGet, Path: "/metrics", HandlerFunc: s.metrics},

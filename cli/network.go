@@ -43,6 +43,7 @@ func (n *NetworkCommand) Init(c *Cli) {
 	c.AddCommand(n, &NetworkListCommand{})
 	c.AddCommand(n, &NetworkConnectCommand{})
 	c.AddCommand(n, &NetworkDisconnectCommand{})
+	c.AddCommand(n, &NetworkPruneCommand{})
 }
 
 // networkCreateDescription is used to describe network create command in detail and auto generate command doc.
@@ -523,4 +524,79 @@ func (nd *NetworkDisconnectCommand) runNetworkDisconnect(args []string) error {
 func (nd *NetworkDisconnectCommand) networkDisconnectExample() string {
 	return `$ pouch network disconnect bridge test
 container test is disconnected from network bridge successfully`
+}
+
+// NetworkPruneDescription is used to describe network prune command in detail and auto generate comand doc.
+var NetworkPruneDescription = "Delete all unused networks"
+
+// NetworkPruneCommand use to implement 'network prune' command
+type NetworkPruneCommand struct {
+	baseCommand
+	force bool
+}
+
+// Init initializes 'network prune' command.
+func (n *NetworkPruneCommand) Init(c *Cli) {
+	n.cli = c
+	n.cmd = &cobra.Command{
+		Use:   "prune",
+		Short: "Prune networks",
+		Args:  cobra.NoArgs,
+		Long:  NetworkPruneDescription,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return n.runNetworkPrune(args)
+		},
+		Example: n.networkPruneExample(),
+	}
+	n.addFlags()
+}
+
+// addFlags adds flags for specific command.
+func (n *NetworkPruneCommand) addFlags() {
+	// add flags
+	flagSet := n.cmd.Flags()
+	flagSet.BoolVarP(&n.force, "force", "f", false, "Do not prompt for confirmation")
+}
+
+// runNetworkPrune is use to delete unused networks.
+func (n *NetworkPruneCommand) runNetworkPrune(args []string) error {
+	logrus.Debugf("prune the network")
+
+	ctx := context.Background()
+	apiClient := n.cli.Client()
+
+	if !n.force {
+		fmt.Println("WARNING! This will remove all networks not used by at least one container.")
+		fmt.Print("Are you sure you want to continue? [y/N]")
+		var input string
+		fmt.Scanf("%s", &input)
+		if input != "Y" && input != "y" {
+			return nil
+		}
+	}
+
+	networkResult, err := apiClient.NetworkPrune(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(networkResult) > 0 {
+		fmt.Println("Deleted Networks:")
+		for _, networkName := range networkResult {
+			fmt.Println(networkName)
+		}
+	}
+
+	return nil
+}
+
+// runNetworkPrune is use to delete unused networks.
+func (n *NetworkPruneCommand) networkPruneExample() string {
+	return `$ pouch network prune
+WARNING! This will remove all networks not used by at least one container.
+Are you sure you want to continue? [y/N]
+Deleted Networks:
+n1
+n2
+`
 }

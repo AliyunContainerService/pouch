@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/daemon/mgr"
 	networktypes "github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/httputils"
 
@@ -110,6 +111,46 @@ func (s *Server) disconnectNetwork(ctx context.Context, rw http.ResponseWriter, 
 	id := mux.Vars(req)["id"]
 
 	return s.ContainerMgr.Disconnect(ctx, network.Container, id, network.Force)
+}
+
+func (s *Server) pruneNetwork(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	var volumeResult []string
+
+	networkLists, err := s.NetworkMgr.List(ctx, map[string]string{})
+	if err != nil {
+		return err
+	}
+
+	toDeleteFlag := map[string]bool{}
+	toDeleteFlag["none"] = true
+	toDeleteFlag["host"] = true
+	toDeleteFlag["bridge"] = true
+
+	_, err = s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
+		All: true,
+		FilterFunc: func(c *mgr.Container) bool {
+			if len(c.NetworkSettings.Networks) == 0 {
+				return false
+			}
+			for k := range c.NetworkSettings.Networks {
+				toDeleteFlag[k] = true
+			}
+			return true
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, network := range networkLists {
+		if toDeleteFlag[network.Name] == false {
+			volumeResult = append(volumeResult, network.Name)
+			s.NetworkMgr.Remove(ctx, network.Name)
+		}
+	}
+
+	return EncodeResponse(rw, http.StatusOK, volumeResult)
 }
 
 func buildNetworkInspectResp(n *networktypes.Network) *types.NetworkInspectResp {

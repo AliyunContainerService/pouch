@@ -605,3 +605,42 @@ func (suite *PouchNetworkSuite) TestNetworkConnectWithRestart(c *check.C) {
 
 	c.Assert(found, check.Equals, false)
 }
+
+// TestNetworkPrune is to verify the correctness of 'network prune' command.
+func (suite *PouchNetworkSuite) TestNetworkPrune(c *check.C) {
+	network1 := "TestPruneNetwork1"
+	command.PouchRun("network", "create", network1, "-d", "bridge", "--gateway", "192.168.1.1", "--subnet", "192.168.1.0/24").Assert(c, icmd.Success)
+
+	network2 := "TestPruneNetwork2"
+	command.PouchRun("network", "create", network2, "-d", "bridge", "--gateway", "192.168.2.1", "--subnet", "192.168.2.0/24").Assert(c, icmd.Success)
+
+	network3 := "TestPruneNetwork3"
+	command.PouchRun("network", "create", network3, "-d", "bridge", "--gateway", "192.168.3.1", "--subnet", "192.168.3.0/24").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("network", "rm", network3).Assert(c, icmd.Success)
+	}()
+
+	// create container
+	containerName := "TestNetworkPruneContainer"
+	command.PouchRun("run", "-d", "--name", containerName, busyboxImage, "top").Assert(c, icmd.Success)
+	defer func() {
+		command.PouchRun("rm", "-f", containerName).Assert(c, icmd.Success)
+	}()
+
+	// connect a network
+	command.PouchRun("network", "connect", network3, containerName).Assert(c, icmd.Success)
+
+	// network prune
+	ret := command.PouchRun("network", "prune", "-f")
+	ret.Assert(c, icmd.Success)
+	out := ret.Combined()
+
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "network1") || strings.Contains(line, "network2") {
+			found = true
+			break
+		}
+	}
+	c.Assert(found, check.Equals, false)
+}

@@ -91,4 +91,5 @@ type NetworkAPIClient interface {
 	NetworkList(ctx context.Context) ([]types.NetworkResource, error)
 	NetworkConnect(ctx context.Context, network string, req *types.NetworkConnect) error
 	NetworkDisconnect(ctx context.Context, networkID, containerID string, force bool) error
+	NetworkPrune(ctx context.Context) ([]string, error)
 }
