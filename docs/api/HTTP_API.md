@@ -1332,6 +1332,14 @@ GET /images/search
 ```
 
 
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Query**|**registry**  <br>*optional*|Search images from specified registry|string|
+|**Query**|**term**  <br>*required*|Term to search|string|
+
+
 #### Responses
 
 |HTTP Code|Description|Schema|
