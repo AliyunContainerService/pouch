@@ -24,8 +24,13 @@ func ParseNetworks(networks []string) (*types.NetworkingConfig, string, error) {
 			return nil, "", err
 		}
 
+		// switch default or blank to bridge
 		if networkMode == "" || mode == "mode" {
-			networkMode = name
+			if name != "default" {
+				networkMode = name
+			} else {
+				networkMode = "bridge"
+			}
 		}
 
 		if name == "container" {

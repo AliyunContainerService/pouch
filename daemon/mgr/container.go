@@ -473,7 +473,7 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	// set network settings
 	networkMode := config.HostConfig.NetworkMode
-	if networkMode == "" {
+	if networkMode == "" || networkMode == "default" {
 		config.HostConfig.NetworkMode = "bridge"
 	}
 	container.NetworkSettings = new(types.NetworkSettings)
