@@ -668,7 +668,19 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 	return nil
 }
 
-func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) error {
+func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) (err0 error) {
+	rollbackVolumes := make([]string, 0, len(c.Mounts))
+
+	defer func() {
+		if err0 != nil {
+			for _, name := range rollbackVolumes {
+				if _, err := mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
+					logrus.Warnf("[rollback] failed to detach volume(%s), err(%v)", name, err)
+				}
+			}
+		}
+	}()
+
 	for _, mount := range c.Mounts {
 		name := mount.Name
 		if name == "" {
@@ -680,6 +692,8 @@ func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) er
 			logrus.Warnf("failed to attach volume(%s), err(%v)", name, err)
 			return err
 		}
+
+		rollbackVolumes = append(rollbackVolumes, name)
 	}
 	return nil
 }
