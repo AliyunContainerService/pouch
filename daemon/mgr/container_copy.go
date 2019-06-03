@@ -14,6 +14,7 @@ import (
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/go-openapi/strfmt"
 	pkgerrors "github.com/pkg/errors"
@@ -30,13 +31,13 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	defer c.Unlock()
 
 	if c.State.Dead {
-		return nil, pkgerrors.Errorf("container has been deleted %s", c.ID)
+		return nil, pkgerrors.Errorf("container(%s) has been deleted", c.ID)
 	}
 
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
 	}
 
 	defer mgr.Unmount(ctx, c, false, !running)
@@ -44,14 +45,14 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	if !running {
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
-			return nil, err
+			return nil, pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
 		}
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes(!running)
+	err = c.mountVolumes()
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
 	defer c.unmountVolumes()
 
@@ -85,13 +86,13 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 	}()
 
 	if c.State.Dead {
-		return nil, nil, pkgerrors.Errorf("container has been deleted %s", c.ID)
+		return nil, nil, pkgerrors.Errorf("container(%s) has been deleted", c.ID)
 	}
 
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
 	}
 	defer func() {
 		if err0 != nil {
@@ -102,7 +103,7 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 	if !running {
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
 		}
 		defer func() {
 			if err0 != nil {
@@ -111,9 +112,9 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		}()
 	}
 
-	err = c.mountVolumes(!running)
+	err = c.mountVolumes()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
 	defer func() {
 		if err0 != nil {
@@ -169,27 +170,27 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	defer c.Unlock()
 
 	if c.State.Dead {
-		return pkgerrors.Errorf("container has been deleted %s", c.ID)
+		return pkgerrors.Errorf("container(%s) has been deleted", c.ID)
 	}
 
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
 	if err != nil {
-		return err
+		return pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
 	}
 	defer mgr.Unmount(ctx, c, false, !running)
 
 	if !running {
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
-			return err
+			return pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
 		}
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes(!running)
+	err = c.mountVolumes()
 	if err != nil {
-		return err
+		return pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
 	defer c.unmountVolumes()
 
@@ -243,14 +244,16 @@ func (c *Container) getResolvedPath(path string) (resolvedPath, absPath string) 
 	return resolvedPath, absPath
 }
 
-func (c *Container) mountVolumes(created bool) (err0 error) {
+func (c *Container) mountVolumes() (err0 error) {
 	rollbackMounts := make([]string, 0, len(c.Mounts))
 
 	defer func() {
 		if err0 != nil {
 			for _, dest := range rollbackMounts {
 				if err := mount.Unmount(dest); err != nil {
-					logrus.Warnf("[rollback] failed to unmount(%s), err(%v)", dest, err)
+					logrus.Warnf("[mountVolumes:rollback] failed to unmount(%s), err(%v)", dest, err)
+				} else {
+					logrus.Debugf("[mountVolumes:rollback] unmount(%s)", dest)
 				}
 			}
 		}
@@ -259,15 +262,20 @@ func (c *Container) mountVolumes(created bool) (err0 error) {
 	for _, m := range c.Mounts {
 		dest, _ := c.getResolvedPath(m.Destination)
 
-		_, err := os.Stat(m.Source)
+		logrus.Debugf("try to mount volume(source %s -> dest %s", m.Source, dest)
+
+		stat, err := os.Stat(m.Source)
 		if err != nil {
 			return err
 		}
 
-		if created {
-			if e := os.MkdirAll(dest, 0755); e != nil {
-				return e
-			}
+		// /dev /proc /tmp is mounted by default oci spec. Those mount
+		// points are mounted by runC. In k8s, the daemonset will mount
+		// log into /dev/termination-log. Before mount it, we need to
+		// create folder or empty file for the target. It will not
+		// impact the running container.
+		if err = fileutils.CreateIfNotExists(dest, stat.IsDir()); err != nil {
+			return err
 		}
 
 		writeMode := "ro"
