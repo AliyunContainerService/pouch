@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/alibaba/pouch/test/command"
@@ -15,8 +16,6 @@ import (
 // APIContainerCopySuite is the test suite for container cp CLI.
 type PouchContainerCopySuite struct{}
 
-var testDataPath = "testdata/cp"
-
 func init() {
 	check.Suite(&PouchContainerCopySuite{})
 }
@@ -25,18 +24,14 @@ func init() {
 func (suite *PouchContainerCopySuite) SetUpSuite(c *check.C) {
 	SkipIfFalse(c, environment.IsLinux)
 	PullImage(c, busyboxImage)
-	err := os.Mkdir(testDataPath, 0755)
-	c.Assert(err, check.IsNil)
-}
-
-// TearDownSuite does cleanup work in the end of each test suite.
-func (suite *PouchContainerCopySuite) TearDownSuite(c *check.C) {
-	err := os.RemoveAll(testDataPath)
-	c.Assert(err, check.IsNil)
 }
 
 // Test pouch cp, basic usage
 func (suite *PouchContainerCopySuite) TestPouchCopy(c *check.C) {
+	testDataPath, err := ioutil.TempDir("", "test-pouch-copy")
+	c.Assert(err, check.IsNil)
+	defer os.RemoveAll(testDataPath)
+
 	// test copy from container
 	name := "TestPouchCopy"
 	command.PouchRun("run",
@@ -56,7 +51,7 @@ func (suite *PouchContainerCopySuite) TestPouchCopy(c *check.C) {
 	command.PouchRun("cp", localTestPath, containerTestPath).Assert(c, icmd.Success)
 	res := command.PouchRun("exec", name, "cat", "test.txt")
 	res.Assert(c, icmd.Success)
-	err := util.PartialEqual(res.Stdout(), "test pouch cp")
+	err = util.PartialEqual(res.Stdout(), "test pouch cp")
 	c.Assert(err, check.IsNil)
 
 	// test copy to container with non-dir
@@ -67,6 +62,10 @@ func (suite *PouchContainerCopySuite) TestPouchCopy(c *check.C) {
 
 // Test pouch cp, where dir locate in volume
 func (suite *PouchContainerCopySuite) TestVolumeCopy(c *check.C) {
+	testDataPath, err := ioutil.TempDir("", "test-volume-copy")
+	c.Assert(err, check.IsNil)
+	defer os.RemoveAll(testDataPath)
+
 	// test mount rw and copy from container
 	name := "TestVolumeCopy"
 	command.PouchRun("volume", "create", "--name", name).Assert(c, icmd.Success)
@@ -90,7 +89,7 @@ func (suite *PouchContainerCopySuite) TestVolumeCopy(c *check.C) {
 	command.PouchRun("cp", localTestPath, containerTestPath).Assert(c, icmd.Success)
 	res := command.PouchRun("exec", name, "cat", "/test/test.txt")
 	res.Assert(c, icmd.Success)
-	err := util.PartialEqual(res.Stdout(), "test pouch cp")
+	err = util.PartialEqual(res.Stdout(), "test pouch cp")
 	c.Assert(err, check.IsNil)
 
 	// test mount only ro
@@ -111,6 +110,10 @@ func (suite *PouchContainerCopySuite) TestVolumeCopy(c *check.C) {
 
 // TestStopContainerCopy tests stopped container can work well
 func (suite *PouchContainerCopySuite) TestStopContainerCopy(c *check.C) {
+	testDataPath := "testdata/cp/test-stop-container-copy"
+	c.Assert(os.MkdirAll(testDataPath, 0755), check.IsNil)
+	defer os.RemoveAll(testDataPath)
+
 	name := "TestStopContainerCopy"
 	command.PouchRun("run", "-d",
 		"--name", name,

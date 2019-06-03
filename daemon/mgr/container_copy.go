@@ -16,6 +16,8 @@ import (
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/go-openapi/strfmt"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // StatPath stats the dir info at the specified path in the container.
@@ -26,6 +28,10 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	}
 	c.Lock()
 	defer c.Unlock()
+
+	if c.State.Dead {
+		return nil, pkgerrors.Errorf("container has been deleted %s", c.ID)
+	}
 
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
@@ -47,7 +53,7 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	if err != nil {
 		return nil, err
 	}
-	defer c.unmountVolumes(!running)
+	defer c.unmountVolumes()
 
 	resolvedPath, absPath := c.getResolvedPath(path)
 	lstat, err := os.Lstat(resolvedPath)
@@ -78,6 +84,10 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		}
 	}()
 
+	if c.State.Dead {
+		return nil, nil, pkgerrors.Errorf("container has been deleted %s", c.ID)
+	}
+
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
 	if err != nil {
@@ -107,7 +117,7 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 	}
 	defer func() {
 		if err0 != nil {
-			defer c.unmountVolumes(!running)
+			defer c.unmountVolumes()
 		}
 	}()
 
@@ -140,7 +150,7 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		if !running {
 			mgr.detachVolumes(ctx, c, false)
 		}
-		c.unmountVolumes(!running)
+		c.unmountVolumes()
 		mgr.Unmount(ctx, c, false, !running)
 		c.Unlock()
 		return err
@@ -157,6 +167,10 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	}
 	c.Lock()
 	defer c.Unlock()
+
+	if c.State.Dead {
+		return pkgerrors.Errorf("container has been deleted %s", c.ID)
+	}
 
 	running := c.IsRunningOrPaused()
 	err = mgr.Mount(ctx, c, false)
@@ -177,7 +191,7 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	if err != nil {
 		return err
 	}
-	defer c.unmountVolumes(!running)
+	defer c.unmountVolumes()
 
 	resolvedPath, _ := c.getResolvedPath(path)
 
@@ -229,7 +243,18 @@ func (c *Container) getResolvedPath(path string) (resolvedPath, absPath string) 
 	return resolvedPath, absPath
 }
 
-func (c *Container) mountVolumes(created bool) error {
+func (c *Container) mountVolumes(created bool) (err0 error) {
+	rollbackMounts := make([]string, 0, len(c.Mounts))
+
+	defer func() {
+		if err0 != nil {
+			for _, dest := range rollbackMounts {
+				if err := mount.Unmount(dest); err != nil {
+					logrus.Warnf("[rollback] failed to unmount(%s), err(%v)", dest, err)
+				}
+			}
+		}
+	}()
 
 	for _, m := range c.Mounts {
 		dest, _ := c.getResolvedPath(m.Destination)
@@ -263,22 +288,19 @@ func (c *Container) mountVolumes(created bool) error {
 		if err := mount.Mount(m.Source, dest, "", opts); err != nil {
 			return err
 		}
+
+		rollbackMounts = append(rollbackMounts, dest)
 	}
 
 	return nil
 }
 
-func (c *Container) unmountVolumes(remove bool) error {
+func (c *Container) unmountVolumes() error {
 	for _, m := range c.Mounts {
 		dest, _ := c.getResolvedPath(m.Destination)
 
 		if err := mount.Unmount(dest); err != nil {
 			return err
-		}
-		if remove {
-			if err := os.RemoveAll(dest); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
