@@ -241,6 +241,156 @@ DELETE /containers/{id}
 * Container
 
 
+<a name="containerarchive"></a>
+### Get an archive of a filesystem resource in a container
+```
+GET /containers/{id}/archive
+```
+
+
+#### Description
+Get a tar archive of a resource in the filesystem of container id.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**path**  <br>*required*|Resource in the container’s filesystem to archive.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error|No Content|
+|**400**|Bad parameter|[0ErrorResponse](#0errorresponse)|
+|**404**|Container or path does not exist|[4ErrorResponse](#4errorresponse)|
+|**500**|server error|[0ErrorResponse](#0errorresponse)|
+
+
+#### Produces
+
+* `application/x-tar`
+
+
+#### Tags
+
+* Copy
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="putcontainerarchive"></a>
+### Extract an archive of files or folders to a directory in a container
+```
+PUT /containers/{id}/archive
+```
+
+
+#### Description
+Upload a tar archive to be extracted to a path in the filesystem of container id.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**copyUIDGID**  <br>*optional*|If “1”, “true”, or “True” then it will copy UID/GID maps to dest file.|string|
+|**Query**|**noOverwriteDirNonDir**  <br>*optional*|If “1”, “true”, or “True” then it will be an error if unpacking the given content would cause an existing directory to be replaced with a non-directory and vice versa.|string|
+|**Query**|**path**  <br>*required*|Path to a directory in the container to extract the archive’s contents into.|string|
+|**Body**|**inputStream**  <br>*required*|The input stream must be a tar archive compressed with one of the following algorithms: identity (no compression), gzip, bzip2, xz.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|The content was extracted successfully|No Content|
+|**400**|Bad parameter|[0ErrorResponse](#0errorresponse)|
+|**403**|Permission denied, the volume or container rootfs is marked as read-only.|[3ErrorResponse](#3errorresponse)|
+|**404**|No such container or path does not exist inside the container|[4ErrorResponse](#4errorresponse)|
+|**500**|Server error|[0ErrorResponse](#0errorresponse)|
+
+
+#### Consumes
+
+* `application/x-tar`
+* `application/octet-stream`
+
+
+#### Tags
+
+* Copy
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
+<a name="containerarchiveinfo"></a>
+### Get information about files in a container
+```
+HEAD /containers/{id}/archive
+```
+
+
+#### Description
+A response header `X-Docker-Container-Path-Stat` is return containing a base64 - encoded JSON object with some filesystem header information about the path.
+
+
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Path**|**id**  <br>*required*|ID or name of the container|string|
+|**Query**|**path**  <br>*required*|Resource in the container’s filesystem to archive.|string|
+
+
+#### Responses
+
+|HTTP Code|Description|Schema|
+|---|---|---|
+|**200**|no error  <br>**Headers** :   <br>`X-Docker-Container-Path-Stat` (string) : A base64 - encoded JSON object with some filesystem header information about the path.|No Content|
+|**400**|Bad parameter|[0ErrorResponse](#0errorresponse)|
+|**404**|Container or path does not exist|[4ErrorResponse](#4errorresponse)|
+|**500**|Server error|[0ErrorResponse](#0errorresponse)|
+
+
+#### Tags
+
+* Copy
+
+
+#### Example HTTP response
+
+##### Response 404
+```
+json :
+{
+  "message" : "No such container: c2ada9df5af8"
+}
+```
+
+
 <a name="containerattach"></a>
 ### Attach to a container
 ```
@@ -1332,6 +1482,14 @@ GET /images/search
 ```
 
 
+#### Parameters
+
+|Type|Name|Description|Schema|
+|---|---|---|---|
+|**Query**|**registry**  <br>*optional*|Search images from specified registry|string|
+|**Query**|**term**  <br>*required*|Term to search|string|
+
+
 #### Responses
 
 |HTTP Code|Description|Schema|
@@ -2325,6 +2483,20 @@ The parameters to filter the log.
 |**Tail**  <br>*optional*|Only reture this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines.|string|
 |**Timestamps**  <br>*optional*|Add timestamps to every log line|boolean|
 |**Until**  <br>*optional*|Only reture logs before this time, as a UNIX timestamp|string|
+
+
+<a name="containerpathstat"></a>
+### ContainerPathStat
+ContainerPathStat is used to describe the stat of file
+
+
+|Name|Description|Schema|
+|---|---|---|
+|**mode**  <br>*optional*||integer (uint32)|
+|**mtime**  <br>*optional*|modification time.|string (date-time)|
+|**name**  <br>*optional*||string|
+|**path**  <br>*optional*||string|
+|**size**  <br>*optional*||string|
 
 
 <a name="containerprocesslist"></a>

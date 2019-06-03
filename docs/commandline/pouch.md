@@ -23,6 +23,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch build](pouch_build.md)	 - Build an image from a Dockerfile
 * [pouch checkpoint](pouch_checkpoint.md)	 - Manage checkpoint commands
 * [pouch commit](pouch_commit.md)	 - Commit an image from a container
+* [pouch cp](pouch_cp.md)	 - Copy files/folders between a container and the local filesystem
 * [pouch create](pouch_create.md)	 - Create a new container with specified image
 * [pouch events](pouch_events.md)	 - Get real time events from the daemon
 * [pouch exec](pouch_exec.md)	 - Run a command in a running container
@@ -48,6 +49,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch rmi](pouch_rmi.md)	 - Remove one or more images by reference
 * [pouch run](pouch_run.md)	 - Create a new container and start it
 * [pouch save](pouch_save.md)	 - Save an image to a tar archive or STDOUT
+* [pouch search](pouch_search.md)	 - Search the images from specific registry
 * [pouch start](pouch_start.md)	 - Start one or more created or stopped containers
 * [pouch stats](pouch_stats.md)	 - Display a live stream of container(s) resource usage statistics
 * [pouch stop](pouch_stop.md)	 - Stop one or more running containers
