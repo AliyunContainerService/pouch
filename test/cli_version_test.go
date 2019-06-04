@@ -43,11 +43,10 @@ func (suite *PouchVersionSuite) TestPouchVersion(c *check.C) {
 
 	kernelVersion := "<unknown>"
 	kerVersion, err := kernel.GetKernelVersion()
-	if err != nil {
+	if err == nil {
 		kernelVersion = kerVersion.String()
 	}
 	c.Assert(kv["KernelVersion"], check.Equals, kernelVersion)
-
 }
 
 // versionToKV reads version string into key-value mapping.
