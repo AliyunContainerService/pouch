@@ -1259,6 +1259,33 @@ paths:
             $ref: "#/responses/500ErrorResponse"
         tags: ["Container"]
 
+  /containers/prune:
+    post:
+      summary: "Delete stopped containers"
+      produces:
+        - "application/json"
+      operationId: "ContainerPrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
+
+            Available filters:
+            - `until=<timestamp>` Prune containers created before this timestamp. The `<timestamp>` can be Unix timestamps, date formatted timestamps, or Go duration strings (e.g. `10m`, `1h30m`) computed relative to the daemon machine’s time.
+            - `label` (`label=<key>`, `label=<key>=<value>`, `label!=<key>`, or `label!=<key>=<value>`) Prune containers with (or without, in case `label!=...` is used) the specified labels.
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/ContainerPruneResp"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/responses/500ErrorResponse"
+      tags: ["Container"]
+
   /volumes:
     get:
       summary: "List volumes"
@@ -2436,6 +2463,20 @@ definitions:
         x-nullable: false
         items:
           type: "string"
+
+  ContainerPruneResp:
+    description: "response returned by daemon when unused containers were removed"
+    type: "object"
+    properties:
+      ContainersDeleted:
+        description: "Container IDs that were deleted"
+        type: "array"
+        items:
+          type: "string"
+      SpaceReclaimed:
+        description: "Disk space reclaimed in bytes"
+        type: "integer"
+        format: "int64"
 
   HostConfig:
     description: "Container configuration that depends on the host we are running on"

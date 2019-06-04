@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/spf13/cobra"
 )
 
 type container struct {
@@ -302,4 +303,26 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 	}
 
 	return config, nil
+}
+
+// containerMgmtDescription is used to describe container command in detail and auto generate command doc.
+var containerMgmtDescription = "Manage Pouch container"
+
+// ContainerMgmtCommand use to implement 'container' command.
+type ContainerMgmtCommand struct {
+	baseCommand
+}
+
+// Init initialize "container" command.
+func (i *ContainerMgmtCommand) Init(c *Cli) {
+	i.cli = c
+
+	i.cmd = &cobra.Command{
+		Use:   "container",
+		Short: "Manage container",
+		Long:  containerMgmtDescription,
+		Args:  cobra.NoArgs,
+	}
+
+	i.cli.AddCommand(i, &ContainerPruneCommand{})
 }

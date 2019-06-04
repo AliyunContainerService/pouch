@@ -62,6 +62,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/resize", HandlerFunc: s.resizeContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/restart", HandlerFunc: s.restartContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/wait", HandlerFunc: withCancelHandler(s.waitContainer)},
+		{Method: http.MethodPost, Path: "/containers/prune", HandlerFunc: withCancelHandler(s.pruneContainer)},
 		{Method: http.MethodPost, Path: "/commit", HandlerFunc: withCancelHandler(s.commitContainer)},
 
 		// image

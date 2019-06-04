@@ -33,6 +33,11 @@ func (c *Container) IsRemoving() bool {
 	return c.State.Status == types.StatusRemoving
 }
 
+// IsStopped returns container is stopped or not.
+func (c *Container) IsStopped() bool {
+	return c.State.Status == types.StatusStopped
+}
+
 // SetStatusRunning sets a container to be status running.
 // When a container's status turns to StatusStopped, the following fields need updated:
 // Status -> StatusRunning

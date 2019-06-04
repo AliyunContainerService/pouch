@@ -58,6 +58,7 @@ func main() {
 	cli.AddCommand(base, &BuildCommand{})
 	cli.AddCommand(base, &CopyCommand{})
 	cli.AddCommand(base, &PortCommand{})
+	cli.AddCommand(base, &ContainerMgmtCommand{})
 
 	// add generate doc command
 	cli.AddCommand(base, &GenDocCommand{})

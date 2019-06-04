@@ -173,6 +173,9 @@ type ContainerMgr interface {
 
 	// ExtractToDir extracts the given archive at the specified path in the container.
 	ExtractToDir(ctx context.Context, name, path string, copyUIDGID, noOverwriteDirNonDir bool, content io.Reader) error
+
+	// Prune delete unused containers
+	Prune(ctx context.Context, option *ContainerListOption) (*types.ContainerPruneResp, error)
 }
 
 // ContainerManager is the default implement of interface ContainerMgr.

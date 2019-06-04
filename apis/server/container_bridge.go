@@ -607,3 +607,25 @@ func (s *Server) commitContainer(ctx context.Context, rw http.ResponseWriter, re
 
 	return EncodeResponse(rw, http.StatusCreated, id)
 }
+
+func (s *Server) pruneContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	option := &mgr.ContainerListOption{
+		All: httputils.BoolValue(req, "all"),
+	}
+
+	filters, err := filters.FromURLParam(req.FormValue("filters"))
+	if err != nil {
+		return err
+	}
+	option.Filter = filters
+	option.All = true
+
+	containerPruneRep, err := s.ContainerMgr.Prune(ctx, option)
+
+	if err != nil {
+		logrus.Errorf("failed to list images: %v", err)
+		return err
+	}
+
+	return EncodeResponse(rw, http.StatusOK, containerPruneRep)
+}
