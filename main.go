@@ -17,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/debug"
+	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/version"
@@ -167,7 +168,15 @@ func runDaemon(cmd *cobra.Command) error {
 		fmt.Printf("pouchd version: %s, build: %s, build at: %s\n", version.Version, version.GitCommit, version.BuildTime)
 		return nil
 	}
-	metrics.EngineVersion.WithLabelValues(version.GitCommit).Set(1)
+
+	kernelVersion, err := kernel.GetKernelVersion()
+	if err != nil {
+		return fmt.Errorf("failed to get kernel version: %s", err)
+	}
+	metrics.EngineVersion.WithLabelValues(
+		version.GitCommit,
+		version.Version,
+		kernelVersion.String()).Set(1)
 	// initialize log.
 	initLog()
 

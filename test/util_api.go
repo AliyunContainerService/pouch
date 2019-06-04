@@ -345,3 +345,18 @@ func GetMetric(c *check.C, key string, keySuccess string) (int, int) {
 
 	return iCount, iCountSuccess
 }
+
+// GetMetricLine get metrics from prometheus server, return the single metric.
+func GetMetricLine(c *check.C, key string) string {
+	resp, err := request.Get("/metrics")
+	c.Assert(err, check.IsNil)
+	defer resp.Body.Close()
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, key) {
+			return line
+		}
+	}
+	return ""
+}

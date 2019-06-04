@@ -38,7 +38,7 @@ var (
 	ImageActionsTimer = metrics.NewLabelTimer(subsystemPouch, "image_actions", "The number of seconds it takes to process each image action", "action")
 
 	// EngineVersion records the version and commit information of the engine process.
-	EngineVersion = metrics.NewLabelGauge(subsystemPouch, "engine", "The version and commit information of the engine process", "commit")
+	EngineVersion = metrics.NewLabelGauge(subsystemPouch, "engine", "The version and commit information of the engine process", "commit", "version", "kernel")
 )
 
 var registerMetrics sync.Once
