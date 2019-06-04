@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/kernel"
 	"github.com/alibaba/pouch/test/command"
 	"github.com/alibaba/pouch/test/environment"
 	"github.com/alibaba/pouch/version"
@@ -37,6 +38,16 @@ func (suite *PouchVersionSuite) TestPouchVersion(c *check.C) {
 	c.Assert(kv["Arch"], check.Equals, runtime.GOARCH)
 	c.Assert(kv["Os"], check.Equals, runtime.GOOS)
 	c.Assert(kv["Version"], check.Equals, version.Version)
+	c.Assert(kv["BuildTime"], check.Equals, version.BuildTime)
+	c.Assert(kv["GitCommit"], check.Equals, version.GitCommit)
+
+	kernelVersion := "<unknown>"
+	kerVersion, err := kernel.GetKernelVersion()
+	if err != nil {
+		kernelVersion = kerVersion.String()
+	}
+	c.Assert(kv["KernelVersion"], check.Equals, kernelVersion)
+
 }
 
 // versionToKV reads version string into key-value mapping.
