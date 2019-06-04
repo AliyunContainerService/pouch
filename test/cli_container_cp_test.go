@@ -132,3 +132,21 @@ func (suite *PouchContainerCopySuite) TestStopContainerCopy(c *check.C) {
 	// test stopped container can start after cp
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// TestCopyHosts tests copy /etc/hosts from container can work well
+func (suite *PouchContainerCopySuite) TestCopyHosts(c *check.C) {
+	testDataPath := "testdata/cp/test-copy-container-hosts"
+	c.Assert(os.MkdirAll(testDataPath, 0755), check.IsNil)
+	defer os.RemoveAll(testDataPath)
+
+	name := "TestCopyHosts"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	localTestPath := fmt.Sprintf("%s/%s", testDataPath, "TestCopyHosts.txt")
+	containerTestPath := fmt.Sprintf("%s:%s", name, "/etc/hosts")
+	command.PouchRun("cp", containerTestPath, localTestPath).Assert(c, icmd.Success)
+	res := command.PouchRun("exec", name, "cat", "/etc/hosts")
+	res.Assert(c, icmd.Success)
+	checkFileContains(c, localTestPath, res.Combined())
+}

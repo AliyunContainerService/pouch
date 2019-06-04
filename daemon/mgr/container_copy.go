@@ -247,7 +247,13 @@ func (c *Container) getResolvedPath(path string, running bool) (resolvedPath, ab
 }
 
 func (c *Container) mountVolumes(running bool) (err0 error) {
-	rollbackMounts := make([]string, 0, len(c.Mounts))
+
+	mounts := make([]*types.MountPoint, 0)
+	if !c.Config.DisableNetworkFiles {
+		mounts = append(mounts, c.generateNetworkMounts()...)
+	}
+	mounts = append(mounts, c.Mounts...)
+	rollbackMounts := make([]string, 0, len(mounts))
 
 	defer func() {
 		if err0 != nil {
@@ -261,7 +267,7 @@ func (c *Container) mountVolumes(running bool) (err0 error) {
 		}
 	}()
 
-	for _, m := range c.Mounts {
+	for _, m := range mounts {
 		dest, _ := c.getResolvedPath(m.Destination, running)
 
 		logrus.Debugf("try to mount volume(source %s -> dest %s", m.Source, dest)
@@ -306,7 +312,12 @@ func (c *Container) mountVolumes(running bool) (err0 error) {
 }
 
 func (c *Container) unmountVolumes(running bool) error {
-	for _, m := range c.Mounts {
+	mounts := make([]*types.MountPoint, 0)
+	if !c.Config.DisableNetworkFiles {
+		mounts = append(mounts, c.generateNetworkMounts()...)
+	}
+	mounts = append(mounts, c.Mounts...)
+	for _, m := range mounts {
 		dest, _ := c.getResolvedPath(m.Destination, running)
 
 		if err := mount.Unmount(dest); err != nil {
@@ -314,4 +325,39 @@ func (c *Container) unmountVolumes(running bool) error {
 		}
 	}
 	return nil
+}
+
+// generateNetworkMounts will generate network mounts.
+func (c *Container) generateNetworkMounts() []*types.MountPoint {
+	mounts := make([]*types.MountPoint, 0)
+	if c.Config.DisableNetworkFiles {
+		return mounts
+	}
+	fileBinds := []struct {
+		Name   string
+		Source string
+		Dest   string
+	}{
+		{"HostnamePath", c.HostnamePath, "/etc/hostname"},
+		{"HostsPath", c.HostsPath, "/etc/hosts"},
+		{"ResolvConfPath", c.ResolvConfPath, "/etc/resolv.conf"},
+	}
+
+	for _, bind := range fileBinds {
+		if bind.Source != "" {
+			_, err := os.Stat(bind.Source)
+			if err != nil {
+				logrus.Warnf("%s set to %s, but stat error: %v, skip it", bind.Name, bind.Source, err)
+			} else {
+				mounts = append(mounts, &types.MountPoint{
+					Source:      bind.Source,
+					Destination: bind.Dest,
+					Type:        "bind",
+					RW:          true,
+				})
+			}
+		}
+	}
+
+	return mounts
 }
