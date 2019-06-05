@@ -186,6 +186,11 @@ func (mgr *ImageManager) LookupImageReferences(ref string) []string {
 
 // PullImage pulls images from specified registry.
 func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *types.AuthConfig, out io.Writer) error {
+	namedRef, err := reference.Parse(ref)
+	if err != nil {
+		return err
+	}
+
 	pctx, cancel := context.WithCancel(ctx)
 	stream := jsonstream.New(out, nil)
 
@@ -209,34 +214,10 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 		closeStream()
 	}
 
-	var (
-		namedRef reference.Named
-		err      error
-	)
-
-	// find an available image which could be resolved.
 	fullRefs := mgr.LookupImageReferences(ref)
-	for _, newRef := range fullRefs {
-		namedRef, err = reference.Parse(newRef)
-		if err != nil {
-			logrus.Warnf("failed to parse image reference when trying to pull image %s, raw reference is %s: %v", newRef, ref, err)
-			continue
-		}
-		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
-		_, _, err = mgr.client.ResolveImage(pctx, namedRef.String(), authConfig)
+	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
-		// got available one
-		if err == nil {
-			break
-		}
-	}
-
-	if err != nil {
-		writeStream(err)
-		return err
-	}
-
-	img, err := mgr.client.FetchImage(pctx, namedRef.String(), authConfig, stream)
+	img, err := mgr.client.FetchImage(pctx, namedRef.String(), fullRefs, authConfig, stream)
 	if err != nil {
 		writeStream(err)
 		return err

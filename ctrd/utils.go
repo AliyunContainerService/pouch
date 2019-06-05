@@ -1,7 +1,9 @@
 package ctrd
 
 import (
+	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -10,12 +12,14 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/runtime/linux/runctypes"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -48,46 +52,128 @@ func (c *Client) isInsecureDomain(ref string) bool {
 	return false
 }
 
-func (c *Client) getResolver(authConfig *types.AuthConfig, ref string, resolverOpt docker.ResolverOptions) (remotes.Resolver, error) {
-	var (
-		username = ""
-		secret   = ""
-		insecure = c.isInsecureDomain(ref)
-	)
+// resolverWrapper wrap a image resolver
+// do reference <-> name translation before each operation.
+type resolverWrapper struct {
+	refToName map[string]string
+	resolver  remotes.Resolver
+}
 
+// Resolve attempts to resolve the reference into a name and descriptor.
+// translate the reference to a name which may be a short name like 'library/ubuntu'.
+func (r *resolverWrapper) Resolve(ctx context.Context, ref string) (name string, desc ocispec.Descriptor, err error) {
+	newRef, desc, err := r.resolver.Resolve(ctx, ref)
+	if err != nil {
+		return "", ocispec.Descriptor{}, err
+	}
+
+	if name, ok := r.refToName[newRef]; ok {
+		return name, desc, nil
+	}
+
+	return newRef, desc, nil
+}
+
+// Fetcher returns a new fetcher for the provided reference.
+// All content fetched from the returned fetcher will be
+// from the namespace referred to by ref.
+func (r *resolverWrapper) Fetcher(ctx context.Context, name string) (remotes.Fetcher, error) {
+	ref := name
+	for rf, n := range r.refToName {
+		if name == n {
+			ref = rf
+			break
+		}
+	}
+	return r.resolver.Fetcher(ctx, ref)
+}
+
+// Pusher returns a new pusher for the provided reference
+func (r *resolverWrapper) Pusher(ctx context.Context, name string) (remotes.Pusher, error) {
+	ref := name
+	for rf, n := range r.refToName {
+		if name == n {
+			ref = rf
+			break
+		}
+	}
+	return r.resolver.Pusher(ctx, ref)
+}
+
+func newImageResolver(refToName map[string]string, resolverOpt docker.ResolverOptions) remotes.Resolver {
+	return &resolverWrapper{
+		refToName: refToName,
+		resolver:  docker.NewResolver(resolverOpt),
+	}
+}
+
+// getResolver try to resolve ref in the reference list, return the resolver and the first available ref.
+func (c *Client) getResolver(ctx context.Context, authConfig *types.AuthConfig, name string, refs []string, resolverOpt docker.ResolverOptions) (remotes.Resolver, string, error) {
+	username, secret := "", ""
 	if authConfig != nil {
 		username = authConfig.Username
 		secret = authConfig.Password
 	}
 
-	tr := &http.Transport{
-		Proxy: proxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}).DialContext,
-		MaxIdleConns:        10,
-		IdleConnTimeout:     30 * time.Second,
-		TLSHandshakeTimeout: 10 * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: insecure,
-		},
-		ExpectContinueTimeout: 5 * time.Second,
+	var (
+		availableRef string
+		opt          docker.ResolverOptions
+	)
+
+	for _, ref := range refs {
+		namedRef, err := reference.Parse(ref)
+		if err != nil {
+			logrus.Warnf("failed to parse image reference when trying to resolve image %s, raw reference is %s: %v", ref, name, err)
+			continue
+		}
+		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
+
+		insecure := c.isInsecureDomain(ref)
+		tr := &http.Transport{
+			Proxy: proxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:        10,
+			IdleConnTimeout:     30 * time.Second,
+			TLSHandshakeTimeout: 10 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: insecure,
+			},
+			ExpectContinueTimeout: 5 * time.Second,
+		}
+
+		opt = docker.ResolverOptions{
+			Tracker:   resolverOpt.Tracker,
+			PlainHTTP: insecure,
+			Credentials: func(host string) (string, string, error) {
+				// Only one host
+				return username, secret, nil
+			},
+			Client: &http.Client{
+				Transport: tr,
+			},
+		}
+
+		resolver := docker.NewResolver(opt)
+
+		if _, _, err := resolver.Resolve(ctx, namedRef.String()); err == nil {
+			availableRef = namedRef.String()
+			break
+		}
 	}
 
-	options := docker.ResolverOptions{
-		Tracker:   resolverOpt.Tracker,
-		PlainHTTP: insecure,
-		Credentials: func(host string) (string, string, error) {
-			// Only one host
-			return username, secret, nil
-		},
-		Client: &http.Client{
-			Transport: tr,
-		},
+	if availableRef == "" {
+		return nil, "", fmt.Errorf("there is no available image reference after trying %+q", refs)
 	}
-	return docker.NewResolver(options), nil
+
+	refToName := map[string]string{
+		availableRef: name,
+	}
+
+	return newImageResolver(refToName, opt), availableRef, nil
 }
 
 // GetWeightDevice Convert weight device from []*types.WeightDevice to []specs.LinuxWeightDevice
