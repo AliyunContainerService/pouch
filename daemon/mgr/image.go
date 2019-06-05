@@ -41,7 +41,11 @@ var acceptedImageFilterTags = map[string]bool{
 	"before":    true,
 	"since":     true,
 	"reference": true,
+	"dangling":  true,
 }
+
+const trueString = "true"
+const falseString = "false"
 
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
@@ -240,6 +244,7 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 	beforeImages := filter.Get("before")
 	sinceImages := filter.Get("since")
 	referenceFilter := filter.Get("reference")
+	danglingImages := filter.Get("dangling")
 
 	// refuse undefined behavior
 	if len(beforeImages) > 1 {
@@ -248,6 +253,10 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 	// refuse undefined behavior
 	if len(sinceImages) > 1 {
 		return nil, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "can't use since filter more than one")
+	}
+	// refuse undefined behavior
+	if len(danglingImages) > 1 {
+		return nil, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "can't use dangling filter more than one")
 	}
 
 	ctrdImageInfos := mgr.localStore.ListCtrdImageInfo()
@@ -297,6 +306,21 @@ func (mgr *ImageManager) ListImages(ctx context.Context, filter filters.Args) ([
 		if err != nil {
 			logrus.Warnf("failed to convert containerd image(%v) to ImageInfo during list images: %v", img.ID, err)
 			continue
+		}
+
+		if len(danglingImages) > 0 {
+			danglingFilter := danglingImages[0]
+			if danglingFilter == trueString {
+				if imgInfo.RepoDigests != nil || imgInfo.RepoTags != nil {
+					continue
+				}
+			} else if danglingFilter == falseString {
+				if imgInfo.RepoDigests == nil && imgInfo.RepoTags == nil {
+					continue
+				}
+			} else {
+				return nil, pkgerrors.Wrapf(errtypes.ErrInvalidParam, "Invalid filter 'dangling=%s'", danglingFilter)
+			}
 		}
 
 		if len(referenceFilter) == 0 {

@@ -528,11 +528,11 @@ func networkOptions(create apitypes.NetworkCreateConfig) ([]libnetwork.NetworkOp
 	}
 
 	// parse options
-	if v, ok := networkCreate.Options["persist"]; ok && v == "true" {
+	if v, ok := networkCreate.Options["persist"]; ok && v == trueString {
 		nwOptions = append(nwOptions, libnetwork.NetworkOptionPersist(true))
 		delete(networkCreate.Options, "persist")
 	}
-	if v, ok := networkCreate.Options["dynamic"]; ok && v == "true" {
+	if v, ok := networkCreate.Options["dynamic"]; ok && v == trueString {
 		nwOptions = append(nwOptions, libnetwork.NetworkOptionDynamic())
 		delete(networkCreate.Options, "dynamic")
 	}
