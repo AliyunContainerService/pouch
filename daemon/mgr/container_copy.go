@@ -35,14 +35,13 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	}
 
 	running := c.IsRunningOrPaused()
-	err = mgr.Mount(ctx, c, false)
-	if err != nil {
-		return nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
-	}
-
-	defer mgr.Unmount(ctx, c, false, !running)
-
 	if !running {
+		if err := mgr.Mount(ctx, c); err != nil {
+			return nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
+		}
+
+		defer mgr.Unmount(ctx, c)
+
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
 			return nil, pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
@@ -50,13 +49,13 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes()
+	err = c.mountVolumes(running)
 	if err != nil {
 		return nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
-	defer c.unmountVolumes()
+	defer c.unmountVolumes(running)
 
-	resolvedPath, absPath := c.getResolvedPath(path)
+	resolvedPath, absPath := c.getResolvedPath(path, running)
 	lstat, err := os.Lstat(resolvedPath)
 
 	if err != nil {
@@ -90,17 +89,16 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 	}
 
 	running := c.IsRunningOrPaused()
-	err = mgr.Mount(ctx, c, false)
-	if err != nil {
-		return nil, nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
-	}
-	defer func() {
-		if err0 != nil {
-			mgr.Unmount(ctx, c, false, !running)
-		}
-	}()
-
 	if !running {
+		if err := mgr.Mount(ctx, c); err != nil {
+			return nil, nil, pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
+		}
+		defer func() {
+			if err0 != nil {
+				mgr.Unmount(ctx, c)
+			}
+		}()
+
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
 			return nil, nil, pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
@@ -112,17 +110,17 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		}()
 	}
 
-	err = c.mountVolumes()
+	err = c.mountVolumes(running)
 	if err != nil {
 		return nil, nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
 	defer func() {
 		if err0 != nil {
-			defer c.unmountVolumes()
+			c.unmountVolumes(running)
 		}
 	}()
 
-	resolvedPath, absPath := c.getResolvedPath(path)
+	resolvedPath, absPath := c.getResolvedPath(path, running)
 	lstat, err := os.Lstat(resolvedPath)
 	if err != nil {
 		return nil, nil, err
@@ -151,8 +149,8 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		if !running {
 			mgr.detachVolumes(ctx, c, false)
 		}
-		c.unmountVolumes()
-		mgr.Unmount(ctx, c, false, !running)
+		c.unmountVolumes(running)
+		mgr.Unmount(ctx, c)
 		c.Unlock()
 		return err
 	})
@@ -174,13 +172,12 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	}
 
 	running := c.IsRunningOrPaused()
-	err = mgr.Mount(ctx, c, false)
-	if err != nil {
-		return pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
-	}
-	defer mgr.Unmount(ctx, c, false, !running)
-
 	if !running {
+		if err := mgr.Mount(ctx, c); err != nil {
+			return pkgerrors.Wrapf(err, "failed to mount cid(%s)", c.ID)
+		}
+		defer mgr.Unmount(ctx, c)
+
 		err = mgr.attachVolumes(ctx, c)
 		if err != nil {
 			return pkgerrors.Wrapf(err, "failed to attachVolumes cid(%s)", c.ID)
@@ -188,13 +185,13 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes()
+	err = c.mountVolumes(running)
 	if err != nil {
 		return pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
-	defer c.unmountVolumes()
+	defer c.unmountVolumes(running)
 
-	resolvedPath, _ := c.getResolvedPath(path)
+	resolvedPath, _ := c.getResolvedPath(path, running)
 
 	lstat, err := os.Lstat(resolvedPath)
 	if err != nil {
@@ -230,21 +227,26 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	return chrootarchive.Untar(content, resolvedPath, opts)
 }
 
-func (c *Container) getResolvedPath(path string) (resolvedPath, absPath string) {
+func (c *Container) getResolvedPath(path string, running bool) (resolvedPath, absPath string) {
 	// consider the given path as an absolute path in the container.
 	absPath = path
 	if !filepath.IsAbs(absPath) {
 		absPath = archive.PreserveTrailingDotOrSeparator(filepath.Join(string(os.PathSeparator), path), path, os.PathSeparator)
 	}
 
+	rootfs := c.MountFS
+	if running {
+		rootfs = c.BaseFS
+	}
+
 	// get the real path on the host
-	resolvedPath = filepath.Join(c.BaseFS, absPath)
+	resolvedPath = filepath.Join(rootfs, absPath)
 	resolvedPath = filepath.Clean(resolvedPath)
 
 	return resolvedPath, absPath
 }
 
-func (c *Container) mountVolumes() (err0 error) {
+func (c *Container) mountVolumes(running bool) (err0 error) {
 	rollbackMounts := make([]string, 0, len(c.Mounts))
 
 	defer func() {
@@ -260,7 +262,7 @@ func (c *Container) mountVolumes() (err0 error) {
 	}()
 
 	for _, m := range c.Mounts {
-		dest, _ := c.getResolvedPath(m.Destination)
+		dest, _ := c.getResolvedPath(m.Destination, running)
 
 		logrus.Debugf("try to mount volume(source %s -> dest %s", m.Source, dest)
 
@@ -303,9 +305,9 @@ func (c *Container) mountVolumes() (err0 error) {
 	return nil
 }
 
-func (c *Container) unmountVolumes() error {
+func (c *Container) unmountVolumes(running bool) error {
 	for _, m := range c.Mounts {
-		dest, _ := c.getResolvedPath(m.Destination)
+		dest, _ := c.getResolvedPath(m.Destination, running)
 
 		if err := mount.Unmount(dest); err != nil {
 			return err
