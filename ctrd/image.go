@@ -200,7 +200,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 
 	pushTracker := docker.NewInMemoryTracker()
 
-	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{
+	resolver, _, err := c.getResolver(ctx, authConfig, ref, []string{ref}, docker.ResolverOptions{
 		Tracker: pushTracker,
 	})
 	if err != nil {
@@ -251,33 +251,21 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 	return nil
 }
 
-// ResolveImage attempts to resolve the image reference into a name and descriptor.
-func (c *Client) ResolveImage(ctx context.Context, ref string, authConfig *types.AuthConfig) (name string, desc ocispec.Descriptor, err error) {
-	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{})
-	if err != nil {
-		return "", ocispec.Descriptor{}, err
-	}
-
-	name, desc, err = resolver.Resolve(ctx, ref)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to resolve reference %q", ref)
-	}
-	return
-}
-
 // FetchImage fetches image content from the remote repository.
-func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
+func (c *Client) FetchImage(ctx context.Context, name string, refs []string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	resolver, err := c.getResolver(authConfig, ref, docker.ResolverOptions{})
+	resolver, availableRef, err := c.getResolver(ctx, authConfig, name, refs, docker.ResolverOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	ongoing := newJobs(ref)
+	logrus.Infof("pulling image name %v reference %v", name, availableRef)
+
+	ongoing := newJobs(name)
 
 	options := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion,
@@ -302,11 +290,11 @@ func (c *Client) FetchImage(ctx context.Context, ref string, authConfig *types.A
 		}
 		close(wait)
 
-		logrus.Infof("fetch progress exited, ref: %s.", ref)
+		logrus.Infof("fetch progress exited, ref: %s.", availableRef)
 	}()
 
 	// start to pull image.
-	img, err := c.fetchImage(ctx, wrapperCli, ref, options)
+	img, err := c.fetchImage(ctx, wrapperCli, availableRef, options)
 
 	// cancel fetch progress before handle error.
 	cancelProgress()

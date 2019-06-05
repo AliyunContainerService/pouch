@@ -15,7 +15,6 @@ import (
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
 	digest "github.com/opencontainers/go-digest"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // APIClient defines common methods of containerd api client
@@ -79,9 +78,7 @@ type ImageAPIClient interface {
 	// ListImages returns the list of containerd.Image filtered by the given conditions.
 	ListImages(ctx context.Context, filter ...string) ([]containerd.Image, error)
 	// FetchImage fetchs image content by the given reference.
-	FetchImage(ctx context.Context, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
-	// ResolveImage attempts to resolve the image reference into a name and descriptor.
-	ResolveImage(ctx context.Context, ref string, authConfig *types.AuthConfig) (name string, desc ocispec.Descriptor, err error)
+	FetchImage(ctx context.Context, name string, refs []string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
 	// RemoveImage removes the image by the given reference.
 	RemoveImage(ctx context.Context, ref string) error
 	// ImportImage creates a set of images by tarstream.
