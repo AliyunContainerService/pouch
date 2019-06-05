@@ -13,7 +13,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/icmd"
 )
 
-// APIContainerCopySuite is the test suite for container cp CLI.
+// PouchContainerCopySuite is the test suite for container cp CLI.
 type PouchContainerCopySuite struct{}
 
 func init() {
