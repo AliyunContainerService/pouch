@@ -44,6 +44,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
       --enableLxcfs                   Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string             Overwrite the default ENTRYPOINT of the image
   -e, --env stringArray               Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)
+      --env-file stringArray          Read in a file of environment variables
       --expose strings                Set expose container's ports
       --group-add strings             Add additional groups to join
   -h, --help                          help for create

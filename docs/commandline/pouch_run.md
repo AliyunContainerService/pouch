@@ -58,6 +58,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
       --enableLxcfs                   Enable lxcfs for the container, only effective when enable-lxcfs switched on in Pouchd
       --entrypoint string             Overwrite the default ENTRYPOINT of the image
   -e, --env stringArray               Set environment variables for container('--env A=' means setting env A to empty, '--env B' means removing env B from container env inherited from image)
+      --env-file stringArray          Read in a file of environment variables
       --expose strings                Set expose container's ports
       --group-add strings             Add additional groups to join
   -h, --help                          help for run
