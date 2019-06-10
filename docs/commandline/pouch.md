@@ -39,6 +39,7 @@ pouch is a client side tool pouch to interact with daemon side process pouchd. F
 * [pouch logs](pouch_logs.md)	 - Print a container's logs
 * [pouch network](pouch_network.md)	 - Manage pouch networks
 * [pouch pause](pouch_pause.md)	 - Pause one or more running containers
+* [pouch port](pouch_port.md)	 - List port mappings or a specific mapping for the container
 * [pouch ps](pouch_ps.md)	 - List containers
 * [pouch pull](pouch_pull.md)	 - Pull an image from registry
 * [pouch push](pouch_push.md)	 - Push an image to registry
