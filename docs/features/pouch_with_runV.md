@@ -108,7 +108,7 @@ First, add runv into config file, restart pouchd, ensure that pouchd know the sp
 $ pouch create --name hypervisor --runtime runv docker.io/library/busybox:latest
 container ID: 95c8d52154515e58ab267f3c33ef74ff84c901ad77ab18ee6428a1ffac12400d, name: hypervisor
 $
-$ pouch ps
+$ pouch ps -a
 Name         ID       Status    Image                              Runtime
 hypervisor   95c8d5   created   docker.io/library/busybox:latest   runv
 4945c0       4945c0   stopped   docker.io/library/busybox:latest   runc
