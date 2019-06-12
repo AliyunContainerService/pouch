@@ -35,11 +35,31 @@ func (suite *PouchRmiSuite) TestRmiWorks(c *check.C) {
 	}
 }
 
+// TestRmiWithRunningContainer tests "pouch rmi" won't work without force
+func (suite *PouchRmiSuite) TestRmiWithRunningContainer(c *check.C) {
+	name := "TestRmiWithRunningContainer"
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// Can't remove without "--force"
+	command.PouchRun("rmi", busyboxImage)
+	res := command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: shouldn't rm image %s without force\n", out, busyboxImage)
+	}
+
+	command.PouchRun("rmi", "-f", busyboxImage).Assert(c, icmd.Success)
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, busyboxImage)
+	}
+}
+
 // TestRmiForce tests "pouch rmi -f" work
 func (suite *PouchRmiSuite) TestRmiForce(c *check.C) {
 	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
 
-	// TODO: rmi -f after create/start containers.
 	command.PouchRun("rmi", "-f", helloworldImage).Assert(c, icmd.Success)
 
 	res := command.PouchRun("images").Assert(c, icmd.Success)
@@ -99,6 +119,35 @@ func (suite *PouchRmiSuite) TestRmiByImageIDWithTwoPrimaryReferences(c *check.C)
 	res = command.PouchRun("images").Assert(c, icmd.Success)
 	if out := res.Combined(); strings.Contains(out, repoTag) {
 		c.Fatalf("unexpected output %s: should rm image %s\n", out, repoTag)
+	}
+}
+
+// TestRmiByImageIDWithPrimaryReferencesAndRunningContainers tests "pouch rmi {ID}" won't work without force.
+func (suite *PouchRmiSuite) TestRmiByImageIDWithPrimaryReferencesAndRunningContainers(c *check.C) {
+	busyboxImageAlias := busyboxImage + "Alias"
+	name := "TestRmiByImageIDWithRunningContainer"
+
+	command.PouchRun("pull", busyboxImage).Assert(c, icmd.Success)
+	command.PouchRun("tag", busyboxImage, busyboxImageAlias).Assert(c, icmd.Success)
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[busyboxImage][0]
+
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// Can't remove without "--force"
+	res = command.PouchRun("rmi", imageID)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("Unable to remove the image"))
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: shouldn't rm image %s without force\n", out, busyboxImage)
+	}
+
+	command.PouchRun("rmi", "-f", imageID).Assert(c, icmd.Success)
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, busyboxImage) {
+		c.Fatalf("unexpected output %s: should rm image %s\n", out, busyboxImage)
 	}
 }
 
