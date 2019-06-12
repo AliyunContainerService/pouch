@@ -196,6 +196,12 @@ The above command `kubeadm join` is used by any node except master node which wi
 
 > NOTE: Kubernetes installation part does not include the CNI network part. CNI network setup is an individual part, refer [Setup CNI network]().
 
+Optional: enable schedule pods on the master node
+
+```sh
+kubectl taint nodes --all node-role.kubernetes.io/master:NoSchedule-
+```
+
 ### Verify Kubernetes Correctness
 
 After installing PouchContainer and Kubernetes, user could create a running pod to verify the correctness of cluster. The following example creates a very simple pod which contains only one busybox container. If we see the pod is running, it means that you succeed in deploying Kubernetes with PouchContainer.
