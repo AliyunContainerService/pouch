@@ -140,8 +140,17 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 	}(time.Now())
 
 	isForce := httputils.BoolValue(req, "force")
-	// We only should check the image whether used by container when there is only one primary reference.
-	if len(refs) == 1 {
+
+	isImageIDPrefix := func(imageID string, name string) bool {
+		if strings.HasPrefix(imageID, name) || strings.HasPrefix(digest.Digest(imageID).Hex(), name) {
+			return true
+		}
+		return false
+	}
+
+	// We should check the image whether used by container when there is only one primary reference
+	// or the image is removed by image ID.
+	if len(refs) == 1 || isImageIDPrefix(image.ID, name) {
 		containers, err := s.ContainerMgr.List(ctx, &mgr.ContainerListOption{
 			All: true,
 			FilterFunc: func(c *mgr.Container) bool {
