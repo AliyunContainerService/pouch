@@ -527,7 +527,7 @@ func checkDupQuotaMap(qms []*quota.QMap, qm *quota.QMap) *quota.QMap {
 	return nil
 }
 
-func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mounted bool) error {
+func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mounted bool, update bool) error {
 	var (
 		err           error
 		globalQuotaID uint32
@@ -629,7 +629,7 @@ func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mou
 	for _, qm := range qms {
 		if qm.Destination == "/" {
 			// set rootfs quota
-			_, err = quota.SetRootfsDiskQuota(qm.Source, qm.Size, qm.QuotaID)
+			_, err = quota.SetRootfsDiskQuota(qm.Source, qm.Size, qm.QuotaID, update)
 			if err != nil {
 				logrus.Warnf("failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d), err(%v)",
 					qm.Source, qm.Size, qm.QuotaID, err)
@@ -763,7 +763,7 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 	}
 
 	// set mount point disk quota
-	if err = mgr.setDiskQuota(ctx, c, true); err != nil {
+	if err = mgr.setDiskQuota(ctx, c, true, false); err != nil {
 		// just ignore failed to set disk quota
 		logrus.Warnf("failed to set disk quota, err(%v)", err)
 	}
