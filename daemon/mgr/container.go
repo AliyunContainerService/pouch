@@ -1351,7 +1351,7 @@ func (mgr *ContainerManager) updateContainerDiskQuota(ctx context.Context, c *Co
 	}
 
 	// set mount point disk quota
-	if err = mgr.setDiskQuota(ctx, c, false); err != nil {
+	if err = mgr.setDiskQuota(ctx, c, false, true); err != nil {
 		return errors.Wrapf(err, "failed to set mount point disk quota")
 	}
 

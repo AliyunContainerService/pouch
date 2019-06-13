@@ -188,7 +188,7 @@ func GetQuotaID(dir string) (uint32, error) {
 }
 
 // SetRootfsDiskQuota is to set container rootfs dir disk quota.
-func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
+func SetRootfsDiskQuota(basefs, size string, quotaID uint32, update bool) (uint32, error) {
 	overlayMountInfo, err := getOverlayMountInfo(basefs)
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to get overlay(%s) mount info", basefs)
@@ -211,7 +211,9 @@ func SetRootfsDiskQuota(basefs, size string, quotaID uint32) (uint32, error) {
 			return 0, errors.Wrapf(err, "failed to set dir(%s) disk quota", dir)
 		}
 
-		if err := SetQuotaForDir(dir, quotaID); err != nil {
+		if update {
+			go SetQuotaForDir(dir, quotaID)
+		} else if err := SetQuotaForDir(dir, quotaID); err != nil {
 			return 0, errors.Wrapf(err, "failed to set dir(%s) quota recursively", dir)
 		}
 	}
