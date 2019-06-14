@@ -66,7 +66,7 @@ func initRoute(s *Server) *mux.Router {
 
 		// image
 		{Method: http.MethodPost, Path: "/images/create", HandlerFunc: s.pullImage},
-		{Method: http.MethodPost, Path: "/images/search", HandlerFunc: s.searchImages},
+		{Method: http.MethodGet, Path: "/images/search", HandlerFunc: s.searchImages},
 		{Method: http.MethodGet, Path: "/images/json", HandlerFunc: s.listImages},
 		{Method: http.MethodDelete, Path: "/images/{name:.*}", HandlerFunc: s.removeImage},
 		{Method: http.MethodGet, Path: "/images/{name:.*}/json", HandlerFunc: s.getImage},
