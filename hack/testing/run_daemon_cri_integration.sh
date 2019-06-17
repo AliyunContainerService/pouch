@@ -19,6 +19,7 @@ export PATH="${GOPATH}/bin:${PATH}"
 
 # CRI_SKIP skips the test to skip.
 DEFAULT_CRI_SKIP="should error on create with wrong options"
+DEFAULT_CRI_SKIP+="|runtime should support execSync with timeout"
 CRI_SKIP="${CRI_SKIP:-"${DEFAULT_CRI_SKIP}"}"
 
 # CRI_FOCUS focuses the test to run.

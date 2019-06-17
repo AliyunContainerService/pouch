@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-CRITEST_BRANCH_DEFAULT=release-1.12
+CRITEST_BRANCH_DEFAULT=master
 
 # keep the first one only
 GOPATH="${GOPATH%%:*}"
