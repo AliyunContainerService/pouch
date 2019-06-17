@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
     if ENV["POUCH_BUILD"] == "true"
       pouch.vm.provision "shell", inline: <<-SHELL
         # configring environments for pouch
-        GO_VERSION=1.10.4
+        GO_VERSION=1.12.6
         GOROOT=/opt/go
         GOPATH=/root/go
         apt-get install -y --no-install-recommends build-essential

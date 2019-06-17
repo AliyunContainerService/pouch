@@ -421,7 +421,7 @@ func (suite *PouchDaemonSuite) TestDaemonTlsVerify(c *check.C) {
 	// Do not use TLS should fail
 	result = RunWithSpecifiedDaemon(&dcfg, "version")
 	c.Assert(result.ExitCode, check.Equals, 1)
-	err := util.PartialEqual(result.Stderr(), "malformed HTTP response")
+	err := util.PartialEqual(result.Stderr(), "Client sent an HTTP request to an HTTPS server")
 	c.Assert(err, check.IsNil)
 
 	{
