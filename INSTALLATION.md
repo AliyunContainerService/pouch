@@ -8,7 +8,27 @@ As a developer who wish to hack on PouchContainer, please read [Developer Quick-
 
 ## End User Quick-Start
 
-You can install PouchContainer automatically on your machine with very few steps. Currently we support two kinds of Linux Distribution: Ubuntu and CentOS.
+You can install PouchContainer automatically on your machine with very few steps. Currently we support the following Linux Distributions: Alibaba Cloud Linux 2, Ubuntu and CentOS.
+
+### Alibaba Cloud Linux 2
+
+**1. Install PouchContainer**
+
+There is an official PouchContainer build in Alibaba Cloud Linux 2 (a.k.a. Aliyun Linux 2) Yum repo, you should be able to install it via Yum tool without adding any extra repo files explicitly. Note that Alibaba Cloud Linux 1 (Aliyun Linux 17.01) is not supported for now.
+
+If you are an Alibaba Cloud Linux 2 user, simply run the following command to install the latest version of PouchContainer:
+
+``` bash
+sudo yum install -y pouch
+```
+
+**2. Start PouchContainer**
+
+``` bash
+sudo systemctl start pouch
+```
+
+Afterwards, you can pull an image and run PouchContainer containers.
 
 ### Ubuntu
 
