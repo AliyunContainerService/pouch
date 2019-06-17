@@ -125,26 +125,36 @@ func redirectLogs(path string, w io.Writer, r io.ReadCloser, stream streamType) 
 	partialBytes := []byte(runtime.LogTagPartial)
 	fullBytes := []byte(runtime.LogTagFull)
 	br := bufio.NewReaderSize(r, bufSize)
+	stop := false
+
 	for {
-		lineBytes, isPrefix, err := br.ReadLine()
-		if err != nil {
-			if err == io.EOF {
-				logrus.Infof("finish redirecting log file(name=%v)", path)
-			} else {
-				logrus.WithError(err).Errorf("failed to redirect log file(name=%v)", path)
-			}
-			return
-		}
+		lineBytes, err := br.ReadBytes(eol)
 		tagBytes := fullBytes
-		if isPrefix {
+		if err != nil {
+			if err != io.EOF {
+				logrus.WithError(err).Errorf("failed to redirect log file(name=%v)", path)
+				return
+			}
+			logrus.Infof("finish redirecting log file(name=%v)", path)
+
+			if len(lineBytes) == 0 {
+				return
+			}
+
+			// the last line without the eol is treated as a partial log.
 			tagBytes = partialBytes
+			stop = true
 		}
+
 		timestampBytes := time.Now().AppendFormat(nil, time.RFC3339Nano)
 		data := bytes.Join([][]byte{timestampBytes, streamBytes, tagBytes, lineBytes}, delimiterBytes)
-		data = append(data, eol)
 
 		if _, err := w.Write(data); err != nil {
 			logrus.Errorf("failed to write %q log to log file: %v", stream, err)
+		}
+
+		if stop {
+			break
 		}
 	}
 }
