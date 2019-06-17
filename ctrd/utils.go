@@ -40,7 +40,7 @@ func withExitShimV1CheckpointTaskOpts() containerd.CheckpointTaskOpts {
 func (c *Client) isInsecureDomain(ref string) bool {
 	u, err := url.Parse("dummy://" + ref)
 	if err != nil {
-		logrus.Warning("failed to parse reference(%s) into url: %v", ref, err)
+		logrus.Warningf("failed to parse reference(%s) into url: %v", ref, err)
 		return false
 	}
 

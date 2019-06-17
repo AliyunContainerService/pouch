@@ -3,7 +3,7 @@ sudo: required
 
 language: go
 go:
-  - 1.10.4
+  - 1.12.6
 
 go_import_path: github.com/alibaba/pouch
 
