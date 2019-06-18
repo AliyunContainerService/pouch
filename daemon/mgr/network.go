@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/apis/opts"
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/events"
@@ -693,8 +694,16 @@ func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]lib
 		sandboxOptions = append(sandboxOptions, libnetwork.OptionDNSOptions(ds))
 	}
 
+	for _, extraHost := range endpoint.ExtraHosts {
+		// allow IPv6 addresses in extra hosts; only split on first ":"
+		if err := opts.ValidateExtraHost(extraHost); err != nil {
+			return nil, err
+		}
+		parts := strings.SplitN(extraHost, ":", 2)
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionExtraHost(parts[0], parts[1]))
+	}
+
 	// TODO: secondary ip address
-	// TODO: parse extra hosts
 	var bindings = make(nat.PortMap)
 	if endpoint.PortBindings != nil {
 		for p, b := range endpoint.PortBindings {
