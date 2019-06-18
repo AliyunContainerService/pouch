@@ -3,7 +3,6 @@ package ctrd
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -166,7 +165,8 @@ func (c *Client) getResolver(ctx context.Context, authConfig *types.AuthConfig, 
 	}
 
 	if availableRef == "" {
-		return nil, "", fmt.Errorf("there is no available image reference after trying %+q", refs)
+		logrus.Warnf("there is no available image reference after trying %+q", refs)
+		return nil, "", errtypes.ErrNotfound
 	}
 
 	refToName := map[string]string{

@@ -47,6 +47,19 @@ func (suite *APIImageCreateSuite) TestImageCreateNil(c *check.C) {
 	CheckRespStatus(c, resp, 400)
 }
 
+// TestImageCreateNonExistentImage tests pulling a non-existent image.
+func (suite *APIImageCreateSuite) TestImageCreateNonExistentImage(c *check.C) {
+	q := url.Values{}
+	image := "qwefghjm:zxcvbn_efgh_nonexist"
+
+	q.Add("fromImage", image)
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/images/create", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 404)
+}
+
 // TestImageCreateWithoutTag tests creating an image without tag, will use "latest" by default.
 func (suite *APIImageCreateSuite) TestImageCreateWithoutTag(c *check.C) {
 	q := url.Values{}

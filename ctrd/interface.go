@@ -13,8 +13,10 @@ import (
 	containerdtypes "github.com/containerd/containerd/api/types"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
+	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/snapshots"
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 )
 
 // APIClient defines common methods of containerd api client
@@ -77,8 +79,10 @@ type ImageAPIClient interface {
 	GetImage(ctx context.Context, ref string) (containerd.Image, error)
 	// ListImages returns the list of containerd.Image filtered by the given conditions.
 	ListImages(ctx context.Context, filter ...string) ([]containerd.Image, error)
-	// FetchImage fetchs image content by the given reference.
-	FetchImage(ctx context.Context, name string, refs []string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
+	// FetchImage fetches image content by the given reference.
+	FetchImage(ctx context.Context, resolver remotes.Resolver, ref string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error)
+	// ResolveImage attempts to resolve the image reference into a available reference and resolver.
+	ResolveImage(ctx context.Context, nameRef string, refs []string, authConfig *types.AuthConfig, opts docker.ResolverOptions) (remotes.Resolver, string, error)
 	// RemoveImage removes the image by the given reference.
 	RemoveImage(ctx context.Context, ref string) error
 	// ImportImage creates a set of images by tarstream.

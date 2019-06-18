@@ -29,6 +29,7 @@ import (
 	"github.com/containerd/containerd/content"
 	ctrdmetaimages "github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	pkgerrors "github.com/pkg/errors"
@@ -217,7 +218,13 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 	fullRefs := mgr.LookupImageReferences(ref)
 	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
-	img, err := mgr.client.FetchImage(pctx, namedRef.String(), fullRefs, authConfig, stream)
+	resolver, availableRef, err := mgr.client.ResolveImage(ctx, namedRef.String(), fullRefs, authConfig, docker.ResolverOptions{})
+	if err != nil {
+		return err
+	}
+	logrus.Infof("pulling image name %v reference %v", namedRef.String(), availableRef)
+
+	img, err := mgr.client.FetchImage(pctx, resolver, availableRef, authConfig, stream)
 	if err != nil {
 		writeStream(err)
 		return err

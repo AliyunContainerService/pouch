@@ -367,14 +367,14 @@ func (suite *PouchDaemonSuite) TestDaemonLabelNeg(c *check.C) {
 func (suite *PouchDaemonSuite) TestDaemonDefaultRegistry(c *check.C) {
 	dcfg, err := StartDefaultDaemonDebug(
 		"--default-registry",
-		"reg.docker.alibaba-inc.com",
+		"registry.hub.docker.com",
 		"--default-registry-namespace",
-		"base")
+		"library")
 	c.Assert(err, check.IsNil)
 
 	// Check pull image with default registry using the registry specified in daemon.
-	result := RunWithSpecifiedDaemon(dcfg, "pull", "hello-world")
-	err = util.PartialEqual(result.Combined(), "reg.docker.alibaba-inc.com/base/hello-world")
+	result := RunWithSpecifiedDaemon(dcfg, "pull", "nginx:latest")
+	err = util.PartialEqual(result.Combined(), "registry.hub.docker.com/library/nginx:latest")
 	c.Assert(err, check.IsNil)
 
 	defer dcfg.KillDaemon()

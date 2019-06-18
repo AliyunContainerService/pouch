@@ -200,7 +200,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 
 	pushTracker := docker.NewInMemoryTracker()
 
-	resolver, _, err := c.getResolver(ctx, authConfig, ref, []string{ref}, docker.ResolverOptions{
+	resolver, _, err := c.ResolveImage(ctx, ref, []string{ref}, authConfig, docker.ResolverOptions{
 		Tracker: pushTracker,
 	})
 	if err != nil {
@@ -251,21 +251,25 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 	return nil
 }
 
+// ResolveImage attempts to resolve the image reference into a available reference and resolver.
+func (c *Client) ResolveImage(ctx context.Context, nameRef string, refs []string, authConfig *types.AuthConfig, opts docker.ResolverOptions) (remotes.Resolver, string, error) {
+	resolver, availableRef, err := c.getResolver(ctx, authConfig, nameRef, refs, opts)
+	if err != nil {
+		logrus.Errorf("image ref not found %s", nameRef)
+		return nil, "", err
+	}
+
+	return resolver, availableRef, nil
+}
+
 // FetchImage fetches image content from the remote repository.
-func (c *Client) FetchImage(ctx context.Context, name string, refs []string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
+func (c *Client) FetchImage(ctx context.Context, resolver remotes.Resolver, availableRef string, authConfig *types.AuthConfig, stream *jsonstream.JSONStream) (containerd.Image, error) {
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a containerd grpc client: %v", err)
 	}
 
-	resolver, availableRef, err := c.getResolver(ctx, authConfig, name, refs, docker.ResolverOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	logrus.Infof("pulling image name %v reference %v", name, availableRef)
-
-	ongoing := newJobs(name)
+	ongoing := newJobs(availableRef)
 
 	options := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion,
