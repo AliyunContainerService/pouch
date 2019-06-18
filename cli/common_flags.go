@@ -72,6 +72,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 	flagSet.StringVar(&c.ip, "ip", "", "Set IPv4 address of container endpoint")
 	flagSet.StringVar(&c.ipv6, "ip6", "", "Set IPv6 address of container endpoint")
 	flagSet.Int64Var(&c.netPriority, "net-priority", 0, "net priority")
+	flagSet.StringArrayVar(&c.extraHosts, "add-host", nil, "Add a custom host-to-IP mapping (host:ip)")
 	// dns
 	flagSet.StringArrayVar(&c.dns, "dns", nil, "Set DNS servers")
 	flagSet.StringSliceVar(&c.dnsOptions, "dns-option", nil, "Set DNS options")

@@ -122,3 +122,28 @@ func (suite *PouchRunNetworkSuite) TestRunWithIP(c *check.C) {
 
 	c.Assert(found, check.Equals, true)
 }
+
+// TestRunAddHost is to verify run container with add-host flag
+func (suite *PouchRunNetworkSuite) TestRunAddHost(c *check.C) {
+	name := "TestRunAddHost"
+	res := command.PouchRun("run", "--name", name, "--add-host=extra:86.75.30.9", busyboxImage, "grep", "extra", "/etc/hosts")
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	stdout := res.Stdout()
+	actual := strings.Trim(stdout, "\r\n")
+	if !strings.Contains(actual, "86.75.30.9\textra") {
+		c.Fatalf("expected '86.75.30.9\textra', but says: %q", actual)
+	}
+}
+
+func (suite *PouchRunNetworkSuite) TestRunAddHostInHostMode(c *check.C) {
+	name := "TestRunAddHostInHostMode"
+	expectedOutput := "1.2.3.4\textra"
+	res := command.PouchRun("run", "--name", name, "--add-host=extra:1.2.3.4", "--net=host", busyboxImage, "cat", "/etc/hosts")
+	res.Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+	if !strings.Contains(res.Stdout(), expectedOutput) {
+		check.Commentf("Expected '%s', but got %q", expectedOutput, res.Stdout())
+	}
+}

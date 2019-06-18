@@ -694,7 +694,12 @@ func buildSandboxOptions(config network.Config, endpoint *types.Endpoint) ([]lib
 	}
 
 	// TODO: secondary ip address
-	// TODO: parse extra hosts
+	for _, extraHost := range endpoint.ExtraHosts {
+		// allow IPv6 addresses in extra hosts; only split on first ":"
+		parts := strings.SplitN(extraHost, ":", 2)
+		sandboxOptions = append(sandboxOptions, libnetwork.OptionExtraHost(parts[0], parts[1]))
+	}
+
 	var bindings = make(nat.PortMap)
 	if endpoint.PortBindings != nil {
 		for p, b := range endpoint.PortBindings {
