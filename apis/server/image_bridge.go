@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/apis/metrics"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
@@ -58,7 +59,10 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	// Error information has be sent to client, so no need call resp.Write
 	if err := s.ImageMgr.PullImage(ctx, image, &authConfig, newWriteFlusher(rw)); err != nil {
 		logrus.Errorf("failed to pull image %s: %v", image, err)
-		return nil
+		if err == errtypes.ErrNotfound {
+			return httputils.NewHTTPError(err, http.StatusNotFound)
+		}
+		return err
 	}
 	metrics.ImageSuccessActionsCounter.WithLabelValues(label).Inc()
 	return nil
