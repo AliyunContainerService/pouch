@@ -72,6 +72,7 @@ type container struct {
 	ipv6        string
 	macAddress  string
 	netPriority int64
+	extraHosts  []string
 	dns         []string
 	dnsOptions  []string
 	dnsSearch   []string
@@ -268,6 +269,7 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 				Ulimits:       c.ulimit.Value(),
 				PidsLimit:     c.pidsLimit,
 			},
+			ExtraHosts:      c.extraHosts,
 			DNS:             c.dns,
 			DNSOptions:      c.dnsOptions,
 			DNSSearch:       c.dnsSearch,
