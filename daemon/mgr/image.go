@@ -217,17 +217,8 @@ func (mgr *ImageManager) PullImage(ctx context.Context, ref string, authConfig *
 	fullRefs := mgr.LookupImageReferences(ref)
 	namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
 
-	img, err := mgr.client.FetchImage(pctx, namedRef.String(), fullRefs, authConfig, stream)
+	img, err := mgr.client.PullImage(pctx, namedRef.String(), fullRefs, authConfig, stream)
 	if err != nil {
-		writeStream(err)
-		return err
-	}
-
-	// before image unpack, call WithImageUnpack
-	ctx = ctrd.WithImageUnpack(ctx)
-
-	// unpack image
-	if err = img.Unpack(ctx, ctrd.CurrentSnapshotterName(ctx)); err != nil {
 		writeStream(err)
 		return err
 	}
