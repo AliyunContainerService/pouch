@@ -240,8 +240,9 @@ func (c *Container) getResolvedPath(path string, running bool) (resolvedPath, ab
 	}
 
 	// get the real path on the host
-	resolvedPath = filepath.Join(rootfs, absPath)
-	resolvedPath = filepath.Clean(resolvedPath)
+	resolvedPath = rootfs + string(os.PathSeparator) + path
+	cleanedPath := filepath.Clean(resolvedPath)
+	resolvedPath = archive.PreserveTrailingDotOrSeparator(cleanedPath, resolvedPath, os.PathSeparator)
 
 	return resolvedPath, absPath
 }

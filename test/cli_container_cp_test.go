@@ -132,3 +132,24 @@ func (suite *PouchContainerCopySuite) TestStopContainerCopy(c *check.C) {
 	// test stopped container can start after cp
 	command.PouchRun("start", name).Assert(c, icmd.Success)
 }
+
+// Test pouch cp, where path contains dot
+func (suite *PouchContainerCopySuite) TestCopyPathDot(c *check.C) {
+	testDataPath := "testdata/cp/test-copy-path-dot"
+	c.Assert(os.MkdirAll(testDataPath, 0755), check.IsNil)
+	defer os.RemoveAll(testDataPath)
+
+	name := "TestCopyPathDot"
+	command.PouchRun("run", "-d",
+		"--name", name,
+		busyboxImage,
+		"sh", "-c",
+		"mkdir -p test && echo 'test pouch cp' >> test/data.txt && top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	// don't copy test dir under testDataPath
+	localTestPath := fmt.Sprintf("%s/%s", testDataPath, "data.txt")
+	containerTestPath := fmt.Sprintf("%s:%s", name, "test/.")
+	command.PouchRun("cp", containerTestPath, testDataPath).Assert(c, icmd.Success)
+	checkFileContains(c, localTestPath, "test pouch cp")
+}
