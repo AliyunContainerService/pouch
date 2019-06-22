@@ -352,6 +352,46 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 	return nil
 }
 
+// KillContainer will kill a container by signal
+func (c *Client) KillContainer(ctx context.Context, containerID string, signal int) error {
+	err := c.killContainer(ctx, containerID, signal)
+	if err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// killContainer is the real process of killing a container
+func (c *Client) killContainer(ctx context.Context, containerID string, signal int) error {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID)
+
+	if !c.lock.TrylockWithRetry(ctx, containerID) {
+		return errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(containerID)
+
+	pack, err := c.watch.get(containerID)
+	if err != nil {
+		return err
+	}
+	// the caller need to execute the all hooks.
+	pack.l.Lock()
+	pack.skipStopHooks = true
+	pack.l.Unlock()
+	defer func() {
+		pack.l.Lock()
+		pack.skipStopHooks = false
+		pack.l.Unlock()
+	}()
+
+	return pack.task.Kill(ctx, syscall.Signal(signal), containerd.WithKillAll)
+}
+
 // DestroyContainer kill container and delete it.
 func (c *Client) DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error) {
 	msg, err := c.destroyContainer(ctx, id, timeout)

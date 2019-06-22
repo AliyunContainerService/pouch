@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
@@ -184,6 +185,24 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 		containerList = append(containerList, singleCon)
 	}
 	return EncodeResponse(rw, http.StatusOK, containerList)
+}
+
+func (s *Server) killContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+	var sig syscall.Signal
+	name := mux.Vars(req)["name"]
+
+	// If we have a signal, look at it. Otherwise, do nothing
+	if sigStr := req.FormValue("signal"); sigStr != "" {
+		var err error
+		if sig, err = utils.ParseSignal(sigStr); err != nil {
+			return err
+		}
+	}
+
+	if err := s.ContainerMgr.Kill(ctx, name, uint64(sig)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Server) startContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {

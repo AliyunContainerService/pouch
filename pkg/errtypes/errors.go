@@ -37,6 +37,9 @@ var (
 
 	// ErrPreCheckFailed represents that failed to pre check.
 	ErrPreCheckFailed = errorType{codePreCheckFailed, "pre check failed"}
+
+	// ErrNoSuchProcess represents there is no such process
+	ErrNoSuchProcess = errorType{codeNoSuchProcess, "no such process"}
 )
 
 const (
@@ -51,6 +54,7 @@ const (
 	codeInUse
 	codeNotModified
 	codePreCheckFailed
+	codeNoSuchProcess
 
 	// volume error code
 	codeVolumeExisted
@@ -95,6 +99,11 @@ func IsInUse(err error) bool {
 // IsNotModified checks the error is not modified error or not.
 func IsNotModified(err error) bool {
 	return checkError(err, codeNotModified)
+}
+
+// IsNoSuchProcess checks the error is no such process error or not.
+func IsNoSuchProcess(err error) bool {
+	return checkError(err, codeNoSuchProcess)
 }
 
 // IsPreCheckFailed checks the error is failed to pre check or not.

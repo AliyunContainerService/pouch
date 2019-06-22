@@ -40,6 +40,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodGet, Path: "/containers/{name:.*}/checkpoints", HandlerFunc: withCancelHandler(s.listContainerCheckpoint)},
 		{Method: http.MethodDelete, Path: "/containers/{name}/checkpoints/{id}", HandlerFunc: withCancelHandler(s.deleteContainerCheckpoint)},
 		{Method: http.MethodPost, Path: "/containers/create", HandlerFunc: s.createContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/kill", HandlerFunc: s.killContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/start", HandlerFunc: s.startContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/stop", HandlerFunc: s.stopContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/attach", HandlerFunc: s.attachContainer},

@@ -31,6 +31,8 @@ type APIClient interface {
 
 // ContainerAPIClient provides access to containerd container features.
 type ContainerAPIClient interface {
+	// KillContainer kill container by signal
+	KillContainer(ctx context.Context, containerID string, signal int) error
 	// CreateContainer creates a containerd container and start process.
 	CreateContainer(ctx context.Context, container *Container, checkpointDir string) error
 	// DestroyContainer kill container and delete it.

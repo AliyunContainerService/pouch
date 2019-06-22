@@ -68,6 +68,9 @@ type ContainerMgr interface {
 	// List returns the list of containers.
 	List(ctx context.Context, option *ContainerListOption) ([]*Container, error)
 
+	// Kill a running container
+	Kill(ctx context.Context, name string, signal uint64) (err error)
+
 	// Start a container.
 	Start(ctx context.Context, id string, options *types.ContainerStartOptions) error
 
