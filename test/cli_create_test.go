@@ -608,3 +608,13 @@ func (suite *PouchCreateSuite) TestCreateWithoutNvidiaConfig(c *check.C) {
 	}
 	c.Assert(result[0].HostConfig.Resources.NvidiaConfig, check.IsNil)
 }
+
+// TestCreateWithInvalidName tests creating container with invalid name.
+func (suite *PouchRunSuite) TestCreateWithInvalidName(c *check.C) {
+	name := "new:invalid"
+	res := command.PouchRun("create", "--name", name, busyboxImage)
+	defer DelContainerForceMultyTime(c, name)
+	if !strings.Contains(res.Stdout(), "Invalid container name") {
+		check.Commentf("Expected '%s', but got %q", "Invalid container name", res.Stdout())
+	}
+}
