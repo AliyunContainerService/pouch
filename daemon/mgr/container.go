@@ -15,7 +15,7 @@ import (
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
-	"github.com/alibaba/pouch/daemon/config"
+	daemon_config "github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/daemon/logger"
@@ -195,7 +195,7 @@ type ContainerManager struct {
 	IOs           *containerio.Cache
 	ExecProcesses *collect.SafeMap
 
-	Config *config.Config
+	Config *daemon_config.Config
 
 	// Cache stores all containers in memory.
 	// Element operated in cache must have a type of *Container.
@@ -211,7 +211,7 @@ type ContainerManager struct {
 }
 
 // NewContainerManager creates a brand new container manager.
-func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, cfg *config.Config, contPlugin hookplugins.ContainerPlugin, eventsService *events.Events) (*ContainerManager, error) {
+func NewContainerManager(ctx context.Context, store *meta.Store, cli ctrd.APIClient, imgMgr ImageMgr, volMgr VolumeMgr, cfg *daemon_config.Config, contPlugin hookplugins.ContainerPlugin, eventsService *events.Events) (*ContainerManager, error) {
 	mgr := &ContainerManager{
 		Store:           store,
 		NameToID:        collect.NewSafeMap(),
@@ -395,6 +395,8 @@ func (mgr *ContainerManager) Create(ctx context.Context, name string, config *ty
 
 	if name == "" {
 		name = mgr.generateName(id)
+	} else if !daemon_config.ValidNamePattern.MatchString(name) {
+		return nil, fmt.Errorf("Invalid container name (%s), only %s are allowed", name, daemon_config.ValidNameChars)
 	} else if mgr.NameToID.Get(name).Exist() {
 		return nil, errors.Wrapf(errtypes.ErrAlreadyExisted, "container name %s", name)
 	}

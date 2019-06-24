@@ -78,7 +78,7 @@ func (suite *PouchCreateLogOptionsSuite) TestOK(c *check.C) {
 			driver:   "json-file",
 			expected: nil,
 		}, {
-			cname:   "TestCreateLogOptions_jsonfile_tag=1",
+			cname:   "TestCreateLogOptions_jsonfile_tag_1",
 			driver:  "json-file",
 			logOpts: []string{"tag=1"},
 			expected: map[string]string{

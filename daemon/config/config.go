@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -28,7 +29,12 @@ const (
 	CgroupSystemdDriver = "systemd"
 	// DefaultCgroupDriver is default cgroups driver
 	DefaultCgroupDriver = CgroupfsDriver
+	// ValidNameChars collects the characters allowed to represent a name, normally used to validate container and volume names.
+	ValidNameChars = `[a-zA-Z0-9][a-zA-Z0-9_.-]`
 )
+
+// ValidNamePattern is a regular expression to validate names against the collection of restricted characters.
+var ValidNamePattern = regexp.MustCompile(`^/?` + ValidNameChars + `+$`)
 
 // Config refers to daemon's whole configurations.
 type Config struct {
