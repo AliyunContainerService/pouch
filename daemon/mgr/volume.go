@@ -185,6 +185,7 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 		}
 	}
 
+	vm.LogVolumeEvent(ctx, name, "attach", map[string]string{"driver": v.Driver()})
 	return vm.core.AttachVolume(id, options)
 }
 
@@ -220,6 +221,6 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 			}
 		}
 	}
-
+	vm.LogVolumeEvent(ctx, name, "detach", map[string]string{"driver": v.Driver()})
 	return vm.core.DetachVolume(id, options)
 }

@@ -270,7 +270,7 @@ func (mgr *ImageManager) PushImage(ctx context.Context, name, tag string, authCo
 	} else {
 		ref = reference.WithTag(ref, tag)
 	}
-
+	mgr.LogImageEvent(ctx, ref.String(), ref.String(), "push")
 	return mgr.client.PushImage(ctx, ref.String(), authConfig, out)
 }
 
@@ -465,7 +465,7 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 		// the searchable reference has different locator without force.
 		// It's different reference from locator aspect.
 		if !force && !uniqueLocatorReference(mgr.localStore.GetReferences(id)) {
-			return fmt.Errorf("Unable to remove the image %q (must force) - image has serveral references", idOrRef)
+			return fmt.Errorf("unable to remove the image %q (must force) - image has serveral references", idOrRef)
 		}
 
 		for _, ref := range mgr.localStore.GetPrimaryReferences(id) {
@@ -486,7 +486,7 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 		if err := mgr.localStore.RemoveReference(id, primaryRef); err != nil {
 			return err
 		}
-
+		mgr.LogImageEvent(ctx, namedRef.String(), namedRef.String(), "delete")
 		return mgr.client.RemoveImage(ctx, primaryRef.String())
 	}
 
@@ -537,6 +537,7 @@ func (mgr *ImageManager) AddTag(ctx context.Context, sourceImage string, targetT
 		Name:   tagRef.String(),
 		Target: ctrdImg.Target(),
 	})
+	mgr.LogImageEvent(ctx, sourceImage, tagRef.String(), "tag")
 	return err
 }
 

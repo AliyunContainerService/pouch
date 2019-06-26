@@ -18,6 +18,7 @@ func (mgr *ImageManager) SaveImage(ctx context.Context, idOrRef string) (io.Read
 	if err != nil {
 		return nil, err
 	}
+	mgr.LogImageEvent(ctx, idOrRef, ref.String(), "save")
 
 	return exportedStream, nil
 }

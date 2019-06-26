@@ -154,6 +154,7 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		c.Unlock()
 		return err
 	})
+	mgr.LogContainerEvent(ctx, c, "archive-path")
 
 	return content, stat, nil
 }
@@ -223,6 +224,8 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	opts := &archive.TarOptions{
 		NoOverwriteDirNonDir: noOverwriteDirNonDir,
 	}
+
+	mgr.LogContainerEvent(ctx, c, "extract-to-dir")
 
 	return chrootarchive.Untar(content, resolvedPath, opts)
 }

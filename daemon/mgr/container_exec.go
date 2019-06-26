@@ -43,7 +43,7 @@ func (mgr *ContainerManager) CreateExec(ctx context.Context, name string, config
 	}
 
 	mgr.ExecProcesses.Put(execid, execConfig)
-
+	mgr.LogContainerEvent(ctx, c, "exec_create")
 	return execid, nil
 }
 
@@ -165,6 +165,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	}, timeout); err != nil {
 		return err
 	}
+	mgr.LogContainerEvent(ctx, c, "exec_start")
 	return <-attachErrCh
 }
 

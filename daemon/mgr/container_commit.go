@@ -80,6 +80,7 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 		// pouch can see the new image reference.
 		logrus.Warnf("failed to update image store: %s", err)
 	}
+	mgr.LogContainerEvent(ctx, c, "commit")
 
 	// return 12 bits image id as a result
 	imageID := imageDigest.Hex()
