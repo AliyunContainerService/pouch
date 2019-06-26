@@ -980,6 +980,8 @@ func (mgr *ContainerManager) Restart(ctx context.Context, name string, timeout i
 	c.RestartCount++
 
 	logrus.Debugf("container %s restartCount is %d", c.ID, c.RestartCount)
+	mgr.LogContainerEvent(ctx, c, "restart")
+
 	return c.Write(mgr.Store)
 }
 
@@ -1445,6 +1447,7 @@ func (mgr *ContainerManager) Top(ctx context.Context, name string, psArgs string
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed parsePSOutput")
 	}
+	mgr.LogContainerEvent(ctx, c, "top")
 
 	return procList, nil
 }
@@ -1463,6 +1466,7 @@ func (mgr *ContainerManager) Resize(ctx context.Context, name string, opts types
 		return fmt.Errorf("failed to resize container %s: container is not running", c.ID)
 	}
 
+	mgr.LogContainerEvent(ctx, c, "resize")
 	return mgr.Client.ResizeContainer(ctx, c.ID, opts)
 }
 

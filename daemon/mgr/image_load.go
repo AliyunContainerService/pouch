@@ -62,5 +62,6 @@ func (mgr *ImageManager) LoadImage(ctx context.Context, imageName string, tarstr
 	if merrs.Size() != 0 {
 		return fmt.Errorf("fails to load image: %v", merrs.Error())
 	}
+	mgr.LogImageEvent(ctx, imageName, imageName, "load")
 	return nil
 }

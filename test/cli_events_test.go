@@ -89,11 +89,19 @@ func (suite *PouchEventsSuite) TestExecDieEventWorks(c *check.C) {
 
 	// check output contains exec_die event
 	lines := delEmptyStrInSlice(strings.Split(output, "\n"))
-	if len(lines) != 1 {
+	if len(lines) != 3 {
 		c.Errorf("unexpected output %s: should just contains 1 line", output)
 	}
 
-	if err := checkContainerEvent(lines[0], "exec_die"); err != nil {
+	if err := checkContainerEvent(lines[0], "exec_create"); err != nil {
+		c.Errorf("exec_create event check error: %v", err)
+	}
+
+	if err := checkContainerEvent(lines[1], "exec_start"); err != nil {
+		c.Errorf("exec_start event check error: %v", err)
+	}
+
+	if err := checkContainerEvent(lines[2], "exec_die"); err != nil {
 		c.Errorf("exec_die event check error: %v", err)
 	}
 }
