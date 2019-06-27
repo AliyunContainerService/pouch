@@ -45,18 +45,25 @@ func (suite *APIImageMetricsSuite) checkAction(c *check.C, label string) {
 	countBefore, countSuccessBefore := GetMetric(c,
 		key,
 		keySuccess)
+	countAdd := 0
 	switch label {
 	case "pull":
 		PullImage(c, helloworldImage)
+		countAdd = 1
 	case "delete":
 		resp, err := request.Delete("/images/" + helloworldImage)
 		c.Assert(err, check.IsNil)
 		CheckRespStatus(c, resp, 204)
+		countAdd = 1
+	case "delete_nonImage":
+		_, err := request.Delete("/images/" + "nonImage")
+		c.Assert(err, check.NotNil)
+		countAdd = 0
 	}
 
 	count, successCount := GetMetric(c,
 		key,
 		keySuccess)
-	c.Assert(count, check.Equals, countBefore+1)
-	c.Assert(successCount, check.Equals, countSuccessBefore+1)
+	c.Assert(count, check.Equals, countBefore+countAdd)
+	c.Assert(successCount, check.Equals, countSuccessBefore+countAdd)
 }

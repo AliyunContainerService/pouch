@@ -131,7 +131,6 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 
 	label := util_metrics.ActionDeleteLabel
 	defer func(start time.Time) {
-		metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 		metrics.ImageActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
 
@@ -153,10 +152,12 @@ func (s *Server) removeImage(ctx context.Context, rw http.ResponseWriter, req *h
 	}
 
 	if err := s.ImageMgr.RemoveImage(ctx, name, isForce); err != nil {
+		metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 		return err
 	}
 
 	metrics.ImageSuccessActionsCounter.WithLabelValues(label).Inc()
+	metrics.ImageActionsCounter.WithLabelValues(label).Inc()
 	rw.WriteHeader(http.StatusNoContent)
 	return nil
 }
