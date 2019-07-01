@@ -151,9 +151,6 @@ func setupFlags(cmd *cobra.Command) {
 
 // runDaemon prepares configs, setups essential details and runs pouchd daemon.
 func runDaemon(cmd *cobra.Command) error {
-	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
-		return fmt.Errorf("failed to load daemon file: %s", err)
-	}
 
 	// parse log driver config
 	logOptMap, err := opts.ParseLogOptions(cfg.DefaultLogConfig.LogDriver, logOpts)
@@ -163,6 +160,10 @@ func runDaemon(cmd *cobra.Command) error {
 
 	if len(logOptMap) > 0 {
 		cfg.DefaultLogConfig.LogOpts = logOptMap
+	}
+
+	if err := loadDaemonFile(cfg, cmd.Flags()); err != nil {
+		return fmt.Errorf("failed to load daemon file: %s", err)
 	}
 
 	//user specifies --version or -v, print version and return.
