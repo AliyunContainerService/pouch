@@ -104,7 +104,7 @@ When backporting some fixes to existing released version, we will checkout backp
 
 ### Commit Rules
 
-Actually in PouchContainer, we take two rules serious when committing:
+Actually in PouchContainer, we take three rules serious when committing:
 
 * [Commit Message](#commit-message)
 * [Commit Content](#commit-content)
