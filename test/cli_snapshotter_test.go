@@ -32,7 +32,7 @@ func (suite *PouchSnapshotterSuite) TearDownTest(c *check.C) {
 
 // TestNotSetSnapshotter tests default snapshotter to run pouchd
 func (suite *PouchSnapshotterSuite) TestNotSetSnapshotter(c *check.C) {
-	dcfg, err := StartDefaultDaemon()
+	dcfg, err := StartDefaultDaemon(nil)
 	c.Assert(err, check.IsNil)
 
 	defer dcfg.KillDaemon()
@@ -50,7 +50,9 @@ func (suite *PouchSnapshotterSuite) TestNotSetSnapshotter(c *check.C) {
 
 // TestSetDefaultSnapshotter tests set default snapshotter driver to run pouchd
 func (suite *PouchSnapshotterSuite) TestSetDefaultSnapshotter(c *check.C) {
-	dcfg, err := StartDefaultDaemon("--snapshotter", "overlayfs")
+	dcfg, err := StartDefaultDaemon(map[string]interface{}{
+		"snapshotter": "overlayfs",
+	})
 	c.Assert(err, check.IsNil)
 
 	defer dcfg.KillDaemon()
@@ -67,7 +69,9 @@ func (suite *PouchSnapshotterSuite) TestSetDefaultSnapshotter(c *check.C) {
 
 // TestOldSnapshotterNotClean tests old snapshotter driver not clean and then set a new one
 func (suite *PouchSnapshotterSuite) TestOldSnapshotterNotClean(c *check.C) {
-	dcfg, err := StartDefaultDaemon("--snapshotter", "overlayfs")
+	dcfg, err := StartDefaultDaemon(map[string]interface{}{
+		"snapshotter": "overlayfs",
+	})
 	c.Assert(err, check.IsNil)
 
 	fileSystemInfo, err := mount.Lookup(dcfg.HomeDir)
@@ -83,12 +87,16 @@ func (suite *PouchSnapshotterSuite) TestOldSnapshotterNotClean(c *check.C) {
 	dcfg.KillDaemon()
 	time.Sleep(10 * time.Second)
 
-	_, err = StartDefaultDaemon("--snapshotter", "btrfs")
+	_, err = StartDefaultDaemon(map[string]interface{}{
+		"snapshotter": "btrfs",
+	})
 	fmt.Printf("start pouchd failed:%s", err.Error())
 	c.Assert(err, check.NotNil)
 
 	// clean image
-	dcfg, err = StartDefaultDaemon("--snapshotter", "overlayfs")
+	dcfg, err = StartDefaultDaemon(map[string]interface{}{
+		"snapshotter": "overlayfs",
+	})
 	c.Assert(err, check.IsNil)
 
 	result = RunWithSpecifiedDaemon(dcfg, "rmi", busyboxImage)
@@ -98,7 +106,10 @@ func (suite *PouchSnapshotterSuite) TestOldSnapshotterNotClean(c *check.C) {
 
 // TestAllowMultiSnapshotter tests pouchd with two snapshotter
 func (suite *PouchSnapshotterSuite) TestAllowMultiSnapshotter(c *check.C) {
-	dcfg, err := StartDefaultDaemon("--snapshotter", "overlayfs", "--allow-multi-snapshotter")
+	dcfg, err := StartDefaultDaemon(map[string]interface{}{
+		"snapshotter":             "overlayfs",
+		"allow-multi-snapshotter": true,
+	})
 	c.Assert(err, check.IsNil)
 
 	fileSystemInfo, err := mount.Lookup(dcfg.HomeDir)
@@ -114,14 +125,19 @@ func (suite *PouchSnapshotterSuite) TestAllowMultiSnapshotter(c *check.C) {
 	dcfg.KillDaemon()
 	time.Sleep(10 * time.Second)
 
-	dcfg, err = StartDefaultDaemon("--snapshotter", "btrfs", "--allow-multi-snapshotter")
+	dcfg, err = StartDefaultDaemon(map[string]interface{}{
+		"snapshotter":             "btrfs",
+		"allow-multi-snapshotter": true,
+	})
 	c.Assert(err, check.IsNil)
 
 	dcfg.KillDaemon()
 	time.Sleep(10 * time.Second)
 
 	// clean image
-	dcfg, err = StartDefaultDaemon("--snapshotter", "overlayfs")
+	dcfg, err = StartDefaultDaemon(map[string]interface{}{
+		"snapshotter": "overlayfs",
+	})
 	c.Assert(err, check.IsNil)
 
 	result = RunWithSpecifiedDaemon(dcfg, "rmi", busyboxImage)
