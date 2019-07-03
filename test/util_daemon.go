@@ -2,9 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/command"
@@ -43,22 +40,13 @@ func GetRootDir() (string, error) {
 	return got.PouchRootDir, nil
 }
 
-// StartDefaultDaemonDebug starts a daemon with default configuration and debug on.
-func StartDefaultDaemonDebug(args ...string) (*daemon.Config, error) {
+// StartDefaultDaemon starts a daemon with all default configuration and debug off.
+func StartDefaultDaemon(configMap map[string]interface{}, args ...string) (*daemon.Config, error) {
 	cfg := daemon.NewConfig()
 	cfg.Debug = true
 
-	cfg.NewArgs(args...)
-
-	return &cfg, cfg.StartDaemon()
-}
-
-// StartDefaultDaemon starts a daemon with all default configuration and debug off.
-func StartDefaultDaemon(args ...string) (*daemon.Config, error) {
-	cfg := daemon.NewConfig()
-	cfg.Debug = false
-
-	cfg.NewArgs(args...)
+	cfg.Cfg = configMap
+	cfg.Args = append(cfg.Args, args...)
 
 	return &cfg, cfg.StartDaemon()
 }
@@ -72,44 +60,12 @@ func RestartDaemon(cfg *daemon.Config) error {
 // RunWithSpecifiedDaemon run pouch command with --host parameter
 func RunWithSpecifiedDaemon(d *daemon.Config, cmd ...string) *icmd.Result {
 	var sock string
-
-	// Find the first -l or --listen parameter and use it.
-	for _, v := range d.Args {
-		if strings.Contains(v, "-l") || strings.Contains(v, "--listen") {
-			if strings.Contains(v, "--listen-cri") {
-				continue
-			}
-			if strings.Contains(v, "=") {
-				sock = strings.Split(v, "=")[1]
-			} else {
-				sock = strings.Fields(v)[1]
-			}
-			break
+	if v, ok := d.Cfg["listen"].([]string); ok {
+		if len(v) > 0 {
+			sock = v[0]
 		}
 	}
-	args := append(append([]string{"--host"}, sock), cmd...)
+
+	args := append([]string{"--host", sock}, cmd...)
 	return command.PouchRun(args...)
-}
-
-// CreateConfigFile create configuration file and marshal cfg.
-func CreateConfigFile(path string, cfg interface{}) error {
-	idx := strings.LastIndex(path, "/")
-	if _, err := os.Stat(path[0:idx]); os.IsNotExist(err) {
-		os.Mkdir(path[0:idx], os.ModePerm)
-	}
-
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	s, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(file, "%s", s)
-	file.Sync()
-
-	defer file.Close()
-	return nil
 }

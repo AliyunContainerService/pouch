@@ -531,7 +531,7 @@ func (suite *PouchNetworkSuite) TestNetworkDisconnect(c *check.C) {
 // and 'network disconnect' after restart daemon.
 func (suite *PouchNetworkSuite) TestNetworkConnectWithRestart(c *check.C) {
 	// start the test pouch daemon
-	dcfg, err := StartDefaultDaemonDebug()
+	dcfg, err := StartDefaultDaemon(nil)
 	if err != nil {
 		c.Skip("daemon start failed.")
 	}

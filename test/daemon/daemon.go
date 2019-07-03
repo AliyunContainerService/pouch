@@ -1,11 +1,13 @@
 package daemon
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -18,12 +20,14 @@ import (
 
 // For pouch daemon test, we launched another pouch daemon.
 const (
-	DaemonLog     = "/tmp/pouchd.log"
-	PouchdBin     = "pouchd"
-	HomeDir       = "/tmp/test/pouch"
-	Listen        = "unix:///tmp/test/pouch/pouchd.sock"
-	ContainerdAdd = "/tmp/test/pouch/containerd.sock"
-	Pidfile       = "/tmp/test/pouch/pouch.pid"
+	DaemonLog        = "/tmp/pouchd.log"
+	PouchdBin        = "pouchd"
+	HomeDir          = "/tmp/test/pouch"
+	Listen           = "unix:///tmp/test/pouch/pouchd.sock"
+	StreamServerPort = "10020"
+	ContainerdAdd    = "/tmp/test/pouch/containerd.sock"
+	Pidfile          = "/tmp/test/pouch/pouch.pid"
+	ConfigFile       = "/tmp/test-config.json"
 )
 
 // Config is the configuration of pouch daemon.
@@ -34,15 +38,19 @@ type Config struct {
 	// Daemon startup arguments.
 	Args []string
 
+	// Daemon startup config.
+	Cfg map[string]interface{}
+
 	// pouchd binary location
 	Bin string
 
 	// The following args are all MUST required,
 	// in case the new daemon conflicts with existing ones.
-	Listen         string
-	HomeDir        string
-	ContainerdAddr string
-	Pidfile        string
+	Listen           string
+	StreamServerPort string
+	HomeDir          string
+	ContainerdAddr   string
+	Pidfile          string
 
 	// pid of pouchd
 	Pid int
@@ -64,6 +72,7 @@ func NewConfig() Config {
 	result.Args = make([]string, 0, 1)
 
 	result.Listen = Listen
+	result.StreamServerPort = StreamServerPort
 	result.HomeDir = HomeDir
 	result.ContainerdAddr = ContainerdAdd
 	result.Pidfile = Pidfile
@@ -74,52 +83,14 @@ func NewConfig() Config {
 	return result
 }
 
-// NewArgs is used to construct args according to the struct Config and input.
-func (d *Config) NewArgs(args ...string) {
-	// Append all default configuration to d.Args if they exists
-	// For the rest args in parameter, they must follow the pouchd args usage.
-	if len(d.Listen) != 0 {
-		d.Args = append(d.Args, "--listen="+d.Listen)
-	}
-	if len(d.HomeDir) != 0 {
-		d.Args = append(d.Args, "--home-dir="+d.HomeDir)
-	}
-	if len(d.ContainerdAddr) != 0 {
-		d.Args = append(d.Args, "--containerd="+d.ContainerdAddr)
-	}
-	if len(d.Pidfile) != 0 {
-		d.Args = append(d.Args, "--pidfile="+d.Pidfile)
-	}
-
-	if len(args) != 0 {
-		d.Args = append(d.Args, args...)
-	}
-}
-
 // IsDaemonUp checks if the pouchd is launched.
 func (d *Config) IsDaemonUp() bool {
-	// if pouchd is started with -l option, use the first listen address
 	var sock string
-
-	for _, v := range d.Args {
-		if strings.Contains(v, "-l") || strings.Contains(v, "--listen") {
-			if strings.Contains(v, "--listen-cri") {
-				continue
+	if v, ok := d.Cfg["listen"].([]string); ok {
+		for _, host := range v {
+			if strings.HasPrefix(host, "unix") {
+				sock = host
 			}
-			if strings.Contains(v, "=") {
-				sock = strings.Split(v, "=")[1]
-				break
-			} else {
-				sock = strings.Fields(v)[1]
-				break
-			}
-		}
-	}
-
-	for _, v := range d.Args {
-		if strings.Contains(v, "--tlsverify") {
-			// TODO: need to verify server with TLS
-			return true
 		}
 	}
 
@@ -132,9 +103,36 @@ func (d *Config) IsDaemonUp() bool {
 
 // StartDaemon starts pouchd
 func (d *Config) StartDaemon() error {
+	d.Args = append(d.Args, "--config-file="+ConfigFile)
 	cmd := exec.Command(d.Bin, d.Args...)
 
+	// set default config
+	if d.Cfg == nil {
+		d.Cfg = make(map[string]interface{})
+	}
+	if _, ok := d.Cfg["listen"]; !ok {
+		d.Cfg["listen"] = []string{d.Listen}
+	}
+	if _, ok := d.Cfg["home-dir"]; !ok {
+		d.Cfg["home-dir"] = d.HomeDir
+	}
+	if _, ok := d.Cfg["containerd"]; !ok {
+		d.Cfg["containerd"] = d.ContainerdAddr
+	}
+	if _, ok := d.Cfg["pidfile"]; !ok {
+		d.Cfg["pidfile"] = d.Pidfile
+	}
+	if _, ok := d.Cfg["cri-config"]; !ok {
+		d.Cfg["cri-config"] = map[string]string{
+			"stream-server-port": d.StreamServerPort,
+		}
+	}
+
 	var err error
+	if err := CreateConfigFile(ConfigFile, d.Cfg); err != nil {
+		return err
+	}
+
 	d.LogFile, err = os.Create(d.LogPath)
 	if err != nil {
 		return fmt.Errorf("failed to create log file %s, err %s", d.LogPath, err)
@@ -210,4 +208,56 @@ func (d *Config) KillDaemon() {
 
 		d.LogFile.Close()
 	}
+}
+
+// CreateConfigFile create configuration file and marshal cfg.
+// Merge the default config to it if the default config exists.
+func CreateConfigFile(path string, cfg interface{}) error {
+	defaultCfg := make(map[string]interface{})
+	defaultCfgPath := "/etc/pouch/config.json"
+	if _, err := os.Stat(defaultCfgPath); !os.IsNotExist(err) {
+		byt, err := ioutil.ReadFile(defaultCfgPath)
+		if err != nil {
+			return fmt.Errorf("failed to read default config: %v", err)
+		}
+
+		if err := json.Unmarshal(byt, &defaultCfg); err != nil {
+			return fmt.Errorf("failed to unmarshal default config: %v", err)
+		}
+	}
+
+	cfgMap := make(map[string]interface{})
+	byt, err := json.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %v", err)
+	}
+	if err := json.Unmarshal(byt, &cfgMap); err != nil {
+		return fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+
+	if cfgMap == nil {
+		cfgMap = make(map[string]interface{})
+	}
+
+	// merge
+	for k, v := range defaultCfg {
+		if _, ok := cfgMap[k]; !ok {
+			cfgMap[k] = v
+		}
+	}
+
+	s, err := json.Marshal(cfgMap)
+	if err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(path, s, 0644); err != nil {
+		return err
+	}
+
+	return nil
 }

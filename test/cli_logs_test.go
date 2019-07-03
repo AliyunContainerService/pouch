@@ -251,7 +251,7 @@ func (suite *PouchLogsSuite) TestSetLogPathInDaemon(c *check.C) {
 	logRootDir := "/tmp/TestSetLogsPathInDaemon"
 	defer os.RemoveAll(logRootDir)
 
-	dcfg, err := StartDefaultDaemon("--log-opt", fmt.Sprintf("root-dir=%s", logRootDir))
+	dcfg, err := StartDefaultDaemon(nil, "--log-opt", fmt.Sprintf("root-dir=%s", logRootDir))
 	c.Assert(err, check.IsNil)
 
 	defer dcfg.KillDaemon()
