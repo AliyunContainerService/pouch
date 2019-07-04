@@ -93,9 +93,12 @@ func mergeContainerMount(mounts []specs.Mount, c *Container, s *specs.Spec) ([]s
 		if !mp.RW {
 			opts = append(opts, "ro")
 		}
-		if pg != "" {
-			opts = append(opts, pg)
+
+		// set rprivate propagation to bind mount if pg is ""
+		if pg == "" {
+			pg = RPrivatePropagationMode
 		}
+		opts = append(opts, pg)
 
 		// TODO: support copy data.
 
