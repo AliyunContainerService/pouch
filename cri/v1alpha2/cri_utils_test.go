@@ -985,10 +985,10 @@ func Test_toCriContainer(t *testing.T) {
 					Config: &apitypes.ContainerConfig{
 						Image: "image",
 						Labels: map[string]string{
-							containerTypeLabelKey: "b",
-							sandboxIDLabelKey:     "sid",
-							"aa":                  "bb",
-							"cc":                  "dd",
+							containerTypeLabelKey:    "b",
+							sandboxIDLabelKey:        "sid",
+							"aa":                     "bb",
+							"cc":                     "dd",
 							annotationPrefix + "aaa": "bbb",
 							annotationPrefix + "ccc": "ddd",
 						},
@@ -1031,10 +1031,10 @@ func Test_toCriContainer(t *testing.T) {
 					Config: &apitypes.ContainerConfig{
 						Image: "image",
 						Labels: map[string]string{
-							containerTypeLabelKey: "b",
-							sandboxIDLabelKey:     "sid",
-							"aa":                  "bb",
-							"cc":                  "dd",
+							containerTypeLabelKey:    "b",
+							sandboxIDLabelKey:        "sid",
+							"aa":                     "bb",
+							"cc":                     "dd",
 							annotationPrefix + "aaa": "bbb",
 							annotationPrefix + "ccc": "ddd",
 						},
@@ -1058,10 +1058,10 @@ func Test_toCriContainer(t *testing.T) {
 					Config: &apitypes.ContainerConfig{
 						Image: "image",
 						Labels: map[string]string{
-							containerTypeLabelKey: "b",
-							sandboxIDLabelKey:     "sid",
-							"aa":                  "bb",
-							"cc":                  "dd",
+							containerTypeLabelKey:    "b",
+							sandboxIDLabelKey:        "sid",
+							"aa":                     "bb",
+							"cc":                     "dd",
 							annotationPrefix + "aaa": "bbb",
 							annotationPrefix + "ccc": "ddd",
 						},

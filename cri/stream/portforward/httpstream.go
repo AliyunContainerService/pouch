@@ -74,8 +74,8 @@ func handleHTTPStreams(ctx context.Context, w http.ResponseWriter, req *http.Req
 		streamChan:            streamChan,
 		streamPairs:           collect.NewSafeMap(),
 		streamCreationTimeout: streamCreationTimeout,
-		pod:       podName,
-		forwarder: portForwarder,
+		pod:                   podName,
+		forwarder:             portForwarder,
 	}
 	h.run(ctx)
 
