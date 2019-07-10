@@ -1108,6 +1108,10 @@ func (mgr *ContainerManager) Rename(ctx context.Context, oldName, newName string
 		"oldName": oldName,
 	}
 
+	if !daemon_config.ValidNamePattern.MatchString(newName) {
+		return fmt.Errorf("Invalid container name (%s), only %s are allowed", newName, daemon_config.ValidNameChars)
+	}
+
 	name := c.Name
 	c.Name = newName
 
