@@ -58,7 +58,8 @@ func (mgr *ContainerManager) ResizeExec(ctx context.Context, execid string, opts
 }
 
 // StartExec executes a new process in container.
-func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig) (err0 error) {
+// timeout = 0 means no timeout
+func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig, timeout int) (err0 error) {
 	// GetExecConfig should not error, since we have done this before call StartExec
 	execConfig, err := mgr.GetExecConfig(ctx, execid)
 	if err != nil {
@@ -161,7 +162,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		ExecID:      execid,
 		IO:          eio,
 		P:           process,
-	}); err != nil {
+	}, timeout); err != nil {
 		return err
 	}
 	return <-attachErrCh

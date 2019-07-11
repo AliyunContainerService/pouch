@@ -69,7 +69,7 @@ func (s *streamRuntime) Exec(ctx context.Context, containerID string, cmd []stri
 		Terminal:  createConfig.Tty,
 	}
 
-	if err := s.containerMgr.StartExec(ctx, execid, attachCfg); err != nil {
+	if err := s.containerMgr.StartExec(ctx, execid, attachCfg, 0); err != nil {
 		return 0, fmt.Errorf("failed to exec for container %q: %v", containerID, err)
 	}
 
