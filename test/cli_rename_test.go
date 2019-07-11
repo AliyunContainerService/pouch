@@ -27,11 +27,11 @@ func (suite *PouchRenameSuite) SetUpSuite(c *check.C) {
 }
 
 func (suite *PouchRenameSuite) TestRenameInvalidName(c *check.C) {
-	name := "myName"
+	name := "TestRenameInvalidName"
 	command.PouchRun("run", "-d", "--name", name, busyboxImage, "top").Assert(c, icmd.Success)
 	defer DelContainerForceMultyTime(c, name)
 
-	res := command.PouchRun("rename", "myName", "new:invalid")
+	res := command.PouchRun("rename", name, "new:invalid")
 	if !strings.Contains(res.Stdout(), "Invalid container name") {
 		check.Commentf("Expected '%s', but got %q", "Invalid container name", res.Stdout())
 	}
