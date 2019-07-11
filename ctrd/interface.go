@@ -46,7 +46,7 @@ type ContainerAPIClient interface {
 	// ContainerStats returns stats of the container.
 	ContainerStats(ctx context.Context, id string) (*containerdtypes.Metric, error)
 	// ExecContainer executes a process in container.
-	ExecContainer(ctx context.Context, process *Process) error
+	ExecContainer(ctx context.Context, process *Process, timeout int) error
 	// ResizeContainer changes the size of the TTY of the exec process running
 	// in the container to the given height and width.
 	ResizeExec(ctx context.Context, id string, execid string, opts types.ResizeOptions) error

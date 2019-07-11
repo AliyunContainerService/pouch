@@ -1146,15 +1146,6 @@ func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenCo
 func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (*runtime.ExecSyncResponse, error) {
 	id := r.GetContainerId()
 
-	timeout := time.Duration(r.GetTimeout()) * time.Second
-	var cancel context.CancelFunc
-	if timeout == 0 {
-		ctx, cancel = context.WithCancel(ctx)
-	} else {
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-	}
-	defer cancel()
-
 	createConfig := &apitypes.ExecCreateConfig{
 		Cmd: r.GetCmd(),
 	}
@@ -1170,7 +1161,8 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 		UseStderr: true,
 		Stderr:    stderrBuf,
 	}
-	if err := c.ContainerMgr.StartExec(ctx, execid, attachCfg); err != nil {
+
+	if err := c.ContainerMgr.StartExec(ctx, execid, attachCfg, int(r.GetTimeout())); err != nil {
 		return nil, fmt.Errorf("failed to start exec for container %q: %v", id, err)
 	}
 

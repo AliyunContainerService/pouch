@@ -86,26 +86,21 @@ func (c *Client) containerStats(ctx context.Context, id string) (*containerdtype
 }
 
 // ExecContainer executes a process in container.
-func (c *Client) ExecContainer(ctx context.Context, process *Process) error {
-	if err := c.execContainer(ctx, process); err != nil {
+func (c *Client) ExecContainer(ctx context.Context, process *Process, timeout int) error {
+	if err := c.execContainer(ctx, process, timeout); err != nil {
 		return convertCtrdErr(err)
 	}
 	return nil
 }
 
 // execContainer executes a process in container.
-func (c *Client) execContainer(ctx context.Context, process *Process) error {
+func (c *Client) execContainer(ctx context.Context, process *Process, timeout int) error {
 	pack, err := c.watch.get(process.ContainerID)
 	if err != nil {
 		return err
 	}
 
 	closeStdinCh := make(chan struct{})
-
-	// make sure the closeStdinCh has been closed.
-	defer func() {
-		close(closeStdinCh)
-	}()
 
 	var (
 		cntrID, execID          = pack.container.ID(), process.ExecID
@@ -137,29 +132,10 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 		return errors.Wrap(err, "failed to exec process")
 	}
 
-	errCh := make(chan error, 1)
-	defer close(errCh)
-
-	go func() {
-		var msg *Message
-
-		if startErr := <-errCh; startErr != nil {
-			msg = &Message{
-				err:      startErr,
-				exitCode: 126,
-				exitTime: time.Now().UTC(),
-			}
-		}
-
-		// success to start which means the cmd is valid and wait
-		// for process.
+	var msg *Message
+	defer func() {
 		if msg == nil {
-			status := <-exitStatus
-			msg = &Message{
-				err:      status.Error(),
-				exitCode: status.ExitCode(),
-				exitTime: status.ExitTime(),
-			}
+			return
 		}
 
 		// XXX: if exec process get run, io should be closed in this function,
@@ -174,13 +150,53 @@ func (c *Client) execContainer(ctx context.Context, process *Process) error {
 		if _, err := execProcess.Delete(context.TODO()); err != nil {
 			logrus.Warnf("failed to delete exec process %s: %s", process.ExecID, err)
 		}
+
 	}()
 
 	// start the exec process
 	if err := execProcess.Start(ctx); err != nil {
-		errCh <- err
-		return err
+		msg = &Message{
+			err:      err,
+			exitCode: 126,
+			exitTime: time.Now().UTC(),
+		}
+		return errors.Wrapf(err, "failed to start exec, exec id %s", execID)
 	}
+	// make sure the closeStdinCh has been closed.
+	close(closeStdinCh)
+
+	t := time.Duration(timeout) * time.Second
+	var timeCh <-chan time.Time
+	if t == 0 {
+		timeCh = make(chan time.Time)
+	} else {
+		timeCh = time.After(t)
+	}
+
+	select {
+	case status := <-exitStatus:
+		msg = &Message{
+			err:      status.Error(),
+			exitCode: status.ExitCode(),
+			exitTime: status.ExitTime(),
+		}
+	case <-timeCh:
+		// ignore the not found error because the process may exit itself before kill
+		if err := execProcess.Kill(ctx, syscall.SIGKILL); err != nil && !errdefs.IsNotFound(err) {
+			// try to force kill the exec process
+			if err := execProcess.Kill(ctx, syscall.SIGTERM); err != nil && !errdefs.IsNotFound(err) {
+				return errors.Wrapf(err, "failed to kill the exec process")
+			}
+		}
+		// wait for process to be killed
+		status := <-exitStatus
+		msg = &Message{
+			err:      errors.Wrapf(status.Error(), "failed to exec process %s, timeout", execID),
+			exitCode: status.ExitCode(),
+			exitTime: status.ExitTime(),
+		}
+	}
+
 	return nil
 }
 

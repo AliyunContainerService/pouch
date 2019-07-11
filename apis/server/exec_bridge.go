@@ -101,7 +101,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 		}
 	}
 
-	if err := s.ContainerMgr.StartExec(ctx, name, attach); err != nil {
+	if err := s.ContainerMgr.StartExec(ctx, name, attach, 0); err != nil {
 		if config.Detach {
 			return err
 		}

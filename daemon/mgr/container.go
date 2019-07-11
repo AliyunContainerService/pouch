@@ -122,7 +122,7 @@ type ContainerMgr interface {
 	CreateExec(ctx context.Context, name string, config *types.ExecCreateConfig) (string, error)
 
 	// StartExec executes a new process in container.
-	StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig) error
+	StartExec(ctx context.Context, execid string, cfg *streams.AttachConfig, timeout int) error
 
 	// InspectExec returns low-level information about exec command.
 	InspectExec(ctx context.Context, execid string) (*types.ContainerExecInspect, error)
