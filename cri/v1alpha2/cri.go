@@ -436,6 +436,13 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
 // sandbox, they should be forcibly terminated.
+// notes:
+// 1. for legacy dockershim style container, lifecycle of podNetwork is bound to container
+// using /proc/$pid/ns/net. When stopping sandbox, we first teardown the pod network, then stop
+// the sandbox container.
+// 2. In newly implementation. We first create an empty netns and setup pod network inside it,
+// which is independent from container lifecycle. When stopping sandbox, we first stop container,
+// then teardown the pod network, which is a reverse operation of RunPodSandbox.
 func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandboxRequest) (*runtime.StopPodSandboxResponse, error) {
 	label := util_metrics.ActionStopLabel
 	defer func(start time.Time) {
@@ -470,10 +477,14 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		logrus.Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
-	// Teardown network of the pod, if it is not in host network mode.
-	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE {
-		if err = c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
-			return nil, fmt.Errorf("failed to teardown network of sandbox %s, ns path: %v", podSandboxID, sandboxMeta.NetNS)
+	// Teardown network of the legacy dockershim style pod, if it is not in host network mode.
+	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE && sandboxMeta.NetNS == "" {
+		container, err := c.ContainerMgr.Get(ctx, podSandboxID)
+		if err != nil {
+			return nil, err
+		}
+		if err = c.teardownNetwork(podSandboxID, containerNetns(container), sandboxMeta.Config); err != nil {
+			return nil, fmt.Errorf("failed to teardown network of sandbox %s, ns path %s: %v", podSandboxID, sandboxMeta.NetNS, err)
 		}
 	}
 
@@ -483,8 +494,11 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
 	}
 
-	// after container stop, no one refer the net namespace, do the clean up job.
-	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE {
+	// After container stop, no one refer the net namespace, do the clean up job.
+	if sandboxNetworkMode(sandboxMeta.Config) != runtime.NamespaceMode_NODE && sandboxMeta.NetNS != "" {
+		if err := c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
+			return nil, fmt.Errorf("failed to teardown network of sandbox %s, ns path %s: %v", podSandboxID, sandboxMeta.NetNS, err)
+		}
 		if err := c.CniMgr.CloseNetNS(sandboxMeta.NetNS); err != nil {
 			return nil, fmt.Errorf("failed to close net ns %s of sandbox %q: %v", sandboxMeta.NetNS, podSandboxID, err)
 		}
