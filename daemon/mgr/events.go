@@ -7,6 +7,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 
 	"github.com/docker/libnetwork"
+	"github.com/sirupsen/logrus"
 )
 
 // LogContainerEvent generates an event related to a container with only the default attributes.
@@ -123,6 +124,18 @@ func (mgr *ContainerManager) updateContainerState(ctx context.Context, id, actio
 
 	c.Lock()
 	defer c.Unlock()
+
+	// NOTE: updateContainerState is async-op and it will be executed with
+	// ContainerMgmt.Remove at the same time. mgr.container will use
+	// memory cache(id <-> container mapping) to get container information.
+	// If the updateContainerState gets the container information before
+	// ContainerMgmt.Remove but the ContainerMgmt.Remove locks first, the
+	// updateContainerState will put the container information into
+	// local disk again. Therefore, we should check the status before update
+	if c.IsDead() {
+		logrus.Warnf("container(%v) is marked dead. no need to update state by action %v", id, action)
+		return nil
+	}
 
 	dirty := true
 	switch action {
