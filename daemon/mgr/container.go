@@ -272,6 +272,16 @@ func (mgr *ContainerManager) Restore(ctx context.Context) error {
 	}
 
 	for _, c := range containers {
+		if c.IsDead() {
+			logrus.Warnf("stop to load container %v because it is dead", c.Key())
+
+			// remove meta.json for container in local disk
+			if err := mgr.Store.Remove(c.Key()); err != nil {
+				logrus.Errorf("failed to remove container %s from meta store: %v", c.ID, err)
+			}
+			continue
+		}
+
 		id := c.Key()
 
 		// NOTE: when pouch is restarting, we need to initialize
