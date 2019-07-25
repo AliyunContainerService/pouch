@@ -318,7 +318,7 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 	}
 
 	var (
-		timeout = 5 * time.Second
+		timeout = 3 * time.Second
 		ch      = make(chan error, 1)
 		task    containerd.Task
 	)
@@ -326,19 +326,28 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 	// for normal shim, this operation should be end less than 1 second,
 	// we give 5 second timeout to believe the shim get locked internal,
 	// return error since we do not want a hang shim affect daemon start
-	pctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	go func() {
-		task, err = lc.Task(pctx, func(fset *cio.FIFOSet) (cio.IO, error) {
-			return c.attachIO(fset, io.InitContainerIO)
-		})
-		ch <- err
-	}()
+	// XXX: when system load is high, make connect to shim fail on retry 3 times
+	for i := 0; i < 3; i++ {
+		pctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		go func() {
+			task, err = lc.Task(pctx, func(fset *cio.FIFOSet) (cio.IO, error) {
+				return c.attachIO(fset, io.InitContainerIO)
+			})
+			ch <- err
+		}()
 
-	select {
-	case <-time.After(timeout):
-		return errors.Wrap(errtypes.ErrTimeout, "failed to connect to shim")
-	case err = <-ch:
+		select {
+		case <-time.After(timeout):
+			if i < 2 {
+				logrus.WithField("container", id).Warn("timeout connect to shim, retry")
+				continue
+			}
+			return errors.Wrap(errtypes.ErrTimeout, "failed to connect to shim")
+		case err = <-ch:
+		}
+
+		break
 	}
 
 	if err != nil {
