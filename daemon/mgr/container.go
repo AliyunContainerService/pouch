@@ -1019,7 +1019,15 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.State.Running {
+	if err := mgr.doPause(ctx, c); err != nil {
+		return err
+	}
+	mgr.LogContainerEvent(ctx, c, "pause")
+	return nil
+}
+
+func (mgr *ContainerManager) doPause(ctx context.Context, c *Container) error {
+	if !c.IsRunning() {
 		return fmt.Errorf("container's status is not running: %s", c.State.Status)
 	}
 
@@ -1033,8 +1041,6 @@ func (mgr *ContainerManager) Pause(ctx context.Context, name string) error {
 		log.With(ctx).Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
-	mgr.LogContainerEvent(ctx, c, "pause")
-
 	return nil
 }
 
@@ -1050,6 +1056,15 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 	c.Lock()
 	defer c.Unlock()
 
+	if err := mgr.doUnpause(ctx, c); err != nil {
+		return err
+	}
+
+	mgr.LogContainerEvent(ctx, c, "unpause")
+	return nil
+}
+
+func (mgr *ContainerManager) doUnpause(ctx context.Context, c *Container) error {
 	if !c.State.Paused {
 		return fmt.Errorf("status(%s) of container %s is not paused", c.State.Status, c.ID)
 	}
@@ -1064,8 +1079,6 @@ func (mgr *ContainerManager) Unpause(ctx context.Context, name string) error {
 		log.With(ctx).Errorf("failed to update meta of container %s: %v", c.ID, err)
 		return err
 	}
-
-	mgr.LogContainerEvent(ctx, c, "unpause")
 	return nil
 }
 
