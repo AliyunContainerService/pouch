@@ -27,6 +27,23 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 	}
 
 	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+	c.Lock()
+	defer c.Unlock()
+
+	if c.IsDead() {
+		return nil, errors.Wrapf(errtypes.ErrConflict, "failed to commit container(%s) which is Dead", c.ID)
+	}
+
+	if c.IsRunning() {
+		if err := mgr.doPause(ctx, c); err != nil {
+			return nil, errors.Wrapf(err, "failed to pause container(%s)", c.ID)
+		}
+		defer func() {
+			if err := mgr.doUnpause(ctx, c); err != nil {
+				log.With(ctx).Warnf("failed to unpause container(%s): %v", c.ID, err)
+			}
+		}()
+	}
 
 	// Image keeps image digest name.
 	_, _, pRef, err := mgr.ImageMgr.CheckReference(ctx, c.Image)
