@@ -138,13 +138,14 @@ func (d *Daemon) Stop() error {
 func (d *Daemon) healthPostCheck() error {
 	var (
 		failureCount  = 0
-		maxRetryCount = 3
+		maxRetryCount = 10
 		client        *containerd.Client
 		err           error
 	)
 
+	// shim v2 has a connect timeout, enlarge the postcheck timeout
 	for ; failureCount < maxRetryCount; failureCount++ {
-		time.Sleep(time.Duration(failureCount*500) * time.Millisecond)
+		time.Sleep(time.Duration(failureCount) * time.Second)
 
 		if client == nil {
 			client, err = containerd.New(d.Address())
