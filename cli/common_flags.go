@@ -97,6 +97,7 @@ func addCommonFlags(flagSet *pflag.FlagSet) *container {
 
 	flagSet.VarP(config.NewVolumes(&c.volume), "volume", "v", "Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be \"ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared\"")
 	flagSet.StringSliceVar(&c.volumesFrom, "volumes-from", nil, "set volumes from other containers, format is <container>[:mode]")
+	flagSet.StringVar(&c.volumeDriver, "volume-driver", "", "set volume driver for container's volumes")
 
 	flagSet.StringVarP(&c.workdir, "workdir", "w", "", "Set the working directory in a container")
 	flagSet.Var(&c.ulimit, "ulimit", "Set container ulimit")
