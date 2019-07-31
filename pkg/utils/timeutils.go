@@ -31,8 +31,8 @@ const (
 var errInvalid = errors.New("invalid time")
 
 // FormatTimeInterval is used to show the time interval from input time to now.
-func FormatTimeInterval(input int64) (formattedTime string, err error) {
-	start := time.Unix(0, input)
+func FormatTimeInterval(sec, nano int64) (formattedTime string, err error) {
+	start := time.Unix(sec, nano)
 	diff := time.Since(start)
 
 	// That should not happen.

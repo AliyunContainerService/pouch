@@ -174,7 +174,7 @@ func (s *Server) getContainers(ctx context.Context, rw http.ResponseWriter, req 
 			ImageID:         c.Image,
 			Command:         strings.Join(c.Config.Cmd, " "),
 			Status:          status,
-			Created:         t.UnixNano(),
+			Created:         t.Unix(),
 			Labels:          c.Config.Labels,
 			HostConfig:      c.HostConfig,
 			NetworkSettings: netSettings,

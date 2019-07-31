@@ -96,7 +96,7 @@ func TestFormatTimeInterval(t *testing.T) {
 			err:      errInvalid,
 		},
 	} {
-		output, err := FormatTimeInterval(tc.input)
+		output, err := FormatTimeInterval(0, tc.input)
 		assert.Equal(t, tc.err, err, tc.name)
 		assert.Equal(t, tc.expected, output, tc.name)
 	}

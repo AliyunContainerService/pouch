@@ -93,7 +93,7 @@ func (p *PsCommand) runPs(args []string) error {
 	display.AddRow([]string{"Name", "ID", "Status", "Created", "Image", "Runtime"})
 
 	for _, c := range containers {
-		created, err := utils.FormatTimeInterval(c.Created)
+		created, err := utils.FormatTimeInterval(c.Created, 0)
 		if err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func (c containerList) Swap(i, j int) {
 
 // Less implements the sort interface.
 func (c containerList) Less(i, j int) bool {
-	iValue := time.Unix(0, c[i].Created)
-	jValue := time.Unix(0, c[j].Created)
+	iValue := time.Unix(c[i].Created, 0)
+	jValue := time.Unix(c[j].Created, 0)
 	return iValue.After(jValue)
 }

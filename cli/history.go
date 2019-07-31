@@ -91,7 +91,7 @@ func (h *HistoryCommand) runHistory(args []string) error {
 		}
 
 		if h.flagHuman {
-			created, err = utils.FormatTimeInterval(entry.Created)
+			created, err = utils.FormatTimeInterval(0, entry.Created)
 			if err != nil {
 				return err
 			}

@@ -388,7 +388,7 @@ func (c *Container) FormatStatus() (string, error) {
 			return "", err
 		}
 
-		startAt, err := utils.FormatTimeInterval(start.UnixNano())
+		startAt, err := utils.FormatTimeInterval(0, start.UnixNano())
 		if err != nil {
 			return "", err
 		}
@@ -404,7 +404,7 @@ func (c *Container) FormatStatus() (string, error) {
 			return "", err
 		}
 
-		finishAt, err := utils.FormatTimeInterval(finish.UnixNano())
+		finishAt, err := utils.FormatTimeInterval(0, finish.UnixNano())
 		if err != nil {
 			return "", err
 		}
