@@ -16,6 +16,7 @@ type container struct {
 	tty                 bool
 	volume              config.Volumes
 	volumesFrom         []string
+	volumeDriver        string
 	runtime             string
 	env                 []string
 	envfile             []string
@@ -228,9 +229,10 @@ func (c *container) config() (*types.ContainerCreateConfig, error) {
 		},
 
 		HostConfig: &types.HostConfig{
-			Binds:       c.volume.Value(),
-			VolumesFrom: c.volumesFrom,
-			Runtime:     c.runtime,
+			Binds:        c.volume.Value(),
+			VolumesFrom:  c.volumesFrom,
+			VolumeDriver: c.volumeDriver,
+			Runtime:      c.runtime,
 			Resources: types.Resources{
 				// cpu
 				CPUShares:  c.cpushare,

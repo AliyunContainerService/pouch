@@ -143,6 +143,8 @@ func (m *pluginManager) scanPluginDir() ([]string, error) {
 		}
 	}
 
+	logrus.Debugf("get all plugins path(%v)", names)
+
 	// DeDuplicate.
 	return utils.DeDuplicate(names), nil
 
@@ -184,6 +186,8 @@ func (m *pluginManager) retryLoad(name string, retry bool) (*Plugin, error) {
 			m.Lock()
 			delete(m.plugins, name)
 			m.Unlock()
+
+			logrus.Errorf("failed to probe volume plugin(%s), err(%v)", name, err)
 
 			return nil, err
 		}
@@ -274,7 +278,7 @@ func (m *pluginManager) newPluginFromJSON(name string, jsonContent []byte) (*Plu
 // generatePluginPaths generates all possible paths.
 func generatePluginPaths(dir, name, ext string) []string {
 	return []string{
-		filepath.Join(dir, name),
 		filepath.Join(dir, name+ext),
+		filepath.Join(dir, name, name+ext),
 	}
 }

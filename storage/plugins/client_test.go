@@ -91,7 +91,7 @@ func TestCallService(t *testing.T) {
 
 	mux.HandleFunc("/testService", func(w http.ResponseWriter, r *http.Request) {
 		method := r.Method
-		contentType := r.Header.Get("Content-Type")
+		contentType := r.Header.Get("Accept")
 
 		if method != http.MethodPost {
 			t.Fatalf("PluginServer expect %s method, but got %s method",
@@ -99,7 +99,7 @@ func TestCallService(t *testing.T) {
 		}
 
 		if contentType != defaultContentType {
-			t.Fatalf("PluginServer expect Content-Type is %s,but got %s",
+			t.Fatalf("PluginServer expect Accept is %s,but got %s",
 				defaultContentType, contentType)
 		}
 
