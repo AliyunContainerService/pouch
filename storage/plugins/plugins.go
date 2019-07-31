@@ -3,7 +3,11 @@ package plugins
 var manager = &pluginManager{
 	plugins:         make(map[string]*Plugin),
 	pluginSockPaths: []string{"/run/pouch/plugins", "/run/docker/plugins"},
-	pluginSpecPaths: []string{"/etc/pouch/plugins", "/var/lib/pouch/plugins"},
+	pluginSpecPaths: []string{
+		"/etc/pouch/plugins",
+		"/var/lib/pouch/plugins",
+		"/etc/docker/plugins",
+		"/var/lib/docker/plugins"},
 }
 
 // Get returns the requested plugin.

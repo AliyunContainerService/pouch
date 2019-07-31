@@ -82,7 +82,7 @@ func (cli *PluginClient) newPluginRequest(path string, data io.Reader) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	request.Header.Set("Content-Type", defaultContentType)
+	request.Header.Set("Accept", defaultContentType)
 
 	return request, nil
 }
