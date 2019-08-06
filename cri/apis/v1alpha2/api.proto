@@ -417,6 +417,7 @@ message LinuxPodSandboxStatus {
 enum PodSandboxState {
     SANDBOX_READY    = 0;
     SANDBOX_NOTREADY = 1;
+    SANDBOX_NOTFOUND = 100;
 }
 
 // PodSandboxStatus contains the status of the PodSandbox.
