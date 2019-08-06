@@ -354,6 +354,11 @@ func setupNamespaces(ctx context.Context, c *Container, specWrapper *SpecWrapper
 		return err
 	}
 
+	// create cgroup namespace spec
+	if err := setupCgroupNamespace(ctx, c, specWrapper); err != nil {
+		return err
+	}
+
 	// create uts namespace spec
 	return setupUtsNamespace(ctx, c, specWrapper)
 }
@@ -508,6 +513,22 @@ func setupUtsNamespace(ctx context.Context, c *Container, specWrapper *SpecWrapp
 	default:
 		ns := specs.LinuxNamespace{Type: specs.UTSNamespace}
 		setNamespace(s, ns)
+	}
+	return nil
+}
+
+func setupCgroupNamespace(ctx context.Context, c *Container, specWrapper *SpecWrapper) error {
+	s := specWrapper.s
+	cgroupMode := c.HostConfig.CgroupMode
+	switch {
+	case isHost(cgroupMode):
+		removeNamespace(s, specs.CgroupNamespace)
+	default:
+		// cgroup netns is support after linux kernel 4.6
+		if _, err := os.Stat(fmt.Sprintf("/proc/self/ns/%s", specs.CgroupNamespace)); err == nil {
+			ns := specs.LinuxNamespace{Type: specs.CgroupNamespace}
+			setNamespace(s, ns)
+		}
 	}
 	return nil
 }

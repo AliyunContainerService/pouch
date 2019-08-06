@@ -40,6 +40,12 @@ type HostConfig struct {
 	// Cgroup to use for the container.
 	Cgroup string `json:"Cgroup,omitempty"`
 
+	// Determine the container has own cgroup namespace, valid values is host
+	// `"host"` means own host cgroup namespace, default or other values will share
+	// host cgroup namespace. Note cgroup namespace only take effect for kernel > 4.6
+	//
+	CgroupMode string `json:"CgroupMode,omitempty"`
+
 	// Initial console size, as an `[height, width]` array. (Windows only)
 	// Max Items: 2
 	// Min Items: 2
@@ -189,6 +195,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 
 		Cgroup string `json:"Cgroup,omitempty"`
 
+		CgroupMode string `json:"CgroupMode,omitempty"`
+
 		ConsoleSize []*int64 `json:"ConsoleSize"`
 
 		ContainerIDFile string `json:"ContainerIDFile,omitempty"`
@@ -274,6 +282,8 @@ func (m *HostConfig) UnmarshalJSON(raw []byte) error {
 	m.CapDrop = dataAO0.CapDrop
 
 	m.Cgroup = dataAO0.Cgroup
+
+	m.CgroupMode = dataAO0.CgroupMode
 
 	m.ConsoleSize = dataAO0.ConsoleSize
 
@@ -372,6 +382,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 
 		Cgroup string `json:"Cgroup,omitempty"`
 
+		CgroupMode string `json:"CgroupMode,omitempty"`
+
 		ConsoleSize []*int64 `json:"ConsoleSize"`
 
 		ContainerIDFile string `json:"ContainerIDFile,omitempty"`
@@ -454,6 +466,8 @@ func (m HostConfig) MarshalJSON() ([]byte, error) {
 	dataAO0.CapDrop = m.CapDrop
 
 	dataAO0.Cgroup = m.Cgroup
+
+	dataAO0.CgroupMode = m.CgroupMode
 
 	dataAO0.ConsoleSize = m.ConsoleSize
 
