@@ -2519,6 +2519,12 @@ definitions:
             description: "A list of additional groups that the container process will run as."
             items:
               type: "string"
+          CgroupMode:
+            type: "string"
+            description: |
+                     Determine the container has own cgroup namespace, valid values is host 
+                     `"host"` means own host cgroup namespace, default or other values will share
+                     host cgroup namespace. Note cgroup namespace only take effect for kernel > 4.6
           IpcMode:
             type: "string"
             description: |
