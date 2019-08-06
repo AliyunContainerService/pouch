@@ -472,6 +472,10 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 	for _, container := range containers {
 		err = c.ContainerMgr.Stop(ctx, container.ID, defaultStopTimeout)
 		if err != nil {
+			if errtypes.IsNotfound(err) {
+				log.With(ctx).Warningf("container %q of sandbox %q not found", container.ID, podSandboxID)
+				continue
+			}
 			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 		log.With(ctx).Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
@@ -490,8 +494,14 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 
 	// Stop the sandbox container.
 	err = c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
+	// if the sandbox container has been removed by 'pouch rm', treat this situation as success
+	// in order to teardown the network.
 	if err != nil {
-		return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+		if errtypes.IsNotfound(err) {
+			log.With(ctx).Warningf("sandbox container %q not found", podSandboxID)
+		} else {
+			return nil, fmt.Errorf("failed to stop sandbox %q: %v", podSandboxID, err)
+		}
 	}
 
 	// After container stop, no one refer the net namespace, do the clean up job.
@@ -537,6 +547,10 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 	// Remove all containers in the sandbox.
 	for _, container := range containers {
 		if err := c.ContainerMgr.Remove(ctx, container.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
+			if errtypes.IsNotfound(err) {
+				log.With(ctx).Warningf("container %q of sandbox %q not found", container.ID, podSandboxID)
+				continue
+			}
 			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 
@@ -545,7 +559,11 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 
 	// Remove the sandbox container.
 	if err := c.ContainerMgr.Remove(ctx, podSandboxID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
-		return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+		if errtypes.IsNotfound(err) {
+			log.With(ctx).Warningf("sandbox container %q not found", podSandboxID)
+		} else {
+			return nil, fmt.Errorf("failed to remove sandbox %q: %v", podSandboxID, err)
+		}
 	}
 
 	// Cleanup the sandbox root directory.
@@ -580,8 +598,25 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	}
 	sandboxMeta := res.(*metatypes.SandboxMeta)
 
+	// partially created sandbox.
+	// kubelet won't call this method because the partially created sandbox
+	// are removed from ListPodSandbox interface.
+	if sandboxMeta.Config == nil {
+		return nil, fmt.Errorf("failed to get status of partially sandbox %q: %v", podSandboxID, err)
+	}
+
 	sandbox, err := c.ContainerMgr.Get(ctx, podSandboxID)
 	if err != nil {
+		if errtypes.IsNotfound(err) {
+			return &runtime.PodSandboxStatusResponse{
+				Status: &runtime.PodSandboxStatus{
+					Id:        podSandboxID,
+					State:     runtime.PodSandboxState_SANDBOX_NOTFOUND,
+					Metadata:  sandboxMeta.Config.Metadata,
+					CreatedAt: 1,
+				},
+			}, nil
+		}
 		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
 	}
 
@@ -597,10 +632,6 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		state = runtime.PodSandboxState_SANDBOX_READY
 	}
 
-	metadata, err := parseSandboxName(sandbox.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get status of sandbox %q: %v", podSandboxID, err)
-	}
 	labels, annotations := extractLabels(sandbox.Config.Labels)
 
 	nsOpts := sandboxMeta.Config.GetLinux().GetSecurityContext().GetNamespaceOptions()
@@ -621,10 +652,10 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 	}
 
 	status := &runtime.PodSandboxStatus{
-		Id:          sandbox.ID,
+		Id:          podSandboxID,
 		State:       state,
 		CreatedAt:   createdAt,
-		Metadata:    metadata,
+		Metadata:    sandboxMeta.Config.Metadata,
 		Labels:      labels,
 		Annotations: annotations,
 		Network:     &runtime.PodSandboxNetworkStatus{Ip: ip},
@@ -652,28 +683,35 @@ func (c *CriManager) ListPodSandbox(ctx context.Context, r *runtime.ListPodSandb
 		metrics.PodActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
 	}(time.Now())
 
-	opts := &mgr.ContainerListOption{All: true}
-	filter := func(c *mgr.Container) bool {
-		return c.Config.Labels[containerTypeLabelKey] == containerTypeLabelSandbox
-	}
-	opts.FilterFunc = filter
-
-	// Filter *only* (sandbox) containers.
-	sandboxList, err := c.ContainerMgr.List(ctx, opts)
+	sandboxMap, err := c.SandboxStore.List()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list sandbox: %v", err)
+		return nil, fmt.Errorf("failed to list sandbox from SandboxStore: %v", err)
 	}
 
-	sandboxList, err = c.filterInvalidSandboxes(ctx, sandboxList)
-	if err != nil {
-		return nil, fmt.Errorf("failed to filter invalid sandboxes: %v", err)
-	}
+	sandboxes := make([]*runtime.PodSandbox, 0, len(sandboxMap))
+	for id, metadata := range sandboxMap {
+		s, err := c.ContainerMgr.Get(ctx, id)
+		// metadata exists but container not found
+		if err != nil {
+			sm, ok := metadata.(*metatypes.SandboxMeta)
+			if !ok || sm == nil || sm.Config == nil {
+				// partially created sandbox.
+				continue
+			}
 
-	sandboxes := make([]*runtime.PodSandbox, 0, len(sandboxList))
-	for _, s := range sandboxList {
+			sandboxes = append(sandboxes, &runtime.PodSandbox{
+				Id:          id,
+				Metadata:    sm.Config.Metadata,
+				State:       runtime.PodSandboxState_SANDBOX_NOTFOUND,
+				Labels:      sm.Config.Labels,
+				Annotations: sm.Config.Annotations,
+				CreatedAt:   1,
+			})
+			continue
+		}
 		sandbox, err := toCriSandbox(s)
 		if err != nil {
-			// TODO: log an error message?
+			log.With(ctx).Warningf("failed to parse state of sandbox %q: %v", id, err)
 			continue
 		}
 		sandboxes = append(sandboxes, sandbox)
