@@ -131,7 +131,7 @@ func (lf *JSONLogFile) WriteLogMessage(msg *logger.LogMessage) error {
 // checkRotate rotates logs according to maxSize and maxFile parameters
 // TODO: after rotating logs, a notice should be made to the log reader
 func (lf *JSONLogFile) checkRotate() error {
-	if lf.maxSize == 0 || lf.maxFile < 2 || lf.currentSize < lf.maxSize {
+	if lf.maxSize == 0 || lf.currentSize < lf.maxSize {
 		// no need to rotate
 		return nil
 	}
