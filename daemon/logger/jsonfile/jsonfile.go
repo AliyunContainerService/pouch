@@ -12,6 +12,9 @@ import (
 	"github.com/alibaba/pouch/pkg/bytefmt"
 )
 
+const defaultMaxSize = uint64(100 * 1024 * 1024)
+const defaultMaxFile = 2
+
 var jsonFilePathName = "json.log"
 
 //MarshalFunc is the function of marshal the logMessage
@@ -61,8 +64,8 @@ func Init(info logger.Info) (logger.LogDriver, error) {
 func NewJSONLogFile(logPath string, perms os.FileMode, logConfig map[string]string, marshalFunc MarshalFunc) (*JSONLogFile, error) {
 	var (
 		currentSize uint64
-		maxSize     uint64
-		maxFiles    = 1
+		maxSize     = defaultMaxSize
+		maxFiles    = defaultMaxFile
 	)
 	f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, perms)
 	if err != nil {
