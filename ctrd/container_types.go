@@ -36,4 +36,5 @@ type Process struct {
 	ExecID      string
 	IO          *containerio.IO
 	P           *specs.Process
+	Detach      bool
 }

@@ -26,6 +26,10 @@ func (client *APIClient) ContainerCreateExec(ctx context.Context, name string, c
 
 // ContainerStartExec starts exec process.
 func (client *APIClient) ContainerStartExec(ctx context.Context, execID string, config *types.ExecStartConfig) (net.Conn, *bufio.Reader, error) {
+	if config.Detach {
+		_, err := client.post(ctx, "/exec/"+execID+"/start", url.Values{}, config, nil)
+		return nil, nil, err
+	}
 	header := map[string][]string{
 		"Content-Type": {"text/plain"},
 	}

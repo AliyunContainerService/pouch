@@ -105,6 +105,7 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 	var (
 		cntrID, execID          = pack.container.ID(), process.ExecID
 		withStdin, withTerminal = process.IO.Stream().Stdin() != nil, process.P.Terminal
+		msg                     *Message
 	)
 
 	// create exec process in container
@@ -132,12 +133,10 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 		return errors.Wrap(err, "failed to exec process")
 	}
 
-	var msg *Message
-	defer func() {
+	cleanup := func(msg *Message) {
 		if msg == nil {
 			return
 		}
-
 		// XXX: if exec process get run, io should be closed in this function,
 		for _, hook := range c.hooks {
 			if err := hook(process.ExecID, msg); err != nil {
@@ -150,20 +149,30 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 		if _, err := execProcess.Delete(context.TODO()); err != nil {
 			logrus.Warnf("failed to delete exec process %s: %s", process.ExecID, err)
 		}
-
-	}()
-
+	}
 	// start the exec process
 	if err := execProcess.Start(ctx); err != nil {
-		msg = &Message{
-			err:      err,
-			exitCode: 126,
-			exitTime: time.Now().UTC(),
-		}
+		close(closeStdinCh)
 		return errors.Wrapf(err, "failed to start exec, exec id %s", execID)
 	}
 	// make sure the closeStdinCh has been closed.
 	close(closeStdinCh)
+
+	if process.Detach {
+		go func() {
+			status := <-exitStatus
+			cleanup(&Message{
+				err:      status.Error(),
+				exitCode: status.ExitCode(),
+				exitTime: status.ExitTime(),
+			})
+		}()
+		return nil
+	}
+
+	defer func() {
+		cleanup(msg)
+	}()
 
 	t := time.Duration(timeout) * time.Second
 	var timeCh <-chan time.Time

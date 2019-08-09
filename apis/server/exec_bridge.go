@@ -74,7 +74,6 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 		stdout  io.Writer
 	)
 
-	// TODO(huamin.thm): support detach exec process through http post method
 	if !config.Detach {
 		stdin, stdout, closeFn, err = openHijackConnection(rw)
 		if err != nil {
@@ -100,6 +99,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 			attach.UseStderr, attach.Stderr = true, stdcopy.NewStdWriter(stdout, stdcopy.Stderr)
 		}
 	}
+	attach.Detach = config.Detach
 
 	if err := s.ContainerMgr.StartExec(ctx, name, attach, 0); err != nil {
 		if config.Detach {

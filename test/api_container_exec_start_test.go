@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/test/environment"
@@ -167,4 +168,106 @@ func (suite *APIContainerExecStartSuite) TestContainerExecStartPaused(c *check.C
 func (suite *APIContainerExecStartSuite) TestContainerExecStartDup(c *check.C) {
 	// TODO: missing case
 	helpwantedForMissingCase(c, "container api exec start twice case")
+}
+
+// TestContainerExecDetach tests start exec process with detach
+func (suite *APIContainerExecStartSuite) TestContainerExecDetach(c *check.C) {
+	cname := "TestContainerExecDetach"
+
+	CreateBusyboxContainerOk(c, cname)
+	defer DelContainerForceMultyTime(c, cname)
+	StartContainerOk(c, cname)
+
+	// verify that we can obtain the exec process's exitCode = 1
+	obj := map[string]interface{}{
+		"Cmd":    []string{"sleep", "2", "&&", "exit", "1"},
+		"Detach": true,
+	}
+	body := request.WithJSONBody(obj)
+	resp, err := request.Post("/containers/"+cname+"/exec", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	var execCreateResp types.ExecCreateResp
+	err = request.DecodeBody(&execCreateResp, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	execid := execCreateResp.ID
+
+	// inspect the exec before exec start
+	resp, err = request.Get("/exec/" + execid + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	var execInspect01 types.ContainerExecInspect
+	request.DecodeBody(&execInspect01, resp.Body)
+
+	c.Assert(execInspect01.Running, check.Equals, false)
+	c.Assert(execInspect01.ExitCode, check.Equals, int64(0))
+
+	// start the exec
+	{
+		resp, _, _, err := StartContainerExec(c, execid, false, true)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 200)
+	}
+
+	// sleep 2s to wait the process exit
+	time.Sleep(2 * time.Second)
+
+	// inspect the exec after exec start
+	resp, err = request.Get("/exec/" + execid + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	var execInspect02 types.ContainerExecInspect
+	request.DecodeBody(&execInspect02, resp.Body)
+
+	c.Assert(execInspect02.Running, check.Equals, false)
+	c.Assert(execInspect02.ExitCode, check.Equals, int64(1))
+
+	// verify exitCode = 0
+	obj = map[string]interface{}{
+		"Cmd":    []string{"ls"},
+		"Detach": true,
+	}
+	body = request.WithJSONBody(obj)
+	resp, err = request.Post("/containers/"+cname+"/exec", body)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 201)
+
+	var execCreateResp01 types.ExecCreateResp
+	err = request.DecodeBody(&execCreateResp01, resp.Body)
+	c.Assert(err, check.IsNil)
+
+	execid = execCreateResp01.ID
+
+	// inspect the exec before exec start
+	resp, err = request.Get("/exec/" + execid + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	var execInspect03 types.ContainerExecInspect
+	request.DecodeBody(&execInspect03, resp.Body)
+
+	c.Assert(execInspect03.Running, check.Equals, false)
+	c.Assert(execInspect03.ExitCode, check.Equals, int64(0))
+
+	// start the exec
+	{
+		resp, _, _, err := StartContainerExec(c, execid, false, true)
+		c.Assert(err, check.IsNil)
+		CheckRespStatus(c, resp, 200)
+	}
+
+	// inspect the exec after exec start
+	resp, err = request.Get("/exec/" + execid + "/json")
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 200)
+
+	var execInspect04 types.ContainerExecInspect
+	request.DecodeBody(&execInspect04, resp.Body)
+
+	c.Assert(execInspect04.Running, check.Equals, false)
+	c.Assert(execInspect04.ExitCode, check.Equals, int64(0))
 }

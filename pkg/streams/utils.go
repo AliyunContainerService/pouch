@@ -20,6 +20,7 @@ type Pipes struct {
 // AttachConfig is used to describe how to attach the client's stream to
 // the process's stream.
 type AttachConfig struct {
+	Detach   bool
 	Terminal bool
 
 	// CloseStdin means if the stdin of client's stream is closed by the

@@ -11,8 +11,8 @@ import (
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/user"
-	"github.com/docker/docker/daemon/caps"
 
+	"github.com/docker/docker/daemon/caps"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
@@ -66,8 +66,10 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		return err
 	}
 
+	execConfig.Lock()
 	c, err := mgr.container(execConfig.ContainerID)
 	if err != nil {
+		execConfig.Unlock()
 		return err
 	}
 
@@ -79,6 +81,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	uid, gid, additionalGids, err := user.Get(c.GetSpecificBasePath(user.PasswdFile),
 		c.GetSpecificBasePath(user.GroupFile), execConfig.User, c.HostConfig.GroupAdd)
 	if err != nil {
+		execConfig.Unlock()
 		return err
 	}
 
@@ -116,6 +119,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 
 	// set exec process ulimit, ulimit not decided by exec config
 	if err := setupRlimits(ctx, c.HostConfig, &specs.Spec{Process: process}); err != nil {
+		execConfig.Unlock()
 		return err
 	}
 
@@ -140,6 +144,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	cfg.CloseStdin = true
 	eio, err := mgr.initExecIO(execid, cfg.UseStdin)
 	if err != nil {
+		execConfig.Unlock()
 		return err
 	}
 
@@ -147,10 +152,13 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 
 	defer func() {
 		if err0 != nil {
+			execConfig.Lock()
 			// set exec exit status
 			execConfig.Running = false
 			exitCode := 126
 			execConfig.ExitCode = int64(exitCode)
+			execConfig.Exited = true
+			execConfig.Unlock()
 			eio.Close()
 			mgr.IOs.Remove(execid)
 		}
@@ -159,11 +167,13 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	execConfig.Running = true
 	mgr.LogContainerEvent(ctx, c, "exec_start")
 
+	execConfig.Unlock()
 	if err := mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,
 		ExecID:      execid,
 		IO:          eio,
 		P:           process,
+		Detach:      cfg.Detach,
 	}, timeout); err != nil {
 		return err
 	}
@@ -185,7 +195,8 @@ func (mgr *ContainerManager) InspectExec(ctx context.Context, execid string) (*t
 		Arguments:  args,
 		Entrypoint: entrypoint,
 	}
-
+	execConfig.Lock()
+	defer execConfig.Unlock()
 	return &types.ContainerExecInspect{
 		ID: execConfig.ExecID,
 		// FIXME: try to use the correct running status of exec
@@ -206,6 +217,11 @@ func (mgr *ContainerManager) GetExecConfig(ctx context.Context, execid string) (
 	if !ok {
 		return nil, fmt.Errorf("invalid exec config type")
 	}
+	execConfig.Lock()
+	if execConfig.Exited {
+		execConfig.Used = true
+	}
+	execConfig.Unlock()
 	return execConfig, nil
 }
 
