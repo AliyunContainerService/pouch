@@ -329,3 +329,24 @@ func (suite *PouchExecSuite) TestExecWithPrivileged(c *check.C) {
 	ret.Assert(c, icmd.Success)
 	c.Assert(ret.Stdout(), check.Equals, "/tmp/sdb\n")
 }
+
+// TestExecWithDetach tests exec with -d can work
+func (suite *PouchExecSuite) TestExecWithDetach(c *check.C) {
+	name := "exec-detach"
+	command.PouchRun("run", "-d", "--name", name, busyboxImage, "sleep", "100000").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, name)
+
+	chWait := make(chan struct{})
+	var res *icmd.Result
+	go func() {
+		res = command.PouchRun("exec", "-d", name, "sleep", "20")
+		close(chWait)
+	}()
+
+	select {
+	case <-chWait:
+		res.Assert(c, icmd.Success)
+	case <-time.After(5 * time.Second):
+		c.Errorf("timeout waiting for `pouch exec` to exit")
+	}
+}

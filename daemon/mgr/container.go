@@ -1880,10 +1880,14 @@ func (mgr *ContainerManager) execExitedAndRelease(id string, m *ctrd.Message) er
 	if !ok {
 		return fmt.Errorf("invalid exec config type")
 	}
+	execConfig.Lock()
 
 	execConfig.ExitCode = int64(m.ExitCode())
 	execConfig.Running = false
 	execConfig.Error = m.RawError()
+	execConfig.Exited = true
+
+	execConfig.Unlock()
 
 	eio := mgr.IOs.Get(id)
 	if eio == nil {
@@ -1993,12 +1997,14 @@ func (mgr *ContainerManager) execProcessGC() {
 			// if unused exec processes are found, we will tag them, and clean
 			// them in next loop, so that we can ensure exec process can get
 			// correct exit code.
+			execConfig.Lock()
 			if execConfig.WaitForClean {
 				cleaned++
 				mgr.ExecProcesses.Remove(id)
-			} else if !execConfig.Running {
+			} else if execConfig.Exited && execConfig.Used {
 				execConfig.WaitForClean = true
 			}
+			execConfig.Unlock()
 		}
 
 		if cleaned > 0 {

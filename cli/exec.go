@@ -71,7 +71,6 @@ func (e *ExecCommand) runExec(args []string) error {
 	id := args[0]
 	command := args[1:]
 
-	// TODO(huamin.thm): exec detach not implement now, detach mode not hijack connect
 	createExecConfig := &types.ExecCreateConfig{
 		Cmd:          command,
 		Tty:          e.Terminal,
@@ -102,6 +101,10 @@ func (e *ExecCommand) runExec(args []string) error {
 	conn, reader, err := apiClient.ContainerStartExec(ctx, createResp.ID, startExecConfig)
 	if err != nil {
 		return fmt.Errorf("failed to start exec: %v", err)
+	}
+
+	if e.Detach {
+		return nil
 	}
 
 	// handle stdio.

@@ -104,6 +104,8 @@ type ContainerFilter func(*Container) bool
 
 // ContainerExecConfig is the config a process exec.
 type ContainerExecConfig struct {
+	sync.Mutex
+
 	// ExecID identifies the ID of this exec
 	ExecID string
 
@@ -127,6 +129,12 @@ type ContainerExecConfig struct {
 
 	// Environment variables
 	Env []string
+
+	// Used means execConfig has been seen by user
+	Used bool
+
+	// Exited means exec process exit or not
+	Exited bool
 }
 
 // AttachConfig wraps some infos of attaching.

@@ -228,6 +228,11 @@ func StartContainerExec(c *check.C, execid string, tty bool, detach bool) (*http
 		"Tty":    tty,
 	}
 
+	if detach {
+		resp, err := request.Post("/exec/"+execid+"/start",
+			request.WithJSONBody(obj))
+		return resp, nil, nil, err
+	}
 	return request.Hijack("/exec/"+execid+"/start",
 		request.WithHeader("Connection", "Upgrade"),
 		request.WithHeader("Upgrade", "tcp"),
