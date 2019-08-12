@@ -63,7 +63,7 @@ func GenTLSConfig(key, cert, ca string) (*tls.Config, error) {
 }
 
 // NewHTTPClient creates a http client using url and tlsconfig
-func NewHTTPClient(u *url.URL, tlsConfig *tls.Config, dialTimeout time.Duration) *http.Client {
+func NewHTTPClient(u *url.URL, tlsConfig *tls.Config, dialTimeout, cliTimeout time.Duration) *http.Client {
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
@@ -81,7 +81,11 @@ func NewHTTPClient(u *url.URL, tlsConfig *tls.Config, dialTimeout time.Duration)
 		tr.DialContext = dial
 	}
 
-	return &http.Client{
+	cli := &http.Client{
 		Transport: tr,
 	}
+	if cliTimeout != 0 {
+		cli.Timeout = cliTimeout
+	}
+	return cli
 }

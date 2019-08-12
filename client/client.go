@@ -52,7 +52,7 @@ func NewAPIClient(host string, tls TLSConfig) (CommonAPIClient, error) {
 
 	tlsConfig := generateTLSConfig(host, tls)
 
-	httpCli := httputils.NewHTTPClient(newURL, tlsConfig, defaultTimeout)
+	httpCli := httputils.NewHTTPClient(newURL, tlsConfig, defaultTimeout, 0)
 
 	basePath := generateBaseURL(newURL, tls)
 
