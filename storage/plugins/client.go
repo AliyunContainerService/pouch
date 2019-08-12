@@ -19,6 +19,7 @@ import (
 var (
 	maxRequestTimeout  = 30 * time.Second
 	defaultDialTimeout = 10 * time.Second
+	defaultCliTimeout  = 600 * time.Second
 )
 
 // defaultContentType is the default Content-Type accepted and sent by the plugins.
@@ -61,7 +62,7 @@ func NewPluginClient(addr string, tlsconfig *TLSConfig) (*PluginClient, error) {
 		}
 	}
 
-	httpCli := httputils.NewHTTPClient(url, config, defaultDialTimeout)
+	httpCli := httputils.NewHTTPClient(url, config, defaultDialTimeout, defaultCliTimeout)
 
 	return &PluginClient{
 		address: addr,
