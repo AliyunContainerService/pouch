@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
@@ -577,4 +578,33 @@ func (suite *PouchRunVolumeSuite) TestRunWithVolumesOpts(c *check.C) {
 	}
 
 	c.Assert(found, check.Equals, true)
+}
+
+func (suite *PouchRunVolumeSuite) TestWorkingDirWithVolume(c *check.C) {
+	cname := "TestWorkingDirWithVolume"
+	workingDir := "/home/admin/working"
+	res := command.PouchRun("run", "-d", "-v", "/tmp/hostworkingdir:/home/admin/working",
+		"--name", cname, "-w", workingDir, busyboxImage, "top")
+
+	defer DelContainerForceMultyTime(c, cname)
+	defer os.RemoveAll("/tmp/hostworkingdir")
+	res.Assert(c, icmd.Success)
+
+	res = command.PouchRun("exec", cname, "pwd")
+	res.Assert(c, icmd.Success)
+
+	stdout := res.Stdout()
+
+	if strings.TrimSpace(stdout) != workingDir {
+		c.Fatalf("wrong working dir, expect(%s), get(%s)", workingDir, stdout)
+	}
+
+	res = command.PouchRun("exec", cname, "ls", "-l")
+	res.Assert(c, icmd.Success)
+
+	stdout = res.Stdout()
+	parts := strings.Split(stdout, "\n")
+	if len(parts) > 2 {
+		c.Fatalf("working not empty (%s)", stdout)
+	}
 }

@@ -516,24 +516,31 @@ func (c *Container) CleanRootfsSnapshotDirs() error {
 // else we should return the real path inside volume.
 func (c *Container) GetResourcePath(baseFS, path string) string {
 	var (
-		rootPath string
+		resourcePath string
 	)
 
+	path = filepath.Clean(path)
+
 	// first check if the dir in volume
+	// the volumes must be sorted before.
 	for _, mp := range c.Mounts {
-		if !strings.HasPrefix(path, mp.Destination) {
+		dest := filepath.Clean(mp.Destination)
+		if !strings.HasPrefix(path, dest) {
 			continue
 		}
 
-		if mp.Source == mp.Destination {
-			rootPath = "/"
-		} else {
-			rootPath = strings.TrimSuffix(mp.Source, mp.Destination)
+		diffPath := strings.TrimPrefix(path, dest)
+
+		// in case: path=/mnt/abcdef, dest=/mnt/abc
+		if diffPath != "" && !filepath.IsAbs(diffPath) {
+			continue
 		}
+
+		resourcePath = filepath.Join(mp.Source, filepath.Clean(diffPath))
 	}
 
-	if rootPath != "" {
-		return filepath.Join(rootPath, path)
+	if resourcePath != "" {
+		return filepath.Clean(resourcePath)
 	}
 	return filepath.Join(baseFS, path)
 }
