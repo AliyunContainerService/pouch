@@ -176,6 +176,48 @@ func (c *Client) getResolver(ctx context.Context, authConfig *types.AuthConfig, 
 	return newImageResolver(refToName, opt), availableRef, nil
 }
 
+func (c *Client) preparePushResolver(authConfig *types.AuthConfig, ref string, resolverOpt docker.ResolverOptions) (remotes.Resolver, error) {
+	var (
+		username = ""
+		secret   = ""
+		insecure = c.isInsecureDomain(ref)
+	)
+
+	if authConfig != nil {
+		username = authConfig.Username
+		secret = authConfig.Password
+	}
+
+	tr := &http.Transport{
+		Proxy: proxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:        10,
+		IdleConnTimeout:     30 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: insecure,
+		},
+		ExpectContinueTimeout: 5 * time.Second,
+	}
+
+	options := docker.ResolverOptions{
+		Tracker:   resolverOpt.Tracker,
+		PlainHTTP: insecure,
+		Credentials: func(host string) (string, string, error) {
+			// Only one host
+			return username, secret, nil
+		},
+		Client: &http.Client{
+			Transport: tr,
+		},
+	}
+	return docker.NewResolver(options), nil
+}
+
 // GetWeightDevice Convert weight device from []*types.WeightDevice to []specs.LinuxWeightDevice
 func GetWeightDevice(devs []*types.WeightDevice) ([]specs.LinuxWeightDevice, error) {
 	var stat syscall.Stat_t

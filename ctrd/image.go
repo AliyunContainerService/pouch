@@ -200,7 +200,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 
 	pushTracker := docker.NewInMemoryTracker()
 
-	resolver, _, err := c.ResolveImage(ctx, ref, []string{ref}, authConfig, docker.ResolverOptions{
+	resolver, err := c.preparePushResolver(authConfig, ref, docker.ResolverOptions{
 		Tracker: pushTracker,
 	})
 	if err != nil {
