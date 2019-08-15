@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"context"
 	"path"
 
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -19,17 +20,17 @@ func NewFakeDriver(name string) Driver {
 }
 
 // Name returns the fake driver's name.
-func (f *FakeDriver) Name(ctx Context) string {
+func (f *FakeDriver) Name(ctx context.Context) string {
 	return f.name
 }
 
 // StoreMode returns the fake driver's store model.
-func (f *FakeDriver) StoreMode(ctx Context) VolumeStoreMode {
+func (f *FakeDriver) StoreMode(ctx context.Context) VolumeStoreMode {
 	return UseLocalMetaStore | LocalStore
 }
 
 // Create a fake volume
-func (f *FakeDriver) Create(ctx Context, id types.VolumeContext) (*types.Volume, error) {
+func (f *FakeDriver) Create(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
 	// generate the mountPath
 	mountPath := path.Join("/fake", id.Name)
 
@@ -37,11 +38,11 @@ func (f *FakeDriver) Create(ctx Context, id types.VolumeContext) (*types.Volume,
 }
 
 // Remove a fake volume
-func (f *FakeDriver) Remove(ctx Context, volume *types.Volume) error {
+func (f *FakeDriver) Remove(ctx context.Context, volume *types.Volume) error {
 	return nil
 }
 
 // Path returns fake volume's path.
-func (f *FakeDriver) Path(ctx Context, volume *types.Volume) (string, error) {
+func (f *FakeDriver) Path(ctx context.Context, volume *types.Volume) (string, error) {
 	return path.Join("/fake", volume.Name), nil
 }

@@ -15,10 +15,10 @@ import (
 	"github.com/alibaba/pouch/client"
 	criconfig "github.com/alibaba/pouch/cri/config"
 	"github.com/alibaba/pouch/network"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -159,7 +159,7 @@ func (cfg *Config) UseSystemd() bool {
 func (cfg *Config) Validate() error {
 	// for debug config file.
 	b, _ := json.Marshal(cfg)
-	logrus.Debugf("daemon config: (%s)", string(b))
+	log.With(nil).Debugf("daemon config: (%s)", string(b))
 
 	// deduplicated elements in slice if there is any.
 	cfg.Listen = utils.DeDuplicate(cfg.Listen)
@@ -199,7 +199,7 @@ func (cfg *Config) MergeConfigurations(flagSet *pflag.FlagSet) error {
 	contents, err := ioutil.ReadFile(cfg.ConfigFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logrus.Debugf("the %v doesn't exist: %v", cfg.ConfigFile, err)
+			log.With(nil).Debugf("the %v doesn't exist: %v", cfg.ConfigFile, err)
 			return nil
 		}
 		return fmt.Errorf("failed to read contents from config file %s: %s", cfg.ConfigFile, err)

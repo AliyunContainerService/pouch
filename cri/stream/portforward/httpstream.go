@@ -12,8 +12,7 @@ import (
 	"github.com/alibaba/pouch/cri/stream/httpstream"
 	"github.com/alibaba/pouch/cri/stream/httpstream/spdy"
 	"github.com/alibaba/pouch/pkg/collect"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // httpStreamReceived is the httpstream.NewStreamHandler for port
@@ -58,7 +57,7 @@ func handleHTTPStreams(ctx context.Context, w http.ResponseWriter, req *http.Req
 	}
 	streamChan := make(chan httpstream.Stream, 1)
 
-	logrus.Infof("upgrading port forward response")
+	log.With(ctx).Infof("upgrading port forward response")
 	upgrader := spdy.NewResponseUpgrader()
 	conn := upgrader.UpgradeResponse(w, req, httpStreamReceived(streamChan))
 	if conn == nil {
@@ -66,7 +65,7 @@ func handleHTTPStreams(ctx context.Context, w http.ResponseWriter, req *http.Req
 	}
 	defer conn.Close()
 
-	logrus.Infof("setting forwarding streaming connection idle timeout to %v", idleTimeout)
+	log.With(ctx).Infof("setting forwarding streaming connection idle timeout to %v", idleTimeout)
 	conn.SetIdleTimeout(idleTimeout)
 
 	h := &httpStreamHandler{
@@ -99,11 +98,11 @@ type httpStreamHandler struct {
 func (h *httpStreamHandler) getStreamPair(requestID string) (*httpStreamPair, bool) {
 	p, ok := h.streamPairs.Get(requestID).Result()
 	if ok {
-		logrus.Infof("portforward of cri: found existing stream pair for request %s", requestID)
+		log.With(nil).Infof("portforward of cri: found existing stream pair for request %s", requestID)
 		return p.(*httpStreamPair), false
 	}
 
-	logrus.Infof("portforward of cri: creating new stream pair for request %s", requestID)
+	log.With(nil).Infof("portforward of cri: creating new stream pair for request %s", requestID)
 
 	pair := newPortForwardPair(requestID)
 	h.streamPairs.Put(requestID, pair)
@@ -125,7 +124,7 @@ func (h *httpStreamHandler) monitorStreamPair(p *httpStreamPair, timeout <-chan 
 		msg := fmt.Sprintf("portforward of cri: timed out waiting for streams of request %s", p.requestID)
 		p.printError(msg)
 	case <-p.complete:
-		logrus.Infof("portforward of cri: successfully received error and data streams of request %s", p.requestID)
+		log.With(nil).Infof("portforward of cri: successfully received error and data streams of request %s", p.requestID)
 	}
 	h.removeStreamPair(p.requestID)
 }
@@ -145,17 +144,17 @@ func (h *httpStreamHandler) requestID(stream httpstream.Stream) string {
 // invoking portForward for each complete stream pair. The loop exits
 // when the httpstream.Connection is closed.
 func (h *httpStreamHandler) run(ctx context.Context) {
-	logrus.Infof("portforward of cri: waiting for streams")
+	log.With(ctx).Infof("portforward of cri: waiting for streams")
 
 	for {
 		select {
 		case <-h.conn.CloseChan():
-			logrus.Infof("portforward of cri: upgraded connection closed")
+			log.With(ctx).Infof("portforward of cri: upgraded connection closed")
 			return
 		case stream := <-h.streamChan:
 			requestID := h.requestID(stream)
 			streamType := stream.Headers().Get(constant.StreamType)
-			logrus.Infof("portForward of cri: received new stream of type %s, request %s", streamType, requestID)
+			log.With(ctx).Infof("portForward of cri: received new stream of type %s, request %s", streamType, requestID)
 
 			p, created := h.getStreamPair(requestID)
 			if created {
@@ -180,9 +179,9 @@ func (h *httpStreamHandler) portForward(ctx context.Context, p *httpStreamPair) 
 	portString := p.dataStream.Headers().Get(constant.PortHeader)
 	port, _ := strconv.ParseInt(portString, 10, 32)
 
-	logrus.Infof("portforward of cri: invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
+	log.With(ctx).Infof("portforward of cri: invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
 	err := h.forwarder.PortForward(ctx, h.pod, int32(port), p.dataStream)
-	logrus.Infof("portforward of cri: done invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
+	log.With(ctx).Infof("portforward of cri: done invoking forwarder.PortForward for port %s of request %s", portString, p.requestID)
 
 	if err != nil {
 		msg := fmt.Sprintf("portforward of cri: error forwarding port %d to pod %s: %v", port, h.pod, err)

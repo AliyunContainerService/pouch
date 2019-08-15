@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/storage/quota"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -19,13 +19,13 @@ var (
 func run(cmd *cobra.Command) error {
 	_, err := quota.StartQuotaDriver(dir)
 	if err != nil {
-		logrus.Errorf("failed to start quota driver for %s, err: %v", dir, err)
+		log.With(nil).Errorf("failed to start quota driver for %s, err: %v", dir, err)
 		return err
 	}
 
 	err = quota.SetDiskQuota(dir, size, quotaID)
 	if err != nil {
-		logrus.Errorf("failed to set subtree for %s, quota id: %d, err: %v", dir, quotaID, err)
+		log.With(nil).Errorf("failed to set subtree for %s, quota id: %d, err: %v", dir, quotaID, err)
 		return err
 	}
 
@@ -34,7 +34,7 @@ func run(cmd *cobra.Command) error {
 	}
 
 	if err := quota.SetQuotaForDir(dir, quotaID); err != nil {
-		logrus.Errorf("failed to set quota id for %s recursively, quota id: %d, err: %v", dir, quotaID, err)
+		log.With(nil).Errorf("failed to set quota id for %s recursively, quota id: %d, err: %v", dir, quotaID, err)
 		return err
 	}
 
@@ -64,7 +64,7 @@ func main() {
 
 	setupFlags(cmdServe)
 	if err := cmdServe.Execute(); err != nil {
-		logrus.Error(err)
+		log.With(nil).Error(err)
 		os.Exit(1)
 	}
 }

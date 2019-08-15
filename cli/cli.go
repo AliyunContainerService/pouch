@@ -5,12 +5,11 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
-	"time"
 
 	"github.com/alibaba/pouch/client"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/fatih/structs"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -65,24 +64,10 @@ func (c *Cli) SetFlags() *Cli {
 func (c *Cli) NewAPIClient() {
 	client, err := client.NewAPIClient(c.Option.host, c.Option.TLS)
 	if err != nil {
-		logrus.Fatal(err)
+		log.With(nil).Fatal(err)
 	}
 
 	c.APIClient = client
-}
-
-// InitLog initializes log Level and log format of client.
-func (c *Cli) InitLog() {
-	if c.Option.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
-		logrus.Infof("start client at debug level")
-	}
-
-	formatter := &logrus.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339Nano,
-	}
-	logrus.SetFormatter(formatter)
 }
 
 // Client returns API client towards daemon.
@@ -108,7 +93,7 @@ func (c *Cli) AddCommand(parent, child Command) {
 	childCmd.DisableFlagsInUseLine = true
 
 	childCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		c.InitLog()
+		log.Init(c.Debug)
 		c.NewAPIClient()
 	}
 

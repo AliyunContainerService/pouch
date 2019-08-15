@@ -14,13 +14,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/BurntSushi/toml"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/defaults"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -51,7 +51,6 @@ type Daemon struct {
 	binaryName string
 	rootDir    string
 	stateDir   string
-	logger     *logrus.Entry
 	waitCh     chan struct{}
 	stopCh     chan struct{}
 }
@@ -79,9 +78,10 @@ func Start(ctx context.Context, rootDir, stateDir string, opts ...Opt) (*Daemon,
 		binaryName: binaryName,
 		rootDir:    rootDir,
 		stateDir:   stateDir,
-		logger:     logrus.WithField("module", "ctrd-supervisord"),
 		stopCh:     make(chan struct{}),
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"module": "ctrd-supervisord"})
 
 	for _, opt := range opts {
 		if err := opt(d); err != nil {
@@ -96,16 +96,16 @@ func Start(ctx context.Context, rootDir, stateDir string, opts ...Opt) (*Daemon,
 		}
 	}
 
-	if err := d.runContainerd(); err != nil {
+	if err := d.runContainerd(ctx); err != nil {
 		return nil, err
 	}
 
-	if err := d.healthPostCheck(); err != nil {
+	if err := d.healthPostCheck(ctx); err != nil {
 		return nil, err
 	}
-	d.logger.WithField("containerd-pid", d.pid).Infof("success to start containerd")
+	log.WithFields(ctx, map[string]interface{}{"containerd-pid": d.pid}).Infof("success to start containerd")
 
-	go d.monitor()
+	go d.monitor(ctx)
 	return d, nil
 }
 
@@ -125,7 +125,7 @@ func (d *Daemon) Stop() error {
 		}
 
 		if utils.IsProcessAlive(d.pid) {
-			d.logger.WithField("containerd-pid", d.pid).Warnf("containerd didn't stop within 15secs, killing it")
+			log.With(nil).WithField("containerd-pid", d.pid).Warnf("containerd didn't stop within 15secs, killing it")
 			utils.KillProcess(d.pid)
 		}
 	}
@@ -135,7 +135,7 @@ func (d *Daemon) Stop() error {
 	return nil
 }
 
-func (d *Daemon) healthPostCheck() error {
+func (d *Daemon) healthPostCheck(ctx context.Context) error {
 	var (
 		failureCount  = 0
 		maxRetryCount = 10
@@ -150,7 +150,7 @@ func (d *Daemon) healthPostCheck() error {
 		if client == nil {
 			client, err = containerd.New(d.Address())
 			if err != nil {
-				d.logger.WithField("healthcheck", "connection").Warnf("failed to connect to containerd: %v", err)
+				log.With(ctx).WithField("healthcheck", "connection").Warnf("failed to connect to containerd: %v", err)
 				client = nil
 				continue
 			}
@@ -161,12 +161,12 @@ func (d *Daemon) healthPostCheck() error {
 		ok, err := client.IsServing(tctx)
 		cancel()
 		if err != nil {
-			d.logger.WithField("healthcheck", "serving").Warnf("failed to check IsServing interface: %v", err)
+			log.With(ctx).WithField("healthcheck", "serving").Warnf("failed to check IsServing interface: %v", err)
 			continue
 		}
 
 		if !ok {
-			d.logger.WithField("healthcheck", "serving").Warnf("containerd is not serving")
+			log.With(ctx).WithField("healthcheck", "serving").Warnf("containerd is not serving")
 			continue
 		}
 
@@ -175,9 +175,9 @@ func (d *Daemon) healthPostCheck() error {
 	}
 
 	if ok, err := d.isContainerdProcess(d.pid); err != nil {
-		d.logger.Warnf("failed to get containerd process status by pid %v: %v", d.pid, err)
+		log.With(ctx).Warnf("failed to get containerd process status by pid %v: %v", d.pid, err)
 	} else if ok {
-		d.logger.WithField("pid", d.pid).Warnf("try to shutdown containerd because failed to connect containerd")
+		log.With(ctx).WithField("pid", d.pid).Warnf("try to shutdown containerd because failed to connect containerd")
 		utils.KillProcess(d.pid)
 	}
 	return fmt.Errorf("health post check failed")
@@ -192,7 +192,10 @@ func (d *Daemon) isContainerdProcess(pid int) (bool, error) {
 	// we can confirm the pid is not owned by containerd.
 	output, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", pid))
 	if err != nil {
-		logrus.WithField("module", "ctrd").WithField("containerd-pid", pid).Infof("got err: %v", err)
+		log.WithFields(nil, map[string]interface{}{
+			"module":         "ctrd",
+			"containerd-pid": pid,
+		}).Infof("got err: %v", err)
 		return false, nil
 	}
 	processPath := strings.TrimSpace(string(output))
@@ -207,7 +210,7 @@ func (d *Daemon) isContainerdProcess(pid int) (bool, error) {
 	return processPath == containerdPath, nil
 }
 
-func (d *Daemon) runContainerd() error {
+func (d *Daemon) runContainerd(ctx context.Context) error {
 	pid, err := d.getContainerdPid()
 	if err != nil {
 		return err
@@ -217,7 +220,10 @@ func (d *Daemon) runContainerd() error {
 	// 1. the stdout of containerd will be redirected to /dev/null
 	// 2. how to make sure the address is the same one?
 	if pid != -1 {
-		logrus.WithField("module", "ctrd").WithField("containerd-pid", pid).Infof("containerd is still running")
+		log.WithFields(nil, map[string]interface{}{
+			"module":         "ctrd",
+			"containerd-pid": pid,
+		}).Infof("containerd is still running")
 		if err := d.setContainerdPid(pid); err != nil {
 			utils.KillProcess(d.pid)
 			return fmt.Errorf("failed to save the pid into %s: %v", d.pidPath(), err)
@@ -262,13 +268,13 @@ func (d *Daemon) runContainerd() error {
 		defer close(d.waitCh)
 
 		if err := cmd.Start(); err != nil {
-			logrus.Errorf("containerd failed to start: %v", err)
+			log.With(nil).Errorf("containerd failed to start: %v", err)
 			pidChan <- -1
 			return
 		}
 		pidChan <- cmd.Process.Pid
 		if err := cmd.Wait(); err != nil {
-			logrus.Errorf("containerd exits: %v", err)
+			log.With(nil).Errorf("containerd exits: %v", err)
 		}
 	}()
 
@@ -288,7 +294,7 @@ func (d *Daemon) runContainerd() error {
 //
 // NOTE: if retry time is too much and restart still fails, the monitor
 // will exit the whole process.
-func (d *Daemon) monitor() {
+func (d *Daemon) monitor(ctx context.Context) {
 	var (
 		maxRetryCount = 10
 		count         = 0
@@ -297,19 +303,19 @@ func (d *Daemon) monitor() {
 	for {
 		select {
 		case <-d.stopCh:
-			d.logger.Info("receiving stop containerd action and stop monitor")
+			log.With(ctx).Info("receiving stop containerd action and stop monitor")
 			return
 		default:
 		}
 
 		if count > maxRetryCount {
-			d.logger.Warnf("failed to restart containerd in time and exit whole process")
+			log.With(ctx).Warnf("failed to restart containerd in time and exit whole process")
 			os.Exit(1)
 		}
 
 		pid, err := d.getContainerdPid()
 		if err != nil {
-			d.logger.Warnf("failed to get containerd pid and will retry it again: %v", err)
+			log.With(ctx).Warnf("failed to get containerd pid and will retry it again: %v", err)
 			count++
 			continue
 		}
@@ -320,26 +326,26 @@ func (d *Daemon) monitor() {
 				case <-d.waitCh:
 					select {
 					case <-d.stopCh:
-						d.logger.Info("receiving stop containerd action and stop monitor")
+						log.With(ctx).Info("receiving stop containerd action and stop monitor")
 						return
 					default:
 					}
 				case <-d.stopCh:
-					d.logger.Info("receiving stop containerd action and stop monitor")
+					log.With(ctx).Info("receiving stop containerd action and stop monitor")
 					return
 				}
 			}
 
 			count++
-			if err := d.runContainerd(); err != nil {
-				d.logger.Warnf("failed to restart containerd and will retry it again: %v", err)
+			if err := d.runContainerd(ctx); err != nil {
+				log.With(ctx).Warnf("failed to restart containerd and will retry it again: %v", err)
 				time.Sleep(delayRetryTimeout)
 				continue
 			}
 		}
 
-		if err := d.healthPostCheck(); err != nil {
-			d.logger.Warn("failed to do health check and will retry it again")
+		if err := d.healthPostCheck(ctx); err != nil {
+			log.With(ctx).Warn("failed to do health check and will retry it again")
 			count++
 			time.Sleep(delayRetryTimeout)
 			continue
@@ -347,7 +353,7 @@ func (d *Daemon) monitor() {
 
 		if count != 0 {
 			count = 0
-			d.logger.WithField("containerd-pid", d.pid).Infof("success to start containerd")
+			log.With(ctx).WithField("containerd-pid", d.pid).Infof("success to start containerd")
 		}
 		time.Sleep(delayRetryTimeout)
 	}
@@ -384,7 +390,8 @@ func (d *Daemon) getContainerdPid() (int, error) {
 		if err != nil {
 			return -1, err
 		} else if !isAlive {
-			logrus.WithField("module", "ctrd").WithField("ctrd-supervisord", pid).Infof("previous containerd pid not exist, delete the pid file")
+			log.WithFields(nil, map[string]interface{}{"module": "ctrd", "ctrd-supervisord": pid}).
+				Infof("previous containerd pid not exist, delete the pid file")
 			os.RemoveAll(d.pidPath())
 			return -1, nil
 		} else {

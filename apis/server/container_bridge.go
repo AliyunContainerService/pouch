@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/filters"
@@ -22,7 +23,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,7 +43,7 @@ func (s *Server) createContainer(ctx context.Context, rw http.ResponseWriter, re
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	logCreateOptions("container", config)
+	logCreateOptions(ctx, "container", config)
 
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
@@ -364,8 +364,8 @@ func (s *Server) updateContainer(ctx context.Context, rw http.ResponseWriter, re
 	reader := req.Body
 	if s.ContainerPlugin != nil {
 		var err error
-		logrus.Infof("invoke container pre-update hook in plugin")
-		if reader, err = s.ContainerPlugin.PreUpdate(req.Body); err != nil {
+		log.With(ctx).Infof("invoke container pre-update hook in plugin")
+		if reader, err = s.ContainerPlugin.PreUpdate(ctx, req.Body); err != nil {
 			return errors.Wrapf(err, "failed to execute pre-create plugin point")
 		}
 	}

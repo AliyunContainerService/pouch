@@ -2,7 +2,7 @@ package server
 
 import (
 	"crypto/tls"
-	"log"
+	stdlog "log"
 	"net"
 	"net/http"
 	"strings"
@@ -15,9 +15,8 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/netutils"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Server is a http server which serves restful api to client.
@@ -69,13 +68,13 @@ func (s *Server) Start(readyCh chan bool) (err error) {
 			readyCh <- false
 			return err
 		}
-		logrus.Infof("start to listen to: %s", one)
+		log.With(nil).Infof("start to listen to: %s", one)
 		s.listeners = append(s.listeners, l)
 
 		go func(l net.Listener) {
 			s := &http.Server{
 				Handler:           router,
-				ErrorLog:          log.New(stdFilterLogWriter, "", 0),
+				ErrorLog:          stdlog.New(stdFilterLogWriter, "", 0),
 				ReadTimeout:       time.Minute * 10,
 				ReadHeaderTimeout: time.Minute * 10,
 				IdleTimeout:       time.Minute * 10,
@@ -125,7 +124,7 @@ func (s *Server) Stop() error {
 	select {
 	case <-drain:
 	case <-time.After(60 * time.Second):
-		logrus.Errorf("stop pouch server after waited 60 seconds, on going request %d", atomic.LoadInt32(&s.FlyingReq))
+		log.With(nil).Errorf("stop pouch server after waited 60 seconds, on going request %d", atomic.LoadInt32(&s.FlyingReq))
 	}
 
 	return nil

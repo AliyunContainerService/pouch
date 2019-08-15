@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 func TestRandString(t *testing.T) {
@@ -20,5 +20,5 @@ func TestRandString(t *testing.T) {
 	}
 	end := time.Now()
 	elapsed := end.Sub(start)
-	logrus.Infof("TestRandString generate 1000 random strings costs: %v s", elapsed.Seconds())
+	log.With(nil).Infof("TestRandString generate 1000 random strings costs: %v s", elapsed.Seconds())
 }

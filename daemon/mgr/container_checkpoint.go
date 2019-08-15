@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 var (
@@ -58,6 +59,8 @@ func (mgr *ContainerManager) CreateCheckpoint(ctx context.Context, name string, 
 	if err != nil {
 		return err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	if !c.IsRunningOrPaused() {
 		return fmt.Errorf("can not checkpoint from a %s container", c.State.Status)

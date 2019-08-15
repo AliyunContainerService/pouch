@@ -18,12 +18,12 @@ import (
 	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/internal"
 	"github.com/alibaba/pouch/network/mode"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 
 	systemddaemon "github.com/coreos/go-systemd/daemon"
 	systemdutil "github.com/coreos/go-systemd/util"
-	"github.com/sirupsen/logrus"
 )
 
 // Daemon refers to a daemon.
@@ -65,7 +65,7 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		},
 	})
 	if err != nil {
-		logrus.Errorf("failed to create container meta store: %v", err)
+		log.With(nil).Errorf("failed to create container meta store: %v", err)
 		return nil
 	}
 
@@ -90,7 +90,7 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		ctrdDaemonOpts...,
 	)
 	if err != nil {
-		logrus.Errorf("failed to start containerd: %v", err)
+		log.With(nil).Errorf("failed to start containerd: %v", err)
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func NewDaemon(cfg *config.Config) *Daemon {
 		ctrd.WithInsecureRegistries(cfg.InsecureRegistries),
 	)
 	if err != nil {
-		logrus.Errorf("failed to new containerd's client: %v", err)
+		log.With(nil).Errorf("failed to new containerd's client: %v", err)
 		return nil
 	}
 
@@ -110,11 +110,11 @@ func NewDaemon(cfg *config.Config) *Daemon {
 	}
 
 	if err = ctrdClient.CheckSnapshotterValid(ctrd.CurrentSnapshotterName(context.TODO()), cfg.AllowMultiSnapshotter); err != nil {
-		logrus.Errorf("failed to check snapshotter driver: %v", err)
+		log.With(nil).Errorf("failed to check snapshotter driver: %v", err)
 		return nil
 	}
 
-	logrus.Infof("Snapshotter is set to be %s", ctrd.CurrentSnapshotterName(context.TODO()))
+	log.With(nil).Infof("Snapshotter is set to be %s", ctrd.CurrentSnapshotterName(context.TODO()))
 
 	return &Daemon{
 		config:         cfg,
@@ -158,7 +158,7 @@ func (d *Daemon) loadPlugin() error {
 	}
 
 	if d.daemonPlugin != nil {
-		logrus.Infof("invoke pre-start hook in plugin")
+		log.With(nil).Infof("invoke pre-start hook in plugin")
 		if err = d.daemonPlugin.PreStartHook(); err != nil {
 			return err
 		}
@@ -263,7 +263,7 @@ func (d *Daemon) Run() error {
 	httpCloseCh := make(chan struct{})
 	go func() {
 		if err := d.server.Start(httpReadyCh); err != nil {
-			logrus.Errorf("failed to start http server: %v", err)
+			log.With(nil).Errorf("failed to start http server: %v", err)
 		}
 		close(httpCloseCh)
 	}()
@@ -287,9 +287,9 @@ func (d *Daemon) Run() error {
 	// daemon if the builder server is down.
 	if d.config.EnableBuilder {
 		go func() {
-			logrus.Info("serving builder server...")
+			log.With(nil).Info("serving builder server...")
 			if err := d.runBuilderServer(); err != nil {
-				logrus.Errorf("failed to serve builder server: %v", err)
+				log.With(nil).Errorf("failed to serve builder server: %v", err)
 			}
 		}()
 	}
@@ -301,7 +301,7 @@ func (d *Daemon) Run() error {
 
 	// Stop pouchd if the server stopped
 	<-httpCloseCh
-	logrus.Infof("HTTP server stopped")
+	log.With(nil).Infof("HTTP server stopped")
 
 	return nil
 }
@@ -314,7 +314,7 @@ func (d *Daemon) Shutdown() error {
 		errMsg = fmt.Sprintf("%s\n", err.Error())
 	}
 
-	logrus.Debugf("Start cleanup containerd...")
+	log.With(nil).Debugf("Start cleanup containerd...")
 	if err := d.ctrdClient.Cleanup(); err != nil {
 		errMsg = fmt.Sprintf("%s\n", err.Error())
 	}
@@ -381,9 +381,9 @@ func (d *Daemon) ImagePlugin() hookplugins.ImagePlugin {
 // ShutdownPlugin invoke pre-stop method in daemon plugin if exist
 func (d *Daemon) ShutdownPlugin() error {
 	if d.daemonPlugin != nil {
-		logrus.Infof("invoke pre-stop hook in plugin")
+		log.With(nil).Infof("invoke pre-stop hook in plugin")
 		if err := d.daemonPlugin.PreStopHook(); err != nil {
-			logrus.Errorf("stop prehook execute error %v", err)
+			log.With(nil).Errorf("stop prehook execute error %v", err)
 		}
 	}
 	return nil
@@ -422,10 +422,10 @@ func notifySystemd() {
 
 	sent, err := systemddaemon.SdNotify(false, "READY=1")
 	if err != nil {
-		logrus.Errorf("failed to notify systemd for readiness: %v", err)
+		log.With(nil).Errorf("failed to notify systemd for readiness: %v", err)
 	}
 
 	if !sent {
-		logrus.Errorf("forgot to set Type=notify in systemd service file?")
+		log.With(nil).Errorf("forgot to set Type=notify in systemd service file?")
 	}
 }

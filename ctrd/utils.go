@@ -11,6 +11,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd"
@@ -21,7 +22,6 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 func withExitShimV1CheckpointTaskOpts() containerd.CheckpointTaskOpts {
@@ -39,7 +39,7 @@ func withExitShimV1CheckpointTaskOpts() containerd.CheckpointTaskOpts {
 func (c *Client) isInsecureDomain(ref string) bool {
 	u, err := url.Parse("dummy://" + ref)
 	if err != nil {
-		logrus.Warningf("failed to parse reference(%s) into url: %v", ref, err)
+		log.With(nil).Warningf("failed to parse reference(%s) into url: %v", ref, err)
 		return false
 	}
 
@@ -122,7 +122,7 @@ func (c *Client) getResolver(ctx context.Context, authConfig *types.AuthConfig, 
 	for _, ref := range refs {
 		namedRef, err := reference.Parse(ref)
 		if err != nil {
-			logrus.Warnf("failed to parse image reference when trying to resolve image %s, raw reference is %s: %v", ref, name, err)
+			log.With(nil).Warnf("failed to parse image reference when trying to resolve image %s, raw reference is %s: %v", ref, name, err)
 			continue
 		}
 		namedRef = reference.TrimTagForDigest(reference.WithDefaultTagIfMissing(namedRef))
@@ -165,7 +165,7 @@ func (c *Client) getResolver(ctx context.Context, authConfig *types.AuthConfig, 
 	}
 
 	if availableRef == "" {
-		logrus.Warnf("there is no available image reference after trying %+q", refs)
+		log.With(nil).Warnf("there is no available image reference after trying %+q", refs)
 		return nil, "", errtypes.ErrNotfound
 	}
 

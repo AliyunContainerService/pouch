@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/docker/libnetwork"
-	"github.com/sirupsen/logrus"
 )
 
 // LogContainerEvent generates an event related to a container with only the default attributes.
@@ -107,6 +107,8 @@ func (mgr *ContainerManager) publishContainerdEvent(ctx context.Context, id, act
 		return err
 	}
 
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
 	c.Lock()
 	defer c.Unlock()
 
@@ -122,6 +124,8 @@ func (mgr *ContainerManager) updateContainerState(ctx context.Context, id, actio
 		return err
 	}
 
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
 	c.Lock()
 	defer c.Unlock()
 
@@ -133,7 +137,7 @@ func (mgr *ContainerManager) updateContainerState(ctx context.Context, id, actio
 	// updateContainerState will put the container information into
 	// local disk again. Therefore, we should check the status before update
 	if c.IsDead() {
-		logrus.Warnf("container(%v) is marked dead. no need to update state by action %v", id, action)
+		log.With(ctx).Warnf("container(%v) is marked dead. no need to update state by action %v", id, action)
 		return nil
 	}
 

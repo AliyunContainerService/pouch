@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/containerd/containerd/cio"
-	"github.com/sirupsen/logrus"
 )
 
 // NewFIFOSet prepares fifo files.
@@ -37,7 +37,7 @@ func NewFIFOSet(processID string, withStdin bool, withTerminal bool) (*cio.FIFOS
 	closeFn := func() error {
 		err := os.RemoveAll(fifoDir)
 		if err != nil {
-			logrus.WithError(err).Warnf("failed to remove process(id=%v) fifo dir", processID)
+			log.With(nil).WithError(err).Warnf("failed to remove process(id=%v) fifo dir", processID)
 		}
 		return err
 	}

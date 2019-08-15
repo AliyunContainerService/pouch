@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
@@ -153,7 +154,7 @@ var backendDrivers = &driverTable{
 
 // Register add a backend driver module.
 func Register(d Driver) error {
-	ctx := Contexts()
+	ctx := context.Background()
 	driverName := d.Name(ctx)
 
 	matched, err := regexp.MatchString(driverNameRegexp, driverName)

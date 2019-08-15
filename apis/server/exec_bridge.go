@@ -10,12 +10,12 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/streams"
 
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -26,7 +26,7 @@ func (s *Server) createContainerExec(ctx context.Context, rw http.ResponseWriter
 	}
 	name := mux.Vars(req)["name"]
 
-	logCreateOptions("container exec for "+name, config)
+	logCreateOptions(ctx, "container exec for "+name, config)
 
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {
@@ -60,7 +60,7 @@ func (s *Server) startContainerExec(ctx context.Context, rw http.ResponseWriter,
 	_, upgrade := req.Header["Upgrade"]
 
 	ba, _ := json.Marshal(config)
-	logrus.Infof("start exec %s, upgrade: %v, body: %s", name, upgrade, string(ba))
+	log.With(ctx).Infof("start exec %s, upgrade: %v, body: %s", name, upgrade, string(ba))
 
 	if err := s.ContainerMgr.CheckExecExist(ctx, name); err != nil {
 		return err

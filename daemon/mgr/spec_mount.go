@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/pkg/errors"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -184,7 +184,7 @@ func generateNetworkMounts(c *Container) []specs.Mount {
 		if bind.Source != "" {
 			_, err := os.Stat(bind.Source)
 			if err != nil {
-				logrus.Warnf("%s set to %s, but stat error: %v, skip it", bind.Name, bind.Source, err)
+				log.With(nil).Warnf("%s set to %s, but stat error: %v, skip it", bind.Name, bind.Source, err)
 			} else {
 				mounts = append(mounts, specs.Mount{
 					Source:      bind.Source,

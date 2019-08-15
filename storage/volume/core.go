@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"reflect"
@@ -9,12 +10,12 @@ import (
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/kmutex"
+	"github.com/alibaba/pouch/pkg/log"
 	metastore "github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Core represents volume core struct.
@@ -58,7 +59,7 @@ func NewCore(cfg Config) (*Core, error) {
 		},
 	})
 	if err != nil {
-		logrus.Errorf("failed to create volume meta store: %v", err)
+		log.With(nil).Errorf("failed to create volume meta store: %v", err)
 		return nil, err
 	}
 	c.store = volumeStore
@@ -74,7 +75,7 @@ func NewCore(cfg Config) (*Core, error) {
 	}
 	for _, dv := range drivers {
 		if d, ok := dv.(driver.Conf); ok {
-			d.Config(driver.Contexts(), driverConfig)
+			d.Config(context.Background(), driverConfig)
 		}
 	}
 
@@ -82,9 +83,7 @@ func NewCore(cfg Config) (*Core, error) {
 }
 
 // getVolume return a volume's info with specified name, If not errors.
-func (c *Core) getVolume(id types.VolumeContext) (*types.Volume, error) {
-	ctx := driver.Contexts()
-
+func (c *Core) getVolume(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
 	// first, try to get volume from local store.
 	obj, err := c.store.Get(id.Name)
 	if err == nil {
@@ -117,7 +116,7 @@ func (c *Core) getVolume(id types.VolumeContext) (*types.Volume, error) {
 	}
 
 	// scan all drivers
-	logrus.Debugf("probing all drivers for volume with name(%s)", id.Name)
+	log.With(ctx).Debugf("probing all drivers for volume with name(%s)", id.Name)
 	drivers, err := driver.GetAll()
 	if err != nil {
 		return nil, err
@@ -147,8 +146,8 @@ func (c *Core) getVolume(id types.VolumeContext) (*types.Volume, error) {
 }
 
 // getVolumeDriver return the backend driver and volume with specified volume's id.
-func (c *Core) getVolumeDriver(id types.VolumeContext) (*types.Volume, driver.Driver, error) {
-	v, err := c.getVolume(id)
+func (c *Core) getVolumeDriver(ctx context.Context, id types.VolumeContext) (*types.Volume, driver.Driver, error) {
+	v, err := c.getVolume(ctx, id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -160,19 +159,19 @@ func (c *Core) getVolumeDriver(id types.VolumeContext) (*types.Volume, driver.Dr
 }
 
 // GetVolume return a volume's info with specified name, If not errors.
-func (c *Core) GetVolume(id types.VolumeContext) (*types.Volume, error) {
+func (c *Core) GetVolume(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	return c.getVolume(id)
+	return c.getVolume(ctx, id)
 }
 
 // CreateVolume use to create a volume, if failed, will return error info.
-func (c *Core) CreateVolume(id types.VolumeContext) (*types.Volume, error) {
+func (c *Core) CreateVolume(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	volume, err := c.getVolume(id)
+	volume, err := c.getVolume(ctx, id)
 	if err == nil {
 		return volume, errtypes.ErrVolumeExisted
 	}
@@ -185,7 +184,7 @@ func (c *Core) CreateVolume(id types.VolumeContext) (*types.Volume, error) {
 		return nil, err
 	}
 
-	volume, err = dv.Create(driver.Contexts(), id)
+	volume, err = dv.Create(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +199,7 @@ func (c *Core) CreateVolume(id types.VolumeContext) (*types.Volume, error) {
 
 // ListVolumes return all volumes.
 // Param 'filter' use to filter the volumes, only return those you want.
-func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
+func (c *Core) ListVolumes(ctx context.Context, filter filters.Args) ([]*types.Volume, error) {
 	var retVolumes = make([]*types.Volume, 0)
 
 	// list local meta store.
@@ -210,13 +209,11 @@ func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
 	}
 
 	// scan all drivers.
-	logrus.Debugf("probing all drivers for listing volume")
+	log.With(ctx).Debugf("probing all drivers for listing volume")
 	drivers, err := driver.GetAll()
 	if err != nil {
 		return nil, err
 	}
-
-	ctx := driver.Contexts()
 
 	var realVolumes = map[string]*types.Volume{}
 
@@ -228,7 +225,7 @@ func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
 		}
 		vList, err := d.List(ctx)
 		if err != nil {
-			logrus.Warnf("volume driver %s list error: %v", dv.Name(ctx), err)
+			log.With(ctx).Warnf("volume driver %s list error: %v", dv.Name(ctx), err)
 			continue
 		}
 
@@ -268,7 +265,7 @@ func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
 
 	for _, v := range realVolumes {
 		// found new volumes, store the meta
-		logrus.Warningf("found new volume %s", v.Name)
+		log.With(ctx).Warningf("found new volume %s", v.Name)
 		c.store.Put(v)
 
 		retVolumes = append(retVolumes, v)
@@ -304,10 +301,10 @@ func (c *Core) ListVolumes(filter filters.Args) ([]*types.Volume, error) {
 
 // ListVolumeName return the name of all volumes only.
 // Param 'filter' use to filter the volume's names, only return those you want.
-func (c *Core) ListVolumeName(filter filters.Args) ([]string, error) {
+func (c *Core) ListVolumeName(ctx context.Context, filter filters.Args) ([]string, error) {
 	var names []string
 
-	volumes, err := c.ListVolumes(filter)
+	volumes, err := c.ListVolumes(ctx, filter)
 	if err != nil {
 		return names, err
 	}
@@ -320,17 +317,17 @@ func (c *Core) ListVolumeName(filter filters.Args) ([]string, error) {
 }
 
 // RemoveVolume remove volume from storage and meta information, if not success return error.
-func (c *Core) RemoveVolume(id types.VolumeContext) error {
+func (c *Core) RemoveVolume(ctx context.Context, id types.VolumeContext) error {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	v, dv, err := c.getVolumeDriver(id)
+	v, dv, err := c.getVolumeDriver(ctx, id)
 	if err != nil {
 		return errors.Wrap(err, "Remove volume: "+id.String())
 	}
 
 	// Call driver's Remove method to remove the volume.
-	if err := dv.Remove(driver.Contexts(), v); err != nil {
+	if err := dv.Remove(ctx, v); err != nil {
 		return err
 	}
 
@@ -338,29 +335,27 @@ func (c *Core) RemoveVolume(id types.VolumeContext) error {
 }
 
 // VolumePath return the path of volume on node host.
-func (c *Core) VolumePath(id types.VolumeContext) (string, error) {
+func (c *Core) VolumePath(ctx context.Context, id types.VolumeContext) (string, error) {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	v, dv, err := c.getVolumeDriver(id)
+	v, dv, err := c.getVolumeDriver(ctx, id)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("Get volume: %s path", id.String()))
 	}
 
-	return c.volumePath(v, dv)
+	return c.volumePath(ctx, v, dv)
 }
 
 // AttachVolume to enable a volume on local host.
-func (c *Core) AttachVolume(id types.VolumeContext, extra map[string]string) (*types.Volume, error) {
+func (c *Core) AttachVolume(ctx context.Context, id types.VolumeContext, extra map[string]string) (*types.Volume, error) {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	v, dv, err := c.getVolumeDriver(id)
+	v, dv, err := c.getVolumeDriver(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx := driver.Contexts()
 
 	// merge extra to volume spec extra.
 	for key, value := range extra {
@@ -382,16 +377,14 @@ func (c *Core) AttachVolume(id types.VolumeContext, extra map[string]string) (*t
 }
 
 // DetachVolume to disable a volume on local host.
-func (c *Core) DetachVolume(id types.VolumeContext, extra map[string]string) (*types.Volume, error) {
+func (c *Core) DetachVolume(ctx context.Context, id types.VolumeContext, extra map[string]string) (*types.Volume, error) {
 	c.lock.Lock(id.Name)
 	defer c.lock.Unlock(id.Name)
 
-	v, dv, err := c.getVolumeDriver(id)
+	v, dv, err := c.getVolumeDriver(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx := driver.Contexts()
 
 	// merge extra to volume spec extra.
 	for key, value := range extra {

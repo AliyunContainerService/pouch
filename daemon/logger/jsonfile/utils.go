@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/daemon/logger"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/sirupsen/logrus"
 )
 
 type newUnmarshalFunc func(r io.Reader) func() (*logger.LogMessage, error)
@@ -74,12 +74,12 @@ func followFile(f *os.File, cfg *logger.ReadConfig, unmarshaler newUnmarshalFunc
 					// ideally, it's caused by removing the container.
 					return errDone
 				default:
-					logrus.Debugf("unexpected file change during watching file %v: %v", f.Name(), e.Op)
+					log.With(nil).Debugf("unexpected file change during watching file %v: %v", f.Name(), e.Op)
 					return errDone
 				}
 			case newErr := <-fileWatcher.Errors:
 				// something wrong during the watching.
-				logrus.Debugf("unexpected error during watching file %v: %v", f.Name(), newErr)
+				log.With(nil).Debugf("unexpected error during watching file %v: %v", f.Name(), newErr)
 				return err
 			case <-watchTimeout.C:
 				// FIXME: Since we hold the file handler in the process,
@@ -92,7 +92,7 @@ func followFile(f *os.File, cfg *logger.ReadConfig, unmarshaler newUnmarshalFunc
 					if os.IsNotExist(sErr) {
 						return errDone
 					}
-					logrus.Debugf("unexpected error during watching file %v: %v", f.Name(), sErr)
+					log.With(nil).Debugf("unexpected error during watching file %v: %v", f.Name(), sErr)
 					return errDone
 				}
 			}

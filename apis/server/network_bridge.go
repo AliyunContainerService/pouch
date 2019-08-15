@@ -21,7 +21,7 @@ func (s *Server) createNetwork(ctx context.Context, rw http.ResponseWriter, req 
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	logCreateOptions("network", config)
+	logCreateOptions(ctx, "network", config)
 
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {

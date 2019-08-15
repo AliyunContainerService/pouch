@@ -9,9 +9,9 @@ import (
 	"github.com/alibaba/pouch/ctrd"
 
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Snapshot contains the information about the snapshot.
@@ -101,7 +101,7 @@ func (s *SnapshotsSyncer) Start() {
 			err := s.Sync()
 			if err != nil {
 				// TODO track the error and report it to the monitor or something.
-				logrus.Errorf("failed to sync snapshot stats: %v", err)
+				log.With(nil).Errorf("failed to sync snapshot stats: %v", err)
 			}
 			<-tick.C
 		}
@@ -137,7 +137,7 @@ func (s *SnapshotsSyncer) Sync() error {
 		}
 		usage, err := s.client.GetSnapshotUsage(context.Background(), info.Name)
 		if err != nil {
-			logrus.Warnf("failed to get usage for snapshot %q: %v", info.Name, err)
+			log.With(nil).Warnf("failed to get usage for snapshot %q: %v", info.Name, err)
 			continue
 		}
 		sn.Size = uint64(usage.Size)

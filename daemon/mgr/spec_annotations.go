@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/alibaba/pouch/pkg/log"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 )
 
 // setupAnnotations extracts other related options from HostConfig and locate them in spec's annotations which will be dealt by vendored runc.
@@ -31,7 +31,7 @@ func setupAnnotations(ctx context.Context, c *Container, s *specs.Spec) error {
 	annotations := c.Config.SpecAnnotation
 	for k, v := range annotations {
 		if _, exist := s.Annotations[k]; exist {
-			logrus.Warnf("Duplicate spec annotation: %s=%s", k, v)
+			log.With(nil).Warnf("Duplicate spec annotation: %s=%s", k, v)
 			continue
 		}
 		s.Annotations[k] = v

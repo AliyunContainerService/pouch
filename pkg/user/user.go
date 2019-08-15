@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -29,11 +29,11 @@ type filterFunc func(line, str string, idInt int, idErr error) (uint32, bool)
 // Get accepts user and group slice, return valid uid, gid and additional gids.
 // Through Get is a interface returns all user informations runtime-spec need.
 func Get(passwdPath, groupPath, username string, groups []string) (uint32, uint32, []uint32, error) {
-	logrus.Debugf("get users, passwd path: (%s), group path: (%s), username: (%s), groups: (%v)",
+	log.With(nil).Debugf("get users, passwd path: (%s), group path: (%s), username: (%s), groups: (%v)",
 		passwdPath, groupPath, username, groups)
 
 	if passwdPath == "" || groupPath == "" {
-		logrus.Warn("get passwd file or group file is nil")
+		log.With(nil).Warn("get passwd file or group file is nil")
 	}
 
 	passwdFile, err := os.Open(passwdPath)

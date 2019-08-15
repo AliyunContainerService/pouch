@@ -11,8 +11,8 @@ import (
 	"github.com/alibaba/pouch/cri/stream/constant"
 	"github.com/alibaba/pouch/cri/stream/httpstream"
 	"github.com/alibaba/pouch/cri/stream/httpstream/spdy"
+	"github.com/alibaba/pouch/pkg/log"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/apiserver/pkg/util/wsstream"
 )
 
@@ -87,7 +87,7 @@ func handleResizeEvents(stream io.Reader, channel chan<- apitypes.ResizeOptions)
 		channel <- size
 	}
 	if err != io.EOF {
-		logrus.Errorf("failed to decode resize request from resize stream: %v", err)
+		log.With(nil).Errorf("failed to decode resize request from resize stream: %v", err)
 	}
 	close(channel)
 }
@@ -120,7 +120,7 @@ func createHTTPStreamStreams(w http.ResponseWriter, req *http.Request, opts *Opt
 	var handler protocolHandler
 	switch protocol {
 	case "":
-		logrus.Infof("Client did not request protocol negotiation. Falling back to %q", constant.StreamProtocolV1Name)
+		log.With(nil).Infof("Client did not request protocol negotiation. Falling back to %q", constant.StreamProtocolV1Name)
 		fallthrough
 	case constant.StreamProtocolV1Name:
 		handler = &v1ProtocolHandler{}
@@ -150,7 +150,7 @@ func createHTTPStreamStreams(w http.ResponseWriter, req *http.Request, opts *Opt
 
 	ctx, err := handler.waitForStreams(streamCh, expectedStreams, expired.C)
 	if err != nil {
-		logrus.Errorf("failed to create streams: %v", err)
+		log.With(nil).Errorf("failed to create streams: %v", err)
 		return nil, false
 	}
 
@@ -208,7 +208,7 @@ done:
 				ctx.resizeStream = stream
 				go waitStreamReply(stream.replySent, replyChan, stop)
 			default:
-				logrus.Errorf("Unexpected stream type: %q", streamType)
+				log.With(nil).Errorf("Unexpected stream type: %q", streamType)
 			}
 		case <-replyChan:
 			receivedStreams++
@@ -256,7 +256,7 @@ done:
 				ctx.stderrStream = stream
 				go waitStreamReply(stream.replySent, replyChan, stop)
 			default:
-				logrus.Errorf("Unexpected stream type: %q", streamType)
+				log.With(nil).Errorf("Unexpected stream type: %q", streamType)
 			}
 		case <-replyChan:
 			receivedStreams++
@@ -304,7 +304,7 @@ done:
 				ctx.stderrStream = stream
 				go waitStreamReply(stream.replySent, replyChan, stop)
 			default:
-				logrus.Errorf("Unexpected stream type: %q", streamType)
+				log.With(nil).Errorf("Unexpected stream type: %q", streamType)
 			}
 		case <-replyChan:
 			receivedStreams++

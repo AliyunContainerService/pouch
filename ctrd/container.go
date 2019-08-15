@@ -15,6 +15,8 @@ import (
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/ioutils"
+	"github.com/alibaba/pouch/pkg/log"
+	"github.com/sirupsen/logrus"
 
 	"github.com/containerd/containerd"
 	containerdtypes "github.com/containerd/containerd/api/types"
@@ -27,7 +29,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -110,12 +111,7 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 
 	// create exec process in container
 	execProcess, err := pack.task.Exec(ctx, process.ExecID, process.P, func(_ string) (cio.IO, error) {
-		logrus.WithFields(
-			logrus.Fields{
-				"container": cntrID,
-				"process":   execID,
-			},
-		).Debugf("creating cio (withStdin=%v, withTerminal=%v)", withStdin, withTerminal)
+		log.With(ctx).Debugf("creating cio (withStdin=%v, withTerminal=%v), process(%s)", withStdin, withTerminal, execID)
 
 		fifoset, err := containerio.NewFIFOSet(execID, withStdin, withTerminal)
 		if err != nil {
@@ -140,14 +136,14 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 		// XXX: if exec process get run, io should be closed in this function,
 		for _, hook := range c.hooks {
 			if err := hook(process.ExecID, msg); err != nil {
-				logrus.Errorf("failed to execute the exec exit hooks: %v", err)
+				log.With(ctx).Errorf("failed to execute the exec exit hooks: %v", err)
 				break
 			}
 		}
 
 		// delete the finished exec process in containerd
 		if _, err := execProcess.Delete(context.TODO()); err != nil {
-			logrus.Warnf("failed to delete exec process %s: %s", process.ExecID, err)
+			log.With(ctx).Warnf("failed to delete exec process %s: %s", process.ExecID, err)
 		}
 	}
 	// start the exec process
@@ -320,6 +316,8 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 
 	lc, err := wrapperCli.client.LoadContainer(ctx, id)
 	if err != nil {
+		log.With(ctx).Errorf("failed to load container from containerd: %v", err)
+
 		if errdefs.IsNotFound(err) {
 			return errors.Wrapf(errtypes.ErrNotfound, "container %s", id)
 		}
@@ -349,7 +347,7 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		select {
 		case <-time.After(timeout):
 			if i < 2 {
-				logrus.WithField("container", id).Warn("timeout connect to shim, retry")
+				log.With(ctx).Warn("timeout connect to shim, retry")
 				continue
 			}
 			return errors.Wrap(errtypes.ErrTimeout, "failed to connect to shim")
@@ -360,6 +358,8 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 	}
 
 	if err != nil {
+		log.With(ctx).Errorf("failed to get task from containerd: %v", err)
+
 		if !errdefs.IsNotFound(err) {
 			return errors.Wrap(err, "failed to get task")
 		}
@@ -373,7 +373,7 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		return errors.Wrap(err, "failed to wait task")
 	}
 
-	c.watch.add(&containerPack{
+	c.watch.add(ctx, &containerPack{
 		id:        id,
 		container: lc,
 		task:      task,
@@ -382,7 +382,7 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 		sch:       statusCh,
 	})
 
-	logrus.Infof("success to recover container: %s", id)
+	log.With(ctx).Infof("success to recover container")
 	return nil
 }
 
@@ -445,6 +445,7 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 	msg = waitExit()
 
 	if err := msg.RawError(); err != nil && errtypes.IsTimeout(err) {
+		log.With(ctx).Infof("send signal 9 to container")
 		// timeout, use SIGKILL to retry.
 		if err := pack.task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
 			if !errdefs.IsNotFound(err) {
@@ -457,8 +458,11 @@ func (c *Client) destroyContainer(ctx context.Context, id string, timeout int64)
 
 	// ignore the error is stop time out
 	// TODO: how to design the stop error is time out?
-	if err := msg.RawError(); err != nil && !errtypes.IsTimeout(err) {
-		return nil, err
+	if err := msg.RawError(); err != nil {
+		if !errtypes.IsTimeout(err) {
+			return nil, err
+		}
+		log.With(ctx).Warnf("timeout to kill task, err(%v)", err)
 	}
 
 clean:
@@ -467,7 +471,7 @@ clean:
 	// when unexcepted error happened in task exit process.
 	if _, err := pack.task.Delete(ctx); err != nil {
 		if !errdefs.IsNotFound(err) {
-			logrus.Errorf("failed to delete task %s again: %v", pack.id, err)
+			log.With(ctx).Errorf("failed to delete task %s again: %v", pack.id, err)
 		}
 	}
 	if err := pack.container.Delete(ctx); err != nil {
@@ -476,7 +480,7 @@ clean:
 		}
 	}
 
-	logrus.Infof("success to destroy container: %s", id)
+	log.With(ctx).Infof("success to destroy container")
 
 	return msg, c.watch.remove(ctx, id)
 }
@@ -507,7 +511,7 @@ func (c *Client) pauseContainer(ctx context.Context, id string) error {
 		}
 	}
 
-	logrus.Infof("success to pause container: %s", id)
+	log.With(ctx).Infof("success to pause container")
 
 	return nil
 }
@@ -538,7 +542,7 @@ func (c *Client) unpauseContainer(ctx context.Context, id string) error {
 		}
 	}
 
-	logrus.Infof("success to unpause container: %s", id)
+	log.With(ctx).Infof("success to unpause container")
 
 	return nil
 }
@@ -578,7 +582,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 			return errors.Wrapf(err, "failed to get image %s", ref)
 		}
 
-		logrus.Infof("success to get image %s, container id %s", img.Name(), id)
+		log.With(ctx).Infof("success to get image %s", img.Name())
 	}
 
 	// create container
@@ -618,7 +622,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 		}
 	}()
 
-	logrus.Infof("success to new container: %s", id)
+	log.With(ctx).Infof("success to new container")
 
 	// create task
 	pack, err := c.createTask(ctx, id, checkpointDir, nc, container, wrapperCli.client)
@@ -629,7 +633,7 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 	// add grpc client to pack struct
 	pack.client = wrapperCli
 
-	c.watch.add(pack)
+	c.watch.add(ctx, pack)
 
 	return nil
 }
@@ -659,7 +663,7 @@ func (c *Client) createTask(ctx context.Context, id, checkpointDir string, conta
 
 	// create task
 	task, err := container.NewTask(ctx, func(_ string) (cio.IO, error) {
-		logrus.WithField("container", cntrID).Debugf("creating cio (withStdin=%v, withTerminal=%v)", withStdin, withTerminal)
+		log.With(ctx).Debugf("creating cio (withStdin=%v, withTerminal=%v)", withStdin, withTerminal)
 
 		fifoset, err := containerio.NewFIFOSet(execID, withStdin, withTerminal)
 		if err != nil {
@@ -684,14 +688,14 @@ func (c *Client) createTask(ctx context.Context, id, checkpointDir string, conta
 		return pack, errors.Wrapf(err, "failed to wait task in container(%s)", id)
 	}
 
-	logrus.Infof("success to create task(pid=%d) in container(%s)", task.Pid(), id)
+	log.With(ctx).Infof("success to create task(pid=%d)", task.Pid())
 
 	// start task
 	if err := task.Start(ctx); err != nil {
 		return pack, errors.Wrapf(err, "failed to start task(%d) in container(%s)", task.Pid(), id)
 	}
 
-	logrus.Infof("success to start task in container(%s)", id)
+	log.With(ctx).Infof("success to start task")
 
 	pack = &containerPack{
 		id:        id,
@@ -938,7 +942,7 @@ func (c *Client) createIO(fifoSet *cio.FIFOSet, cntrID, procID string, closeStdi
 						// for the case, we should use strings.Contains to reduce warning
 						// log. it will be fixed in containerd#2747.
 						if !errdefs.IsNotFound(err) && !strings.Contains(err.Error(), "not found") {
-							logrus.WithError(err).Warnf("failed to close stdin containerd IO (container:%v, process:%v", cntrID, procID)
+							log.With(nil).WithError(err).Warnf("failed to close stdin containerd IO (container:%v, process:%v", cntrID, procID)
 						}
 					}
 				}()

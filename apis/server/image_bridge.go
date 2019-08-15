@@ -16,12 +16,12 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
 	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // pullImage will pull an image from a specified registry.
@@ -58,7 +58,7 @@ func (s *Server) pullImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	}
 	// Error information has be sent to client, so no need call resp.Write
 	if err := s.ImageMgr.PullImage(ctx, image, &authConfig, newWriteFlusher(rw)); err != nil {
-		logrus.Errorf("failed to pull image %s: %v", image, err)
+		log.With(ctx).Errorf("failed to pull image %s: %v", image, err)
 		if err == errtypes.ErrNotfound {
 			return httputils.NewHTTPError(err, http.StatusNotFound)
 		}
@@ -73,7 +73,7 @@ func (s *Server) getImage(ctx context.Context, rw http.ResponseWriter, req *http
 
 	imageInfo, err := s.ImageMgr.GetImage(ctx, idOrRef)
 	if err != nil {
-		logrus.Errorf("failed to get image: %v", err)
+		log.With(ctx).Errorf("failed to get image: %v", err)
 		return err
 	}
 
@@ -88,7 +88,7 @@ func (s *Server) listImages(ctx context.Context, rw http.ResponseWriter, req *ht
 
 	imageList, err := s.ImageMgr.ListImages(ctx, filter)
 	if err != nil {
-		logrus.Errorf("failed to list images: %v", err)
+		log.With(ctx).Errorf("failed to list images: %v", err)
 		return err
 	}
 	return EncodeResponse(rw, http.StatusOK, imageList)
@@ -113,7 +113,7 @@ func (s *Server) searchImages(ctx context.Context, rw http.ResponseWriter, req *
 
 	searchResultItem, err := s.ImageMgr.SearchImages(ctx, searchPattern, registry, &authConfig)
 	if err != nil {
-		logrus.Errorf("failed to search images from registry: %v", err)
+		log.With(ctx).Errorf("failed to search images from registry: %v", err)
 		return err
 	}
 	return EncodeResponse(rw, http.StatusOK, searchResultItem)
@@ -248,7 +248,7 @@ func (s *Server) pushImage(ctx context.Context, rw http.ResponseWriter, req *htt
 	}
 
 	if err := s.ImageMgr.PushImage(ctx, name, tag, &authConfig, newWriteFlusher(rw)); err != nil {
-		logrus.Errorf("failed to push image %s with tag %s: %v", name, tag, err)
+		log.With(ctx).Errorf("failed to push image %s with tag %s: %v", name, tag, err)
 		return err
 	}
 

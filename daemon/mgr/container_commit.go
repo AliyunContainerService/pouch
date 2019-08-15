@@ -6,10 +6,10 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Commit commits an image from a container.
@@ -25,6 +25,8 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find container(%s) to commit", name)
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	// Image keeps image digest name.
 	_, _, pRef, err := mgr.ImageMgr.CheckReference(ctx, c.Image)
@@ -78,7 +80,7 @@ func (mgr *ContainerManager) Commit(ctx context.Context, name string, options *t
 		// ignore error here, if failed to update image store only infect
 		// pouch, but it does successful created a new image, restart
 		// pouch can see the new image reference.
-		logrus.Warnf("failed to update image store: %s", err)
+		log.With(ctx).Warnf("failed to update image store: %s", err)
 	}
 	mgr.LogContainerEvent(ctx, c, "commit")
 

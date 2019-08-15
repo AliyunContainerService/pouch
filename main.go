@@ -7,7 +7,6 @@ import (
 	"path"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
 	"github.com/alibaba/pouch/apis/opts"
@@ -18,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/lxcfs"
 	"github.com/alibaba/pouch/pkg/debug"
 	"github.com/alibaba/pouch/pkg/kernel"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
@@ -57,7 +57,7 @@ func main() {
 	setupFlags(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Error(err)
+		log.With(nil).Error(err)
 		os.Exit(1)
 	}
 }
@@ -181,16 +181,16 @@ func runDaemon(cmd *cobra.Command) error {
 		version.Version,
 		kernelVersion.String()).Set(1)
 	// initialize log.
-	initLog()
+	log.Init(cfg.Debug)
 
 	if err := cfg.Validate(); err != nil {
-		logrus.Fatal(err)
+		log.With(nil).Fatal(err)
 	}
 
 	// import debugger tools for pouch when in debug mode.
 	if cfg.Debug || cfg.EnableProfiler {
 		if err := agent.Listen(agent.Options{}); err != nil {
-			logrus.Fatal(err)
+			log.With(nil).Fatal(err)
 		}
 		debug.SetupDumpStackTrap()
 	}
@@ -205,19 +205,19 @@ func runDaemon(cmd *cobra.Command) error {
 	// saves daemon pid to pidfile.
 	if cfg.Pidfile != "" {
 		if err := utils.NewPidfile(cfg.Pidfile); err != nil {
-			logrus.Errorf("failed to create pidfile: %s", err)
+			log.With(nil).Errorf("failed to create pidfile: %s", err)
 			return err
 		}
 		defer func() {
 			if err := os.Remove(cfg.Pidfile); err != nil {
-				logrus.Errorf("failed to delete pidfile: %s", err)
+				log.With(nil).Errorf("failed to delete pidfile: %s", err)
 			}
 		}()
 	}
 
 	// set pouchd oom-score
 	if err := utils.SetOOMScore(os.Getpid(), cfg.OOMScoreAdjust); err != nil {
-		logrus.Errorf("failed to set oom-score for pouchd: %v", err)
+		log.With(nil).Errorf("failed to set oom-score for pouchd: %v", err)
 	}
 
 	// define and start all required processes.
@@ -256,11 +256,11 @@ func runDaemon(cmd *cobra.Command) error {
 
 	select {
 	case sig := <-signalCh:
-		logrus.Warnf("received signal: %s", sig)
+		log.With(nil).Warnf("received signal: %s", sig)
 
 		for _, handle := range sigHandles {
 			if err := handle(); err != nil {
-				logrus.Errorf("failed to handle signal: %v", err)
+				log.With(nil).Errorf("failed to handle signal: %v", err)
 			}
 		}
 
@@ -270,20 +270,6 @@ func runDaemon(cmd *cobra.Command) error {
 		return err
 	}
 	return nil
-}
-
-// initLog initializes log Level and log format of daemon.
-func initLog() {
-	if cfg.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
-		logrus.Infof("start daemon at debug level")
-	}
-
-	formatter := &logrus.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339Nano,
-	}
-	logrus.SetFormatter(formatter)
 }
 
 // check lxcfs config

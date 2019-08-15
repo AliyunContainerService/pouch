@@ -7,11 +7,11 @@ import (
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/crilog"
 	"github.com/alibaba/pouch/daemon/logger/logbuffer"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/multierror"
 	"github.com/alibaba/pouch/pkg/streams"
 
 	"github.com/containerd/containerd/cio"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -72,7 +72,7 @@ func NewIO(id string, withStdin bool) *IO {
 // Reset reset the logdriver.
 func (ctrio *IO) Reset() {
 	if err := ctrio.Close(); err != nil {
-		logrus.WithError(err).WithField("process", ctrio.id).
+		log.With(nil).WithError(err).WithField("process", ctrio.id).
 			Warnf("failed to close during reset IO")
 	}
 
@@ -139,7 +139,7 @@ func (ctrio *IO) Wait() {
 	select {
 	case <-waitCh:
 	case <-time.After(streamCloseTimeout):
-		logrus.Warnf("stream doesn't exit in time")
+		log.With(nil).Warnf("stream doesn't exit in time")
 	}
 }
 
@@ -162,7 +162,7 @@ func (ctrio *IO) Close() error {
 			select {
 			case <-waitCh:
 			case <-time.After(logcopierCloseTimeout):
-				logrus.Warnf("logcopier doesn't exit in time")
+				log.With(nil).Warnf("logcopier doesn't exit in time")
 			}
 		}
 

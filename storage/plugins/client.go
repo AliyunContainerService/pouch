@@ -12,8 +12,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/pkg/httputils"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 var (
@@ -146,7 +145,7 @@ func (cli *PluginClient) callService(service string, data io.Reader, retry bool)
 				return nil, err
 			}
 			times++
-			logrus.Warnf("plugin %s call %s failed, retry after %v seconds", cli.address, service, delay.Seconds())
+			log.With(nil).Warnf("plugin %s call %s failed, retry after %v seconds", cli.address, service, delay.Seconds())
 			time.Sleep(delay)
 			continue
 		}

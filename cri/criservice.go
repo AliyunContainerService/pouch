@@ -8,8 +8,7 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/hookplugins"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // RunCriService start cri service if pouchd is specified with --enable-cri.
@@ -38,7 +37,7 @@ func RunCriService(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, i
 
 // Start CRI service with CRI version: v1alpha2
 func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, imageMgr mgr.ImageMgr, volumeMgr mgr.VolumeMgr, criPlugin hookplugins.CriPlugin, streamRouterCh chan stream.Router, readyCh chan bool) error {
-	logrus.Infof("Start CRI service with CRI version: v1alpha2")
+	log.With(nil).Infof("Start CRI service with CRI version: v1alpha2")
 	criMgr, err := criv1alpha2.NewCriManager(daemonconfig, containerMgr, imageMgr, volumeMgr, criPlugin)
 	if err != nil {
 		streamRouterCh <- nil
@@ -62,14 +61,14 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 	} else {
 		go func() {
 			errChan <- criMgr.StreamServerStart()
-			logrus.Infof("CRI Stream server stopped")
+			log.With(nil).Infof("CRI Stream server stopped")
 		}()
 		streamRouterCh <- nil
 	}
 
 	go func() {
 		errChan <- service.Serve()
-		logrus.Infof("CRI GRPC server stopped")
+		log.With(nil).Infof("CRI GRPC server stopped")
 	}()
 
 	// the criservice has set up, send Ready
@@ -82,6 +81,6 @@ func runv1alpha2(daemonconfig *config.Config, containerMgr mgr.ContainerMgr, ima
 		}
 	}
 
-	logrus.Infof("CRI service stopped")
+	log.With(nil).Infof("CRI service stopped")
 	return nil
 }

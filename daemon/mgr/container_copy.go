@@ -11,6 +11,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/ioutils"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
@@ -18,7 +19,6 @@ import (
 	"github.com/docker/docker/pkg/mount"
 	"github.com/go-openapi/strfmt"
 	pkgerrors "github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // StatPath stats the dir info at the specified path in the container.
@@ -27,6 +27,9 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
 	c.Lock()
 	defer c.Unlock()
 
@@ -49,11 +52,11 @@ func (mgr *ContainerManager) StatPath(ctx context.Context, name, path string) (s
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes(running)
+	err = c.mountVolumes(ctx, running)
 	if err != nil {
 		return nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
-	defer c.unmountVolumes(running)
+	defer c.unmountVolumes(ctx, running)
 
 	resolvedPath, absPath := c.getResolvedPath(path, running)
 	lstat, err := os.Lstat(resolvedPath)
@@ -77,6 +80,9 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
 	c.Lock()
 	defer func() {
 		if err0 != nil {
@@ -110,13 +116,13 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		}()
 	}
 
-	err = c.mountVolumes(running)
+	err = c.mountVolumes(ctx, running)
 	if err != nil {
 		return nil, nil, pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
 	defer func() {
 		if err0 != nil {
-			c.unmountVolumes(running)
+			c.unmountVolumes(ctx, running)
 		}
 	}()
 
@@ -149,7 +155,7 @@ func (mgr *ContainerManager) ArchivePath(ctx context.Context, name, path string)
 		if !running {
 			mgr.detachVolumes(ctx, c, false)
 		}
-		c.unmountVolumes(running)
+		c.unmountVolumes(ctx, running)
 		mgr.Unmount(ctx, c)
 		c.Unlock()
 		return err
@@ -165,6 +171,9 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 	if err != nil {
 		return err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
 	c.Lock()
 	defer c.Unlock()
 
@@ -186,11 +195,11 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 		defer mgr.detachVolumes(ctx, c, false)
 	}
 
-	err = c.mountVolumes(running)
+	err = c.mountVolumes(ctx, running)
 	if err != nil {
 		return pkgerrors.Wrapf(err, "failed to mountVolumes cid(%s)", c.ID)
 	}
-	defer c.unmountVolumes(running)
+	defer c.unmountVolumes(ctx, running)
 
 	resolvedPath, _ := c.getResolvedPath(path, running)
 
@@ -249,16 +258,16 @@ func (c *Container) getResolvedPath(path string, running bool) (resolvedPath, ab
 	return resolvedPath, absPath
 }
 
-func (c *Container) mountVolumes(running bool) (err0 error) {
+func (c *Container) mountVolumes(ctx context.Context, running bool) (err0 error) {
 	rollbackMounts := make([]string, 0, len(c.Mounts))
 
 	defer func() {
 		if err0 != nil {
 			for _, dest := range rollbackMounts {
 				if err := mount.Unmount(dest); err != nil {
-					logrus.Warnf("[mountVolumes:rollback] failed to unmount(%s), err(%v)", dest, err)
+					log.With(ctx).Warnf("[mountVolumes:rollback] failed to unmount(%s), err(%v)", dest, err)
 				} else {
-					logrus.Debugf("[mountVolumes:rollback] unmount(%s)", dest)
+					log.With(ctx).Debugf("[mountVolumes:rollback] unmount(%s)", dest)
 				}
 			}
 		}
@@ -267,7 +276,7 @@ func (c *Container) mountVolumes(running bool) (err0 error) {
 	for _, m := range c.Mounts {
 		dest, _ := c.getResolvedPath(m.Destination, running)
 
-		logrus.Debugf("try to mount volume(source %s -> dest %s", m.Source, dest)
+		log.With(ctx).Debugf("try to mount volume(source %s -> dest %s", m.Source, dest)
 
 		stat, err := os.Stat(m.Source)
 		if err != nil {
@@ -308,7 +317,7 @@ func (c *Container) mountVolumes(running bool) (err0 error) {
 	return nil
 }
 
-func (c *Container) unmountVolumes(running bool) error {
+func (c *Container) unmountVolumes(ctx context.Context, running bool) error {
 	for _, m := range c.Mounts {
 		dest, _ := c.getResolvedPath(m.Destination, running)
 

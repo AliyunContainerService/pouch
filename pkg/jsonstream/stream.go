@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // JSONStream represents a stream transfer, the data be encoded with json.
@@ -38,7 +38,7 @@ func New(out io.Writer, f Formater) *JSONStream {
 
 		// begin to write.
 		if err := stream.writeDelim(f.BeginWrite); err != nil {
-			logrus.Errorf("failed to write begin delim: %v", err)
+			log.With(nil).Errorf("failed to write begin delim: %v", err)
 			return
 		}
 
@@ -49,14 +49,14 @@ func New(out io.Writer, f Formater) *JSONStream {
 			}
 
 			if err := stream.writeObj(o, f.Write); err != nil {
-				logrus.Errorf("failed to write object: %v", err)
+				log.With(nil).Errorf("failed to write object: %v", err)
 				return
 			}
 		}
 
 		// end to write.
 		if err := stream.writeDelim(f.EndWrite); err != nil {
-			logrus.Errorf("failed to write end delim: %v", err)
+			log.With(nil).Errorf("failed to write end delim: %v", err)
 		}
 	}()
 

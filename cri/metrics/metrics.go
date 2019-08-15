@@ -4,8 +4,7 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/pkg/utils/metrics"
-
-	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 )
 
 func init() {

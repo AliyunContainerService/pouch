@@ -89,7 +89,7 @@ func (vm *VolumeManager) Create(ctx context.Context, name, driver string, option
 		id.Options = options
 	}
 
-	v, err := vm.core.CreateVolume(id)
+	v, err := vm.core.CreateVolume(ctx, id)
 	if err != nil {
 		if errtypes.IsVolumeExisted(err) {
 			return v, nil
@@ -107,7 +107,7 @@ func (vm *VolumeManager) Get(ctx context.Context, name string) (*types.Volume, e
 	id := types.VolumeContext{
 		Name: name,
 	}
-	vol, err := vm.core.GetVolume(id)
+	vol, err := vm.core.GetVolume(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, errors.Wrap(errtypes.ErrVolumeNotFound, err.Error())
@@ -122,7 +122,7 @@ func (vm *VolumeManager) List(ctx context.Context, filter filters.Args) ([]*type
 	if err := filter.Validate(acceptedVolumeFilterTags); err != nil {
 		return nil, err
 	}
-	return vm.core.ListVolumes(filter)
+	return vm.core.ListVolumes(ctx, filter)
 }
 
 // Remove is used to delete an existing volume.
@@ -140,7 +140,7 @@ func (vm *VolumeManager) Remove(ctx context.Context, name string) error {
 	id := types.VolumeContext{
 		Name: name,
 	}
-	if err := vm.core.RemoveVolume(id); err != nil {
+	if err := vm.core.RemoveVolume(ctx, id); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return errors.Wrap(errtypes.ErrVolumeNotFound, err.Error())
 		}
@@ -157,7 +157,7 @@ func (vm *VolumeManager) Path(ctx context.Context, name string) (string, error) 
 	id := types.VolumeContext{
 		Name: name,
 	}
-	return vm.core.VolumePath(id)
+	return vm.core.VolumePath(ctx, id)
 }
 
 // Attach is used to bind a volume to container.
@@ -186,7 +186,7 @@ func (vm *VolumeManager) Attach(ctx context.Context, name string, options map[st
 	}
 
 	vm.LogVolumeEvent(ctx, name, "attach", map[string]string{"driver": v.Driver()})
-	return vm.core.AttachVolume(id, options)
+	return vm.core.AttachVolume(ctx, id, options)
 }
 
 // Detach is used to unbind a volume from container.
@@ -222,5 +222,5 @@ func (vm *VolumeManager) Detach(ctx context.Context, name string, options map[st
 		}
 	}
 	vm.LogVolumeEvent(ctx, name, "detach", map[string]string{"driver": v.Driver()})
-	return vm.core.DetachVolume(id, options)
+	return vm.core.DetachVolume(ctx, id, options)
 }
