@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // LogCopier is used to copy data from stream and write it into LogDriver.
@@ -33,7 +33,7 @@ func (lc *LogCopier) StartCopy() {
 }
 
 func (lc *LogCopier) copy(source string, reader io.Reader) {
-	defer logrus.Debugf("finish %s stream type logcopy for %s", source, lc.dst.Name())
+	defer log.With(nil).Debugf("finish %s stream type logcopy for %s", source, lc.dst.Name())
 	defer lc.Done()
 
 	var (
@@ -52,7 +52,7 @@ func (lc *LogCopier) copy(source string, reader io.Reader) {
 		bs, isPartial, err = br.ReadLine()
 		if err != nil {
 			if err != io.EOF {
-				logrus.WithError(err).
+				log.With(nil).WithError(err).
 					Errorf("failed to copy into %v-%v", lc.dst.Name(), source)
 			}
 			return
@@ -75,7 +75,7 @@ func (lc *LogCopier) copy(source string, reader io.Reader) {
 			Line:      bs,
 			Timestamp: createdTime,
 		}); err != nil {
-			logrus.WithError(err).Errorf("failed to copy into %v-%v", lc.dst.Name(), source)
+			log.With(nil).WithError(err).Errorf("failed to copy into %v-%v", lc.dst.Name(), source)
 		}
 	}
 }

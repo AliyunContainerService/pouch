@@ -2,8 +2,7 @@ package logbuffer
 
 import (
 	"github.com/alibaba/pouch/daemon/logger"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // LogBuffer is uses to cache the container's logs with ringBuffer.
@@ -39,7 +38,7 @@ func (bl *LogBuffer) Close() error {
 	bl.ringBuffer.Close()
 	for _, msg := range bl.ringBuffer.Drain() {
 		if err := bl.logger.WriteLogMessage(msg); err != nil {
-			logrus.Debugf("failed to write log %v when closing with log driver %s", msg, bl.logger.Name())
+			log.With(nil).Debugf("failed to write log %v when closing with log driver %s", msg, bl.logger.Name())
 		}
 	}
 
@@ -55,7 +54,7 @@ func (bl *LogBuffer) run() {
 		}
 
 		if err := bl.logger.WriteLogMessage(msg); err != nil {
-			logrus.Debugf("failed to write log %v with log driver %s", msg, bl.logger.Name())
+			log.With(nil).Debugf("failed to write log %v with log driver %s", msg, bl.logger.Name())
 		}
 	}
 }

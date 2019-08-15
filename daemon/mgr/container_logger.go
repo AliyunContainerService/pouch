@@ -9,8 +9,7 @@ import (
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 const (
@@ -29,7 +28,7 @@ func logOptionsForContainerio(c *Container, info logger.Info) (logger.LogDriver,
 	case types.LogConfigLogDriverSyslog:
 		return syslog.Init(info)
 	default:
-		logrus.Warnf("not support (%v) log driver yet", cfg.LogDriver)
+		log.With(nil).Warnf("not support (%v) log driver yet", cfg.LogDriver)
 		return nil, nil
 	}
 }

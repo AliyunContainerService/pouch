@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/apis/types"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // challengeClient defines a client to manage challenge–response authentication.
@@ -89,7 +88,7 @@ func genV2Endpoints(addr string) registryEndpoint {
 
 // loginV1 login to a v1 registry with provided credential.
 func loginV1(url *url.URL, username, password string) (string, error) {
-	logrus.Infof("attempt to login v1 registry %s", url.String())
+	log.With(nil).Infof("attempt to login v1 registry %s", url.String())
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return "", err
@@ -167,7 +166,7 @@ func newV2AuthClient(challenges []Challenge) *challengeClient {
 
 // loginV2 login to a v2 registry with provided credential.
 func loginV2(url *url.URL, username, password string) (string, error) {
-	logrus.Infof("attempt to login v2 registry %s", url.String())
+	log.With(nil).Infof("attempt to login v2 registry %s", url.String())
 	challenges, err := pingV2(url)
 	if err != nil {
 		return "", err

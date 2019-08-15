@@ -22,7 +22,7 @@ func (s *Server) createVolume(ctx context.Context, rw http.ResponseWriter, req *
 		return httputils.NewHTTPError(err, http.StatusBadRequest)
 	}
 
-	logCreateOptions("volume", config)
+	logCreateOptions(ctx, "volume", config)
 
 	// validate request body
 	if err := config.Validate(strfmt.NewFormats()); err != nil {

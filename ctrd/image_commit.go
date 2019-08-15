@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/randomid"
 
 	"github.com/containerd/containerd"
@@ -25,7 +26,6 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -110,7 +110,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 
 	defer func() {
 		if err0 != nil {
-			logrus.Warnf("remove snapshot %s cause commit image failed", rootfsID)
+			log.With(ctx).Warnf("remove snapshot %s cause commit image failed", rootfsID)
 			client.SnapshotService(CurrentSnapshotterName(ctx)).Remove(ctx, rootfsID)
 		}
 	}()

@@ -1,6 +1,8 @@
 package hookplugins
 
 import (
+	"context"
+
 	"github.com/alibaba/pouch/apis/types"
 )
 
@@ -8,7 +10,7 @@ import (
 type VolumePlugin interface {
 	// PreVolumeCreate defines plugin point where receives an volume create request, in this plugin point user
 	// could change the volume create body passed-in by http request body
-	PreVolumeCreate(*types.VolumeCreateConfig) error
+	PreVolumeCreate(context.Context, *types.VolumeCreateConfig) error
 }
 
 var volumePlugin VolumePlugin

@@ -8,8 +8,8 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cli/inspect"
+	"github.com/alibaba/pouch/pkg/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -345,7 +345,7 @@ func (n *NetworkListCommand) addFlags() {
 
 // runNetworkList is the entry of NetworkListCommand command.
 func (n *NetworkListCommand) runNetworkList(args []string) error {
-	logrus.Debugf("list the networks")
+	log.With(nil).Debugf("list the networks")
 
 	ctx := context.Background()
 	apiClient := n.cli.Client()

@@ -8,9 +8,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/user"
-
-	"github.com/sirupsen/logrus"
 )
 
 // GetListener get a listener for an address.
@@ -70,7 +69,7 @@ func newUnixSocket(path string) (net.Listener, error) {
 	if err != nil {
 		// ignore error when group pouch not exist, group pouch should to be
 		// created before pouchd started, it means code not create pouch group
-		logrus.Warnf("failed to find group pouch, cannot change unix socket %s to pouch group", path)
+		log.With(nil).Warnf("failed to find group pouch, cannot change unix socket %s to pouch group", path)
 		return l, nil
 	}
 

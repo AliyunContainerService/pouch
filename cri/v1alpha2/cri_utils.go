@@ -22,13 +22,13 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/netutils"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/go-openapi/strfmt"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -440,7 +440,7 @@ func (c *CriManager) filterInvalidSandboxes(ctx context.Context, sandboxes []*mg
 		// NOTE: what if the worst case that we failed to remove the sandbox and
 		// it is still running?
 		if status != apitypes.StatusRunning && status != apitypes.StatusCreated {
-			logrus.Warnf("filterInvalidSandboxes: remove invalid sandbox %v", sandbox.ID)
+			log.With(ctx).Warnf("filterInvalidSandboxes: remove invalid sandbox %v", sandbox.ID)
 			c.ContainerMgr.Remove(ctx, sandbox.ID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 		}
 	}

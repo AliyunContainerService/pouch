@@ -11,10 +11,10 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/docker/go-units"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // StatsEntry represents the statistics data collected from a container
@@ -128,7 +128,7 @@ func (s *StatsEntryWithLock) GetError() error {
 }
 
 func collect(ctx context.Context, s *StatsEntryWithLock, cli client.CommonAPIClient, streamStats bool, waitFirst *sync.WaitGroup) {
-	logrus.Debugf("collecting stats for %s", s.container)
+	log.With(nil).Debugf("collecting stats for %s", s.container)
 	var (
 		getFirst       bool
 		previousCPU    uint64

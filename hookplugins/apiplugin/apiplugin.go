@@ -1,6 +1,8 @@
 package apiplugin
 
 import (
+	"context"
+
 	"github.com/alibaba/pouch/apis/server/types"
 	"github.com/alibaba/pouch/hookplugins"
 )
@@ -11,7 +13,7 @@ func init() {
 	hookplugins.RegisterAPIPlugin(&apiPlugin{})
 }
 
-func (a *apiPlugin) UpdateHandler(handlers []*types.HandlerSpec) []*types.HandlerSpec {
+func (a *apiPlugin) UpdateHandler(ctx context.Context, handlers []*types.HandlerSpec) []*types.HandlerSpec {
 	// TODO: Implemented by the developer
 	// just return the original handlers here
 	return handlers

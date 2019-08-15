@@ -1,6 +1,8 @@
 package hookplugins
 
 import (
+	"context"
+
 	"github.com/alibaba/pouch/apis/server/types"
 )
 
@@ -9,7 +11,7 @@ type APIPlugin interface {
 	// UpdateHandler could register extra HTTP API to PouchContainer server,
 	// change the behavior of the default handler.
 	// The default handler of each API would be passed in while starting HTTP server.
-	UpdateHandler([]*types.HandlerSpec) []*types.HandlerSpec
+	UpdateHandler(context.Context, []*types.HandlerSpec) []*types.HandlerSpec
 }
 
 var apiPlugin APIPlugin

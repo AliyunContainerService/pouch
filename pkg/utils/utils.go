@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // If implements ternary operator. if cond is true return v1, or return v2 instead.
@@ -279,7 +279,7 @@ func ConvertKVStrToMapWithNoErr(values []string) map[string]string {
 	for _, value := range values {
 		k, v, err := ConvertStrToKV(value)
 		if err != nil {
-			logrus.Warnf("input %s should have a format of key=value", value)
+			log.With(nil).Warnf("input %s should have a format of key=value", value)
 			continue
 		}
 		kvs[k] = v
@@ -455,7 +455,7 @@ func ExtractIPAndPortFromAddresses(addresses []string) (string, string) {
 	for _, addr := range addresses {
 		addrParts := strings.SplitN(addr, "://", 2)
 		if len(addrParts) != 2 {
-			logrus.Errorf("invalid listening address %s: must be in format [protocol]://[address]", addr)
+			log.With(nil).Errorf("invalid listening address %s: must be in format [protocol]://[address]", addr)
 			continue
 		}
 
@@ -463,14 +463,14 @@ func ExtractIPAndPortFromAddresses(addresses []string) (string, string) {
 		case "tcp":
 			host, port, err := net.SplitHostPort(addrParts[1])
 			if err != nil {
-				logrus.Errorf("failed to split host and port from address: %v", err)
+				log.With(nil).Errorf("failed to split host and port from address: %v", err)
 				continue
 			}
 			return host, port
 		case "unix":
 			continue
 		default:
-			logrus.Errorf("only unix socket or tcp address is support")
+			log.With(nil).Errorf("only unix socket or tcp address is support")
 		}
 	}
 	return "", ""

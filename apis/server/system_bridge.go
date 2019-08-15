@@ -10,13 +10,13 @@ import (
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/metrics"
 
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) ping(context context.Context, rw http.ResponseWriter, req *http.Request) (err error) {
@@ -138,7 +138,7 @@ func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.R
 		select {
 		case ev := <-eventq:
 			if err := enc.Encode(ev); err != nil {
-				logrus.Errorf("encode events got an error: %v", err)
+				log.With(ctx).Errorf("encode events got an error: %v", err)
 				return err
 			}
 		case err := <-errq:
@@ -149,7 +149,7 @@ func (s *Server) events(ctx context.Context, rw http.ResponseWriter, req *http.R
 		case <-timeout:
 			return nil
 		case <-ctx.Done():
-			logrus.Debug("client context is cancelled, stop sending events")
+			log.With(ctx).Debug("client context is cancelled, stop sending events")
 			return nil
 		}
 	}

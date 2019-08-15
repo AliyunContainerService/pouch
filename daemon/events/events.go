@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 
 	goevents "github.com/docker/go-events"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -80,7 +80,7 @@ func (e *Events) Publish(ctx context.Context, action string, eventType types.Eve
 
 	err := e.broadcaster.Write(&msg)
 	if err != nil {
-		logrus.Errorf("failed to publish event {action: %s, type: %s, id: %s}: %v", msg.Action, msg.Type, msg.ID, err)
+		log.With(ctx).Errorf("failed to publish event {action: %s, type: %s, id: %s}: %v", msg.Action, msg.Type, msg.ID, err)
 	}
 
 	return err

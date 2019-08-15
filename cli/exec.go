@@ -12,9 +12,9 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/client"
 	"github.com/alibaba/pouch/pkg/ioutils"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/unix"
@@ -174,7 +174,7 @@ func holdHijackConnection(ctx context.Context, apiClient client.CommonAPIClient,
 	select {
 	case err := <-stdoutDone:
 		if err != nil {
-			logrus.Debugf("receive stdout error: %s", err)
+			log.With(ctx).Debugf("receive stdout error: %s", err)
 			return err
 		}
 
@@ -182,7 +182,7 @@ func holdHijackConnection(ctx context.Context, apiClient client.CommonAPIClient,
 		if stdout || stderr {
 			select {
 			case err := <-stdoutDone:
-				logrus.Debugf("receive stdout error: %s", err)
+				log.With(ctx).Debugf("receive stdout error: %s", err)
 				return err
 			case <-ctx.Done():
 			}
@@ -214,12 +214,12 @@ func execResize(ctx context.Context, apiClient client.CommonAPIClient, execID st
 		for range s {
 			width, height, err = terminal.GetSize(int(os.Stdin.Fd()))
 			if err != nil {
-				logrus.Debugf("failed to get tty size, err(%v)", err)
+				log.With(ctx).Debugf("failed to get tty size, err(%v)", err)
 				continue
 			}
 			err = apiClient.ContainerExecResize(ctx, execID, types.ResizeOptions{Width: int64(width), Height: int64(height)})
 			if err != nil {
-				logrus.Debugf("failed to resize tty, err(%v)", err)
+				log.With(ctx).Debugf("failed to resize tty, err(%v)", err)
 			}
 		}
 	}()

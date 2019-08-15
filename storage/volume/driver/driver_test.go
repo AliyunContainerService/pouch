@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"context"
 	"testing"
 )
 
@@ -21,7 +22,8 @@ func TestRegister(t *testing.T) {
 		t.Fatal("failed to get fake1 driver is nil")
 	}
 
-	if d.Name(Contexts()) != testDriverName {
+	ctx := context.Background()
+	if d.Name(ctx) != testDriverName {
 		t.Fatal("error driver name with testdriver")
 	}
 
@@ -32,7 +34,7 @@ func TestRegister(t *testing.T) {
 
 	d, err = Get(testDriverName)
 	if err == nil || d != nil {
-		t.Fatalf("failed to unregister testdriver, get driver: %s", d.Name(Contexts()))
+		t.Fatalf("failed to unregister testdriver, get driver: %s", d.Name(ctx))
 	}
 }
 
@@ -99,8 +101,9 @@ func TestAlias(t *testing.T) {
 		t.Fatal("failed to get alias volume driver")
 	}
 
-	if d.Name(Contexts()) != "testdriver1" {
-		t.Fatalf("failed to get volume name: %s", d.Name(Contexts()))
+	ctx := context.Background()
+	if d.Name(ctx) != "testdriver1" {
+		t.Fatalf("failed to get volume name: %s", d.Name(ctx))
 	}
 }
 

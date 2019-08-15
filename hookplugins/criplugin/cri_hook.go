@@ -1,6 +1,8 @@
 package criplugin
 
 import (
+	"context"
+
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/hookplugins"
 )
@@ -13,7 +15,7 @@ func init() {
 
 // PreCreateContainer defines plugin point where receives a container create request, in this plugin point user
 // could the container's config in cri interface.
-func (c *criPlugin) PreCreateContainer(createConfig *types.ContainerCreateConfig, res interface{}) error {
+func (c *criPlugin) PreCreateContainer(ctx context.Context, createConfig *types.ContainerCreateConfig, res interface{}) error {
 	// TODO: Implemented by the developer
 	return nil
 }

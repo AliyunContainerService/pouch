@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/scheduler"
 	"github.com/alibaba/pouch/pkg/utils"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/typeurl"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -103,7 +103,7 @@ func NewClient(opts ...ClientOpt) (APIClient, error) {
 		client.pool = append(client.pool, cli)
 	}
 
-	logrus.Infof("success to create %d containerd clients, connect to: %s", copts.grpcClientPoolCapacity, copts.rpcAddr)
+	log.With(nil).Infof("success to create %d containerd clients, connect to: %s", copts.grpcClientPoolCapacity, copts.rpcAddr)
 
 	scheduler, err := scheduler.NewLRUScheduler(client.pool)
 	if err != nil {
@@ -138,9 +138,7 @@ func (c *Client) Get(ctx context.Context) (*WrapperClient, error) {
 
 	end := time.Now()
 	elapsed := end.Sub(start)
-	logrus.WithFields(logrus.Fields{
-		"elapsed": elapsed,
-	}).Debug("Get a grpc client")
+	log.WithFields(ctx, map[string]interface{}{"elapsed": elapsed}).Debug("Get a grpc client")
 
 	return wrapperCli, nil
 }
@@ -254,7 +252,7 @@ func (c *Client) collectContainerdEvents() {
 	// get client
 	wrapperCli, err := c.Get(ctx)
 	if err != nil {
-		logrus.Errorf("failed to get a containerd grpc client: %v", err)
+		log.With(nil).Errorf("failed to get a containerd grpc client: %v", err)
 		return
 	}
 	eventsClient := wrapperCli.client.EventService()
@@ -273,7 +271,7 @@ func (c *Client) collectContainerdEvents() {
 		case e = <-eventCh:
 		case err := <-errCh:
 			if err != nil {
-				logrus.Errorf("failed to receive event: %v", err)
+				log.With(nil).Errorf("failed to receive event: %v", err)
 			}
 			return
 		}
@@ -289,7 +287,7 @@ func (c *Client) collectContainerdEvents() {
 
 		out, err := typeurl.UnmarshalAny(e.Event)
 		if err != nil {
-			logrus.Errorf("failed to unmarshal event %s: %v", e.Topic, err)
+			log.With(nil).Errorf("failed to unmarshal event %s: %v", e.Topic, err)
 			continue
 		}
 
@@ -297,7 +295,7 @@ func (c *Client) collectContainerdEvents() {
 		case TaskExitEventTopic:
 			exitEvent, ok := out.(*eventstypes.TaskExit)
 			if !ok {
-				logrus.Warnf("failed to parse %s event: %#v", TaskExitEventTopic, out)
+				log.With(nil).Warnf("failed to parse %s event: %#v", TaskExitEventTopic, out)
 				continue
 			}
 			if exitEvent.ID == exitEvent.ContainerID {
@@ -311,21 +309,21 @@ func (c *Client) collectContainerdEvents() {
 		case TaskOOMEventTopic:
 			oomEvent, ok := out.(*eventstypes.TaskOOM)
 			if !ok {
-				logrus.Warnf("failed to parse %s event: %#v", TaskOOMEventTopic, out)
+				log.With(nil).Warnf("failed to parse %s event: %#v", TaskOOMEventTopic, out)
 				continue
 			}
 
 			action = "oom"
 			containerID = oomEvent.ContainerID
 		default:
-			logrus.Debugf("skip event %s: %#v", e.Topic, out)
+			log.With(nil).Debugf("skip event %s: %#v", e.Topic, out)
 			continue
 		}
 
 		// handles the event
 		for _, hook := range c.eventsHooks {
 			if err := hook(ctx, containerID, action, attributes); err != nil {
-				logrus.Errorf("failed to execute the containerd events hooks: %v", err)
+				log.With(nil).Errorf("failed to execute the containerd events hooks: %v", err)
 				break
 			}
 		}
@@ -340,7 +338,7 @@ func (c *Client) CheckSnapshotterValid(snapshotter string, allowMultiSnapshotter
 
 	plugins, err := c.Plugins(context.Background(), []string{fmt.Sprintf("type==%s", plugin.SnapshotPlugin)})
 	if err != nil {
-		logrus.Errorf("failed to get containerd plugins: %v", err)
+		log.With(nil).Errorf("failed to get containerd plugins: %v", err)
 		return err
 	}
 

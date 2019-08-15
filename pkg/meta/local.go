@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 func init() {
@@ -106,7 +106,7 @@ func (s *localStore) Get(fileName, key string) ([]byte, error) {
 
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
-			logrus.Warnf("container %s meta.json file not exist", key)
+			log.With(nil).Warnf("container %s meta.json file not exist", key)
 			return nil, ErrObjectNotFound
 		}
 	}

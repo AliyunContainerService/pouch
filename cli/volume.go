@@ -9,8 +9,8 @@ import (
 	"github.com/alibaba/pouch/apis/filters"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cli/inspect"
+	"github.com/alibaba/pouch/pkg/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -93,7 +93,7 @@ func (v *VolumeCreateCommand) addFlags() {
 
 // runVolumeCreate is the entry of VolumeCreateCommand command.
 func (v *VolumeCreateCommand) runVolumeCreate(args []string) error {
-	logrus.Debugf("create a volume: %s, options: %v, labels: %v, selectors: %v",
+	log.With(nil).Debugf("create a volume: %s, options: %v, labels: %v, selectors: %v",
 		v.name, v.options, v.labels, v.selectors)
 	return v.volumeCreate()
 }
@@ -194,7 +194,7 @@ func (v *VolumeRemoveCommand) addFlags() {}
 func (v *VolumeRemoveCommand) runVolumeRm(args []string) error {
 	name := args[0]
 
-	logrus.Debugf("remove a volume: %s", name)
+	log.With(nil).Debugf("remove a volume: %s", name)
 
 	ctx := context.Background()
 	apiClient := v.cli.Client()
@@ -317,7 +317,7 @@ func (v *VolumeListCommand) addFlags() {
 
 // runVolumeList is the entry of VolumeListCommand command.
 func (v *VolumeListCommand) runVolumeList(args []string) error {
-	logrus.Debugf("list the volumes")
+	log.With(nil).Debugf("list the volumes")
 
 	ctx := context.Background()
 	apiClient := v.cli.Client()

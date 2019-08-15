@@ -17,6 +17,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/archive"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/storage/quota"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/containerd/containerd/mount"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *Container) (string, string, error) {
@@ -35,7 +35,7 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *C
 			"backend": driver,
 		}
 		if _, err := mgr.VolumeMgr.Create(ctx, name, c.HostConfig.VolumeDriver, opts, nil); err != nil {
-			logrus.Errorf("failed to create volume(%s), err(%v)", name, err)
+			log.With(ctx).Errorf("failed to create volume(%s), err(%v)", name, err)
 			return "", "", errors.Wrap(err, "failed to create volume")
 		}
 	} else {
@@ -43,13 +43,13 @@ func (mgr *ContainerManager) attachVolume(ctx context.Context, name string, c *C
 	}
 
 	if _, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
-		logrus.Errorf("failed to attach volume(%s), err(%v)", name, err)
+		log.With(ctx).Errorf("failed to attach volume(%s), err(%v)", name, err)
 		return "", "", errors.Wrap(err, "failed to attach volume")
 	}
 
 	mountPath, err := mgr.VolumeMgr.Path(ctx, name)
 	if err != nil {
-		logrus.Errorf("failed to get the mount path of volume(%s), err(%v)", name, err)
+		log.With(ctx).Errorf("failed to get the mount path of volume(%s), err(%v)", name, err)
 		return "", "", errors.Wrap(err, "failed to get volume mount path")
 	}
 
@@ -73,7 +73,7 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 	defer func() {
 		if err != nil {
 			if err := mgr.detachVolumes(ctx, c, false); err != nil {
-				logrus.Errorf("failed to detach volume, err(%v)", err)
+				log.With(ctx).Errorf("failed to detach volume, err(%v)", err)
 			}
 		}
 	}()
@@ -121,7 +121,7 @@ func (mgr *ContainerManager) generateMountPoints(ctx context.Context, c *Contain
 func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Container, volumeSet map[string]struct{}) error {
 	var err error
 
-	logrus.Debugf("bind volumes(%v)", c.HostConfig.Binds)
+	log.With(ctx).Debugf("bind volumes(%v)", c.HostConfig.Binds)
 
 	// parse binds
 	for _, b := range c.HostConfig.Binds {
@@ -152,7 +152,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 		}
 
 		if opts.CheckDuplicateMountPoint(c.Mounts, mp.Destination) {
-			logrus.Warnf("duplicate mountpoint(%s)", mp.Destination)
+			log.With(ctx).Warnf("duplicate mountpoint(%s)", mp.Destination)
 			continue
 		}
 
@@ -162,7 +162,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 
 		err = opts.ParseBindMode(mp, mode)
 		if err != nil {
-			logrus.Errorf("failed to parse bind mode(%s), err(%v)", mode, err)
+			log.With(ctx).Errorf("failed to parse bind mode(%s), err(%v)", mode, err)
 			return err
 		}
 
@@ -172,7 +172,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 			if _, exist := volumeSet[name]; !exist {
 				_, mp.Driver, err = mgr.attachVolume(ctx, name, c)
 				if err != nil {
-					logrus.Errorf("failed to bind volume(%s), err(%v)", name, err)
+					log.With(ctx).Errorf("failed to bind volume(%s), err(%v)", name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
 
@@ -181,7 +181,7 @@ func (mgr *ContainerManager) getMountPointFromBinds(ctx context.Context, c *Cont
 
 			volume, err := mgr.VolumeMgr.Get(ctx, name)
 			if err != nil || volume == nil {
-				logrus.Errorf("failed to get volume(%s), err(%v)", name, err)
+				log.With(ctx).Errorf("failed to get volume(%s), err(%v)", name, err)
 				return errors.Wrapf(err, "failed to get volume(%s)", name)
 			}
 			mp.Driver = volume.Driver()
@@ -220,7 +220,7 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, c *Co
 	// parse volumes
 	for dest := range c.Config.Volumes {
 		if opts.CheckDuplicateMountPoint(c.Mounts, dest) {
-			logrus.Warnf("duplicate mountpoint(%s) from volumes", dest)
+			log.With(ctx).Warnf("duplicate mountpoint(%s) from volumes", dest)
 			continue
 		}
 
@@ -236,13 +236,13 @@ func (mgr *ContainerManager) getMountPointFromVolumes(ctx context.Context, c *Co
 
 		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
-			logrus.Errorf("failed to bind volume(%s), err(%v)", mp.Name, err)
+			log.With(ctx).Errorf("failed to bind volume(%s), err(%v)", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
 		}
 
 		err = opts.ParseBindMode(mp, "")
 		if err != nil {
-			logrus.Errorf("failed to parse mode, err(%v)", err)
+			log.With(ctx).Errorf("failed to parse mode, err(%v)", err)
 			return err
 		}
 
@@ -269,7 +269,7 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, c *Cont
 		}
 
 		if opts.CheckDuplicateMountPoint(c.Mounts, dest) {
-			logrus.Warnf("duplicate mountpoint(%s) from image", dest)
+			log.With(ctx).Warnf("duplicate mountpoint(%s) from image", dest)
 			continue
 		}
 
@@ -279,13 +279,13 @@ func (mgr *ContainerManager) getMountPointFromImage(ctx context.Context, c *Cont
 
 		mp.Source, mp.Driver, err = mgr.attachVolume(ctx, mp.Name, c)
 		if err != nil {
-			logrus.Errorf("failed to bind volume(%s), err(%v)", mp.Name, err)
+			log.With(ctx).Errorf("failed to bind volume(%s), err(%v)", mp.Name, err)
 			return errors.Wrap(err, "failed to bind volume")
 		}
 
 		err = opts.ParseBindMode(mp, "")
 		if err != nil {
-			logrus.Errorf("failed to parse mode, err(%v)", err)
+			log.With(ctx).Errorf("failed to parse mode, err(%v)", err)
 			return err
 		}
 
@@ -315,7 +315,7 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 
 		for _, oldMountPoint := range oldContainer.Mounts {
 			if opts.CheckDuplicateMountPoint(container.Mounts, oldMountPoint.Destination) {
-				logrus.Warnf("duplicate mount point %s on container %s", oldMountPoint.Destination, containerID)
+				log.With(ctx).Warnf("duplicate mount point %s on container %s", oldMountPoint.Destination, containerID)
 				continue
 			}
 
@@ -333,7 +333,7 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 				mp.Name = oldMountPoint.Name
 				mp.Source, mp.Driver, err = mgr.attachVolume(ctx, oldMountPoint.Name, container)
 				if err != nil {
-					logrus.Errorf("failed to bind volume(%s), err(%v)", oldMountPoint.Name, err)
+					log.With(ctx).Errorf("failed to bind volume(%s), err(%v)", oldMountPoint.Name, err)
 					return errors.Wrap(err, "failed to bind volume")
 				}
 
@@ -342,7 +342,7 @@ func (mgr *ContainerManager) getMountPointFromContainers(ctx context.Context, co
 
 			err = opts.ParseBindMode(mp, mode)
 			if err != nil {
-				logrus.Errorf("failed to parse volumes-from mode(%s), err(%v)", mode, err)
+				log.With(ctx).Errorf("failed to parse volumes-from mode(%s), err(%v)", mode, err)
 				return err
 			}
 
@@ -383,14 +383,14 @@ func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container) 
 			continue
 		}
 
-		logrus.Debugf("copying image data from (%s:%s), to volume(%s) or path(%s)",
+		log.With(ctx).Debugf("copying image data from (%s:%s), to volume(%s) or path(%s)",
 			c.ID, mp.Destination, mp.Name, mp.Source)
 
 		imagePath := path.Join(c.MountFS, mp.Destination)
 
-		err := copyImageContent(imagePath, mp.Source)
+		err := copyImageContent(ctx, imagePath, mp.Source)
 		if err != nil {
-			logrus.Errorf("failed to copy image contents, volume[imagepath(%s), source(%s)], err(%v)", imagePath, mp.Source, err)
+			log.With(ctx).Errorf("failed to copy image contents, volume[imagepath(%s), source(%s)], err(%v)", imagePath, mp.Source, err)
 			return errors.Wrapf(err, "failed to copy image content, image(%s), host(%s)", imagePath, mp.Source)
 		}
 	}
@@ -412,7 +412,7 @@ func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container) 
 }
 
 func (mgr *ContainerManager) setMountTab(ctx context.Context, c *Container) error {
-	logrus.Debugf("start to set mount tab into container")
+	log.With(ctx).Debugf("start to set mount tab into container")
 
 	if len(c.MountFS) == 0 {
 		return nil
@@ -467,7 +467,7 @@ func (mgr *ContainerManager) setMountTab(ctx context.Context, c *Container) erro
 		return errors.Wrapf(err, "failed to write file(%s)", mtabPath)
 	}
 
-	logrus.Infof("write mtab file to (%s)", mtabPath)
+	log.With(ctx).Infof("write mtab file to (%s)", mtabPath)
 
 	return nil
 }
@@ -478,7 +478,7 @@ func (mgr *ContainerManager) getDiskQuotaMountPoints(ctx context.Context, c *Con
 	for _, mp := range c.Mounts {
 		// skip volume mount or replace mode mount
 		if mp.Replace != "" || mp.Source == "" || mp.Destination == "" {
-			logrus.Debugf("skip volume mount or replace mode mount")
+			log.With(ctx).Debugf("skip volume mount or replace mode mount")
 			continue
 		}
 
@@ -486,19 +486,19 @@ func (mgr *ContainerManager) getDiskQuotaMountPoints(ctx context.Context, c *Con
 		if mp.Name != "" {
 			v, err := mgr.VolumeMgr.Get(ctx, mp.Name)
 			if err != nil {
-				logrus.Warnf("failed to get volume(%s)", mp.Name)
+				log.With(ctx).Warnf("failed to get volume(%s)", mp.Name)
 				continue
 			}
 
 			if v.Size() != "" {
-				logrus.Debugf("skip volume(%s) with size", mp.Name)
+				log.With(ctx).Debugf("skip volume(%s) with size", mp.Name)
 				continue
 			}
 		}
 
 		// skip non-directory path.
 		if fd, err := os.Stat(mp.Source); err != nil || !fd.IsDir() {
-			logrus.Debugf("skip non-directory path(%s)", mp.Source)
+			log.With(ctx).Debugf("skip non-directory path(%s)", mp.Source)
 			continue
 		}
 
@@ -631,13 +631,13 @@ func (mgr *ContainerManager) setDiskQuota(ctx context.Context, c *Container, mou
 			// set rootfs quota
 			_, err = quota.SetRootfsDiskQuota(qm.Source, qm.Size, qm.QuotaID, update)
 			if err != nil {
-				logrus.Warnf("failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d), err(%v)",
+				log.With(ctx).Warnf("failed to set rootfs quota, mountfs(%s), size(%s), quota id(%d), err(%v)",
 					qm.Source, qm.Size, qm.QuotaID, err)
 			}
 		} else {
 			err := quota.SetDiskQuota(qm.Source, qm.Size, qm.QuotaID)
 			if err != nil {
-				logrus.Warnf("failed to set disk quota, directory(%s), size(%s), quota id(%d), err(%v)",
+				log.With(ctx).Warnf("failed to set disk quota, directory(%s), size(%s), quota id(%d), err(%v)",
 					qm.Source, qm.Size, qm.QuotaID, err)
 			}
 		}
@@ -655,12 +655,12 @@ func (mgr *ContainerManager) detachVolumes(ctx context.Context, c *Container, re
 
 		_, err := mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID})
 		if err != nil {
-			logrus.Warnf("failed to detach volume(%s), err(%v)", name, err)
+			log.With(ctx).Warnf("failed to detach volume(%s), err(%v)", name, err)
 		}
 
 		if remove && !mount.Named {
 			if err := mgr.VolumeMgr.Remove(ctx, name); err != nil && !errtypes.IsInUse(err) {
-				logrus.Warnf("failed to remove volume(%s) when remove container", name)
+				log.With(ctx).Warnf("failed to remove volume(%s) when remove container", name)
 			}
 		}
 	}
@@ -675,7 +675,7 @@ func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) (e
 		if err0 != nil {
 			for _, name := range rollbackVolumes {
 				if _, err := mgr.VolumeMgr.Detach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID}); err != nil {
-					logrus.Warnf("[rollback] failed to detach volume(%s), err(%v)", name, err)
+					log.With(ctx).Warnf("[rollback] failed to detach volume(%s), err(%v)", name, err)
 				}
 			}
 		}
@@ -689,7 +689,7 @@ func (mgr *ContainerManager) attachVolumes(ctx context.Context, c *Container) (e
 
 		_, err := mgr.VolumeMgr.Attach(ctx, name, map[string]string{volumetypes.OptionRef: c.ID})
 		if err != nil {
-			logrus.Warnf("failed to attach volume(%s), err(%v)", name, err)
+			log.With(ctx).Warnf("failed to attach volume(%s), err(%v)", name, err)
 			return err
 		}
 
@@ -765,7 +765,7 @@ func (mgr *ContainerManager) initContainerStorage(ctx context.Context, c *Contai
 	// set mount point disk quota
 	if err = mgr.setDiskQuota(ctx, c, true, false); err != nil {
 		// just ignore failed to set disk quota
-		logrus.Warnf("failed to set disk quota, err(%v)", err)
+		log.With(ctx).Warnf("failed to set disk quota, err(%v)", err)
 	}
 
 	// set volumes into /etc/mtab in container
@@ -817,7 +817,7 @@ func (mgr *ContainerManager) getRootfs(ctx context.Context, c *Container, mounte
 
 		defer func() {
 			if err = mgr.Unmount(ctx, c); err != nil {
-				logrus.Errorf("failed to umount mountfs: (%s), err: (%v)", c.MountFS, err)
+				log.With(ctx).Errorf("failed to umount mountfs: (%s), err: (%v)", c.MountFS, err)
 			}
 		}()
 	} else {
@@ -838,7 +838,7 @@ func sortMountPoint(mounts []*types.MountPoint) []*types.MountPoint {
 	return mounts
 }
 
-func copyImageContent(source, destination string) error {
+func copyImageContent(ctx context.Context, source, destination string) error {
 	fi, err := os.Stat(source)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -856,7 +856,7 @@ func copyImageContent(source, destination string) error {
 		}
 
 		// destination directory is not exist, so mkdir for it.
-		logrus.Warnf("(%s) is not exist", destination)
+		log.With(ctx).Warnf("(%s) is not exist", destination)
 		if err := os.MkdirAll(destination, 0755); err != nil && !os.IsExist(err) {
 			return err
 		}
@@ -864,10 +864,10 @@ func copyImageContent(source, destination string) error {
 		return nil
 	}
 
-	return copyExistContents(source, destination)
+	return copyExistContents(ctx, source, destination)
 }
 
-func copyExistContents(source, destination string) error {
+func copyExistContents(ctx context.Context, source, destination string) error {
 	volList, err := ioutil.ReadDir(source)
 	if err != nil {
 		return err
@@ -879,10 +879,10 @@ func copyExistContents(source, destination string) error {
 			return err
 		}
 		if len(dstList) == 0 {
-			logrus.Debugf("copy (%s) to (%s) with tar", source, destination)
+			log.With(ctx).Debugf("copy (%s) to (%s) with tar", source, destination)
 			err := archive.CopyWithTar(source, destination)
 			if err != nil {
-				logrus.Errorf("copyImageContent: %v", err)
+				log.With(ctx).Errorf("copyImageContent: %v", err)
 				return err
 			}
 		}

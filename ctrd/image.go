@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/jsonstream"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/reference"
 
 	"github.com/containerd/containerd"
@@ -20,7 +21,6 @@ import (
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // CreateImageReference creates the image in the meta data in the containerd.
@@ -246,7 +246,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 		return err
 	}
 
-	logrus.Infof("push image %s successfully", ref)
+	log.With(nil).Infof("push image %s successfully", ref)
 
 	return nil
 }
@@ -255,7 +255,7 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 func (c *Client) ResolveImage(ctx context.Context, nameRef string, refs []string, authConfig *types.AuthConfig, opts docker.ResolverOptions) (remotes.Resolver, string, error) {
 	resolver, availableRef, err := c.getResolver(ctx, authConfig, nameRef, refs, opts)
 	if err != nil {
-		logrus.Errorf("image ref not found %s", nameRef)
+		log.With(nil).Errorf("image ref not found %s", nameRef)
 		return nil, "", err
 	}
 
@@ -290,11 +290,11 @@ func (c *Client) FetchImage(ctx context.Context, resolver remotes.Resolver, avai
 
 	go func() {
 		if err := c.fetchProgress(pctx, wrapperCli, ongoing, stream); err != nil {
-			logrus.Errorf("failed to get pull's progress: %v", err)
+			log.With(nil).Errorf("failed to get pull's progress: %v", err)
 		}
 		close(wait)
 
-		logrus.Infof("fetch progress exited, ref: %s.", availableRef)
+		log.With(nil).Infof("fetch progress exited, ref: %s.", availableRef)
 	}()
 
 	// start to pull image.
@@ -310,7 +310,7 @@ func (c *Client) FetchImage(ctx context.Context, resolver remotes.Resolver, avai
 		return nil, err
 	}
 
-	logrus.Infof("success to fetch image: %s", img.Name())
+	log.With(nil).Infof("success to fetch image: %s", img.Name())
 	return img, nil
 }
 
@@ -353,7 +353,7 @@ outer:
 			if !done {
 				actives, err := cs.ListStatuses(context.TODO(), "")
 				if err != nil {
-					logrus.Errorf("failed to list statuses: %v", err)
+					log.With(nil).Errorf("failed to list statuses: %v", err)
 					continue
 				}
 				// update status of active entries!
@@ -385,7 +385,7 @@ outer:
 					info, err := cs.Info(context.TODO(), j.Digest)
 					if err != nil {
 						if !errdefs.IsNotFound(err) {
-							logrus.Errorf("failed to get content info: %v", err)
+							log.With(nil).Errorf("failed to get content info: %v", err)
 							continue outer
 						} else {
 							progresses[key] = jsonstream.JSONMessage{

@@ -15,6 +15,7 @@ import (
 	"github.com/alibaba/pouch/daemon/events"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/kernel"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/registry"
@@ -24,7 +25,6 @@ import (
 	"github.com/opencontainers/runc/libcontainer/apparmor"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -70,7 +70,7 @@ func NewSystemManager(cfg *config.Config, store *meta.Store, imageManager ImageM
 func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 	kernelVersion := unknownKernelVersion
 	if kv, err := kernel.GetKernelVersion(); err != nil {
-		logrus.Warnf("Could not get kernel version: %v", err)
+		log.With(nil).Warnf("Could not get kernel version: %v", err)
 	} else {
 		kernelVersion = kv.String()
 	}
@@ -96,28 +96,28 @@ func (mgr *SystemManager) Info() (types.SystemInfo, error) {
 
 	hostname := unknownHostName
 	if name, err := os.Hostname(); err != nil {
-		logrus.Warnf("failed to get hostname: %v", err)
+		log.With(nil).Warnf("failed to get hostname: %v", err)
 	} else {
 		hostname = name
 	}
 
 	totalMem := int64(0)
 	if mem, err := system.GetTotalMem(); err != nil {
-		logrus.Warnf("failed to get system mem: %v", err)
+		log.With(nil).Warnf("failed to get system mem: %v", err)
 	} else {
 		totalMem = int64(mem)
 	}
 
 	OSName := unknownOSName
 	if osName, err := system.GetOSName(); err != nil {
-		logrus.Warnf("failed to get operating system: %v", err)
+		log.With(nil).Warnf("failed to get operating system: %v", err)
 	} else {
 		OSName = osName
 	}
 
 	images, err := mgr.imageMgr.ListImages(context.Background(), filters.NewArgs())
 	if err != nil {
-		logrus.Warnf("failed to get image info: %v", err)
+		log.With(nil).Warnf("failed to get image info: %v", err)
 	}
 	volumeDrivers := volumedriver.AllDriversName()
 
@@ -192,7 +192,7 @@ func (mgr *SystemManager) SubscribeToEvents(ctx context.Context, since, until ti
 func (mgr *SystemManager) Version() (types.SystemVersion, error) {
 	kernelVersion := unknownKernelVersion
 	if kv, err := kernel.GetKernelVersion(); err != nil {
-		logrus.Warnf("Could not get kernel version: %v", err)
+		log.With(nil).Warnf("Could not get kernel version: %v", err)
 	} else {
 		kernelVersion = kv.String()
 	}

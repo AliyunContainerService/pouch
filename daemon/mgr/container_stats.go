@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
@@ -19,7 +20,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/opencontainers/runc/libcontainer/system"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const nanoSecondsPerSecond = 1e9
@@ -30,6 +30,8 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 	if err != nil {
 		return err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	outStream := config.OutStream
 
@@ -54,7 +56,7 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 		networkStat, err := mgr.NetworkMgr.GetNetworkStats(c.NetworkSettings.SandboxID)
 		if err != nil {
 			// --net=none or disconnect from network, the sandbox will be nil
-			logrus.Debugf("failed to get network stats from container %s: %v", name, err)
+			log.With(nil).Debugf("failed to get network stats from container %s: %v", name, err)
 		}
 		stats.Networks = networkStat
 		return stats, nil
@@ -83,10 +85,10 @@ func (mgr *ContainerManager) StreamStats(ctx context.Context, name string, confi
 	for {
 		select {
 		case <-ctx.Done():
-			logrus.Infof("context is cancelled when streaming stats of container %s", c.ID)
+			log.With(nil).Infof("context is cancelled when streaming stats of container %s", c.ID)
 			return nil
 		default:
-			logrus.Debugf("Start to stream stats of container %s", c.ID)
+			log.With(nil).Debugf("Start to stream stats of container %s", c.ID)
 			metrics, stats, err := mgr.Stats(ctx, name)
 			if err != nil {
 				return err
@@ -111,6 +113,8 @@ func (mgr *ContainerManager) Stats(ctx context.Context, name string) (*container
 	if err != nil {
 		return nil, nil, err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	c.Lock()
 	defer c.Unlock()

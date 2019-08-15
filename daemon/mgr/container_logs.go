@@ -10,6 +10,7 @@ import (
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	pkgerrors "github.com/pkg/errors"
@@ -23,6 +24,8 @@ func (mgr *ContainerManager) Logs(ctx context.Context, name string, logOpt *type
 	if err != nil {
 		return nil, false, err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	if !(logOpt.ShowStdout || logOpt.ShowStderr) {
 		return nil, false, pkgerrors.Wrap(errtypes.ErrInvalidParam, "you must choose at least one stream")

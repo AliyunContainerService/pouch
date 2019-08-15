@@ -3,7 +3,7 @@ package mgr
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 const (
@@ -61,13 +61,13 @@ func NewContainerMonitor() *ContainerMonitor {
 		for {
 			ev := <-m.c
 
-			logrus.Debugf("receive event: %s", ev)
+			log.With(nil).Debugf("receive event: %s", ev)
 
 			if ev.handle != nil {
-				logrus.Infof("handle event: %s", ev)
+				log.With(nil).Infof("handle event: %s", ev)
 
 				if err := ev.handle(ev.c); err != nil {
-					logrus.Errorf("failed to handle event: %s", ev)
+					log.With(nil).Errorf("failed to handle event: %s", ev)
 				}
 			}
 		}

@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/alibaba/pouch/apis/types"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Upgrade a container with new image and args. when upgrade a container,
@@ -21,6 +21,8 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	if err != nil {
 		return err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	var (
 		needRollback  = false
@@ -51,9 +53,9 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		}
 
 		if err := mgr.start(ctx, c, &types.ContainerStartOptions{}); err != nil {
-			logrus.Errorf("failed to rollback upgrade action: %s", err.Error())
-			if err := mgr.markStoppedAndRelease(c, nil); err != nil {
-				logrus.Errorf("failed to mark container %s stop status: %s", c.ID, err.Error())
+			log.With(nil).Errorf("failed to rollback upgrade action: %s", err.Error())
+			if err := mgr.markStoppedAndRelease(ctx, c, nil); err != nil {
+				log.With(nil).Errorf("failed to mark container %s stop status: %s", c.ID, err.Error())
 			}
 		}
 	}()
@@ -93,7 +95,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 		err = mgr.start(ctx, c, &types.ContainerStartOptions{})
 		if err != nil {
 			if err := mgr.Client.RemoveSnapshot(ctx, newSnapID); err != nil {
-				logrus.Errorf("failed to remove snapshot %s: %v", newSnapID, err)
+				log.With(nil).Errorf("failed to remove snapshot %s: %v", newSnapID, err)
 			}
 		}
 
@@ -103,7 +105,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 	// Upgrade success, remove snapshot of old container
 	if err := mgr.Client.RemoveSnapshot(ctx, oldSnapID); err != nil {
 		// TODO(ziren): remove old snapshot failed, may cause dirty data
-		logrus.Errorf("failed to remove snapshot %s: %v", oldSnapID, err)
+		log.With(nil).Errorf("failed to remove snapshot %s: %v", oldSnapID, err)
 	}
 
 	// Upgrade succeeded, refresh the cache
@@ -111,7 +113,7 @@ func (mgr *ContainerManager) Upgrade(ctx context.Context, name string, config *t
 
 	// Works fine, store new container info to disk.
 	if err := c.Write(mgr.Store); err != nil {
-		logrus.Errorf("failed to update container %s in meta store: %v", c.ID, err)
+		log.With(nil).Errorf("failed to update container %s in meta store: %v", c.ID, err)
 		return err
 	}
 

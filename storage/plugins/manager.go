@@ -9,9 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
-
-	"github.com/sirupsen/logrus"
 )
 
 // pluginManager is a plugin manager, which manages all plugin events.
@@ -143,7 +142,7 @@ func (m *pluginManager) scanPluginDir() ([]string, error) {
 		}
 	}
 
-	logrus.Debugf("get all plugins path(%v)", names)
+	log.With(nil).Debugf("get all plugins path(%v)", names)
 
 	// DeDuplicate.
 	return utils.DeDuplicate(names), nil
@@ -164,7 +163,7 @@ func (m *pluginManager) retryLoad(name string, retry bool) (*Plugin, error) {
 					return nil, err
 				}
 				times++
-				logrus.Warnf("plugin %s not found, retry loading after %d seconds", name, delay/time.Second)
+				log.With(nil).Warnf("plugin %s not found, retry loading after %d seconds", name, delay/time.Second)
 				time.Sleep(delay)
 				continue
 			}
@@ -187,7 +186,7 @@ func (m *pluginManager) retryLoad(name string, retry bool) (*Plugin, error) {
 			delete(m.plugins, name)
 			m.Unlock()
 
-			logrus.Errorf("failed to probe volume plugin(%s), err(%v)", name, err)
+			log.With(nil).Errorf("failed to probe volume plugin(%s), err(%v)", name, err)
 
 			return nil, err
 		}

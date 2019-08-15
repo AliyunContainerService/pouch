@@ -7,7 +7,7 @@ import (
 	rdebug "runtime/debug"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 func init() {
@@ -40,5 +40,5 @@ func DumpStacks() {
 	buf = buf[:stackSize]
 	// Note that if the daemon is started with a less-verbose log-level than "info" (the default), the goroutine
 	// traces won't show up in the log.
-	logrus.Infof("=== BEGIN goroutine stack dump ===\n%s\n=== END goroutine stack dump ===", buf)
+	log.With(nil).Infof("=== BEGIN goroutine stack dump ===\n%s\n=== END goroutine stack dump ===", buf)
 }

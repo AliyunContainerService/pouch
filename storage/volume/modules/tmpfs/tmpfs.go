@@ -3,6 +3,7 @@
 package tmpfs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/alibaba/pouch/pkg/bytefmt"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -32,18 +34,18 @@ type Tmpfs struct {
 }
 
 // Name returns tmpfs volume driver's name.
-func (p *Tmpfs) Name(ctx driver.Context) string {
+func (p *Tmpfs) Name(ctx context.Context) string {
 	return "tmpfs"
 }
 
 // StoreMode returns tmpfs volume driver's store mode.
-func (p *Tmpfs) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
+func (p *Tmpfs) StoreMode(ctx context.Context) driver.VolumeStoreMode {
 	return driver.LocalStore | driver.UseLocalMetaStore
 }
 
 // Create a tmpfs volume.
-func (p *Tmpfs) Create(ctx driver.Context, id types.VolumeContext) (*types.Volume, error) {
-	ctx.Log.Debugf("Tmpfs create volume: %s", id.Name)
+func (p *Tmpfs) Create(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
+	log.With(ctx).Debugf("Tmpfs create volume: %s", id.Name)
 
 	// parse the mount path
 	mountPath := path.Join(dataDir, id.Name)
@@ -70,15 +72,15 @@ func (p *Tmpfs) Create(ctx driver.Context, id types.VolumeContext) (*types.Volum
 }
 
 // Remove a tmpfs volume.
-func (p *Tmpfs) Remove(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Tmpfs remove volume: %s", v.Name)
+func (p *Tmpfs) Remove(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Tmpfs remove volume: %s", v.Name)
 
 	return nil
 }
 
 // Path returns tmpfs volume's path.
-func (p *Tmpfs) Path(ctx driver.Context, v *types.Volume) (string, error) {
-	ctx.Log.Debugf("Tmpfs volume mount path: %s", v.Name)
+func (p *Tmpfs) Path(ctx context.Context, v *types.Volume) (string, error) {
+	log.With(ctx).Debugf("Tmpfs volume mount path: %s", v.Name)
 	return path.Join(dataDir, v.Name), nil
 }
 
@@ -92,8 +94,8 @@ func (p *Tmpfs) Options() map[string]types.Option {
 }
 
 // Attach a tmpfs volume.
-func (p *Tmpfs) Attach(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Tmpfs attach volume: %s", v.Name)
+func (p *Tmpfs) Attach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Tmpfs attach volume: %s", v.Name)
 	mountPath := v.Path()
 	reqID := v.Option("reqID")
 
@@ -133,8 +135,8 @@ func (p *Tmpfs) Attach(ctx driver.Context, v *types.Volume) error {
 }
 
 // Detach a tmpfs volume.
-func (p *Tmpfs) Detach(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Tmpfs detach volume: %s", v.Name)
+func (p *Tmpfs) Detach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Tmpfs detach volume: %s", v.Name)
 	mountPath := v.Path()
 	reqID := v.Option("reqID")
 	ids := v.Option("ids")

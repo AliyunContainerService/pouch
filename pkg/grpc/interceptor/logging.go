@@ -2,10 +2,13 @@ package interceptor
 
 import (
 	"context"
+	"encoding/json"
 	"path"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/alibaba/pouch/pkg/log"
+	"github.com/alibaba/pouch/pkg/randomid"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -15,35 +18,35 @@ import (
 type ServerPayloadLoggingDecider func(ctx context.Context, fullMethodName string, servingObject interface{}) logrus.Level
 
 // PayloadUnaryServerInterceptor returns a new unary server interceptors that logs the payloads of requests.
-func PayloadUnaryServerInterceptor(entry *logrus.Entry, decider ServerPayloadLoggingDecider) grpc.UnaryServerInterceptor {
+func PayloadUnaryServerInterceptor(decider ServerPayloadLoggingDecider) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// add request id for cri trace log
+		ctx = log.NewContext(ctx, map[string]interface{}{"RequestID": randomid.Generate()[:10]})
+
 		logLevel := decider(ctx, info.FullMethod, info.Server)
 
 		service := path.Dir(info.FullMethod)[1:]
 		method := path.Base(info.FullMethod)
 
-		logEntry := entry.WithFields(logrus.Fields{
+		ctx = log.AddFields(ctx, map[string]interface{}{
 			"grpc.service":    service,
 			"grpc.method":     method,
 			"grpc.start_time": time.Now().Format(time.RFC3339),
 		})
-		logProtoMessageAsJSON(logEntry, req, "grpc.request.content", "grpc start", logLevel)
+		logProtoMessageAsJSON(ctx, req, "grpc.request.content", "grpc start", logLevel)
 		resp, err := handler(ctx, req)
 		if err == nil {
-			logProtoMessageAsJSON(logEntry, resp, "grpc.response.content", "grpc end", logLevel)
+			logProtoMessageAsJSON(ctx, resp, "grpc.response.content", "grpc end", logLevel)
 		} else {
-			logProtoMessageAsJSON(logEntry, resp, "grpc.response.content", "grpc failed "+err.Error(), logrus.ErrorLevel)
+			logProtoMessageAsJSON(ctx, resp, "grpc.response.content", "grpc failed "+err.Error(), logrus.ErrorLevel)
 		}
 		return resp, err
 	}
 }
 
-func logProtoMessageAsJSON(entry *logrus.Entry, pbMsg interface{}, key string, msg string, level logrus.Level) {
-	p, ok := pbMsg.(proto.Message)
-	if !ok {
-		return
-	}
-	entry = entry.WithField(key, &jsonpbMarshalleble{p})
+func logProtoMessageAsJSON(ctx context.Context, pbMsg interface{}, key string, msg string, level logrus.Level) {
+	b, _ := json.Marshal(pbMsg)
+	entry := log.WithFields(ctx, map[string]interface{}{key: string(b)})
 
 	switch level {
 	case logrus.DebugLevel:
@@ -61,8 +64,4 @@ func logProtoMessageAsJSON(entry *logrus.Entry, pbMsg interface{}, key string, m
 	default:
 		entry.Debug(msg)
 	}
-}
-
-type jsonpbMarshalleble struct {
-	proto.Message
 }

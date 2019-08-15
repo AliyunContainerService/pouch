@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/contiv/executor"
-	"github.com/sirupsen/logrus"
 )
 
 // Run returns running command result with timeout, returns are command exit code,
@@ -15,7 +15,7 @@ import (
 func Run(timeout time.Duration, bin string, args ...string) (int, string, string, error) {
 	var cancel context.CancelFunc
 
-	logrus.Debugf("run command: [%s] %v", bin, args)
+	log.With(nil).Debugf("run command: [%s] %v", bin, args)
 
 	cmd := exec.Command(bin, args...)
 	ctx := context.Background()
@@ -42,7 +42,7 @@ func RunWithRetry(times int, interval, timeout time.Duration, bin string, args .
 		cancel context.CancelFunc
 	)
 
-	logrus.Debugf("run command with retry: [%s] %v", bin, args)
+	log.With(nil).Debugf("run command with retry: [%s] %v", bin, args)
 
 	for ; times > 0; times-- {
 		cmd := exec.Command(bin, args...)

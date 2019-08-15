@@ -1,6 +1,8 @@
 package hookplugins
 
 import (
+	"context"
+
 	"github.com/alibaba/pouch/apis/types"
 )
 
@@ -8,7 +10,7 @@ import (
 type CriPlugin interface {
 	// PreCreateContainer defines plugin point where receives a container create request, in this plugin point user
 	// could update the container's config in cri interface.
-	PreCreateContainer(*types.ContainerCreateConfig, interface{}) error
+	PreCreateContainer(context.Context, *types.ContainerCreateConfig, interface{}) error
 }
 
 var criPlugin CriPlugin

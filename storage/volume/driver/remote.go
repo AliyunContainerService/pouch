@@ -1,6 +1,9 @@
 package driver
 
 import (
+	"context"
+
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/plugins"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -24,20 +27,20 @@ func NewRemoteDriverWrapper(name string, plugin *plugins.Plugin) Driver {
 }
 
 // Name returns the volume driver's name.
-func (r *remoteDriverWrapper) Name(ctx Context) string {
+func (r *remoteDriverWrapper) Name(ctx context.Context) string {
 	return r.driverName
 }
 
 // StoreMode returns the volume driver's store mode.
-func (r *remoteDriverWrapper) StoreMode(ctx Context) VolumeStoreMode {
+func (r *remoteDriverWrapper) StoreMode(ctx context.Context) VolumeStoreMode {
 	return RemoteStore | UseLocalMetaStore
 }
 
 // Create a remote volume.
-func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeContext) (*types.Volume, error) {
-	ctx.Log.Debugf("driver wrapper [%s] creates volume: %s", r.Name(ctx), id.Name)
+func (r *remoteDriverWrapper) Create(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
+	log.With(ctx).Debugf("driver wrapper [%s] creates volume: %s", r.Name(ctx), id.Name)
 
-	ctx.Log.Debugf("driver wrapper gets options: %v", id.Options)
+	log.With(ctx).Debugf("driver wrapper gets options: %v", id.Options)
 
 	if err := r.proxy.Create(id.Name, id.Options); err != nil {
 		return nil, err
@@ -52,15 +55,15 @@ func (r *remoteDriverWrapper) Create(ctx Context, id types.VolumeContext) (*type
 }
 
 // Remove a remote volume.
-func (r *remoteDriverWrapper) Remove(ctx Context, v *types.Volume) error {
-	ctx.Log.Debugf("driver wrapper [%s] removes volume: %s", r.Name(ctx), v.Name)
+func (r *remoteDriverWrapper) Remove(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("driver wrapper [%s] removes volume: %s", r.Name(ctx), v.Name)
 
 	return r.proxy.Remove(v.Name)
 }
 
 // Get a volume from remote driver.
-func (r *remoteDriverWrapper) Get(ctx Context, name string) (*types.Volume, error) {
-	ctx.Log.Debugf("driver wrapper [%s] gets volume: %s", r.Name(ctx), name)
+func (r *remoteDriverWrapper) Get(ctx context.Context, name string) (*types.Volume, error) {
+	log.With(ctx).Debugf("driver wrapper [%s] gets volume: %s", r.Name(ctx), name)
 
 	rv, err := r.proxy.Get(name)
 	if err != nil {
@@ -73,8 +76,8 @@ func (r *remoteDriverWrapper) Get(ctx Context, name string) (*types.Volume, erro
 }
 
 // List all volumes from remote driver.
-func (r *remoteDriverWrapper) List(ctx Context) ([]*types.Volume, error) {
-	ctx.Log.Debugf("driver wrapper [%s] list all volumes", r.Name(ctx))
+func (r *remoteDriverWrapper) List(ctx context.Context) ([]*types.Volume, error) {
+	log.With(ctx).Debugf("driver wrapper [%s] list all volumes", r.Name(ctx))
 
 	rvList, err := r.proxy.List()
 	if err != nil {
@@ -94,8 +97,8 @@ func (r *remoteDriverWrapper) List(ctx Context) ([]*types.Volume, error) {
 }
 
 // Path returns remote volume mount path.
-func (r *remoteDriverWrapper) Path(ctx Context, v *types.Volume) (string, error) {
-	ctx.Log.Debugf("driver wrapper [%s] gets volume [%s] mount path", r.Name(ctx), v.Name)
+func (r *remoteDriverWrapper) Path(ctx context.Context, v *types.Volume) (string, error) {
+	log.With(ctx).Debugf("driver wrapper [%s] gets volume [%s] mount path", r.Name(ctx), v.Name)
 
 	// Get the mount path from remote plugin
 	mountPath, err := r.proxy.Path(v.Name)
@@ -111,16 +114,16 @@ func (r *remoteDriverWrapper) Options() map[string]types.Option {
 }
 
 // Attach a remote volume.
-func (r *remoteDriverWrapper) Attach(ctx Context, v *types.Volume) error {
-	ctx.Log.Debugf("driver wrapper [%s] attach volume: %s", r.Name(ctx), v.Name)
+func (r *remoteDriverWrapper) Attach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("driver wrapper [%s] attach volume: %s", r.Name(ctx), v.Name)
 
 	_, err := r.proxy.Mount(v.Name, v.UID)
 	return err
 }
 
 // Detach a remote volume.
-func (r *remoteDriverWrapper) Detach(ctx Context, v *types.Volume) error {
-	ctx.Log.Debugf("driver wrapper [%s] detach volume: %s", r.Name(ctx), v.Name)
+func (r *remoteDriverWrapper) Detach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("driver wrapper [%s] detach volume: %s", r.Name(ctx), v.Name)
 
 	return r.proxy.Unmount(v.Name, v.UID)
 }

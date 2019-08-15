@@ -9,11 +9,11 @@ import (
 	"sync"
 
 	"github.com/alibaba/pouch/cri/config"
+	"github.com/alibaba/pouch/pkg/log"
 
 	cnicurrent "github.com/containernetworking/cni/pkg/types/current"
 	"github.com/cri-o/ocicni/pkg/ocicni"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // CniManager is an implementation of interface CniMgr.
@@ -91,7 +91,7 @@ func (c *CniManager) SetUpPodNetwork(podNetwork *ocicni.PodNetwork) error {
 			// Teardown network if an error returned.
 			err := c.plugin.TearDownPod(*podNetwork)
 			if err != nil {
-				logrus.Errorf("failed to destroy network for sandbox %q: %v", podNetwork.ID, err)
+				log.With(nil).Errorf("failed to destroy network for sandbox %q: %v", podNetwork.ID, err)
 			}
 		}
 	}()
@@ -143,7 +143,7 @@ func (c *CniManager) TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error {
 	// if netNSPath is not found, dont return error.
 	if _, err = os.Stat(podNetwork.NetNS); err != nil {
 		if os.IsNotExist(err) {
-			logrus.Warnf("failed to find network namespace file %s of sandbox %s", podNetwork.NetNS, podNetwork.ID)
+			log.With(nil).Warnf("failed to find network namespace file %s of sandbox %s", podNetwork.NetNS, podNetwork.ID)
 			return nil
 		}
 		return err

@@ -10,8 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/alibaba/pouch/cri/stream/httpstream"
-
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // HeaderSpdy31 is used to specify SPDY/3.1 as the stream protocol.
@@ -78,14 +77,14 @@ func (u responseUpgrader) UpgradeResponse(w http.ResponseWriter, req *http.Reque
 
 	conn, bufrw, err := hijacker.Hijack()
 	if err != nil {
-		logrus.Errorf("unable to upgrade: error hijacking response: %v", err)
+		log.With(nil).Errorf("unable to upgrade: error hijacking response: %v", err)
 		return nil
 	}
 
 	connWithBuf := &connWrapper{Conn: conn, bufReader: bufrw.Reader}
 	spdyConn, err := NewServerConnection(connWithBuf, newStreamHandler)
 	if err != nil {
-		logrus.Errorf("unable to upgrade: error creating SPDY server connection: %v", err)
+		log.With(nil).Errorf("unable to upgrade: error creating SPDY server connection: %v", err)
 		return nil
 	}
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // PortForwarder knows how to forward content from a data stream to/from a port
@@ -25,7 +25,7 @@ func ServePortForward(ctx context.Context, w http.ResponseWriter, req *http.Requ
 	// TODO: support web socket stream.
 	err := handleHTTPStreams(ctx, w, req, portForwarder, podName, idleTimeout, streamCreationTimeout, supportedProtocols)
 	if err != nil {
-		logrus.Errorf("failed to serve port forward: %v", err)
+		log.With(ctx).Errorf("failed to serve port forward: %v", err)
 		return
 	}
 }

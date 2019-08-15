@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -45,14 +45,14 @@ func (s *Stream) CopyPipes(p Pipes) {
 	copyfn := func(styp string, w io.WriteCloser, r io.ReadCloser) {
 		s.Add(1)
 		go func() {
-			logrus.Debugf("start to copy %s from pipe", styp)
-			defer logrus.Debugf("stop copy %s from pipe", styp)
+			log.With(nil).Debugf("start to copy %s from pipe", styp)
+			defer log.With(nil).Debugf("stop copy %s from pipe", styp)
 
 			defer s.Done()
 			defer r.Close()
 
 			if _, err := io.Copy(w, r); err != nil {
-				logrus.WithError(err).Error("failed to copy pipe data")
+				log.With(nil).WithError(err).Error("failed to copy pipe data")
 			}
 		}()
 	}
@@ -67,12 +67,12 @@ func (s *Stream) CopyPipes(p Pipes) {
 
 	if s.stdin != nil && p.Stdin != nil {
 		go func() {
-			logrus.Debug("start to copy stdin from pipe")
-			defer logrus.Debug("stop copy stdin from pipe")
+			log.With(nil).Debug("start to copy stdin from pipe")
+			defer log.With(nil).Debug("stop copy stdin from pipe")
 
 			io.Copy(p.Stdin, s.stdin)
 			if err := p.Stdin.Close(); err != nil {
-				logrus.WithError(err).Error("failed to close pipe stdin")
+				log.With(nil).WithError(err).Error("failed to close pipe stdin")
 			}
 		}()
 	}
@@ -87,8 +87,8 @@ func (s *Stream) Attach(ctx context.Context, cfg *AttachConfig) <-chan error {
 
 	if cfg.UseStdin {
 		group.Go(func() error {
-			logrus.Debug("start to attach stdin to stream")
-			defer logrus.Debug("stop attach stdin to stream")
+			log.With(nil).Debug("start to attach stdin to stream")
+			defer log.With(nil).Debug("stop attach stdin to stream")
 
 			defer func() {
 				if cfg.CloseStdin {
@@ -105,8 +105,8 @@ func (s *Stream) Attach(ctx context.Context, cfg *AttachConfig) <-chan error {
 	}
 
 	attachFn := func(styp string, w io.Writer, r io.ReadCloser) error {
-		logrus.Debugf("start to attach %s to stream", styp)
-		defer logrus.Debugf("stop attach %s to stream", styp)
+		log.With(nil).Debugf("start to attach %s to stream", styp)
+		defer log.With(nil).Debugf("stop attach %s to stream", styp)
 
 		defer func() {
 			// NOTE: when the stdout/stderr is closed, the stdin
@@ -152,7 +152,7 @@ func (s *Stream) Attach(ctx context.Context, cfg *AttachConfig) <-chan error {
 	}()
 
 	go func() {
-		defer logrus.Debug("the goroutine for attaching is done")
+		defer log.With(nil).Debug("the goroutine for attaching is done")
 		defer close(errCh)
 
 		select {

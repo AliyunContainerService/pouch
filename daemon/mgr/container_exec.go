@@ -8,6 +8,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/user"
@@ -72,6 +73,8 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		execConfig.Unlock()
 		return err
 	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
 
 	// set exec process user, user decided by exec config
 	if execConfig.User == "" {

@@ -14,6 +14,7 @@ import (
 	"github.com/alibaba/pouch/network"
 	"github.com/alibaba/pouch/network/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
@@ -25,7 +26,6 @@ import (
 	"github.com/docker/libnetwork/options"
 	networktypes "github.com/docker/libnetwork/types"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // NetworkMgr defines interface to manage container network.
@@ -88,7 +88,7 @@ func NewNetworkManager(cfg *config.Config, store *meta.Store, ctrMgr ContainerMg
 				return c.IsRunningOrPaused() && !isContainer(c.HostConfig.NetworkMode)
 			}})
 	if err != nil {
-		logrus.Errorf("failed to new network manager: cannot get container list")
+		log.With(nil).Errorf("failed to new network manager: cannot get container list")
 		return nil, errors.Wrap(err, "failed to get container list")
 	}
 	cfg.NetworkConfig.ActiveSandboxes = make(map[string]interface{})
@@ -281,7 +281,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	networkConfig := endpoint.NetworkConfig
 	endpointConfig := endpoint.EndpointConfig
 
-	logrus.Debugf("create endpoint for container [%s] on network [%s]", containerID, network)
+	log.With(nil).Debugf("create endpoint for container [%s] on network [%s]", containerID, network)
 	if networkConfig == nil || endpointConfig == nil {
 		return "", errors.Wrap(errtypes.ErrInvalidParam, "networkConfig or endpointConfig cannot be empty")
 	}
@@ -315,7 +315,7 @@ func (nm *NetworkManager) EndpointCreate(ctx context.Context, endpoint *types.En
 	defer func() {
 		if err != nil {
 			if err := ep.Delete(true); err != nil {
-				logrus.Errorf("failed to delete endpoint %s after failing to create endpoint(%v)", ep.Name(), err)
+				log.With(nil).Errorf("failed to delete endpoint %s after failing to create endpoint(%v)", ep.Name(), err)
 			}
 		}
 	}()
@@ -394,7 +394,7 @@ func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.En
 	sid := endpoint.NetworkConfig.SandboxID
 	epConfig := endpoint.EndpointConfig
 
-	logrus.Debugf("remove endpoint(%s) on network(%s)", epConfig.EndpointID, endpoint.Name)
+	log.With(nil).Debugf("remove endpoint(%s) on network(%s)", epConfig.EndpointID, endpoint.Name)
 
 	if sid == "" {
 		return nil
@@ -440,7 +440,7 @@ func (nm *NetworkManager) EndpointRemove(ctx context.Context, endpoint *types.En
 	eplist = sb.Endpoints()
 	if len(eplist) == 0 {
 		if err := sb.Delete(); err != nil {
-			logrus.Errorf("failed to delete sandbox id(%s): %v", sid, err)
+			log.With(nil).Errorf("failed to delete sandbox id(%s): %v", sid, err)
 			return errors.Wrapf(err, "failed to delete sandbox id(%s)", sid)
 		}
 	}
@@ -625,7 +625,7 @@ func endpointOptions(n libnetwork.Network, endpoint *types.Endpoint) ([]libnetwo
 			return nil, err
 		}
 		genericOption, _ = utils.MergeMap(genericOption, options.Generic{netlabel.MacAddress: mac})
-		logrus.Debugf("generate endpoint macaddress: (%s)", endpoint.MacAddress)
+		log.With(nil).Debugf("generate endpoint macaddress: (%s)", endpoint.MacAddress)
 	}
 	createOptions = append(createOptions, libnetwork.EndpointOptionGeneric(genericOption))
 

@@ -13,10 +13,11 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/httputils"
+	"github.com/alibaba/pouch/pkg/log"
+	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 // versionMatcher defines to parse version url path.
@@ -109,7 +110,7 @@ func initRoute(s *Server) *mux.Router {
 	}
 
 	if s.APIPlugin != nil {
-		handlers = s.APIPlugin.UpdateHandler(handlers)
+		handlers = s.APIPlugin.UpdateHandler(context.Background(), handlers)
 	}
 
 	// register API
@@ -178,6 +179,10 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 		ctx, cancel := context.WithCancel(pctx)
 		defer cancel()
 
+		ctx = log.NewContext(ctx, map[string]interface{}{
+			"RequestID": randomid.Generate()[:10],
+		})
+
 		atomic.AddInt32(&s.FlyingReq, 1)
 		defer atomic.AddInt32(&s.FlyingReq, -1)
 
@@ -196,9 +201,10 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 		clientInfo := req.RemoteAddr
 		defer func() {
 			d := time.Since(t) / (time.Millisecond)
-			// If elapse time of handler >= 500ms, log request.
-			if d >= 500 {
-				logrus.Infof("End of Calling %s %s, costs %d ms. client %s", req.Method, req.URL.Path, d, clientInfo)
+			if req.Method != http.MethodGet {
+				log.With(ctx).Infof("End of Calling %s %s, costs %d ms. client %s", req.Method, req.URL.Path, d, clientInfo)
+			} else {
+				log.With(ctx).Debugf("End of Calling %s %s, costs %d ms. client %s", req.Method, req.URL.Path, d, clientInfo)
 			}
 		}()
 
@@ -210,9 +216,9 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 			clientInfo = fmt.Sprintf("%s %s %s", clientInfo, issuer, clientName)
 		}
 		if req.Method != http.MethodGet {
-			logrus.Infof("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
+			log.With(ctx).Infof("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
 		} else {
-			logrus.Debugf("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
+			log.With(ctx).Debugf("Calling %s %s, client %s", req.Method, req.URL.RequestURI(), clientInfo)
 		}
 
 		// Start to handle request.
@@ -221,7 +227,7 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 			return
 		}
 		// Handle error if request handling fails.
-		logrus.Errorf("Handler for %s %s, client %s returns error: %s", req.Method, req.URL.RequestURI(), clientInfo, err)
+		log.With(ctx).Errorf("Handler for %s %s, client %s returns error: %s", req.Method, req.URL.RequestURI(), clientInfo, err)
 		HandleErrorResponse(w, err)
 	}
 }

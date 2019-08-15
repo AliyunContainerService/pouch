@@ -11,13 +11,13 @@ import (
 	"github.com/alibaba/pouch/daemon/logger"
 	"github.com/alibaba/pouch/daemon/logger/jsonfile"
 	"github.com/alibaba/pouch/daemon/logger/syslog"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/system"
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/storage/quota"
 
 	"github.com/docker/go-units"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -175,13 +175,13 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 	// validates memory cgroup value
 	if cgroupInfo.Memory != nil {
 		if r.Memory > 0 && !cgroupInfo.Memory.MemoryLimit {
-			logrus.Warn(MemoryWarn)
+			log.With(nil).Warn(MemoryWarn)
 			warnings = append(warnings, MemoryWarn)
 			r.Memory = 0
 			r.MemorySwap = 0
 		}
 		if r.MemoryReservation > 0 && !cgroupInfo.Memory.MemoryReservation {
-			logrus.Warn(MemoryReservationWarn)
+			log.With(nil).Warn(MemoryReservationWarn)
 			warnings = append(warnings, MemoryReservationWarn)
 			r.MemoryReservation = 0
 		}
@@ -192,7 +192,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			return warnings, fmt.Errorf("Minimum memory limit should be larger than memory reservation limit")
 		}
 		if r.MemorySwap > 0 && !cgroupInfo.Memory.MemorySwap {
-			logrus.Warn(MemorySwapWarn)
+			log.With(nil).Warn(MemorySwapWarn)
 			warnings = append(warnings, MemorySwapWarn)
 			r.MemorySwap = 0
 		}
@@ -211,7 +211,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			warnings = append(warnings, "You should typically size your swap space to approximately 2x main memory for systems with less than 2GB of RAM")
 		}
 		if r.MemorySwappiness != nil && !cgroupInfo.Memory.MemorySwappiness {
-			logrus.Warn(MemorySwappinessWarn)
+			log.With(nil).Warn(MemorySwappinessWarn)
 			warnings = append(warnings, MemorySwappinessWarn)
 			r.MemorySwappiness = nil
 		}
@@ -219,7 +219,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			return warnings, fmt.Errorf("MemorySwappiness should in range [0, 100] or -1 as a legacy alias of 0")
 		}
 		if r.OomKillDisable != nil && !cgroupInfo.Memory.OOMKillDisable {
-			logrus.Warn(OOMKillWarn)
+			log.With(nil).Warn(OOMKillWarn)
 			warnings = append(warnings, OOMKillWarn)
 			r.OomKillDisable = nil
 		}
@@ -228,22 +228,22 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 	// validates cpu cgroup value
 	if cgroupInfo.CPU != nil {
 		if r.CpusetCpus != "" && !cgroupInfo.CPU.CpusetCpus {
-			logrus.Warn(CpusetCpusWarn)
+			log.With(nil).Warn(CpusetCpusWarn)
 			warnings = append(warnings, CpusetCpusWarn)
 			r.CpusetCpus = ""
 		}
 		if r.CpusetMems != "" && !cgroupInfo.CPU.CpusetMems {
-			logrus.Warn(CpusetMemsWarn)
+			log.With(nil).Warn(CpusetMemsWarn)
 			warnings = append(warnings, CpusetMemsWarn)
 			r.CpusetMems = ""
 		}
 		if r.CPUShares > 0 && !cgroupInfo.CPU.CPUShares {
-			logrus.Warn(CPUSharesWarn)
+			log.With(nil).Warn(CPUSharesWarn)
 			warnings = append(warnings, CPUSharesWarn)
 			r.CPUShares = 0
 		}
 		if r.CPUQuota > 0 && !cgroupInfo.CPU.CPUQuota {
-			logrus.Warn(CPUQuotaWarn)
+			log.With(nil).Warn(CPUQuotaWarn)
 			warnings = append(warnings, CPUQuotaWarn)
 			r.CPUQuota = 0
 		}
@@ -252,7 +252,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 			return warnings, fmt.Errorf("CPU cfs quota should be greater than 1ms(1000)")
 		}
 		if r.CPUPeriod > 0 && !cgroupInfo.CPU.CPUPeriod {
-			logrus.Warn(CPUPeriodWarn)
+			log.With(nil).Warn(CPUPeriodWarn)
 			warnings = append(warnings, CPUPeriodWarn)
 			r.CPUPeriod = 0
 		}
@@ -264,32 +264,32 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 	// validates blkio cgroup value
 	if cgroupInfo.Blkio != nil {
 		if r.BlkioWeight > 0 && !cgroupInfo.Blkio.BlkioWeight {
-			logrus.Warn(BlkioWeightWarn)
+			log.With(nil).Warn(BlkioWeightWarn)
 			warnings = append(warnings, BlkioWeightWarn)
 			r.BlkioWeight = 0
 		}
 		if len(r.BlkioWeightDevice) > 0 && !cgroupInfo.Blkio.BlkioWeightDevice {
-			logrus.Warn(BlkioWeightDeviceWarn)
+			log.With(nil).Warn(BlkioWeightDeviceWarn)
 			warnings = append(warnings, BlkioWeightDeviceWarn)
 			r.BlkioWeightDevice = []*types.WeightDevice{}
 		}
 		if len(r.BlkioDeviceReadBps) > 0 && !cgroupInfo.Blkio.BlkioDeviceReadBps {
-			logrus.Warn(BlkioDeviceReadBpsWarn)
+			log.With(nil).Warn(BlkioDeviceReadBpsWarn)
 			warnings = append(warnings, BlkioDeviceReadBpsWarn)
 			r.BlkioDeviceReadBps = []*types.ThrottleDevice{}
 		}
 		if len(r.BlkioDeviceWriteBps) > 0 && !cgroupInfo.Blkio.BlkioDeviceWriteBps {
-			logrus.Warn(BlkioDeviceWriteBpsWarn)
+			log.With(nil).Warn(BlkioDeviceWriteBpsWarn)
 			warnings = append(warnings, BlkioDeviceWriteBpsWarn)
 			r.BlkioDeviceWriteBps = []*types.ThrottleDevice{}
 		}
 		if len(r.BlkioDeviceReadIOps) > 0 && !cgroupInfo.Blkio.BlkioDeviceReadIOps {
-			logrus.Warn(BlkioDeviceReadIOpsWarn)
+			log.With(nil).Warn(BlkioDeviceReadIOpsWarn)
 			warnings = append(warnings, BlkioDeviceReadIOpsWarn)
 			r.BlkioDeviceReadIOps = []*types.ThrottleDevice{}
 		}
 		if len(r.BlkioDeviceWriteIOps) > 0 && !cgroupInfo.Blkio.BlkioDeviceWriteIOps {
-			logrus.Warn(BlkioDeviceWriteIOpsWarn)
+			log.With(nil).Warn(BlkioDeviceWriteIOpsWarn)
 			warnings = append(warnings, BlkioDeviceWriteIOpsWarn)
 			r.BlkioDeviceWriteIOps = []*types.ThrottleDevice{}
 		}
@@ -298,7 +298,7 @@ func validateResource(r *types.Resources, update bool) ([]string, error) {
 	// validates pid cgroup value
 	if cgroupInfo.Pids != nil {
 		if r.PidsLimit != 0 && !cgroupInfo.Pids.Pids {
-			logrus.Warn(PidsLimitWarn)
+			log.With(nil).Warn(PidsLimitWarn)
 			warnings = append(warnings, PidsLimitWarn)
 			r.PidsLimit = 0
 		}

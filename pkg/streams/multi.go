@@ -4,7 +4,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 )
 
 // multiWriter allows caller to broadcast data to several writers.
@@ -26,7 +26,7 @@ func (mw *multiWriter) Write(p []byte) (int, error) {
 	var evictIdx []int
 	for n, w := range mw.writers {
 		if _, err := w.Write(p); err != nil {
-			logrus.WithError(err).Debug("failed to write data")
+			log.With(nil).WithError(err).Debug("failed to write data")
 
 			w.Close()
 			evictIdx = append(evictIdx, n)

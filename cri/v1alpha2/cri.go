@@ -25,6 +25,7 @@ import (
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/hookplugins"
 	"github.com/alibaba/pouch/pkg/errtypes"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/reference"
 	pkgstreams "github.com/alibaba/pouch/pkg/streams"
@@ -33,7 +34,6 @@ import (
 	"github.com/alibaba/pouch/version"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -174,7 +174,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 	}
 
 	c.imageFSPath = imageFSPath(path.Join(config.HomeDir, "containerd/root"), ctrd.CurrentSnapshotterName(context.TODO()))
-	logrus.Infof("Get image filesystem path %q", c.imageFSPath)
+	log.With(nil).Infof("Get image filesystem path %q", c.imageFSPath)
 
 	if config.CriConfig.EnableCriStatsCollect {
 		period := config.CriConfig.CriStatsCollectPeriod
@@ -187,7 +187,7 @@ func NewCriManager(config *config.Config, ctrMgr mgr.ContainerMgr, imgMgr mgr.Im
 		)
 		snapshotsSyncer.Start()
 	} else {
-		logrus.Infof("disable cri to collect stats from containerd periodically")
+		log.With(nil).Infof("disable cri to collect stats from containerd periodically")
 	}
 
 	return c, nil
@@ -253,7 +253,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	defer func() {
 		if retErr != nil && !removeContainerErr {
 			if err := c.SandboxStore.Remove(id); err != nil {
-				logrus.Errorf("failed to remove the metadata of container %q from sandboxStore: %v", id, err)
+				log.With(ctx).Errorf("failed to remove the metadata of container %q from sandboxStore: %v", id, err)
 			}
 		}
 	}()
@@ -269,7 +269,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		defer func() {
 			if retErr != nil {
 				if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
-					logrus.Errorf("failed to remove net ns for sandbox %q: %v", id, err)
+					log.With(ctx).Errorf("failed to remove net ns for sandbox %q: %v", id, err)
 				}
 			}
 		}()
@@ -279,7 +279,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		defer func() {
 			if retErr != nil {
 				if err := c.teardownNetwork(id, sandboxMeta.NetNS, config); err != nil {
-					logrus.Errorf("failed to teardown pod network for sandbox %q: %v", id, err)
+					log.With(ctx).Errorf("failed to teardown pod network for sandbox %q: %v", id, err)
 				}
 			}
 		}()
@@ -321,7 +321,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		if retErr != nil {
 			if err := c.ContainerMgr.Remove(ctx, id, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true}); err != nil {
 				removeContainerErr = true
-				logrus.Errorf("failed to remove container when running sandbox failed %q: %v", id, err)
+				log.With(ctx).Errorf("failed to remove container when running sandbox failed %q: %v", id, err)
 			}
 		}
 	}()
@@ -341,7 +341,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		// If running sandbox failed, clean up the sandbox directory.
 		if retErr != nil {
 			if err := os.RemoveAll(sandboxRootDir); err != nil {
-				logrus.Errorf("failed to clean up the directory of sandbox %q: %v", id, err)
+				log.With(ctx).Errorf("failed to clean up the directory of sandbox %q: %v", id, err)
 			}
 		}
 	}()
@@ -390,7 +390,7 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 			defer func() {
 				if retErr != nil {
 					if err := c.CniMgr.RemoveNetNS(sandboxMeta.NetNS); err != nil {
-						logrus.Errorf("failed to remove net ns for sandbox %q: %v", podSandboxID, err)
+						log.With(ctx).Errorf("failed to remove net ns for sandbox %q: %v", podSandboxID, err)
 					}
 				}
 			}()
@@ -401,7 +401,7 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 			defer func() {
 				if retErr != nil {
 					if err := c.teardownNetwork(podSandboxID, sandboxMeta.NetNS, sandboxMeta.Config); err != nil {
-						logrus.Errorf("failed to teardown pod network for sandbox %q: %v", podSandboxID, err)
+						log.With(ctx).Errorf("failed to teardown pod network for sandbox %q: %v", podSandboxID, err)
 					}
 				}
 			}()
@@ -417,7 +417,7 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 		if retErr != nil {
 			stopErr := c.ContainerMgr.Stop(ctx, podSandboxID, defaultStopTimeout)
 			if stopErr != nil {
-				logrus.Errorf("failed to stop sandbox %q: %v", podSandboxID, stopErr)
+				log.With(ctx).Errorf("failed to stop sandbox %q: %v", podSandboxID, stopErr)
 			}
 		}
 	}()
@@ -474,7 +474,7 @@ func (c *CriManager) StopPodSandbox(ctx context.Context, r *runtime.StopPodSandb
 		if err != nil {
 			return nil, fmt.Errorf("failed to stop container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
-		logrus.Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
+		log.With(ctx).Infof("success to stop container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
 	// Teardown network of the legacy dockershim style pod, if it is not in host network mode.
@@ -540,7 +540,7 @@ func (c *CriManager) RemovePodSandbox(ctx context.Context, r *runtime.RemovePodS
 			return nil, fmt.Errorf("failed to remove container %q of sandbox %q: %v", container.ID, podSandboxID, err)
 		}
 
-		logrus.Infof("success to remove container %q of sandbox %q", container.ID, podSandboxID)
+		log.With(ctx).Infof("success to remove container %q of sandbox %q", container.ID, podSandboxID)
 	}
 
 	// Remove the sandbox container.
@@ -612,7 +612,7 @@ func (c *CriManager) PodSandboxStatus(ctx context.Context, r *runtime.PodSandbox
 		ip, err = c.CniMgr.GetPodNetworkStatus(containerNetns(sandbox))
 		if err != nil {
 			// Maybe the pod has been stopped.
-			logrus.Warnf("failed to get ip of sandbox %q: %v", podSandboxID, err)
+			log.With(ctx).Warnf("failed to get ip of sandbox %q: %v", podSandboxID, err)
 		}
 	}
 
@@ -784,7 +784,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	// call cri plugin to update create config
 	if c.CriPlugin != nil {
-		if err := c.CriPlugin.PreCreateContainer(createConfig, sandboxMeta); err != nil {
+		if err := c.CriPlugin.PreCreateContainer(ctx, createConfig, sandboxMeta); err != nil {
 			return nil, err
 		}
 	}
@@ -801,7 +801,7 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		if err != nil {
 			removeErr := c.ContainerMgr.Remove(ctx, containerID, &apitypes.ContainerRemoveOptions{Volumes: true, Force: true})
 			if removeErr != nil {
-				logrus.Errorf("failed to remove the container when creating container failed: %v", removeErr)
+				log.With(ctx).Errorf("failed to remove the container when creating container failed: %v", removeErr)
 			}
 		}
 	}()
@@ -900,7 +900,7 @@ func (c *CriManager) ListContainers(ctx context.Context, r *runtime.ListContaine
 	for _, c := range containerList {
 		container, err := toCriContainer(c)
 		if err != nil {
-			logrus.Warnf("failed to translate container %v to cri container in ListContainers: %v", c.ID, err)
+			log.With(ctx).Warnf("failed to translate container %v to cri container in ListContainers: %v", c.ID, err)
 			continue
 		}
 		containers = append(containers, container)
@@ -1072,7 +1072,7 @@ func (c *CriManager) ListContainerStats(ctx context.Context, r *runtime.ListCont
 	for _, container := range containers {
 		cs, err := c.getContainerMetrics(ctx, container)
 		if err != nil {
-			logrus.Warnf("failed to decode metrics of container %q: %v", container.ID, err)
+			log.With(ctx).Warnf("failed to decode metrics of container %q: %v", container.ID, err)
 			continue
 		}
 
@@ -1144,7 +1144,7 @@ func (c *CriManager) ReopenContainerLog(ctx context.Context, r *runtime.ReopenCo
 	// get logPath of container
 	logPath := container.Config.Labels[containerLogPathLabelKey]
 	if logPath == "" {
-		logrus.Warnf("log path of container: %q is empty", containerID)
+		log.With(ctx).Warnf("log path of container: %q is empty", containerID)
 		return &runtime.ReopenContainerLogResponse{}, nil
 	}
 
@@ -1218,7 +1218,7 @@ func (c *CriManager) UpdateRuntimeConfig(ctx context.Context, r *runtime.UpdateR
 		return nil, fmt.Errorf("failed to update podCIDR: %v", err)
 	}
 
-	logrus.Infof("CNI default PodCIDR change to \"%v\"", podCIDR)
+	log.With(ctx).Infof("CNI default PodCIDR change to \"%v\"", podCIDR)
 
 	return &runtime.UpdateRuntimeConfigResponse{}, nil
 }

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/alibaba/pouch/pkg/log"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -84,7 +84,7 @@ func New(path string, withTerminal bool) (*Log, error) {
 			select {
 			case <-stdoutStopCh:
 			case <-time.After(redirectLogCloseTimeout):
-				logrus.WithField("cri-log", path).
+				log.WithFields(nil, map[string]interface{}{"cri-log": path}).
 					Warn("failed to stop stdout's redirectLogs")
 			}
 		}
@@ -93,7 +93,7 @@ func New(path string, withTerminal bool) (*Log, error) {
 			select {
 			case <-stderrStopCh:
 			case <-time.After(redirectLogCloseTimeout):
-				logrus.WithField("cri-log", path).
+				log.WithFields(nil, map[string]interface{}{"cri-log": path}).
 					Warn("failed to stop stderr's redirectLogs")
 			}
 		}
@@ -132,10 +132,10 @@ func redirectLogs(path string, w io.Writer, r io.ReadCloser, stream streamType) 
 		tagBytes := fullBytes
 		if err != nil {
 			if err != io.EOF {
-				logrus.WithError(err).Errorf("failed to redirect log file(name=%v)", path)
+				log.With(nil).WithError(err).Errorf("failed to redirect log file(name=%v)", path)
 				return
 			}
-			logrus.Infof("finish redirecting log file(name=%v)", path)
+			log.With(nil).Infof("finish redirecting log file(name=%v)", path)
 
 			if len(lineBytes) == 0 {
 				return
@@ -150,7 +150,7 @@ func redirectLogs(path string, w io.Writer, r io.ReadCloser, stream streamType) 
 		data := bytes.Join([][]byte{timestampBytes, streamBytes, tagBytes, lineBytes}, delimiterBytes)
 
 		if _, err := w.Write(data); err != nil {
-			logrus.Errorf("failed to write %q log to log file: %v", stream, err)
+			log.With(nil).Errorf("failed to write %q log to log file: %v", stream, err)
 		}
 
 		if stop {

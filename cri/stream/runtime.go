@@ -11,9 +11,8 @@ import (
 	apitypes "github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/cri/stream/remotecommand"
 	"github.com/alibaba/pouch/daemon/mgr"
+	"github.com/alibaba/pouch/pkg/log"
 	pkgstreams "github.com/alibaba/pouch/pkg/streams"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Runtime is the interface to execute the commands and provide the streams.
@@ -55,7 +54,7 @@ func (s *streamRuntime) Exec(ctx context.Context, containerID string, cmd []stri
 	handleResizing(containerID, execid, resizeChan, func(size apitypes.ResizeOptions) {
 		err := s.containerMgr.ResizeExec(ctx, execid, size)
 		if err != nil {
-			logrus.Errorf("failed to resize process %q console for container %q: %v", execid, containerID, err)
+			log.With(ctx).Errorf("failed to resize process %q console for container %q: %v", execid, containerID, err)
 		}
 	})
 
@@ -143,7 +142,7 @@ func (s *streamRuntime) PortForward(ctx context.Context, id string, port int32, 
 		return fmt.Errorf("failed to find nsenter: %v", err)
 	}
 
-	logrus.Infof("Executing port forwarding command: %s %s", nsenter, strings.Join(args, " "))
+	log.With(ctx).Infof("Executing port forwarding command: %s %s", nsenter, strings.Join(args, " "))
 
 	cmd := exec.Command(nsenter, args...)
 	cmd.Stdout = stream
@@ -166,10 +165,10 @@ func (s *streamRuntime) PortForward(ctx context.Context, id string, port int32, 
 	}
 	go func() {
 		if _, err := io.Copy(in, stream); err != nil {
-			logrus.Errorf("failed to copy port forward input for %q port %d: %v", id, port, err)
+			log.With(ctx).Errorf("failed to copy port forward input for %q port %d: %v", id, port, err)
 		}
 		in.Close()
-		logrus.Infof("finish copy port forward input for %q port %d: %v", id, port, err)
+		log.With(ctx).Infof("finish copy port forward input for %q port %d: %v", id, port, err)
 	}()
 
 	err = cmd.Run()
@@ -177,7 +176,7 @@ func (s *streamRuntime) PortForward(ctx context.Context, id string, port int32, 
 		return fmt.Errorf("nsenter command returns error: %v, stderr: %q", err, stderr.String())
 	}
 
-	logrus.Infof("finish port forwarding for %q port %d", id, port)
+	log.With(ctx).Infof("finish port forwarding for %q port %d", id, port)
 
 	return nil
 }

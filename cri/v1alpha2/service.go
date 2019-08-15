@@ -22,15 +22,13 @@ type Service struct {
 
 // NewService creates a brand new cri service.
 func NewService(cfg *config.Config, criMgr CriMgr) (*Service, error) {
-	logEntry := logrus.NewEntry(logrus.StandardLogger())
-
 	s := &Service{
 		config: cfg,
 		server: grpc.NewServer(
 			grpc.StreamInterceptor(metrics.GRPCMetrics.StreamServerInterceptor()),
 			interceptor.WithUnaryServerChain(
 				metrics.GRPCMetrics.UnaryServerInterceptor(),
-				interceptor.PayloadUnaryServerInterceptor(logEntry, criLogLevelDecider),
+				interceptor.PayloadUnaryServerInterceptor(criLogLevelDecider),
 			),
 		),
 	}

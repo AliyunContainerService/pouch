@@ -3,12 +3,14 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
 	"strconv"
 
 	"github.com/alibaba/pouch/pkg/bytefmt"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/storage/quota"
 	"github.com/alibaba/pouch/storage/volume/driver"
 	"github.com/alibaba/pouch/storage/volume/types"
@@ -30,18 +32,18 @@ type Local struct {
 }
 
 // Name returns local volume driver's name.
-func (p *Local) Name(ctx driver.Context) string {
+func (p *Local) Name(ctx context.Context) string {
 	return "local"
 }
 
 // StoreMode returns local volume driver's store mode.
-func (p *Local) StoreMode(ctx driver.Context) driver.VolumeStoreMode {
+func (p *Local) StoreMode(ctx context.Context) driver.VolumeStoreMode {
 	return driver.LocalStore | driver.UseLocalMetaStore
 }
 
 // Create a local volume.
-func (p *Local) Create(ctx driver.Context, id types.VolumeContext) (*types.Volume, error) {
-	ctx.Log.Debugf("Local create volume: %s", id.Name)
+func (p *Local) Create(ctx context.Context, id types.VolumeContext) (*types.Volume, error) {
+	log.With(ctx).Debugf("Local create volume: %s", id.Name)
 
 	dataPath := defaultDataPath
 	if p.DataPath != "" {
@@ -88,8 +90,8 @@ func (p *Local) Create(ctx driver.Context, id types.VolumeContext) (*types.Volum
 }
 
 // Remove a local volume.
-func (p *Local) Remove(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Local remove volume: %s", v.Name)
+func (p *Local) Remove(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Local remove volume: %s", v.Name)
 	mountPath := v.Path()
 
 	if err := os.RemoveAll(mountPath); err != nil && !os.IsNotExist(err) {
@@ -100,8 +102,8 @@ func (p *Local) Remove(ctx driver.Context, v *types.Volume) error {
 }
 
 // Path returns local volume's path.
-func (p *Local) Path(ctx driver.Context, v *types.Volume) (string, error) {
-	ctx.Log.Debugf("Local volume mount path: %s", v.Name)
+func (p *Local) Path(ctx context.Context, v *types.Volume) (string, error) {
+	log.With(ctx).Debugf("Local volume mount path: %s", v.Name)
 
 	if mp := v.Path(); mp != "" {
 		return mp, nil
@@ -128,15 +130,15 @@ func (p *Local) Options() map[string]types.Option {
 }
 
 // Config is used to pass the daemon volume configure for local driver.
-func (p *Local) Config(ctx driver.Context, cfg map[string]interface{}) error {
+func (p *Local) Config(ctx context.Context, cfg map[string]interface{}) error {
 	p.DataPath = cfg["volume-meta-dir"].(string)
 
 	return nil
 }
 
 // Attach a local volume.
-func (p *Local) Attach(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Local attach volume: %s", v.Name)
+func (p *Local) Attach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Local attach volume: %s", v.Name)
 	mountPath := v.Path()
 	size := v.Size()
 
@@ -159,8 +161,8 @@ func (p *Local) Attach(ctx driver.Context, v *types.Volume) error {
 }
 
 // Detach a local volume.
-func (p *Local) Detach(ctx driver.Context, v *types.Volume) error {
-	ctx.Log.Debugf("Local detach volume: %s", v.Name)
+func (p *Local) Detach(ctx context.Context, v *types.Volume) error {
+	log.With(ctx).Debugf("Local detach volume: %s", v.Name)
 
 	return nil
 }

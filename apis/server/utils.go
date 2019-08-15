@@ -10,10 +10,10 @@ import (
 
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/logger"
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/sirupsen/logrus"
 )
 
 type flusher interface {
@@ -96,13 +96,13 @@ func writeLogStream(ctx context.Context, w io.Writer, tty bool, opt *types.Conta
 
 			if msg.Source == "stdout" && opt.ShowStdout {
 				if _, err := stdoutStream.Write(logLine); err != nil {
-					logrus.Errorf("unexpected error during stdout log: %v\n", err)
+					log.With(ctx).Errorf("unexpected error during stdout log: %v\n", err)
 					return
 				}
 			}
 			if msg.Source == "stderr" && opt.ShowStderr {
 				if _, err := stderrStream.Write(logLine); err != nil {
-					logrus.Errorf("unexpected error during stderr log: %v\n", err)
+					log.With(ctx).Errorf("unexpected error during stderr log: %v\n", err)
 				}
 			}
 		}
@@ -110,11 +110,11 @@ func writeLogStream(ctx context.Context, w io.Writer, tty bool, opt *types.Conta
 }
 
 // logCreateOptions will print create args in pouchd logs for debugging.
-func logCreateOptions(objType string, config interface{}) {
+func logCreateOptions(ctx context.Context, objType string, config interface{}) {
 	args, err := json.Marshal(config)
 	if err != nil {
-		logrus.Errorf("failed to marsal config for %s: %v", objType, err)
+		log.With(ctx).Errorf("failed to marsal config for %s: %v", objType, err)
 	} else {
-		logrus.Infof("create %s with args: %v", objType, string(args))
+		log.With(ctx).Infof("create %s with args: %v", objType, string(args))
 	}
 }
