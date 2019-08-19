@@ -791,11 +791,11 @@
 			"tree": true
 		},
 		{
-			"checksumSHA1": "bWhrAD8iGI5DBq0KBP8FeG8G3n4=",
+			"checksumSHA1": "jR+rarEdXlHoT1MsN5QpLlwWdA0=",
 			"origin": "github.com/alibaba/ocicni/pkg/ocicni",
 			"path": "github.com/cri-o/ocicni/pkg/ocicni",
-			"revision": "1881fa76784cf8c8c0c7715fd75b3b1a2c33301a",
-			"revisionTime": "2019-04-17T09:08:52Z"
+			"revision": "615e1f01429c29f61d434d4091c1739616a8a2ea",
+			"revisionTime": "2019-08-19T03:12:58Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",

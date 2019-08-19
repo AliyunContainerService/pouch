@@ -456,13 +456,17 @@ func (plugin *cniNetworkPlugin) TearDownPod(podNetwork PodNetwork) error {
 	plugin.podLock(podNetwork).Lock()
 	defer plugin.podUnlock(podNetwork)
 
-	return plugin.forEachNetwork(&podNetwork, func(network *cniNetwork, ifName string, podNetwork *PodNetwork, runtimeConfig RuntimeConfig) error {
+	if err := plugin.forEachNetwork(&podNetwork, func(network *cniNetwork, ifName string, podNetwork *PodNetwork, runtimeConfig RuntimeConfig) error {
 		if err := network.deleteFromNetwork(plugin.cacheDir, podNetwork, ifName, runtimeConfig); err != nil {
 			logrus.Errorf("Error while removing pod from CNI network %q: %s", network.name, err)
 			return err
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	return plugin.loNetwork.deleteFromNetwork(plugin.cacheDir, &podNetwork, "lo", RuntimeConfig{})
 }
 
 // GetPodNetworkStatus returns IP addressing and interface details for all
