@@ -12,14 +12,15 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/randomid"
+	"github.com/alibaba/pouch/pkg/utils"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/diff"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/platforms"
-	"github.com/containerd/containerd/rootfs"
 	"github.com/containerd/containerd/snapshots"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
@@ -214,7 +215,7 @@ func (c *Client) Commit(ctx context.Context, config *CommitConfig) (_ digest.Dig
 // export a new layer from a container
 func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs content.Store, comparer diff.Comparer) (ocispec.Descriptor, digest.Digest, error) {
 	// export new layer
-	rwDesc, err := rootfs.CreateDiff(ctx, name, sn, comparer)
+	rwDesc, err := createDiff(ctx, name, sn, comparer)
 	if err != nil {
 		return ocispec.Descriptor{}, digest.Digest(""), fmt.Errorf("failed to diff: %s", err)
 	}
@@ -240,6 +241,58 @@ func exportLayer(ctx context.Context, name string, sn snapshots.Snapshotter, cs 
 		Size:      info.Size,
 	}
 	return layer, diffID, nil
+}
+
+// createDiff copied from containerd vendor and fix two things:
+//
+// 1. don't use canceled context
+// 2. add the random string to lowdir
+func createDiff(ctx context.Context, snapshotID string, sn snapshots.Snapshotter, d diff.Comparer, opts ...diff.Opt) (ocispec.Descriptor, error) {
+	// NOTE: the passthrough context might be canceled and we can't use
+	// the ctx to do any cleanup things.
+	//
+	// in pouch, we set default ns to containerd client so that we don't
+	// need set namespace to clean context.
+	cctx := context.TODO()
+
+	info, err := sn.Stat(ctx, snapshotID)
+	if err != nil {
+		return ocispec.Descriptor{}, err
+	}
+
+	randKey := utils.RandString(5, "", "")
+
+	lowerKey := fmt.Sprintf("%s-parent-view-%s", info.Parent, randKey)
+	lower, err := sn.View(ctx, lowerKey, info.Parent)
+	if err != nil {
+		return ocispec.Descriptor{}, err
+	}
+	defer func() {
+		if err := sn.Remove(cctx, lowerKey); err != nil {
+			log.With(cctx).Warnf("failed to cleanup diff lower snapshotter(key=%s): %v", lowerKey, err)
+		}
+	}()
+
+	var upper []mount.Mount
+	if info.Kind == snapshots.KindActive {
+		upper, err = sn.Mounts(ctx, snapshotID)
+		if err != nil {
+			return ocispec.Descriptor{}, err
+		}
+	} else {
+		upperKey := fmt.Sprintf("%s-view-%s", snapshotID, randKey)
+		upper, err = sn.View(ctx, upperKey, snapshotID)
+		if err != nil {
+			return ocispec.Descriptor{}, err
+		}
+		defer func() {
+			if err := sn.Remove(cctx, upperKey); err != nil {
+				log.With(cctx).Warnf("failed to cleanup diff upper snapshotter(key=%s): %v", upperKey, err)
+			}
+		}()
+	}
+
+	return d.Compare(ctx, lower, upper, opts...)
 }
 
 // create a new child image descriptor
