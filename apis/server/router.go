@@ -261,6 +261,8 @@ func HandleErrorResponse(w http.ResponseWriter, err error) {
 		code = http.StatusConflict
 	} else if errtypes.IsNotModified(err) {
 		code = http.StatusNotModified
+	} else if errtypes.IsInvalidAuthorization(err) {
+		code = http.StatusForbidden
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -37,6 +37,9 @@ var (
 
 	// ErrPreCheckFailed represents that failed to pre check.
 	ErrPreCheckFailed = errorType{codePreCheckFailed, "pre check failed"}
+
+	// ErrInvalidAuthorization represents that authorization failed.
+	ErrInvalidAuthorization = errorType{codeInvalidAuthorization, "authorization failed"}
 )
 
 const (
@@ -51,6 +54,7 @@ const (
 	codeInUse
 	codeNotModified
 	codePreCheckFailed
+	codeInvalidAuthorization
 
 	// volume error code
 	codeVolumeExisted
@@ -100,6 +104,11 @@ func IsNotModified(err error) bool {
 // IsPreCheckFailed checks the error is failed to pre check or not.
 func IsPreCheckFailed(err error) bool {
 	return checkError(err, codePreCheckFailed)
+}
+
+// IsInvalidAuthorization checks the errors is authorization failure or not.
+func IsInvalidAuthorization(err error) bool {
+	return checkError(err, codeInvalidAuthorization)
 }
 
 func checkError(err error, code int) bool {

@@ -255,7 +255,6 @@ func (c *Client) PushImage(ctx context.Context, ref string, authConfig *types.Au
 func (c *Client) ResolveImage(ctx context.Context, nameRef string, refs []string, authConfig *types.AuthConfig, opts docker.ResolverOptions) (remotes.Resolver, string, error) {
 	resolver, availableRef, err := c.getResolver(ctx, authConfig, nameRef, refs, opts)
 	if err != nil {
-		log.With(nil).Errorf("image ref not found %s", nameRef)
 		return nil, "", err
 	}
 

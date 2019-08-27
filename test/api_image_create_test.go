@@ -50,7 +50,7 @@ func (suite *APIImageCreateSuite) TestImageCreateNil(c *check.C) {
 // TestImageCreateNonExistentImage tests pulling a non-existent image.
 func (suite *APIImageCreateSuite) TestImageCreateNonExistentImage(c *check.C) {
 	q := url.Values{}
-	image := "qwefghjm:zxcvbn_efgh_nonexist"
+	image := "nginx:zxcvbn_efgh_nonexist"
 
 	q.Add("fromImage", image)
 	query := request.WithQuery(q)
@@ -58,6 +58,19 @@ func (suite *APIImageCreateSuite) TestImageCreateNonExistentImage(c *check.C) {
 	resp, err := request.Post("/images/create", query)
 	c.Assert(err, check.IsNil)
 	CheckRespStatus(c, resp, 404)
+}
+
+// TestImageCreateNoAuthority tests pulling a no authority image.
+func (suite *APIImageCreateSuite) TestImageCreateNoAuthority(c *check.C) {
+	q := url.Values{}
+	image := "foobarnotexist_zzzz:zzz"
+
+	q.Add("fromImage", image)
+	query := request.WithQuery(q)
+
+	resp, err := request.Post("/images/create", query)
+	c.Assert(err, check.IsNil)
+	CheckRespStatus(c, resp, 403)
 }
 
 // TestImageCreateWithoutTag tests creating an image without tag, will use "latest" by default.
