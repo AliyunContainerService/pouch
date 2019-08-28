@@ -23,6 +23,11 @@ func (suite *PouchRmiSuite) SetUpSuite(c *check.C) {
 	environment.PruneAllContainers(apiClient)
 }
 
+// SetupTest does common setup in the beginning of each test.
+func (suite *PouchRmiSuite) SetUpTest(c *check.C) {
+	c.Assert(environment.PruneAllImages(apiClient), check.IsNil)
+}
+
 // TestRmiWorks tests "pouch rmi" work.
 func (suite *PouchRmiSuite) TestRmiWorks(c *check.C) {
 	command.PouchRun("pull", helloworldImage).Assert(c, icmd.Success)
@@ -119,6 +124,49 @@ func (suite *PouchRmiSuite) TestRmiByImageIDWithTwoPrimaryReferences(c *check.C)
 	res = command.PouchRun("images").Assert(c, icmd.Success)
 	if out := res.Combined(); strings.Contains(out, repoTag) {
 		c.Fatalf("unexpected output %s: should rm image %s\n", out, repoTag)
+	}
+}
+
+// TestRmiByImageIDUsingByRunningContainerWithTwoPrimaryReferences tests "pouch rmi {ID}" work.
+func (suite *PouchRmiSuite) TestRmiByImageIDUsingByRunningContainerWithTwoPrimaryReferences(c *check.C) {
+	var (
+		repoTag    = environment.BusyboxRepo + ":" + environment.BusyboxTag
+		repoDigest = environment.BusyboxRepo + "@" + environment.BusyboxDigest
+		cname      = "TestRmiByImageIDUsingByRunningContainerWithTwoPrimaryReferences"
+	)
+
+	command.PouchRun("pull", repoTag).Assert(c, icmd.Success)
+	res := command.PouchRun("images")
+	res.Assert(c, icmd.Success)
+	imageID := imagesListToKV(res.Combined())[repoTag][0]
+
+	command.PouchRun("run", "-d", "--name", cname, repoTag, "top").Assert(c, icmd.Success)
+	defer DelContainerForceMultyTime(c, cname)
+
+	// can't remove without "--force" because there is only one primary
+	// reference. the name@digest is fake one so that we shouldn't count
+	// it.
+	res = command.PouchRun("rmi", repoTag)
+	c.Assert(res.Stderr(), check.NotNil, check.Commentf("Unable to remove the image"))
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); !strings.Contains(out, repoTag) {
+		c.Fatalf("unexpected output %s: shouldn't rm image %s without force\n", out, repoTag)
+	}
+
+	// pull the name@digest image means we have two primary reference
+	command.PouchRun("pull", repoDigest).Assert(c, icmd.Success)
+	// we can remove the image by name because there has other primary reference
+	command.PouchRun("rmi", repoTag).Assert(c, icmd.Success)
+
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, repoTag) || !strings.Contains(out, repoDigest) {
+		c.Fatalf("unexpected output %s: should rm image %s without force\n", out, repoTag)
+	}
+
+	command.PouchRun("rmi", "-f", imageID).Assert(c, icmd.Success)
+	res = command.PouchRun("images").Assert(c, icmd.Success)
+	if out := res.Combined(); strings.Contains(out, repoTag) || strings.Contains(out, repoDigest) {
+		c.Fatalf("unexpected output %s: should rm image %s and %s\n", out, repoTag, repoDigest)
 	}
 }
 

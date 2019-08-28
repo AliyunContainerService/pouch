@@ -36,18 +36,22 @@ import (
 	pkgerrors "github.com/pkg/errors"
 )
 
-// The daemon will load all the images from containerd into memory. At
-// the beginning, we assume that it can load it in 10 secs. But if the
-// system has busy IO, it will take long time to load it, especially the
-// more-layers and huge-size images. So update it from 10 secs to 10 mins.
-var deadlineLoadImagesAtBootup = time.Minute * 10
+var (
+	// The daemon will load all the images from containerd into memory. At
+	// the beginning, we assume that it can load it in 10 secs. But if the
+	// system has busy IO, it will take long time to load it, especially the
+	// more-layers and huge-size images. So update it from 10 secs to 10 mins.
+	deadlineLoadImagesAtBootup = time.Minute * 10
 
-// the filter tags set allowed when pouch images -f
-var acceptedImageFilterTags = map[string]bool{
-	"before":    true,
-	"since":     true,
-	"reference": true,
-}
+	// the filter tags set allowed when pouch images -f
+	acceptedImageFilterTags = map[string]bool{
+		"before":    true,
+		"since":     true,
+		"reference": true,
+	}
+
+	labelDigestRef = "io.alibaba.pouch.image.digestref"
+)
 
 // ImageMgr as an interface defines all operations against images.
 type ImageMgr interface {
@@ -480,14 +484,53 @@ func (mgr *ImageManager) RemoveImage(ctx context.Context, idOrRef string, force 
 		return nil
 	}
 
+	isTaggedOnly := reference.IsNameTagged(namedRef)
+
 	namedRef = reference.TrimTagForDigest(namedRef)
 	// remove the image if the nameRef is primary reference
 	if primaryRef.String() == namedRef.String() {
 		if err := mgr.localStore.RemoveReference(id, primaryRef); err != nil {
 			return err
 		}
-		mgr.LogImageEvent(ctx, namedRef.String(), namedRef.String(), "delete")
-		return mgr.client.RemoveImage(ctx, primaryRef.String())
+
+		// get digest for the image before remove
+		img, err := mgr.client.GetImage(ctx, primaryRef.String())
+		if err != nil {
+			return err
+		}
+
+		if err := mgr.client.RemoveImage(ctx, img.Name()); err != nil {
+			return err
+		}
+
+		// skip if the namedRef contains the digest
+		//
+		// this means that the name@digest image is used to pull
+		// , not created by StoreImageReference function
+		if !isTaggedOnly {
+			return nil
+		}
+
+		digNamed := reference.WithDigest(namedRef, img.Target().Digest)
+		digImg, err := mgr.client.GetImage(ctx, digNamed.String())
+		if err != nil {
+			if !errtypes.IsNotfound(err) {
+				return err
+			}
+			// skip not found error for tag case
+			return nil
+		}
+
+		if labels := digImg.Labels(); labels != nil {
+			if _, ok := labels[labelDigestRef]; ok {
+				if err := mgr.localStore.RemoveReference(id, digNamed); err != nil {
+					return err
+				}
+
+				return mgr.client.RemoveImage(ctx, digImg.Name())
+			}
+		}
+		return nil
 	}
 
 	// untag event
@@ -663,8 +706,30 @@ func (mgr *ImageManager) CheckReference(ctx context.Context, idOrRef string) (ac
 
 // ListReferences returns all references
 func (mgr *ImageManager) ListReferences(ctx context.Context, imageID digest.Digest) ([]reference.Named, error) {
-	// NOTE: we just keep ctx and error for further expansion
-	return mgr.localStore.GetPrimaryReferences(imageID), nil
+	names := mgr.localStore.GetPrimaryReferences(imageID)
+
+	// NOTE: for the label io.alibaba.pouch.image.digestref image data,
+	// we should skip it because it is fake primary ref.
+	filter := make([]reference.Named, 0, len(names))
+	for _, name := range names {
+		if reference.IsNameTagged(name) {
+			filter = append(filter, name)
+			continue
+		}
+
+		img, err := mgr.client.GetImage(ctx, name.String())
+		if err != nil {
+			return nil, err
+		}
+
+		if labels := img.Labels(); labels != nil {
+			if _, ok := labels[labelDigestRef]; ok {
+				continue
+			}
+		}
+		filter = append(filter, name)
+	}
+	return filter, nil
 }
 
 // GetOCIImageConfig returns the image config of OCI
@@ -722,6 +787,44 @@ func (mgr *ImageManager) StoreImageReference(ctx context.Context, img containerd
 
 	if err := mgr.addReferenceIntoStore(imgCfg.Digest, namedRef, img.Target().Digest); err != nil {
 		return err
+	}
+
+	// NOTE: create name@digest meta data in containerd to make sure that
+	// the image should not be overrided by the same name. there is the
+	// case.
+	//
+	// users pull image named by busybox:latest into local and run container
+	// by the busybox:latest. if someone builds new image named by the
+	// same name, busybox:latest with different digest, the users pull it
+	// again. the original image will be overrided by the new one. in this
+	// case, the users have no chance to know which one is the original
+	// image. therefore, if the name is only with tag, we should create
+	// the name@digest in the containerd with special label.
+	//
+	// the special label means this image meta data can be removed if
+	// user try to remove image by the name.
+	if reference.IsNameTagged(namedRef) {
+		digRef := reference.TrimTagForDigest(
+			reference.WithDigest(namedRef, img.Target().Digest),
+		)
+
+		// ignore the existing error here because
+		// 1. the name@digest has been pulled by user and we can't
+		// change it.
+		// 2. the existing one is created by restarting pouch
+		if _, err := mgr.client.CreateImageReference(ctx, ctrdmetaimages.Image{
+			Name:   digRef.String(),
+			Target: img.Target(),
+			Labels: map[string]string{
+				labelDigestRef: "managed",
+			},
+		}); err != nil && !errtypes.IsAlreadyExisted(err) {
+			return err
+		}
+
+		if err := mgr.addReferenceIntoStore(imgCfg.Digest, digRef, img.Target().Digest); err != nil {
+			return err
+		}
 	}
 
 	mgr.localStore.CacheCtrdImageInfo(imgCfg.Digest, CtrdImageInfo{

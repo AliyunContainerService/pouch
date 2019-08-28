@@ -22,7 +22,6 @@ import (
 	"github.com/alibaba/pouch/daemon/config"
 	"github.com/alibaba/pouch/daemon/mgr"
 	"github.com/alibaba/pouch/pkg/errtypes"
-	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/netutils"
 	"github.com/alibaba/pouch/pkg/randomid"
 	"github.com/alibaba/pouch/pkg/utils"
