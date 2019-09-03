@@ -149,6 +149,11 @@ func (c *Client) execContainer(ctx context.Context, process *Process, timeout in
 	// start the exec process
 	if err := execProcess.Start(ctx); err != nil {
 		close(closeStdinCh)
+
+		// delete exec process in containerd to cleanup pipe fd
+		if _, cerr := execProcess.Delete(context.TODO()); cerr != nil {
+			log.With(ctx).Warnf("failed to delete exec process %s: %s", process.ExecID, cerr)
+		}
 		return errors.Wrapf(err, "failed to start exec, exec id %s", execID)
 	}
 	// make sure the closeStdinCh has been closed.
