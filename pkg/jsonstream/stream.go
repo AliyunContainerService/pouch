@@ -10,10 +10,11 @@ import (
 
 // JSONStream represents a stream transfer, the data be encoded with json.
 type JSONStream struct {
-	w     io.Writer
-	cache chan interface{}
-	wg    sync.WaitGroup
-	f     Formater
+	w         io.Writer
+	cache     chan interface{}
+	wg        sync.WaitGroup
+	f         Formater
+	closingCh chan struct{}
 }
 
 // New creates a 'JSONStream' instance and use a goroutine to recv/send data.
@@ -24,15 +25,19 @@ func New(out io.Writer, f Formater) *JSONStream {
 	}
 
 	stream := &JSONStream{
-		w:     out,
-		cache: make(chan interface{}, 16),
-		f:     format,
+		w:         out,
+		cache:     make(chan interface{}, 16),
+		f:         format,
+		closingCh: make(chan struct{}),
 	}
 
 	stream.wg.Add(1)
 
 	go func() {
-		defer stream.wg.Done()
+		defer func() {
+			stream.wg.Done()
+			close(stream.closingCh)
+		}()
 
 		f := stream.f
 
@@ -70,7 +75,10 @@ func (s *JSONStream) Wait() {
 
 // WriteObject writes a object to client via stream tranfer.
 func (s *JSONStream) WriteObject(obj interface{}) error {
-	s.cache <- obj
+	select {
+	case s.cache <- obj:
+	case <-s.closingCh:
+	}
 	return nil
 }
 

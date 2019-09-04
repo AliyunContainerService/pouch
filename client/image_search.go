@@ -21,7 +21,7 @@ func (client *APIClient) ImageSearch(ctx context.Context, term, registry, encode
 		headers["X-Registry-Auth"] = []string{encodedAuth}
 	}
 
-	resp, err := client.get(ctx, "/images/search", q, headers)
+	resp, err := client.post(ctx, "/images/search", q, nil, headers)
 
 	if err != nil {
 		return nil, err
