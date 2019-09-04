@@ -67,8 +67,8 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodPost, Path: "/commit", HandlerFunc: withCancelHandler(s.commitContainer)},
 
 		// image
-		{Method: http.MethodPost, Path: "/images/create", HandlerFunc: s.pullImage},
-		{Method: http.MethodGet, Path: "/images/search", HandlerFunc: s.searchImages},
+		{Method: http.MethodPost, Path: "/images/create", HandlerFunc: withCancelHandler(s.pullImage)},
+		{Method: http.MethodPost, Path: "/images/search", HandlerFunc: s.searchImages},
 		{Method: http.MethodGet, Path: "/images/json", HandlerFunc: s.listImages},
 		{Method: http.MethodDelete, Path: "/images/{name:.*}", HandlerFunc: s.removeImage},
 		{Method: http.MethodGet, Path: "/images/{name:.*}/json", HandlerFunc: s.getImage},

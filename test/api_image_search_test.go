@@ -29,7 +29,7 @@ func (suite *APIImageSearchSuite) TestImageSearchOK(c *check.C) {
 	q.Add("registry", "")
 
 	query := request.WithQuery(q)
-	resp, err := request.Get("/images/search", query)
+	resp, err := request.Post("/images/search", query)
 
 	defer resp.Body.Close()
 	CheckRespStatus(c, resp, 200)
