@@ -141,7 +141,7 @@ func (c *CniManager) TearDownPodNetwork(podNetwork *ocicni.PodNetwork) error {
 	}
 
 	// if netNSPath is not found, dont return error.
-	if _, err = os.Stat(podNetwork.NetNS); err != nil {
+	if _, err := os.Stat(podNetwork.NetNS); err != nil {
 		if os.IsNotExist(err) {
 			log.With(nil).Warnf("failed to find network namespace file %s of sandbox %s", podNetwork.NetNS, podNetwork.ID)
 			return nil
