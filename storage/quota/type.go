@@ -16,3 +16,10 @@ type OverlayMount struct {
 	Upper  string
 	Work   string
 }
+
+// MountInfo defines the information of device mount.
+type MountInfo struct {
+	MountPoint string
+	FsType     string
+	DeviceID   uint64
+}

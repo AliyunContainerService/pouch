@@ -17,13 +17,7 @@ var (
 )
 
 func run(cmd *cobra.Command) error {
-	_, err := quota.StartQuotaDriver(dir)
-	if err != nil {
-		log.With(nil).Errorf("failed to start quota driver for %s, err: %v", dir, err)
-		return err
-	}
-
-	err = quota.SetDiskQuota(dir, size, quotaID)
+	err := quota.SetDiskQuota(dir, size, quotaID)
 	if err != nil {
 		log.With(nil).Errorf("failed to set subtree for %s, quota id: %d, err: %v", dir, quotaID, err)
 		return err

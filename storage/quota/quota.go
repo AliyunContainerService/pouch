@@ -8,8 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
+	"time"
 
 	"github.com/alibaba/pouch/pkg/exec"
 	"github.com/alibaba/pouch/pkg/kernel"
@@ -30,24 +30,13 @@ const (
 var (
 	// GQuotaDriver represents global quota driver.
 	GQuotaDriver = NewQuotaDriver("")
-
-	// devLimits saves all the limit of device.
-	// key: device ID
-	// value: the storage upper limit size of the device(unit:B)
-	devLimits = make(map[uint64]uint64)
-
-	// the lock for devLimits
-	lock sync.Mutex
 )
 
 // BaseQuota defines the quota operation interface.
 // It abstracts the common operation ways a quota driver should implement.
 type BaseQuota interface {
 	// EnforceQuota is used to enforce disk quota effect on specified directory.
-	EnforceQuota(dir string) (string, error)
-
-	// SetSubtree sets quota for container root dir which is a subtree of host's dir mapped on a device.
-	SetSubtree(dir string, qid uint32) (uint32, error)
+	EnforceQuota(dir string) (*MountInfo, error)
 
 	// SetDiskQuota uses the following two parameters to set disk quota for a directory.
 	// * quota size: a byte size of requested quota.
@@ -66,10 +55,6 @@ type BaseQuota interface {
 	// The input attributes is quota ID.
 	SetQuotaIDInFileAttr(dir string, quotaID uint32) error
 
-	// SetQuotaIDInFileAttrNoOutput sets file attributes of quota ID for the input directory without returning error if exists.
-	// The input attributes is quota ID.
-	SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32)
-
 	// GetNextQuotaID gets next quota ID in global scope of host.
 	GetNextQuotaID() (uint32, error)
 
@@ -83,25 +68,21 @@ func NewQuotaDriver(name string) BaseQuota {
 	switch name {
 	case "grpquota":
 		quota = &GrpQuotaDriver{
-			quotaIDs:    make(map[uint32]struct{}),
-			mountPoints: make(map[uint64]string),
+			quotaIDs: make(map[uint32]struct{}),
 		}
 	case "prjquota":
 		quota = &PrjQuotaDriver{
-			quotaIDs:    make(map[uint32]struct{}),
-			mountPoints: make(map[uint64]string),
+			quotaIDs: make(map[uint32]struct{}),
 		}
 	default:
 		kernelVersion, err := kernel.GetKernelVersion()
 		if err == nil && kernelVersion.Kernel >= 4 {
 			quota = &PrjQuotaDriver{
-				quotaIDs:    make(map[uint32]struct{}),
-				mountPoints: make(map[uint64]string),
+				quotaIDs: make(map[uint32]struct{}),
 			}
 		} else {
 			quota = &GrpQuotaDriver{
-				quotaIDs:    make(map[uint32]struct{}),
-				mountPoints: make(map[uint64]string),
+				quotaIDs: make(map[uint32]struct{}),
 			}
 		}
 	}
@@ -112,21 +93,6 @@ func NewQuotaDriver(name string) BaseQuota {
 // SetQuotaDriver is used to set global quota driver.
 func SetQuotaDriver(name string) {
 	GQuotaDriver = NewQuotaDriver(name)
-}
-
-// StartQuotaDriver is used to start quota driver.
-func StartQuotaDriver(dir string) (string, error) {
-	return GQuotaDriver.EnforceQuota(dir)
-}
-
-// SetSubtree is used to set quota id for directory.
-func SetSubtree(dir string, qid uint32) (uint32, error) {
-	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
-		log.With(nil).Debugf("set quota skip not regular file: %s", dir)
-		return 0, err
-	}
-
-	return GQuotaDriver.SetSubtree(dir, qid)
 }
 
 // SetDiskQuota is used to set quota for directory.
@@ -147,26 +113,6 @@ func CheckMountpoint(devID uint64) (string, bool, string) {
 // GetQuotaIDInFileAttr returns the directory attributes of quota ID.
 func GetQuotaIDInFileAttr(dir string) uint32 {
 	return GQuotaDriver.GetQuotaIDInFileAttr(dir)
-}
-
-// SetQuotaIDInFileAttr is used to set file attributes of quota ID.
-func SetQuotaIDInFileAttr(dir string, id uint32) error {
-	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
-		log.With(nil).Debugf("set quota skip not regular file: %s", dir)
-		return err
-	}
-
-	return GQuotaDriver.SetQuotaIDInFileAttr(dir, id)
-}
-
-// SetQuotaIDInFileAttrNoOutput is used to set file attribute of quota ID without error.
-func SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
-	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
-		log.With(nil).Debugf("set quota skip not regular file: %s", dir)
-		return
-	}
-
-	GQuotaDriver.SetQuotaIDInFileAttrNoOutput(dir, quotaID)
 }
 
 //GetNextQuotaID returns the next available quota id.
@@ -353,72 +299,10 @@ func loadQuotaIDs(repquotaOpt string) (map[uint32]struct{}, uint32, error) {
 	return quotaIDs, minID, nil
 }
 
-func getMountpoint(dir string) (string, error) {
-	var (
-		mountPoint string
-	)
-
-	output, err := ioutil.ReadFile(procMountFile)
-	if err != nil {
-		log.With(nil).Warnf("failed to read file(%s), err(%v)", procMountFile, err)
-		return "", errors.Wrapf(err, "failed to read file(%s)", procMountFile)
-	}
-
-	devID, err := system.GetDevID(dir)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to get device id for dir(%s)", dir)
-	}
-	log.With(nil).Debugf("get dir(%s) device id(%d)", dir, devID)
-
-	// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
-	for _, line := range strings.Split(string(output), "\n") {
-		parts := strings.Split(line, " ")
-		if len(parts) != 6 {
-			continue
-		}
-
-		// only check xfs/ext3/ext4 file system
-		if parts[2] != "xfs" && parts[2] != "ext3" && parts[2] != "ext4" {
-			continue
-		}
-
-		newDevID, err := system.GetDevID(parts[1])
-		if err != nil {
-			continue
-		}
-
-		// /dev/sdb1 /home/pouch ext4 rw,relatime,prjquota,data=ordered 0 0
-		// /dev/sdb1 /home/pouch/overlay ext4 rw,relatime,prjquota,data=ordered 0 0
-		// we will choose the shortest match string, /home/pouch
-		if devID == newDevID && strings.HasPrefix(dir, parts[1]) &&
-			(mountPoint == "" || len(parts[1]) < len(mountPoint)) {
-			mountPoint = parts[1]
-			devID = newDevID
-		}
-	}
-
-	if mountPoint == "" {
-		return "", errors.Errorf("failed to get mount point of dir(%s)", dir)
-	}
-
-	log.With(nil).Debugf("get the dir(%s)'s mountpoint(%s)", dir, mountPoint)
-
-	return mountPoint, nil
-}
-
-// setDevLimit sets device storage upper limit in quota driver according to inpur dir.
-func setDevLimit(dir string, devID uint64) (uint64, error) {
-	lock.Lock()
-	limit, exist := devLimits[devID]
-	lock.Unlock()
-	if exist {
-		return limit, nil
-	}
-
-	mp, err := getMountpoint(dir)
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to set device limit, dir(%s), devID(%d)", dir, devID)
-	}
+// getDevLimit returns the device storage upper limit.
+func getDevLimit(info *MountInfo) (uint64, error) {
+	mp := info.MountPoint
+	devID := info.DeviceID
 
 	newDevID, _ := system.GetDevID(mp)
 	if newDevID != devID {
@@ -432,38 +316,36 @@ func setDevLimit(dir string, devID uint64) (uint64, error) {
 		log.With(nil).Errorf("failed to get path(%s) limit, err(%v)", mp, err)
 		return 0, errors.Wrapf(err, "failed to get path(%s) limit", mp)
 	}
-	limit = stfs.Blocks * uint64(stfs.Bsize)
+	limit := stfs.Blocks * uint64(stfs.Bsize)
 
-	lock.Lock()
-	devLimits[devID] = limit
-	lock.Unlock()
-
-	log.With(nil).Debugf("SetDevLimit: dir(%s), mountpoint(%s), limit(%v) B", dir, mp, limit)
+	log.With(nil).Debugf("get device limit size, mountpoint(%s), limit(%v) B", mp, limit)
 	return limit, nil
 }
 
 // checkDevLimit checks if the device on which the input dir lies has already been recorded in driver.
-func checkDevLimit(dir string, size uint64) error {
-	devID, err := system.GetDevID(dir)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get device id, dir(%s)", dir)
-	}
+func checkDevLimit(mountInfo *MountInfo, size uint64) error {
+	mp := mountInfo.MountPoint
 
-	lock.Lock()
-	limit, exist := devLimits[devID]
-	lock.Unlock()
-	if !exist {
-		// if has not recorded, just add (dir, device, limit) to driver.
-		if limit, err = setDevLimit(dir, devID); err != nil {
-			return errors.Wrapf(err, "failed to set device limit, dir(%s), devID: (%d)", dir, devID)
-		}
+	limit, err := getDevLimit(mountInfo)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get device(%s) limit", mp)
 	}
 
 	if limit < size {
-		return fmt.Errorf("dir %s quota limit %v must be less than %v", dir, size, limit)
+		return fmt.Errorf("dir %s quota limit %v must be less than %v", mp, size, limit)
 	}
 
-	log.With(nil).Debugf("succeeded in checkDevLimit (dir %s quota limit %v B) with size %v B", dir, limit, size)
+	log.With(nil).Debugf("succeeded in checkDevLimit (dir %s quota limit %v B) with size %v B", mp, limit, size)
 
 	return nil
+}
+
+func getDevID(dir string) (uint64, error) {
+	// call "stat <dir>" to ensure stat not timeout
+	_, _, _, err := exec.Run(time.Second*5, "stat", dir)
+	if err != nil {
+		return 0, err
+	}
+
+	return system.GetDevID(dir)
 }
