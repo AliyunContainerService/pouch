@@ -314,3 +314,12 @@ func (quota *PrjQuotaDriver) GetNextQuotaID() (uint32, error) {
 	log.With(nil).Debugf("get next project quota id: %d", id)
 	return id, nil
 }
+
+func (quota *PrjQuotaDriver) SetFileAttrRecursive(dir string, quotaID uint32) error {
+	strID := strconv.FormatUint(uint64(quotaID), 10)
+
+	exit, stdout, stderr, err := exec.Run(0, "chattr", "-R", "-p", strID, "+P", dir)
+	log.With(nil).Infof("SetQuotaIDInFileAttr xfs_quota, dir: (%s), quota id: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+		dir, strID, stdout, stderr, exit)
+	return errors.Wrapf(err, "failed to set file(%s) quota id(%d) by recursively", dir, strID)
+}
