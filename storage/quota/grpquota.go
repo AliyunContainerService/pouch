@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -363,4 +364,19 @@ func getVFSVersionAndQuotaFile(devID uint64) (string, string, error) {
 	}
 
 	return vfsVersion, quotaFilename, nil
+}
+
+func (quota *GrpQuotaDriver) SetFileAttrRecursive(dir string, quotaID uint32) error {
+	return filepath.Walk(dir, func(path string, fd os.FileInfo, err error) error {
+		if err != nil {
+			log.With(nil).Warnf("setQuota walk dir %s get error %v", path, err)
+			return nil
+		}
+
+		existedQid := quota.GetQuotaIDInFileAttr(path)
+		if existedQid != quotaID {
+			quota.SetQuotaIDInFileAttrNoOutput(path, quotaID)
+		}
+		return nil
+	})
 }

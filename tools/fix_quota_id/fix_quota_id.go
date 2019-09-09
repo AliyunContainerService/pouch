@@ -33,7 +33,7 @@ func run(cmd *cobra.Command) error {
 		return nil
 	}
 
-	if err := quota.SetQuotaForDir(dir, quotaID); err != nil {
+	if err := quota.SetFileAttrRecursive(dir, quotaID); err != nil {
 		log.With(nil).Errorf("failed to set quota id for %s recursively, quota id: %d, err: %v", dir, quotaID, err)
 		return err
 	}

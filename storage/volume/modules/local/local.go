@@ -151,7 +151,6 @@ func (p *Local) Attach(ctx context.Context, v *types.Volume) error {
 	}
 
 	if size != "" && size != "0" {
-		quota.StartQuotaDriver(mountPath)
 		if ex := quota.SetDiskQuota(mountPath, size, 0); ex != nil {
 			return ex
 		}
