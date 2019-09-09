@@ -28,56 +28,45 @@ type GrpQuotaDriver struct {
 	// value: stuct{}
 	quotaIDs map[uint32]struct{}
 
-	// mountPoints saves all the mount point of volume which have already been enforced disk quota.
-	// key: device ID such as /dev/sda1
-	// value: the mountpoint of the device in the filesystem
-	mountPoints map[uint64]string
-
 	// LastID is used to mark last used quota ID.
 	// quota ID is allocated increasingly by sequence one by one.
 	lastID uint32
 }
 
 // EnforceQuota is used to enforce disk quota effect on specified directory.
-func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
+func (quota *GrpQuotaDriver) EnforceQuota(dir string) (*MountInfo, error) {
 	log.With(nil).Debugf("start group quota driver: (%s)", dir)
 
 	devID, err := system.GetDevID(dir)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get deivce id for directory: (%s)", dir)
+		return nil, errors.Wrapf(err, "failed to get deivce id for directory: (%s)", dir)
 	}
 
-	// set limit of dir's device in driver
-	if _, err = setDevLimit(dir, devID); err != nil {
-		return "", errors.Wrapf(err, "failed to set device limit, dir: (%s), devID: (%d)", dir, devID)
+	mountPoint, hasQuota, fsType := quota.CheckMountpoint(devID)
+	if mountPoint == "" {
+		return nil, fmt.Errorf("failed to find mountpoint: (%s)", dir)
 	}
 
-	quota.lock.Lock()
-	defer quota.lock.Unlock()
-
-	if mp, ok := quota.mountPoints[devID]; ok {
-		// if the device has already been enforced quota, just return.
-		return mp, nil
+	mountInfo := &MountInfo{
+		MountPoint: mountPoint,
+		FsType:     fsType,
+		DeviceID:   devID,
 	}
 
-	mountPoint, hasQuota, _ := quota.CheckMountpoint(devID)
-	if len(mountPoint) == 0 {
-		return mountPoint, fmt.Errorf("failed to find mountpoint: (%s)", dir)
-	}
 	if !hasQuota {
 		// remount option grpquota for mountpoint
 		exit, stdout, stderr, err := exec.Run(0, "mount", "-o", "remount,grpquota", mountPoint)
 		if err != nil {
 			log.With(nil).Errorf("failed to remount grpquota, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
 				mountPoint, stdout, stderr, exit, err)
-			return "", errors.Wrapf(err, "failed to remount grpquota, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+			return nil, errors.Wrapf(err, "failed to remount grpquota, mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
 				mountPoint, stdout, stderr, exit)
 		}
 	}
 
 	vfsVersion, quotaFilename, err := getVFSVersionAndQuotaFile(devID)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get vfs version and quota file")
+		return nil, errors.Wrapf(err, "failed to get vfs version and quota file")
 	}
 
 	filename := mountPoint + "/" + quotaFilename
@@ -92,20 +81,20 @@ func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
 		}
 
 		if writeErr := ioutil.WriteFile(filename, header, 0644); writeErr != nil {
-			return mountPoint, errors.Wrapf(writeErr, "failed to write file, filename: (%s), vfs version: (%s)",
+			return nil, errors.Wrapf(writeErr, "failed to write file, filename: (%s), vfs version: (%s)",
 				filename, vfsVersion)
 		}
 		if exit, stdout, stderr, err := exec.Run(0, "setquota", "-g", "-t", "43200", "43200", mountPoint); err != nil {
 			os.Remove(filename)
 			log.With(nil).Errorf("failed to setquota, stdout: (%s), stderr: (%s), exit: (%d), err: (%v)",
 				stdout, stderr, exit, err)
-			return mountPoint, errors.Wrapf(err, "failed to setquota, stdout: (%s), stderr: (%s), exit: (%d)",
+			return nil, errors.Wrapf(err, "failed to setquota, stdout: (%s), stderr: (%s), exit: (%d)",
 				stdout, stderr, exit)
 		}
 		if err := quota.setQuota(0, 0, mountPoint); err != nil {
 			os.Remove(filename)
 			log.With(nil).Errorf("failed to set quota, mountpoint: (%s), err: (%v)", mountPoint, err)
-			return mountPoint, errors.Wrapf(err, "failed to set quota, mountpoint: (%s)", mountPoint)
+			return nil, errors.Wrapf(err, "failed to set quota, mountpoint: (%s)", mountPoint)
 		}
 	}
 
@@ -114,12 +103,11 @@ func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
 	if err != nil && exit != 1 {
 		log.With(nil).Errorf("failed to quota on for mountpoint: (%s), exit: (%d), stdout: (%s), stderr: (%s), err: (%v)",
 			mountPoint, exit, stdout, stderr, err)
-		return "", errors.Wrapf(err, "failed to quota on for mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+		return nil, errors.Wrapf(err, "failed to quota on for mountpoint: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
 			mountPoint, stdout, stderr, exit)
 	}
 	if strings.Contains(stdout, " is on") {
-		quota.mountPoints[devID] = mountPoint
-		return mountPoint, nil
+		return mountInfo, nil
 	}
 	if exit, stdout, stderr, err = exec.Run(0, "quotaon", mountPoint); err != nil {
 		mountPoint = ""
@@ -127,32 +115,7 @@ func (quota *GrpQuotaDriver) EnforceQuota(dir string) (string, error) {
 			mountPoint, stdout, stderr, exit)
 	}
 
-	quota.mountPoints[devID] = mountPoint
-	return mountPoint, err
-}
-
-// SetSubtree is used to set quota id for directory,
-// setfattr -n system.subtree -v $QUOTAID
-func (quota *GrpQuotaDriver) SetSubtree(dir string, qid uint32) (uint32, error) {
-	log.With(nil).Debugf("set subtree, dir: %s, quotaID: %d", dir, qid)
-	id := qid
-	var err error
-	if id == 0 {
-		id = quota.GetQuotaIDInFileAttr(dir)
-		if id > 0 {
-			return id, nil
-		}
-		id, err = quota.GetNextQuotaID()
-	}
-
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get file: (%s) quota id", dir)
-	}
-	strid := strconv.FormatUint(uint64(id), 10)
-	exit, stdout, stderr, err := exec.Run(0, "setfattr", "-n", "system.subtree", "-v", strid, dir)
-
-	return id, errors.Wrapf(err, "failed to setfattr, dir: (%s), quota id: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
-		dir, strid, stdout, stderr, exit)
+	return mountInfo, err
 }
 
 // CheckMountpoint is used to check mount point.
@@ -222,11 +185,11 @@ func (quota *GrpQuotaDriver) CheckMountpoint(devID uint64) (string, bool, string
 func (quota *GrpQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint32) error {
 	log.With(nil).Debugf("set disk quota, dir: %s, size: %s, quotaID: %d", dir, size, quotaID)
 
-	mountPoint, err := quota.EnforceQuota(dir)
+	mountInfo, err := quota.EnforceQuota(dir)
 	if err != nil {
 		return errors.Wrapf(err, "failed to enforce quota, dir: (%s)", dir)
 	}
-	if len(mountPoint) == 0 {
+	if mountInfo == nil || mountInfo.MountPoint == "" {
 		return errors.Errorf("failed to find mountpoint, dir: (%s)", dir)
 	}
 
@@ -236,11 +199,11 @@ func (quota *GrpQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 		return errors.Wrapf(err, "failed to change size: (%s) to kilobytes", size)
 	}
 
-	if err := checkDevLimit(dir, limit*1024); err != nil {
+	if err := checkDevLimit(mountInfo, limit*1024); err != nil {
 		return err
 	}
 
-	id, err := quota.SetSubtree(dir, quotaID)
+	id, err := quota.setQuotaID(dir, quotaID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to set subtree, dir: (%s), quota id: (%d)", dir, quotaID)
 	}
@@ -248,18 +211,7 @@ func (quota *GrpQuotaDriver) SetDiskQuota(dir string, size string, quotaID uint3
 		return errors.Errorf("failed to find quota id to set subtree")
 	}
 
-	return quota.setQuota(id, limit, mountPoint)
-}
-
-func (quota *GrpQuotaDriver) setQuota(quotaID uint32, diskQuota uint64, mountPoint string) error {
-	log.With(nil).Debugf("set user quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, diskQuota, mountPoint)
-
-	quotaIDStr := strconv.FormatUint(uint64(quotaID), 10)
-	limit := strconv.FormatUint(diskQuota, 10)
-
-	exit, stdout, stderr, err := exec.Run(0, "setquota", "-g", quotaIDStr, "0", limit, "0", "0", mountPoint)
-	return errors.Wrapf(err, "failed to set quota, mountpoint: (%s), quota id: (%d), quota: (%d kbytes), stdout: (%s), stderr: (%s), exit: (%d)",
-		mountPoint, quotaID, diskQuota, stdout, stderr, exit)
+	return quota.setQuota(id, limit, mountInfo.MountPoint)
 }
 
 // GetQuotaIDInFileAttr returns quota ID in the directory attributes.
@@ -281,6 +233,11 @@ func (quota *GrpQuotaDriver) GetQuotaIDInFileAttr(dir string) uint32 {
 func (quota *GrpQuotaDriver) SetQuotaIDInFileAttr(dir string, id uint32) error {
 	log.With(nil).Debugf("set file attr, dir: %s, quotaID: %d", dir, id)
 
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		log.With(nil).Debugf("set quota id skip not regular file: %s", dir)
+		return err
+	}
+
 	strid := strconv.FormatUint(uint64(id), 10)
 	exit, stdout, stderr, err := exec.Run(0, "setfattr", "-n", "system.subtree", "-v", strid, dir)
 	return errors.Wrapf(err, "failed to setfattr, dir: (%s), quota id: (%d), stdout: (%s), stderr: (%s), exit: (%d)",
@@ -288,7 +245,12 @@ func (quota *GrpQuotaDriver) SetQuotaIDInFileAttr(dir string, id uint32) error {
 }
 
 // SetQuotaIDInFileAttrNoOutput is used to set file attributes without error.
-func (quota *GrpQuotaDriver) SetQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
+func (quota *GrpQuotaDriver) setQuotaIDInFileAttrNoOutput(dir string, quotaID uint32) {
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		log.With(nil).Debugf("set quota id skip not regular file: %s", dir)
+		return
+	}
+
 	strid := strconv.FormatUint(uint64(quotaID), 10)
 	exit, stdout, stderr, err := exec.Run(0, "setfattr", "-n", "system.subtree", "-v", strid, dir)
 	if err != nil {
@@ -366,6 +328,7 @@ func getVFSVersionAndQuotaFile(devID uint64) (string, string, error) {
 	return vfsVersion, quotaFilename, nil
 }
 
+// SetFileAttrRecursive set the file attr by recursively.
 func (quota *GrpQuotaDriver) SetFileAttrRecursive(dir string, quotaID uint32) error {
 	return filepath.Walk(dir, func(path string, fd os.FileInfo, err error) error {
 		if err != nil {
@@ -375,8 +338,49 @@ func (quota *GrpQuotaDriver) SetFileAttrRecursive(dir string, quotaID uint32) er
 
 		existedQid := quota.GetQuotaIDInFileAttr(path)
 		if existedQid != quotaID {
-			quota.SetQuotaIDInFileAttrNoOutput(path, quotaID)
+			quota.setQuotaIDInFileAttrNoOutput(path, quotaID)
 		}
 		return nil
 	})
+}
+
+// setQuotaID is used to set quota id for directory,
+// setfattr -n system.subtree -v $QUOTAID
+func (quota *GrpQuotaDriver) setQuotaID(dir string, qid uint32) (uint32, error) {
+	log.With(nil).Debugf("set subtree, dir: %s, quotaID: %d", dir, qid)
+
+	if isRegular, err := CheckRegularFile(dir); err != nil || !isRegular {
+		log.With(nil).Debugf("set quota id skip not regular file: %s", dir)
+		return 0, errors.Errorf("file(%s) is not regular file", dir)
+	}
+
+	id := qid
+	var err error
+	if id == 0 {
+		id = quota.GetQuotaIDInFileAttr(dir)
+		if id > 0 {
+			return id, nil
+		}
+		id, err = quota.GetNextQuotaID()
+	}
+
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get file: (%s) quota id", dir)
+	}
+	strid := strconv.FormatUint(uint64(id), 10)
+	exit, stdout, stderr, err := exec.Run(0, "setfattr", "-n", "system.subtree", "-v", strid, dir)
+
+	return id, errors.Wrapf(err, "failed to setfattr, dir: (%s), quota id: (%s), stdout: (%s), stderr: (%s), exit: (%d)",
+		dir, strid, stdout, stderr, exit)
+}
+
+func (quota *GrpQuotaDriver) setQuota(quotaID uint32, diskQuota uint64, mountPoint string) error {
+	log.With(nil).Debugf("set user quota, quotaID: %d, limit: %d, mountpoint: %s", quotaID, diskQuota, mountPoint)
+
+	quotaIDStr := strconv.FormatUint(uint64(quotaID), 10)
+	limit := strconv.FormatUint(diskQuota, 10)
+
+	exit, stdout, stderr, err := exec.Run(0, "setquota", "-g", quotaIDStr, "0", limit, "0", "0", mountPoint)
+	return errors.Wrapf(err, "failed to set quota, mountpoint: (%s), quota id: (%d), quota: (%d kbytes), stdout: (%s), stderr: (%s), exit: (%d)",
+		mountPoint, quotaID, diskQuota, stdout, stderr, exit)
 }
