@@ -2,10 +2,10 @@ package mgr
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/alibaba/pouch/pkg/log"
 	"github.com/alibaba/pouch/pkg/utils/filters"
 )
 
@@ -187,22 +187,19 @@ func (fc *filterContext) filter(c *Container) bool {
 
 // List returns the container's list.
 func (mgr *ContainerManager) List(ctx context.Context, option *ContainerListOption) ([]*Container, error) {
-	cons := []*Container{}
-
-	list, err := mgr.Store.List()
-	if err != nil {
-		return nil, err
-	}
+	var cons []*Container
+	list := mgr.cache.Values(nil)
 
 	fc, err := newFilterContext(option)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, obj := range list {
+	for id, obj := range list {
 		c, ok := obj.(*Container)
 		if !ok {
-			return nil, fmt.Errorf("failed to get container list, invalid meta type")
+			log.With(ctx).Warningf("getting container list, drop partial container cache %s", id)
+			continue
 		}
 
 		if fc.filter(c) {
