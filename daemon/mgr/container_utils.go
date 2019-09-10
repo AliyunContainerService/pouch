@@ -57,13 +57,18 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 }
 
 func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) {
+	res, ok := mgr.cache.Get(nameOrPrefix).Result()
+	if ok {
+		return res.(*Container), nil
+	}
+
 	id, err := mgr.containerID(nameOrPrefix)
 	if err != nil {
 		return nil, err
 	}
 
 	// lookup again
-	res, ok := mgr.cache.Get(id).Result()
+	res, ok = mgr.cache.Get(id).Result()
 	if ok {
 		return res.(*Container), nil
 	}
