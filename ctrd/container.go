@@ -42,6 +42,9 @@ var (
 	RuntimeTypeV2kataV2 = "io.containerd.kata.v2"
 	// RuntimeTypeV2runcV1 is the runtime type name for runc containerd shim implement the shim v2 api.
 	RuntimeTypeV2runcV1 = "io.containerd.runc.v1"
+
+	// cleanupTimeout is used to clean up the container/task meta data in containerd.
+	cleanupTimeout = 100 * time.Second
 )
 
 type containerPack struct {
@@ -623,7 +626,11 @@ func (c *Client) createContainer(ctx context.Context, ref, id, checkpointDir str
 	defer func() {
 		if err0 != nil {
 			// Delete snapshot when start failed, may cause data lost.
-			nc.Delete(ctx)
+			dctx, dcancel := context.WithTimeout(context.TODO(), cleanupTimeout)
+			defer dcancel()
+			if cerr := nc.Delete(dctx); cerr != nil {
+				log.With(ctx).Warnf("failed to cleanup container(id=%s) meta in containerd: %v", nc.ID(), cerr)
+			}
 		}
 	}()
 
@@ -684,7 +691,12 @@ func (c *Client) createTask(ctx context.Context, id, checkpointDir string, conta
 
 	defer func() {
 		if err0 != nil {
-			task.Delete(ctx)
+			dctx, dcancel := context.WithTimeout(context.TODO(), cleanupTimeout)
+			defer dcancel()
+
+			if _, cerr := task.Delete(dctx, containerd.WithProcessKill); cerr != nil {
+				log.With(ctx).Warnf("failed to cleanup task(id=%s) meta in containerd: %v", task.ID(), cerr)
+			}
 		}
 	}()
 
