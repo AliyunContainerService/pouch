@@ -3,6 +3,7 @@
 package quota
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -341,11 +342,26 @@ func checkDevLimit(mountInfo *MountInfo, size uint64) error {
 }
 
 func getDevID(dir string) (uint64, error) {
-	// call "stat <dir>" to ensure stat not timeout
-	_, _, _, err := exec.Run(time.Second*5, "stat", dir)
-	if err != nil {
-		return 0, err
-	}
+	// ensure stat syscall don't timeout
+	idChan := make(chan uint64)
+	errChan := make(chan error)
+	timeoutChan := time.After(time.Second * 5)
 
-	return system.GetDevID(dir)
+	go func() {
+		id, err := system.GetDevID(dir)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		idChan <- id
+	}()
+
+	select {
+	case err := <-errChan:
+		return 0, err
+	case id := <-idChan:
+		return id, nil
+	case <-timeoutChan:
+		return 0, context.DeadlineExceeded
+	}
 }
