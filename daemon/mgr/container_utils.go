@@ -13,6 +13,7 @@ import (
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
 	networktypes "github.com/alibaba/pouch/network/types"
+	"github.com/alibaba/pouch/pkg/collect"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/meta"
 	"github.com/alibaba/pouch/pkg/randomid"
@@ -56,10 +57,24 @@ func (mgr *ContainerManager) containerID(nameOrPrefix string) (string, error) {
 	return con.ID, nil
 }
 
+func containerFromCache(cache *collect.SafeMap, key string) (*Container, error) {
+	res, exists := cache.Get(key).Result()
+	if exists {
+		// we may put nil to cache to hold the containerID when creating container.
+		v, ok := res.(*Container)
+		if ok {
+			return v, nil
+		}
+		return nil, errors.Wrapf(errtypes.ErrNotfound, "container %s creating", key)
+	}
+
+	return nil, errors.Wrapf(errtypes.ErrNotfound, "container %s", key)
+}
+
 func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) {
-	res, ok := mgr.cache.Get(nameOrPrefix).Result()
-	if ok {
-		return res.(*Container), nil
+	res, err := containerFromCache(mgr.cache, nameOrPrefix)
+	if err == nil {
+		return res, nil
 	}
 
 	id, err := mgr.containerID(nameOrPrefix)
@@ -68,12 +83,7 @@ func (mgr *ContainerManager) container(nameOrPrefix string) (*Container, error) 
 	}
 
 	// lookup again
-	res, ok = mgr.cache.Get(id).Result()
-	if ok {
-		return res.(*Container), nil
-	}
-
-	return nil, errors.Wrapf(errtypes.ErrNotfound, "container %s", nameOrPrefix)
+	return containerFromCache(mgr.cache, id)
 }
 
 // generateID generates an ID for newly created container. We must ensure that
