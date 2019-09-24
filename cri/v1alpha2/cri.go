@@ -226,6 +226,10 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 
 	config := r.GetConfig()
 
+	if config.GetMetadata() == nil {
+		return nil, fmt.Errorf("sandbox metadata required")
+	}
+
 	// Step 1: Prepare image for the sandbox.
 	image := c.SandboxImage
 
@@ -288,19 +292,19 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// Step 3: Create the sandbox container.
 
 	// applies the runtime of container specified by the caller.
-	if err := c.applySandboxRuntimeHandler(sandboxMeta, r.GetRuntimeHandler(), config.Annotations); err != nil {
+	if err := c.applySandboxRuntimeHandler(sandboxMeta, r.GetRuntimeHandler(), config.GetAnnotations()); err != nil {
 		return nil, err
 	}
 
 	// applies the annotations extended.
-	if err := c.applySandboxAnnotations(sandboxMeta, config.Annotations); err != nil {
+	if err := c.applySandboxAnnotations(sandboxMeta, config.GetAnnotations()); err != nil {
 		return nil, err
 	}
 
 	createConfig, err := makeSandboxPouchConfig(config, sandboxMeta, image)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.Metadata.Name, err)
+		return nil, fmt.Errorf("failed to make sandbox pouch config for pod %q: %v", config.GetMetadata().GetName(), err)
 	}
 	createConfig.SpecificID = id
 
@@ -329,7 +333,7 @@ func (c *CriManager) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// Step 4: Start the sandbox container.
 	err = c.ContainerMgr.Start(ctx, id, &apitypes.ContainerStartOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.Metadata.Name, err)
+		return nil, fmt.Errorf("failed to start sandbox container for pod %q: %v", config.GetMetadata().GetName(), err)
 	}
 
 	sandboxRootDir := path.Join(c.SandboxBaseDir, id)
@@ -733,6 +737,10 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}(time.Now())
 
 	config := r.GetConfig()
+	if config.GetMetadata() == nil {
+		return nil, fmt.Errorf("container metadata required")
+	}
+
 	sandboxConfig := r.GetSandboxConfig()
 	podSandboxID := r.GetPodSandboxId()
 
@@ -761,11 +769,6 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 		labels[containerLogPathLabelKey] = logPath
 	}
 
-	image := ""
-	if iSpec := config.GetImage(); iSpec != nil {
-		image = iSpec.Image
-	}
-
 	// compatible with both kubernetes and cri-o annotations
 	specAnnotation := make(map[string]string)
 	specAnnotation[anno.CRIOContainerType] = anno.ContainerTypeContainer
@@ -777,18 +780,18 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	resources := r.GetConfig().GetLinux().GetResources()
 	createConfig := &apitypes.ContainerCreateConfig{
 		ContainerConfig: apitypes.ContainerConfig{
-			Entrypoint: config.Command,
-			Cmd:        config.Args,
+			Entrypoint: config.GetCommand(),
+			Cmd:        config.GetArgs(),
 			Env:        generateEnvList(config.GetEnvs()),
-			Image:      image,
-			WorkingDir: config.WorkingDir,
+			Image:      config.GetImage().GetImage(),
+			WorkingDir: config.GetWorkingDir(),
 			Labels:     labels,
 			// Interactive containers:
-			OpenStdin:      config.Stdin,
-			StdinOnce:      config.StdinOnce,
-			Tty:            config.Tty,
+			OpenStdin:      config.GetStdin(),
+			StdinOnce:      config.GetStdinOnce(),
+			Tty:            config.GetTty(),
 			SpecAnnotation: specAnnotation,
-			NetPriority:    config.NetPriority,
+			NetPriority:    config.GetNetPriority(),
 			DiskQuota:      resources.GetDiskQuota(),
 			QuotaID:        config.GetQuotaId(),
 		},
@@ -809,11 +812,11 @@ func (c *CriManager) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	createConfig.HostConfig.Binds = append(createConfig.HostConfig.Binds, generateContainerMounts(sandboxRootDir)...)
 
 	var devices []*apitypes.DeviceMapping
-	for _, device := range config.Devices {
+	for _, device := range config.GetDevices() {
 		devices = append(devices, &apitypes.DeviceMapping{
-			PathOnHost:        device.HostPath,
-			PathInContainer:   device.ContainerPath,
-			CgroupPermissions: device.Permissions,
+			PathOnHost:        device.GetHostPath(),
+			PathInContainer:   device.GetContainerPath(),
+			CgroupPermissions: device.GetPermissions(),
 		})
 	}
 	createConfig.HostConfig.Resources.Devices = devices
@@ -1392,7 +1395,6 @@ func (c *CriManager) ImageStatus(ctx context.Context, r *runtime.ImageStatusRequ
 
 // PullImage pulls an image with authentication config.
 func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest) (*runtime.PullImageResponse, error) {
-	// TODO: authentication.
 	imageRef := r.GetImage().GetImage()
 
 	label := util_metrics.ActionPullLabel
@@ -1404,13 +1406,13 @@ func (c *CriManager) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	}(time.Now())
 
 	authConfig := &apitypes.AuthConfig{}
-	if r.Auth != nil {
-		authConfig.Auth = r.Auth.Auth
-		authConfig.Username = r.Auth.Username
-		authConfig.Password = r.Auth.Password
-		authConfig.ServerAddress = r.Auth.ServerAddress
-		authConfig.IdentityToken = r.Auth.IdentityToken
-		authConfig.RegistryToken = r.Auth.RegistryToken
+	if auth := r.GetAuth(); auth != nil {
+		authConfig.Auth = auth.GetAuth()
+		authConfig.Username = auth.GetUsername()
+		authConfig.Password = auth.GetPassword()
+		authConfig.ServerAddress = auth.GetServerAddress()
+		authConfig.IdentityToken = auth.GetIdentityToken()
+		authConfig.RegistryToken = auth.GetRegistryToken()
 	}
 
 	if err := c.ImageMgr.PullImage(ctx, imageRef, authConfig, bytes.NewBuffer([]byte{})); err != nil {
