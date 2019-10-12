@@ -81,8 +81,9 @@ func NewDaemon(cfg *config.Config) *Daemon {
 
 	if cfg.Debug {
 		ctrdDaemonOpts = append(ctrdDaemonOpts, supervisord.WithLogLevel("debug"))
-		ctrdDaemonOpts = append(ctrdDaemonOpts, supervisord.WithV1RuntimeShimDebug())
 	}
+
+	ctrdDaemonOpts = append(ctrdDaemonOpts, supervisord.WithV1RuntimeShimDebug())
 
 	ctrdDaemon, err := supervisord.Start(context.TODO(),
 		filepath.Join(cfg.HomeDir, "containerd/root"),
