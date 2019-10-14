@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"sync/atomic"
 	"time"
 
 	serverTypes "github.com/alibaba/pouch/apis/server/types"
@@ -176,6 +177,9 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(pctx)
 		defer cancel()
+
+		atomic.AddInt32(&s.FlyingReq, 1)
+		defer atomic.AddInt32(&s.FlyingReq, -1)
 
 		s.lock.RLock()
 		if len(s.ManagerWhiteList) > 0 && req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {

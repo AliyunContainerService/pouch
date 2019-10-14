@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/alibaba/pouch/cri/stream"
@@ -33,6 +34,7 @@ type Server struct {
 	APIPlugin        hookplugins.APIPlugin
 	ManagerWhiteList map[string]struct{}
 	lock             sync.RWMutex
+	FlyingReq        int32
 }
 
 // Start setup route table and listen to specified address which currently only supports unix socket and tcp address.
@@ -107,5 +109,24 @@ func (s *Server) Stop() error {
 	for _, one := range s.listeners {
 		one.Close()
 	}
+
+	// drain all requests on going or timeout after one minute
+	drain := make(chan struct{})
+	go func() {
+		for {
+			if atomic.LoadInt32(&s.FlyingReq) == 0 {
+				close(drain)
+				return
+			}
+			time.Sleep(time.Microsecond * 50)
+		}
+	}()
+
+	select {
+	case <-drain:
+	case <-time.After(60 * time.Second):
+		logrus.Errorf("stop pouch server after waited 60 seconds, on going request %d", atomic.LoadInt32(&s.FlyingReq))
+	}
+
 	return nil
 }

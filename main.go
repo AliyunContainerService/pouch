@@ -247,7 +247,7 @@ func runDaemon(cmd *cobra.Command) error {
 	}
 
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
-	sigHandles = append(sigHandles, d.ShutdownPlugin, d.Shutdown)
+	sigHandles = append(sigHandles, d.Shutdown, d.ShutdownPlugin)
 
 	go func() {
 		// FIXME: I think the Run() should always return error.

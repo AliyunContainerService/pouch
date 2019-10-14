@@ -14,3 +14,4 @@ coverage.txt
 bin/
 coverage/
 test/testdata/cp/*
+.vscode
