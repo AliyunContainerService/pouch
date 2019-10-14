@@ -157,6 +157,8 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	}()
 
 	execConfig.Running = true
+	mgr.LogContainerEvent(ctx, c, "exec_start")
+
 	if err := mgr.Client.ExecContainer(ctx, &ctrd.Process{
 		ContainerID: execConfig.ContainerID,
 		ExecID:      execid,
@@ -165,7 +167,6 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	}, timeout); err != nil {
 		return err
 	}
-	mgr.LogContainerEvent(ctx, c, "exec_start")
 	return <-attachErrCh
 }
 
