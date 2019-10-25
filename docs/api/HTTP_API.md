@@ -2796,6 +2796,7 @@ Container configuration that depends on the host we are running on
 |**CapAdd**  <br>*optional*|A list of kernel capabilities to add to the container.|< string > array|
 |**CapDrop**  <br>*optional*|A list of kernel capabilities to drop from the container.|< string > array|
 |**Cgroup**  <br>*optional*|Cgroup to use for the container.|string|
+|**CgroupMode**  <br>*optional*|Determine the container has own cgroup namespace, valid values is host <br>`"host"` means own host cgroup namespace, default or other values will share<br>host cgroup namespace. Note cgroup namespace only take effect for kernel > 4.6|string|
 |**CgroupParent**  <br>*optional*|Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.|string|
 |**ConsoleSize**  <br>*optional*|Initial console size, as an `[height, width]` array. (Windows only)|< integer > array|
 |**ContainerIDFile**  <br>*optional*|Path to a file where the container ID is written|string|
