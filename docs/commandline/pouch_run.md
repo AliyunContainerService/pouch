@@ -105,6 +105,7 @@ crw-rw-rw-    1 root     root        1,   3 Jan  8 09:40 /dev/testnull
   -u, --user string                   UID
       --uts string                    UTS namespace to use
   -v, --volume volumes                Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared" (default [])
+      --volume-driver string          set volume driver for container's volumes
       --volumes-from strings          set volumes from other containers, format is <container>[:mode]
   -w, --workdir string                Set the working directory in a container
 ```
