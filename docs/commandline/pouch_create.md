@@ -90,6 +90,7 @@ e1d541722d68dc5d133cca9e7bd8fd9338603e1763096c8e853522b60d11f7b9
   -u, --user string                   UID
       --uts string                    UTS namespace to use
   -v, --volume volumes                Bind mount volumes to container, format is: [source:]<destination>[:mode], [source] can be volume or host's path, <destination> is container's path, [mode] can be "ro/rw/dr/rr/z/Z/nocopy/private/rprivate/slave/rslave/shared/rshared" (default [])
+      --volume-driver string          set volume driver for container's volumes
       --volumes-from strings          set volumes from other containers, format is <container>[:mode]
   -w, --workdir string                Set the working directory in a container
 ```
