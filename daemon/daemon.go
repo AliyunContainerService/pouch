@@ -223,7 +223,7 @@ func (d *Daemon) Run() error {
 
 	// after initialize network manager, try to recover all
 	// running containers
-	if err := containerMgr.Restore(ctx); err != nil {
+	if err := containerMgr.Restore(context.Background()); err != nil {
 		return err
 	}
 

@@ -62,7 +62,14 @@ func (w *watch) isContainerdDead() bool {
 // isChannelClosed means containerd break unexpected, all exit channel
 // ctrd watched will exit.
 func isChannelClosed(s containerd.ExitStatus) bool {
-	return s.ExitTime().IsZero() && strings.Contains(s.Error().Error(), "transport is closing")
+	if s.Error() == nil {
+		return false
+	}
+
+	rpcError := strings.Contains(s.Error().Error(), "transport is closing") ||
+		strings.Contains(s.Error().Error(), "rpc error")
+
+	return s.ExitTime().IsZero() && rpcError
 }
 
 func (w *watch) add(ctx context.Context, pack *containerPack) {
