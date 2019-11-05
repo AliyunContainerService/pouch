@@ -67,6 +67,19 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 		return err
 	}
 
+	defer func() {
+		if err0 != nil {
+			execConfig.Lock()
+			// set exec exit status
+			execConfig.Running = false
+			exitCode := 126
+			execConfig.ExitCode = int64(exitCode)
+			execConfig.Exited = true
+			execConfig.Used = true
+			execConfig.Unlock()
+		}
+	}()
+
 	execConfig.Lock()
 	c, err := mgr.container(execConfig.ContainerID)
 	if err != nil {
@@ -130,7 +143,7 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	// stdin in the AttachConfig. If we close it directly, the stdout/stderr
 	// will return the `using closed connection` error. As a result, the
 	// Attach will return the error. We need to use pipe here instead of
-	// origin one and let the caller closes the stdin by themself.
+	// origin one and let the caller closes the stdin by themselves.
 	if execConfig.AttachStdin && cfg.UseStdin {
 		oldStdin := cfg.Stdin
 		pstdinr, pstdinw := io.Pipe()
@@ -152,16 +165,8 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	}
 
 	attachErrCh := eio.Stream().Attach(ctx, cfg)
-
 	defer func() {
 		if err0 != nil {
-			execConfig.Lock()
-			// set exec exit status
-			execConfig.Running = false
-			exitCode := 126
-			execConfig.ExitCode = int64(exitCode)
-			execConfig.Exited = true
-			execConfig.Unlock()
 			eio.Close()
 			mgr.IOs.Remove(execid)
 		}
