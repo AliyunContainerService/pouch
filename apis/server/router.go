@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -183,8 +184,10 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 			"RequestID": randomid.Generate()[:10],
 		})
 
-		atomic.AddInt32(&s.FlyingReq, 1)
-		defer atomic.AddInt32(&s.FlyingReq, -1)
+		if flyingReqDecider(req) {
+			atomic.AddInt32(&s.FlyingReq, 1)
+			defer atomic.AddInt32(&s.FlyingReq, -1)
+		}
 
 		s.lock.RLock()
 		if len(s.ManagerWhiteList) > 0 && req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
@@ -230,6 +233,17 @@ func filter(handler serverTypes.Handler, s *Server) http.HandlerFunc {
 		log.With(ctx).Errorf("Handler for %s %s, client %s returns error: %s", req.Method, req.URL.RequestURI(), clientInfo, err)
 		HandleErrorResponse(w, err)
 	}
+}
+
+var routeGroupToWait = []string{"/containers/", "/volumes/", "/networks/"}
+
+func flyingReqDecider(req *http.Request) bool {
+	for _, r := range routeGroupToWait {
+		if strings.Contains(req.URL.Path, r) {
+			return true
+		}
+	}
+	return false
 }
 
 // EncodeResponse encodes response in json.
