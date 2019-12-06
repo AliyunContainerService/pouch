@@ -75,7 +75,7 @@ func (c *Client) CreateSnapshot(ctx context.Context, id, ref string) error {
 	unpacked, werr := image.IsUnpacked(ctx, snName)
 	if werr != nil {
 		log.With(ctx).Warnf("failed to check unpack status for image %s on %s snapshotter: %v", image.Name(), snName, werr)
-		return err
+		return werr
 	}
 
 	// if it is not unpacked, try to unpack it.
@@ -86,7 +86,7 @@ func (c *Client) CreateSnapshot(ctx context.Context, id, ref string) error {
 		// snapshotter will not removed if we remove image.
 		if werr = image.Unpack(originalCtx, snName); werr != nil {
 			log.With(ctx).Warnf("failed to unpack for image %s on %s snapshotter: %v", image.Name(), snName, werr)
-			return err
+			return werr
 		}
 
 		// do it again.
