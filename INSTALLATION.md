@@ -67,7 +67,7 @@ uid                  opsx-admin <opsx@service.alibaba.com>
 
 **2. Set up the PouchContainer repository**
 
-Before you install PouchContainer for the first time on a new host machine, you need to set up the PouchContainer repository. We enabled `stabel` repository by default, you always need the `stable` repository. To add the `test` repository, add the word `test` after the word `stable` in the command line below. Afterward, you can install and update PouchContainer from the repository.
+Before you install PouchContainer for the first time on a new host machine, you need to set up the PouchContainer repository. We enabled `stable` repository by default, you always need the `stable` repository. To add the `test` repository, add the word `test` after the word `stable` in the command line below. Afterward, you can install and update PouchContainer from the repository.
 
 ``` bash
 sudo add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
