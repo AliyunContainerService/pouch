@@ -3,7 +3,9 @@ FROM ubuntu:16.04
 # install wget to download golang source code
 # install git
 RUN apt-get update \
-    && apt-get install -y \
+    && apt-get --no-install-recommends install -y \
+    apt-utils \
+    ca-certificates \
     wget \ 
     git \
     make \
