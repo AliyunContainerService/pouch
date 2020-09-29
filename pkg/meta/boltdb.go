@@ -87,7 +87,7 @@ func (b *bolt) Keys(bucket string) ([]string, error) {
 	return keys, err
 }
 
-// Put is used to put metadate into boltdb.
+// Put is used to put metadata into boltdb.
 func (b *bolt) Put(bucket, key string, value []byte) error {
 	b.Lock()
 	defer b.Unlock()
@@ -104,7 +104,7 @@ func (b *bolt) Put(bucket, key string, value []byte) error {
 	})
 }
 
-// Del is used to delete metadate from boltdb.
+// Del is used to delete metadata from boltdb.
 func (b *bolt) Remove(bucket string, key string) error {
 	b.Lock()
 	defer b.Unlock()
