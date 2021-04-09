@@ -955,10 +955,6 @@ func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int
 		return nil
 	}
 
-	if timeout == 0 {
-		timeout = c.StopTimeout()
-	}
-
 	id := c.ID
 	msg, err := mgr.Client.DestroyContainer(ctx, id, timeout)
 	if err != nil {
