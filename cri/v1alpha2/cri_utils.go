@@ -2,6 +2,7 @@ package v1alpha2
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -1272,4 +1273,32 @@ func applyContainerConfigByAnnotation(annotations map[string]string, config *api
 	}
 
 	return nil
+}
+
+type cappedWriter struct {
+	w      io.Writer
+	remain int
+}
+
+var errNoRemain = errors.New("no more space to write")
+
+func (cw *cappedWriter) Write(p []byte) (int, error) {
+	if cw.remain <= 0 {
+		return 0, errNoRemain
+	}
+
+	end := cw.remain
+	if end > len(p) {
+		end = len(p)
+	}
+	written, err := cw.w.Write(p[0:end])
+	cw.remain -= written
+
+	if err != nil {
+		return written, err
+	}
+	if written < len(p) {
+		return written, errNoRemain
+	}
+	return written, nil
 }
