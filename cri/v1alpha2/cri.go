@@ -71,6 +71,9 @@ const (
 
 	// networkNotReadyReason is the reason reported when network is not ready.
 	networkNotReadyReason = "NetworkPluginNotReady"
+
+	// maxMsgSize is the max size syncExec could output
+	maxMsgSize = 1024 * 1024 * 64
 )
 
 var (
@@ -1213,9 +1216,9 @@ func (c *CriManager) ExecSync(ctx context.Context, r *runtime.ExecSyncRequest) (
 	stdoutBuf, stderrBuf := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
 	attachCfg := &pkgstreams.AttachConfig{
 		UseStdout: true,
-		Stdout:    stdoutBuf,
+		Stdout:    &cappedWriter{stdoutBuf, maxMsgSize},
 		UseStderr: true,
-		Stderr:    stderrBuf,
+		Stderr:    &cappedWriter{stderrBuf, maxMsgSize},
 	}
 
 	if err := c.ContainerMgr.StartExec(ctx, execid, attachCfg, int(r.GetTimeout())); err != nil {

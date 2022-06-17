@@ -1,6 +1,7 @@
 package v1alpha2
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -1973,4 +1974,21 @@ func Test_applyContainerConfigByAnnotation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCWWrite(t *testing.T) {
+	var buf bytes.Buffer
+	cw := &cappedWriter{w: &buf, remain: 10}
+
+	n, err := cw.Write([]byte("hello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	n, err = cw.Write([]byte("helloworld"))
+	assert.Equal(t, []byte("hellohello"), buf.Bytes(), "partial write")
+	assert.Equal(t, 5, n)
+	assert.Equal(t, err.Error(), errNoRemain.Error())
+
+	_, err = cw.Write([]byte("world"))
+	assert.Equal(t, err.Error(), errNoRemain.Error())
 }
