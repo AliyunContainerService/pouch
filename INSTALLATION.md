@@ -53,7 +53,7 @@ sudo apt-get install curl apt-transport-https ca-certificates software-propertie
 **1. Add PouchContainer's official GPG key**
 
 ``` bash
-curl -fsSL http://mirrors.aliyun.com/opsx/pouch/linux/debian/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
+curl -fsSL https://mirrors.aliyun.com/opsx/pouch/linux/debian.orig/opsx@service.alibaba.com.gpg.key | sudo apt-key add -
 ```
 
 Verify that you now have the key with the fingerprint `F443 EDD0 4A58 7E8B F645  9C40 CF68 F84A BE2F 475F`, by searching for the last 8 characters of the fingerprint.
@@ -70,7 +70,7 @@ uid                  opsx-admin <opsx@service.alibaba.com>
 Before you install PouchContainer for the first time on a new host machine, you need to set up the PouchContainer repository. We enabled `stable` repository by default, you always need the `stable` repository. To add the `test` repository, add the word `test` after the word `stable` in the command line below. Afterward, you can install and update PouchContainer from the repository.
 
 ``` bash
-sudo add-apt-repository "deb http://mirrors.aliyun.com/opsx/pouch/linux/debian/ pouch stable"
+sudo add-apt-repository "deb https://mirrors.aliyun.com/opsx/pouch/linux/debian.orig/ pouch stable"
 ```
 
 **3. Install PouchContainer**
@@ -112,7 +112,7 @@ sudo yum install -y yum-utils
 Use the following command to add PouchContainer repository.
 
 ``` bash
-sudo yum-config-manager --add-repo http://mirrors.aliyun.com/opsx/opsx-centos7.repo
+sudo yum-config-manager --add-repo https://mirrors.aliyun.com/opsx/opsx-centos7.repo
 sudo yum update
 ```
 
