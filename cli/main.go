@@ -20,6 +20,7 @@ func main() {
 	cli.AddCommand(base, &CreateCommand{})
 	cli.AddCommand(base, &StartCommand{})
 	cli.AddCommand(base, &StopCommand{})
+	cli.AddCommand(base, &KillCommand{})
 	cli.AddCommand(base, &PsCommand{})
 	cli.AddCommand(base, &RmCommand{})
 	cli.AddCommand(base, &RestartCommand{})

@@ -45,6 +45,7 @@ func initRoute(s *Server) *mux.Router {
 		{Method: http.MethodPost, Path: "/containers/create", HandlerFunc: s.createContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/start", HandlerFunc: s.startContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/stop", HandlerFunc: s.stopContainer},
+		{Method: http.MethodPost, Path: "/containers/{name:.*}/kill", HandlerFunc: s.killContainer},
 		{Method: http.MethodPost, Path: "/containers/{name:.*}/attach", HandlerFunc: s.attachContainer},
 		{Method: http.MethodGet, Path: "/containers/json", HandlerFunc: s.getContainers},
 		{Method: http.MethodGet, Path: "/containers/{name:.*}/json", HandlerFunc: s.getContainer},

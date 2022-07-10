@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alibaba/pouch/apis/metrics"
@@ -19,6 +20,7 @@ import (
 	"github.com/alibaba/pouch/pkg/utils"
 	"github.com/alibaba/pouch/pkg/utils/filters"
 	util_metrics "github.com/alibaba/pouch/pkg/utils/metrics"
+	"github.com/alibaba/pouch/pkg/utils/signal"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/gorilla/mux"
@@ -261,6 +263,36 @@ func (s *Server) stopContainer(ctx context.Context, rw http.ResponseWriter, req 
 	name := mux.Vars(req)["name"]
 
 	if err = s.ContainerMgr.Stop(ctx, name, int64(t)); err != nil {
+		return err
+	}
+
+	metrics.ContainerSuccessActionsCounter.WithLabelValues(label).Inc()
+
+	rw.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) killContainer(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+
+	var sig syscall.Signal
+
+	label := util_metrics.ActionKillLabel
+	defer func(start time.Time) {
+		metrics.ContainerActionsCounter.WithLabelValues(label).Inc()
+		metrics.ContainerActionsTimer.WithLabelValues(label).Observe(time.Since(start).Seconds())
+	}(time.Now())
+
+	name := mux.Vars(req)["name"]
+
+	// If we have a signal, look at it. Otherwise, do nothing
+	if sigStr := req.FormValue("signal"); sigStr != "" {
+		var err error
+		if sig, err = signal.ParseSignal(sigStr); err != nil {
+			return err
+		}
+	}
+
+	if err := s.ContainerMgr.Kill(ctx, name, int(sig)); err != nil {
 		return err
 	}
 

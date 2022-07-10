@@ -12,6 +12,7 @@ const (
 	ActionStatusLabel    = "status"
 	ActionStartLabel     = "start"
 	ActionStopLabel      = "stop"
+	ActionKillLabel      = "kill"
 	ActionRenameLabel    = "rename"
 	ActionRestartLabel   = "restart"
 	ActionRunLabel       = "run"

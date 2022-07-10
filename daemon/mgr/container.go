@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/alibaba/pouch/apis/opts"
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/ctrd"
@@ -30,7 +32,6 @@ import (
 	"github.com/alibaba/pouch/pkg/streams"
 	"github.com/alibaba/pouch/pkg/utils"
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
-	"github.com/sirupsen/logrus"
 
 	"github.com/containerd/cgroups"
 	containerdtypes "github.com/containerd/containerd/api/types"
@@ -74,6 +75,9 @@ type ContainerMgr interface {
 
 	// Stop a container.
 	Stop(ctx context.Context, name string, timeout int64) error
+
+	// Kill a container
+	Kill(ctx context.Context, name string, signal int) error
 
 	// Restart restart a running container.
 	Restart(ctx context.Context, name string, timeout int64) error
@@ -966,6 +970,55 @@ func (mgr *ContainerManager) stop(ctx context.Context, c *Container, timeout int
 	}
 
 	return mgr.markStoppedAndRelease(ctx, c, msg)
+}
+
+// Kill kills a running container.
+func (mgr *ContainerManager) Kill(ctx context.Context, name string, signal int) (err error) {
+	c, err := mgr.container(name)
+	if err != nil {
+		return err
+	}
+
+	ctx = log.AddFields(ctx, map[string]interface{}{"ContainerID": c.ID})
+
+	// NOTE: choose snapshotter, snapshotter can only be set
+	// through containerPlugin in Create function
+	ctx = ctrd.WithSnapshotter(ctx, c.Config.Snapshotter)
+
+	err = mgr.kill(ctx, c, signal)
+	if err != nil {
+		return err
+	}
+	attributes := map[string]string{
+		"signal": fmt.Sprintf("%d", signal),
+	}
+	mgr.LogContainerEventWithAttributes(ctx, c, "kill", attributes)
+	return nil
+}
+
+func (mgr *ContainerManager) kill(ctx context.Context, c *Container, signal int) error {
+	logrus.Debugf("Sending signal %d to %s", signal, c.ID)
+	c.Lock()
+	defer c.Unlock()
+
+	if c.State.Paused {
+		return fmt.Errorf("Container %s is paused. Unpause the container before stopping", c.ID)
+	}
+
+	if !c.State.Running {
+		return fmt.Errorf("Container %s is not running", c.ID)
+	}
+
+	if err := mgr.Client.KillContainer(ctx, c.ID, signal); err != nil {
+		// if container or process not exists, ignore the error
+		if strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "no such process") {
+			logrus.Warnf("container kill failed because of 'container not found' or 'no such process': %s", err.Error())
+		} else {
+			return fmt.Errorf("Cannot kill container %s: %s", c.ID, err)
+		}
+	}
+	return nil
 }
 
 // Restart restarts a running container.
