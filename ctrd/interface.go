@@ -35,6 +35,8 @@ type APIClient interface {
 type ContainerAPIClient interface {
 	// CreateContainer creates a containerd container and start process.
 	CreateContainer(ctx context.Context, container *Container, checkpointDir string) error
+	// KillContainer kills a container's all processes by signal.
+	KillContainer(ctx context.Context, id string, signal int) error
 	// DestroyContainer kill container and delete it.
 	DestroyContainer(ctx context.Context, id string, timeout int64) (*Message, error)
 	// ProbeContainer probe the container's status, if timeout <= 0, will block to receive message.

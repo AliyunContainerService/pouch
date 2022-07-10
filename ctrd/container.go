@@ -11,12 +11,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/alibaba/pouch/apis/types"
 	"github.com/alibaba/pouch/daemon/containerio"
 	"github.com/alibaba/pouch/pkg/errtypes"
 	"github.com/alibaba/pouch/pkg/ioutils"
 	"github.com/alibaba/pouch/pkg/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/containerd/containerd"
 	containerdtypes "github.com/containerd/containerd/api/types"
@@ -392,6 +393,39 @@ func (c *Client) recoverContainer(ctx context.Context, id string, io *containeri
 
 	log.With(ctx).Infof("success to recover container")
 	return nil
+}
+
+// KillContainer kills a container's all processes by signal.
+func (c *Client) KillContainer(ctx context.Context, id string, signal int) error {
+	if err := c.killContainer(ctx, id, signal); err != nil {
+		return convertCtrdErr(err)
+	}
+	return nil
+}
+
+// killContainer is the real process of killing a container
+func (c *Client) killContainer(ctx context.Context, id string, signal int) error {
+	wrapperCli, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get a containerd grpc client: %v", err)
+	}
+
+	ctx = leases.WithLease(ctx, wrapperCli.lease.ID)
+
+	if !c.lock.TrylockWithRetry(ctx, id) {
+		return errtypes.ErrLockfailed
+	}
+	defer c.lock.Unlock(id)
+
+	pack, err := c.watch.get(id)
+	if err != nil {
+		return err
+	}
+
+	//don't need to skip hooks!!!
+
+	// TODO: need we add WithKillAll to kill all processes in the container?
+	return pack.task.Kill(ctx, syscall.Signal(signal), containerd.WithKillAll)
 }
 
 // DestroyContainer kill container and delete it.
