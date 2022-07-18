@@ -3,7 +3,7 @@
 ## What is CRI
 
 The Container Runtime Interface (CRI) is a plugin interface which enables kubelet to use a wide variety of container runtimes, without the need to recompile.
-CRI (_Container Runtime Interface_) consists of a [protobuf API](https://github.com/kubernetes/kubernetes/blob/release-1.12/pkg/kubelet/apis/cri/runtime/v1alpha2/api.proto),specifications/requirements and [libraries](https://git.k8s.io/kubernetes/pkg/kubelet/server/streaming)for container runtimes to integrate with kubelet on a node.
+CRI (_Container Runtime Interface_) consists of a [protobuf API](https://github.com/kubernetes/kubernetes/blob/release-1.12/pkg/kubelet/apis/cri/runtime/v1alpha2/api.proto),specifications/requirements and [libraries](https://github.com/kubernetes/kubernetes/tree/master/pkg/kubelet/server) for container runtimes to integrate with kubelet on a node.
 
 This diagram explains how the Container Runtime Interface works:
 
