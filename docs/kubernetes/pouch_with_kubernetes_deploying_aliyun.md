@@ -171,7 +171,7 @@ sudo cp -i /etc/kubernetes/admin.conf  ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
 ```
 
-Configure CNI network plugin with [flannel](https://github.com/coreos/flannel)
+Configure CNI network plugin with [flannel](https://github.com/flannel-io/flannel)
 
 ```
 kubectl create -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
