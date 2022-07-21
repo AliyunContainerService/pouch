@@ -427,6 +427,13 @@ func (c *CriManager) StartPodSandbox(ctx context.Context, r *runtime.StartPodSan
 		}
 	}
 
+	// Setup sandbox file /etc/resolv.conf again to ensure resolv.conf is right
+	sandboxRootDir := path.Join(c.SandboxBaseDir, sandbox.ID)
+	err = setupSandboxFiles(sandboxRootDir, sandboxMeta.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup sandbox files: %v", err)
+	}
+
 	metrics.PodSuccessActionsCounter.WithLabelValues(label).Inc()
 
 	return &runtime.StartPodSandboxResponse{}, nil
