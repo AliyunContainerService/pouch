@@ -676,7 +676,7 @@ func getSeccompSecurityOpts(sc *runtime.LinuxContainerSecurityContext) ([]string
 	}
 
 	// Return unconfined profile explicitly.
-	if profile == mgr.ProfileDockerDefault {
+	if profile == mgr.ProfileDockerDefault || profile == mgr.ProfileRuntimeDefault {
 		// return nil so pouch will load the default seccomp profile.
 		return nil, nil
 	}
