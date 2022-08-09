@@ -62,7 +62,6 @@ func TestContainerTop(t *testing.T) {
 	for _, ps := range psList.Processes {
 		if len(ps) != len(psList.Titles) {
 			t.Fatalf("expected 2 values, got %v", len(ps))
-			break
 		}
 	}
 }
