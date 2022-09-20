@@ -24,6 +24,7 @@ import (
 	volumetypes "github.com/alibaba/pouch/storage/volume/types"
 
 	"github.com/containerd/containerd/mount"
+	"github.com/containerd/continuity/fs"
 	"github.com/pkg/errors"
 )
 
@@ -380,9 +381,12 @@ func (mgr *ContainerManager) populateVolumes(ctx context.Context, c *Container, 
 		log.With(ctx).Debugf("copying image data from (%s:%s), to volume(%s) or path(%s)",
 			c.ID, mp.Destination, mp.Name, mp.Source)
 
-		imagePath := path.Join(c.MountFS, mp.Destination)
+		imagePath, err := fs.RootPath(c.MountFS, mp.Destination)
+		if err != nil {
+			return fmt.Errorf("rootpath on mountPath %s, volume %s: %w", c.MountFS, mp.Destination, err)
+		}
 
-		err := copyImageContent(ctx, imagePath, mp.Source, qms)
+		err = copyImageContent(ctx, imagePath, mp.Source, qms)
 		if err != nil {
 			log.With(ctx).Errorf("failed to copy image contents, volume[imagepath(%s), source(%s)], err(%v)", imagePath, mp.Source, err)
 			return errors.Wrapf(err, "failed to copy image content, image(%s), host(%s)", imagePath, mp.Source)
