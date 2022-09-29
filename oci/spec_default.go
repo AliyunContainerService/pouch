@@ -77,10 +77,9 @@ func NewDefaultSpec() *specs.Spec {
 
 	s.Process = &specs.Process{
 		Capabilities: &specs.LinuxCapabilities{
-			Bounding:    defaultCaps(),
-			Permitted:   defaultCaps(),
-			Inheritable: defaultCaps(),
-			Effective:   defaultCaps(),
+			Bounding:  defaultCaps(),
+			Permitted: defaultCaps(),
+			Effective: defaultCaps(),
 		},
 	}
 

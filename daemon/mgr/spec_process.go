@@ -101,7 +101,6 @@ func setupCapabilities(ctx context.Context, hostConfig *types.HostConfig, s *spe
 	capabilities.Effective = caplist
 	capabilities.Bounding = caplist
 	capabilities.Permitted = caplist
-	capabilities.Inheritable = caplist
 
 	s.Process.Capabilities = capabilities
 	return nil

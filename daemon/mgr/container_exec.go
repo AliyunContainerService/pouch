@@ -121,10 +121,9 @@ func (mgr *ContainerManager) StartExec(ctx context.Context, execid string, cfg *
 	if execConfig.Privileged {
 		capList := caps.GetAllCapabilities()
 		process.Capabilities = &specs.LinuxCapabilities{
-			Effective:   capList,
-			Bounding:    capList,
-			Permitted:   capList,
-			Inheritable: capList,
+			Effective: capList,
+			Bounding:  capList,
+			Permitted: capList,
 		}
 	} else if spec, err := mgr.getContainerSpec(c); err == nil {
 		// NOTE: if container is created by docker and taken over by pouchd,
