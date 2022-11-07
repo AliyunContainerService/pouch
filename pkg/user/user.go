@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/alibaba/pouch/pkg/log"
+
 	"github.com/opencontainers/runc/libcontainer/user"
 )
 
@@ -61,7 +62,8 @@ func Get(passwdPath, groupPath, username string, groups []string) (uint32, uint3
 	uid := uint32(execUser.Uid)
 	gid := uint32(execUser.Gid)
 	sgids := append(execUser.Sgids, addGroups...)
-	var additionalGids []uint32
+
+	additionalGids := []uint32{gid}
 	for _, g := range sgids {
 		additionalGids = append(additionalGids, uint32(g))
 	}
