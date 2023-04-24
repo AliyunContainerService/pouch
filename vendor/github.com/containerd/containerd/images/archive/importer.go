@@ -23,7 +23,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"path"
 
 	"github.com/containerd/containerd/archive/compression"
@@ -192,15 +191,14 @@ func ImportIndex(ctx context.Context, store content.Store, reader io.Reader) (oc
 	return writeManifest(ctx, store, idx, ocispec.MediaTypeImageIndex)
 }
 
+const (
+	kib       = 1024
+	mib       = 1024 * kib
+	jsonLimit = 20 * mib
+)
+
 func onUntarJSON(r io.Reader, j interface{}) error {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(b, j); err != nil {
-		return err
-	}
-	return nil
+	return json.NewDecoder(io.LimitReader(r, jsonLimit)).Decode(j)
 }
 
 func onUntarBlob(ctx context.Context, r io.Reader, store content.Ingester, size int64, ref string) (digest.Digest, error) {
