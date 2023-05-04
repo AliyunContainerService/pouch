@@ -156,7 +156,7 @@ func collect(ctx context.Context, s *StatsEntryWithLock, cli client.CommonAPICli
 	go func() {
 		for {
 			var (
-				v                      *types.ContainerStats
+				v                      types.ContainerStats
 				memPercent, cpuPercent float64
 				blkRead, blkWrite      uint64
 				mem, memLimit          float64
