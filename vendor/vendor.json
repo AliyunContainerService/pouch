@@ -581,16 +581,16 @@
 			"versionExact": "v1.2.5"
 		},
 		{
-			"path": "github.com/containerd/containerd/services/content/contentserver",
-			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
-			"version": "v1.2.5",
-			"versionExact": "v1.2.5"
-		},
-		{
 			"checksumSHA1": "w7ldsP68azUNYnbqSI0d0MxKSeQ=",
 			"path": "github.com/containerd/containerd/runtime/v2/runc/options",
 			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
 			"revisionTime": "2019-03-13T05:41:42Z",
+			"version": "v1.2.5",
+			"versionExact": "v1.2.5"
+		},
+		{
+			"path": "github.com/containerd/containerd/services/content/contentserver",
+			"revision": "bb71b10fd8f58240ca47fbb579b9d1028eea7c84",
 			"version": "v1.2.5",
 			"versionExact": "v1.2.5"
 		},
@@ -883,10 +883,10 @@
 			"revisionTime": "2019-03-27T06:32:23Z"
 		},
 		{
-			"checksumSHA1": "l+Cj+KvNrFIn93JBWTwlpVwzkcE=",
+			"checksumSHA1": "hD0DhRCdwEVz0H/elkrty463jRU=",
 			"path": "github.com/docker/docker/pkg/chrootarchive",
-			"revision": "da823cf3a5a3437763ba12b2fa369c826d4a2bf4",
-			"revisionTime": "2019-03-27T06:32:23Z"
+			"revision": "69f9c8c90662290f3e3abc01a3be51b95b80367b",
+			"revisionTime": "2021-02-12T10:58:29Z"
 		},
 		{
 			"checksumSHA1": "jhniGMHY8Ze6TvmbKnzuCosOVN8=",
