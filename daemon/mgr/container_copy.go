@@ -236,7 +236,11 @@ func (mgr *ContainerManager) ExtractToDir(ctx context.Context, name, path string
 
 	mgr.LogContainerEvent(ctx, c, "extract-to-dir")
 
-	return chrootarchive.Untar(content, resolvedPath, opts)
+	rootfs := c.MountFS
+	if running {
+		rootfs = c.BaseFS
+	}
+	return chrootarchive.UntarWithRoot(content, resolvedPath, opts, rootfs)
 }
 
 func (c *Container) getResolvedPath(path string, running bool) (resolvedPath, absPath string) {
