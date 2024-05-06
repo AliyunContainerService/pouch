@@ -29,6 +29,7 @@ func CheckLxcfsMount() error {
 	if err != nil {
 		return fmt.Errorf("Check lxcfs mounts failed: %v", err)
 	}
+	defer f.Close()
 	fr := bufio.NewReader(f)
 	for {
 		line, err := fr.ReadBytes('\n')
